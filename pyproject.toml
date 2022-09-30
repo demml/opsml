@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "opsml-data"
+version = "0.1.0"
+description = "Package for handling data for machine learning projects"
+authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<=3.11"
+cloud-sql-python-connector = {extras = ["pymysql"], version = "^0.8.1"}
+sqlalchemy = "^1.4.41"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = ""
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+default = true
