@@ -13,7 +13,6 @@ steps:
     commands:
       #- python env.py
       - apt update
-      - apt-get install graphviz -y
       - pip install poetry==1.1.11
       - poetry install -E "all"
       - ls
