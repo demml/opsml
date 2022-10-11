@@ -12,6 +12,7 @@ class Defaults:
     GCS_BUCKET = os.getenv("GCS_BUCKET", "py-opsml")
     GCP_REGION = "us-central1"
     GCP_CREDS = os.getenv("GCP_CRED_BASE64")
+    GCP_PROJECT = os.getenv("GCP_PROJECT")
 
 
 defaults = Defaults()
