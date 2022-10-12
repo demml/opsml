@@ -3,7 +3,11 @@ import sqlalchemy
 
 
 def test_registry_connection(
-    test_defaults, db_name, db_username, db_password, db_instance
+    test_defaults,
+    db_name,
+    db_username,
+    db_password,
+    db_instance,
 ):
 
     registry = DataRegistry(
@@ -18,16 +22,11 @@ def test_registry_connection(
     assert isinstance(registry.engine, sqlalchemy.engine.base.Engine)
 
 
-def test_list_tables(test_defaults, db_name, db_username, db_password, db_instance):
-    registry = DataRegistry(
-        gcp_project=test_defaults.GCP_PROJECT,
-        gcp_region=test_defaults.GCP_REGION,
-        instance_name=db_instance,
-        db_name=db_name,
-        username=db_username,
-        password=db_password,
-    )
+def test_list_data(
+    connection,
+    setup_database,
+):
 
-    tables = registry.list_data_tables()
+    tables = connection.list_data()
 
     assert isinstance(tables, list)
