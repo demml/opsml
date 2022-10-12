@@ -37,14 +37,14 @@ class DataRegistry(SqlRegistry):
             credentials=creds.credentials,
         )
 
-        engine = self.get_sql_engine()
+        engine = self._get_sql_engine()
 
         super().__init__(
             db_name=self._db_name,
             engine=engine,
         )
 
-    def get_conn(self) -> pymysql.connections.Connection:
+    def _get_conn(self) -> pymysql.connections.Connection:
         conn: pymysql.connections.Connection = self.connector.connect(
             self._instance_connection_name,
             "pymysql",
@@ -55,10 +55,10 @@ class DataRegistry(SqlRegistry):
 
         return conn
 
-    def get_sql_engine(self) -> sqlalchemy.engine.base.Engine:
+    def _get_sql_engine(self) -> sqlalchemy.engine.base.Engine:
         engine = sqlalchemy.create_engine(
             "mysql+pymysql://",
-            creator=self.get_conn,
+            creator=self._get_conn,
         )
         logger.info("Connected to db")
         return engine

@@ -14,7 +14,7 @@ class SqlRegistry:
         self.schema = SqlDataRegistrySchema
         self.schema.__table_args__ = {"schema": f"{db_name}"}
 
-    def list_data_tables(self):
+    def list_data(self):
         sql_statement = select(self.schema.table_name).group_by(
             self.schema.table_name,
         )
