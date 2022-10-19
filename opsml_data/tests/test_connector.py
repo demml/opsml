@@ -1,6 +1,8 @@
+from pydantic import ValidationError
 from opsml_data.connector import DataRegistry
 from opsml_data.connector.data_model import TestSqlDataRegistrySchema
 import sqlalchemy
+import pytest
 
 
 def test_registry_connection(
@@ -34,5 +36,15 @@ def test_max_version(connection, setup_database):
     assert version == 0
 
 
-def test_insert_data(test_data_record, connection, setup_database):
-    connection._insert_data(test_data_record)
+def test_insert_data(
+    test_data_record,
+    test_data_record_wrong,
+    connection,
+    setup_database,
+):
+    # this should pass
+    connection.insert_data(test_data_record)
+
+    # this should fail
+    with pytest.raises(ValidationError) as error:
+        connection.insert_data(test_data_record_wrong)

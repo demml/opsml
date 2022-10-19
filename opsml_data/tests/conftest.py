@@ -93,7 +93,7 @@ def test_data_record():
         table_name="test_table",
         storage_uri="storage_uri_test",
         feature_mapping=dict(col1="int", col2="string"),
-        version=0,
+        version=1,
         user_email="test_email",
     )
 

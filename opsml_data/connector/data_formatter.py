@@ -8,7 +8,17 @@ from typing import Dict
 
 class DataFormatter:
     @staticmethod
-    def convert_data_to_arrow(data: Union[pd.DataFrame, np.array]):
+    def convert_data_to_arrow(data: Union[pd.DataFrame, np.array]) -> pa.Table:
+
+        """
+        Converts a pandas dataframe or numpy array into a py arrow table.
+
+        Args:
+            data: Pandas dataframe or numpy array.
+        Returns:
+            py arrow table
+        """
+
         if isinstance(data, pd.DataFrame):
             return pa.Table.from_pandas(
                 data,
@@ -27,7 +37,16 @@ class DataFormatter:
             )
 
     @staticmethod
-    def get_schema(data: pa.Table) -> Dict[str, str]:
+    def create_table_schema(data: pa.Table) -> Dict[str, str]:
+        """
+        Generates a schema (column: type) from a py arrow table.
+
+        Args:
+            data: py arrow table.
+        Returns:
+            schema: Dict[str,str]
+        """
+
         schema = data.schema
         feature_map = {}
 

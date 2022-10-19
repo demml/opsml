@@ -1,14 +1,18 @@
-from opsml_data.helpers.utils import GCPCredentials
-from opsml_data.helpers.defaults import defaults
-from opsml_data.connector.sql_registry import SqlRegistry, TableRegistry
+from ctypes import Union
+from opsml_data.connector.sql_registry import (
+    SqlRegistry,
+    TableRegistry,
+    GCPSqlConnector,
+)
 from opsml_data.connector.data_model import DataModel
-from google.cloud.sql.connector import Connector, IPTypes
+from opsml_data.connector.data_formatter import DataFormatter
+from opsml_data.helpers.utils import GCSStorageClient
 from pyshipt_logging.logger import ShiptLogging
-import pymysql
-import os
-import sqlalchemy
 from sqlalchemy import select, desc
-from typing import Dict, Any
+from typing import Dict, Any, Union
+from opsml_data.helpers.defaults import defaults
+import pandas as pd
+import numpy as np
 
 logger = ShiptLogging.get_default_logger()
 
@@ -25,52 +29,27 @@ class DataRegistry(SqlRegistry):
         gcp_region: str = defaults.GCP_REGION,
         gcp_bucket: str = defaults.GCS_BUCKET,
     ):
+        self.storage_client = GCSStorageClient(gcs_bucket="opsml-data-registry")
 
-        self._instance_connection_name = f"{gcp_project}:{gcp_region}:{instance_name}"
-        self._db_name = db_name
-        self._username = username
-        self._password = password
-
-        ip_type = IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
-
-        # composition components
-        creds = GCPCredentials(gcp_creds=defaults.GCP_CREDS)
-
-        self.connector = Connector(
-            ip_type=ip_type,
-            credentials=creds.credentials,
+        sql_connector = GCPSqlConnector(
+            instance_name=instance_name,
+            db_name=db_name,
+            username=username,
+            password=password,
+            gcp_project=gcp_project,
+            gcp_region=gcp_region,
         )
 
-        # create engine
-        engine = self._create_sql_engine()
+        engine = sql_connector.create_sql_engine()
 
         # Table schema
-        schema = TableRegistry.get_schema(table_name)
+        table_schema = TableRegistry.get_schema(table_name)
 
         super().__init__(
-            schema=schema,
-            db_name=self._db_name,
+            schema=table_schema,
+            db_name=db_name,
             engine=engine,
         )
-
-    def _set_conn(self) -> pymysql.connections.Connection:
-        conn: pymysql.connections.Connection = self.connector.connect(
-            self._instance_connection_name,
-            "pymysql",
-            user=self._username,
-            password=self._password,
-            db=self._db_name,
-        )
-
-        return conn
-
-    def _create_sql_engine(self) -> sqlalchemy.engine.base.Engine:
-        engine = sqlalchemy.create_engine(
-            "mysql+pymysql://",
-            creator=self._set_conn,
-        )
-        logger.info("Connected to db")
-        return engine
 
     def list_tables(self):
         sql_statement = select(self.schema.table_name).group_by(
@@ -80,22 +59,35 @@ class DataRegistry(SqlRegistry):
 
         return [row.table_name for row in results]
 
-    def max_table_version(self, table_name: str):
-        sql_statement = (
-            select(self.schema.version)
-            .where(self.schema.table_name == table_name)
-            .order_by(desc(self.schema.version))
-            .limit(1)
+    def add_data(
+        self,
+        table_name: str,
+        user_email: str,
+        data: Union[pd.DataFrame, np.array],
+    ):
+        """
+        Adds new data record to data registry.
+
+        Args:
+            table_name: Name of table. If table name is same as an existing table,
+            a new version will be created.
+            user_email: Email associated with this data.
+            data: A pandas dataframe or numpy array.
+        """
+
+        max_version = self.max_table_version(
+            table_name=table_name,
         )
+        data = DataFormatter.convert_data_to_arrow(data)
+        feature_map = DataFormatter.create_table_schema(data)
 
-        result = self.submit_query(sql_statement).scalar()
-
-        if result is None:
-            return 0
-
-        return result
-
-    def _insert_data(self, data: Dict[str, Any]):
+        # save data to gcs
 
         model = DataModel(**data)
+
+        # algo
+        # Convert to data model
+        # get max version of table
+        # update version
+
         self.insert(model.dict())
