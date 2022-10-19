@@ -1,4 +1,5 @@
 from opsml_data.connector import DataRegistry
+from opsml_data.connector.data_model import TestSqlDataRegistrySchema
 import sqlalchemy
 
 
@@ -22,11 +23,16 @@ def test_registry_connection(
     assert isinstance(registry.engine, sqlalchemy.engine.base.Engine)
 
 
-def test_list_data(
-    connection,
-    setup_database,
-):
-
-    tables = connection.list_data()
+def test_list_data(connection, setup_database):
+    tables = connection.list_tables()
 
     assert isinstance(tables, list)
+
+
+def test_max_version(connection, setup_database):
+    version = connection.max_table_version("test_table")
+    assert version == 0
+
+
+def test_insert_data(test_data_record, connection, setup_database):
+    connection._insert_data(test_data_record)
