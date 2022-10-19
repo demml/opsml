@@ -1,4 +1,4 @@
-<diagram program="umletino" version="15.0.0"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>320</x><y>0</y><w>210</w><h>140</h></coordinates><panel_attributes>SqlDataRegistrySchema
+<diagram program="umletino" version="15.0.0"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>360</x><y>0</y><w>210</w><h>140</h></coordinates><panel_attributes>SqlDataRegistrySchema
 (Data Model)
 --
 +date: Column(String)
@@ -6,14 +6,16 @@
 +table_name: Column(String)
 +storage_uri: Column(String)
 +feature_mapping: Column(JSON)
-+version: Column(Integer)</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>370</x><y>240</y><w>380</w><h>90</h></coordinates><panel_attributes>SqlRegistry
++version: Column(Integer)</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>410</x><y>240</y><w>380</w><h>110</h></coordinates><panel_attributes>SqlRegistry
 --
 +engine: sqlalchemy.engine.base.Engine
 +schema: SqlDataRegistrySchema
 --
 +__init__(engine: sqlalchemy.engine.base.Engine, db_name:string)
-+list_data_files()
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>300</x><y>130</y><w>140</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>70;160;10;160;10;60;120;60;120;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>370</x><y>400</y><w>380</w><h>270</h></coordinates><panel_attributes>DataRegistry
++submit_query()
++insert()
+
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>340</x><y>130</y><w>140</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>70;160;10;160;10;60;120;60;120;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>410</x><y>400</y><w>380</w><h>270</h></coordinates><panel_attributes>DataRegistry
 --
 -_instance_connection_name: string
 -_db_name: string
@@ -21,18 +23,19 @@
 -_password: string
 +connector: GCP Sql Connector
 --
-+__init__(
-gcp_project: string, 
-gcp_region: string,  
-instance_name: string,
-db_name: string,
-username: string,
-password: string
-)
++__init__()
 -_set_conn()
--_create_sql_engine()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>550</x><y>320</y><w>30</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;80</additional_attributes></element><element><id>UMLClass</id><coordinates><x>70</x><y>290</y><w>210</w><h>80</h></coordinates><panel_attributes>GCPCredentials
+-_create_sql_engine()
+-_insert_data()
++list_tables()
++max_table_version()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>590</x><y>340</y><w>30</w><h>80</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;60</additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>290</y><w>210</w><h>80</h></coordinates><panel_attributes>GCPCredentials
 --
 +key: dictionary 
 --
 +__init__(gcp_creds:string)
-+credentials()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>160</x><y>360</y><w>230</w><h>170</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>210;150;10;150;10;10</additional_attributes></element></diagram>
++credentials()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>70</x><y>360</y><w>360</w><h>170</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>340;150;10;150;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>20</x><y>560</y><w>210</w><h>80</h></coordinates><panel_attributes>GCPStorageHandler
+--
++key: dictionary 
+--
++)
++credentials()</panel_attributes><additional_attributes></additional_attributes></element></diagram>

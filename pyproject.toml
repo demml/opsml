@@ -9,6 +9,10 @@ python = ">=3.8,<=3.11"
 cloud-sql-python-connector = {extras = ["pymysql"], version = "^0.8.1"}
 sqlalchemy = "^1.4.41"
 pyshipt-logging = "^0.5.0"
+numpy = "^1.23.4"
+pandas = "^1.5.0"
+pyarrow = "8.0.0"
+pydantic = "^1.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"

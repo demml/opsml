@@ -3,6 +3,9 @@ from opsml_data.helpers.defaults import defaults
 from opsml_data.connector.data_model import SqlDataRegistrySchema
 from opsml_data.connector import DataRegistry
 import os
+import pandas as pd
+import numpy as np
+import pyarrow as pa
 
 
 @pytest.fixture(scope="session")
@@ -46,46 +49,73 @@ def connection(
         db_name=db_name,
         username=db_username,
         password=db_password,
+        table_name="test_data_registry",
     )
 
     return conn
 
 
-def data_model():
-    base = declarative_base()
-
-
-class SqlDataRegistrySchema(base):
-    __tablename__ = "data_registry"
-
-    date = Column("date", String(100))
-    timestamp = Column(
-        "timestamp",
-        FLOAT,
-        primary_key=True,
-    )
-    table_name = Column("table_name", String(100))
-    storage_uri = Column("storage_uri", String(100))
-    feature_mapping = Column("feature_mapping", JSON)
-    version = Column("version", Integer, nullable=False)
-
-    __table_args__ = {"schema": "flight-plan-data-registry"}
-
-    def __repr__(cls):
-        return f"<SqlMetric({cls.__tablename__}"
-
-
 @pytest.fixture(scope="session")
 def setup_database(connection):
 
-    schema = SqlDataRegistrySchema
-    schema.__tablename__ = "test_data_registry"
-    print(schema)
-    schema.__table__.create(
+    connection.schema.__table__.create(
         bind=connection.engine,
         checkfirst=True,
     )
-    a
+
     yield
 
-    # schema.__table__.drop(bind=connection.engine)
+    connection.schema.__table__.drop(bind=connection.engine)
+
+
+@pytest.fixture(scope="session")
+def test_array():
+    data = np.arange(10, dtype="int16")
+    return data
+
+
+@pytest.fixture(scope="session")
+def test_df():
+    df = pd.DataFrame(
+        {
+            "year": [2020, 2022, 2019, 2021],
+            "n_legs": [2, 4, 5, 100],
+            "animals": ["Flamingo", "Horse", "Brittle stars", "Centipede"],
+        }
+    )
+
+    return df
+
+
+@pytest.fixture(scope="session")
+def test_data_record():
+    test_dict = dict(
+        table_name="test_table",
+        storage_uri="storage_uri_test",
+        feature_mapping=dict(col1="int", col2="string"),
+        version=0,
+        user_email="test_email",
+    )
+
+    return test_dict
+
+
+@pytest.fixture(scope="session")
+def test_data_record_wrong():
+    test_dict = dict(
+        table_name="test_table",
+        feature_mapping=dict(col1="int", col2="string"),
+        version=0,
+        user_email="test_email",
+    )
+
+    return test_dict
+
+
+@pytest.fixture(scope="session")
+def test_arrow_table():
+    n_legs = pa.array([2, 4, 5, 100])
+    animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
+    names = ["n_legs", "animals"]
+    table = pa.Table.from_arrays([n_legs, animals], names=names)
+    return table
