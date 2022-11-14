@@ -29,6 +29,7 @@ class DataRegistry(SqlRegistry):
         gcp_region: str = defaults.GCP_REGION,
         gcp_bucket: str = defaults.GCS_BUCKET,
     ):
+        # aggregations
         self.storage_client = GCSStorageClient(gcs_bucket="opsml-data-registry")
 
         sql_connector = GCPSqlConnector(
@@ -40,11 +41,13 @@ class DataRegistry(SqlRegistry):
             gcp_region=gcp_region,
         )
 
+        # create engine and table schema
         engine = sql_connector.create_sql_engine()
 
         # Table schema
         table_schema = TableRegistry.get_schema(table_name)
 
+        # init sqlregistry base
         super().__init__(
             schema=table_schema,
             db_name=db_name,
