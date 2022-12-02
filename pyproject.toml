@@ -53,7 +53,6 @@ extension-pkg-whitelist = [
 
 [tool.flake8]
 # This section is just a doc placeholder..see setup.cfg
-#   https://gitlab.com/pycqa/flake8/-/issues/428#note_251982786
 max-complexity = 10
 format = "pylint"
 statistics = "True"
