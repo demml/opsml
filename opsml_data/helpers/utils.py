@@ -1,111 +1,319 @@
-import base64
-import json
-from turtle import st
-from google.oauth2 import service_account
-from functools import cached_property
-from .defaults import defaults
+"""Suite of helper objects"""
+import glob
+import os
+from pathlib import Path
+from typing import Optional, Union
+
+from google.cloud import secretmanager, storage  # type: ignore
+from google.oauth2.service_account import Credentials
 from pyshipt_logging import ShiptLogging
-from google.cloud import storage
+
+from . import exceptions
 
 logger = ShiptLogging.get_logger(__name__)
 
 
-class GCPCredentials:
-    def __init__(self, gcp_creds: str):
+class FindPath:
+    """Helper class for finding paths to artifacts"""
 
-        if gcp_creds == None:
-            raise ValueError("GCP Creds must not be None.")
+    @staticmethod
+    def find_filepath(
+        name: str,
+        path: Optional[str] = None,
+    ) -> str:
+        """Finds the file path of a given file.
 
-        base_64 = base64.b64decode(gcp_creds).decode("utf-8")
-        self.key = json.loads(base_64)
+        Args:
+            name (str): Name of file
+            path (str): Optional. Base path to search
 
-    @cached_property
-    def credentials(self):
-        return service_account.Credentials.from_service_account_info(self.key)
+        Returns:
+            filepath (str)
+        """
+        if path is None:
+            path = os.getcwd()
+
+        paths = list(Path(path).rglob(name))
+        file_path = paths[0]
+
+        if file_path is not None:
+            return file_path
+
+        raise exceptions.MissingKwarg(
+            f"""{name} file was not found in the current path.
+                    Check to make sure you specified the correct name."""
+        )
+
+    @staticmethod
+    def find_dirpath(
+        dir_name: str,
+        path: str,
+        anchor_file: str,
+    ):
+        """Finds the dir path of a given file.
+        Used as part of pipeline runner.
+
+        Args:
+            dir_name (str): Name of directory
+            path (str): Optional. Base path to search
+            anchor_file (str): Name of anchor file in directory
+
+        Returns:
+            dirpath (str)
+        """
+
+        paths = glob.glob(f"{path}/**/{anchor_file}", recursive=True)
+
+        if len(paths) <= 1:
+            new_path: Union[list, str] = []
+            dirs = paths[0].split("/")[:-1]
+
+            try:
+                dir_idx = dirs.index(dir_name)
+            except ValueError as error:
+                raise exceptions.DirNotFound(
+                    f"""Directory {dir_name} was not found.
+                     Please check the name of your top-level directory.
+                     Error: {error}
+                     """
+                )
+
+            new_path = "/".join(dirs[: dir_idx + 1])
+
+            logger.info("Src dir path: %s", new_path)
+            return new_path
+
+        raise exceptions.MoreThanOnePath(
+            f"""More than one path was found for the trip configuration file.
+                Please check your project structure.
+                Found paths: {paths}
+            """
+        )
+
+    @staticmethod
+    def find_source_dir(
+        path: str,
+        runner_file: str,
+    ):
+        """Finds the dir path of a given of the pipeline
+        runner file.
+
+        Args:
+            path (str): Current directory
+            runner_file (str): Name of pipeline runner file
+
+        Returns:
+            dirpath (str)
+        """
+        paths = glob.glob(f"{path}/**/{runner_file}", recursive=True)
+        if len(paths) <= 1:
+            source_path = "/".join(paths[0].split("/")[:-1])
+            source_dir = paths[0].split("/")[:-1][-1]
+            return source_dir, source_path
+
+        raise exceptions.MoreThanOnePath(
+            f"""More than one path was found for the trip configuration file.
+                Please check your project structure.
+                Found paths: {paths}
+            """
+        )
+
+
+class GCPSecretManager:
+    def __init__(
+        self,
+        gcp_credentials: Optional[Credentials] = None,
+    ):
+        """Class for interacting with GCP secrets related to
+        a project.
+
+        Args:
+            gcp_credentials (gcp Credentials): Credentials associated with
+            a given gcp account that has permissions for accessing secrets.
+            If not supplied, gcp will infer credentials for you local environment.
+        """
+
+        self.creds = gcp_credentials
+        self.client = secretmanager.SecretManagerServiceClient(
+            credentials=self.creds,
+        )
+
+    def get_secret(
+        self,
+        project: str,
+        secret: str,
+        version: str = "latest",
+    ):
+
+        """Gets secret for GCP secrets manager.
+
+        Args:
+            project (str): GCP Project
+            secret (str): Name of secret
+            version (str) Version of secret to pull
+
+        Returns
+            secret value
+
+        """
+
+        response = self.client.access_secret_version(
+            request={"name": f"projects/{project}/secrets/{secret}/versions/{version}"}  # noqa
+        )
+
+        payload = response.payload.data.decode("UTF-8")
+
+        return payload
 
 
 class GCSStorageClient:
-    def __init__(self, gcs_bucket: str):
-        self.credentials = self.get_creds()
-        self.bucket = self.set_storage_bucket(gcs_bucket)
+    def __init__(
+        self,
+        gcp_credentials: Optional[Credentials],
+    ):
 
-    def get_creds(self):
+        """Instantiates GCP storage client
 
-        if defaults.GCP_CREDS is not None:
-            base_64 = base64.b64decode(
-                defaults.GCP_CREDS,
-            )
-            key = json.loads(
-                base_64.decode("utf-8"),
-            )
+        Args:
+            gcp_credentials (Credentials): Credentials with permissions for
+            gcp storage client
 
-            return service_account.Credentials.from_service_account_info(  # noqa
-                key,
-            )
-
-        else:
-            return None
+        """
+        self.client = storage.Client(
+            credentials=gcp_credentials,
+        )
 
     def list_objects(
         self,
-        prefix: str = None,
+        gcs_bucket: Union[str, None] = None,
+        prefix: Union[str, None] = None,
     ):
-        blobs = self.bucket.list_blobs(prefix=prefix)
-        blobs = [blob.name for blob in blobs]
+        """List object is a given bucket with the specified prefix
+
+        Args:
+            gcs_bucket (str): Name of GCS bucket
+            prefix (str): Blob prefix
+
+        Returns:
+            List of storage blobs
+
+        """
+        bucket = self.client.bucket(gcs_bucket)
+        blobs = bucket.list_blobs(prefix=prefix)
         return blobs
-
-    def set_storage_bucket(
-        self,
-        gcs_bucket: str = None,
-    ):
-        storage_client = storage.Client(
-            credentials=self.credentials,
-        )
-
-        bucket = storage_client.bucket(gcs_bucket)
-        if not bucket.exists():
-            bucket.create()
-
-        return bucket
 
     def download_object(
         self,
-        blob_path: str = None,
-        destination_filename: str = None,
+        gcs_bucket: str,
+        blob_path: Union[str, None] = None,
+        destination_filename: Union[str, None] = None,
     ):
-        blob = self.bucket.blob(blob_path)
+
+        """Download an object from gcs
+
+        Args:
+            gcs_bucket (str): Name of GCS bucket
+            blob_path (str): Path to object in gcs (including object name)
+            destination_filename (str): Local filename to download to.
+
+        """
+
+        bucket = self.client.bucket(gcs_bucket)
+        blob = bucket.blob(blob_path)
         blob.download_to_filename(destination_filename)
 
-        logger.info(
-            f"Successully downloaded gs://{self.bucket.name}/{blob_path}",
+        logger.info("Successully downloaded gs://%s/%s", gcs_bucket, blob_path)
+
+    def download_object_from_uri(self, gcs_uri: str):
+        bucket, blob, filename = self.parse_gcs_uri(gcs_uri=gcs_uri)
+
+        self.download_object(
+            gcs_bucket=bucket,
+            blob_path=blob,
+            destination_filename=filename,
         )
+
+        return filename
 
     def delete_object(
         self,
-        blob_path: str = None,
+        gcs_bucket: str,
+        blob_path: Union[str, None] = None,
     ):
-        blob = self.bucket.blob(blob_path)
+        """Delete object from gcs
+
+        Args:
+            gcs_bucket (str): Name of GCS bucket
+            blob_path (str): Path to object in gcs (including object name)
+
+        """
+
+        bucket = self.client.bucket(gcs_bucket)
+        blob = bucket.blob(blob_path)
         blob.delete()
 
-        logger.info(
-            f"Successully deleted gs://{self.bucket.name}/{blob_path}",
-        )
+        logger.info("Successully deleted gs://%s/%s", gcs_bucket, blob_path)
 
-    def parse_gcs_url(
+    def parse_gcs_uri(
         self,
-        gcs_url: str,
+        gcs_uri: str,
     ):
-        split_url = gcs_url.split("/")
+        """Parses gcs url
+
+        Args:
+            gcs_uri (str): Uri for gcs object
+
+        Return:
+            gcs_bucket and path
+        """
+
+        split_url = gcs_uri.split("/")
         bucket = split_url[2]
         blob_path = "/".join(split_url[3:])
+        filename = split_url[-1]
 
-        return bucket, blob_path
+        return bucket, blob_path, filename
 
-    def delete_object_from_url(self, gcs_url: str):
-        bucket, blob_path = self.parse_gcs_url(
-            gcs_url,
+    def delete_object_from_url(self, gcs_uri: str):
+
+        """Delete object from gcs
+
+        Args:
+            gcs_uri (str): GCS uri of object
+
+        """
+
+        bucket, blob_path, _ = self.parse_gcs_uri(
+            gcs_uri,
         )
 
         self.delete_object(
+            bucket,
             blob_path,
         )
+
+    def upload(
+        self,
+        gcs_bucket: str,
+        filename: str,
+        destination_path: str,
+    ):
+        """Upload local file to gcs
+
+        Args:
+            gcs_bucket (str): Name of gcs bucket
+            filename (str): Local filename to upload
+            destination_path (str): gcs path to write to
+
+        Returns:
+            Location of gcs object
+
+        """
+        bucket = self.client.bucket(gcs_bucket)
+        blob = bucket.blob(destination_path)
+        blob.upload_from_filename(filename)
+        code_location = f"gs://{gcs_bucket}/{destination_path}"
+
+        logger.info("Uploaded %s to %s", filename, code_location)
+
+        return code_location
