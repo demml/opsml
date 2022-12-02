@@ -4,8 +4,7 @@ type: docker
 
 trigger:
   event:
-    - pull_request
-    - tag
+  - pull_request
 
 steps:
   - name: py39
@@ -14,7 +13,7 @@ steps:
       #- python env.py
       - apt update
       - pip install poetry==1.1.11
-      - poetry install -E "all"
+      - poetry install
       - ls
       - make test.unit
     environment:
@@ -22,120 +21,64 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      AIRFLOW_LOCAL_DIR:
-        from_secret: AIRFLOW_LOCAL_DIR
-      AIRFLOW_REPO_BRANCH:
-        from_secret: AIRFLOW_REPO_BRANCH
-      AIRFLOW_REPO_URL:
-        from_secret: AIRFLOW_REPO_URL
-      AIRFLOW_TEAM_DIR:
-        from_secret: AIRFLOW_TEAM_DIR
-      GCP_CRED_BASE64:
-        from_secret: gcp_cred_base64
-      GCP_DOCKER_ADDRESS:
-        from_secret: gcp_docker_address
-      GCP_SNOWFLAKE_URL:
-        from_secret: gcp_snowflake_url
-      GCP_AUTH:
-        from_secret: gcp_auth
-      GCS_DATA_URL:
-        from_secret: GCS_DATA_URL
-      SNOWFLAKE_USERNAME:
-        from_secret: SNOWFLAKE_USERNAME
-      SNOWFLAKE_PASSWORD:
-        from_secret: SNOWFLAKE_PASSWORD
-      SNOWFLAKE_HOST:
-        from_secret: SNOWFLAKE_HOST
-      SNOWFLAKE_DATABASE:
-        from_secret: SNOWFLAKE_DATABASE
-      SNOWFLAKE_WAREHOUSE:
-        from_secret: SNOWFLAKE_WAREHOUSE
-      SNOWFLAKE_ROLE:
-        from_secret: SNOWFLAKE_ROLE
-      MLFLOW_TRACKING_URI:
-        from_secret: MLFLOW_TRACKING_URI
-      MLFLOW_TRACKING_USERNAME:
-        from_secret: MLFLOW_TRACKING_USERNAME
-      MLFLOW_TRACKING_PASSWORD:
-        from_secret: MLFLOW_TRACKING_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
 
-  - name: lints
+  - name: quality-checks
     image: python:3.9
+    commands:
+      - pip install poetry==1.1.11
+      - poetry install
+      - make format
+      - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      AIRFLOW_LOCAL_DIR:
-        from_secret: AIRFLOW_LOCAL_DIR
-      AIRFLOW_REPO_BRANCH:
-        from_secret: AIRFLOW_REPO_BRANCH
-      AIRFLOW_REPO_URL:
-        from_secret: AIRFLOW_REPO_URL
-      AIRFLOW_TEAM_DIR:
-        from_secret: AIRFLOW_TEAM_DIR
-      GCP_CRED_BASE64:
-        from_secret: GCP_CRED_BASE64
-      GCP_DOCKER_ADDRESS:
-        from_secret: GCP_DOCKER_ADDRESS
-    commands:
-      - pip install poetry==1.1.11
-      - poetry install
-      - make lints
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
 
-  - name: formatting
-    image: python:3.9
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-      AIRFLOW_LOCAL_DIR:
-        from_secret: AIRFLOW_LOCAL_DIR
-      AIRFLOW_REPO_BRANCH:
-        from_secret: AIRFLOW_REPO_BRANCH
-      AIRFLOW_REPO_URL:
-        from_secret: AIRFLOW_REPO_URL
-      AIRFLOW_TEAM_DIR:
-        from_secret: AIRFLOW_TEAM_DIR
-      GCP_CRED_BASE64:
-        from_secret: GCP_CRED_BASE64
-      GCP_DOCKER_ADDRESS:
-        from_secret: GCP_DOCKER_ADDRESS
-    commands:
-      - pip install poetry==1.1.11
-      - poetry install
-      - make lints.format.check
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
     environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
       SONAR_HOST:
         from_secret: SONAR_HOST
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
     depends_on:
       - py39
-      - lints
-      - formatting
+      - quality-checks
 
-  - name: publish-release
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.10_poetry_1.1.13
+---
+name: publish-release
+kind: pipeline
+type: docker
+depends_on:
+  - test-and-build
+trigger:
+  event:
+    - tag
+  branch:
+    - main
+
+steps:
+  - name: artifactory-poetry-publish
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.12_poetry_1.1.13
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     commands:
-      - test "v$(poetry version --short)" "=" "$DRONE_TAG"
-      - poetry config repositories.shipt-deploy https://artifactory.shipt.com/artifactory/api/pypi/pypi-local
-      - poetry publish --repository shipt-deploy --build
-    when:
-      branch:
-        - main
-      event:
-        - tag
-    depends_on:
-      - py39
-      - formatting
-      - lints
+      # tag events validate poetry version is equal to the tag
+      # increment patch version for releases based on drone tag
+      # manually updating toml is annoying
+      - export TAG=$(echo "$DRONE_TAG" | cut -c 2-)
+      - poetry version "$TAG"
+      - make publish

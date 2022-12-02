@@ -1,6 +1,6 @@
 PROJECT=poetry-template
 PYTHON_VERSION=3.9.9
-SOURCE_OBJECTS=opsml
+SOURCE_OBJECTS=opsml_data
 
 
 deploy.requirements:
@@ -13,26 +13,21 @@ format.black:
 	poetry run black ${SOURCE_OBJECTS}
 format.isort:
 	poetry run isort --atomic ${SOURCE_OBJECTS}
-# TODO autocommit the formatting only changes and add it rev to .git-blame-ignore-revs?
 format: format.isort format.black
 
-lints.format.check:
+lints.format_check:
 	poetry run black --check ${SOURCE_OBJECTS}
 	poetry run isort --check-only ${SOURCE_OBJECTS}
 lints.flake8:
-	poetry run flake8 --ignore=DAR,E203,W503,F841 ${SOURCE_OBJECTS}
-lints.flake8.strict:
 	poetry run flake8 ${SOURCE_OBJECTS}
-#lints.pylint:
-#	poetry run pylint --rcfile pyproject.toml ${SOURCE_OBJECTS}
-lints: lints.flake8 lints.format.check
-lints.strict: lints.flake8.strict lints.format.check
-
-publish:
-	export POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME=${ARTIFACTORY_PYPI_USERNAME} \
-		POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD=${ARTIFACTORY_PYPI_PASSWORD} && \
-	poetry config repositories.shipt-deploy https://artifactory.shipt.com/artifactory/api/pypi/pypi-local && \
-	poetry publish --repository shipt-deploy --build
+lints.flake8.ci:
+	poetry run flake8 --output-file=flake8-output.txt ${SOURCE_OBJECTS}
+lints.mypy:
+	poetry run mypy --ignore-missing-imports ${SOURCE_OBJECTS}
+lints.pylint:
+	poetry run pylint --rcfile pyproject.toml  ${SOURCE_OBJECTS}
+lints: lints.flake8 lints.pylint
+lints.ci: lints.flake8.ci lints.pylint lints.format_check
 
 setup: setup.python setup.sysdep.poetry setup.poetry-template
 setup.uninstall:
@@ -61,9 +56,13 @@ test.shell:
 test.shell.debug:
 	docker-compose run --entrypoint /bin/bash test
 test.unit: setup
-		poetry run pytest \
-			--cov \
-			--cov-fail-under=0 \
-			--cov-report \
-			xml:./coverage.xml \
-			--junitxml=./results.xml
+		poetry run coverage run -m pytest \
+        --cov=./ \
+		--cov-config=.coveragerc \
+        --cov-report=xml:coverage-report-unit-tests.xml \
+        --junitxml=coverage-junit-unit-tests.xml \
+        --cov-report term
+
+publish:
+	poetry config repositories.shipt-deploy https://artifactory.shipt.com/artifactory/api/pypi/pypi-local
+	poetry publish --repository shipt-deploy --build
