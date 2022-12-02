@@ -997,7 +997,7 @@ reference = "shipt-resolve"
 
 [[package]]
 name = "pyshipt-logging"
-version = "0.5.0"
+version = "0.4.6"
 description = "Common logging interface for Python"
 category = "main"
 optional = false
@@ -1295,7 +1295,7 @@ reference = "shipt-resolve"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "b082b09a89371a381508e6383ca990c6d9c6d68628ee2c26bf5f911ad2eff944"
+content-hash = "1c461ec3e2c5d5498774eb47a8c043cfb8a81ba35e40291e6122b625bd958800"
 
 [metadata.files]
 aiohttp = [
@@ -2229,8 +2229,8 @@ pyparsing = [
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
 ]
 pyshipt-logging = [
-    {file = "pyshipt_logging-0.5.0-py3-none-any.whl", hash = "sha256:ee66c1b53071a365fce453f520e5d6e9b0672025d7cb6b7836d44dfea6ffe76d"},
-    {file = "pyshipt_logging-0.5.0.tar.gz", hash = "sha256:0272b8f3f75246ff2e0b77179e0429c67731f10d6f5a257a6720368003dd053e"},
+    {file = "pyshipt_logging-0.4.6-py3-none-any.whl", hash = "sha256:f4b170b7912aa46b70483c58785f5c57aa8f6213904c31b292d220cbd3879a0f"},
+    {file = "pyshipt_logging-0.4.6.tar.gz", hash = "sha256:e70c9b4eaef9038dcb95acf0425ba18a8d91a2926eae77005096c8e667f16f7c"},
 ]
 pytest = [
     {file = "pytest-7.2.0-py3-none-any.whl", hash = "sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71"},
