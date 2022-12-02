@@ -7,6 +7,9 @@ authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 [tool.poetry.dependencies]
 python = ">=3.8,<=3.11"
 cloud-sql-python-connector = {extras = ["pymysql"], version = "^0.8.1"}
+google-cloud-secret-manager ="^2.12.2"
+google-auth = "1.35.0"
+google-cloud-storage = "1.44.0"
 sqlalchemy = "^1.4.41"
 pyshipt-logging = "^0.5.0"
 numpy = "^1.23.4"
@@ -15,13 +18,84 @@ pyarrow = "8.0.0"
 pydantic = "^1.10.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.3"
+pytest-cov = "^3.0.0"
+black = "22.3.0"
+pytest = "^7.1.2"
+flake8 = "^4.0.1"
+pylint = "^2.14.5"
+isort = "^5.10.1"
+coverage = {extras = ["toml"], version = "^6.5.0"}
+mypy = "^0.991"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.pylint.messages_control]
+max-line-length = 120
+disable = [
+    "too-few-public-methods",
+    "design",
+    "duplicate-code",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-many-nested-blocks",
+    "unused-argument",
+]
+extension-pkg-whitelist = [
+    "pydantic"
+]
+
+[tool.flake8]
+# This section is just a doc placeholder..see setup.cfg
+max-complexity = 10
+format = "pylint"
+statistics = "True"
+max-line-length = 120
+# ignore non-PEP8 lints
+ignore = ["E203", "W503"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+testpaths = ["tests"]
+
+[tool.mypy]
+# platform configuration
+python_version = "3.9"
+platform = "linux"
+mypy_path = "stubs"
+plugins = [
+    "numpy.typing.mypy_plugin",
+    "pydantic.mypy",
+]
+
+
+[tool.coverage.paths]
+source = ["opsml_pipelines", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["opsml_pipelines"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [[tool.poetry.source]]
+# Access Shipt's private Artifactory remote PyPi repository. It serves as a caching proxy.
+# Generate Identity Token in Artifactory and use it as password and then have these ENV's set:
+# export POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME=${ARTIFACTORY_PYPI_USERNAME}
+# export POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD=${ARTIFACTORY_PYPI_PASSWORD}
 name = ""
 url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 default = true
