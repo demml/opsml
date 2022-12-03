@@ -6,7 +6,6 @@ from pydantic import BaseModel, Extra
 from pyshipt_logging import ShiptLogging
 from requests.models import Response
 
-
 logger = ShiptLogging.get_logger(__name__)
 
 
@@ -72,3 +71,31 @@ class GCPQueryRunner:
         metadata = QueryMetadata(**response.json())
 
         return metadata
+
+    def gcs_to_table(self, gcs_uri: str, table_name: str):
+        """
+        Submits GCS url which is then downloaded
+        and saved as snowflake table.
+        Args:
+            gcs_url: GCS url of csv dataframe.
+        Returns:
+            status: Status of uploading csv as snowflake table.
+            reason: Reason for status
+        """
+
+        data = {
+            "url": gcs_uri,
+            "table_name": table_name,
+        }
+        response = requests.post(
+            f"{self.gcp_snow_url}/v1/csv_to_table",
+            headers=self.headers,
+            json=data,
+            timeout=3600,
+        )
+
+        metadata = response.json()
+
+        status = metadata["status"]
+        reason = metadata["reason"]
+        return status, reason
