@@ -19,3 +19,14 @@ class Params(BaseModel):
     class Config:
         extra = Extra.allow
         arbitrary_types_allowed = True
+
+
+class SnowflakeParams(BaseModel):
+    """Loads snowflake credentials from gcs"""
+
+    username: str
+    password: str
+    host: str
+    database: str
+    warehouse: str
+    role: str

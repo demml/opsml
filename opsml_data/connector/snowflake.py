@@ -18,8 +18,6 @@ class SnowflakeDataGetter:
     on local or in an env that has Snowflake access then
     use pyshipt.
 
-    Args:
-        gcs_bucket: GCS bucket to write to as an intermediary.
     """
 
     def __init__(
@@ -41,6 +39,16 @@ class SnowflakeDataGetter:
         client.delete_object_from_url(gcs_uri=gcs_uri)
 
         return data
+
+    def _gcs_to_table(
+        self,
+        gcs_url: str,
+        table_name: str,
+    ):
+        return self.query_runner.gcs_to_table(
+            gcs_url,
+            table_name,
+        )
 
     def _find_sql_file(self, sql_file_name: str) -> str:
 
