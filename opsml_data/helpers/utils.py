@@ -312,8 +312,8 @@ class GCSStorageClient:
         bucket = self.client.bucket(gcs_bucket)
         blob = bucket.blob(destination_path)
         blob.upload_from_filename(filename)
-        code_location = f"gs://{gcs_bucket}/{destination_path}"
+        gcs_uri = f"gs://{gcs_bucket}/{destination_path}"
 
-        logger.info("Uploaded %s to %s", filename, code_location)
+        logger.info("Uploaded %s to %s", filename, gcs_uri)
 
-        return code_location
+        return gcs_uri
