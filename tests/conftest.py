@@ -18,7 +18,7 @@ def pytest_sessionfinish(session, exitstatus):
 
     paths = [path for path in Path(os.getcwd()).rglob("*.csv")]
     for path in paths:
-        if "pick_time_example.csv" in path:
+        if "pick_time_example.csv" in path.name:
             pass
         else:
             os.remove(path)
