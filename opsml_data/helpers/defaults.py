@@ -13,7 +13,7 @@ from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.helpers.models import Params
+from opsml_data.helpers.models import Params, SnowflakeParams
 from opsml_data.helpers.utils import FindPath, GCPSecretManager
 
 logger = ShiptLogging.get_logger(__name__)
@@ -171,3 +171,19 @@ class Defaults:
 DEFAULTS = Defaults()
 
 params = Params(**{k.lower(): v for k, v in DEFAULTS.__dict__.items()})
+
+
+class SnowflakeCredentials:
+    @staticmethod
+    def credentials() -> SnowflakeParams:
+        login_vars = {}
+        secret_client = GCPSecretManager(gcp_credentials=params.gcp_creds)
+        for secret in SnowflakeParams.__annotations__.keys():  # pylint: disable=no-member
+            value = secret_client.get_secret(
+                project=params.gcp_project,
+                secret=f"snowflake_{secret}",
+            )
+
+            login_vars[secret] = value
+
+        return SnowflakeParams(**login_vars)
