@@ -19,13 +19,6 @@ from opsml_data.helpers.utils import FindPath, GCPSecretManager
 logger = ShiptLogging.get_logger(__name__)
 
 
-class RunID:
-    @cached_property
-    def value(self):
-        run_id = str(datetime.now().strftime("%Y%m%d%H%M%S"))
-        return run_id
-
-
 # specific for shipt
 class OpsmlCreds:
     @staticmethod
@@ -116,7 +109,7 @@ class Defaults:
 
     _singleton: ClassVar[Any] = None
     PATH: str = os.getcwd()
-    RUN_ID: str = RunID().value
+    RUN_ID: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
     APP_ENV: str = os.getenv("ENV", "staging")
 
     def __post_init__(self):
