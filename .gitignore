@@ -96,7 +96,6 @@ dmypy.json
 scratch/
 qr_cache/
 test_project/
-opsml/trips/airflow_dags/shipt
 tests/_test_scratch.py
 tests/_test_scratch_estimator.py
 *.pyc
