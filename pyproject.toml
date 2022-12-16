@@ -17,6 +17,9 @@ pandas = "^1.5.0"
 pyarrow = "8.0.0"
 pydantic = "^1.10.2"
 pyshipt = "2.1.8"
+gcsfs = "^2022.11.0"
+altair = "^4.2.0"
+scikit-learn = ">=1.0"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^3.0.0"

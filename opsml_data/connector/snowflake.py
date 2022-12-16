@@ -1,88 +1,140 @@
 import pandas as pd
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.connector.base import GCPQueryRunner
+from opsml_data.connector.base import QueryRunner, GcsFilePath
 from opsml_data.helpers.defaults import params
 from opsml_data.helpers.utils import FindPath, GCSStorageClient
+import gcsfs
+import pyarrow.parquet as pq
+import time
 
 logger = ShiptLogging.get_logger(__name__)
 
+file_sys = gcsfs.GCSFileSystem(
+    project=params.gcp_project,
+)
 
-class SnowflakeDataGetter:
-    """Takes a sql query, submits it to snowflake and
-    returns a dataframe. Note - This class is only to
-    be used when running jobs in vertex. In order to
-    connect to Snowflake, queries submitted in vertex
-    are first routed to an api that has been white listed
-    to communicate with Snowflake. If you are running
-    on local or in an env that has Snowflake access then
-    use pyshipt.
 
-    """
+class SnowflakeQueryRunner(QueryRunner):
+    def __init__(self):
 
-    def __init__(
-        self,
-    ):
-        self.query_runner = GCPQueryRunner(
-            snowflake_api_auth=params.snowflake_api_auth,
-            snowflake_api_url=params.snowflake_api_url,
+        headers = {
+            "Accept": "application/json",
+            "Authorization": params.snowflake_api_auth,
+        }
+
+        super().__init__(
+            api_prefix=params.snowflake_api_url,
+            status_suffix="/v2/query_status",
+            submit_suffix="/v2/async_query",
+            results_suffix="/v2/query_results",
+            headers=headers,
         )
 
-    def _gcs_to_dataframe(self, gcs_uri: str) -> pd.DataFrame:
+    def run_query(
+        self,
+        query: str = None,
+        sql_file: str = None,
+    ):
 
-        client = GCSStorageClient(gcp_credentials=params.gcp_creds)
-        filename = client.download_object_from_uri(gcs_uri=gcs_uri)
+        """Submits a query to run
 
-        data = pd.read_csv(filename)
+        Args:
+            query (str): Optional query to run
+            sql_file (str): Optional sql file to run
 
-        # delete after converting to pandas
-        client.delete_object_from_url(gcs_uri=gcs_uri)
+        Returns:
+            Response
+        """
 
-        return data
+        # submit
+        response = self.submit_query(query=query, sql_file=sql_file)
+        query_id = response.json()["query_id"]
+
+        # poll
+        self.poll_results(query_id=query_id)
+
+        # get results (stream to gcs)
+        gcs_metadata: GcsFilePath = self.results_to_gcs(query_id=query_id)
+        df = self.gcs_to_parquet(gcs_metadata=gcs_metadata)
+
+        return df
+
+    def gcs_to_parquet(self, gcs_metadata: GcsFilePath):
+
+        files = [
+            "gs://" + path
+            for path in file_sys.ls(
+                path=gcs_metadata.gcs_bucket,
+                prefix=gcs_metadata.gcs_filepath,
+            )
+        ]
+
+        df = (
+            pq.ParquetDataset(
+                path_or_paths=files,
+                filesystem=file_sys,
+            )
+            .read()
+            .to_pandas()
+        )
+
+        file_sys.rm(
+            path=gcs_metadata.full_path,
+            recursive=True,
+        )
+
+        return df
+
+    def results_to_gcs(self, query_id: str) -> GcsFilePath:
+        response = self.query_results(
+            query_id=query_id,
+        )
+
+        url = response.json()["gcs_url"]
+        bucket = url.split("/")[2]
+        file_path = "/".join(url.split("/")[3:])
+
+        metadata = GcsFilePath(
+            gcs_url=url,
+            gcs_bucket=bucket,
+            gcs_filepath=file_path,
+        )
+
+        return metadata
 
     def _gcs_to_table(
         self,
         gcs_url: str,
         table_name: str,
     ):
-        return self.query_runner.gcs_to_table(
-            gcs_url,
-            table_name,
+
+        data = {"url": gcs_url, "table_name": table_name}
+
+        response = self._post_request(
+            suffix="v2/csv_to_table",
+            data=data,
         )
 
-    def _find_sql_file(self, sql_file_name: str) -> str:
+        response = response.json()
+        return response["status"], response["reason"]
 
-        if sql_file_name is not None:
-            sql_path = FindPath.find_filepath(
-                sql_file_name,
+    def poll_results(self, query_id: str):
+        # poll
+        finished = False
+        while not finished:
+            response = self.query_status(
+                query_id=query_id,
             )
 
-            # get query
-            with open(sql_path, "r", encoding="utf-8") as sql:
-                query = sql.read()
+            status = response.json()["query_status"]
 
-        return query
+            if status.lower() == "success":
+                break
 
-    def get_data(
-        self,
-        query: str = None,
-        sql_file_name: str = None,
-    ) -> pd.DataFrame:
+            if "error" in status.lower():
+                message = response.json()["message"]
+                logger.info("Query failed: %s", message)
+                raise ValueError(message)
 
-        if sql_file_name is not None:
-            query = self._find_sql_file(
-                sql_file_name,
-            )
-
-        if query is None:
-            msg = "No query provided in either args"  # noqa
-            logger.error(msg)
-            raise ValueError(msg)
-
-        response = self.query_runner.submit_query(
-            query=query,
-        )
-
-        data = self._gcs_to_dataframe(gcs_uri=response.gcs_url)
-
-        return data
+            time.sleep(2)
