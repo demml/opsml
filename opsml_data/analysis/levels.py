@@ -10,7 +10,7 @@ from pyshipt.helpers.model import ColumnType, Table
 from pyshipt.helpers.pandas import PandasHelper as ph
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.connector.snowflake import SnowflakeDataGetter
+from opsml_data.connector.snowflake import SnowflakeQueryRunner
 from opsml_data.helpers.defaults import params
 
 from ..helpers import exceptions
@@ -38,6 +38,7 @@ class SqlArgs:
             self.outlier_flg = "AND EVAL_OUTLIER = 0"
 
 
+# this code needs to be refactored (do it once networking is figured out)
 class LevelHandler:
     def __init__(
         self,
@@ -48,7 +49,7 @@ class LevelHandler:
         self.compute_env = compute_env
 
         if compute_env == "gcp":
-            self.data_getter = SnowflakeDataGetter()
+            self.data_getter = SnowflakeQueryRunner()
             self.storage_client = GCSStorageClient(gcp_credentials=params.gcp_creds)
 
         else:
@@ -114,13 +115,13 @@ class LevelHandler:
     ):
 
         columns = [
-            id_col,
-            "checkout_time",
-            "delivery_time",
-            "pick_time",
-            "drop_time",
-            "drive_time",
-            "wait_time",
+            id_col.upper(),
+            "CHECKOUT_TIME",
+            "DELIVERY_TIME",
+            "PICK_TIME",
+            "DROP_TIME",
+            "DRIVE_TIME",
+            "WAIT_TIME",
         ]
 
         analysis_df = pd.DataFrame(
@@ -244,17 +245,13 @@ class LevelHandler:
                 table_name=table_name,
             )
 
-            df = self.data_getter.get_data(
-                query=query,
-            )
+            df = self.data_getter.run_query(query=query)
+
             self.storage_client.delete_object_from_url(
                 gcs_uri=gcs_uri,
             )
 
-            self.data_getter.query_runner.submit_query(
-                query=f"DROP TABLE DATA_SCIENCE.{table_name}",
-                to_storage=False,
-            )
+            self.data_getter.submit_query(query=f"DROP TABLE DATA_SCIENCE.{table_name}")
             return df
 
         else:

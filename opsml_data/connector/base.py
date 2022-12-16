@@ -2,100 +2,132 @@ import logging
 from typing import Any, Dict, Optional
 
 import requests
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, root_validator
 from pyshipt_logging import ShiptLogging
 from requests.models import Response
+from opsml_data.helpers.utils import FindPath
 
 logger = ShiptLogging.get_logger(__name__)
 
 
-class QueryMetadata(BaseModel):
-    query_id: Optional[str] = None
-    gcs_url: Optional[str] = None
-
-    class Config:
-        extra = Extra.allow
-
-
-class GCPQueryRunner:
+class QueryRunner:
     def __init__(
         self,
-        snowflake_api_url: str,
-        snowflake_api_auth: str,
+        api_prefix: str,
+        submit_suffix: str,
+        status_suffix: str,
+        results_suffix: str,
+        headers: Dict[str, Any],
     ):
-        self.headers = {
-            "Accept": "application/json",
-            "Authorization": snowflake_api_auth,
-        }
-        self.gcp_snow_url = snowflake_api_url
+        self.api_prefix = api_prefix
+        self.submit_suffix = submit_suffix
+        self.status_suffix = status_suffix
+        self.results_suffix = results_suffix
+        self.headers = headers
 
-        if snowflake_api_auth is None:
-            msg = "No authorization or gcp url found. Check your environment variables."  # noqa
-            logging.error(msg)
-            raise ValueError(msg)
+    def submit_query(
+        self,
+        query: str = None,
+        sql_file: str = None,
+    ) -> Response:
 
-    def _post(self, data: Dict[str, Any]) -> Response:
-        response = requests.post(
-            f"{self.gcp_snow_url}/v1/query",
-            headers=self.headers,
-            json=data,
-            timeout=3600,
+        """Submits a query to run
+
+        Args:
+            query (str): Optional query to run
+            sql_file (str): Optional sql file to run
+
+        Returns:
+            Response
+        """
+
+        sql = query or sql_file
+
+        if sql is None:
+            raise ValueError(
+                "Either a query or sql file name must be provided",
+            )
+
+        if ".sql" in sql:
+            sql_path = FindPath.find_filepath(name=sql)
+            sql = open(file=sql_path, mode="r", encoding="utf-8").read()
+
+        # logic to get sql file
+        response = self._post_request(
+            suffix=self.submit_suffix,
+            data={"query": sql},
         )
 
         return response
 
-    def submit_query(
-        self,
-        query: str,
-        to_storage: bool = True,
-    ) -> QueryMetadata:
-        """
-        Submits query and returns query id.
+    def query_status(self, query_id: str) -> Response:
+        """Retrieve status for a given query
 
         Args:
-            query: SQL query to submit to Snowflake.
+            query_id (str): Id associated with query
+
         Returns:
-            query_id: Snowflake query id.
-
+            Response
         """
 
-        data = {
-            "query": query,
-            "to_storage": to_storage,
-        }
-        response = self._post(data=data)
-
-        logging.info(response.status_code)
-        logging.info(response.json())
-
-        metadata = QueryMetadata(**response.json())
-
-        return metadata
-
-    def gcs_to_table(self, gcs_uri: str, table_name: str):
-        """
-        Submits GCS url which is then downloaded
-        and saved as snowflake table.
-        Args:
-            gcs_url: GCS url of csv dataframe.
-        Returns:
-            status: Status of uploading csv as snowflake table.
-            reason: Reason for status
-        """
-
-        data = {
-            "url": gcs_uri,
-            "table_name": table_name,
-        }
-        response = requests.post(
-            f"{self.gcp_snow_url}/v1/csv_to_table",
-            headers=self.headers,
-            json=data,
-            timeout=3600,
+        return self._post_request(
+            suffix=self.status_suffix,
+            data={"query_id": query_id},
         )
 
-        metadata = response.json()
+    def query_results(self, query_id: str):
+        """Retrieves results for a given query id
 
-        status = metadata["status"]
-        reason = metadata["reason"]
-        return status, reason
+        Args:
+            query_id (str): Id associated with query
+
+        Returns:
+            Response
+        """
+
+        return self._post_request(
+            suffix=self.results_suffix,
+            data={"query_id": query_id},
+        )
+
+    def _post_request(self, suffix, data):
+
+        try:
+            response = requests.post(
+                f"{self.api_prefix}/{suffix}",
+                headers=self.headers,
+                json=data,
+            )
+        except Exception as e:
+            if hasattr(e, "message"):
+                logger.error(
+                    "Failed request \n Status: %s \n, Message: %s",
+                    e.message["response"]["Error"]["Code"],
+                    e.message["response"]["Error"]["Message"],
+                )
+                raise e
+            else:
+                raise e
+
+        if response.status_code != 200:
+            message = str(response.json())
+            logger.error(
+                "Failed request: %s",
+                message,
+            )
+            raise ValueError(message)
+
+        return response
+
+
+class GcsFilePath(BaseModel):
+    gcs_url: str
+    gcs_bucket: str
+    gcs_filepath: str
+    full_path: Optional[str]
+
+    @root_validator(pre=True)
+    def set_extras(cls, values):  # pylint: disable=no-self-argument
+
+        values["full_path"] = f"{values['gcs_bucket']}/{values['gcs_filepath']}"
+        return values

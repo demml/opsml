@@ -8,9 +8,7 @@ import pytest
 
 from opsml_data.analysis.levels import LevelHandler
 from opsml_data.analysis.helpers import Analyzer
-from opsml_data.connector.snowflake import SnowflakeDataGetter
-from opsml_data.connector.base import GCPQueryRunner
-from opsml_data.helpers.defaults import params
+from opsml_data.connector.snowflake import SnowflakeQueryRunner
 
 
 @pytest.mark.parametrize("id_col", ["ng_order_id", "bundle_id"])
@@ -109,15 +107,11 @@ def test_handler_gcs_to_table(
 
     # delete everything
     os.system(f"gsutil rm {gcs_url}")
-    query_runner = GCPQueryRunner(
-        snowflake_api_auth=params.snowflake_api_auth,
-        snowflake_api_url=params.snowflake_api_url,
-    )
+    query_runner = SnowflakeQueryRunner()
     response = query_runner.submit_query(
         query=f"DROP TABLE DATA_SCIENCE.preds_{unique_id};",
-        to_storage=False,
     )
-    assert response.gcs_url == None
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize("compute_env", ["local"])
@@ -206,8 +200,8 @@ def test_bundle_run(
     bundle_query,
 ):
 
-    data_getter = SnowflakeDataGetter()
-    data = data_getter.get_data(query=bundle_query)
+    data_getter = SnowflakeQueryRunner()
+    data = data_getter.run_query(query=bundle_query)
 
     analyzer = Analyzer(compute_env=compute_env)
 
@@ -235,8 +229,8 @@ def test_order_run(
     order_query,
 ):
 
-    data_getter = SnowflakeDataGetter()
-    data = data_getter.get_data(query=order_query)
+    data_getter = SnowflakeQueryRunner()
+    data = data_getter.run_query(query=order_query)
 
     analyzer = Analyzer(compute_env=compute_env)
 

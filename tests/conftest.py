@@ -23,6 +23,11 @@ def pytest_sessionfinish(session, exitstatus):
         else:
             os.remove(path)
 
+    paths = [path for path in Path(os.getcwd()).rglob("chart.html")]
+    if paths:
+        for path in paths:
+            os.remove(path)
+
 
 @pytest.fixture(scope="session")
 def test_defaults():
@@ -118,4 +123,11 @@ def order_query():
         AND DROP_OFF_EVAL_FLG = 1
         AND DROP_OFF_EVAL_OUTLIER = 0
         """
+    return query
+
+
+@pytest.fixture()
+def test_query():
+    query = "SELECT ORDER_ID FROM PRD_DATALAKEHOUSE.DATA_SCIENCE.ORDER_STATS limit 100"
+
     return query
