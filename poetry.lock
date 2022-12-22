@@ -3133,6 +3133,26 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "pytest-lazy-fixture"
+version = "0.6.3"
+description = "It helps to use fixtures in pytest.mark.parametrize"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-lazy-fixture-0.6.3.tar.gz", hash = "sha256:0e7d0c7f74ba33e6e80905e9bfd81f9d15ef9a790de97993e34213deb5ad10ac"},
+    {file = "pytest_lazy_fixture-0.6.3-py3-none-any.whl", hash = "sha256:e0b379f38299ff27a653f03eaa69b08a6fd4484e46fd1c9907d984b9f9daeda6"},
+]
+
+[package.dependencies]
+pytest = ">=3.2.5"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -4176,4 +4196,4 @@ reference = ""
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<=3.11"
-content-hash = "94a112c697a67cc7417deaba4f300d0250b784a68845fca0adb68c5ad0334599"
+content-hash = "595e6b12286bc3eee2acb0f4943df21ba01331a2c8f9dc29c23445ddbd91fd9e"
