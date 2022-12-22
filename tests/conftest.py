@@ -1,10 +1,16 @@
 import pytest
+from opsml_data.helpers.utils import GCPClient
 from opsml_data.helpers.defaults import params
+from opsml_data.registry.sql_schema import TestDataSchema
+from opsml_data.registry.connection import create_sql_engine
+from opsml_data.registry.data_registry import DataRegistry
 import os
 from pathlib import Path
 from opsml_data.helpers.utils import FindPath
 import pandas as pd
 from datetime import datetime
+import numpy as np
+import pyarrow as pa
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -131,3 +137,54 @@ def test_query():
     query = "SELECT ORDER_ID FROM PRD_DATALAKEHOUSE.DATA_SCIENCE.ORDER_STATS limit 100"
 
     return query
+
+
+@pytest.fixture(scope="session")
+def test_array():
+    data = np.random.rand(10, 100)
+    return data
+
+
+@pytest.fixture(scope="session")
+def test_df():
+    df = pd.DataFrame(
+        {
+            "year": [2020, 2022, 2019, 2021],
+            "n_legs": [2, 4, 5, 100],
+            "animals": ["Flamingo", "Horse", "Brittle stars", "Centipede"],
+        }
+    )
+
+    return df
+
+
+@pytest.fixture(scope="session")
+def test_arrow_table():
+    n_legs = pa.array([2, 4, 5, 100])
+    animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
+    names = ["n_legs", "animals"]
+    table = pa.Table.from_arrays([n_legs, animals], names=names)
+    return table
+
+
+@pytest.fixture(scope="session")
+def setup_database():
+
+    engine = create_sql_engine()
+    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
+    TestDataSchema.__table__.create(bind=engine, checkfirst=True)
+
+    registry = DataRegistry()
+    registry.table = TestDataSchema
+    yield registry
+
+    # TestData.schema.__table__.drop(bind=engine)
+
+
+@pytest.fixture(scope="session")
+def storage_client():
+
+    return GCPClient.get_service(
+        service_name="storage",
+        gcp_credentials=params.gcp_creds,
+    )

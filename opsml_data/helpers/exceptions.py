@@ -11,3 +11,11 @@ class DirNotFound(ValueError):
 
 class MissingKwarg(ValueError):
     """Kwarg is missing"""
+
+
+class NotOfCorrectType(ValueError):
+    """Not of correct type"""
+
+
+class ServiceNameNotFound(ValueError):
+    """Service name not found"""
