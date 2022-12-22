@@ -7,6 +7,7 @@ from typing import Optional, Union
 from google.cloud import secretmanager, storage  # type: ignore
 from google.oauth2.service_account import Credentials
 from pyshipt_logging import ShiptLogging
+from abc import ABC, abstractstaticmethod
 
 from . import exceptions
 
@@ -119,7 +120,13 @@ class FindPath:
         )
 
 
-class GCPSecretManager:
+class GCPService(ABC):
+    @abstractstaticmethod
+    def valid_service_name():
+        pass
+
+
+class GCPSecretManager(GCPService):
     def __init__(
         self,
         gcp_credentials: Optional[Credentials] = None,
@@ -132,10 +139,8 @@ class GCPSecretManager:
             a given gcp account that has permissions for accessing secrets.
             If not supplied, gcp will infer credentials for you local environment.
         """
-
-        self.creds = gcp_credentials
         self.client = secretmanager.SecretManagerServiceClient(
-            credentials=self.creds,
+            credentials=gcp_credentials,
         )
 
     def get_secret(
@@ -165,11 +170,17 @@ class GCPSecretManager:
 
         return payload
 
+    @staticmethod
+    def valid_service_name(service_name: str):
+        if service_name == "secret_manager":
+            return True
+        return False
 
-class GCSStorageClient:
+
+class GCSStorageClient(GCPService):
     def __init__(
         self,
-        gcp_credentials: Optional[Credentials],
+        gcp_credentials: Optional[Credentials] = None,
     ):
 
         """Instantiates GCP storage client
@@ -317,3 +328,33 @@ class GCSStorageClient:
         logger.info("Uploaded %s to %s", filename, gcs_uri)
 
         return gcs_uri
+
+    @staticmethod
+    def valid_service_name(service_name: str):
+        if service_name == "storage":
+            return True
+        return False
+
+
+class GCPClient:
+    @staticmethod
+    def get_service(
+        service_name: str,
+        gcp_credentials: Optional[Credentials] = None,
+    ):
+
+        service = next(
+            (
+                service
+                for service in GCPService.__subclasses__()
+                if service.valid_service_name(
+                    service_name=service_name,
+                )
+            ),
+            None,
+        )
+
+        if not bool(service):
+            raise exceptions.ServiceNameNotFound("""GCP service name not found""")
+
+        return service(gcp_credentials=gcp_credentials)
