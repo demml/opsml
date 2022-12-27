@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin
 
-from opsml_data.helpers.defaults import params
+from opsml_data.helpers.settings import settings
 
 Base = declarative_base()
 
@@ -19,7 +19,7 @@ class DataMixin:
     uid = Column("uuid", String(length=32), primary_key=True, default=lambda: uuid.uuid4().hex)
     date = Column("date", String(100), default=datetime.date.today().strftime("%Y-%m-%d"))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
-    app_env = Column("app_env", String(100), default=params.app_env)
+    app_env = Column("app_env", String(100), default=settings.app_env)
     data_name = Column("data_name", String(100))
     team = Column("team", String(100))
     data_uri = Column("data_uri", String(100))

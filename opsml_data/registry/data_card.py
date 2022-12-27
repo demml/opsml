@@ -33,9 +33,9 @@ class DataCard(BaseModel):
 
         (1) Split based on column value (works for pd.DataFrame)
             splits = [
-                {"label": "train", "col": "DF_COL", "val": 0}, -> "val" can also be a string
-                {"label": "test",  "col": "DF_COL", "val": 1},
-                {"label": "eval",  "col": "DF_COL", "val": 2},
+                {"label": "train", "column": "DF_COL", "column_value": 0}, -> "val" can also be a string
+                {"label": "test",  "column": "DF_COL", "column_value": 1},
+                {"label": "eval",  "column": "DF_COL", "column_value": 2},
                 ]
 
         (2) Index slicing (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
@@ -74,6 +74,17 @@ class DataCard(BaseModel):
 
         return values
 
+    def _parse_splits(self):
+        data_holder = SplitDataHolder()
+        for split in self.data_splits:
+            if split.row_slicing:
+                data_holder.set_row_split(label=split.label, data=self.data, start_idx=split.start, stop_idx=split.stop)
+
+            else:
+                data_holder.set_column_split(label=split.label, data=self.data, column=split.col, value=split.val)
+
+        return data_holder
+
     def split_data(self) -> SplitDataHolder:
 
         """Takes data from data card and splits it by the specified data splits
@@ -83,27 +94,11 @@ class DataCard(BaseModel):
 
         """
 
-        if self.data_splits is None:
+        if not bool(self.data_splits):
             return SplitDataHolder(data=self.data)
 
-        data_holder = SplitDataHolder()
-        for split in self.data_splits:
-
-            if split.row_slicing:
-                setattr(
-                    data_holder,
-                    split.label,
-                    self.data[split.start : split.stop],
-                )
-
-            else:
-                setattr(
-                    data_holder,
-                    split.label,
-                    self.data.loc[self.data[split.col] == split.val],
-                )
-
-        return data_holder
+        else:
+            return self._parse_splits()
 
     def __convert_and_save(
         self,
@@ -139,7 +134,7 @@ class DataCard(BaseModel):
         return converted_data
 
     # private method used in dataregistry
-    def create_registry_metadata(self, version: int) -> RegistryRecord:  # pylint: disable=unused-private-member
+    def create_registry_record(self, version: int) -> RegistryRecord:  # pylint: disable=unused-private-member
 
         """Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
@@ -153,13 +148,11 @@ class DataCard(BaseModel):
         """
 
         data_artifact = self.__convert_and_save(
-            data=self.data,
-            data_name=self.data_name,
-            version=version,
-            team=self.team,
+            data=self.data, data_name=self.data_name, version=version, team=self.team
         )
 
-        if self.drift_report is not None:
+        if bool(self.drift_report):
+
             drift_artifact: ArrowTable = self.__convert_and_save(
                 data=self.drift_report,
                 data_name="drift_report",

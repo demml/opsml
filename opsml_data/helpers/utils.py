@@ -146,7 +146,7 @@ class GCPSecretManager(GCPService):
 
     def get_secret(
         self,
-        project: str,
+        project_name: str,
         secret: str,
         version: str = "latest",
     ):
@@ -164,7 +164,7 @@ class GCPSecretManager(GCPService):
         """
 
         response = self.client.access_secret_version(
-            request={"name": f"projects/{project}/secrets/{secret}/versions/{version}"}  # noqa
+            request={"name": f"projects/{project_name}/secrets/{secret}/versions/{version}"}  # noqa
         )
 
         payload = response.payload.data.decode("UTF-8")
