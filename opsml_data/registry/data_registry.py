@@ -1,27 +1,15 @@
-from opsml_data.registry.connection import create_sql_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import and_, func
-from opsml_data.registry.sql_schema import TableSchema, DataSchema
-from opsml_data.registry.data_model import (
-    RegisterMetadata,
-    DataStoragePath,
-    RegisterMetadata,
-    ArrowTable,
-    DataArtifacts,
-)
-from opsml_data.registry.data_card import DataCard
-from opsml_data.registry.data_writer import DataStorage
-from typing import Union, List
+from typing import List, Optional
+
 import pandas as pd
-import numpy as np
-from opsml_data.registry.formatter import DataFormatter
-import pyarrow as pa
 from pyshipt_logging import ShiptLogging
-from typing import Union, Optional
-import pyarrow as pa
-import numpy as np
-import pandas as pd
-import uuid
+from sqlalchemy import and_, func
+from sqlalchemy.orm import sessionmaker
+
+from opsml_data.registry.connection import create_sql_engine
+from opsml_data.registry.data_card import DataCard
+from opsml_data.registry.models import RegistryRecord
+from opsml_data.registry.sql_schema import DataSchema, TableSchema
+from opsml_data.registry.storage import load_record_data_from_storage
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -46,14 +34,14 @@ class SQLRegistry:
         )
         return 1 + (last if last else 0)
 
-    def _query_data(
+    def _query_record(
         self,
         data_name: str,
         team: str,
         version: int = None,
     ) -> List[DataSchema]:
 
-        query = self.session.query(self.table.storage_uri)
+        query = self.session.query(self.table)
         query = query.filter(and_(self.table.data_name == data_name, self.table.team == team))
 
         if version is None:
@@ -62,90 +50,39 @@ class SQLRegistry:
         else:
             query = query.filter(self.table.version == version)
 
-        return query.all()
+        return query.all()[0]
 
 
 class DataRegistry(SQLRegistry):
-    def _convert_and_save(
-        self,
-        data: Union[pd.DataFrame, pa.Table, np.ndarray],
-        data_name: str,
-        version: int,
-        team: str,
-    ) -> ArrowTable:
-
-        """Converts data into a pyarrow table or numpy array.
-
-        Args:
-            data (pd.DataFrame, pa.Table, np.array): Data to convert
-            data_name (str): Name for data
-            version (int): version of the data
-            team (str): Name of team
-
-        Returns:
-            ArrowTable containing metadata
-        """
-
-        data: ArrowTable = DataFormatter.convert_data_to_arrow(data)
-        data.feature_map = DataFormatter.create_table_schema(data.table)
-        storage_path = DataStorage.save(data=data.table, data_name=data_name, version=version, team=team)
-        data.storage_uri = storage_path.gcs_uri
-
-        return data
 
     # Create
-    def register(self, data_card: DataCard) -> RegisterMetadata:
+    def register(self, data_card: DataCard) -> None:
         """
         Adds new data record to data registry.
         Args:
-            data_name: Name of table. If table name is same as an existing table,
-            a new version will be created.
-            user_email: Email associated with this data.
-            team: Data Science team assoiated with data.
-            data: A pandas dataframe or numpy array.
+            data_card: Data card to register.
         """
 
-        version = self._set_version(data_name=data_card.data_name, team=data_card.team)
+        # version logic is sql based (should be kept in registry)
+        data_card.version = self._set_version(data_name=data_card.data_name, team=data_card.team)
 
-        data_artifact = self._convert_and_save(
-            data=data_card.data,
-            data_name=data_card.data_name,
-            version=version,
-            team=data_card.team,
-        )
-
-        if data_card.drift_report is not None:
-            drift_artifact: ArrowTable = self._convert_and_save(data=data_card.drift_report)
-            drift_uri = drift_artifact.storage_uri
-        else:
-            drift_uri = None
-
-        datamodel = RegisterMetadata(
-            data_name=data_card.data_name,
-            team=data_card.team,
-            data_uri=data_artifact.storage_uri,
-            drift_uri=drift_uri,
-            feature_map=data_artifact.feature_map,
-            data_type=data_artifact.table_type,
-            version=version,
-            user_email=data_card.user_email,
-        )
+        # call private method for class
+        datamodel = data_card.create_registry_metadata(version=data_card.version)  # pylint: disable=protected-access
 
         self.session.add(self.table(**datamodel.dict()))
         self.session.commit()
-
         logger.info(
             "Table: %s registered as version %s",
             data_card.data_name,
-            version,
+            data_card.version,
         )
 
-        return datamodel
-
+    # Read
     def list_data(
         self,
         data_name: str = None,
         team: str = None,
+        version: int = None,
     ) -> pd.DataFrame:
 
         """Retrieves records for data registry
@@ -166,29 +103,45 @@ class DataRegistry(SQLRegistry):
         if team is not None:
             query = query.filter(self.table.team == team)
 
+        if version is not None:
+            query = query.filter(self.table.version == version)
+
         return pd.read_sql(query.statement, query.session.bind)
 
+    # Read
     def load(
         self,
         data_name: str,
         team: str,
-        version: int = None,
+        version: Optional[int] = None,
     ) -> DataCard:
 
-        sql_data: DataSchema = self._query_data(
+        """Loads a data card from the data registry
+
+        Args:
+            data_name (str): Data record name
+            team (str): Team data is assigned to
+            version (int): Optional version number of existing data. If not specified,
+            the most recent version will be used
+
+        Returns:
+            Data card
+        """
+
+        sql_data: DataSchema = self._query_record(
             data_name=data_name,
             team=team,
             version=version,
-        )[0]
+        )
 
         # load data
-        data = DataStorage.load(
+        data = load_record_data_from_storage(
             storage_uri=sql_data.data_uri,
             data_type=sql_data.data_type,
         )
 
         if sql_data.drift_uri is not None:
-            drift_report = DataStorage.load(
+            drift_report = load_record_data_from_storage(
                 storage_uri=sql_data.drift_uri,
                 data_type="DataFrame",
             )
@@ -196,12 +149,55 @@ class DataRegistry(SQLRegistry):
             drift_report = None
 
         data_card = DataCard(
-            data_name=sql_data.data_name,
-            team=sql_data.team,
-            user_email=sql_data.user_email,
             data=data,
             drift_report=drift_report,
             uid=sql_data.uid,
+            date=sql_data.date,
+            timestamp=sql_data.timestamp,
+            app_env=sql_data.app_env,
+            data_name=sql_data.data_name,
+            team=sql_data.team,
+            data_uri=sql_data.data_uri,
+            drift_uri=sql_data.drift_uri,
+            feature_map=sql_data.feature_map,
+            data_splits=sql_data.data_splits,
+            data_type=sql_data.data_type,
+            version=sql_data.version,
+            user_email=sql_data.user_email,
         )
 
         return data_card
+
+    def update(self, data_card: DataCard) -> None:
+
+        """Updates an existing data card
+
+        Args:
+            data_card (DataCard): Existing data card record
+
+        Returns:
+            None
+        """
+
+        metadata = RegistryRecord(
+            data_name=data_card.data_name,
+            team=data_card.team,
+            data_uri=data_card.data_uri,
+            drift_uri=data_card.drift_uri,
+            feature_map=data_card.feature_map,
+            data_type=data_card.data_type,
+            data_splits=data_card.data_splits,
+            version=data_card.version,
+            user_email=data_card.user_email,
+            uid=data_card.uid,
+        )
+
+        self.session.query(self.table).filter(self.table.uid == metadata.uid).update(
+            metadata.dict(),
+        )
+        self.session.commit()
+        logger.info(
+            "Data: %s, version:%s updated",
+            data_card.data_name,
+            data_card.version,
+        )

@@ -1,6 +1,8 @@
-from opsml_data.connector.snowflake import SnowflakeQueryRunner
-import pandas as pd
 import time
+
+import pandas as pd
+
+from opsml_data.connector.snowflake import SnowflakeQueryRunner
 
 
 # remove these once networking is configured

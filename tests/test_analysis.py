@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from opsml_data.analysis.levels import LevelHandler
 from opsml_data.analysis.helpers import Analyzer
+from opsml_data.analysis.levels import LevelHandler
 from opsml_data.connector.snowflake import SnowflakeQueryRunner
 
 

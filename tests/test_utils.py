@@ -1,7 +1,8 @@
-from opsml_data.helpers import utils
-from opsml_data.helpers.defaults import DEFAULTS
 import os
 from pathlib import PosixPath
+
+from opsml_data.helpers import utils
+from opsml_data.helpers.defaults import params
 
 
 def test_find_path():
@@ -20,7 +21,7 @@ def test_find_dir_path():
 
 def test_find_src_dir():
     src_dir, src_path = utils.FindPath.find_source_dir(
-        DEFAULTS.PATH,
+        params.path,
         "anchor.py",
     )
     assert src_dir == "example_project"
@@ -34,24 +35,24 @@ def test_gcs_storage_client_integration():
     path = "test_upload/test.csv"
 
     storage_client = utils.GCSStorageClient(
-        gcp_credentials=DEFAULTS.GCP_CREDS,
+        gcp_credentials=params.gcp_creds,
     )
 
     storage_client.upload(
-        gcs_bucket=DEFAULTS.GCS_BUCKET,
+        gcs_bucket=params.gcs_bucket,
         filename=file_path,
         destination_path=path,
     )
 
     # download
     storage_client.download_object(
-        gcs_bucket=DEFAULTS.GCS_BUCKET,
+        gcs_bucket=params.gcs_bucket,
         blob_path=path,
         destination_filename="test.csv",
     )
 
     blobs = storage_client.list_objects(
-        gcs_bucket=DEFAULTS.GCS_BUCKET,
+        gcs_bucket=params.gcs_bucket,
         prefix="test_upload/",
     )
 
@@ -60,7 +61,7 @@ def test_gcs_storage_client_integration():
 
     # delete
     storage_client.delete_object(
-        gcs_bucket=DEFAULTS.GCS_BUCKET,
+        gcs_bucket=params.gcs_bucket,
         blob_path=path,
     )
 

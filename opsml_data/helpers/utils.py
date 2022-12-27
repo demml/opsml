@@ -1,13 +1,13 @@
 """Suite of helper objects"""
 import glob
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Union
 
 from google.cloud import secretmanager, storage  # type: ignore
 from google.oauth2.service_account import Credentials
 from pyshipt_logging import ShiptLogging
-from abc import ABC, abstractstaticmethod
 
 from . import exceptions
 
@@ -121,9 +121,10 @@ class FindPath:
 
 
 class GCPService(ABC):
-    @abstractstaticmethod
-    def valid_service_name():
-        pass
+    @staticmethod
+    @abstractmethod
+    def valid_service_name(service_name: str):
+        """Validates service name"""
 
 
 class GCPSecretManager(GCPService):
@@ -172,9 +173,7 @@ class GCPSecretManager(GCPService):
 
     @staticmethod
     def valid_service_name(service_name: str):
-        if service_name == "secret_manager":
-            return True
-        return False
+        return bool(service_name == "secret_manager")
 
 
 class GCSStorageClient(GCPService):
@@ -331,9 +330,7 @@ class GCSStorageClient(GCPService):
 
     @staticmethod
     def valid_service_name(service_name: str):
-        if service_name == "storage":
-            return True
-        return False
+        return bool(service_name == "storage")
 
 
 class GCPClient:

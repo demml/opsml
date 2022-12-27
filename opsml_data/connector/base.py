@@ -1,10 +1,10 @@
-import logging
 from typing import Any, Dict, Optional
 
 import requests
 from pydantic import BaseModel, root_validator
 from pyshipt_logging import ShiptLogging
 from requests.models import Response
+
 from opsml_data.helpers.utils import FindPath
 
 logger = ShiptLogging.get_logger(__name__)
@@ -50,7 +50,8 @@ class QueryRunner:
 
         if ".sql" in sql:
             sql_path = FindPath.find_filepath(name=sql)
-            sql = open(file=sql_path, mode="r", encoding="utf-8").read()
+            with open(file=sql_path, mode="r", encoding="utf-8") as file_:
+                sql = file_.read()
 
         # logic to get sql file
         response = self._post_request(
@@ -97,17 +98,16 @@ class QueryRunner:
                 f"{self.api_prefix}/{suffix}",
                 headers=self.headers,
                 json=data,
+                timeout=1200,
             )
-        except Exception as e:
-            if hasattr(e, "message"):
+        except Exception as error:  # pylint: disable=broad-except
+            if hasattr(error, "message"):
                 logger.error(
                     "Failed request \n Status: %s \n, Message: %s",
-                    e.message["response"]["Error"]["Code"],
-                    e.message["response"]["Error"]["Message"],
+                    error.message["response"]["Error"]["Code"],
+                    error.message["response"]["Error"]["Message"],
                 )
-                raise e
-            else:
-                raise e
+            raise error
 
         if response.status_code != 200:
             message = str(response.json())

@@ -1,16 +1,18 @@
-from google.cloud.sql.connector import Connector, IPTypes
-import pymysql
-from opsml_data.helpers.defaults import params
 import os
-from pyshipt_logging.logger import ShiptLogging
+
+import pymysql
 import sqlalchemy
+from google.cloud.sql.connector import Connector, IPTypes
+from pyshipt_logging.logger import ShiptLogging
+
+from opsml_data.helpers.defaults import params
 
 logger = ShiptLogging.get_default_logger()
 
 ip_type = IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
 
-class SqlConnector:
+class SqlConnection:
     def __init__(self):
 
         self._instance_connection_name = f"{params.gcp_project}:{params.gcp_region}:{params.db_instance_name}"
@@ -32,7 +34,7 @@ class SqlConnector:
 def create_sql_engine() -> sqlalchemy.engine.base.Engine:
     engine = sqlalchemy.create_engine(
         "mysql+pymysql://",
-        creator=SqlConnector().get_conn,
+        creator=SqlConnection().get_conn,
     )
     logger.info("Connected to db")
     return engine

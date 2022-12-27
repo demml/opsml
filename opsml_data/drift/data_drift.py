@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 import altair as alt
 import numpy as np
@@ -12,7 +12,8 @@ from .drift_utils import shipt_theme
 alt.themes.register("shipt", shipt_theme)
 alt.themes.enable("shipt")
 
-# this needs to be refactored into bette code at some point (steven)
+
+# this needs to be refactored into better code (steven)
 class Drifter:
     bins = 20
 
@@ -98,7 +99,7 @@ class Drifter:
                 bins=cls.bins,
                 density=False,
             )
-            cur_hist, cur_edge = np.histogram(
+            cur_hist, _ = np.histogram(
                 current_data,
                 bins=ref_edge,
                 density=False,
@@ -117,7 +118,7 @@ class Drifter:
                 reference_data,
                 return_counts=True,
             )
-            cur_edge, cur_hist = np.unique(
+            _, cur_hist = np.unique(
                 current_data,
                 return_counts=True,
             )
@@ -152,7 +153,7 @@ class Drifter:
         log_reg.fit(x_train, y_train)
 
         preds = log_reg.predict_proba(x_train)[::, 1]
-        fpr, tpr, thresholds = roc_curve(
+        fpr, tpr, _ = roc_curve(
             y_train,
             preds,
             pos_label=1,
@@ -175,8 +176,8 @@ class Drifter:
         # )
         # target type can be reg, binary, multiclass
 
-        if not type(reference_data) == pd.DataFrame or not type(current_data) == pd.DataFrame:
-            raise exceptions.NotDataFrame(
+        if not isinstance(reference_data, pd.DataFrame) or not isinstance(current_data, pd.DataFrame):
+            raise exceptions.NotofTypeDataFrame(
                 """Reference and current data must be of type
                 pd.DataFrame"""
             )
@@ -189,11 +190,11 @@ class Drifter:
         # reference_data["target"] = 0
         # current_data["target"] = 1
 
-        df = pd.concat([reference_data, current_data])
-        df.dropna(inplace=True)
+        dataframe = pd.concat([reference_data, current_data])
+        dataframe.dropna(inplace=True)
 
         # Set X data
-        x_train = df[feature_list]
+        x_train = dataframe[feature_list]
 
         # y_train is the indicator between reference and current data
         y_train = np.hstack((ref_targets, current_targets))
@@ -203,7 +204,6 @@ class Drifter:
         # Fit model and return importances
         log_reg = LogisticRegression()
         log_reg.fit(x_train, y_train)
-        preds = log_reg.predict_proba(x_train)[::, 1]
         importances = log_reg.coef_[0]
 
         if not len(importances) == len(feature_list):
@@ -214,25 +214,25 @@ class Drifter:
 
         for feature, importance in zip(feature_list, importances):
 
-            auc = cls._compute_log_reg_auc(
+            computed_auc = cls._compute_log_reg_auc(
                 x_train[feature].to_numpy().reshape(-1, 1),
                 y_train,
             )
             feature_importance_dict[feature] = {
                 "feature_importance": importance,
-                "feature_auc": auc,
+                "feature_auc": computed_auc,
             }
 
         if target_feature is not None:
 
-            auc = cls._compute_log_reg_auc(
-                df[target_feature].to_numpy().reshape(-1, 1),
+            computed_auc = cls._compute_log_reg_auc(
+                dataframe[target_feature].to_numpy().reshape(-1, 1),
                 y_train,
             )
 
             feature_importance_dict[target_feature] = {
                 "feature_importance": None,
-                "feature_auc": auc,
+                "feature_auc": computed_auc,
             }
 
         return feature_importance_dict
@@ -243,7 +243,7 @@ class Drifter:
         reference_data: pd.DataFrame,
         current_data: pd.DataFrame,
         feature_mapping: Dict[str, str] = None,
-        categorical_features: List[str] = [],
+        categorical_features: Optional[List[str]] = None,
         target_feature: str = None,
         exclude_cols: List[str] = None,
         current_label: str = "current",
@@ -283,7 +283,9 @@ class Drifter:
             exclude_cols = []
 
         feature_list = list(set(feature_mapping.keys()) - set(exclude_cols))
-        cat_features = [feature for feature in feature_list if feature in categorical_features]  # noqa
+        cat_features = [
+            feature for feature in feature_list if feature in categorical_features and bool(categorical_features)
+        ]  # noqa
 
         # Create global model and compute feature importance
         feature_importance = cls._compute_drift_feature_importance(
@@ -356,13 +358,17 @@ class Drifter:
                 feature_dict[feature]["target_feature"] = 0
 
         if return_df:
-            df = pd.DataFrame.from_dict(feature_dict, orient="index").reset_index().rename(columns={"index": "feature"})
-            return df
+            dataframe = (
+                pd.DataFrame.from_dict(feature_dict, orient="index").reset_index().rename(columns={"index": "feature"})
+            )
+            return dataframe
+
+        return None
 
     @classmethod
     def _parse_drift_df(
         cls,
-        df: pd.DataFrame,
+        dataframe: pd.DataFrame,
         reference_label: str,
         current_label: str,
     ):
@@ -372,8 +378,8 @@ class Drifter:
             "num_data": None,
             "cat_data": None,
         }
-        for feature in df["feature"].unique():
-            subset = df.loc[df["feature"] == feature]
+        for feature in dataframe["feature"].unique():
+            subset = dataframe.loc[dataframe["feature"] == feature]
             reference = pd.DataFrame.from_dict(subset["reference_distribution"].values[0])
             reference["data"] = reference_label
             current = pd.DataFrame.from_dict(
@@ -471,13 +477,13 @@ class Drifter:
         return num_chart
 
     @classmethod
-    def _feature_auc_plot(cls, df: pd.DataFrame = None):
+    def _feature_auc_plot(cls, dataframe: pd.DataFrame = None):
 
-        if df is None:
+        if not bool(dataframe):
             return None
         # feature auc
         feature_auc_chart = (
-            alt.Chart(df)
+            alt.Chart(dataframe)
             .mark_bar()
             .encode(
                 y=alt.X("feature_auc", title="Values"),
@@ -541,7 +547,7 @@ class Drifter:
     @classmethod
     def chart_drift_diagnostics(
         cls,
-        df: pd.DataFrame,
+        dataframe: pd.DataFrame,
         reference_label: str = "reference",
         current_label: str = "current",
         save_fig: bool = True,
@@ -551,7 +557,7 @@ class Drifter:
         that was generated by "run_drift_diagnostics".
 
         Args:
-            df: Pandas dataframe from "run_drift_diagnostics
+            dataframe: Pandas dataframe from "run_drift_diagnostics
             reference_label: Label that was used for reference data when
             computing metrics.
             current_label: Label that was used for current data when
@@ -563,7 +569,7 @@ class Drifter:
         """
 
         data_dict = cls._parse_drift_df(
-            df=df,
+            dataframe=dataframe,
             reference_label=reference_label,
             current_label=current_label,
         )
@@ -575,7 +581,7 @@ class Drifter:
             data_dict["num_data"],
         )
 
-        feature_auc_chart = cls._feature_auc_plot(df)
+        feature_auc_chart = cls._feature_auc_plot(dataframe)
         chart = cls._generate_final_chart(
             num_chart=num_chart,
             cat_chart=cat_chart,

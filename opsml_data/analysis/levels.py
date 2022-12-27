@@ -54,7 +54,7 @@ class LevelHandler:
 
         else:
             sf_kwargs = SnowflakeCredentials.credentials()
-            self.db = ShiptDB.warehouse(
+            self.database = ShiptDB.warehouse(
                 username=sf_kwargs.username,
                 password=sf_kwargs.password,
                 host=sf_kwargs.host,
@@ -77,8 +77,8 @@ class LevelHandler:
             dir_path,
         )
 
-        sql = open(sql_path, "r")
-        sql_string = sql.read()
+        with open(sql_path, "r", encoding="utf-8") as sql:
+            sql_string = sql.read()
 
         sql_args = SqlArgs(
             metro_level=metro_level,
@@ -170,14 +170,14 @@ class LevelHandler:
         table_name: str,
     ):
 
-        status, reason = self.data_getter._gcs_to_table(
+        status, reason = self.data_getter._gcs_to_table(  # pylint: disable=protected-access
             gcs_url=gcs_url,
             table_name=table_name,
         )
 
         if status.lower() != "succeeded":
-            logger.error(f"Failed to create snowflake table for {table_name}: {reason}")  # noqa
-            raise exceptions.SnowflakeAPIError(reason)
+            logger.error("Failed to create snowflake table for %s: %s", table_name, reason)
+            raise exceptions.SnowFlakeApiError(reason)
 
         return status
 
@@ -211,7 +211,7 @@ class LevelHandler:
         outlier_removal: bool = False,
         schema: str = None,
         metro_level: bool = False,
-    ):
+    ) -> pd.DataFrame:
 
         # Create dataframe
         analysis_df = self._create_pred_dataframe(
@@ -245,34 +245,33 @@ class LevelHandler:
                 table_name=table_name,
             )
 
-            df = self.data_getter.run_query(query=query)
+            dataframe = self.data_getter.run_query(query=query)
 
             self.storage_client.delete_object_from_url(
                 gcs_uri=gcs_uri,
             )
 
             self.data_getter.submit_query(query=f"DROP TABLE DATA_SCIENCE.{table_name}")
-            return df
+            return dataframe
 
-        else:
-            model = self._get_table_schema(self.id_col)
-            ph.dataframe_to_table(
-                dataframe=analysis_df,
-                model=model,
-                schema=schema,
-                table=table_name,
-                database=self.db,
-                temp_dir="/tmp",
+        model = self._get_table_schema(self.id_col)
+        ph.dataframe_to_table(
+            dataframe=analysis_df,
+            model=model,
+            schema=schema,
+            table=table_name,
+            database=self.database,
+            temp_dir="/tmp",
+        )
+
+        with self.database.get_connection() as cnxn, cnxn.cursor() as cursor:
+            cursor.execute(query)
+            dataframe = cursor.fetch_pandas_all()
+            cursor.execute(
+                f"DROP TABLE {schema}.{table_name}",
             )
 
-            with self.db.get_connection() as cnxn, cnxn.cursor() as cursor:
-                cursor.execute(query)
-                df = cursor.fetch_pandas_all()
-                cursor.execute(
-                    f"DROP TABLE {schema}.{table_name}",
-                )
-
-            return df
+        return dataframe
 
 
 class Bundle(LevelHandler):
@@ -299,7 +298,7 @@ class Bundle(LevelHandler):
         metro_level: bool = False,
         schema: str = None,
     ):
-        df = self._run_analysis(
+        dataframe = self._run_analysis(
             ids=ids,
             checkout_predictions=checkout_predictions,
             delivery_predictions=delivery_predictions,
@@ -315,7 +314,7 @@ class Bundle(LevelHandler):
             schema=schema,
         )
 
-        return df
+        return dataframe
 
     @staticmethod
     def match_analysis_type(
@@ -323,8 +322,8 @@ class Bundle(LevelHandler):
     ):
         if analysis_type.lower() == "bundle":
             return True
-        else:
-            return False
+
+        return False
 
 
 class Order(LevelHandler):
@@ -350,8 +349,8 @@ class Order(LevelHandler):
         outlier_removal: bool = None,
         metro_level: bool = False,
         schema: str = None,
-    ):
-        df = self._run_analysis(
+    ) -> pd.DataFrame:
+        dataframe = self._run_analysis(
             ids=ids,
             checkout_predictions=checkout_predictions,
             delivery_predictions=delivery_predictions,
@@ -366,13 +365,10 @@ class Order(LevelHandler):
             metro_level=metro_level,
             schema=schema,
         )
-        return df
+        return dataframe
 
     @staticmethod
     def match_analysis_type(
         analysis_type: str,
     ):
-        if analysis_type.lower() == "order":
-            return True
-        else:
-            return False
+        return bool(analysis_type.lower() == "order")

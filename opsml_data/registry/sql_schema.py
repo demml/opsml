@@ -1,11 +1,13 @@
-from sqlalchemy import BigInteger, Column, String, Integer, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_mixin
-from sqlalchemy.dialects.postgresql import JSON
-from typing import Union
-import uuid
 import datetime
 import time
+import uuid
+from typing import Union
+
+from sqlalchemy import BigInteger, Column, Integer, String
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_mixin
+
 from opsml_data.helpers.defaults import params
 
 Base = declarative_base()
@@ -23,7 +25,7 @@ class DataMixin:
     data_uri = Column("data_uri", String(100))
     drift_uri = Column("drift_uri", String(100))
     feature_map = Column("feature_map", JSON)
-    data_splits = Column("splits", JSON)
+    data_splits = Column("data_splits", JSON)
     data_type = Column("data_type", String(100))
     version = Column("version", Integer, nullable=False)
     user_email = Column("user_email", String(100))
@@ -34,15 +36,15 @@ class DataMixin:
 class DataSchema(Base, DataMixin):
     __tablename__ = "data_registry"
 
-    def __repr__(cls):
-        return f"<SqlMetric({cls.__tablename__}"
+    def __repr__(self):
+        return f"<SqlMetric({self.__tablename__}"
 
 
 class TestDataSchema(Base, DataMixin):
     __tablename__ = "test_data_registry"
 
-    def __repr__(cls):
-        return f"<SqlMetric({cls.__tablename__}"
+    def __repr__(self):
+        return f"<SqlMetric({self.__tablename__}"
 
 
 class TableSchema:

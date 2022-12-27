@@ -1,4 +1,4 @@
-from opsml_data.helpers.defaults import Defaults, params, SnowflakeCredentials
+from opsml_data.helpers.defaults import Defaults, SnowflakeCredentials, params
 from opsml_data.helpers.models import Params, SnowflakeParams
 
 
