@@ -6,12 +6,12 @@ import pyarrow.parquet as pq
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.connector.base import GcsFilePath, QueryRunner
-from opsml_data.helpers.defaults import params
+from opsml_data.helpers.settings import settings
 
 logger = ShiptLogging.get_logger(__name__)
 
 file_sys = gcsfs.GCSFileSystem(
-    project=params.gcp_project,
+    project=settings.gcp_project,
 )
 
 
@@ -20,11 +20,11 @@ class SnowflakeQueryRunner(QueryRunner):
 
         headers = {
             "Accept": "application/json",
-            "Authorization": params.snowflake_api_auth,
+            "Authorization": settings.snowflake_api_auth,
         }
 
         super().__init__(
-            api_prefix=params.snowflake_api_url,
+            api_prefix=settings.snowflake_api_url,
             status_suffix="/v2/query_status",
             submit_suffix="/v2/async_query",
             results_suffix="/v2/query_results",

@@ -11,10 +11,10 @@ from pyshipt.helpers.pandas import PandasHelper as ph
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.connector.snowflake import SnowflakeQueryRunner
-from opsml_data.helpers.defaults import params
+from opsml_data.helpers.settings import settings
 
 from ..helpers import exceptions
-from ..helpers.defaults import SnowflakeCredentials
+from ..helpers.settings import SnowflakeCredentials
 from ..helpers.utils import FindPath, GCSStorageClient
 
 logger = ShiptLogging.get_logger(__name__)
@@ -50,7 +50,7 @@ class LevelHandler:
 
         if compute_env == "gcp":
             self.data_getter = SnowflakeQueryRunner()
-            self.storage_client = GCSStorageClient(gcp_credentials=params.gcp_creds)
+            self.storage_client = GCSStorageClient(gcp_credentials=settings.gcp_creds)
 
         else:
             sf_kwargs = SnowflakeCredentials.credentials()
@@ -157,7 +157,7 @@ class LevelHandler:
             dataframe.to_csv(f"{tmpdirname}/{filename}", index=False)
 
             gcs_uri = self.storage_client.upload(
-                gcs_bucket=params.gcs_bucket,
+                gcs_bucket=settings.gcs_bucket,
                 filename=f"{tmpdirname}/{filename}",
                 destination_path=f"data/{filename}",
             )
@@ -277,7 +277,7 @@ class LevelHandler:
 class Bundle(LevelHandler):
     def __init__(self, compute_env: str):
         self.id_col = "bundle_id"
-        self.tabe_name = f"preds_bundle_{params.run_id}"
+        self.tabe_name = f"preds_bundle_{settings.run_id}"
 
         super().__init__(
             id_col=self.id_col,
@@ -329,7 +329,7 @@ class Bundle(LevelHandler):
 class Order(LevelHandler):
     def __init__(self, compute_env: str):
         self.id_col = "ng_order_id"
-        self.tabe_name = f"preds_order_{params.run_id}"
+        self.tabe_name = f"preds_order_{settings.run_id}"
 
         super().__init__(
             id_col=self.id_col,
