@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Union
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
@@ -27,6 +27,7 @@ class SQLRegistry:
         data_name: str,
         team: str,
     ):
+
         last = (
             self.session.query(func.max(self.table.version))
             .filter(and_(self.table.data_name == data_name, self.table.team == team))
@@ -52,6 +53,13 @@ class SQLRegistry:
 
         return query.all()[0]
 
+    def _add_and_commit(self, record: Dict[str, Union[str, int, float]]):
+        record_name = record.get("data_name")
+        record_version = record.get("version")
+        self.session.add(self.table(**record))
+        self.session.commit()
+        logger.info("Table: %s registered as version %s", record_name, record_version)
+
 
 class DataRegistry(SQLRegistry):
 
@@ -62,20 +70,12 @@ class DataRegistry(SQLRegistry):
         Args:
             data_card: Data card to register.
         """
-
-        # version logic is sql based (should be kept in registry)
         data_card.version = self._set_version(data_name=data_card.data_name, team=data_card.team)
 
         # call private method for class
-        datamodel = data_card.create_registry_metadata(version=data_card.version)  # pylint: disable=protected-access
+        record = data_card.create_registry_record(version=data_card.version)
 
-        self.session.add(self.table(**datamodel.dict()))
-        self.session.commit()
-        logger.info(
-            "Table: %s registered as version %s",
-            data_card.data_name,
-            data_card.version,
-        )
+        self._add_and_commit(record=record.dict())
 
     # Read
     def list_data(
@@ -128,23 +128,13 @@ class DataRegistry(SQLRegistry):
             Data card
         """
 
-        sql_data: DataSchema = self._query_record(
-            data_name=data_name,
-            team=team,
-            version=version,
-        )
+        sql_data: DataSchema = self._query_record(data_name=data_name, team=team, version=version)
 
         # load data
-        data = load_record_data_from_storage(
-            storage_uri=sql_data.data_uri,
-            data_type=sql_data.data_type,
-        )
+        data = load_record_data_from_storage(storage_uri=sql_data.data_uri, data_type=sql_data.data_type)
 
         if sql_data.drift_uri is not None:
-            drift_report = load_record_data_from_storage(
-                storage_uri=sql_data.drift_uri,
-                data_type="DataFrame",
-            )
+            drift_report = load_record_data_from_storage(storage_uri=sql_data.drift_uri, data_type="DataFrame")
         else:
             drift_report = None
 
