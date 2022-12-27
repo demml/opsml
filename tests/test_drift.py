@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from opsml_data.drift import Drifter
 from opsml_data.connector import SnowflakeQueryRunner
+from opsml_data.drift import Drifter
 
 
-def _test_intersection():
+def test_intersection():
     mu_1 = -4  # mean of the first distribution
     mu_2 = 4  # mean of the second distribution
     data_1 = np.random.normal(mu_1, 2.0, 1000)
@@ -30,7 +30,7 @@ def _test_intersection():
 
 
 @pytest.mark.parametrize("feature_type", ["numerical", "categorical"])
-def _test_feature_drift(feature_type):
+def test_feature_drift(feature_type):
     mu_1 = -4  # mean of the first distribution
     mu_2 = 4  # mean of the second distribution
     data_1 = np.random.normal(mu_1, 2.0, 1000)
@@ -47,7 +47,7 @@ def _test_feature_drift(feature_type):
     assert isinstance(results, dict)
 
 
-def _test_feature_importance_drift():
+def test_feature_importance_drift():
     mu_1 = -4  # mean of the first distribution
     mu_2 = 4  # mean of the second distribution
     X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
@@ -69,7 +69,7 @@ def _test_feature_importance_drift():
     assert isinstance(results, dict)
 
 
-def _test_run_diagnostics():
+def test_run_diagnostics():
     mu_1 = -4  # mean of the first distribution
     mu_2 = 4  # mean of the second distribution
     X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
@@ -109,7 +109,7 @@ def _test_run_diagnostics():
     assert subset.values[0] == "categorical"
 
 
-def _test_drift_chart():
+def test_drift_chart():
     mu_1 = -4  # mean of the first distribution
     mu_2 = 4  # mean of the second distribution
     X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
@@ -170,7 +170,6 @@ def test_real_data():
         reference_label="train",
         current_label="eval",
     )
-    a
 
     # mu_1 = -4  # mean of the first distribution
     # mu_2 = 4  # mean of the second distribution

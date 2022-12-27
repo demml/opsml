@@ -1,16 +1,17 @@
+import os
+from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
 import pytest
-from opsml_data.helpers.utils import GCPClient
+
 from opsml_data.helpers.defaults import params
-from opsml_data.registry.sql_schema import TestDataSchema
+from opsml_data.helpers.utils import FindPath, GCPClient
 from opsml_data.registry.connection import create_sql_engine
 from opsml_data.registry.data_registry import DataRegistry
-import os
-from pathlib import Path
-from opsml_data.helpers.utils import FindPath
-import pandas as pd
-from datetime import datetime
-import numpy as np
-import pyarrow as pa
+from opsml_data.registry.sql_schema import TestDataSchema
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -177,6 +178,8 @@ def setup_database():
     registry = DataRegistry()
     registry.table = TestDataSchema
     yield registry
+
+    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
 
     # TestData.schema.__table__.drop(bind=engine)
 
