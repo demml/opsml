@@ -8,18 +8,18 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml_data.helpers.defaults import params
+from opsml_data.helpers.settings import settings
 from opsml_data.helpers.exceptions import NotOfCorrectType
 from opsml_data.registry.models import DataStoragePath
 
 
 class RegistryDataStorage:
     def __init__(self):
-        self.gcs_bucket = params.gcs_bucket
+        self.gcs_bucket = settings.gcs_bucket
         self.blob_path = "data_registry"
         self.storage_client = gcsfs.GCSFileSystem(
-            project=params.gcp_project,
-            token=params.gcsfs_creds,
+            project=settings.gcp_project,
+            token=settings.gcsfs_creds,
         )
 
     def list_files(self, storage_uri: str) -> List[str]:

@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pyarrow as pa
 from pydantic import BaseModel, Extra, root_validator
+import pandas as pd
 
 
 class SplitDataHolder(BaseModel):
@@ -14,11 +15,29 @@ class SplitDataHolder(BaseModel):
         arbitrary_types_allowed = True
         extra = Extra.allow
 
+    def set_row_split(
+        self,
+        label: str,
+        data: Union[pd.DataFrame, np.ndarray],
+        start_idx: int,
+        stop_idx: int,
+    ):
+        setattr(self, label, data[start_idx:stop_idx])
+
+    def set_column_split(
+        self,
+        label: str,
+        data: Union[pd.DataFrame, np.ndarray],
+        column: int,
+        value: int,
+    ):
+        setattr(self, label, data.loc[data[column] == value])
+
 
 class DataSplit(BaseModel):
     label: Optional[str] = None
-    col: Optional[str] = None
-    val: Optional[Union[int, str]] = None
+    column: Optional[str] = None
+    column_value: Optional[Union[int, str]] = None
     start: Optional[int] = None
     stop: Optional[int] = None
     row_slicing: bool = False
@@ -27,7 +46,7 @@ class DataSplit(BaseModel):
     def set_attributes(cls, values):  # pylint: disable=no-self-argument
         """Pre checks"""
 
-        no_column_slicing = any(i is None for i in [values.get("col"), values.get("val")])
+        no_column_slicing = any(i is None for i in [values.get("column"), values.get("column_value")])
         no_row_slicing = any(i is None for i in [values.get("start"), values.get("stop")])
 
         # User must supply one or the other
@@ -35,7 +54,7 @@ class DataSplit(BaseModel):
         if no_column_slicing and no_row_slicing:
 
             raise ValueError(
-                """Split dictionary must either contain 'col' and 'val' keys or 'start' and 'stop'
+                """Split dictionary must either contain 'column' and 'column_value' keys or 'start' and 'stop'
             """
             )
 

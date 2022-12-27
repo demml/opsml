@@ -2,7 +2,7 @@ from google.oauth2.service_account import Credentials
 from pydantic import BaseModel, Extra, root_validator
 
 
-class Params(BaseModel):
+class Settings(BaseModel):
     """Creates pipeline params associated
     with the current pipeline run.
     """

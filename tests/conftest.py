@@ -7,7 +7,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 
-from opsml_data.helpers.defaults import params
+from opsml_data.helpers.settings import settings
 from opsml_data.helpers.utils import FindPath, GCPClient
 from opsml_data.registry.connection import create_sql_engine
 from opsml_data.registry.data_registry import DataRegistry
@@ -37,9 +37,9 @@ def pytest_sessionfinish(session, exitstatus):
 
 
 @pytest.fixture(scope="session")
-def test_defaults():
+def test_settings():
 
-    return params
+    return settings
 
 
 @pytest.fixture(scope="session")
@@ -177,6 +177,7 @@ def setup_database():
 
     registry = DataRegistry()
     registry.table = TestDataSchema
+
     yield registry
 
     TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
@@ -189,5 +190,5 @@ def storage_client():
 
     return GCPClient.get_service(
         service_name="storage",
-        gcp_credentials=params.gcp_creds,
+        gcp_credentials=settings.gcp_creds,
     )
