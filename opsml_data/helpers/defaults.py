@@ -4,7 +4,6 @@ import json
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from functools import cached_property
 from typing import Any, ClassVar, List, Tuple
 
 import google.auth
@@ -14,7 +13,7 @@ from google.oauth2.service_account import Credentials
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.helpers.models import Params, SnowflakeParams
-from opsml_data.helpers.utils import FindPath, GCPClient
+from opsml_data.helpers.utils import GCPClient
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -68,7 +67,7 @@ class OpsmlCreds:
             # Defaulting to user creds
             # soft failure
             except Exception as error:
-                logger.error(f"{error}")
+                logger.error(error)
                 raise error
 
         base_64 = base64.b64decode(s=service_base_creds).decode("utf-8")

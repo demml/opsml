@@ -1,12 +1,12 @@
+import time
+
+import gcsfs
 import pandas as pd
+import pyarrow.parquet as pq
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.connector.base import QueryRunner, GcsFilePath
+from opsml_data.connector.base import GcsFilePath, QueryRunner
 from opsml_data.helpers.defaults import params
-from opsml_data.helpers.utils import FindPath, GCSStorageClient
-import gcsfs
-import pyarrow.parquet as pq
-import time
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -35,7 +35,7 @@ class SnowflakeQueryRunner(QueryRunner):
         self,
         query: str = None,
         sql_file: str = None,
-    ):
+    ) -> pd.DataFrame:
 
         """Submits a query to run
 
@@ -44,7 +44,7 @@ class SnowflakeQueryRunner(QueryRunner):
             sql_file (str): Optional sql file to run
 
         Returns:
-            Response
+            Pandas dataframe
         """
 
         # submit
@@ -56,9 +56,9 @@ class SnowflakeQueryRunner(QueryRunner):
 
         # get results (stream to gcs)
         gcs_metadata: GcsFilePath = self.results_to_gcs(query_id=query_id)
-        df = self.gcs_to_parquet(gcs_metadata=gcs_metadata)
+        dataframe = self.gcs_to_parquet(gcs_metadata=gcs_metadata)
 
-        return df
+        return dataframe
 
     def gcs_to_parquet(self, gcs_metadata: GcsFilePath):
 
@@ -70,7 +70,7 @@ class SnowflakeQueryRunner(QueryRunner):
             )
         ]
 
-        df = (
+        dataframe = (
             pq.ParquetDataset(
                 path_or_paths=files,
                 filesystem=file_sys,
@@ -84,7 +84,7 @@ class SnowflakeQueryRunner(QueryRunner):
             recursive=True,
         )
 
-        return df
+        return dataframe
 
     def results_to_gcs(self, query_id: str) -> GcsFilePath:
         response = self.query_results(

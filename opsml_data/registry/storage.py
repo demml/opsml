@@ -1,17 +1,19 @@
-import pyarrow.parquet as pq
-import gcsfs
-from typing import List, Union
-from opsml_data.helpers.exceptions import NotOfCorrectType
-from opsml_data.helpers.defaults import params
-from opsml_data.registry.data_model import DataStoragePath, DataArtifacts
-import pyarrow as pa
-import numpy as np
 import tempfile
-import pandas as pd
 import uuid
+from typing import List, Union
+
+import gcsfs
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+from opsml_data.helpers.defaults import params
+from opsml_data.helpers.exceptions import NotOfCorrectType
+from opsml_data.registry.models import DataStoragePath
 
 
-class DataWriter:
+class RegistryDataStorage:
     def __init__(self):
         self.gcs_bucket = params.gcs_bucket
         self.blob_path = "data_registry"
@@ -42,18 +44,16 @@ class DataWriter:
         team: str,
     ):
         """Saves data"""
-        pass
 
     def load_data(self, storage_uri: str):
         """Loads data"""
-        pass
 
+    @staticmethod
     def validate_type(data_type: str):
         """validate table type"""
-        pass
 
 
-class ParquetWriter(DataWriter):
+class ParquetStorage(RegistryDataStorage):
     def save_data(
         self,
         data: pa.Table,
@@ -86,7 +86,7 @@ class ParquetWriter(DataWriter):
 
         files = self.list_files(storage_uri=storage_uri)
 
-        df = (
+        dataframe = (
             pq.ParquetDataset(
                 path_or_paths=files,
                 filesystem=self.storage_client,
@@ -95,15 +95,16 @@ class ParquetWriter(DataWriter):
             .to_pandas()
         )
 
-        return df
+        return dataframe
 
+    @staticmethod
     def validate_type(data_type: str):
-        if data_type == pa.Table:
+        if data_type.lower() in ["table", "dataframe"]:
             return True
         return False
 
 
-class NumpyWriter(DataWriter):
+class NumpyStorage(RegistryDataStorage):
     def save_data(
         self,
         data: np.ndarray,
@@ -132,58 +133,60 @@ class NumpyWriter(DataWriter):
 
         return data
 
+    @staticmethod
     def validate_type(data_type: str):
-        if data_type == np.ndarray:
+        if data_type.lower() == "ndarray":
             return True
         return False
 
 
-class DataStorage:
-    @staticmethod
-    def save(
-        data: Union[pa.Table, np.ndarray],
-        data_name: str,
-        version: int,
-        team: str,
-    ):
+def save_record_data_to_storage(
+    data: Union[pa.Table, np.ndarray],
+    data_name: str,
+    version: int,
+    team: str,
+):
 
-        data_type = type(data)
-        writer = next(
-            (
-                writer
-                for writer in DataWriter.__subclasses__()
-                if writer.validate_type(
-                    data_type=data_type,
-                )
-            ),
-            None,
-        )
+    data_type = data.__class__.__name__
+    storage_type = next(
+        (
+            storage_type
+            for storage_type in RegistryDataStorage.__subclasses__()
+            if storage_type.validate_type(
+                data_type=data_type,
+            )
+        ),
+        None,
+    )
 
-        if not bool(writer):
-            raise NotOfCorrectType(f"""Data type of {data_type} is not supported""")
+    if not bool(storage_type):
+        raise NotOfCorrectType(f"""Data type of {data_type} is not supported""")
 
-        return writer().save_data(
-            data=data,
-            data_name=data_name,
-            version=version,
-            team=team,
-        )
+    return storage_type().save_data(
+        data=data,
+        data_name=data_name,
+        version=version,
+        team=team,
+    )
 
-    @staticmethod
-    def load(storage_uri: str, data_type: str):
 
-        loader = next(
-            (
-                loader
-                for loader in DataWriter.__subclasses__()
-                if loader.validate_type(
-                    data_type=data_type,
-                )
-            ),
-            None,
-        )
+def load_record_data_from_storage(
+    storage_uri: str,
+    data_type: str,
+):
 
-        if not bool(loader):
-            raise NotOfCorrectType(f"""Data type of {data_type} is not supported""")
+    storage_type = next(
+        (
+            storage_type
+            for storage_type in RegistryDataStorage.__subclasses__()
+            if storage_type.validate_type(
+                data_type=data_type,
+            )
+        ),
+        None,
+    )
 
-        return loader().load_data(storage_uri=storage_uri)
+    if not bool(storage_type):
+        raise NotOfCorrectType(f"""Data type of {data_type} is not supported""")
+
+    return storage_type().load_data(storage_uri=storage_uri)
