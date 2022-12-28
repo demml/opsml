@@ -87,7 +87,7 @@ class ArrowTable(BaseModel):
 class RegistryRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str] = None
-    data_splits: Optional[List[DataSplit]] = None
+    data_splits: Optional[Dict[str, List[DataSplit]]] = None
     version: int
     data_type: str
     data_name: str
@@ -96,3 +96,12 @@ class RegistryRecord(BaseModel):
     user_email: str
     uid: Optional[str] = None
     version: Optional[int] = None
+
+    @root_validator(pre=True)
+    def set_attributes(cls, values):  # pylint: disable=no-self-argument
+        """Pre checks"""
+
+        if bool(values["data_splits"]):
+            values["data_splits"] = {"splits": values["data_splits"]}
+
+        return values

@@ -10,6 +10,7 @@ from opsml_data.registry.data_card import DataCard
 from opsml_data.registry.models import RegistryRecord
 from opsml_data.registry.sql_schema import DataSchema, TableSchema
 from opsml_data.registry.storage import load_record_data_from_storage
+import uuid
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -21,6 +22,9 @@ class SQLRegistry:
     def __init__(self):
         self.session = Session()
         self.table = TableSchema.get_table(table_name="data_registry")
+
+    def _set_uid(self):
+        return uuid.uuid4().hex
 
     def _set_version(
         self,
@@ -70,9 +74,8 @@ class DataRegistry(SQLRegistry):
         Args:
             data_card: Data card to register.
         """
+        data_card.uid = self._set_uid()
         data_card.version = self._set_version(data_name=data_card.data_name, team=data_card.team)
-
-        # call private method for class
         record = data_card.create_registry_record(version=data_card.version)
 
         self._add_and_commit(record=record.dict())
@@ -129,16 +132,10 @@ class DataRegistry(SQLRegistry):
         """
 
         sql_data: DataSchema = self._query_record(data_name=data_name, team=team, version=version)
-
-        # load data
         data = load_record_data_from_storage(storage_uri=sql_data.data_uri, data_type=sql_data.data_type)
+        drift_report = load_record_data_from_storage(storage_uri=sql_data.drift_uri, data_type="DataFrame")
 
-        if sql_data.drift_uri is not None:
-            drift_report = load_record_data_from_storage(storage_uri=sql_data.drift_uri, data_type="DataFrame")
-        else:
-            drift_report = None
-
-        data_card = DataCard(
+        return DataCard(
             data=data,
             drift_report=drift_report,
             uid=sql_data.uid,
@@ -150,13 +147,11 @@ class DataRegistry(SQLRegistry):
             data_uri=sql_data.data_uri,
             drift_uri=sql_data.drift_uri,
             feature_map=sql_data.feature_map,
-            data_splits=sql_data.data_splits,
+            data_splits=sql_data.data_splits.get("splits"),
             data_type=sql_data.data_type,
             version=sql_data.version,
             user_email=sql_data.user_email,
         )
-
-        return data_card
 
     def update(self, data_card: DataCard) -> None:
 
@@ -169,7 +164,7 @@ class DataRegistry(SQLRegistry):
             None
         """
 
-        metadata = RegistryRecord(
+        record = RegistryRecord(
             data_name=data_card.data_name,
             team=data_card.team,
             data_uri=data_card.data_uri,
@@ -182,8 +177,8 @@ class DataRegistry(SQLRegistry):
             uid=data_card.uid,
         )
 
-        self.session.query(self.table).filter(self.table.uid == metadata.uid).update(
-            metadata.dict(),
+        self.session.query(self.table).filter(self.table.uid == record.uid).update(
+            record.dict(),
         )
         self.session.commit()
         logger.info(

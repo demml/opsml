@@ -14,7 +14,7 @@ from opsml_data.registry.data_registry import DataRegistry
         lazy_fixture("test_arrow_table"),
     ],
 )
-def _test_register_data(setup_database, test_data, storage_client):
+def test_register_data(setup_database, test_data, storage_client):
 
     registry: DataRegistry = setup_database
 
@@ -36,7 +36,7 @@ def _test_register_data(setup_database, test_data, storage_client):
         lazy_fixture("test_df"),
     ],
 )
-def _test_list_data(setup_database, test_data):
+def test_list_data(setup_database, test_data):
 
     registry: DataRegistry = setup_database
 
@@ -133,16 +133,14 @@ def test_load_data_card(setup_database, test_data, storage_client):
     )
 
     registry.register(data_card=data_card)
-    # loaded_data = registry.load(data_name=data_name, team=team, version=data_card.version)
+    loaded_data = registry.load(data_name=data_name, team=team, version=data_card.version)
 
+    # update
+    loaded_data.version = 100
 
-#
-## update
-# loaded_data.version = 100
-#
-# registry.update(data_card=loaded_data)
-# storage_client.delete_object_from_url(gcs_uri=loaded_data.data_uri)
-#
-# df = registry.list_data(data_name=data_name, team=team, version=100)
-#
-# assert df["version"].to_numpy()[0] == 100
+    registry.update(data_card=loaded_data)
+    storage_client.delete_object_from_url(gcs_uri=loaded_data.data_uri)
+
+    df = registry.list_data(data_name=data_name, team=team, version=100)
+
+    assert df["version"].to_numpy()[0] == 100

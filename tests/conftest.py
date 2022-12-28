@@ -159,6 +159,26 @@ def test_df():
     return df
 
 
+@pytest.fixture(scope="function")
+def drift_dataframe():
+    mu_1 = -4  # mean of the first distribution
+    mu_2 = 4  # mean of the second distribution
+    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+    cat = np.random.randint(0, 3, 1000).reshape(-1, 1)
+    X_train = np.hstack((X_train, cat))
+
+    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
+
+    col_names = []
+    for i in range(0, X_train.shape[1]):
+        col_names.append(f"col_{i}")
+
+    X_train = pd.DataFrame(X_train, columns=col_names)
+    y_train = np.random.randint(1, 100, size=(1000, 1))
+
+    return X_train, y_train
+
+
 @pytest.fixture(scope="session")
 def test_arrow_table():
     n_legs = pa.array([2, 4, 5, 100])
@@ -180,7 +200,7 @@ def setup_database():
 
     yield registry
 
-    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
+    # TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
 
     # TestData.schema.__table__.drop(bind=engine)
 

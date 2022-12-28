@@ -174,6 +174,8 @@ def load_record_data_from_storage(
     storage_uri: str,
     data_type: str,
 ):
+    if not bool(storage_uri):
+        return None
 
     storage_type = next(
         (

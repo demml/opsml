@@ -1,3 +1,3 @@
-from .data_drift import Drifter  # noqa
+from .data_drift import DriftDetector  # noqa
 
-__all__ = ["Drifter"]
+__all__ = ["DriftDetector"]
