@@ -8,7 +8,6 @@ from pandas import DataFrame
 from pyarrow import Table
 from pydantic import BaseModel, Extra, root_validator
 from pyshipt_logging import ShiptLogging
-
 from opsml_data.registry.formatter import ArrowTable, DataFormatter
 from opsml_data.registry.models import DataSplit, RegistryRecord, SplitDataHolder
 from opsml_data.registry.storage import save_record_data_to_storage
@@ -54,7 +53,7 @@ class DataCard(BaseModel):
     user_email: str
     data: Union[NDArray, DataFrame, Table]
     drift_report: Optional[DataFrame] = None
-    data_splits: Optional[List[DataSplit]]
+    data_splits: Optional[List[DataSplit]] = None
     data_uri: Optional[str] = None
     drift_uri: Optional[str] = None
 
@@ -62,7 +61,7 @@ class DataCard(BaseModel):
         arbitrary_types_allowed = True
         extra = Extra.allow
         allow_mutation = True
-        validate_assignment = True
+        validate_assignment = False
 
     @root_validator(pre=True)
     def set_attributes(cls, values):  # pylint: disable=no-self-argument
@@ -75,6 +74,13 @@ class DataCard(BaseModel):
         return values
 
     def _parse_splits(self):
+
+        """Loops through data splits and splits data either by indexing or
+        column values
+
+        Returns
+            Class containing data splits
+        """
         data_holder = SplitDataHolder()
         for split in self.data_splits:
             if split.row_slicing:
@@ -97,8 +103,7 @@ class DataCard(BaseModel):
         if not bool(self.data_splits):
             return SplitDataHolder(data=self.data)
 
-        else:
-            return self._parse_splits()
+        return self._parse_splits()
 
     def __convert_and_save(
         self,
