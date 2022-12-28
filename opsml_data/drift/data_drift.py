@@ -1,369 +1,409 @@
-from typing import Any, Dict, Iterable, List, Optional
-
+from typing import Any, Dict, List, Optional, Tuple, Union
+from enum import Enum
 import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import auc, roc_curve
-
-from ..helpers import exceptions
-from .drift_utils import shipt_theme
+from opsml_data.drift.drift_utils import shipt_theme
+from opsml_data.drift.models import (
+    DriftData,
+    HistogramOutput,
+    FeatureStatsOutput,
+    FeatureImportance,
+    DriftReport,
+    ExtractedAttributes,
+)
 
 alt.themes.register("shipt", shipt_theme)
 alt.themes.enable("shipt")
 
 
-# this needs to be refactored into better code (steven)
-class Drifter:
-    bins = 20
+class FeatureTypes(Enum):
+    CATEGORICAL = 0
+    NUMERIC = 1
 
-    @classmethod
-    def _compute_intersection(
-        cls,
-        cur_hist,
-        ref_hist,
+
+class FeatureImportanceCalculator:
+    """Provides metrics for drift detections"""
+
+    def __init__(
+        self,
+        features: List[str],
+        data: DriftData,
+        target_feature: str,
     ):
-        intersection = np.sum(cur_hist) / np.sum(ref_hist)
+        self.log_reg = LogisticRegression()
+        self.features = features
+        self.data = data
+        self.features_and_target = [*self.features, *[target_feature]]
 
-        return intersection
+    def compute_auc(self, X: np.ndarray, y: np.ndarray) -> float:
+        self.log_reg.fit(X, y)
+        preds = self.log_reg.predict_proba(X)[::, 1]
+        fpr, tpr, _ = roc_curve(y, preds, pos_label=1)
+        return auc(fpr, tpr)
 
-    @classmethod
-    def _get_feature_types(
-        cls,
-        feature_mapping: Dict[str, str],
+    def calculate_feature_importance(self):
+        self.log_reg.fit(self.data.X, self.data.y)
+        coefs = list(self.log_reg.coef_[0])
+        coefs.append(None)  # for target
+
+        return coefs
+
+    def calculate_feature_auc(self):
+        feature_aucs = []
+        X = np.hstack((self.data.X[self.features].to_numpy(), self.data.target))
+        for feature in range(X.shape[1]):
+            computed_auc = self.compute_auc(X=X[:, feature].reshape(-1, 1), y=self.data.y)
+            feature_aucs.append(computed_auc)
+
+        return feature_aucs
+
+    def combine_feature_importance_auc(
+        self, feature_importances: List[float], feature_aucs: List[float]
+    ) -> Dict[str, FeatureImportance]:
+
+        feature_dict = {}
+        for feature_name, importance, computed_auc in zip(self.features_and_target, feature_importances, feature_aucs):
+            feature_dict[feature_name] = FeatureImportance(importance=importance, auc=computed_auc)
+
+        return feature_dict
+
+    def compute_importance(
+        self,
+    ) -> Dict[str, FeatureImportance]:
+        """Computes feature importance from object attributes
+
+        Returns
+            Dictionary containing features and their importances
+        """
+
+        feature_importances = self.calculate_feature_importance()
+        feature_aucs = self.calculate_feature_auc()
+        combined_features = self.combine_feature_importance_auc(
+            feature_importances=feature_importances, feature_aucs=feature_aucs
+        )
+        return combined_features
+
+
+class DriftFeatures:
+    """Computes relevant feature attributes used in drift detection"""
+
+    def __init__(
+        self,
+        dtypes: Dict[str, Any],
+        categorical_features: Optional[List[str]] = None,
+        target_feature: Optional[str] = None,
     ):
-        if not isinstance(feature_mapping, dict):
-            raise exceptions.NotofTypeDictionary(
-                """Expected dictionary type for
-                feature mappings"""
-            )
 
-        for key, val in feature_mapping.items():
+        self.dtypes = dtypes
+        self.target_feature = target_feature
+        self.feature_list = self.create_feature_list()
+        self.categorical_features = self.get_categorical_features(categorical_features=categorical_features)
+
+    def create_feature_list(self) -> List[str]:
+        feature_mapping = self.get_feature_types()
+        return list(feature_mapping.keys())
+
+    def get_categorical_features(self, categorical_features: Optional[List[str]] = None) -> List[str]:
+
+        if not bool(categorical_features):
+            categorical_features = []
+
+        return [feature for feature in self.feature_list if feature in categorical_features]
+
+    def get_feature_types(self):
+        feature_mapping = {}
+
+        for key, val in self.dtypes.items():
             if val == "O":
                 feature_mapping[key] = "str"
             else:
                 feature_mapping[key] = str(val)
+
         return feature_mapping
 
-    @classmethod
-    def _count_missing(cls, data: Iterable):
-        if not isinstance(data, np.ndarray):
-            raise exceptions.NotofTypeArray(
-                """Data is expected to be of
-            type np.array"""
-            )
-        return len(np.argwhere(np.isnan(data)))
+    def set_feature_type(self, feature: str):
+        if feature in self.categorical_features:
+            return 0
+        return 1
 
-    @classmethod
-    def _compute_feature_stats(
-        cls,
-        reference_data: Iterable,
-        current_data: Iterable,
-        reference_label: str,
-        current_label: str,
-        feature_type: str,
-    ) -> Dict[str, Any]:
 
-        """Computes the drift of a feature given reference
-        and current datasets. Currently works with dataframes
+class DriftDetectorData:
+    """Houses data used for drift detection"""
 
-        Args:
-            reference_data: Reference data
-            current_data: Current data
-            reference_label: Reference data label
-            current_label: Current data label
-            feature_type: Whether feature is "categorical" or
-            "numerical".
-
-        Returns:
-            Dictionary
-
-        """
-        if not isinstance(reference_data, np.ndarray):
-            reference_data = np.array(reference_data)
-
-        if not isinstance(current_data, np.ndarray):
-            current_data = np.array(current_data)
-
-        # count number of missing records
-        nbr_missing_records = cls._count_missing(reference_data)
-        percent_missing = round((nbr_missing_records / reference_data.shape[0]) * 100, 2)  # noqa
-
-        # Remove missing values
-        reference_data = reference_data[~np.isnan(reference_data)]
-        current_data = current_data[~np.isnan(current_data)]
-
-        if feature_type == "numerical":
-            ref_hist, ref_edge = np.histogram(
-                reference_data,
-                bins=cls.bins,
-                density=False,
-            )
-            cur_hist, _ = np.histogram(
-                current_data,
-                bins=ref_edge,
-                density=False,
-            )
-
-            ref_hist = ref_hist / reference_data.shape[0]
-            cur_hist = cur_hist / current_data.shape[0]
-
-            intersection = cls._compute_intersection(
-                cur_hist,
-                ref_hist,
-            )
-
-        else:
-            ref_edge, ref_hist = np.unique(
-                reference_data,
-                return_counts=True,
-            )
-            _, cur_hist = np.unique(
-                current_data,
-                return_counts=True,
-            )
-            intersection = cls._compute_intersection(cur_hist, ref_hist)
-
-        unique_values = len(np.unique(reference_data))
-        results = {
-            f"{reference_label}_histogram": {
-                "hist": ref_hist.astype(np.float32).tolist(),
-                "edges": ref_edge[1:].astype(np.float32).tolist(),
-            },
-            f"{current_label}_histogram": {
-                "hist": cur_hist.astype(np.float32).tolist(),
-                "edges": ref_edge[1:].astype(np.float32).tolist(),  # noqa
-            },
-            "intersection": intersection,
-            "missing_records": f"{nbr_missing_records}, {percent_missing}%",  # noqa
-            "unique": unique_values,
-        }
-
-        return results
-
-    @classmethod
-    def _compute_log_reg_auc(
-        cls,
-        x_train,
-        y_train,
+    def __init__(
+        self,
+        reference_data: DriftData,
+        current_data: DriftData,
     ):
 
-        # Create model
-        log_reg = LogisticRegression()
-        log_reg.fit(x_train, y_train)
+        self.reference_data = reference_data
+        self.current_data = current_data
 
-        preds = log_reg.predict_proba(x_train)[::, 1]
-        fpr, tpr, _ = roc_curve(
-            y_train,
-            preds,
-            pos_label=1,
-        )
-        auc_score = auc(fpr, tpr)
-
-        return auc_score
-
-    @classmethod
-    def _compute_drift_feature_importance(
-        cls,
-        reference_data: pd.DataFrame,
-        current_data: pd.DataFrame,
-        feature_list: List[str],
-        target_feature: str = None,
-    ):
-        # if not type(reference_data) == pd.DataFrame:
-        # raise exceptions.NotDataFrame(
-        # """Reference and current data must be of type pd.DataFrame"""
-        # )
-        # target type can be reg, binary, multiclass
-
-        if not isinstance(reference_data, pd.DataFrame) or not isinstance(current_data, pd.DataFrame):
-            raise exceptions.NotofTypeDataFrame(
-                """Reference and current data must be of type
-                pd.DataFrame"""
-            )
-
-        feature_importance_dict = {}
-
-        # Run feature importance
-        ref_targets = np.zeros((reference_data.shape[0],))
-        current_targets = np.ones((current_data.shape[0],))
-        # reference_data["target"] = 0
-        # current_data["target"] = 1
-
-        dataframe = pd.concat([reference_data, current_data])
-        dataframe.dropna(inplace=True)
-
-        # Set X data
-        x_train = dataframe[feature_list]
-
-        # y_train is the indicator between reference and current data
+    def create_y_data(self) -> np.ndarray:
+        ref_targets = np.zeros((self.reference_data.y.shape[0],))
+        current_targets = np.ones((self.current_data.y.shape[0],))
         y_train = np.hstack((ref_targets, current_targets))
 
-        # Remove missing indices
+        return y_train
 
-        # Fit model and return importances
-        log_reg = LogisticRegression()
-        log_reg.fit(x_train, y_train)
-        importances = log_reg.coef_[0]
+    def create_x_data(self) -> Union[np.ndarray, pd.DataFrame]:
+        x_train = pd.concat([self.reference_data.X, self.current_data.X])
+        x_train.dropna(inplace=True)
 
-        if not len(importances) == len(feature_list):
-            raise exceptions.LengthMismatch(
-                """Number of features and feature
-                importances are not the same"""
-            )
+        return x_train
 
-        for feature, importance in zip(feature_list, importances):
+    def create_drift_data(self) -> DriftData:
 
-            computed_auc = cls._compute_log_reg_auc(
-                x_train[feature].to_numpy().reshape(-1, 1),
-                y_train,
-            )
-            feature_importance_dict[feature] = {
-                "feature_importance": importance,
-                "feature_auc": computed_auc,
-            }
+        X_drift = self.create_x_data()
+        y_drift = self.create_y_data()
+        target = np.vstack((self.reference_data.y.reshape(-1, 1), self.current_data.y.reshape(-1, 1)))
 
-        if target_feature is not None:
+        return DriftData(X=X_drift, y=y_drift, target=target)
 
-            computed_auc = cls._compute_log_reg_auc(
-                dataframe[target_feature].to_numpy().reshape(-1, 1),
-                y_train,
-            )
 
-            feature_importance_dict[target_feature] = {
-                "feature_importance": None,
-                "feature_auc": computed_auc,
-            }
+class FeatureHistogram:
+    def __init__(
+        self,
+        bins: Union[int, List[Union[int, float]]],
+        feature_type: int,
+    ):
+        self.bins = bins
+        self.feature_type = feature_type
 
-        return feature_importance_dict
+    def compute_histogram(self, data: np.ndarray) -> Tuple[List[float], List[float]]:
+        hist, edges = np.histogram(data, bins=self.bins, density=False)
+        hist = np.divide(hist, data.shape[0])
 
-    @classmethod
-    def run_drift_diagnostics(
-        cls,
-        reference_data: pd.DataFrame,
-        current_data: pd.DataFrame,
-        feature_mapping: Dict[str, str] = None,
+        return edges, hist
+
+    def compute_feature_histogram(self, data: np.ndarray) -> HistogramOutput:
+        if FeatureTypes(self.feature_type) == FeatureTypes.NUMERIC:
+            edges, hist = self.compute_histogram(data=data)
+        else:
+            edges, hist = np.unique(data, return_counts=True)
+
+        return HistogramOutput(histogram=hist, edges=edges)
+
+
+class FeatureStats:
+    """Calculates statistics for single feature data"""
+
+    def __init__(
+        self,
+        data: np.ndarray,
+        feature_type: int,
+        target_val: int,
+        bins: Optional[Union[int, List[Union[int, float]]]] = None,
+    ):
+        self.data = data
+        self.feature_type = feature_type
+        self.target_val = target_val
+        self.bins = bins
+
+        if bins is None:
+            bins = 20
+
+        self.histogram = FeatureHistogram(
+            bins=bins,
+            feature_type=self.feature_type,
+        )
+
+    @staticmethod
+    def compute_intersection(current_hist, reference_hist):
+        intersection = np.sum(current_hist) / np.sum(reference_hist)
+        return intersection
+
+    def count_missing(self) -> Tuple[int, float]:
+        nbr_missing = len(np.argwhere(np.isnan(self.data)))
+        percent_missing = round((nbr_missing / self.data.shape[0]) * 100, 2)
+
+        return nbr_missing, percent_missing
+
+    def compute_stats(self) -> FeatureStatsOutput:
+
+        # count number of missing records
+        nbr_missing_records, percent_missing = self.count_missing()
+
+        # Remove missing values
+        new_data = self.data[~np.isnan(self.data)]
+        feature_hist = self.histogram.compute_feature_histogram(data=new_data)
+        unique_values = len(np.unique(self.data))
+
+        return FeatureStatsOutput(
+            historgram=feature_hist,
+            missing_records=f"{nbr_missing_records}, {percent_missing}%",
+            unique=unique_values,
+            type_=self.feature_type,
+            target_feature=self.target_val,
+        )
+
+
+# Detects drift between reference and current dataframe
+class DriftDetector:
+    def __init__(
+        self,
+        x_reference: pd.DataFrame,
+        y_reference: np.array,
+        x_current: pd.DataFrame,
+        y_current: np.array,
+        target_feature_name: str,
         categorical_features: Optional[List[str]] = None,
-        target_feature: str = None,
-        exclude_cols: List[str] = None,
-        current_label: str = "current",
-        reference_label: str = "reference",
-        return_df: bool = False,
     ):
 
-        """Computes drift diagnostics between reference and current
-        data based upon column mapping
+        """Calculates a drift report for reference vs current data
 
         Args:
-            reference_data: Pandas dataframe of reference data
-            current_data: Pandas dataframe containing current data
-            feature_mapping: Dictionary containing features (keys) and
-            their types
-            target_feature: Name of target variable
-            exclude_cols: List of columns to exclude
-            current_label: Label for current data
-            reference_label: Label for reference data
-            return_df: Whether to return pandas dataframe or not
+            x_reference (pd.DataFrame): Pandas dataframe of reference data for features
+            y_reference (np.ndarray): Numpy array of target reference data
+            x_current (pd.DataFrame): Pandas dataframe of current data for features
+            y_current (np.ndarray): Numpy array of target current data
+            target_feature (str): Optional name of target data
+            categorical_features (list(str)): Optional list of categorical features
+        """
+
+        self.drift_features = DriftFeatures(
+            dtypes=dict(x_reference.dtypes),
+            categorical_features=categorical_features,
+            target_feature=target_feature_name,
+        )
+
+        self.drift_data = DriftDetectorData(
+            reference_data=DriftData(X=x_reference, y=y_reference),
+            current_data=DriftData(X=x_current, y=y_current),
+        )
+
+        self.training_data = self.drift_data.create_drift_data()
+        self.importance_calc = FeatureImportanceCalculator(
+            data=self.training_data,
+            features=self.drift_features.feature_list,
+            target_feature=self.drift_features.target_feature,
+        )
+        self.features_and_target = [*self.drift_features.feature_list, *[target_feature_name]]
+
+    def run_drift_diagnostics(self, return_dataframe: bool = False):
+        """Computes drift diagnostics between reference and current
+        data based upon column mapping
 
         Returns:
             return_df (pd.DataFrame): Dataframe of computed drift statistics.
         """
 
-        # Compute feature drift
-        feature_dict = {}
+        feature_importance = self.importance_calc.compute_importance()
+        feature_stats = self.create_feature_stats()
 
-        if feature_mapping is None:
-            feature_mapping = cls._get_feature_types(
-                feature_mapping=dict(
-                    reference_data.dtypes,
-                )
-            )
-
-        if exclude_cols is None:
-            exclude_cols = []
-
-        feature_list = list(set(feature_mapping.keys()) - set(exclude_cols))
-        cat_features = [
-            feature for feature in feature_list if feature in categorical_features and bool(categorical_features)
-        ]  # noqa
-
-        # Create global model and compute feature importance
-        feature_importance = cls._compute_drift_feature_importance(
-            reference_data,
-            current_data,
-            feature_list=feature_list,
-            target_feature=target_feature,
+        self.drift_report = self.combine_importance_auc(
+            feature_importance=feature_importance,
+            feature_stats=feature_stats,
         )
 
-        if target_feature is not None:
-            if not isinstance(target_feature, list):
-                target_feature = [target_feature]
+        if return_dataframe:
+            return self.convert_report_to_dataframe()
+
+    def convert_report_to_dataframe(self):
+        dataframe_dict = {}
+        for feature, report in self.drift_report.items():
+            dataframe_dict[feature] = report.dict()
+
+        dataframe = pd.DataFrame.from_dict(dataframe_dict, orient="index")
+        dataframe.reset_index(inplace=True)
+        dataframe = dataframe.rename(columns={"index": "feature"})
+
+        return dataframe
+
+    def combine_importance_auc(
+        self,
+        feature_importance: Dict[str, FeatureImportance],
+        feature_stats: Dict[str, DriftReport],
+    ):
+
+        for feature, stats in feature_stats.items():
+            stats.feature_importance = feature_importance[feature].importance
+            stats.feature_auc = feature_importance[feature].auc
+
+        return feature_stats
+
+    def create_feature_stats(self) -> Dict[str, DriftReport]:
+
+        stats = {}
+        for feature in self.features_and_target:
+            stats[feature] = self.compute_feature_stats(feature=feature)
+        return stats
+
+    def compute_feature_stats(self, feature: str):
+        feat_attr = self.extract_feature_attributes_for_stats(feature=feature)
+
+        reference_stats = FeatureStats(
+            data=feat_attr.reference_data,
+            feature_type=feat_attr.feature_type,
+            target_val=feat_attr.target_val,
+        ).compute_stats()
+
+        # using bins from reference stats
+        current_stats = FeatureStats(
+            data=feat_attr.current_data,
+            feature_type=feat_attr.feature_type,
+            target_val=feat_attr.target_val,
+            bins=reference_stats.historgram.edges,
+        ).compute_stats()
+
+        intersection = FeatureStats.compute_intersection(
+            current_hist=current_stats.historgram.histogram,
+            reference_hist=reference_stats.historgram.histogram,
+        )
+        return DriftReport(
+            intersection=intersection,
+            missing_records=reference_stats.missing_records,
+            unique=reference_stats.unique,
+            reference_distribution=reference_stats.historgram,
+            current_distribution=current_stats.historgram,
+            target_feature=feat_attr.target_val,
+        )
+
+    def get_ref_curr_feature_data(self, feature: str, data_ind: str = "X"):
+
+        if data_ind == "X":
+            ref_data = self.drift_data.reference_data.X[feature].to_numpy().reshape(-1, 1)
+            curr_data = self.drift_data.current_data.X[feature].to_numpy().reshape(-1, 1)
         else:
-            target_feature = []
+            ref_data = self.drift_data.reference_data.y.reshape(-1, 1)
+            curr_data = self.drift_data.current_data.y.reshape(-1, 1)
 
-        for feature in [*feature_list, *target_feature]:
-            if feature in cat_features:
-                feature_type = "categorical"
-            else:
-                feature_type = "numerical"
+        return ref_data, curr_data
 
-            feature_dict[feature] = dict.fromkeys(
-                [
-                    "type",
-                    "intersection",
-                    "missing_records",
-                    "unique",
-                    "reference_distribution",
-                    "current_distribution",
-                    "feature_importance",
-                    "feature_auc",
-                    "reference_label",
-                    "current_label",
-                    "target_feature",
-                ]
-            )
+    def extract_feature_attributes_for_stats(self, feature: str) -> ExtractedAttributes:
 
-            feature_dict[feature]["type"] = feature_type
+        if feature == self.drift_features.target_feature:
+            target_val = 1
+            data_ind = "y"
+        else:
+            target_val = 0
+            data_ind = "X"
 
-            # Subset data
-            ref_data = reference_data[feature]
-            cur_data = current_data[feature]
+        feature_type = self.drift_features.set_feature_type(feature=feature)
+        ref_data, curr_data = self.get_ref_curr_feature_data(feature=feature, data_ind=data_ind)
 
-            # Create distributions and intersection between current and reference data # noqa
-            results = cls._compute_feature_stats(
-                reference_data=ref_data,
-                current_data=cur_data,
-                reference_label=reference_label,
-                current_label=current_label,
-                feature_type=feature_type,
-            )
+        return ExtractedAttributes(
+            reference_data=ref_data,
+            current_data=curr_data,
+            feature_type=feature_type,
+            target_val=target_val,
+        )
 
-            feature_dict[feature]["intersection"] = results["intersection"]  # noqa
-            feature_dict[feature]["missing_records"] = results["missing_records"]  # noqa
-            feature_dict[feature]["unique"] = results["unique"]
+    def convert_diagnostics_to_dataframe(
+        self,
+        feature_importance: Dict[str, Dict[str, Union[float, int]]],
+        feature_stats: Dict[str, Dict[str, Union[str, int, float]]],
+    ) -> pd.DataFrame:
+        combined_data = {}
+        for feature in self.features_and_target:
+            combined_data[feature] = {}
+            combined_data[feature].update(feature_importance[feature])
+            combined_data[feature].update(feature_stats[feature])
 
-            feature_dict[feature]["feature_importance"] = feature_importance[feature]["feature_importance"]  # noqa
-            feature_dict[feature]["feature_auc"] = feature_importance[feature]["feature_auc"]  # noqa
-
-            feature_dict[feature]["reference_distribution"] = results[f"{reference_label}_histogram"]
-            feature_dict[feature]["current_distribution"] = results[f"{current_label}_histogram"]
-
-            feature_dict[feature]["reference_label"] = reference_label
-            feature_dict[feature]["current_label"] = current_label
-
-            if feature in target_feature:
-                feature_dict[feature]["target_feature"] = 1
-
-            else:
-                feature_dict[feature]["target_feature"] = 0
-
-        if return_df:
-            dataframe = (
-                pd.DataFrame.from_dict(feature_dict, orient="index").reset_index().rename(columns={"index": "feature"})
-            )
-            return dataframe
-
-        return None
+        return pd.DataFrame.from_dict(combined_data, orient="index")
 
     @classmethod
     def _parse_drift_df(
@@ -449,7 +489,7 @@ class Drifter:
             return None
         num_dropdown = alt.binding_select(
             options=num_data["feature"].unique(),
-            name="Numerical Feature ",
+            name="Numeric Feature ",
         )
         num_selection = alt.selection_single(
             fields=["feature"],
@@ -471,7 +511,7 @@ class Drifter:
             .add_selection(num_selection)
             .mark_area()
             .transform_filter(num_selection)
-            .properties(width=300, title="Numerical")
+            .properties(width=300, title="Numeric")
         )
 
         return num_chart
