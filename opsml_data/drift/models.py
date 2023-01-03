@@ -2,6 +2,7 @@ from pydantic import BaseModel, Extra, root_validator
 from typing import Optional, List, Dict, Any, Union
 import pandas as pd
 import numpy as np
+from enum import Enum
 
 
 class DriftData(BaseModel):
@@ -32,11 +33,20 @@ class FeatureImportance(BaseModel):
 
 
 class HistogramOutput(BaseModel):
-    histogram: np.ndarray
-    edges: np.ndarray
+    values: np.ndarray
+    bins: np.ndarray
 
     class Config:
         arbitrary_types_allowed = True
+
+    @root_validator(pre=True)
+    def modify_attr(cls, values):
+        bins = values["bins"]
+        vals = values["values"]
+
+        values["bins"] = bins[: len(vals)]
+
+        return values
 
 
 class FeatureStatsOutput(BaseModel):
@@ -56,8 +66,36 @@ class DriftReport(BaseModel):
     target_feature: int
     feature_importance: Optional[float] = None
     feature_auc: Optional[float] = None
+    feature_type: int
 
     class Config:
         arbitrary_types_allowed = True
         allow_mutation = True
         validate_assignment = False
+
+
+class ParsedFeatures(BaseModel):
+    feature: Optional[List[str]] = []
+    values: Optional[List[float]] = []
+    bins: Optional[List[float]] = []
+    label: Optional[List[str]] = []
+    feature_type: Optional[List[int]] = []
+
+
+class ParsedFeatureImportance(BaseModel):
+    feature: Optional[List[str]] = []
+    auc: Optional[List[float]] = []
+    importance: Optional[List[float]] = []
+
+
+class ParsedFeatureDataFrames(BaseModel):
+    distribution_dataframe: pd.DataFrame
+    importance_dataframe: pd.DataFrame
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class FeatureTypes(Enum):
+    CATEGORICAL = 0
+    NUMERIC = 1
