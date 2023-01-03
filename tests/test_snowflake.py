@@ -1,37 +1,47 @@
-from opsml_data.connector.base import GCPQueryRunner
-from opsml_data.helpers.utils import GCSStorageClient
-from opsml_data.connector.snowflake import SnowflakeDataGetter
-from opsml_data.helpers.defaults import params
-import pandas
-from unittest.mock import patch
+import time
+
+import pandas as pd
+
+from opsml_data.connector.snowflake import SnowflakeQueryRunner
 
 
-def test_submit_query(mock_response):
+# remove these once networking is configured
+def test_snowflake_query(test_query):
 
-    with patch.object(GCPQueryRunner, "_post") as _post:
-        _post.return_value = mock_response
-        query_runner = GCPQueryRunner(
-            snowflake_api_auth=params.snowflake_api_auth,
-            snowflake_api_url=params.snowflake_api_url,
+    runner = SnowflakeQueryRunner()
+    response = runner.submit_query(query=test_query)
+
+    assert response.status_code == 200
+    query_id = response.json()["query_id"]
+
+    response = runner.query_status(query_id=query_id)
+    finished = False
+    while not finished:
+        response = runner.query_status(
+            query_id=query_id,
         )
 
-        response = query_runner.submit_query(
-            query="test",
-        )
+        status = response.json()["query_status"]
 
-        assert "gs" in response.gcs_url
+        if status.lower() == "success":
+            break
+
+        if "error" in status.lower():
+            message = response.json()["message"]
+            raise ValueError(message)
+
+        time.sleep(2)
 
 
-def test_snowflake_to_dataframe(mock_response, gcs_url):
+def test_snowflake_query_df(test_query):
 
-    with patch.object(GCPQueryRunner, "_post") as _post:
-        _post.return_value = mock_response
+    runner = SnowflakeQueryRunner()
+    df = runner.run_query(test_query)
+    assert isinstance(df, pd.DataFrame)
 
-        with patch.object(GCSStorageClient, "delete_object") as delete_object:
-            delete_object.return_value = False
 
-            data_getter = SnowflakeDataGetter()
+def test_snowflake_file_df():
 
-            # get data
-            df = data_getter._gcs_to_dataframe(gcs_url)
-            assert type(df) == pandas.DataFrame
+    runner = SnowflakeQueryRunner()
+    df = runner.run_query(sql_file="test_sql.sql")
+    assert isinstance(df, pd.DataFrame)

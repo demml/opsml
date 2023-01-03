@@ -23,11 +23,13 @@ lints.flake8:
 lints.flake8.ci:
 	poetry run flake8 --output-file=flake8-output.txt ${SOURCE_OBJECTS}
 lints.mypy:
-	poetry run mypy --ignore-missing-imports ${SOURCE_OBJECTS}
+	poetry run mypy ${SOURCE_OBJECTS}
 lints.pylint:
 	poetry run pylint --rcfile pyproject.toml  ${SOURCE_OBJECTS}
-lints: lints.flake8 lints.pylint
-lints.ci: lints.flake8.ci lints.pylint lints.format_check
+lints.ruff:
+	poetry run ruff ${SOURCE_OBJECTS}
+lints: lints.flake8 lints.pylint lints.ruff
+lints.ci: lints.flake8.ci lints.pylint lints.ruff lints.format_check
 
 setup: setup.python setup.sysdep.poetry setup.poetry-template
 setup.uninstall:
@@ -55,13 +57,24 @@ test.shell:
 	docker-compose run test /bin/bash
 test.shell.debug:
 	docker-compose run --entrypoint /bin/bash test
-test.unit: setup
-		poetry run coverage run -m pytest \
-        --cov=./ \
-		--cov-config=.coveragerc \
-        --cov-report=xml:coverage-report-unit-tests.xml \
-        --junitxml=coverage-junit-unit-tests.xml \
-        --cov-report term
+test.unit:
+	poetry run pytest \
+		--cov \
+		--cov-fail-under=0 \
+		--cov-report xml:./coverage.xml \
+		--cov-report term \
+		--junitxml=./results.xml
+
+poetry.pre.patch:
+	poetry version prepatch
+
+poetry.sub.pre.tag:
+	$(eval VER = $(shell grep "^version =" pyproject.toml | tr -d '"' | sed "s/^version = //"))
+	$(eval TS = $(shell date +%s))
+	$(eval REL_CANDIDATE = $(subst alpha.0,rc.$(TS),$(VER)))
+	@sed -i "s/$(VER)/$(REL_CANDIDATE)/" pyproject.toml
+
+prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
 
 publish:
 	poetry config repositories. https://artifactory.shipt.com/artifactory/api/pypi/pypi-local
