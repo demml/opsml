@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml-data"
-version = "0.1.0"
+version = "0.1.1a0"
 description = "Package for handling data for machine learning projects"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -140,7 +140,7 @@ target-version = "py39"
 max-complexity = 10
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.2.2"]
 build-backend = "poetry.core.masonry.api"
 
 [[tool.poetry.source]]
