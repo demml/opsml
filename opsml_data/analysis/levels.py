@@ -10,11 +10,11 @@ from pyshipt.helpers.model import ColumnType, Table
 from pyshipt.helpers.pandas import PandasHelper as ph
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.connector.snowflake import SnowflakeDataGetter
-from opsml_data.helpers.defaults import params
+from opsml_data.connector.snowflake import SnowflakeQueryRunner
+from opsml_data.helpers.settings import settings
 
 from ..helpers import exceptions
-from ..helpers.defaults import SnowflakeCredentials
+from ..helpers.settings import SnowflakeCredentials
 from ..helpers.utils import FindPath, GCSStorageClient
 
 logger = ShiptLogging.get_logger(__name__)
@@ -38,6 +38,7 @@ class SqlArgs:
             self.outlier_flg = "AND EVAL_OUTLIER = 0"
 
 
+# this code needs to be refactored (do it once networking is figured out)
 class LevelHandler:
     def __init__(
         self,
@@ -48,12 +49,12 @@ class LevelHandler:
         self.compute_env = compute_env
 
         if compute_env == "gcp":
-            self.data_getter = SnowflakeDataGetter()
-            self.storage_client = GCSStorageClient(gcp_credentials=params.gcp_creds)
+            self.data_getter = SnowflakeQueryRunner()
+            self.storage_client = GCSStorageClient(gcp_credentials=settings.gcp_creds)
 
         else:
             sf_kwargs = SnowflakeCredentials.credentials()
-            self.db = ShiptDB.warehouse(
+            self.database = ShiptDB.warehouse(
                 username=sf_kwargs.username,
                 password=sf_kwargs.password,
                 host=sf_kwargs.host,
@@ -76,8 +77,8 @@ class LevelHandler:
             dir_path,
         )
 
-        sql = open(sql_path, "r")
-        sql_string = sql.read()
+        with open(sql_path, "r", encoding="utf-8") as sql:
+            sql_string = sql.read()
 
         sql_args = SqlArgs(
             metro_level=metro_level,
@@ -114,13 +115,13 @@ class LevelHandler:
     ):
 
         columns = [
-            id_col,
-            "checkout_time",
-            "delivery_time",
-            "pick_time",
-            "drop_time",
-            "drive_time",
-            "wait_time",
+            id_col.upper(),
+            "CHECKOUT_TIME",
+            "DELIVERY_TIME",
+            "PICK_TIME",
+            "DROP_TIME",
+            "DRIVE_TIME",
+            "WAIT_TIME",
         ]
 
         analysis_df = pd.DataFrame(
@@ -156,7 +157,7 @@ class LevelHandler:
             dataframe.to_csv(f"{tmpdirname}/{filename}", index=False)
 
             gcs_uri = self.storage_client.upload(
-                gcs_bucket=params.gcs_bucket,
+                gcs_bucket=settings.gcs_bucket,
                 filename=f"{tmpdirname}/{filename}",
                 destination_path=f"data/{filename}",
             )
@@ -169,14 +170,14 @@ class LevelHandler:
         table_name: str,
     ):
 
-        status, reason = self.data_getter._gcs_to_table(
+        status, reason = self.data_getter._gcs_to_table(  # pylint: disable=protected-access
             gcs_url=gcs_url,
             table_name=table_name,
         )
 
         if status.lower() != "succeeded":
-            logger.error(f"Failed to create snowflake table for {table_name}: {reason}")  # noqa
-            raise exceptions.SnowflakeAPIError(reason)
+            logger.error("Failed to create snowflake table for %s: %s", table_name, reason)
+            raise exceptions.SnowFlakeApiError(reason)
 
         return status
 
@@ -210,7 +211,7 @@ class LevelHandler:
         outlier_removal: bool = False,
         schema: str = None,
         metro_level: bool = False,
-    ):
+    ) -> pd.DataFrame:
 
         # Create dataframe
         analysis_df = self._create_pred_dataframe(
@@ -244,44 +245,39 @@ class LevelHandler:
                 table_name=table_name,
             )
 
-            df = self.data_getter.get_data(
-                query=query,
-            )
+            dataframe = self.data_getter.run_query(query=query)
+
             self.storage_client.delete_object_from_url(
                 gcs_uri=gcs_uri,
             )
 
-            self.data_getter.query_runner.submit_query(
-                query=f"DROP TABLE DATA_SCIENCE.{table_name}",
-                to_storage=False,
+            self.data_getter.submit_query(query=f"DROP TABLE DATA_SCIENCE.{table_name}")
+            return dataframe
+
+        model = self._get_table_schema(self.id_col)
+        ph.dataframe_to_table(
+            dataframe=analysis_df,
+            model=model,
+            schema=schema,
+            table=table_name,
+            database=self.database,
+            temp_dir="/tmp",
+        )
+
+        with self.database.get_connection() as cnxn, cnxn.cursor() as cursor:
+            cursor.execute(query)
+            dataframe = cursor.fetch_pandas_all()
+            cursor.execute(
+                f"DROP TABLE {schema}.{table_name}",
             )
-            return df
 
-        else:
-            model = self._get_table_schema(self.id_col)
-            ph.dataframe_to_table(
-                dataframe=analysis_df,
-                model=model,
-                schema=schema,
-                table=table_name,
-                database=self.db,
-                temp_dir="/tmp",
-            )
-
-            with self.db.get_connection() as cnxn, cnxn.cursor() as cursor:
-                cursor.execute(query)
-                df = cursor.fetch_pandas_all()
-                cursor.execute(
-                    f"DROP TABLE {schema}.{table_name}",
-                )
-
-            return df
+        return dataframe
 
 
 class Bundle(LevelHandler):
     def __init__(self, compute_env: str):
         self.id_col = "bundle_id"
-        self.tabe_name = f"preds_bundle_{params.run_id}"
+        self.tabe_name = f"preds_bundle_{settings.run_id}"
 
         super().__init__(
             id_col=self.id_col,
@@ -302,7 +298,7 @@ class Bundle(LevelHandler):
         metro_level: bool = False,
         schema: str = None,
     ):
-        df = self._run_analysis(
+        dataframe = self._run_analysis(
             ids=ids,
             checkout_predictions=checkout_predictions,
             delivery_predictions=delivery_predictions,
@@ -318,7 +314,7 @@ class Bundle(LevelHandler):
             schema=schema,
         )
 
-        return df
+        return dataframe
 
     @staticmethod
     def match_analysis_type(
@@ -326,14 +322,14 @@ class Bundle(LevelHandler):
     ):
         if analysis_type.lower() == "bundle":
             return True
-        else:
-            return False
+
+        return False
 
 
 class Order(LevelHandler):
     def __init__(self, compute_env: str):
         self.id_col = "ng_order_id"
-        self.tabe_name = f"preds_order_{params.run_id}"
+        self.tabe_name = f"preds_order_{settings.run_id}"
 
         super().__init__(
             id_col=self.id_col,
@@ -353,8 +349,8 @@ class Order(LevelHandler):
         outlier_removal: bool = None,
         metro_level: bool = False,
         schema: str = None,
-    ):
-        df = self._run_analysis(
+    ) -> pd.DataFrame:
+        dataframe = self._run_analysis(
             ids=ids,
             checkout_predictions=checkout_predictions,
             delivery_predictions=delivery_predictions,
@@ -369,13 +365,10 @@ class Order(LevelHandler):
             metro_level=metro_level,
             schema=schema,
         )
-        return df
+        return dataframe
 
     @staticmethod
     def match_analysis_type(
         analysis_type: str,
     ):
-        if analysis_type.lower() == "order":
-            return True
-        else:
-            return False
+        return bool(analysis_type.lower() == "order")
