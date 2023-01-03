@@ -2,9 +2,9 @@ from enum import Enum
 from typing import Dict, List, Optional, Union
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel, Extra, root_validator
-import pandas as pd
 
 
 class SplitDataHolder(BaseModel):

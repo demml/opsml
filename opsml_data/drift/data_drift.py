@@ -1,24 +1,27 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
+
 import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import auc, roc_curve
+
 from opsml_data.drift.drift_utils import shipt_theme
-from opsml_data.drift.visualize import AltairChart
-from opsml_data.helpers import exceptions
 from opsml_data.drift.models import (
+    ChartType,
     DriftData,
-    HistogramOutput,
-    FeatureStatsOutput,
-    FeatureImportance,
     DriftReport,
     ExtractedAttributes,
-    ParsedFeatures,
+    FeatureImportance,
+    FeatureStatsOutput,
     FeatureTypes,
-    ParsedFeatureImportance,
+    HistogramOutput,
     ParsedFeatureDataFrames,
+    ParsedFeatureImportance,
+    ParsedFeatures,
 )
+from opsml_data.drift.visualize import AltairChart
+from opsml_data.helpers import exceptions
 
 alt.themes.register("shipt", shipt_theme)
 alt.themes.enable("shipt")
@@ -38,10 +41,10 @@ class FeatureImportanceCalculator:
         self.data = data
         self.features_and_target = [*self.features, *[target_feature]]
 
-    def compute_auc(self, X: np.ndarray, y: np.ndarray) -> float:
-        self.log_reg.fit(X, y)
-        preds = self.log_reg.predict_proba(X)[::, 1]
-        fpr, tpr, _ = roc_curve(y, preds, pos_label=1)
+    def compute_auc(self, x_data: np.ndarray, y_data: np.ndarray) -> float:
+        self.log_reg.fit(x_data, y_data)
+        preds = self.log_reg.predict_proba(x_data)[::, 1]
+        fpr, tpr, _ = roc_curve(y_data, preds, pos_label=1)
         return auc(fpr, tpr)
 
     def calculate_feature_importance(self):
@@ -53,9 +56,12 @@ class FeatureImportanceCalculator:
 
     def calculate_feature_auc(self):
         feature_aucs = []
-        X = np.hstack((self.data.X[self.features].to_numpy(), self.data.target))
-        for feature in range(X.shape[1]):
-            computed_auc = self.compute_auc(X=X[:, feature].reshape(-1, 1), y=self.data.y)
+        x_data = np.hstack((self.data.X[self.features].to_numpy(), self.data.target))
+        for feature in range(x_data.shape[1]):
+            computed_auc = self.compute_auc(
+                x_data=x_data[:, feature].reshape(-1, 1),
+                y_data=self.data.y,
+            )
             feature_aucs.append(computed_auc)
 
         return feature_aucs
@@ -161,14 +167,16 @@ class DriftDetectorData:
 
     def create_drift_data(self) -> DriftData:
 
-        X_drift = self.create_x_data()
+        x_drift = self.create_x_data()
         y_drift = self.create_y_data()
         target = np.vstack((self.reference_data.y.reshape(-1, 1), self.current_data.y.reshape(-1, 1)))
 
-        return DriftData(X=X_drift, y=y_drift, target=target)
+        return DriftData(X=x_drift, y=y_drift, target=target)
 
 
 class FeatureHistogram:
+    """Creates histogram values and bins for feature data"""
+
     def __init__(
         self,
         bins: Union[int, List[Union[int, float]]],
@@ -306,13 +314,15 @@ class DriftDetector:
         feature_importance = self.importance_calc.compute_importance()
         feature_stats = self.create_feature_stats()
 
-        self.drift_report = self.combine_importance_auc(
+        self.drift_report = self.combine_importance_stats(  # pylint: disable=attribute-defined-outside-init
             feature_importance=feature_importance,
             feature_stats=feature_stats,
         )
 
         if return_dataframe:
             return self.convert_report_to_dataframe()
+
+        return None
 
     def convert_report_to_dataframe(self):
         dataframe_dict = {}
@@ -325,7 +335,7 @@ class DriftDetector:
 
         return dataframe
 
-    def combine_importance_auc(
+    def combine_importance_stats(
         self,
         feature_importance: Dict[str, FeatureImportance],
         feature_stats: Dict[str, DriftReport],
@@ -353,7 +363,6 @@ class DriftDetector:
             target_val=feat_attr.target_val,
         ).compute_stats()
 
-        # using bins from reference stats
         current_stats = FeatureStats(
             data=feat_attr.current_data,
             feature_type=feat_attr.feature_type,
@@ -404,19 +413,29 @@ class DriftDetector:
             target_val=target_val,
         )
 
+    def drift_report_available(self):
+        if not hasattr(self, "drift_report"):
+            return False
+        return True
+
+    def visualize_report(self) -> alt.Chart:
+        if not self.drift_report_available():
+            self.run_drift_diagnostics()
+        visualizer = DriftVisualizer(drift_report=self.drift_report)
+        return visualizer.visualize_report()
+
 
 class DriftReportParser:
     def __init__(
         self,
         drift_report: Dict[str, DriftReport],
-        feature_list: List[str],
     ):
         self.drift_report = drift_report
-        self.feature_list = feature_list
+        self.feature_list = list(drift_report.keys())
         self.feature_distributions = ParsedFeatures()
         self.feature_importance = ParsedFeatureImportance()
 
-    def parse_drift_report(self) -> pd.DataFrame:
+    def report_to_dataframes(self) -> ParsedFeatureDataFrames:
         for feature in self.feature_list:
             self.parse_feature(feature=feature)
 
@@ -458,19 +477,20 @@ class DriftReportParser:
 class DriftVisualizer:
     def __init__(
         self,
+        drift_report: Dict[str, DriftReport],
+    ):
+        self.report_parser = DriftReportParser(drift_report=drift_report)
+        self.dataframes = self.report_parser.report_to_dataframes()
+
+    def select_chart(
+        self,
+        chart_type: int,
         data: pd.DataFrame,
-        x_column: Optional[str] = None,
-        y_column: Optional[str] = None,
+        x_column: str,
+        y_column: str,
         color_column: Optional[str] = None,
         dropdown_field_name: Optional[str] = None,
     ):
-        self.data = data
-        self.x_column = x_column
-        self.y_column = y_column
-        self.color_column = color_column
-        self.dropdown_field_name = dropdown_field_name
-
-    def select_plotter(self, chart_type: str):
         chart_builder = next(
             (
                 chart_builder
@@ -484,18 +504,95 @@ class DriftVisualizer:
 
         if not bool(chart_builder):
             raise exceptions.NotOfCorrectType(
-                """No plotting class found for %s""",
-                chart_type,
+                f"""No charting class found for {ChartType(chart_type).name}""",
             )
 
         return chart_builder(
-            data=self.data,
-            x_column=self.x_column,
-            y_column=self.y_column,
-            color_column=self.color_column,
-            dropdown_field_name=self.dropdown_field_name,
+            data=data,
+            x_column=x_column,
+            y_column=y_column,
+            color_column=color_column,
+            dropdown_field_name=dropdown_field_name,
         )
 
-    def build_plot(self, plot_type: str):
-        plotter = self.select_plotter(plot_type=plot_type)
-        return plotter.build_plot()
+    def get_dataframe(self, chart_type: int):
+        """Gets dataframe associated with chart type
+
+        Args:
+            chart_type (int): Chart type that is being built
+
+        Returns:
+            pandas dataframe
+        """
+        if ChartType(chart_type) == ChartType.AUC:
+            return self.dataframes.importance_dataframe
+        data = self.dataframes.distribution_dataframe
+        return data.loc[data["feature_type"] == chart_type]
+
+    def build_chart(
+        self,
+        chart_type: int,
+        x_column: str,
+        y_column: str,
+        chart_title: str,
+        color_column: Optional[str] = None,
+        dropdown_field_name: Optional[str] = None,
+    ):
+        data = self.get_dataframe(chart_type=chart_type)
+
+        chart_builder = self.select_chart(
+            chart_type=chart_type,
+            data=data,
+            x_column=x_column,
+            y_column=y_column,
+            color_column=color_column,
+            dropdown_field_name=dropdown_field_name,
+        )
+
+        return chart_builder.build_chart(chart_title=chart_title)
+
+    def get_chart_title(self, chart_type: int):
+        if ChartType(chart_type) == ChartType.NUMERIC:
+            return "Numeric Feature Distribution"
+        return "Categorical Feature Distribution"
+
+    def create_distribution_plots(self) -> List[alt.Chart]:
+        charts = []
+        chart_types = self.dataframes.distribution_dataframe["feature_type"].unique()
+        for chart_type in chart_types:
+            chart_title = self.get_chart_title(chart_type=chart_type)
+            charts.append(
+                self.build_chart(
+                    chart_type=chart_type,
+                    x_column="bins",
+                    y_column="values",
+                    color_column="label",
+                    dropdown_field_name="feature",
+                    chart_title=chart_title,
+                )
+            )
+        return charts
+
+    def create_auc_chart(self) -> List[alt.Chart]:
+        chart_type = 2
+        chart = [
+            self.build_chart(
+                chart_type=chart_type,
+                x_column="auc",
+                y_column="feature",
+                chart_title="Feature AUC",
+            )
+        ]
+        return chart
+
+    def visualize_report(self, filename: str = "chart.html"):
+        dist_charts = self.create_distribution_plots()
+        auc_chart = self.create_auc_chart()
+
+        final_chart = alt.vconcat(alt.hconcat(*dist_charts), *auc_chart)
+        final_chart.save(
+            filename,
+            embed_options={"renderer": "svg"},
+        )
+
+        return final_chart
