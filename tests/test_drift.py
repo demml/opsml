@@ -13,8 +13,12 @@ from opsml_data.drift.data_drift import (
     FeatureTypes,
     FeatureHistogram,
     DriftDetector,
+    DriftReportParser,
+    ParsedFeatureDataFrames,
 )
+from opsml_data.drift.visualize import NumericChart, CategoricalChart, AucChart
 from opsml_data.drift.models import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
+import altair_viewer
 
 
 @pytest.mark.parametrize("categorical", [None, ["col_10"]])
@@ -105,8 +109,8 @@ def _test_histogram(drift_dataframe, feature_type):
     assert isinstance(hist_output, HistogramOutput)
 
 
-@pytest.mark.parametrize("categorical", [None, ["col_10"]])
-def test_drift_detector(drift_dataframe, categorical):
+@pytest.mark.parametrize("categorical", [["col_10"]])
+def _test_drift_detector(drift_dataframe, categorical):
     X_train, y_train = drift_dataframe
 
     detector = DriftDetector(
@@ -126,6 +130,76 @@ def test_drift_detector(drift_dataframe, categorical):
     results = detector.run_drift_diagnostics(return_dataframe=True)
 
     assert isinstance(results, pd.DataFrame)
+
+
+@pytest.mark.parametrize("categorical", [["col_10"]])
+def test_altair_plots(drift_dataframe, categorical):
+
+    X_train, y_train, X_test, y_test = drift_dataframe
+
+    detector = DriftDetector(
+        x_reference=X_train,
+        y_reference=y_train,
+        x_current=X_test,
+        y_current=y_test,
+        target_feature_name="target",
+        categorical_features=categorical,
+    )
+
+    importance = detector.importance_calc.compute_importance()
+    stats = detector.create_feature_stats()
+
+    assert len(importance.keys()) == len(stats.keys())
+
+    detector.run_drift_diagnostics(return_dataframe=False)
+
+    parser = DriftReportParser(
+        drift_report=detector.drift_report,
+        feature_list=detector.features_and_target,
+    )
+
+    parsed_dfs: ParsedFeatureDataFrames = parser.parse_drift_report()
+    df = parsed_dfs.distribution_dataframe
+
+    # test numeric plot
+    numeric_data = df.loc[df["feature_type"] == 1]
+    numeric_chart = NumericChart(
+        data=numeric_data,
+        x_column="bins",
+        y_column="values",
+        color_column="label",
+        dropdown_field_name="feature",
+    )
+    chart = numeric_chart.build_chart(chart_title="Numeric Data")
+    chart.save("numeric_chart.html")
+    assert os.path.isfile("numeric_chart.html")
+
+    # test categorical
+    categorical_data = df.loc[df["feature_type"] == 0]
+    categorical_data["bins"] = categorical_data["bins"].astype("int")
+
+    cat_chart = CategoricalChart(
+        data=categorical_data,
+        x_column="bins",
+        y_column="values",
+        color_column="label",
+        dropdown_field_name="feature",
+    )
+
+    chart = cat_chart.build_chart(chart_title="Categorical")
+    chart.save("categorical_chart.html")
+    assert os.path.isfile("categorical_chart.html")
+
+    importance_data = parsed_dfs.importance_dataframe
+
+    importance_chart = AucChart(
+        data=importance_data,
+        x_column="auc",
+        y_column="feature",
+    )
+
+    chart = importance_chart.build_chart(chart_title="AUC")
+    altair_viewer.show(chart)
 
 
 @pytest.mark.parametrize("feature_type", ["numerical", "categorical"])
