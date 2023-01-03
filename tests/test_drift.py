@@ -15,6 +15,7 @@ from opsml_data.drift.data_drift import (
     DriftDetector,
     DriftReportParser,
     ParsedFeatureDataFrames,
+    DriftVisualizer,
 )
 from opsml_data.drift.visualize import NumericChart, CategoricalChart, AucChart
 from opsml_data.drift.models import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
@@ -22,8 +23,8 @@ import altair_viewer
 
 
 @pytest.mark.parametrize("categorical", [None, ["col_10"]])
-def _test_drift_features(drift_dataframe, categorical):
-    X_train, y_train = drift_dataframe
+def test_drift_features(drift_dataframe, categorical):
+    X_train, y_train, X_test, y_test = drift_dataframe
 
     features = DriftFeatures(
         dtypes=dict(X_train.dtypes),
@@ -53,8 +54,8 @@ def _test_drift_detector_data(drift_dataframe):
 
 
 @pytest.mark.parametrize("categorical", [None, ["col_10"]])
-def _test_feature_importance(drift_dataframe, categorical):
-    X_train, y_train = drift_dataframe
+def test_feature_importance(drift_dataframe, categorical):
+    X_train, y_train, X_test, y_test = drift_dataframe
 
     features = DriftFeatures(
         dtypes=dict(X_train.dtypes),
@@ -79,8 +80,8 @@ def _test_feature_importance(drift_dataframe, categorical):
 
 
 @pytest.mark.parametrize("feature_type", [0, 1])
-def _test_feature_stats(drift_dataframe, feature_type):
-    X_train, y_train = drift_dataframe
+def test_feature_stats(drift_dataframe, feature_type):
+    X_train, y_train, X_test, y_test = drift_dataframe
 
     test_data = X_train["col_1"].to_numpy().reshape(-1, 1)
 
@@ -101,8 +102,8 @@ def _test_feature_stats(drift_dataframe, feature_type):
 
 
 @pytest.mark.parametrize("feature_type", [0, 1])
-def _test_histogram(drift_dataframe, feature_type):
-    X_train, y_train = drift_dataframe
+def test_histogram(drift_dataframe, feature_type):
+    X_train, y_train, X_test, y_test = drift_dataframe
 
     data = X_train["col_1"].to_numpy().reshape(-1, 1)
     hist_output = FeatureHistogram(feature_type=feature_type, bins=20).compute_feature_histogram(data=data)
@@ -110,8 +111,8 @@ def _test_histogram(drift_dataframe, feature_type):
 
 
 @pytest.mark.parametrize("categorical", [["col_10"]])
-def _test_drift_detector(drift_dataframe, categorical):
-    X_train, y_train = drift_dataframe
+def test_drift_detector(drift_dataframe, categorical):
+    X_train, y_train, X_test, y_test = drift_dataframe
 
     detector = DriftDetector(
         x_reference=X_train,
@@ -146,19 +147,10 @@ def test_altair_plots(drift_dataframe, categorical):
         categorical_features=categorical,
     )
 
-    importance = detector.importance_calc.compute_importance()
-    stats = detector.create_feature_stats()
-
-    assert len(importance.keys()) == len(stats.keys())
-
     detector.run_drift_diagnostics(return_dataframe=False)
+    parser = DriftReportParser(drift_report=detector.drift_report)
 
-    parser = DriftReportParser(
-        drift_report=detector.drift_report,
-        feature_list=detector.features_and_target,
-    )
-
-    parsed_dfs: ParsedFeatureDataFrames = parser.parse_drift_report()
+    parsed_dfs: ParsedFeatureDataFrames = parser.report_to_dataframes()
     df = parsed_dfs.distribution_dataframe
 
     # test numeric plot
@@ -199,115 +191,31 @@ def test_altair_plots(drift_dataframe, categorical):
     )
 
     chart = importance_chart.build_chart(chart_title="AUC")
-    altair_viewer.show(chart)
+    chart.save("auc_chart.html")
+    assert os.path.isfile("auc_chart.html")
 
 
-@pytest.mark.parametrize("feature_type", ["numerical", "categorical"])
-def _test_feature_drift(feature_type):
-    mu_1 = -4  # mean of the first distribution
-    mu_2 = 4  # mean of the second distribution
-    data_1 = np.random.normal(mu_1, 2.0, 1000)
-    data_2 = np.random.normal(mu_2, 2.0, 1000)
+@pytest.mark.parametrize("categorical", [["col_10"], None])
+def test_drift_visualizer(drift_dataframe, categorical):
 
-    drifter = Drifter()
-    results = drifter._compute_feature_stats(
-        data_1,
-        data_2,
-        "reference",
-        "current",
-        feature_type,
+    X_train, y_train, X_test, y_test = drift_dataframe
+
+    detector = DriftDetector(
+        x_reference=X_train,
+        y_reference=y_train,
+        x_current=X_test,
+        y_current=y_test,
+        target_feature_name="target",
+        categorical_features=categorical,
     )
-    assert isinstance(results, dict)
+    detector.run_drift_diagnostics(return_dataframe=False)
 
+    visualizer = DriftVisualizer(drift_report=detector.drift_report)
+    chart = visualizer.visualize_report()
 
-def _test_feature_importance_drift():
-    mu_1 = -4  # mean of the first distribution
-    mu_2 = 4  # mean of the second distribution
-    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
-    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
-
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-
-    X_train = pd.DataFrame(X_train, columns=col_names)
-    X_train["target_feature"] = np.random.randint(1, 100, size=(1000, 1))
-
-    X_test = pd.DataFrame(X_test, columns=col_names)
-    X_test["target_feature"] = np.random.randint(5, 50, size=(1000, 1))
-
-    drifter = Drifter()
-    results = drifter._compute_drift_feature_importance(X_train, X_test, col_names, target_feature="target_feature")
-
-    assert isinstance(results, dict)
-
-
-def _test_run_diagnostics():
-    mu_1 = -4  # mean of the first distribution
-    mu_2 = 4  # mean of the second distribution
-    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
-    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
-
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-
-    X_train = pd.DataFrame(X_train, columns=col_names)
-    X_train["target_feature"] = np.random.randint(1, 100, size=(1000, 1))
-
-    X_test = pd.DataFrame(X_test, columns=col_names)
-    X_test["target_feature"] = np.random.randint(5, 50, size=(1000, 1))
-
-    drifter = Drifter()
-    results = drifter.run_drift_diagnostics(
-        reference_data=X_train,
-        current_data=X_test,
-        target_feature="target_feature",
-        return_df=True,
-    )
-
-    assert isinstance(results, pd.DataFrame)
-
-    results = drifter.run_drift_diagnostics(
-        reference_data=X_train,
-        current_data=X_test,
-        target_feature="target_feature",
-        return_df=True,
-        exclude_cols=["col_0"],
-        categorical_features=["col_2"],
-    )
-
-    assert "col_0" not in results["feature"].unique()
-    subset = results.loc[results["feature"] == "col_2"]["type"]
-    assert subset.values[0] == "categorical"
-
-
-def _test_drift_chart():
-    mu_1 = -4  # mean of the first distribution
-    mu_2 = 4  # mean of the second distribution
-    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
-    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
-
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-
-    X_train = pd.DataFrame(X_train, columns=col_names)
-    X_train["target_feature"] = np.random.randint(1, 100, size=(1000, 1))
-
-    X_test = pd.DataFrame(X_test, columns=col_names)
-    X_test["target_feature"] = np.random.randint(5, 50, size=(1000, 1))
-
-    drifter = Drifter()
-    results = drifter.run_drift_diagnostics(
-        reference_data=X_train,
-        current_data=X_test,
-        target_feature="target_feature",
-        return_df=True,
-    )
-
-    chart = drifter.chart_drift_diagnostics(df=results)
-    os.remove("chart.html")
+    # try drift detector by itself
+    chart = detector.visualize_report()
+    assert os.path.isfile("chart.html")
 
 
 def _test_real_data():
@@ -325,49 +233,20 @@ def _test_real_data():
         "DROP_OFF_TIME",
     ]
 
-    train_data = df.loc[(df["EVAL_FLG"] == 0) & (df["TRAIN_OUTLIER"] == 0)][features]
-    eval_data = df.loc[df["EVAL_FLG"] == 1][features]
+    X_train = df.loc[(df["EVAL_FLG"] == 0) & (df["TRAIN_OUTLIER"] == 0)][features]
+    X_test = df.loc[df["EVAL_FLG"] == 1][features]
 
-    drifter = Drifter()
-    drift_df = drifter.run_drift_diagnostics(
-        reference_data=train_data,
-        current_data=eval_data,
-        target_feature="DROP_OFF_TIME",
-        current_label="eval",
-        reference_label="train",
-        return_df=True,
+    y_train = X_train.pop("DROP_OFF_TIME").to_numpy().reshape(-1, 1)
+    y_test = X_test.pop("DROP_OFF_TIME").to_numpy().reshape(-1, 1)
+
+    detector = DriftDetector(
+        x_reference=X_train,
+        y_reference=y_train,
+        x_current=X_test,
+        y_current=y_test,
+        target_feature_name="DROP_OFF_TIME",
+        categorical_features=None,
     )
 
-    drifter.chart_drift_diagnostics(
-        df=drift_df,
-        reference_label="train",
-        current_label="eval",
-    )
-
-    # mu_1 = -4  # mean of the first distribution
-    # mu_2 = 4  # mean of the second distribution
-    # X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
-    # X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
-
-
-#
-# col_names = []
-# for i in range(0, X_train.shape[1]):
-#    col_names.append(f"col_{i}")
-#
-# X_train = pd.DataFrame(X_train, columns=col_names)
-# X_train["target_feature"] = np.random.randint(1, 100, size=(1000, 1))
-#
-# X_test = pd.DataFrame(X_test, columns=col_names)
-# X_test["target_feature"] = np.random.randint(5, 50, size=(1000, 1))
-#
-# drifter = Drifter()
-# results = drifter.run_drift_diagnostics(
-#    reference_data=X_train,
-#    current_data=X_test,
-#    target_feature="target_feature",
-#    return_df=True,
-# )
-#
-# chart = drifter.chart_drift_diagnostics(df=results)
-# os.remove("chart.html")
+    chart = detector.visualize_report()
+    altair_viewer.show(chart)

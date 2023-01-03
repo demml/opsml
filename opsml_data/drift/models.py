@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Extra, root_validator
-from typing import Optional, List, Dict, Any, Union
-import pandas as pd
-import numpy as np
 from enum import Enum
+from typing import List, Optional
+
+import numpy as np
+import pandas as pd
+from pydantic import BaseModel, Extra, root_validator
 
 
 class DriftData(BaseModel):
@@ -40,7 +41,7 @@ class HistogramOutput(BaseModel):
         arbitrary_types_allowed = True
 
     @root_validator(pre=True)
-    def modify_attr(cls, values):
+    def modify_attr(cls, values):  # pylint: disable=no-self-argument
         bins = values["bins"]
         vals = values["values"]
 
@@ -99,3 +100,9 @@ class ParsedFeatureDataFrames(BaseModel):
 class FeatureTypes(Enum):
     CATEGORICAL = 0
     NUMERIC = 1
+
+
+class ChartType(Enum):
+    CATEGORICAL = 0
+    NUMERIC = 1
+    AUC = 2

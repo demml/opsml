@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict, Union
+import uuid
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
@@ -10,7 +11,6 @@ from opsml_data.registry.data_card import DataCard
 from opsml_data.registry.models import RegistryRecord
 from opsml_data.registry.sql_schema import DataSchema, TableSchema
 from opsml_data.registry.storage import load_record_data_from_storage
-import uuid
 
 logger = ShiptLogging.get_logger(__name__)
 

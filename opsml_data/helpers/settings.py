@@ -2,12 +2,12 @@ import base64
 import json
 import os
 from datetime import datetime
-from typing import List, Tuple, Dict, Union
-from pydantic import BaseModel, Extra, root_validator
+from typing import Dict, List, Tuple, Union
 
 import google.auth
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
+from pydantic import BaseModel, Extra, root_validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.helpers.models import SnowflakeParams
@@ -92,10 +92,10 @@ class GCPEnvSetter:
 
         secret_name = f"opsml_service_creds_{self.attributes['app_env']}"
         gcp_creds, gcp_project = OpsmlCreds().set_opsml_creds(service_account_secret_name=secret_name)
-        service_account = getattr(gcp_creds, "service_account_email", None)
+        service_account_email = getattr(gcp_creds, "service_account_email", None)
 
         key_names = ["gcp_creds", "gcp_project", "service_account"]
-        values = [gcp_creds, gcp_project, service_account]
+        values = [gcp_creds, gcp_project, service_account_email]
 
         self._append_to_attributes(key_names=key_names, values=values)
 
@@ -142,6 +142,7 @@ class Settings(BaseModel):
     gcp_region: str
     run_id: str
     app_env: str
+    path: str = os.getcwd()
     gcp_creds: Credentials
     snowflake_api_auth: str
     snowflake_api_url: str
