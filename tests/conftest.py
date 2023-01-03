@@ -12,6 +12,7 @@ from opsml_data.helpers.utils import FindPath, GCPClient
 from opsml_data.registry.connection import create_sql_engine
 from opsml_data.registry.data_registry import DataRegistry
 from opsml_data.registry.sql_schema import TestDataSchema
+import joblib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -30,7 +31,7 @@ def pytest_sessionfinish(session, exitstatus):
         else:
             os.remove(path)
 
-    paths = [path for path in Path(os.getcwd()).rglob("chart.html")]
+    paths = [path for path in Path(os.getcwd()).rglob("*chart.html")]
     if paths:
         for path in paths:
             os.remove(path)
@@ -163,20 +164,24 @@ def test_df():
 def drift_dataframe():
     mu_1 = -4  # mean of the first distribution
     mu_2 = 4  # mean of the second distribution
-    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
     cat = np.random.randint(0, 3, 1000).reshape(-1, 1)
     X_train = np.hstack((X_train, cat))
 
     X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
+    cat = np.random.randint(2, 5, 1000).reshape(-1, 1)
+    X_test = np.hstack((X_test, cat))
 
     col_names = []
     for i in range(0, X_train.shape[1]):
         col_names.append(f"col_{i}")
 
     X_train = pd.DataFrame(X_train, columns=col_names)
+    X_test = pd.DataFrame(X_test, columns=col_names)
     y_train = np.random.randint(1, 100, size=(1000, 1))
+    y_test = np.random.randint(2, 100, size=(1000, 1))
 
-    return X_train, y_train
+    return X_train, y_train, X_test, y_test
 
 
 @pytest.fixture(scope="session")
@@ -212,3 +217,10 @@ def storage_client():
         service_name="storage",
         gcp_credentials=settings.gcp_creds,
     )
+
+
+@pytest.fixture(scope="function")
+def drift_report():
+    drift_report = joblib.load("tests/drift_report.joblib")
+
+    return drift_report

@@ -1,11 +1,12 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
-from enum import Enum
 import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import auc, roc_curve
 from opsml_data.drift.drift_utils import shipt_theme
+from opsml_data.drift.visualize import AltairChart
+from opsml_data.helpers import exceptions
 from opsml_data.drift.models import (
     DriftData,
     HistogramOutput,
@@ -13,15 +14,14 @@ from opsml_data.drift.models import (
     FeatureImportance,
     DriftReport,
     ExtractedAttributes,
+    ParsedFeatures,
+    FeatureTypes,
+    ParsedFeatureImportance,
+    ParsedFeatureDataFrames,
 )
 
 alt.themes.register("shipt", shipt_theme)
 alt.themes.enable("shipt")
-
-
-class FeatureTypes(Enum):
-    CATEGORICAL = 0
-    NUMERIC = 1
 
 
 class FeatureImportanceCalculator:
@@ -66,7 +66,10 @@ class FeatureImportanceCalculator:
 
         feature_dict = {}
         for feature_name, importance, computed_auc in zip(self.features_and_target, feature_importances, feature_aucs):
-            feature_dict[feature_name] = FeatureImportance(importance=importance, auc=computed_auc)
+            feature_dict[feature_name] = FeatureImportance(
+                importance=importance,
+                auc=computed_auc,
+            )
 
         return feature_dict
 
@@ -82,7 +85,8 @@ class FeatureImportanceCalculator:
         feature_importances = self.calculate_feature_importance()
         feature_aucs = self.calculate_feature_auc()
         combined_features = self.combine_feature_importance_auc(
-            feature_importances=feature_importances, feature_aucs=feature_aucs
+            feature_importances=feature_importances,
+            feature_aucs=feature_aucs,
         )
         return combined_features
 
@@ -173,19 +177,18 @@ class FeatureHistogram:
         self.bins = bins
         self.feature_type = feature_type
 
-    def compute_histogram(self, data: np.ndarray) -> Tuple[List[float], List[float]]:
-        hist, edges = np.histogram(data, bins=self.bins, density=False)
-        hist = np.divide(hist, data.shape[0])
-
-        return edges, hist
-
     def compute_feature_histogram(self, data: np.ndarray) -> HistogramOutput:
+
         if FeatureTypes(self.feature_type) == FeatureTypes.NUMERIC:
-            edges, hist = self.compute_histogram(data=data)
+            hist, edges = np.histogram(data, bins=self.bins, density=False)
         else:
             edges, hist = np.unique(data, return_counts=True)
+        hist = np.divide(hist, data.shape[0])
 
-        return HistogramOutput(histogram=hist, edges=edges)
+        return HistogramOutput(
+            values=hist,
+            bins=edges,
+        )
 
 
 class FeatureStats:
@@ -212,8 +215,17 @@ class FeatureStats:
         )
 
     @staticmethod
-    def compute_intersection(current_hist, reference_hist):
-        intersection = np.sum(current_hist) / np.sum(reference_hist)
+    def compute_intersection(
+        current_distribution: HistogramOutput,
+        reference_distribution: HistogramOutput,
+    ):
+        overlap_vals = []
+        min_bin = min(reference_distribution.bins)
+        max_bin = max(reference_distribution.bins)
+        for bin_, val in zip(current_distribution.bins, current_distribution.values):
+            if min_bin <= bin_ <= max_bin:
+                overlap_vals.append(val)
+        intersection = np.sum(overlap_vals)
         return intersection
 
     def count_missing(self) -> Tuple[int, float]:
@@ -346,12 +358,11 @@ class DriftDetector:
             data=feat_attr.current_data,
             feature_type=feat_attr.feature_type,
             target_val=feat_attr.target_val,
-            bins=reference_stats.historgram.edges,
         ).compute_stats()
 
         intersection = FeatureStats.compute_intersection(
-            current_hist=current_stats.historgram.histogram,
-            reference_hist=reference_stats.historgram.histogram,
+            current_distribution=current_stats.historgram,
+            reference_distribution=reference_stats.historgram,
         )
         return DriftReport(
             intersection=intersection,
@@ -360,6 +371,7 @@ class DriftDetector:
             reference_distribution=reference_stats.historgram,
             current_distribution=current_stats.historgram,
             target_feature=feat_attr.target_val,
+            feature_type=reference_stats.type_,
         )
 
     def get_ref_curr_feature_data(self, feature: str, data_ind: str = "X"):
@@ -392,245 +404,98 @@ class DriftDetector:
             target_val=target_val,
         )
 
-    def convert_diagnostics_to_dataframe(
+
+class DriftReportParser:
+    def __init__(
         self,
-        feature_importance: Dict[str, Dict[str, Union[float, int]]],
-        feature_stats: Dict[str, Dict[str, Union[str, int, float]]],
-    ) -> pd.DataFrame:
-        combined_data = {}
-        for feature in self.features_and_target:
-            combined_data[feature] = {}
-            combined_data[feature].update(feature_importance[feature])
-            combined_data[feature].update(feature_stats[feature])
-
-        return pd.DataFrame.from_dict(combined_data, orient="index")
-
-    @classmethod
-    def _parse_drift_df(
-        cls,
-        dataframe: pd.DataFrame,
-        reference_label: str,
-        current_label: str,
+        drift_report: Dict[str, DriftReport],
+        feature_list: List[str],
     ):
-        num_list = []
-        cat_list = []
-        data_dict = {
-            "num_data": None,
-            "cat_data": None,
-        }
-        for feature in dataframe["feature"].unique():
-            subset = dataframe.loc[dataframe["feature"] == feature]
-            reference = pd.DataFrame.from_dict(subset["reference_distribution"].values[0])
-            reference["data"] = reference_label
-            current = pd.DataFrame.from_dict(
-                subset["current_distribution"].values[0],
-            )
-            current["data"] = current_label
-            plot_data = pd.concat([reference, current], axis=0)
-            plot_data["feature"] = feature
-            if subset["type"].values[0] == "categorical":
-                cat_list.append(plot_data)
-            else:
-                num_list.append(plot_data)
+        self.drift_report = drift_report
+        self.feature_list = feature_list
+        self.feature_distributions = ParsedFeatures()
+        self.feature_importance = ParsedFeatureImportance()
 
-        if len(num_list) > 0:
-            data_dict["num_data"] = pd.concat(
-                num_list,
-                axis=0,
-            )
+    def parse_drift_report(self) -> pd.DataFrame:
+        for feature in self.feature_list:
+            self.parse_feature(feature=feature)
 
-        if len(cat_list) > 0:
-            data_dict["cat_data"] = pd.concat(
-                cat_list,
-                axis=0,
-            )
+        dist_dataframe = pd.DataFrame.from_dict(self.feature_distributions.dict())
+        importance_dataframe = pd.DataFrame.from_dict(self.feature_importance.dict())
 
-        return data_dict
-
-    @classmethod
-    def _build_cat_plot(cls, cat_data: pd.DataFrame = None):
-
-        if cat_data is None:
-            return None
-
-        cat_dropdown = alt.binding_select(
-            options=cat_data["feature"].unique(),
-            name="Categorical Feature ",
-        )
-        cat_selection = alt.selection_single(
-            fields=["feature"],
-            bind=cat_dropdown,
+        return ParsedFeatureDataFrames(
+            distribution_dataframe=dist_dataframe,
+            importance_dataframe=importance_dataframe,
         )
 
-        cat_chart = (
-            alt.Chart(cat_data)
-            .mark_bar()
-            .encode(
-                x=alt.X("edges", title="Values"),
-                y=alt.Y("hist", title="Count"),
-                color=alt.Color(
-                    "data:N",
-                    title="Data",
-                    legend=alt.Legend(orient="right"),
-                ),
-                tooltip="hist:N",
-            )
-            .add_selection(cat_selection)
-            .transform_filter(cat_selection)
-            .properties(width=300, title="Categorical")
-        )
+    def parse_feature(self, feature: str):
+        feature_report: DriftReport = self.drift_report[feature]
+        self.append_to_feature_data(feature=feature, feature_report=feature_report)
+        self.append_to_feature_auc(feature=feature, feature_report=feature_report)
 
-        return cat_chart
+    def append_to_feature_auc(self, feature: str, feature_report: DriftReport):
+        self.feature_importance.feature.append(feature)
+        self.feature_importance.auc.append(feature_report.feature_auc)
+        self.feature_importance.importance.append(feature_report.feature_importance)
 
-    @classmethod
-    def _build_num_plot(cls, num_data: pd.DataFrame = None):
+    def append_to_feature_data(self, feature: str, feature_report: DriftReport):
 
-        if num_data is None:
-            return None
-        num_dropdown = alt.binding_select(
-            options=num_data["feature"].unique(),
-            name="Numeric Feature ",
-        )
-        num_selection = alt.selection_single(
-            fields=["feature"],
-            bind=num_dropdown,
-        )
+        for label in ["reference", "current"]:
+            hist: HistogramOutput = getattr(feature_report, f"{label}_distribution")
+            self.feature_distributions.feature = [
+                *self.feature_distributions.feature,
+                *[feature] * hist.values.shape[0],
+            ]
+            self.feature_distributions.label = [*self.feature_distributions.label, *[label] * hist.values.shape[0]]
+            self.feature_distributions.values = [*self.feature_distributions.values, *hist.values]
+            self.feature_distributions.bins = [*self.feature_distributions.bins, *hist.bins]
+            self.feature_distributions.feature_type = [
+                *self.feature_distributions.feature_type,
+                *[feature_report.feature_type] * hist.bins.shape[0],
+            ]
 
-        num_chart = (
-            alt.Chart(num_data)
-            .encode(
-                x=alt.X("edges", title="Values"),
-                y=alt.Y("hist", title="Count"),
-                color=alt.Color(
-                    "data:N",
-                    title="Data",
-                    legend=alt.Legend(orient="right"),
-                ),
-                tooltip="hist:N",
-            )
-            .add_selection(num_selection)
-            .mark_area()
-            .transform_filter(num_selection)
-            .properties(width=300, title="Numeric")
-        )
 
-        return num_chart
-
-    @classmethod
-    def _feature_auc_plot(cls, dataframe: pd.DataFrame = None):
-
-        if not bool(dataframe):
-            return None
-        # feature auc
-        feature_auc_chart = (
-            alt.Chart(dataframe)
-            .mark_bar()
-            .encode(
-                y=alt.X("feature_auc", title="Values"),
-                x=alt.Y(
-                    "feature",
-                    title="Feature",
-                    sort="-x",
-                    axis=alt.Axis(
-                        domain=True,
-                        offset=1,
-                        labelAngle=-45,
-                    ),
-                ),
-                color=alt.condition(
-                    "datum.feature_auc>=.6",
-                    alt.ColorValue("red"),
-                    alt.ColorValue("#BEBFC1"),
-                ),
-            )
-            .properties(title="Feature Importance")
-        )
-
-        return feature_auc_chart
-
-    @classmethod
-    def _generate_final_chart(
-        cls,
-        num_chart=None,
-        cat_chart=None,
-        feature_auc_chart=None,
+class DriftVisualizer:
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        x_column: Optional[str] = None,
+        y_column: Optional[str] = None,
+        color_column: Optional[str] = None,
+        dropdown_field_name: Optional[str] = None,
     ):
+        self.data = data
+        self.x_column = x_column
+        self.y_column = y_column
+        self.color_column = color_column
+        self.dropdown_field_name = dropdown_field_name
 
-        if num_chart is not None and cat_chart is not None:
-            chart1 = alt.hconcat(
-                num_chart,
-                cat_chart,
-            )
-
-            chart = alt.vconcat(
-                chart1,
-                feature_auc_chart,
-            )
-
-        if num_chart is not None and cat_chart is None:
-            chart = alt.hconcat(
-                feature_auc_chart,
-                num_chart,
-            )
-
-        if cat_chart is not None and num_chart is None:
-            chart = alt.hconcat(
-                feature_auc_chart,
-                cat_chart,
-            )
-
-        if num_chart is None and cat_chart is None:
-            chart = feature_auc_chart
-
-        return chart
-
-    @classmethod
-    def chart_drift_diagnostics(
-        cls,
-        dataframe: pd.DataFrame,
-        reference_label: str = "reference",
-        current_label: str = "current",
-        save_fig: bool = True,
-        filename: str = "chart.html",
-    ):
-        """Visualize drift diagnostics from a pandas dataframe
-        that was generated by "run_drift_diagnostics".
-
-        Args:
-            dataframe: Pandas dataframe from "run_drift_diagnostics
-            reference_label: Label that was used for reference data when
-            computing metrics.
-            current_label: Label that was used for current data when
-            computing metrics.
-            save_fig: Whether to save the chart or not.
-            filename: Filename to save chart to.
-        Returns:
-            chart (Alatair Chart): Chart created from drift dataframe.
-        """
-
-        data_dict = cls._parse_drift_df(
-            dataframe=dataframe,
-            reference_label=reference_label,
-            current_label=current_label,
-        )
-        cat_chart = cls._build_cat_plot(
-            data_dict["cat_data"],
+    def select_plotter(self, chart_type: str):
+        chart_builder = next(
+            (
+                chart_builder
+                for chart_builder in AltairChart.__subclasses__()
+                if chart_builder.validate_type(
+                    chart_type=chart_type,
+                )
+            ),
+            None,
         )
 
-        num_chart = cls._build_num_plot(
-            data_dict["num_data"],
-        )
-
-        feature_auc_chart = cls._feature_auc_plot(dataframe)
-        chart = cls._generate_final_chart(
-            num_chart=num_chart,
-            cat_chart=cat_chart,
-            feature_auc_chart=feature_auc_chart,
-        )
-
-        if save_fig:
-            chart.save(
-                filename,
-                embed_options={"renderer": "svg"},
+        if not bool(chart_builder):
+            raise exceptions.NotOfCorrectType(
+                """No plotting class found for %s""",
+                chart_type,
             )
-        return chart
+
+        return chart_builder(
+            data=self.data,
+            x_column=self.x_column,
+            y_column=self.y_column,
+            color_column=self.color_column,
+            dropdown_field_name=self.dropdown_field_name,
+        )
+
+    def build_plot(self, plot_type: str):
+        plotter = self.select_plotter(plot_type=plot_type)
+        return plotter.build_plot()

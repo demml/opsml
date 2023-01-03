@@ -34,6 +34,7 @@ mypy = "^0.991"
 [tool.poetry.group.dev.dependencies]
 pytest-lazy-fixture = "^0.6.3"
 ruff = "^0.0.194"
+altair-viewer = "^0.4.0"
 
 [tool.isort]
 profile = "black"
