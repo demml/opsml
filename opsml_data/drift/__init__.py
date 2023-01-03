@@ -1,3 +1,3 @@
-from .data_drift import DriftDetector  # noqa
+from .data_drift import DriftDetector, DriftVisualizer  # noqa
 
-__all__ = ["DriftDetector"]
+__all__ = ["DriftDetector", "DriftVisualizer"]

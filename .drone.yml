@@ -31,10 +31,9 @@ steps:
     commands:
       #- python env.py
            #- python env.py
+      - apt update
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
       - export GOOGLE_APPLICATION_CREDENTIALS=account.json
-      - apt update
-      - apt-get install graphviz -y
       - pip install poetry==1.2.2
       - poetry install
       - make test.unit

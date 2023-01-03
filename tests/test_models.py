@@ -4,16 +4,16 @@ from pytest_lazyfixture import lazy_fixture
 
 from opsml_data.helpers.exceptions import NotOfCorrectType
 from opsml_data.registry.data_card import DataCard
-from opsml_data.registry.models import DataSplit, SplitStartStop
+from opsml_data.registry.models import DataSplit
 
 
 def test_partition():
-    split = {"label": "train", "col": "test", "val": 10}
+    split = {"label": "train", "column": "test", "column_value": 10}
 
     partition = DataSplit(**split)
 
-    assert partition.col == "test"
-    assert partition.val == 10
+    assert partition.column == "test"
+    assert partition.column_value == 10
 
     split = {"label": "train", "start": 0, "stop": 10}
 
@@ -61,8 +61,8 @@ def test_data_card_splits(test_data):
 
     if isinstance(test_data, pd.DataFrame):
         splits = [
-            {"label": "train", "col": "n_legs", "val": 2},
-            {"label": "test", "col": "n_legs", "val": 4},
+            {"label": "train", "column": "n_legs", "column_value": 2},
+            {"label": "test", "column": "n_legs", "column_value": 4},
         ]
 
         data_card = DataCard(

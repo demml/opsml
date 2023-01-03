@@ -8,8 +8,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml_data.helpers.settings import settings
 from opsml_data.helpers.exceptions import NotOfCorrectType
+from opsml_data.helpers.settings import settings
 from opsml_data.registry.models import DataStoragePath
 
 

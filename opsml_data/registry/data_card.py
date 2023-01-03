@@ -8,6 +8,7 @@ from pandas import DataFrame
 from pyarrow import Table
 from pydantic import BaseModel, Extra, root_validator
 from pyshipt_logging import ShiptLogging
+
 from opsml_data.registry.formatter import ArrowTable, DataFormatter
 from opsml_data.registry.models import DataSplit, RegistryRecord, SplitDataHolder
 from opsml_data.registry.storage import save_record_data_to_storage
@@ -82,12 +83,22 @@ class DataCard(BaseModel):
             Class containing data splits
         """
         data_holder = SplitDataHolder()
-        for split in self.data_splits:
+        for split in self.data_splits:  # pylint: disable=not-an-iterable
             if split.row_slicing:
-                data_holder.set_row_split(label=split.label, data=self.data, start_idx=split.start, stop_idx=split.stop)
+                data_holder.set_row_split(
+                    label=split.label,
+                    data=self.data,
+                    start_idx=split.start,
+                    stop_idx=split.stop,
+                )
 
             else:
-                data_holder.set_column_split(label=split.label, data=self.data, column=split.col, value=split.val)
+                data_holder.set_column_split(
+                    label=split.label,
+                    data=self.data,
+                    column=split.column,
+                    value=split.column_value,
+                )
 
         return data_holder
 
@@ -139,7 +150,7 @@ class DataCard(BaseModel):
         return converted_data
 
     # private method used in dataregistry
-    def create_registry_record(self, version: int) -> RegistryRecord:  # pylint: disable=unused-private-member
+    def create_registry_record(self, version: int) -> RegistryRecord:
 
         """Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
