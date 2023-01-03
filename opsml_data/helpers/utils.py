@@ -1,6 +1,7 @@
 """Suite of helper objects"""
 import glob
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Union
 
@@ -119,7 +120,14 @@ class FindPath:
         )
 
 
-class GCPSecretManager:
+class GCPService(ABC):
+    @staticmethod
+    @abstractmethod
+    def valid_service_name(service_name: str):
+        """Validates service name"""
+
+
+class GCPSecretManager(GCPService):
     def __init__(
         self,
         gcp_credentials: Optional[Credentials] = None,
@@ -132,15 +140,13 @@ class GCPSecretManager:
             a given gcp account that has permissions for accessing secrets.
             If not supplied, gcp will infer credentials for you local environment.
         """
-
-        self.creds = gcp_credentials
         self.client = secretmanager.SecretManagerServiceClient(
-            credentials=self.creds,
+            credentials=gcp_credentials,
         )
 
     def get_secret(
         self,
-        project: str,
+        project_name: str,
         secret: str,
         version: str = "latest",
     ):
@@ -158,18 +164,22 @@ class GCPSecretManager:
         """
 
         response = self.client.access_secret_version(
-            request={"name": f"projects/{project}/secrets/{secret}/versions/{version}"}  # noqa
+            request={"name": f"projects/{project_name}/secrets/{secret}/versions/{version}"}  # noqa
         )
 
         payload = response.payload.data.decode("UTF-8")
 
         return payload
 
+    @staticmethod
+    def valid_service_name(service_name: str):
+        return bool(service_name == "secret_manager")
 
-class GCSStorageClient:
+
+class GCSStorageClient(GCPService):
     def __init__(
         self,
-        gcp_credentials: Optional[Credentials],
+        gcp_credentials: Optional[Credentials] = None,
     ):
 
         """Instantiates GCP storage client
@@ -317,3 +327,31 @@ class GCSStorageClient:
         logger.info("Uploaded %s to %s", filename, gcs_uri)
 
         return gcs_uri
+
+    @staticmethod
+    def valid_service_name(service_name: str):
+        return bool(service_name == "storage")
+
+
+class GCPClient:
+    @staticmethod
+    def get_service(
+        service_name: str,
+        gcp_credentials: Optional[Credentials] = None,
+    ):
+
+        service = next(
+            (
+                service
+                for service in GCPService.__subclasses__()
+                if service.valid_service_name(
+                    service_name=service_name,
+                )
+            ),
+            None,
+        )
+
+        if not bool(service):
+            raise exceptions.ServiceNameNotFound("""GCP service name not found""")
+
+        return service(gcp_credentials=gcp_credentials)

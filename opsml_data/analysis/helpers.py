@@ -1,6 +1,7 @@
 import os
 from typing import List
 
+import pandas as pd
 from pyshipt_logging import ShiptLogging
 
 from .levels import LevelHandler
@@ -30,7 +31,7 @@ class Analyzer:
         outlier_removal: bool = True,
         metro_level: bool = False,
         schema: str = "data_science",
-    ):
+    ) -> pd.DataFrame:
 
         """
         Helper method to run automated pay and arror analysis.
@@ -67,7 +68,7 @@ class Analyzer:
         logger.info(msg)
         for handler in LevelHandler.__subclasses__():
             if handler.match_analysis_type(analysis_level):
-                df = handler(self.compute_env).run_analysis(
+                dataframe = handler(self.compute_env).run_analysis(
                     ids=ids,
                     checkout_predictions=checkout_predictions,
                     delivery_predictions=delivery_predictions,
@@ -80,4 +81,4 @@ class Analyzer:
                     schema=schema,
                     metro_level=metro_level,
                 )
-        return df
+        return dataframe

@@ -1,10 +1,18 @@
-import pytest
-from opsml_data.helpers.defaults import params
 import os
-from pathlib import Path
-from opsml_data.helpers.utils import FindPath
-import pandas as pd
 from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pytest
+
+from opsml_data.helpers.settings import settings
+from opsml_data.helpers.utils import FindPath, GCPClient
+from opsml_data.registry.connection import create_sql_engine
+from opsml_data.registry.data_registry import DataRegistry
+from opsml_data.registry.sql_schema import TestDataSchema
+import joblib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -23,11 +31,16 @@ def pytest_sessionfinish(session, exitstatus):
         else:
             os.remove(path)
 
+    paths = [path for path in Path(os.getcwd()).rglob("*chart.html")]
+    if paths:
+        for path in paths:
+            os.remove(path)
+
 
 @pytest.fixture(scope="session")
-def test_defaults():
+def test_settings():
 
-    return params
+    return settings
 
 
 @pytest.fixture(scope="session")
@@ -119,3 +132,95 @@ def order_query():
         AND DROP_OFF_EVAL_OUTLIER = 0
         """
     return query
+
+
+@pytest.fixture()
+def test_query():
+    query = "SELECT ORDER_ID FROM PRD_DATALAKEHOUSE.DATA_SCIENCE.ORDER_STATS limit 100"
+
+    return query
+
+
+@pytest.fixture(scope="session")
+def test_array():
+    data = np.random.rand(10, 100)
+    return data
+
+
+@pytest.fixture(scope="session")
+def test_df():
+    df = pd.DataFrame(
+        {
+            "year": [2020, 2022, 2019, 2021],
+            "n_legs": [2, 4, 5, 100],
+            "animals": ["Flamingo", "Horse", "Brittle stars", "Centipede"],
+        }
+    )
+
+    return df
+
+
+@pytest.fixture(scope="function")
+def drift_dataframe():
+    mu_1 = -4  # mean of the first distribution
+    mu_2 = 4  # mean of the second distribution
+    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
+    cat = np.random.randint(0, 3, 1000).reshape(-1, 1)
+    X_train = np.hstack((X_train, cat))
+
+    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
+    cat = np.random.randint(2, 5, 1000).reshape(-1, 1)
+    X_test = np.hstack((X_test, cat))
+
+    col_names = []
+    for i in range(0, X_train.shape[1]):
+        col_names.append(f"col_{i}")
+
+    X_train = pd.DataFrame(X_train, columns=col_names)
+    X_test = pd.DataFrame(X_test, columns=col_names)
+    y_train = np.random.randint(1, 100, size=(1000, 1))
+    y_test = np.random.randint(2, 100, size=(1000, 1))
+
+    return X_train, y_train, X_test, y_test
+
+
+@pytest.fixture(scope="session")
+def test_arrow_table():
+    n_legs = pa.array([2, 4, 5, 100])
+    animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
+    names = ["n_legs", "animals"]
+    table = pa.Table.from_arrays([n_legs, animals], names=names)
+    return table
+
+
+@pytest.fixture(scope="session")
+def setup_database():
+
+    engine = create_sql_engine()
+    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
+    TestDataSchema.__table__.create(bind=engine, checkfirst=True)
+
+    registry = DataRegistry()
+    registry.table = TestDataSchema
+
+    yield registry
+
+    # TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
+
+    # TestData.schema.__table__.drop(bind=engine)
+
+
+@pytest.fixture(scope="session")
+def storage_client():
+
+    return GCPClient.get_service(
+        service_name="storage",
+        gcp_credentials=settings.gcp_creds,
+    )
+
+
+@pytest.fixture(scope="function")
+def drift_report():
+    drift_report = joblib.load("tests/drift_report.joblib")
+
+    return drift_report
