@@ -48,16 +48,16 @@ class PayErrorAnalysis:
                 metro_level=self.metro_level,
                 outlier_removal=self.outlier_removal,
             )
-        else:
-            return AnalysisAttributes(
-                id_col="ng_order_id",
-                compute_env=self.compute_env,
-                analysis_level=self.analysis_level,
-                analysis_type=self.analysis_type,
-                table_name=f"preds_order_{settings.run_id}",
-                metro_level=self.metro_level,
-                outlier_removal=self.outlier_removal,
-            )
+
+        return AnalysisAttributes(
+            id_col="ng_order_id",
+            compute_env=self.compute_env,
+            analysis_level=self.analysis_level,
+            analysis_type=self.analysis_type,
+            table_name=f"preds_order_{settings.run_id}",
+            metro_level=self.metro_level,
+            outlier_removal=self.outlier_removal,
+        )
 
     def run_analysis(
         self,

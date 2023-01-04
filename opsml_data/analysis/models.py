@@ -1,7 +1,6 @@
-from pydantic import BaseModel
 from typing import Optional, Any, List
+from pydantic import BaseModel
 import pandas as pd
-from enum import Enum
 
 
 class PayAnalysisData(BaseModel):
@@ -34,4 +33,4 @@ class PayDataFrame(pd.DataFrame):
         self.columns = map(str.lower, self.columns)
 
     def get_valid_data(self) -> PayAnalysisData:
-        return PayAnalysisData(**self.to_dict(orient="list"))
+        return PayAnalysisData(**self.to_dict(orient="list"))  # pylint: disable=not-a-mapping
