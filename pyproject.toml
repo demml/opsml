@@ -37,6 +37,7 @@ pytest = "^7.1.2"
 flake8 = "^4.0.1"
 pylint = "^2.14.5"
 isort = "^5.10.1"
+sqlalchemy2-stubs = "0.0.2a31"
 coverage = {extras = ["toml"], version = "^6.5.0"}
 mypy = "^0.991"
 
