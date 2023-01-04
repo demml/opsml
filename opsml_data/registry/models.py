@@ -15,23 +15,20 @@ class SplitDataHolder(BaseModel):
         arbitrary_types_allowed = True
         extra = Extra.allow
 
-    def set_row_split(
+    def set_split(
         self,
+        is_row_slicing: bool,
         label: str,
         data: Union[pd.DataFrame, np.ndarray],
-        start_idx: int,
-        stop_idx: int,
+        start_idx: Optional[int] = None,
+        stop_idx: Optional[int] = None,
+        column: Optional[str] = None,
+        column_value: Optional[Union[int, str]] = None,
     ):
-        setattr(self, label, data[start_idx:stop_idx])
-
-    def set_column_split(
-        self,
-        label: str,
-        data: Union[pd.DataFrame, np.ndarray],
-        column: int,
-        value: int,
-    ):
-        setattr(self, label, data.loc[data[column] == value])
+        if is_row_slicing:
+            setattr(self, label, data[start_idx:stop_idx])
+        else:
+            setattr(self, label, data.loc[data[column] == column_value])
 
 
 class DataSplit(BaseModel):
