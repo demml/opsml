@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -28,6 +28,7 @@ class SplitDataHolder(BaseModel):
         if is_row_slicing:
             setattr(self, label, data[start_idx:stop_idx])
         else:
+            data = cast(pd.DataFrame, data)
             setattr(self, label, data.loc[data[column] == column_value])
 
 
@@ -75,7 +76,7 @@ class ArrowTable(BaseModel):
     table: Union[pa.Table, np.ndarray]
     table_type: AllowedTableTypes
     storage_uri: Optional[str] = None
-    feature_map: Dict[str, Union[str, None]]
+    feature_map: Optional[Dict[str, Union[str, None]]] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -92,7 +93,6 @@ class RegistryRecord(BaseModel):
     feature_map: Dict[str, str]
     user_email: str
     uid: Optional[str] = None
-    version: Optional[int] = None
 
     @root_validator(pre=True)
     def set_attributes(cls, values):  # pylint: disable=no-self-argument

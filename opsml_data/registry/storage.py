@@ -1,6 +1,6 @@
 import tempfile
 import uuid
-from typing import List, Union, Type
+from typing import List, Union
 
 import gcsfs
 import numpy as np
@@ -8,7 +8,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml_data.helpers.exceptions import NotOfCorrectType
 from opsml_data.helpers.settings import settings
 from opsml_data.registry.models import DataStoragePath
 
@@ -148,20 +147,13 @@ def save_record_data_to_storage(
 ):
 
     data_type = data.__class__.__name__
-    storage_type: Union[Type[RegistryDataStorage], None] = next(
-        (
-            storage_type
-            for storage_type in RegistryDataStorage.__subclasses__()
-            if storage_type.validate_type(
-                data_type=data_type,
-            )
-        ),
-        None,
+    storage_type = next(
+        storage_type
+        for storage_type in RegistryDataStorage.__subclasses__()
+        if storage_type.validate_type(
+            data_type=data_type,
+        )
     )
-
-    if not bool(storage_type):
-        raise NotOfCorrectType(f"""Data type of {data_type} is not supported""")
-
     return storage_type().save_data(
         data=data,
         data_name=data_name,
@@ -177,18 +169,12 @@ def load_record_data_from_storage(
     if not bool(storage_uri):
         return None
 
-    storage_type: Union[Type[RegistryDataStorage], None] = next(
-        (
-            storage_type
-            for storage_type in RegistryDataStorage.__subclasses__()
-            if storage_type.validate_type(
-                data_type=data_type,
-            )
-        ),
-        None,
+    storage_type = next(
+        storage_type
+        for storage_type in RegistryDataStorage.__subclasses__()
+        if storage_type.validate_type(
+            data_type=data_type,
+        )
     )
-
-    if not bool(storage_type):
-        raise NotOfCorrectType(f"""Data type of {data_type} is not supported""")
 
     return storage_type().load_data(storage_uri=storage_uri)
