@@ -50,7 +50,7 @@ steps:
     image: python:3.9
     commands:
       - pip install poetry==1.2.2
-      - poetry install
+      - poetry install --with dev
       - make format
       - make lints.ci
     environment:
