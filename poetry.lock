@@ -4465,4 +4465,4 @@ reference = "shipt-resolve"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<=3.11"
-content-hash = "18fde8eb8aa8cd64cf1a99240c4a01fe893a470efbd8a65ee9e43a7d296f259d"
+content-hash = "88326c5a0f7e439c2db807efe81c0dd86824ea3f34d4e16c4deb20e37e573339"
