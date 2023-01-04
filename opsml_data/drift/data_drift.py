@@ -34,7 +34,7 @@ class FeatureImportanceCalculator:
         self,
         features: List[str],
         data: DriftData,
-        target_feature: str,
+        target_feature: Optional[str] = None,
     ):
         self.log_reg = LogisticRegression()
         self.features = features
@@ -116,7 +116,7 @@ class DriftFeatures:
         feature_mapping = self.get_feature_types()
         return list(feature_mapping.keys())
 
-    def get_categorical_features(self, categorical_features: Optional[List[str]] = None) -> List[str]:
+    def get_categorical_features(self, categorical_features: Optional[List[str]]) -> List[str]:
 
         if not bool(categorical_features):
             categorical_features = []
@@ -268,7 +268,7 @@ class DriftDetector:
         x_reference: pd.DataFrame,
         y_reference: np.array,
         x_current: pd.DataFrame,
-        y_current: np.array,
+        y_current: np.ndarray,
         target_feature_name: str,
         categorical_features: Optional[List[str]] = None,
     ):
@@ -303,7 +303,7 @@ class DriftDetector:
         )
         self.features_and_target = [*self.drift_features.feature_list, *[target_feature_name]]
 
-    def run_drift_diagnostics(self, return_dataframe: bool = False):
+    def run_drift_diagnostics(self, return_dataframe: bool = False) -> Union[pd.DataFrame, None]:
         """Computes drift diagnostics between reference and current
         data based upon column mapping
 

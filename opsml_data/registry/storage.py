@@ -1,6 +1,6 @@
 import tempfile
 import uuid
-from typing import List, Union
+from typing import List, Union, Type
 
 import gcsfs
 import numpy as np
@@ -148,7 +148,7 @@ def save_record_data_to_storage(
 ):
 
     data_type = data.__class__.__name__
-    storage_type = next(
+    storage_type: Union[Type[RegistryDataStorage], None] = next(
         (
             storage_type
             for storage_type in RegistryDataStorage.__subclasses__()
@@ -177,7 +177,7 @@ def load_record_data_from_storage(
     if not bool(storage_uri):
         return None
 
-    storage_type = next(
+    storage_type: Union[Type[RegistryDataStorage], None] = next(
         (
             storage_type
             for storage_type in RegistryDataStorage.__subclasses__()

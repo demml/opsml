@@ -84,9 +84,9 @@ class ParsedFeatures(BaseModel):
 
 
 class ParsedFeatureImportance(BaseModel):
-    feature: Optional[List[str]] = []
-    auc: Optional[List[float]] = []
-    importance: Optional[List[float]] = []
+    feature: List[str] = []
+    auc: List[float] = []
+    importance: List[float] = []
 
 
 class ParsedFeatureDataFrames(BaseModel):
