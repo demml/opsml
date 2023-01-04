@@ -1,7 +1,7 @@
 import os
 import tempfile
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union, Type
 
 import numpy as np
 import pandas as pd
@@ -60,6 +60,7 @@ class FlightPlanSQL:
 
     def format_sql(self, sql_string) -> str:
         """Analyzer specific formatting"""
+        return "Test"
 
     def get_sql(self):
         sql_string = self.open_sql_file()
@@ -277,7 +278,7 @@ class PayErrorAnalyzer:
         self.analysis_data = PayDataFrame(prediction_dataframe).get_valid_data()
 
     def set_compute_client(self, analysis_attributes: AnalysisAttributes):
-        compute_client = next(
+        compute_client: Union[Type[ComputeClient], None] = next(
             (
                 compute_client
                 for compute_client in ComputeClient.__subclasses__()
@@ -294,7 +295,7 @@ class PayErrorAnalyzer:
         return compute_client()
 
     def set_sql(self, analysis_attributes: AnalysisAttributes):
-        sql = next(
+        sql: Union[Type[FlightPlanSQL], None] = next(
             (
                 sql
                 for sql in FlightPlanSQL.__subclasses__()

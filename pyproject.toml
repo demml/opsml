@@ -35,6 +35,8 @@ mypy = "^0.991"
 pytest-lazy-fixture = "^0.6.3"
 ruff = "^0.0.194"
 altair-viewer = "^0.4.0"
+sqlalchemy-stubs = "^0.4"
+types-pymysql = "^1.0.19.1"
 
 [tool.isort]
 profile = "black"
@@ -82,6 +84,7 @@ mypy_path = "stubs"
 plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",
+    "sqlalchemy.ext.mypy.plugin",
 ]
 
 

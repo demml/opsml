@@ -30,7 +30,7 @@ class PayDataFrame(pd.DataFrame):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """instantiate as normal, then validate using pydantic"""
         super().__init__(*args, **kwargs)
-        self.columns = map(str.lower, self.columns)
+        self.columns: List[str] = map(str.lower, self.columns)
 
     def get_valid_data(self) -> PayAnalysisData:
         return PayAnalysisData(**self.to_dict(orient="list"))  # pylint: disable=not-a-mapping

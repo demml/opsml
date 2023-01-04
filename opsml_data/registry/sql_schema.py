@@ -1,7 +1,7 @@
 import datetime
 import time
 import uuid
-from typing import Union
+from typing import Type
 
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
@@ -49,7 +49,7 @@ class TestDataSchema(Base, DataMixin):
 
 class TableSchema:
     @staticmethod
-    def get_table(table_name: str) -> Union[DataSchema, TestDataSchema]:
+    def get_table(table_name: str) -> Type[DataSchema]:
         for table_schema in Base.__subclasses__():
             if table_name == table_schema.__tablename__:
                 return table_schema
