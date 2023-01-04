@@ -84,21 +84,15 @@ class DataCard(BaseModel):
         """
         data_holder = SplitDataHolder()
         for split in self.data_splits:  # pylint: disable=not-an-iterable
-            if split.row_slicing:
-                data_holder.set_row_split(
-                    label=split.label,
-                    data=self.data,
-                    start_idx=split.start,
-                    stop_idx=split.stop,
-                )
-
-            else:
-                data_holder.set_column_split(
-                    label=split.label,
-                    data=self.data,
-                    column=split.column,
-                    value=split.column_value,
-                )
+            data_holder.set_split(
+                is_row_slicing=split.row_slicing,
+                label=split.label,
+                data=self.data,
+                start_idx=split.start,
+                stop_idx=split.stop,
+                column=split.column,
+                column_value=split.column_value,
+            )
 
         return data_holder
 
