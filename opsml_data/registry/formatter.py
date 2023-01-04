@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Union
+from typing import Dict, Union, Type
 
 import numpy as np
 import pandas as pd
@@ -111,7 +111,7 @@ class DataFormatter:
             py arrow table
         """
 
-        converter = next(
+        converter: Union[Type[ArrowFormatter], None] = next(
             (
                 arrow_formatter
                 for arrow_formatter in ArrowFormatter.__subclasses__()
@@ -129,7 +129,7 @@ class DataFormatter:
         return converter.convert(data=data)
 
     @staticmethod
-    def create_table_schema(data: Union[pa.Table, np.ndarray]) -> Dict[str, str]:
+    def create_table_schema(data: Union[pa.Table, np.ndarray]) -> Dict[str, Union[None, str]]:
         """
         Generates a schema (column: type) from a py arrow table.
         Args:

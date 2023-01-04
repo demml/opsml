@@ -3,7 +3,7 @@ import glob
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Type
 
 from google.cloud import secretmanager, storage  # type: ignore
 from google.oauth2.service_account import Credentials
@@ -21,7 +21,7 @@ class FindPath:
     def find_filepath(
         name: str,
         path: Optional[str] = None,
-    ) -> str:
+    ) -> Path:
         """Finds the file path of a given file.
 
         Args:
@@ -121,6 +121,12 @@ class FindPath:
 
 
 class GCPService(ABC):
+    def __init__(
+        self,
+        gcp_credentials: Optional[Credentials] = None,
+    ):
+        """Generic init"""
+
     @staticmethod
     @abstractmethod
     def valid_service_name(service_name: str):
@@ -340,7 +346,7 @@ class GCPClient:
         gcp_credentials: Optional[Credentials] = None,
     ):
 
-        service = next(
+        service: Union[Type[GCPService], None] = next(
             (
                 service
                 for service in GCPService.__subclasses__()

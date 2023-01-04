@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
@@ -43,8 +43,8 @@ class SQLRegistry:
         self,
         data_name: str,
         team: str,
-        version: int = None,
-    ) -> List[DataSchema]:
+        version: Optional[int] = None,
+    ) -> DataSchema:
 
         query = self.session.query(self.table)
         query = query.filter(and_(self.table.data_name == data_name, self.table.team == team))
@@ -83,9 +83,9 @@ class DataRegistry(SQLRegistry):
     # Read
     def list_data(
         self,
-        data_name: str = None,
-        team: str = None,
-        version: int = None,
+        data_name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
     ) -> pd.DataFrame:
 
         """Retrieves records for data registry

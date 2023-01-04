@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 
 import numpy as np
 import pandas as pd
@@ -49,7 +49,7 @@ class DataCard(BaseModel):
 
     """
 
-    data_name: Optional[str] = None
+    data_name: str
     team: str
     user_email: str
     data: Union[NDArray, DataFrame, Table]
@@ -57,6 +57,10 @@ class DataCard(BaseModel):
     data_splits: Optional[List[DataSplit]] = None
     data_uri: Optional[str] = None
     drift_uri: Optional[str] = None
+    version: Optional[int] = None
+    feature_map: Optional[Dict[str, Union[str, None]]] = None
+    data_type: Optional[str] = None
+    uid: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -175,6 +179,9 @@ class DataCard(BaseModel):
 
         self.data_uri = data_artifact.storage_uri
         self.drift_uri = drift_uri
+        self.data_type = data_artifact.table_type
+        self.feature_map = data_artifact.feature_map
+        self.version = version
 
         return RegistryRecord(
             data_name=self.data_name,
