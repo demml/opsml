@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import altair as alt
 import numpy as np
@@ -21,7 +21,6 @@ from opsml_data.drift.models import (
     ParsedFeatures,
 )
 from opsml_data.drift.visualize import AltairChart
-from opsml_data.helpers import exceptions
 
 alt.themes.register("shipt", shipt_theme)
 alt.themes.enable("shipt")
@@ -68,7 +67,7 @@ class FeatureImportanceCalculator:
 
     def combine_feature_importance_auc(
         self, feature_importances: List[float], feature_aucs: List[float]
-    ) -> Dict[str, FeatureImportance]:
+    ) -> Dict[Optional[str], FeatureImportance]:
 
         feature_dict = {}
         for feature_name, importance, computed_auc in zip(self.features_and_target, feature_importances, feature_aucs):
@@ -81,7 +80,7 @@ class FeatureImportanceCalculator:
 
     def compute_importance(
         self,
-    ) -> Dict[str, FeatureImportance]:
+    ) -> Dict[Optional[str], FeatureImportance]:
         """Computes feature importance from object attributes
 
         Returns
@@ -116,12 +115,17 @@ class DriftFeatures:
         feature_mapping = self.get_feature_types()
         return list(feature_mapping.keys())
 
-    def get_categorical_features(self, categorical_features: Optional[List[str]]) -> List[str]:
-
+    def get_categorical_features(self, categorical_features: Optional[List[str]]):
         if not bool(categorical_features):
-            categorical_features = []
+            features = []
+        else:
+            features = cast(List[Optional[str]], categorical_features)
 
-        return [feature for feature in self.feature_list if feature in categorical_features]
+        return self.create_categorical_feature_list(cat_features=features)
+
+    def create_categorical_feature_list(self, cat_features: List[Optional[str]]) -> List[str]:
+
+        return [feature for feature in self.feature_list if feature in cat_features]
 
     def get_feature_types(self):
         feature_mapping = {}
@@ -266,7 +270,7 @@ class DriftDetector:
     def __init__(
         self,
         x_reference: pd.DataFrame,
-        y_reference: np.array,
+        y_reference: np.ndarray,
         x_current: pd.DataFrame,
         y_current: np.ndarray,
         target_feature_name: str,
@@ -337,7 +341,7 @@ class DriftDetector:
 
     def combine_importance_stats(
         self,
-        feature_importance: Dict[str, FeatureImportance],
+        feature_importance: Dict[Optional[str], FeatureImportance],
         feature_stats: Dict[str, DriftReport],
     ):
 
@@ -492,20 +496,12 @@ class DriftVisualizer:
         dropdown_field_name: Optional[str] = None,
     ):
         chart_builder = next(
-            (
-                chart_builder
-                for chart_builder in AltairChart.__subclasses__()
-                if chart_builder.validate_type(
-                    chart_type=chart_type,
-                )
-            ),
-            None,
-        )
-
-        if not bool(chart_builder):
-            raise exceptions.NotOfCorrectType(
-                f"""No charting class found for {ChartType(chart_type).name}""",
+            chart_builder
+            for chart_builder in AltairChart.__subclasses__()
+            if chart_builder.validate_type(
+                chart_type=chart_type,
             )
+        )
 
         return chart_builder(
             data=data,

@@ -49,9 +49,9 @@ class TestDataSchema(Base, DataMixin):
 
 class TableSchema:
     @staticmethod
-    def get_table(table_name: str) -> Type[DataSchema]:
+    def get_table(table_name: str) -> Type[Base]:
         for table_schema in Base.__subclasses__():
-            if table_name == table_schema.__tablename__:
+            if table_name == table_schema.__tablename__:  # type: ignore
                 return table_schema
 
         # return default

@@ -1,9 +1,8 @@
 """Suite of helper objects"""
 import glob
 import os
-from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union, Type
+from typing import Optional, Union
 
 from google.cloud import secretmanager, storage  # type: ignore
 from google.oauth2.service_account import Credentials
@@ -120,7 +119,7 @@ class FindPath:
         )
 
 
-class GCPService(ABC):
+class GCPService:
     def __init__(
         self,
         gcp_credentials: Optional[Credentials] = None,
@@ -128,7 +127,6 @@ class GCPService(ABC):
         """Generic init"""
 
     @staticmethod
-    @abstractmethod
     def valid_service_name(service_name: str):
         """Validates service name"""
 
@@ -346,18 +344,11 @@ class GCPClient:
         gcp_credentials: Optional[Credentials] = None,
     ):
 
-        service: Union[Type[GCPService], None] = next(
-            (
-                service
-                for service in GCPService.__subclasses__()
-                if service.valid_service_name(
-                    service_name=service_name,
-                )
-            ),
-            None,
+        service = next(
+            service
+            for service in GCPService.__subclasses__()
+            if service.valid_service_name(
+                service_name=service_name,
+            )
         )
-
-        if not bool(service):
-            raise exceptions.ServiceNameNotFound("""GCP service name not found""")
-
         return service(gcp_credentials=gcp_credentials)

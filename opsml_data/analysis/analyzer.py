@@ -2,9 +2,10 @@ import os
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
+
+from opsml_data.analysis.base_analyzer import PayErrorAnalyzer
 from opsml_data.analysis.models import AnalysisAttributes
 from opsml_data.helpers.settings import settings
-from opsml_data.analysis.base_analyzer import PayErrorAnalyzer
 
 logger = ShiptLogging.get_logger(__name__)
 dir_path = os.path.dirname(os.path.realpath(__file__))

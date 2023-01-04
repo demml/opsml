@@ -10,7 +10,7 @@ cloud-sql-python-connector = {extras = ["pymysql"], version = "^0.8.1"}
 google-cloud-secret-manager ="^2.12.2"
 google-auth = "1.35.0"
 google-cloud-storage = "1.44.0"
-sqlalchemy = "^1.4.41"
+sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 pyshipt-logging = "^0.4.3"
 numpy = "^1.23.4"
 pandas = "^1.5.0"
@@ -37,6 +37,7 @@ ruff = "^0.0.194"
 altair-viewer = "^0.4.0"
 sqlalchemy-stubs = "^0.4"
 types-pymysql = "^1.0.19.1"
+types-requests = "^2.28.11.7"
 
 [tool.isort]
 profile = "black"
@@ -81,6 +82,7 @@ testpaths = ["tests"]
 python_version = "3.9"
 platform = "linux"
 mypy_path = "stubs"
+ignore_missing_imports = true
 plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",

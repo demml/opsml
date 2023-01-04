@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
@@ -30,7 +30,7 @@ class SQLRegistry:
         self,
         data_name: str,
         team: str,
-    ):
+    ) -> int:
 
         last = (
             self.session.query(func.max(self.table.version))
@@ -64,6 +64,9 @@ class SQLRegistry:
         self.session.commit()
         logger.info("Table: %s registered as version %s", record_name, record_version)
 
+    def get_data_splits(self, data_splits: Dict[str, Any]) -> Optional[Any]:
+        return data_splits.get("splits")
+
 
 class DataRegistry(SQLRegistry):
 
@@ -75,10 +78,11 @@ class DataRegistry(SQLRegistry):
             data_card: Data card to register.
         """
         data_card.uid = self._set_uid()
-        data_card.version = self._set_version(data_name=data_card.data_name, team=data_card.team)
-        record = data_card.create_registry_record(version=data_card.version)
+        version = self._set_version(data_name=data_card.data_name, team=data_card.team)
+        record = data_card.create_registry_record(version=version)
 
         self._add_and_commit(record=record.dict())
+        data_card.version = version
 
     # Read
     def list_data(
@@ -132,8 +136,15 @@ class DataRegistry(SQLRegistry):
         """
 
         sql_data: DataSchema = self._query_record(data_name=data_name, team=team, version=version)
-        data = load_record_data_from_storage(storage_uri=sql_data.data_uri, data_type=sql_data.data_type)
-        drift_report = load_record_data_from_storage(storage_uri=sql_data.drift_uri, data_type="DataFrame")
+        data = load_record_data_from_storage(
+            storage_uri=cast(str, sql_data.data_uri),
+            data_type=cast(str, sql_data.data_type),
+        )
+        drift_report = load_record_data_from_storage(
+            storage_uri=cast(str, sql_data.drift_uri),
+            data_type="DataFrame",
+        )
+        data_splits = self.get_data_splits(data_splits=cast(Dict[str, Any], sql_data.data_splits))
 
         return DataCard(
             data=data,
@@ -147,7 +158,7 @@ class DataRegistry(SQLRegistry):
             data_uri=sql_data.data_uri,
             drift_uri=sql_data.drift_uri,
             feature_map=sql_data.feature_map,
-            data_splits=sql_data.data_splits.get("splits"),
+            data_splits=data_splits,
             data_type=sql_data.data_type,
             version=sql_data.version,
             user_email=sql_data.user_email,

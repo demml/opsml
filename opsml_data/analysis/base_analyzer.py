@@ -1,7 +1,7 @@
 import os
 import tempfile
 from dataclasses import dataclass
-from typing import List, Union, Type
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -11,10 +11,9 @@ from pyshipt.helpers.model import ColumnType, Table
 from pyshipt.helpers.pandas import PandasHelper as ph
 from pyshipt_logging import ShiptLogging
 
+from opsml_data.analysis.models import AnalysisAttributes, PayDataFrame
 from opsml_data.connector.snowflake import SnowflakeQueryRunner
 from opsml_data.helpers.settings import settings
-from opsml_data.helpers.exceptions import NotOfCorrectType
-from opsml_data.analysis.models import PayDataFrame, AnalysisAttributes
 
 from ..helpers import exceptions
 from ..helpers.settings import SnowflakeCredentials
@@ -278,37 +277,23 @@ class PayErrorAnalyzer:
         self.analysis_data = PayDataFrame(prediction_dataframe).get_valid_data()
 
     def set_compute_client(self, analysis_attributes: AnalysisAttributes):
-        compute_client: Union[Type[ComputeClient], None] = next(
-            (
-                compute_client
-                for compute_client in ComputeClient.__subclasses__()
-                if compute_client.validate(
-                    compute_env=analysis_attributes.compute_env,
-                )
-            ),
-            None,
+
+        compute_client = next(
+            compute_client
+            for compute_client in ComputeClient.__subclasses__()
+            if compute_client.validate(
+                compute_env=analysis_attributes.compute_env,
+            )
         )
-
-        if not bool(compute_client):
-            raise NotOfCorrectType(f"""No compute client found for {analysis_attributes.compute_env}""")
-
         return compute_client()
 
     def set_sql(self, analysis_attributes: AnalysisAttributes):
-        sql: Union[Type[FlightPlanSQL], None] = next(
-            (
-                sql
-                for sql in FlightPlanSQL.__subclasses__()
-                if sql.validate(
-                    analysis_type=analysis_attributes.analysis_type,
-                )
-            ),
-            None,
+
+        sql = next(
+            sql
+            for sql in FlightPlanSQL.__subclasses__()
+            if sql.validate(analysis_type=analysis_attributes.analysis_type)
         )
-
-        if not bool(sql):
-            raise NotOfCorrectType(f"""No analyzer type found for {analysis_attributes.analysis_type}""")
-
         return sql(analysis_attributes=analysis_attributes)
 
     def append_predictions_to_dataframe(
