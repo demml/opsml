@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -11,8 +11,8 @@ from pyshipt_logging import ShiptLogging
 
 from opsml_data.registry.formatter import ArrowTable, DataFormatter
 from opsml_data.registry.models import RegistryRecord
+from opsml_data.registry.splitter import DataHolder, DataSplitter
 from opsml_data.registry.storage import save_record_data_to_storage
-from opsml_data.registry.splitter import DataSplitter, DataHolder
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -61,7 +61,7 @@ class DataCard(BaseModel):
     user_email: str
     data: Union[NDArray, DataFrame, Table]
     drift_report: Optional[DataFrame] = None
-    data_splits: Optional[List[Dict[str, Any]]] = None
+    data_splits: List[Dict[str, Any]] = []
     data_uri: Optional[str] = None
     drift_uri: Optional[str] = None
     version: Optional[int] = None
@@ -89,9 +89,8 @@ class DataCard(BaseModel):
         if not self.has_data_splits:
             return None
 
-        else:
-            data_splits: DataHolder = self.parse_data_splits()
-            return data_splits
+        data_splits: DataHolder = self.parse_data_splits()
+        return data_splits
 
     def parse_data_splits(self) -> DataHolder:
 
