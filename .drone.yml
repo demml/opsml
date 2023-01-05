@@ -104,7 +104,6 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     commands:
-      - pip install poetry==1.2.2
       - make prep.pre.patch
       - make publish
 
