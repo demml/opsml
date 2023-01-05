@@ -27,8 +27,8 @@ class QueryRunner:
 
     def submit_query(
         self,
-        query: str = None,
-        sql_file: str = None,
+        query: Optional[str] = None,
+        sql_file: Optional[str] = None,
     ) -> Response:
 
         """Submits a query to run

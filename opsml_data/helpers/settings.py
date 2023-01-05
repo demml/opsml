@@ -2,12 +2,12 @@ import base64
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import google.auth
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
-from pydantic import BaseModel, Extra, root_validator
+from pydantic import BaseModel, Extra
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.helpers.models import SnowflakeParams
@@ -24,7 +24,7 @@ class OpsmlCreds:
         self.service_base_creds = None
         self.secret_client = None
 
-    def set_gcp_sdk_creds(self) -> Tuple[Credentials, str]:
+    def set_gcp_sdk_creds(self) -> None:
         """Pulls google cloud sdk creds from local env
 
         Returns
@@ -84,13 +84,37 @@ class OpsmlCreds:
 
 # to be used with Settings class
 class GCPEnvSetter:
-    def __init__(self, attributes: Dict[str, Union[str, int]]):
-        self.attributes = attributes
+    def __init__(self):
+        self.attributes = {}
+        self.app_env = os.getenv("ENV", "staging")
+        self.env_vars = [
+            "gcp_region",
+            "gcs_bucket",
+            "snowflake_api_auth",
+            "snowflake_api_url",
+            "db_name",
+            "db_instance_name",
+            "db_username",
+            "db_password",
+        ]
+
+        self.secret_names = [
+            "gcp_pipeline_region",
+            "gcs_pipeline_bucket",
+            "snowflake_api_auth",
+            "snowflake_api_url",
+            "data_registry_db_name",
+            "data_registry_instance_name",
+            "data_registry_username",
+            "data_registry_password",
+        ]
+
+        self.set_gcp_env_secrets()
 
     def set_gcp_credentials(self):
         """Sets gcp credentials"""
 
-        secret_name = f"opsml_service_creds_{self.attributes['app_env']}"
+        secret_name = f"opsml_service_creds_{self.app_env }"
         gcp_creds, gcp_project = OpsmlCreds().set_opsml_creds(service_account_secret_name=secret_name)
         service_account_email = getattr(gcp_creds, "service_account_email", None)
 
@@ -133,6 +157,14 @@ class GCPEnvSetter:
 
         self._append_to_attributes(key_names=env_vars, values=secret_values)
 
+    def set_gcp_env_secrets(self):
+        self.set_gcp_credentials()
+        self.set_env_variables_from_secrets(env_vars=self.env_vars, secret_names=self.secret_names)
+
+        # remove this once networking is figured out
+        scopes = "https://www.googleapis.com/auth/devstorage.full_control"
+        self.attributes["gcsfs_creds"] = self.attributes["gcp_creds"].with_scopes([scopes])
+
 
 class Settings(BaseModel):
     """Creates base settings used through package"""
@@ -140,8 +172,8 @@ class Settings(BaseModel):
     gcp_project: str
     gcs_bucket: str
     gcp_region: str
-    run_id: str
-    app_env: str
+    run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
+    app_env: str = os.getenv("ENV", "staging")
     path: str = os.getcwd()
     gcp_creds: Credentials
     snowflake_api_auth: str
@@ -156,47 +188,9 @@ class Settings(BaseModel):
         extra = Extra.allow
         arbitrary_types_allowed = True
 
-    @root_validator(pre=True)
-    def set_extras(cls, values):  # pylint: disable=no-self-argument
-        """Pre checks"""
 
-        values["app_env"] = os.getenv("ENV", "staging")
-        values["run_id"] = str(datetime.now().strftime("%Y%m%d%H%M%S"))
-
-        var_setter = GCPEnvSetter(attributes=values)
-        var_setter.set_gcp_credentials()
-
-        env_vars = [
-            "gcp_region",
-            "gcs_bucket",
-            "snowflake_api_auth",
-            "snowflake_api_url",
-            "db_name",
-            "db_instance_name",
-            "db_username",
-            "db_password",
-        ]
-
-        secret_names = [
-            "gcp_pipeline_region",
-            "gcs_pipeline_bucket",
-            "snowflake_api_auth",
-            "snowflake_api_url",
-            "data_registry_db_name",
-            "data_registry_instance_name",
-            "data_registry_username",
-            "data_registry_password",
-        ]
-
-        var_setter.set_env_variables_from_secrets(env_vars=env_vars, secret_names=secret_names)
-
-        scopes = "https://www.googleapis.com/auth/devstorage.full_control"
-        var_setter.attributes["gcsfs_creds"] = var_setter.attributes["gcp_creds"].with_scopes([scopes])
-
-        return var_setter.attributes
-
-
-settings = Settings()
+env_setter = GCPEnvSetter()
+settings = Settings(**env_setter.attributes)
 
 
 class SnowflakeCredentials:

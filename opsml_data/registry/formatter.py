@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 
-from opsml_data.helpers.exceptions import NotOfCorrectType
 from opsml_data.registry.models import ArrowTable
 
 
@@ -101,7 +100,7 @@ class ArrowTableFormatter(ArrowFormatter):
 # Run tests for data formatter
 class DataFormatter:
     @staticmethod
-    def convert_data_to_arrow(data: Union[pd.DataFrame, np.array, pa.Table]) -> ArrowTable:
+    def convert_data_to_arrow(data: Union[pd.DataFrame, np.ndarray, pa.Table]) -> ArrowTable:
 
         """
         Converts a pandas dataframe or numpy array into a py arrow table.
@@ -116,20 +115,13 @@ class DataFormatter:
                 arrow_formatter
                 for arrow_formatter in ArrowFormatter.__subclasses__()
                 if arrow_formatter.validate_data(data=data)
-            ),
-            None,
-        )
-
-        if not bool(converter):
-            raise NotOfCorrectType(
-                """Data type was not of Numpy array, pandas dataframe or pyarrow table
-            """
             )
+        )
 
         return converter.convert(data=data)
 
     @staticmethod
-    def create_table_schema(data: Union[pa.Table, np.ndarray]) -> Dict[str, str]:
+    def create_table_schema(data: Union[pa.Table, np.ndarray]) -> Dict[str, Optional[str]]:
         """
         Generates a schema (column: type) from a py arrow table.
         Args:
@@ -138,16 +130,17 @@ class DataFormatter:
             schema: Dict[str,str]
         """
 
+        feature_map: Dict[str, Optional[str]] = {}
         if isinstance(data, pa.Table):
             schema = data.schema
-            feature_map = {}
 
             for feature, type_ in zip(schema.names, schema.types):
                 feature_map[feature] = str(type_)
 
-            return feature_map
+        elif isinstance(data, np.ndarray):
+            feature_map["numpy_dtype"] = str(data.dtype)
 
-        if isinstance(data, np.ndarray):
-            return {"numpy_dtype": str(data.dtype)}
+        else:
+            feature_map["data_dtype"] = None
 
-        return {"data_dtype": None}
+        return feature_map
