@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Extra
-from typing import Dict, List, Optional, Union, Any, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, Extra
 
 
 class DataHolder(BaseModel):
@@ -14,7 +14,7 @@ class DataHolder(BaseModel):
 
 
 class SplitModel(BaseModel):
-    label: Optional[str] = None
+    label: str
     column: Optional[str] = None
     column_value: Optional[Union[int, str]] = None
     start: Optional[int] = None
@@ -26,11 +26,11 @@ class Splitter:
     def __init__(self, split_attributes: Dict[str, Any]):
         self.split_attributes = SplitModel(**split_attributes)
 
-    def split(self):
+    def split(self, data):
         """Splits data"""
 
     @staticmethod
-    def validate(data_type: str, split_dict: Dict[str, Any]):
+    def validate(data_type: type, split_dict: Dict[str, Any]):
         """Validates data type"""
 
 
@@ -39,7 +39,7 @@ class PandasIndexSplitter(Splitter):
         return self.split_attributes.label, data.iloc[self.split_attributes.indices]
 
     @staticmethod
-    def validate(data_type: str, split_dict: Dict[str, Any]):
+    def validate(data_type: type, split_dict: Dict[str, Any]):
         if data_type == pd.DataFrame and split_dict.get("indices") is not None:
             return True
         return False
@@ -63,7 +63,7 @@ class PandasColumnSplitter(Splitter):
         return self.split_attributes.label, data_split
 
     @staticmethod
-    def validate(data_type: str, split_dict: Dict[str, Any]):
+    def validate(data_type: type, split_dict: Dict[str, Any]):
         if data_type == pd.DataFrame and split_dict.get("column") is not None:
             return True
         return False
