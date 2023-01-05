@@ -2,35 +2,7 @@ import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml_data.helpers.exceptions import NotOfCorrectType
 from opsml_data.registry.data_card import DataCard
-from opsml_data.registry.models import DataSplit
-
-
-def test_partition():
-    split = {"label": "train", "column": "test", "column_value": 10}
-
-    partition = DataSplit(**split)
-
-    assert partition.column == "test"
-    assert partition.column_value == 10
-
-    split = {"label": "train", "start": 0, "stop": 10}
-
-    partition = DataSplit(**split)
-
-    assert partition.start == 0
-    assert partition.stop == 10
-
-    # this should fail
-    new_data = {"label": "train", "col_fail": "test_fail", "val": 10}
-
-    try:
-        split = DataSplit(**new_data)
-        raise NotOfCorrectType("Datasplit should fail for invalid keys")
-
-    except ValueError as e:
-        pass
 
 
 @pytest.mark.parametrize(

@@ -22,15 +22,15 @@ class SQLRegistry:
     def __init__(self):
         self.session = Session()
         self.table = TableSchema.get_table(table_name="data_registry")
+        self.create_table()
+
+    def create_table(self):
+        self.table.__table__.create(bind=engine, checkfirst=True)
 
     def _set_uid(self):
         return uuid.uuid4().hex
 
-    def _set_version(
-        self,
-        data_name: str,
-        team: str,
-    ) -> int:
+    def _set_version(self, data_name: str, team: str) -> int:
 
         last = (
             self.session.query(func.max(self.table.version))

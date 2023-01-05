@@ -84,8 +84,8 @@ def test_data_card_splits(test_data):
         data_splits=data_split,
     )
 
-    assert data_card.data_splits[0].column == "year"
-    assert data_card.data_splits[0].column_value == 2020
+    assert data_card.data_splits[0]["column"] == "year"
+    assert data_card.data_splits[0]["column_value"] == 2020
 
     data_split = [
         {"label": "train", "start": 0, "stop": 2},
@@ -100,8 +100,8 @@ def test_data_card_splits(test_data):
         data_splits=data_split,
     )
 
-    assert data_card.data_splits[0].start == 0
-    assert data_card.data_splits[0].stop == 2
+    assert data_card.data_splits[0]["start"] == 0
+    assert data_card.data_splits[0]["stop"] == 2
 
     # metadata = registry.register(data_card=data_card)
 
