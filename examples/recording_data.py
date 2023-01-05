@@ -3,10 +3,11 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-# Create data
-
+# Instantiate data registry
 registry = DataRegistry()
 
+#################### Create pandas dataframe with index list for splitting data ########
+# create fake data
 mu_1, mu_2 = -4, 4
 X_data = np.random.normal(mu_1, 2.0, size=(1000, 10))
 y_data = np.random.randint(2, 100, size=(1000, 1))
