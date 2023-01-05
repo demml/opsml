@@ -1,12 +1,12 @@
 import datetime
 import time
 import uuid
-from typing import Union
+from typing import Type
 
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_mixin
+from sqlalchemy.orm import declarative_mixin  # type: ignore
 
 from opsml_data.helpers.settings import settings
 
@@ -33,14 +33,14 @@ class DataMixin:
     __table_args__ = {"schema": "ds-data-registry"}
 
 
-class DataSchema(Base, DataMixin):
+class DataSchema(Base, DataMixin):  # type: ignore
     __tablename__ = "data_registry"
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
 
 
-class TestDataSchema(Base, DataMixin):
+class TestDataSchema(Base, DataMixin):  # type: ignore
     __tablename__ = "test_data_registry"
 
     def __repr__(self):
@@ -49,9 +49,9 @@ class TestDataSchema(Base, DataMixin):
 
 class TableSchema:
     @staticmethod
-    def get_table(table_name: str) -> Union[DataSchema, TestDataSchema]:
+    def get_table(table_name: str) -> Type[Base]:  # type: ignore
         for table_schema in Base.__subclasses__():
-            if table_name == table_schema.__tablename__:
+            if table_name == table_schema.__tablename__:  # type: ignore
                 return table_schema
 
         # return default

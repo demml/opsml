@@ -76,17 +76,17 @@ class DriftReport(BaseModel):
 
 
 class ParsedFeatures(BaseModel):
-    feature: Optional[List[str]] = []
-    values: Optional[List[float]] = []
-    bins: Optional[List[float]] = []
-    label: Optional[List[str]] = []
-    feature_type: Optional[List[int]] = []
+    feature: List[Optional[str]] = []
+    values: List[Optional[float]] = []
+    bins: List[Optional[float]] = []
+    label: List[Optional[str]] = []
+    feature_type: List[Optional[int]] = []
 
 
 class ParsedFeatureImportance(BaseModel):
-    feature: Optional[List[str]] = []
-    auc: Optional[List[float]] = []
-    importance: Optional[List[float]] = []
+    feature: List[str] = []
+    auc: List[Optional[float]] = []
+    importance: List[Optional[float]] = []
 
 
 class ParsedFeatureDataFrames(BaseModel):

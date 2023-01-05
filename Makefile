@@ -28,8 +28,8 @@ lints.pylint:
 	poetry run pylint --rcfile pyproject.toml  ${SOURCE_OBJECTS}
 lints.ruff:
 	poetry run ruff ${SOURCE_OBJECTS}
-lints: lints.flake8 lints.pylint lints.ruff
-lints.ci: lints.flake8.ci lints.pylint lints.ruff lints.format_check
+lints: lints.flake8 lints.pylint lints.ruff lints.mypy
+lints.ci: lints.flake8.ci lints.pylint lints.ruff lints.format_check lints.mypy
 
 setup: setup.python setup.sysdep.poetry setup.poetry-template
 setup.uninstall:

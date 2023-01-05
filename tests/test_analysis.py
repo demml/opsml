@@ -1,246 +1,183 @@
-import os
-import time
-from unittest.mock import patch
-
-import numpy as np
+from opsml_data.analysis.analyzer import PayErrorAnalysis
+from opsml_data.analysis.base_analyzer import FlightPlanSQL, PayErrorAnalyzer
 import pandas as pd
 import pytest
 
-from opsml_data.analysis.helpers import Analyzer
-from opsml_data.analysis.levels import LevelHandler
-from opsml_data.connector.snowflake import SnowflakeQueryRunner
 
-
-@pytest.mark.parametrize("id_col", ["ng_order_id", "bundle_id"])
-@pytest.mark.parametrize("compute_env", ["gcp", "local"])
-def test_handler(id_col, compute_env):
-    handler = LevelHandler(id_col=id_col, compute_env=compute_env)
-
-    if compute_env == "gcp":
-        assert handler.data_getter is not None
-        assert handler.storage_client is not None
-
-
-@pytest.mark.parametrize("id_col", ["ng_order_id", "bundle_id"])
 @pytest.mark.parametrize("compute_env", ["gcp", "local"])
 @pytest.mark.parametrize("outlier_removal", [True, False])
 @pytest.mark.parametrize("analysis_level", ["order", "bundle"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-def test_handler_sql_template(id_col, compute_env, outlier_removal, analysis_level, analysis_type):
-    handler = LevelHandler(id_col=id_col, compute_env=compute_env)
+def test_sql_getters(compute_env, outlier_removal, analysis_level, analysis_type):
 
-    query = handler._get_sql_template(
-        analysis_level=analysis_level,
+    pay_error_analysis = PayErrorAnalysis(
         analysis_type=analysis_type,
+        analysis_level=analysis_level,
         outlier_removal=outlier_removal,
-        metro_level=False,
-        table_name="test",
+        compute_env=compute_env,
     )
 
-    assert isinstance(query, str)
+    attributes = pay_error_analysis.create_analysis_attributes()
+
+    sql_getter = next(
+        (
+            sql
+            for sql in FlightPlanSQL.__subclasses__()
+            if sql.validate(
+                analysis_type=attributes.analysis_type,
+            )
+        ),
+        None,
+    )
+
+    sql_str = sql_getter(analysis_attributes=attributes).get_sql()
+    assert isinstance(sql_str, str)
+
+    # assert isinstance(query, str)
 
 
-@pytest.mark.parametrize("id_col", ["ng_order_id", "bundle_id"])
 @pytest.mark.parametrize("compute_env", ["gcp", "local"])
-def test_handler_get_dataframe(
-    id_col,
-    compute_env,
-    pick_predictions,
-):
-    order_ids, pick_predictions = pick_predictions
-    handler = LevelHandler(id_col=id_col, compute_env=compute_env)
-
-    df = handler._create_pred_dataframe(ids=order_ids, pick_predictions=pick_predictions, id_col=id_col)
-
-    assert isinstance(df, pd.DataFrame)
-
-
-@pytest.mark.parametrize("id_col", ["ng_order_id", "bundle_id"])
-@pytest.mark.parametrize("compute_env", ["gcp", "local"])
-def test_handler_upload_to_gcs(
-    id_col,
-    compute_env,
-    pick_predictions,
-    unique_id,
-):
-    order_ids, pick_predictions = pick_predictions
-    handler = LevelHandler(id_col=id_col, compute_env=compute_env)
-
-    df = handler._create_pred_dataframe(ids=order_ids, pick_predictions=pick_predictions, id_col=id_col)
-
-    assert isinstance(df, pd.core.frame.DataFrame)
-
-    if compute_env == "env":
-        gcs_uri = handler._upload_dataframe_to_gcs(df, unique_id)
-
-        assert isinstance(
-            gcs_uri,
-            str,
-        )
-
-        os.system(f"gsutil rm {gcs_uri}")
-
-
-@pytest.mark.parametrize("id_col", ["ng_order_id"])
-@pytest.mark.parametrize("compute_env", ["gcp"])
-def test_handler_gcs_to_table(
-    id_col,
-    compute_env,
-    pick_predictions,
-    unique_id,
-):
-    order_ids, pick_predictions = pick_predictions
-    handler = LevelHandler(id_col=id_col, compute_env=compute_env)
-
-    df = handler._create_pred_dataframe(ids=order_ids, pick_predictions=pick_predictions, id_col=id_col)
-
-    assert isinstance(df, pd.core.frame.DataFrame)
-
-    gcs_url = handler._upload_dataframe_to_gcs(df, unique_id)
-
-    assert isinstance(
-        gcs_url,
-        str,
-    )
-
-    handler._gcs_to_table(gcs_url, f"preds_{unique_id}")
-
-    # delete everything
-    os.system(f"gsutil rm {gcs_url}")
-    query_runner = SnowflakeQueryRunner()
-    response = query_runner.submit_query(
-        query=f"DROP TABLE DATA_SCIENCE.preds_{unique_id};",
-    )
-    assert response.status_code == 200
-
-
-@pytest.mark.parametrize("compute_env", ["local"])
-@pytest.mark.parametrize("analysis_level", ["order", "bundle"])
+@pytest.mark.parametrize("outlier_removal", [True, False])
+@pytest.mark.parametrize("analysis_level", ["order"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-def test_handler_local_run_analysis(
+def test_order_analysis_df(
     compute_env,
-    pick_predictions,
-    unique_id,
-    analysis_type,
+    outlier_removal,
     analysis_level,
-    sf_schema,
-    df_columns,
+    analysis_type,
+    pick_predictions,
 ):
     order_ids, pick_predictions = pick_predictions
-    if analysis_level == "order":
-        id_col = "ng_order_id"
-    else:
-        id_col = "bundle_id"
 
-    with patch.object(LevelHandler, "_run_analysis") as _run_analysis:
-        _run_analysis.return_value = pd.DataFrame(
-            np.empty((10, 7)) * np.nan,
-            columns=df_columns,
-        )
+    pay_error_analysis = PayErrorAnalysis(
+        analysis_type=analysis_type,
+        analysis_level=analysis_level,
+        outlier_removal=outlier_removal,
+        compute_env=compute_env,
+    )
 
-        handler = LevelHandler(id_col=id_col, compute_env=compute_env)
+    prediction_dataframe = pd.DataFrame.from_dict(
+        {
+            "ids": order_ids,
+            "pick_predictions": pick_predictions,
+        }
+    )
 
-        df = handler._run_analysis(
-            ids=order_ids,
-            pick_predictions=pick_predictions,
-            analysis_type=analysis_type,
-            analysis_level=analysis_level,
-            table_name=f"preds_{analysis_level}_{unique_id}",
-            schema=sf_schema,
-        )
+    attributes = pay_error_analysis.create_analysis_attributes()
 
-        assert isinstance(df, pd.core.frame.DataFrame)
+    pay_error_analyzer = PayErrorAnalyzer(
+        prediction_dataframe=prediction_dataframe,
+        analysis_attributes=attributes,
+    )
+
+    dataframe = pay_error_analyzer.create_pred_dataframe()
+    assert isinstance(dataframe, pd.DataFrame)
+
+
+@pytest.mark.parametrize("compute_env", ["gcp", "local"])
+@pytest.mark.parametrize("outlier_removal", [True, False])
+@pytest.mark.parametrize("analysis_level", ["bundle"])
+@pytest.mark.parametrize("analysis_type", ["pay", "error"])
+def test_bundle_analysis_df(
+    compute_env,
+    outlier_removal,
+    analysis_level,
+    analysis_type,
+    pick_predictions,
+):
+    order_ids, pick_predictions = pick_predictions
+
+    pay_error_analysis = PayErrorAnalysis(
+        analysis_type=analysis_type,
+        analysis_level=analysis_level,
+        outlier_removal=outlier_removal,
+        compute_env=compute_env,
+    )
+
+    prediction_dataframe = pd.DataFrame.from_dict(
+        {
+            "ids": order_ids,
+            "pick_predictions": pick_predictions,
+        }
+    )
+
+    attributes = pay_error_analysis.create_analysis_attributes()
+
+    pay_error_analyzer = PayErrorAnalyzer(
+        prediction_dataframe=prediction_dataframe,
+        analysis_attributes=attributes,
+    )
+
+    dataframe = pay_error_analyzer.create_pred_dataframe()
+    assert isinstance(dataframe, pd.DataFrame)
 
 
 @pytest.mark.parametrize("compute_env", ["local"])
+@pytest.mark.parametrize("outlier_removal", [False, True])
 @pytest.mark.parametrize("analysis_level", ["bundle", "order"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
 @pytest.mark.parametrize("metro_level", [True, False])
-@pytest.mark.parametrize("outlier_removal", [True, False])
-def test_analyzer(
+def test_analysis_local(
     compute_env,
-    pick_predictions,
-    analysis_type,
-    analysis_level,
-    df_columns,
-    metro_level,
     outlier_removal,
+    analysis_level,
+    analysis_type,
+    pick_predictions,
+    metro_level,
 ):
     order_ids, pick_predictions = pick_predictions
-    with patch.object(Analyzer, "run_analysis") as run_analysis:
-        run_analysis.return_value = pd.DataFrame(
-            np.empty((10, 7)) * np.nan,
-            columns=df_columns,
-        )
 
-        analyzer = Analyzer(compute_env == compute_env)
+    pay_error_analysis = PayErrorAnalysis(
+        analysis_type=analysis_type,
+        analysis_level=analysis_level,
+        outlier_removal=outlier_removal,
+        compute_env=compute_env,
+        metro_level=metro_level,
+    )
 
-        df = analyzer.run_analysis(
-            ids=order_ids,
-            pick_predictions=pick_predictions,
-            analysis_type=analysis_type,
-            analysis_level=analysis_level,
-            metro_level=metro_level,
-            outlier_removal=outlier_removal,
-        )
+    prediction_dataframe = pd.DataFrame.from_dict(
+        {
+            "ids": order_ids,
+            "pick_predictions": pick_predictions,
+        }
+    )
 
-        assert isinstance(df, pd.core.frame.DataFrame)
+    results = pay_error_analysis.run_analysis(
+        prediction_dataframe=prediction_dataframe,
+    )
+
+    assert isinstance(results, pd.DataFrame)
 
 
-# limiting options because these queries take a while
 @pytest.mark.parametrize("compute_env", ["gcp"])
-@pytest.mark.parametrize("analysis_type", ["error"])
-@pytest.mark.parametrize("metro_level", [False])
 @pytest.mark.parametrize("outlier_removal", [False])
-def test_bundle_run(
-    compute_env,
-    analysis_type,
-    metro_level,
-    outlier_removal,
-    bundle_query,
-):
-
-    data_getter = SnowflakeQueryRunner()
-    data = data_getter.run_query(query=bundle_query)
-
-    analyzer = Analyzer(compute_env=compute_env)
-
-    df = analyzer.run_analysis(
-        ids=data["TIME_BUNDLE_ID"],
-        drop_predictions=data["DROP_TIME"],
-        analysis_type=analysis_type,
-        analysis_level="bundle",
-        metro_level=metro_level,
-        outlier_removal=outlier_removal,
-    )
-
-    assert isinstance(df, pd.core.frame.DataFrame)
-
-
-@pytest.mark.parametrize("compute_env", ["gcp"])
+@pytest.mark.parametrize("analysis_level", ["order"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-@pytest.mark.parametrize("metro_level", [True, False])
-@pytest.mark.parametrize("outlier_removal", [True, False])
-def test_order_run(
+def test_analysis_gcp(
     compute_env,
-    analysis_type,
-    metro_level,
     outlier_removal,
-    order_query,
+    analysis_level,
+    analysis_type,
+    pick_predictions,
 ):
+    order_ids, pick_predictions = pick_predictions
 
-    data_getter = SnowflakeQueryRunner()
-    data = data_getter.run_query(query=order_query)
-
-    analyzer = Analyzer(compute_env=compute_env)
-
-    df = analyzer.run_analysis(
-        ids=data["NG_ORDER_ID"],
-        drop_predictions=data["DROP_TIME"],
+    pay_error_analysis = PayErrorAnalysis(
         analysis_type=analysis_type,
-        analysis_level="order",
-        metro_level=metro_level,
+        analysis_level=analysis_level,
         outlier_removal=outlier_removal,
+        compute_env=compute_env,
     )
 
-    assert isinstance(df, pd.core.frame.DataFrame)
+    prediction_dataframe = pd.DataFrame.from_dict(
+        {
+            "ids": order_ids,
+            "pick_predictions": pick_predictions,
+        }
+    )
+
+    results = pay_error_analysis.run_analysis(
+        prediction_dataframe=prediction_dataframe,
+    )
+
+    assert isinstance(results, pd.DataFrame)

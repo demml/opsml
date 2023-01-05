@@ -1,7 +1,6 @@
 """Suite of helper objects"""
 import glob
 import os
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Union
 
@@ -21,7 +20,7 @@ class FindPath:
     def find_filepath(
         name: str,
         path: Optional[str] = None,
-    ) -> str:
+    ) -> Path:
         """Finds the file path of a given file.
 
         Args:
@@ -120,9 +119,14 @@ class FindPath:
         )
 
 
-class GCPService(ABC):
+class GCPService:
+    def __init__(
+        self,
+        gcp_credentials: Optional[Credentials] = None,
+    ):
+        """Generic init"""
+
     @staticmethod
-    @abstractmethod
     def valid_service_name(service_name: str):
         """Validates service name"""
 
@@ -341,17 +345,10 @@ class GCPClient:
     ):
 
         service = next(
-            (
-                service
-                for service in GCPService.__subclasses__()
-                if service.valid_service_name(
-                    service_name=service_name,
-                )
-            ),
-            None,
+            service
+            for service in GCPService.__subclasses__()
+            if service.valid_service_name(
+                service_name=service_name,
+            )
         )
-
-        if not bool(service):
-            raise exceptions.ServiceNameNotFound("""GCP service name not found""")
-
         return service(gcp_credentials=gcp_credentials)
