@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -6,12 +6,13 @@ import pyarrow as pa
 from numpy.typing import NDArray
 from pandas import DataFrame
 from pyarrow import Table
-from pydantic import BaseModel, Extra, root_validator
+from pydantic import BaseModel
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.registry.formatter import ArrowTable, DataFormatter
-from opsml_data.registry.models import DataSplit, RegistryRecord, SplitDataHolder
+from opsml_data.registry.models import RegistryRecord
 from opsml_data.registry.storage import save_record_data_to_storage
+from opsml_data.registry.splitter import DataSplitter, DataHolder
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -38,10 +39,16 @@ class DataCard(BaseModel):
                 {"label": "eval",  "column": "DF_COL", "column_value": 2},
                 ]
 
-        (2) Index slicing (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
+        (2) Index slicing by start and stop (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
             splits = [
                 {"label": "train", "start": 0, "stop": 10},
                 {"label": "test", "start": 11, "stop": 15},
+                ]
+
+        (3) Index slicing by list (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
+            splits = [
+                {"label": "train", "indices": [1,2,3,4]},
+                {"label": "test", "indices": [5,6,7,8]},
                 ]
 
     Returns:
@@ -54,7 +61,7 @@ class DataCard(BaseModel):
     user_email: str
     data: Union[NDArray, DataFrame, Table]
     drift_report: Optional[DataFrame] = None
-    data_splits: Optional[List[DataSplit]] = None
+    data_splits: Optional[List[Dict[str, Any]]] = None
     data_uri: Optional[str] = None
     drift_uri: Optional[str] = None
     version: Optional[int] = None
@@ -64,21 +71,13 @@ class DataCard(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        extra = Extra.allow
-        allow_mutation = True
         validate_assignment = False
 
-    @root_validator(pre=True)
-    def set_attributes(cls, values):  # pylint: disable=no-self-argument
-        """Pre checks"""
+    @property
+    def has_data_splits(self):
+        return bool(self.data_splits)
 
-        data_splits = values.get("data_splits")
-        if bool(data_splits):
-            values["data_splits"] = [DataSplit(**split) for split in data_splits]
-
-        return values
-
-    def _parse_splits(self):
+    def split_data(self) -> Union[DataHolder, None]:
 
         """Loops through data splits and splits data either by indexing or
         column values
@@ -86,33 +85,22 @@ class DataCard(BaseModel):
         Returns
             Class containing data splits
         """
-        data_holder = SplitDataHolder()
-        for split in self.data_splits:  # pylint: disable=not-an-iterable
-            data_holder.set_split(
-                is_row_slicing=split.row_slicing,
-                label=split.label,
-                data=self.data,
-                start_idx=split.start,
-                stop_idx=split.stop,
-                column=split.column,
-                column_value=split.column_value,
-            )
+
+        if not self.has_data_splits:
+            return None
+
+        else:
+            data_splits: DataHolder = self.parse_data_splits()
+            return data_splits
+
+    def parse_data_splits(self) -> DataHolder:
+
+        data_holder = DataHolder()
+        for split in self.data_splits:
+            label, data = DataSplitter(split_attributes=split).split(data=self.data)
+            setattr(data_holder, label, data)
 
         return data_holder
-
-    def split_data(self) -> SplitDataHolder:
-
-        """Takes data from data card and splits it by the specified data splits
-
-        Returns:
-            DataModel (pydantic) with attributes corresponding to data splits
-
-        """
-
-        if not bool(self.data_splits):
-            return SplitDataHolder(data=self.data)
-
-        return self._parse_splits()
 
     def __convert_and_save(
         self,
@@ -142,12 +130,10 @@ class DataCard(BaseModel):
             version=version,
             team=team,
         )
-
         converted_data.storage_uri = storage_path.gcs_uri
 
         return converted_data
 
-    # private method used in dataregistry
     def create_registry_record(self, version: int) -> RegistryRecord:
 
         """Creates required metadata for registering the current data card.
