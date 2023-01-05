@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 import gcsfs
 import pandas as pd
@@ -33,8 +34,8 @@ class SnowflakeQueryRunner(QueryRunner):
 
     def run_query(
         self,
-        query: str = None,
-        sql_file: str = None,
+        query: Optional[str] = None,
+        sql_file: Optional[str] = None,
     ) -> pd.DataFrame:
 
         """Submits a query to run
