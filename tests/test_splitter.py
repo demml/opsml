@@ -16,6 +16,11 @@ def test_pandas_splitter(test_df):
     label, data = DataSplitter(split_attributes=split).split(data=test_df)
     assert isinstance(data, pd.DataFrame)
 
+    # test array conversion
+    split = {"label": "train", "indices": np.array([0, 1, 2])}
+    label, data = DataSplitter(split_attributes=split).split(data=test_df)
+    assert isinstance(data, pd.DataFrame)
+
 
 def test_numpy_splitter(test_array):
     split = {"label": "train", "start": 0, "stop": 2}
