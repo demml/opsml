@@ -19,7 +19,10 @@ class SplitModel(BaseModel):
     column_value: Optional[Union[int, str]] = None
     start: Optional[int] = None
     stop: Optional[int] = None
-    indices: Optional[List[int]] = None
+    indices: Optional[Union[np.ndarray, List[int]]] = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Splitter:

@@ -89,10 +89,10 @@ class DataCard(BaseModel):
         if not self.has_data_splits:
             return None
 
-        data_splits: DataHolder = self.parse_data_splits()
+        data_splits: DataHolder = self._parse_data_splits()
         return data_splits
 
-    def parse_data_splits(self) -> DataHolder:
+    def _parse_data_splits(self) -> DataHolder:
 
         data_holder = DataHolder()
         for split in self.data_splits:
