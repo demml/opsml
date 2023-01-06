@@ -21,6 +21,9 @@ class SplitModel(BaseModel):
     stop: Optional[int] = None
     indices: Optional[Union[np.ndarray, List[int]]] = None
 
+    class Config:
+        arbitrary_types_allowed = True
+
 
 class Splitter:
     def __init__(self, split_attributes: Dict[str, Any]):
