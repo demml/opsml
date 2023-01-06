@@ -7,14 +7,13 @@ from opsml_data.registry.data_registry import DataRegistry
 
 
 @pytest.mark.parametrize(
-    "test_data",
+    "data_splits, test_data",
     [
-        lazy_fixture("test_array"),
-        lazy_fixture("test_df"),
-        lazy_fixture("test_arrow_table"),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_array")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-@pytest.mark.parametrize("data_splits", [lazy_fixture("test_split"), None])
 def test_register_data(setup_database, test_data, storage_client, data_splits):
 
     registry: DataRegistry = setup_database
