@@ -161,8 +161,9 @@ def test_df():
 
 
 @pytest.fixture(scope="session")
-def test_split():
-    return [{"label": "train", "indices": [0, 1, 2]}]
+def test_split_array():
+    indices = np.array([0, 1, 2])
+    return [{"label": "train", "indices": indices}]
 
 
 @pytest.fixture(scope="function")
