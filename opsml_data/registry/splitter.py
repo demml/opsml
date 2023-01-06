@@ -2,8 +2,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Extra, validator
 import pyarrow as pa
+from pydantic import BaseModel, Extra, validator
 
 
 class DataHolder(BaseModel):
