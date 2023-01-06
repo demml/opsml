@@ -11,7 +11,6 @@ steps:
   - name: py38
     image: python:3.8
     commands:
-      #- python env.py
       - apt update
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
       - export GOOGLE_APPLICATION_CREDENTIALS=account.json
@@ -29,8 +28,6 @@ steps:
   - name: py39
     image: python:3.9
     commands:
-      #- python env.py
-           #- python env.py
       - apt update
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
       - export GOOGLE_APPLICATION_CREDENTIALS=account.json

@@ -10,9 +10,9 @@
   <img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" />
 
   <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-data_AYTUBacTQq5Yye6S24hq">
-  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-pipelines_AYRc4wMXEju8C6-GH2aW&metric=alert_status&token=squ_44147ff03402c20656a2ed05aab463378bf5c1a0" />
+  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-data_AYTUBacTQq5Yye6S24hq&metric=alert_status&token=squ_52f05a6d9e8d193bcbd54d5142cae5652e35cc4f" />
 
-  <a href="https://sonarqube.shipt.com/component_measures?id=shipt_opsml-pipelines_AYRc4wMXEju8C6-GH2aW&metric=coverage">
-  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-pipelines_AYRc4wMXEju8C6-GH2aW&metric=coverage&token=squ_44147ff03402c20656a2ed05aab463378bf5c1a0" />
+  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-data_AYTUBacTQq5Yye6S24hq">
+  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-data_AYTUBacTQq5Yye6S24hq&metric=coverage&token=squ_52f05a6d9e8d193bcbd54d5142cae5652e35cc4f" />
 
 </p>
