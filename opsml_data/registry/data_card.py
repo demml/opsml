@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-from numpy.typing import NDArray
 from pandas import DataFrame
 from pyarrow import Table
 from pydantic import BaseModel, validator
@@ -17,7 +16,43 @@ from opsml_data.registry.storage import save_record_data_to_storage
 logger = ShiptLogging.get_logger(__name__)
 
 
-class DataCard(BaseModel):
+class ValidCard(BaseModel):
+
+    data_name: str
+    team: str
+    user_email: str
+    data: Union[np.ndarray, DataFrame, Table]
+    drift_report: Optional[DataFrame] = None
+    data_splits: List[Dict[str, Any]] = []
+    data_uri: Optional[str] = None
+    drift_uri: Optional[str] = None
+    version: Optional[int] = None
+    feature_map: Optional[Dict[str, Union[str, None]]] = None
+    data_type: Optional[str] = None
+    uid: Optional[str] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+        validate_assignment = False
+
+    @property
+    def has_data_splits(self):
+        return bool(self.data_splits)
+
+    @validator("data_splits", pre=True)
+    def convert_none(cls, splits):  # pylint: disable=no-self-argument
+        if splits is None:
+            return []
+
+        for split in splits:
+            indices = split.get("indices")
+            if indices is not None and isinstance(indices, np.ndarray):
+                split["indices"] = indices.tolist()
+
+        return splits
+
+
+class DataCard(ValidCard):
     """Create a data card class from data.
 
     Args:
@@ -55,33 +90,6 @@ class DataCard(BaseModel):
         Data card
 
     """
-
-    data_name: str
-    team: str
-    user_email: str
-    data: Union[NDArray, DataFrame, Table]
-    drift_report: Optional[DataFrame] = None
-    data_splits: List[Dict[str, Any]] = []
-    data_uri: Optional[str] = None
-    drift_uri: Optional[str] = None
-    version: Optional[int] = None
-    feature_map: Optional[Dict[str, Union[str, None]]] = None
-    data_type: Optional[str] = None
-    uid: Optional[str] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = False
-
-    @validator("data_splits", pre=True)
-    def convert_none(cls, value):  # pylint: disable=no-self-argument
-        if value is None:
-            value = []
-        return value
-
-    @property
-    def has_data_splits(self):
-        return bool(self.data_splits)
 
     def split_data(self) -> Union[DataHolder, None]:
 
