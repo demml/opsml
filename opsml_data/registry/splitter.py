@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, Extra, validator
 
 
 class DataHolder(BaseModel):
@@ -19,10 +19,19 @@ class SplitModel(BaseModel):
     column_value: Optional[Union[int, str]] = None
     start: Optional[int] = None
     stop: Optional[int] = None
-    indices: Optional[Union[np.ndarray, List[int]]] = None
+    indices: Optional[List[int]] = None
 
     class Config:
         arbitrary_types_allowed = True
+
+    @validator("indices", pre=True)
+    def convert_to_list(cls, value):  # pylint: disable=no-self-argument
+        """Pre to convert indices to list if not None"""
+
+        if value is not None and not isinstance(value, list):
+            value = list(value)
+
+        return value
 
 
 class Splitter:

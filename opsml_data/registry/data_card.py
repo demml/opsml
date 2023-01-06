@@ -6,7 +6,7 @@ import pyarrow as pa
 from numpy.typing import NDArray
 from pandas import DataFrame
 from pyarrow import Table
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.registry.formatter import ArrowTable, DataFormatter
@@ -73,6 +73,12 @@ class DataCard(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = False
 
+    @validator("data_splits", pre=True)
+    def convert_none(cls, value):  # pylint: disable=no-self-argument
+        if value is None:
+            value = []
+        return value
+
     @property
     def has_data_splits(self):
         return bool(self.data_splits)
@@ -133,6 +139,18 @@ class DataCard(BaseModel):
 
         return converted_data
 
+    def __convert_and_save_drift(self, version: int) -> Optional[str]:
+        if bool(self.drift_report):
+
+            drift_artifact: ArrowTable = self.__convert_and_save(
+                data=self.drift_report,
+                data_name="drift_report",
+                version=version,
+                team=self.team,
+            )
+            return drift_artifact.storage_uri
+        return None
+
     def create_registry_record(self, version: int) -> RegistryRecord:
 
         """Creates required metadata for registering the current data card.
@@ -147,23 +165,16 @@ class DataCard(BaseModel):
         """
 
         data_artifact = self.__convert_and_save(
-            data=self.data, data_name=self.data_name, version=version, team=self.team
+            data=self.data,
+            data_name=self.data_name,
+            version=version,
+            team=self.team,
         )
 
-        if bool(self.drift_report):
-
-            drift_artifact: ArrowTable = self.__convert_and_save(
-                data=self.drift_report,
-                data_name="drift_report",
-                version=version,
-                team=self.team,
-            )
-            drift_uri = drift_artifact.storage_uri
-        else:
-            drift_uri = None
+        drift_storage_uri = self.__convert_and_save_drift(version=version)
 
         self.data_uri = data_artifact.storage_uri
-        self.drift_uri = drift_uri
+        self.drift_uri = drift_storage_uri
         self.data_type = data_artifact.table_type
         self.feature_map = data_artifact.feature_map
         self.version = version
@@ -172,7 +183,7 @@ class DataCard(BaseModel):
             data_name=self.data_name,
             team=self.team,
             data_uri=data_artifact.storage_uri,
-            drift_uri=drift_uri,
+            drift_uri=drift_storage_uri,
             feature_map=data_artifact.feature_map,
             data_type=data_artifact.table_type,
             data_splits=self.data_splits,
