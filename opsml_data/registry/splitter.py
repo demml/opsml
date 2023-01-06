@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 from pydantic import BaseModel, Extra, validator
 
 
@@ -77,6 +78,17 @@ class PandasColumnSplitter(Splitter):
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
         if data_type == pd.DataFrame and split_dict.get("column") is not None:
+            return True
+        return False
+
+
+class PyArrowIndexSplitter(Splitter):
+    def split(self, data: pa.Table) -> Tuple[str, pa.Table]:
+        return self.split_attributes.label, data.take(self.split_attributes.indices)
+
+    @staticmethod
+    def validate(data_type: type, split_dict: Dict[str, Any]):
+        if data_type == pa.Table and split_dict.get("indices") is not None:
             return True
         return False
 
