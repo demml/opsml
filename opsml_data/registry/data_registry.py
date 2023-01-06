@@ -71,7 +71,7 @@ class SQLRegistry:
 class DataRegistry(SQLRegistry):
 
     # Create
-    def register(self, data_card: DataCard) -> None:
+    def register_data(self, data_card: DataCard) -> None:
         """
         Adds new data record to data registry.
         Args:
@@ -116,7 +116,7 @@ class DataRegistry(SQLRegistry):
         return pd.read_sql(query.statement, query.session.bind)
 
     # Read
-    def load(
+    def load_data(
         self,
         data_name: str,
         team: str,
@@ -164,9 +164,9 @@ class DataRegistry(SQLRegistry):
             user_email=sql_data.user_email,
         )
 
-    def update(self, data_card: DataCard) -> None:
+    def update_data(self, data_card: DataCard) -> None:
 
-        """Updates an existing data card
+        """Updates an existing data card in the data registry
 
         Args:
             data_card (DataCard): Existing data card record

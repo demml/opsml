@@ -14,18 +14,19 @@ from opsml_data.registry.data_registry import DataRegistry
         lazy_fixture("test_arrow_table"),
     ],
 )
-def test_register_data(setup_database, test_data, storage_client):
+@pytest.mark.parametrize("data_splits", [lazy_fixture("test_split"), None])
+def test_register_data(setup_database, test_data, storage_client, data_splits):
 
     registry: DataRegistry = setup_database
-
     data_card = DataCard(
         data=test_data,
         data_name="test_df",
         team="mlops",
         user_email="mlops.com",
+        data_splits=data_splits,
     )
 
-    registry.register(data_card=data_card)
+    registry.register_data(data_card=data_card)
 
     storage_client.delete_object_from_url(gcs_uri=data_card.data_uri)
 
@@ -47,7 +48,7 @@ def test_list_data(setup_database, test_data):
         user_email="mlops.com",
     )
 
-    metadata = registry.register(data_card=data_card)
+    metadata = registry.register_data(data_card=data_card)
 
     df = registry.list_data(data_name="test_df", team="spsms")
     assert isinstance(df, pd.DataFrame)
@@ -132,13 +133,13 @@ def test_load_data_card(setup_database, test_data, storage_client):
         data_splits=data_split,
     )
 
-    registry.register(data_card=data_card)
-    loaded_data = registry.load(data_name=data_name, team=team, version=data_card.version)
+    registry.register_data(data_card=data_card)
+    loaded_data = registry.load_data(data_name=data_name, team=team, version=data_card.version)
 
     # update
     loaded_data.version = 100
 
-    registry.update(data_card=loaded_data)
+    registry.update_data(data_card=loaded_data)
     storage_client.delete_object_from_url(gcs_uri=loaded_data.data_uri)
 
     df = registry.list_data(data_name=data_name, team=team, version=100)

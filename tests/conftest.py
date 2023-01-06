@@ -160,6 +160,11 @@ def test_df():
     return df
 
 
+@pytest.fixture(scope="session")
+def test_split():
+    return [{"label": "train", "indices": [0, 1, 2]}]
+
+
 @pytest.fixture(scope="function")
 def drift_dataframe():
     mu_1 = -4  # mean of the first distribution
