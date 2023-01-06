@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Type
 
-from sqlalchemy import BigInteger, Column, Integer, String
+from sqlalchemy import BigInteger, Column, Integer, String, Text, VARCHAR
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin  # type: ignore
@@ -16,19 +16,19 @@ Base = declarative_base()
 @declarative_mixin
 class DataMixin:
 
-    uid = Column("uuid", String(length=32), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(100), default=datetime.date.today().strftime("%Y-%m-%d"))
+    uid = Column("uuid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
+    date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
-    app_env = Column("app_env", String(100), default=settings.app_env)
-    data_name = Column("data_name", String(100))
-    team = Column("team", String(100))
-    data_uri = Column("data_uri", String(100))
-    drift_uri = Column("drift_uri", String(100))
+    app_env = Column("app_env", String(512), default=settings.app_env)
+    data_name = Column("data_name", String(512))
+    team = Column("team", String(512))
+    data_uri = Column("data_uri", String(2048))
+    drift_uri = Column("drift_uri", String(2048))
     feature_map = Column("feature_map", JSON)
     data_splits = Column("data_splits", JSON)
-    data_type = Column("data_type", String(100))
+    data_type = Column("data_type", String(512))
     version = Column("version", Integer, nullable=False)
-    user_email = Column("user_email", String(100))
+    user_email = Column("user_email", String(512))
 
     __table_args__ = {"schema": "ds-data-registry"}
 

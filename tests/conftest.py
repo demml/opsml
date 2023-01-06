@@ -211,10 +211,6 @@ def setup_database():
 
     yield registry
 
-    # TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
-
-    # TestData.schema.__table__.drop(bind=engine)
-
 
 @pytest.fixture(scope="session")
 def storage_client():
