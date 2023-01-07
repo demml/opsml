@@ -1,21 +1,25 @@
 import tempfile
 import uuid
-from typing import List, Union
-
+from typing import List, Union, Dict
+import joblib
 import gcsfs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+from pydantic import BaseModel
 
 from opsml_data.helpers.settings import settings
-from opsml_data.registry.models import DataStoragePath
+from opsml_data.drift.data_drift import DriftReport
+
+
+class DataStoragePath(BaseModel):
+    gcs_uri: str
 
 
 class RegistryDataStorage:
     def __init__(self):
         self.gcs_bucket = settings.gcs_bucket
-        self.blob_path = "data_registry"
         self.storage_client = gcsfs.GCSFileSystem(
             project=settings.gcp_project,
             token=settings.gcsfs_creds,
@@ -38,10 +42,11 @@ class RegistryDataStorage:
     def save_data(
         self,
         data: Union[pa.Table, np.ndarray],
+        blob_path: str,
         data_name: str,
         version: int,
         team: str,
-    ):
+    ) -> DataStoragePath:
         """Saves data"""
 
     def load_data(self, storage_uri: str):
@@ -56,6 +61,7 @@ class ParquetStorage(RegistryDataStorage):
     def save_data(
         self,
         data: pa.Table,
+        blob_path: str,
         data_name: str,
         version: int,
         team: str,
@@ -70,7 +76,7 @@ class ParquetStorage(RegistryDataStorage):
         """
 
         filename = f"{uuid.uuid4().hex}.parquet"
-        gcs_uri = f"gs://{self.gcs_bucket}/{self.blob_path}/{team}/{data_name}/version-{version}/{filename}"  # noqa
+        gcs_uri = f"gs://{self.gcs_bucket}/{blob_path}/{team}/{data_name}/version-{version}/{filename}"  # noqa
         pq.write_table(
             table=data,
             where=gcs_uri,
@@ -107,6 +113,7 @@ class NumpyStorage(RegistryDataStorage):
     def save_data(
         self,
         data: np.ndarray,
+        blob_path: str,
         data_name: str,
         version: int,
         team: str,
@@ -114,7 +121,7 @@ class NumpyStorage(RegistryDataStorage):
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             filename = f"{uuid.uuid4().hex}.npy"
-            gcs_uri = f"gs://{self.gcs_bucket}/{self.blob_path}/{team}/{data_name}/version-{version}/{filename}"
+            gcs_uri = f"gs://{self.gcs_bucket}/{blob_path}/{team}/{data_name}/version-{version}/{filename}"
             local_path = f"{tmpdirname}/{filename}"
             np.save(file=local_path, arr=data)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
@@ -123,7 +130,7 @@ class NumpyStorage(RegistryDataStorage):
             gcs_uri=gcs_uri,
         )
 
-    def load_data(self, storage_uri: str):
+    def load_data(self, storage_uri: str) -> np.ndarray:
 
         np_path = self.list_files(storage_uri=storage_uri)[0]
         with tempfile.NamedTemporaryFile(suffix=".npy") as tmpfile:  # noqa
@@ -139,12 +146,49 @@ class NumpyStorage(RegistryDataStorage):
         return False
 
 
+class DriftStorage(RegistryDataStorage):
+    def save_data(
+        self,
+        data: Dict[str, DriftReport],
+        blob_path: str,
+        data_name: str,
+        version: int,
+        team: str,
+    ) -> DataStoragePath:
+
+        with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+            filename = f"{uuid.uuid4().hex}.joblib"
+            gcs_uri = f"gs://{self.gcs_bucket}/{blob_path}/{team}/{data_name}/version-{version}/{filename}"
+            local_path = f"{tmpdirname}/{filename}"
+            joblib.dump(data, local_path)
+            self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
+
+        return DataStoragePath(
+            gcs_uri=gcs_uri,
+        )
+
+    def load_data(self, storage_uri: str) -> Dict[str, DriftReport]:
+        joblib_path = self.list_files(storage_uri=storage_uri)[0]
+        with tempfile.NamedTemporaryFile(suffix=".joblib") as tmpfile:  # noqa
+            self.storage_client.download(rpath=joblib_path, lpath=tmpfile.name)
+            data = joblib.load(tmpfile)
+
+        return data
+
+    @staticmethod
+    def validate_type(data_type: str):
+        if data_type.lower() == "dict":
+            return True
+        return False
+
+
 def save_record_data_to_storage(
-    data: Union[pa.Table, np.ndarray],
+    data: Union[pa.Table, np.ndarray, Dict[str, DriftReport]],
+    blob_path: str,
     data_name: str,
     version: int,
     team: str,
-):
+) -> DataStoragePath:
 
     data_type = data.__class__.__name__
     storage_type = next(
@@ -156,6 +200,7 @@ def save_record_data_to_storage(
     )
     return storage_type().save_data(
         data=data,
+        blob_path=blob_path,
         data_name=data_name,
         version=version,
         team=team,
@@ -177,4 +222,6 @@ def load_record_data_from_storage(
         )
     )
 
-    return storage_type().load_data(storage_uri=storage_uri)
+    return storage_type().load_data(
+        storage_uri=storage_uri,
+    )

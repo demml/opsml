@@ -307,12 +307,20 @@ class DriftDetector:
         )
         self.features_and_target = [*self.drift_features.feature_list, *[target_feature_name]]
 
-    def run_drift_diagnostics(self, return_dataframe: bool = False) -> Union[pd.DataFrame, None]:
+    def run_drift_diagnostics(self, return_dataframe: bool = False) -> Union[pd.DataFrame, Dict[str, DriftReport]]:
         """Computes drift diagnostics between reference and current
         data based upon column mapping
 
+        Args:
+            return_dataframe (bool): Whether to return a summary dataframe.
+            If false, a dictionary of pydantic models will be returned.
+
         Returns:
-            return_df (pd.DataFrame): Dataframe of computed drift statistics.
+            If "return_dataframe" is True, a pandas dataframe of computed drift statistics
+            will be returned. If "return_dataframe" is False, a drift report in the form
+            of a dictionary of pydantic models will be returned.
+
+            *Note: DataCards only accept the pydantic form of the drift report.
         """
 
         feature_importance = self.importance_calc.compute_importance()
@@ -326,7 +334,7 @@ class DriftDetector:
         if return_dataframe:
             return self.convert_report_to_dataframe()
 
-        return None
+        return self.drift_report
 
     def convert_report_to_dataframe(self):
         dataframe_dict = {}
@@ -422,11 +430,11 @@ class DriftDetector:
             return False
         return True
 
-    def visualize_report(self) -> alt.Chart:
+    def visualize_report(self, filename: str = "chart.html") -> alt.Chart:
         if not self.drift_report_available():
             self.run_drift_diagnostics()
         visualizer = DriftVisualizer(drift_report=self.drift_report)
-        return visualizer.visualize_report()
+        return visualizer.visualize_report(filename=filename)
 
 
 class DriftReportParser:

@@ -15,6 +15,10 @@ from opsml_data.registry.sql_schema import TestDataSchema
 import joblib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+gcs_storage_client = GCPClient.get_service(
+    service_name="storage",
+    gcp_credentials=settings.gcp_creds,
+)
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -35,6 +39,18 @@ def pytest_sessionfinish(session, exitstatus):
     if paths:
         for path in paths:
             os.remove(path)
+
+    # delete all test data registry files
+    blobs = gcs_storage_client.list_objects(
+        gcs_bucket=settings.gcs_bucket,
+        prefix="test_data_registry/",
+    )
+
+    for blob in blobs:
+        gcs_storage_client.delete_object(
+            gcs_bucket=settings.gcs_bucket,
+            blob_path=blob.name,
+        )
 
 
 @pytest.fixture(scope="session")
@@ -206,8 +222,7 @@ def setup_database():
     TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
     TestDataSchema.__table__.create(bind=engine, checkfirst=True)
 
-    registry = DataRegistry()
-    registry.table = TestDataSchema
+    registry = DataRegistry(table_name="test_data_registry")
 
     yield registry
 
@@ -215,10 +230,7 @@ def setup_database():
 @pytest.fixture(scope="session")
 def storage_client():
 
-    return GCPClient.get_service(
-        service_name="storage",
-        gcp_credentials=settings.gcp_creds,
-    )
+    return gcs_storage_client
 
 
 @pytest.fixture(scope="function")

@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Type
 
-from sqlalchemy import BigInteger, Column, Integer, String, Text, VARCHAR
+from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin  # type: ignore
@@ -16,7 +16,7 @@ Base = declarative_base()
 @declarative_mixin
 class DataMixin:
 
-    uid = Column("uuid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
+    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
     date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
     app_env = Column("app_env", String(512), default=settings.app_env)
@@ -29,6 +29,7 @@ class DataMixin:
     data_type = Column("data_type", String(512))
     version = Column("version", Integer, nullable=False)
     user_email = Column("user_email", String(512))
+    dependent_vars = Column("dependent_vars", JSON)
 
     __table_args__ = {"schema": "ds-data-registry"}
 

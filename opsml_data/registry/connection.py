@@ -32,9 +32,5 @@ class SqlConnection:
 
 
 def create_sql_engine() -> sqlalchemy.engine.base.Engine:
-    engine = sqlalchemy.create_engine(
-        "mysql+pymysql://",
-        creator=SqlConnection().get_conn,
-    )
-    logger.info("Connected to db")
+    engine = sqlalchemy.create_engine("mysql+pymysql://", creator=SqlConnection().get_conn)
     return engine

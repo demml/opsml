@@ -17,7 +17,7 @@ class DataHolder(BaseModel):
 class SplitModel(BaseModel):
     label: str
     column: Optional[str] = None
-    column_value: Optional[Union[int, str]] = None
+    column_value: Optional[Any] = None
     start: Optional[int] = None
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
@@ -64,7 +64,6 @@ class PandasRowSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        print(data_type == pd.DataFrame)
         if data_type == pd.DataFrame and split_dict.get("start") is not None:
             return True
         return False
