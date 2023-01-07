@@ -8,9 +8,8 @@ from sqlalchemy.orm import sessionmaker
 
 from opsml_data.registry.connection import create_sql_engine
 from opsml_data.registry.data_card import DataCard
-from opsml_data.registry.models import RegistryRecord
+from opsml_data.registry.models import RegistryRecord, LoadedRecord
 from opsml_data.registry.sql_schema import DataSchema, TableSchema
-from opsml_data.registry.storage import load_record_data_from_storage
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -19,13 +18,13 @@ Session = sessionmaker(bind=engine)
 
 
 class SQLRegistry:
-    def __init__(self):
-        self.session = Session()
-        self.table = TableSchema.get_table(table_name="data_registry")
-        self.create_table()
+    def __init__(self, table_name: str = "data_registry"):
+        self._session = Session()
+        self._table: DataSchema = TableSchema.get_table(table_name=table_name)
+        self._create_table()
 
-    def create_table(self):
-        self.table.__table__.create(bind=engine, checkfirst=True)
+    def _create_table(self):
+        self._table.__table__.create(bind=engine, checkfirst=True)
 
     def _set_uid(self):
         return uuid.uuid4().hex
@@ -33,8 +32,8 @@ class SQLRegistry:
     def _set_version(self, data_name: str, team: str) -> int:
 
         last = (
-            self.session.query(func.max(self.table.version))
-            .filter(and_(self.table.data_name == data_name, self.table.team == team))
+            self._session.query(func.max(self._table.version))
+            .filter(and_(self._table.data_name == data_name, self._table.team == team))
             .scalar()
         )
         return 1 + (last if last else 0)
@@ -46,43 +45,59 @@ class SQLRegistry:
         version: Optional[int] = None,
     ) -> DataSchema:
 
-        query = self.session.query(self.table)
-        query = query.filter(and_(self.table.data_name == data_name, self.table.team == team))
+        query = self._session.query(self._table)
+        query = query.filter(and_(self._table.data_name == data_name, self._table.team == team))
 
         if version is None:
-            query = query.order_by(self.table.version.desc())
+            query = query.order_by(self._table.version.desc())
 
         else:
-            query = query.filter(self.table.version == version)
+            query = query.filter(self._table.version == version)
 
         return query.all()[0]
 
-    def _add_and_commit(self, record: Dict[str, Union[str, int, float]]):
-        record_name = record.get("data_name")
-        record_version = record.get("version")
-        self.session.add(self.table(**record))
-        self.session.commit()
-        logger.info("Table: %s registered as version %s", record_name, record_version)
+    def _add_and_commit(self, record: Dict[str, Any]):
+        self._session.add(self._table(**record))
+        self._session.commit()
+        logger.info(
+            "Table: %s registered as version %s",
+            record.get("data_name"),
+            record.get("version"),
+        )
 
-    def get_data_splits(self, data_splits: Dict[str, Any]) -> Optional[Any]:
-        return data_splits.get("splits")
+    def _update_record(self, record: Dict[str, Any]):
+        record_uid = record.get("uid")
+        query = self._session.query(self._table).filter(self._table.uid == record_uid)
+        query.update(record)
+        self._session.commit()
+
+        logger.info(
+            "Data: %s, version:%s updated",
+            record.get("data_name"),
+            record.get("version"),
+        )
 
 
 class DataRegistry(SQLRegistry):
 
     # Create
-    def register_data(self, data_card: DataCard) -> None:
+    def register_data(self, data_card: Union[DataCard, RegistryRecord]) -> None:
         """
         Adds new data record to data registry.
         Args:
-            data_card: Data card to register.
+            data_card (DataCard or RegistryRecord): DataCard to register. RegistryRecord is also accepted.
         """
-        data_card.uid = self._set_uid()
-        version = self._set_version(data_name=data_card.data_name, team=data_card.team)
-        record = data_card.create_registry_record(version=version)
+        if isinstance(data_card, DataCard):
+            version = self._set_version(data_name=data_card.data_name, team=data_card.team)
+            record = data_card.create_registry_record(
+                data_registry=self._table.__tablename__,
+                uid=self._set_uid(),
+                version=version,
+            )
+        else:
+            record = data_card
 
         self._add_and_commit(record=record.dict())
-        data_card.version = version
 
     # Read
     def list_data(
@@ -102,16 +117,16 @@ class DataRegistry(SQLRegistry):
             pandas dataframe of data records
         """
 
-        query = self.session.query(self.table)
+        query = self._session.query(self._table)
 
         if data_name is not None:
-            query = query.filter(self.table.data_name == data_name)
+            query = query.filter(self._table.data_name == data_name)
 
         if team is not None:
-            query = query.filter(self.table.team == team)
+            query = query.filter(self._table.team == team)
 
         if version is not None:
-            query = query.filter(self.table.version == version)
+            query = query.filter(self._table.version == version)
 
         return pd.read_sql(query.statement, query.session.bind)
 
@@ -135,34 +150,14 @@ class DataRegistry(SQLRegistry):
             Data card
         """
 
-        sql_data: DataSchema = self._query_record(data_name=data_name, team=team, version=version)
-        data = load_record_data_from_storage(
-            storage_uri=cast(str, sql_data.data_uri),
-            data_type=cast(str, sql_data.data_type),
+        sql_data: DataSchema = self._query_record(
+            data_name=data_name,
+            team=team,
+            version=version,
         )
-        drift_report = load_record_data_from_storage(
-            storage_uri=cast(str, sql_data.drift_uri),
-            data_type="DataFrame",
-        )
-        data_splits = self.get_data_splits(data_splits=cast(Dict[str, Any], sql_data.data_splits))
+        loaded_record = LoadedRecord(**sql_data.__dict__)
 
-        return DataCard(
-            data=data,
-            drift_report=drift_report,
-            uid=sql_data.uid,
-            date=sql_data.date,
-            timestamp=sql_data.timestamp,
-            app_env=sql_data.app_env,
-            data_name=sql_data.data_name,
-            team=sql_data.team,
-            data_uri=sql_data.data_uri,
-            drift_uri=sql_data.drift_uri,
-            feature_map=sql_data.feature_map,
-            data_splits=data_splits,
-            data_type=sql_data.data_type,
-            version=sql_data.version,
-            user_email=sql_data.user_email,
-        )
+        return DataCard(**loaded_record.dict())
 
     def update_data(self, data_card: DataCard) -> None:
 
@@ -175,25 +170,5 @@ class DataRegistry(SQLRegistry):
             None
         """
 
-        record = RegistryRecord(
-            data_name=data_card.data_name,
-            team=data_card.team,
-            data_uri=data_card.data_uri,
-            drift_uri=data_card.drift_uri,
-            feature_map=data_card.feature_map,
-            data_type=data_card.data_type,
-            data_splits=data_card.data_splits,
-            version=data_card.version,
-            user_email=data_card.user_email,
-            uid=data_card.uid,
-        )
-
-        self.session.query(self.table).filter(self.table.uid == record.uid).update(
-            record.dict(),
-        )
-        self.session.commit()
-        logger.info(
-            "Data: %s, version:%s updated",
-            data_card.data_name,
-            data_card.version,
-        )
+        record = RegistryRecord(**data_card.dict())
+        self._update_record(record=record.dict())

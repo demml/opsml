@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 from pydantic import BaseModel, root_validator
@@ -25,22 +25,11 @@ class QueryRunner:
         self.results_suffix = results_suffix
         self.headers = headers
 
-    def submit_query(
+    def load_sql(
         self,
         query: Optional[str] = None,
         sql_file: Optional[str] = None,
-    ) -> Response:
-
-        """Submits a query to run
-
-        Args:
-            query (str): Optional query to run
-            sql_file (str): Optional sql file to run
-
-        Returns:
-            Response
-        """
-
+    ) -> str:
         sql = query or sql_file
 
         if sql is None:
@@ -53,13 +42,31 @@ class QueryRunner:
             with open(file=sql_path, mode="r", encoding="utf-8") as file_:
                 sql = file_.read()
 
+        return sql
+
+    def submit_query(
+        self,
+        query: Optional[str] = None,
+    ) -> Tuple[Response, str]:
+
+        """Submits a query to run
+
+        Args:
+            query (str): Optional query to run
+            sql_file (str): Optional sql file to run
+
+        Returns:
+            Response
+        """
+
         # logic to get sql file
         response = self._post_request(
             suffix=self.submit_suffix,
-            data={"query": sql},
+            data={"query": query},
         )
+        query_id = response.json()["query_id"]
 
-        return response
+        return response, query_id
 
     def query_status(self, query_id: str) -> Response:
         """Retrieve status for a given query
