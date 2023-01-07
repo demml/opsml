@@ -3,27 +3,30 @@ from typing import Optional
 
 import gcsfs
 import pandas as pd
+import os
 import pyarrow.parquet as pq
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.connector.base import GcsFilePath, QueryRunner
 from opsml_data.helpers.settings import settings
+from opsml_data.helpers.settings import SnowflakeCredentials
+from pyshipt.helpers.connection_string import ConnectionString, DBType
+from pyshipt.helpers.database import SnowflakeDatabase
 
 logger = ShiptLogging.get_logger(__name__)
 
-file_sys = gcsfs.GCSFileSystem(
-    project=settings.gcp_project,
-)
+file_sys = gcsfs.GCSFileSystem(project=settings.gcp_project)
 
 
 class SnowflakeQueryRunner(QueryRunner):
-    def __init__(self):
+    def __init__(self, on_vpn: bool = False):
+        self.on_vpn = on_vpn
+        self.local_db = self._set_local_database()
 
         headers = {
             "Accept": "application/json",
             "Authorization": settings.snowflake_api_auth,
         }
-
         super().__init__(
             api_prefix=settings.snowflake_api_url,
             status_suffix="/v2/query_status",
@@ -32,7 +35,38 @@ class SnowflakeQueryRunner(QueryRunner):
             headers=headers,
         )
 
-    def run_query(
+    def _set_local_database(self) -> Optional[SnowflakeDatabase]:
+        if self.on_vpn:
+            sf_kwargs = SnowflakeCredentials.credentials()
+
+            query = {
+                "warehouse": [sf_kwargs.warehouse],
+                "role": [sf_kwargs.role],
+            }
+
+            conn_str = ConnectionString(
+                dbtype=DBType.SNOWFLAKE,
+                username=sf_kwargs.username,
+                password=sf_kwargs.password,
+                host=sf_kwargs.host,
+                port=None,
+                dbname=sf_kwargs.database,
+                query=query,
+            )
+            return SnowflakeDatabase(conn_str)
+        return None
+
+    @property
+    def has_local_db(self):
+        return bool(self.local_db)
+
+    def run_local_query(self, sql: str) -> pd.DataFrame:
+        with self.local_db.get_connection() as cnxn, cnxn.cursor() as cursor:
+            cursor.execute(sql)
+            dataframe = cursor.fetch_pandas_all()
+        return dataframe
+
+    def query_to_dataframe(
         self,
         query: Optional[str] = None,
         sql_file: Optional[str] = None,
@@ -47,10 +81,12 @@ class SnowflakeQueryRunner(QueryRunner):
         Returns:
             Pandas dataframe
         """
+        sql = self.load_sql(query=query, sql_file=sql_file)
+        if self.has_local_db:
+            return self.run_local_query(sql=sql)
 
         # submit
-        response = self.submit_query(query=query, sql_file=sql_file)
-        query_id = response.json()["query_id"]
+        _, query_id = self.submit_query(query=sql)
 
         # poll
         self.poll_results(query_id=query_id)

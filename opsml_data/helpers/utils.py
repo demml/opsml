@@ -51,7 +51,6 @@ class FindPath:
         anchor_file: str,
     ):
         """Finds the dir path of a given file.
-        Used as part of pipeline runner.
 
         Args:
             dir_name (str): Name of directory
@@ -79,8 +78,6 @@ class FindPath:
                 )
 
             new_path = "/".join(dirs[: dir_idx + 1])
-
-            logger.info("Src dir path: %s", new_path)
             return new_path
 
         raise exceptions.MoreThanOnePath(

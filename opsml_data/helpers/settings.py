@@ -23,6 +23,7 @@ class OpsmlCreds:
         self.project_name = None
         self.service_base_creds = None
         self.secret_client = None
+        self.service_base64_creds = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")
 
     def set_gcp_sdk_creds(self) -> None:
         """Pulls google cloud sdk creds from local env
@@ -33,12 +34,9 @@ class OpsmlCreds:
         self.user_creds, _ = google.auth.default()
         self.project_name = self.user_creds.quota_project_id
 
-    def set_gcp_service_creds(self) -> str:
-        """Extracts base64 gcp json from environment"""
-        service_base64_creds = os.environ["GOOGLE_ACCOUNT_JSON_BASE64"]
-        logger.info("""Default service credentials found""")
-
-        return service_base64_creds
+    def has_service_base64_creds(self) -> str:
+        """Has environment creds"""
+        return bool(self.service_base64_creds)
 
     def create_secret_client(self):
         self.secret_client = GCPClient.get_service(
@@ -46,38 +44,36 @@ class OpsmlCreds:
             gcp_credentials=self.user_creds,
         )
 
-    def create_gcp_creds_from_base64(self, base64_creds: str) -> Tuple[Credentials, str]:
+    def decode_base64(self) -> str:
+        base_64 = base64.b64decode(s=self.service_base64_creds).decode("utf-8")
+        return json.loads(base_64)
+
+    def create_gcp_creds_from_base64(self) -> Tuple[Credentials, str]:
         """Decodes base64 encoded service creds into GCP Credentials
 
         Returns
             Tuple of gcp credentials and project name
         """
-        base_64 = base64.b64decode(s=base64_creds).decode("utf-8")
-        key = json.loads(base_64)
+        key = self.decode_base64()
         service_creds: Credentials = service_account.Credentials.from_service_account_info(info=key)  # noqa
         project_name = service_creds.project_id
 
-        logger.info("Loaded service account credentials for GCP project: %s", project_name)
-
         return service_creds, project_name
 
-    def set_opsml_creds(
+    def get_opsml_creds(
         self,
         service_account_secret_name: str,
     ) -> Tuple[Credentials, str]:
 
-        if bool(os.getenv("GOOGLE_ACCOUNT_JSON_BASE64")):
-            service_base64_creds = self.set_gcp_service_creds()
-
-        else:
+        if not self.has_service_base64_creds:
             self.set_gcp_sdk_creds()
             self.create_secret_client()
-            service_base64_creds = self.secret_client.get_secret(
+            self.service_base64_creds = self.secret_client.get_secret(
                 project_name=self.project_name,
                 secret_name=service_account_secret_name,
             )
 
-        service_creds, project_name = self.create_gcp_creds_from_base64(base64_creds=service_base64_creds)
+        service_creds, project_name = self.create_gcp_creds_from_base64()
 
         return service_creds, project_name
 
@@ -86,7 +82,7 @@ class OpsmlCreds:
 class GCPEnvSetter:
     def __init__(self):
         self.attributes = {}
-        self.app_env = os.getenv("ENV", "staging")
+        self.attributes["app_env"] = os.environ.get("APP_ENV", "staging")
         self.env_vars = [
             "gcp_region",
             "gcs_bucket",
@@ -114,8 +110,8 @@ class GCPEnvSetter:
     def set_gcp_credentials(self):
         """Sets gcp credentials"""
 
-        secret_name = f"opsml_service_creds_{self.app_env }"
-        gcp_creds, gcp_project = OpsmlCreds().set_opsml_creds(service_account_secret_name=secret_name)
+        secret_name = f"opsml_service_creds_{self.attributes['app_env']}"
+        gcp_creds, gcp_project = OpsmlCreds().get_opsml_creds(service_account_secret_name=secret_name)
         service_account_email = getattr(gcp_creds, "service_account_email", None)
 
         key_names = ["gcp_creds", "gcp_project", "service_account"]
@@ -173,7 +169,7 @@ class Settings(BaseModel):
     gcs_bucket: str
     gcp_region: str
     run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
-    app_env: str = os.getenv("ENV", "staging")
+    app_env: str
     path: str = os.getcwd()
     gcp_creds: Credentials
     snowflake_api_auth: str

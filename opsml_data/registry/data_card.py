@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Set
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,7 @@ from opsml_data.registry.formatter import ArrowTable, DataFormatter
 from opsml_data.registry.models import RegistryRecord
 from opsml_data.registry.splitter import DataHolder, DataSplitter
 from opsml_data.registry.storage import save_record_data_to_storage
+from opsml_data.drift.data_drift import DriftReport
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -22,7 +23,7 @@ class ValidCard(BaseModel):
     team: str
     user_email: str
     data: Union[np.ndarray, DataFrame, Table]
-    drift_report: Optional[DataFrame] = None
+    drift_report: Optional[Dict[str, DriftReport]] = None
     data_splits: List[Dict[str, Any]] = []
     data_uri: Optional[str] = None
     drift_uri: Optional[str] = None
@@ -30,6 +31,7 @@ class ValidCard(BaseModel):
     feature_map: Optional[Dict[str, Union[str, None]]] = None
     data_type: Optional[str] = None
     uid: Optional[str] = None
+    dependent_vars: Optional[List[str]] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -50,6 +52,11 @@ class ValidCard(BaseModel):
                 split["indices"] = indices.tolist()
 
         return splits
+
+    def overwrite_converted_data_attributes(self, converted_data: ArrowTable):
+        setattr(self, "data_uri", converted_data.storage_uri)
+        setattr(self, "feature_map", converted_data.feature_map)
+        setattr(self, "data_type", converted_data.table_type)
 
 
 class DataCard(ValidCard):
@@ -115,86 +122,60 @@ class DataCard(ValidCard):
 
         return data_holder
 
-    def __convert_and_save(
-        self,
-        data: Union[pd.DataFrame, pa.Table, np.ndarray],
-        data_name: str,
-        version: int,
-        team: str,
-    ) -> ArrowTable:
+    def _convert_and_save_data(self, blob_path: str) -> None:
 
         """Converts data into a pyarrow table or numpy array and saves to gcs.
 
         Args:
-            data (pd.DataFrame, pa.Table, np.array): Data to convert
-            data_name (str): Name for data
-            version (int): version of the data
-            team (str): Name of team
-
-        Returns:
-            ArrowTable containing metadata
+            Data_registry (str): Name of data registry. This attribute is used when saving
+            data in gcs.
         """
 
-        converted_data: ArrowTable = DataFormatter.convert_data_to_arrow(data=data)
+        converted_data: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.data)
         converted_data.feature_map = DataFormatter.create_table_schema(converted_data.table)
         storage_path = save_record_data_to_storage(
             data=converted_data.table,
-            data_name=data_name,
-            version=version,
-            team=team,
+            data_name=self.data_name,
+            version=self.version,
+            team=self.team,
+            blob_path=blob_path,
         )
         converted_data.storage_uri = storage_path.gcs_uri
 
-        return converted_data
+        # manually overwrite
+        self.overwrite_converted_data_attributes(converted_data=converted_data)
 
-    def __convert_and_save_drift(self, version: int) -> Optional[str]:
+    def _save_drift(self, blob_path: str) -> None:
+
+        """Saves drift report to gcs"""
+
         if bool(self.drift_report):
 
-            drift_artifact: ArrowTable = self.__convert_and_save(
+            storage_path = save_record_data_to_storage(
                 data=self.drift_report,
                 data_name="drift_report",
-                version=version,
+                version=self.version,
                 team=self.team,
+                blob_path=blob_path,
             )
-            return drift_artifact.storage_uri
-        return None
+            setattr(self, "drift_uri", storage_path.gcs_uri)
 
-    def create_registry_record(self, version: int) -> RegistryRecord:
+    def create_registry_record(self, data_registry: str, uid: str, version: int) -> RegistryRecord:
 
         """Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
 
         Args:
-            Version (int): Version number for the current data card
+            Data_registry (str): Name of data registry. This attribute is used when saving
+            data in gcs.
 
         Returns:
             Regsitry metadata
 
         """
+        setattr(self, "uid", uid)
+        setattr(self, "version", version)
+        self._convert_and_save_data(blob_path=data_registry)
+        self._save_drift(blob_path=data_registry)
 
-        data_artifact = self.__convert_and_save(
-            data=self.data,
-            data_name=self.data_name,
-            version=version,
-            team=self.team,
-        )
-
-        drift_storage_uri = self.__convert_and_save_drift(version=version)
-
-        self.data_uri = data_artifact.storage_uri
-        self.drift_uri = drift_storage_uri
-        self.data_type = data_artifact.table_type
-        self.feature_map = data_artifact.feature_map
-        self.version = version
-
-        return RegistryRecord(
-            data_name=self.data_name,
-            team=self.team,
-            data_uri=data_artifact.storage_uri,
-            drift_uri=drift_storage_uri,
-            feature_map=data_artifact.feature_map,
-            data_type=data_artifact.table_type,
-            data_splits=self.data_splits,
-            version=version,
-            user_email=self.user_email,
-        )
+        return RegistryRecord(**self.__dict__)
