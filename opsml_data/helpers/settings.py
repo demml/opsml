@@ -34,7 +34,8 @@ class OpsmlCreds:
         self.user_creds, _ = google.auth.default()
         self.project_name = self.user_creds.quota_project_id
 
-    def has_service_base64_creds(self) -> str:
+    @property
+    def has_service_base64_creds(self) -> bool:
         """Has environment creds"""
         return bool(self.service_base64_creds)
 

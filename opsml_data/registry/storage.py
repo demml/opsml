@@ -1,6 +1,6 @@
 import tempfile
 import uuid
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Any
 import joblib
 import gcsfs
 import numpy as np
@@ -41,12 +41,12 @@ class RegistryDataStorage:
 
     def save_data(
         self,
-        data: Union[pa.Table, np.ndarray],
+        data: Any,
         blob_path: str,
         data_name: str,
         version: int,
         team: str,
-    ) -> DataStoragePath:
+    ):
         """Saves data"""
 
     def load_data(self, storage_uri: str):
@@ -110,7 +110,7 @@ class ParquetStorage(RegistryDataStorage):
 
 
 class NumpyStorage(RegistryDataStorage):
-    def save_data(
+    def save_data(  # type: ignore
         self,
         data: np.ndarray,
         blob_path: str,
@@ -147,7 +147,7 @@ class NumpyStorage(RegistryDataStorage):
 
 
 class DriftStorage(RegistryDataStorage):
-    def save_data(
+    def save_data(  # type: ignore
         self,
         data: Dict[str, DriftReport],
         blob_path: str,
