@@ -96,7 +96,7 @@ class DataCard(ValidCard):
 
     """
 
-    def split_data(self) -> Union[DataHolder, None]:
+    def split_data(self) -> Optional[DataHolder]:
 
         """Loops through data splits and splits data either by indexing or
         column values
