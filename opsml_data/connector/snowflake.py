@@ -62,6 +62,7 @@ class SnowflakeQueryRunner(QueryRunner):
         with self.local_db.get_connection() as cnxn, cnxn.cursor() as cursor:
             cursor.execute(sql)
             dataframe = cursor.fetch_pandas_all()
+
         return dataframe
 
     def query_to_dataframe(
@@ -80,8 +81,14 @@ class SnowflakeQueryRunner(QueryRunner):
             Pandas dataframe
         """
         sql = self.load_sql(query=query, sql_file=sql_file)
+
         if self.has_local_db:
-            return self.run_local_query(sql=sql)
+            try:
+                dataframe = self.run_local_query(sql=sql)
+                return dataframe
+
+            except Exception as error:
+                logger.error("""Failed to connect to snowlake. Using API instead. %s""", error)
 
         # submit
         _, query_id = self.submit_query(query=sql)

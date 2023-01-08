@@ -154,6 +154,7 @@ def test_example3(setup_database):
         "METRO_X",
         "METRO_Y",
         "METRO_Z",
+        "APT_FLG",
         "DROP_OFF_TIME",
     ]
     DEPENDENT_VAR = "DROP_OFF_TIME"
@@ -184,7 +185,7 @@ def test_example3(setup_database):
         x_current=splits.test[features],
         y_current=splits.test[DEPENDENT_VAR].to_numpy().reshape(-1, 1),
         target_feature_name=DEPENDENT_VAR,
-        categorical_features=None,
+        categorical_features=["APT_FLG"],
     )
 
     chart = detector.visualize_report()
