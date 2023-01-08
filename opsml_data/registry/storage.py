@@ -1,34 +1,65 @@
 import tempfile
 import uuid
-from typing import List, Union, Dict, Any
-import joblib
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import gcsfs
+import joblib
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import BaseModel
 
-from opsml_data.helpers.settings import settings
 from opsml_data.drift.data_drift import DriftReport
+from opsml_data.helpers.settings import settings
 
 
 class DataStoragePath(BaseModel):
     gcs_uri: str
 
 
+class DataSaveInfo(BaseModel):
+    blob_path: str
+    data_name: str
+    version: int
+    team: str
+
+
 class RegistryDataStorage:
-    def __init__(self):
+    def __init__(
+        self,
+        save_info: Optional[DataSaveInfo] = None,
+        file_suffix: Optional[str] = None,
+    ):
         self.gcs_bucket = settings.gcs_bucket
         self.storage_client = gcsfs.GCSFileSystem(
             project=settings.gcp_project,
             token=settings.gcsfs_creds,
         )
+        self.file_suffix = "placeholder"
+
+        if save_info is not None:
+            self.save_info = save_info
+
+        if file_suffix is not None:
+            self.file_suffix = file_suffix
+
+    def create_gcs_path(self) -> Tuple[str, str]:
+        filename = f"{uuid.uuid4().hex}.{self.file_suffix}"
+        gcs_base_path = f"gs://{self.gcs_bucket}/{self.save_info.blob_path}"
+        data_path = f"/{self.save_info.team}/{self.save_info.data_name}/version-{self.save_info.version}"
+
+        return gcs_base_path + data_path + f"/{filename}", filename
+
+    def create_tmp_path(self, tmp_dir: str):
+        gcs_path, filename = self.create_gcs_path()
+        local_path = f"{tmp_dir}/{filename}"
+
+        return gcs_path, local_path
 
     def list_files(self, storage_uri: str) -> List[str]:
         bucket = storage_uri.split("/")[2]
         file_path = "/".join(storage_uri.split("/")[3:])
-
         files = [
             "gs://" + path
             for path in self.storage_client.ls(
@@ -42,10 +73,6 @@ class RegistryDataStorage:
     def save_data(
         self,
         data: Any,
-        blob_path: str,
-        data_name: str,
-        version: int,
-        team: str,
     ):
         """Saves data"""
 
@@ -58,25 +85,23 @@ class RegistryDataStorage:
 
 
 class ParquetStorage(RegistryDataStorage):
+    def __init__(
+        self,
+        save_info: Optional[DataSaveInfo] = None,
+    ):
+        super().__init__(save_info=save_info, file_suffix="parquet")
+
     def save_data(
         self,
         data: pa.Table,
-        blob_path: str,
-        data_name: str,
-        version: int,
-        team: str,
     ) -> DataStoragePath:
         """Saves pyarrow table to gcs.
 
         Args:
             data (pa.Table): pyarrow table
-            data_name (str): Table name
-            version (int): Version number
-            team (str): Data science team
         """
 
-        filename = f"{uuid.uuid4().hex}.parquet"
-        gcs_uri = f"gs://{self.gcs_bucket}/{blob_path}/{team}/{data_name}/version-{version}/{filename}"  # noqa
+        gcs_uri, _ = self.create_gcs_path()
         pq.write_table(
             table=data,
             where=gcs_uri,
@@ -110,19 +135,16 @@ class ParquetStorage(RegistryDataStorage):
 
 
 class NumpyStorage(RegistryDataStorage):
+    def __init__(self, save_info: Optional[DataSaveInfo] = None):
+        super().__init__(save_info=save_info, file_suffix="npy")
+
     def save_data(  # type: ignore
         self,
         data: np.ndarray,
-        blob_path: str,
-        data_name: str,
-        version: int,
-        team: str,
     ) -> DataStoragePath:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-            filename = f"{uuid.uuid4().hex}.npy"
-            gcs_uri = f"gs://{self.gcs_bucket}/{blob_path}/{team}/{data_name}/version-{version}/{filename}"
-            local_path = f"{tmpdirname}/{filename}"
+            gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
             np.save(file=local_path, arr=data)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
@@ -147,19 +169,16 @@ class NumpyStorage(RegistryDataStorage):
 
 
 class DriftStorage(RegistryDataStorage):
+    def __init__(self, save_info: Optional[DataSaveInfo] = None):
+        super().__init__(save_info=save_info, file_suffix="joblib")
+
     def save_data(  # type: ignore
         self,
         data: Dict[str, DriftReport],
-        blob_path: str,
-        data_name: str,
-        version: int,
-        team: str,
     ) -> DataStoragePath:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-            filename = f"{uuid.uuid4().hex}.joblib"
-            gcs_uri = f"gs://{self.gcs_bucket}/{blob_path}/{team}/{data_name}/version-{version}/{filename}"
-            local_path = f"{tmpdirname}/{filename}"
+            gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
             joblib.dump(data, local_path)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
@@ -169,7 +188,7 @@ class DriftStorage(RegistryDataStorage):
 
     def load_data(self, storage_uri: str) -> Dict[str, DriftReport]:
         joblib_path = self.list_files(storage_uri=storage_uri)[0]
-        with tempfile.NamedTemporaryFile(suffix=".joblib") as tmpfile:  # noqa
+        with tempfile.NamedTemporaryFile(suffix=self.file_suffix) as tmpfile:  # noqa
             self.storage_client.download(rpath=joblib_path, lpath=tmpfile.name)
             data = joblib.load(tmpfile)
 
@@ -198,19 +217,20 @@ def save_record_data_to_storage(
             data_type=data_type,
         )
     )
-    return storage_type().save_data(
-        data=data,
+    save_info = DataSaveInfo(
         blob_path=blob_path,
         data_name=data_name,
         version=version,
         team=team,
     )
+    return storage_type(save_info=save_info).save_data(data=data)
 
 
 def load_record_data_from_storage(
     storage_uri: str,
     data_type: str,
 ):
+
     if not bool(storage_uri):
         return None
 
