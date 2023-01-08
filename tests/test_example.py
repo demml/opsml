@@ -187,6 +187,8 @@ def test_example3(setup_database):
         categorical_features=None,
     )
 
-    chart = detector.visualize_report(filename="test.html")
+    chart = detector.visualize_report()
     data_card.drift_report = detector.run_drift_diagnostics()
     registry.register_data(data_card=data_card)
+    registry_data = registry.list_data(data_name=DATA_NAME, team=TEAM, version=data_card.version)
+    assert registry_data["drift_uri"].values[0] is not None
