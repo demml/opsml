@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import altair as alt
 import numpy as np
@@ -102,29 +102,32 @@ class DriftFeatures:
     def __init__(
         self,
         dtypes: Dict[str, Any],
-        categorical_features: Optional[List[str]] = None,
+        categorical_features: List[Optional[str]],
         target_feature: Optional[str] = None,
     ):
 
         self.dtypes = dtypes
         self.target_feature = target_feature
         self.feature_list = self.create_feature_list()
-        self.categorical_features = self.get_categorical_features(categorical_features=categorical_features)
+        self.categorical_features = self.create_categorical_feature_list(
+            cat_features=categorical_features,
+        )
+        # else:
+        # self.categorical_features = []
 
     def create_feature_list(self) -> List[str]:
         feature_mapping = self.get_feature_types()
         return list(feature_mapping.keys())
 
-    def get_categorical_features(self, categorical_features: Optional[List[str]]):
-        if not bool(categorical_features):
-            features = []
-        else:
-            features = cast(List[Optional[str]], categorical_features)
+    # def get_categorical_features(self, categorical_features: List[str]):
+    #    if not bool(categorical_features):
+    #        features = []
+    #    else:
+    #        features = cast(List[Optional[str]], categorical_features)
+    #
+    #    return self.create_categorical_feature_list(cat_features=features)
 
-        return self.create_categorical_feature_list(cat_features=features)
-
-    def create_categorical_feature_list(self, cat_features: List[Optional[str]]) -> List[str]:
-
+    def create_categorical_feature_list(self, cat_features: List[Optional[str]]) -> List[Optional[str]]:
         return [feature for feature in self.feature_list if feature in cat_features]
 
     def get_feature_types(self):
@@ -274,7 +277,7 @@ class DriftDetector:
         x_current: pd.DataFrame,
         y_current: np.ndarray,
         target_feature_name: str,
-        categorical_features: Optional[List[str]] = None,
+        categorical_features: Optional[List[Optional[str]]] = None,
     ):
 
         """Calculates a drift report for reference vs current data
@@ -287,6 +290,9 @@ class DriftDetector:
             target_feature (str): Optional name of target data
             categorical_features (list(str)): Optional list of categorical features
         """
+
+        if categorical_features is None:
+            categorical_features = []
 
         self.drift_features = DriftFeatures(
             dtypes=dict(x_reference.dtypes),

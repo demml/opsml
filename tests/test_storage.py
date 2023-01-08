@@ -1,19 +1,20 @@
 import numpy as np
 import pandas as pd
 import pytest
-from opsml_data.registry.storage import NumpyStorage, ParquetStorage, DriftStorage
+from opsml_data.registry.storage import NumpyStorage, ParquetStorage, DriftStorage, DataSaveInfo
 from opsml_data.drift.data_drift import DriftDetector
 
 
 def test_parquet(test_arrow_table, storage_client):
-    pq_wrtier = ParquetStorage()  # change this to bucket name
-    metadata = pq_wrtier.save_data(
-        data=test_arrow_table,
-        data_name="pq_test",
-        version=1,
+
+    save_info = DataSaveInfo(
         blob_path="blob",
+        version=1,
         team="mlops",
+        data_name="test",
     )
+    pq_wrtier = ParquetStorage(save_info=save_info)
+    metadata = pq_wrtier.save_data(data=test_arrow_table)
 
     assert isinstance(metadata.gcs_uri, str)
 
@@ -24,15 +25,14 @@ def test_parquet(test_arrow_table, storage_client):
 
 
 def test_array(test_array, storage_client):
-    np_writer = NumpyStorage()
-
-    metadata = np_writer.save_data(
-        data=test_array,
-        data_name="pq_test",
-        version=1,
+    save_info = DataSaveInfo(
         blob_path="blob",
+        version=1,
         team="mlops",
+        data_name="test",
     )
+    np_writer = NumpyStorage(save_info=save_info)
+    metadata = np_writer.save_data(data=test_array)
 
     array = np_writer.load_data(storage_uri=metadata.gcs_uri)
     assert isinstance(array, np.ndarray)
@@ -55,15 +55,16 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
     )
 
     drift_report = detector.run_drift_diagnostics(return_dataframe=False)
-    drift_writer = DriftStorage()
 
-    metadata = drift_writer.save_data(
-        data=drift_report,
-        data_name="drift_report",
-        version=1,
+    save_info = DataSaveInfo(
         blob_path="blob",
+        version=1,
         team="mlops",
+        data_name="test",
     )
+
+    drift_writer = DriftStorage(save_info=save_info)
+    metadata = drift_writer.save_data(data=drift_report)
 
     drift_report = drift_writer.load_data(storage_uri=metadata.gcs_uri)
     assert isinstance(drift_report, dict)

@@ -1,7 +1,7 @@
 import datetime
 import time
 import uuid
-from typing import cast, Type
+from typing import Type, cast
 
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON

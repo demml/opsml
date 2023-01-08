@@ -22,7 +22,7 @@ from opsml_data.drift.models import FeatureImportance, DriftData, FeatureStatsOu
 import altair_viewer
 
 
-@pytest.mark.parametrize("categorical", [None, ["col_10"]])
+@pytest.mark.parametrize("categorical", [[], ["col_10"]])
 def test_drift_features(drift_dataframe, categorical):
     X_train, y_train, X_test, y_test = drift_dataframe
 
@@ -42,18 +42,7 @@ def test_drift_features(drift_dataframe, categorical):
         assert features.set_feature_type("col_10") == FeatureTypes.NUMERIC.value
 
 
-def _test_drift_detector_data(drift_dataframe):
-    X_train, y_train = drift_dataframe
-
-    data_holder = DriftDetectorData(
-        reference_data=DriftData(X=X_train, y=y_train),
-        current_data=DriftData(X=X_train, y=y_train),
-    )
-    drift_data = data_holder.create_drift_data()
-    assert isinstance(drift_data, DriftData)
-
-
-@pytest.mark.parametrize("categorical", [None, ["col_10"]])
+@pytest.mark.parametrize("categorical", [[], ["col_10"]])
 def test_feature_importance(drift_dataframe, categorical):
     X_train, y_train, X_test, y_test = drift_dataframe
 
@@ -110,7 +99,7 @@ def test_histogram(drift_dataframe, feature_type):
     assert isinstance(hist_output, HistogramOutput)
 
 
-@pytest.mark.parametrize("categorical", [["col_10"]])
+@pytest.mark.parametrize("categorical", [None, ["col_10"]])
 def test_drift_detector(drift_dataframe, categorical):
     X_train, y_train, X_test, y_test = drift_dataframe
 
