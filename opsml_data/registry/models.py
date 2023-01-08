@@ -2,12 +2,12 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-import pyarrow as pa
 import pandas as pd
-from pydantic import BaseModel, validator, root_validator
+import pyarrow as pa
+from pydantic import BaseModel, root_validator, validator
 
-from opsml_data.registry.storage import load_record_data_from_storage
 from opsml_data.drift.models import DriftReport
+from opsml_data.registry.storage import load_record_data_from_storage
 
 
 class AllowedTableTypes(str, Enum):
@@ -66,7 +66,7 @@ class LoadedRecord(BaseModel):
         arbitrary_types_allowed = True
 
     @root_validator(pre=True)
-    def load_attributes(cls, values):
+    def load_attributes(cls, values):  # pylint: disable=no-self-argument
         values["data_splits"] = LoadedRecord.get_splits(splits=values["data_splits"])
         values["data"] = LoadedRecord.load_data(values=values)
         values["drift_report"] = LoadedRecord.load_drift_report(values=values)
@@ -74,7 +74,7 @@ class LoadedRecord(BaseModel):
         return values
 
     @staticmethod
-    def get_splits(splits):  # pylint: disable=no-self-argument
+    def get_splits(splits):
         if bool(splits):
             return splits.get("splits")
         return splits

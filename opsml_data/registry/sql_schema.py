@@ -1,7 +1,7 @@
 import datetime
 import time
 import uuid
-from typing import Type
+from typing import cast, Type
 
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
@@ -50,10 +50,10 @@ class TestDataSchema(Base, DataMixin):  # type: ignore
 
 class TableSchema:
     @staticmethod
-    def get_table(table_name: str) -> Type[Base]:  # type: ignore
+    def get_table(table_name: str) -> Type[DataSchema]:  # type: ignore
         for table_schema in Base.__subclasses__():
             if table_name == table_schema.__tablename__:  # type: ignore
-                return table_schema
+                return cast(Type[DataSchema], table_schema)
 
         # return default
         return DataSchema
