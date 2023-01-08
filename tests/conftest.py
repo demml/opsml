@@ -238,3 +238,13 @@ def drift_report():
     drift_report = joblib.load("tests/drift_report.joblib")
 
     return drift_report
+
+
+@pytest.fixture(scope="function")
+def test_sql_file():
+    return "test_drop_off_bundle.sql"
+
+
+@pytest.fixture(scope="function")
+def var_store_order_query():
+    return """SELECT NG_ORDER_ID FROM OPSML_FP_ORDERS_TIME_ACTUALS LIMIT 10"""

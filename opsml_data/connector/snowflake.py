@@ -87,7 +87,7 @@ class SnowflakeQueryRunner(QueryRunner):
                 dataframe = self.run_local_query(sql=sql)
                 return dataframe
 
-            except Exception as error:
+            except Exception as error:  # pylint: disable=broad-except
                 logger.error("""Failed to connect to snowlake. Using API instead. %s""", error)
 
         # submit
