@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
@@ -8,8 +8,8 @@ from sqlalchemy.orm import sessionmaker
 
 from opsml_data.registry.connection import create_sql_engine
 from opsml_data.registry.data_card import DataCard
-from opsml_data.registry.models import RegistryRecord, LoadedRecord
-from opsml_data.registry.sql_schema import DataSchema, TableSchema
+from opsml_data.registry.models import LoadedRecord, RegistryRecord
+from opsml_data.registry.sql_schema import TableSchema
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -20,7 +20,7 @@ Session = sessionmaker(bind=engine)
 class SQLRegistry:
     def __init__(self, table_name: str = "data_registry"):
         self._session = Session()
-        self._table: DataSchema = TableSchema.get_table(table_name=table_name)
+        self._table = TableSchema.get_table(table_name=table_name)
         self._create_table()
 
     def _create_table(self):
@@ -43,7 +43,7 @@ class SQLRegistry:
         data_name: str,
         team: str,
         version: Optional[int] = None,
-    ) -> DataSchema:
+    ):
 
         query = self._session.query(self._table)
         query = query.filter(and_(self._table.data_name == data_name, self._table.team == team))
@@ -128,7 +128,7 @@ class DataRegistry(SQLRegistry):
         if version is not None:
             query = query.filter(self._table.version == version)
 
-        return pd.read_sql(query.statement, query.session.bind)
+        return pd.read_sql(query.statement, self._session.bind)
 
     # Read
     def load_data(
@@ -150,7 +150,7 @@ class DataRegistry(SQLRegistry):
             Data card
         """
 
-        sql_data: DataSchema = self._query_record(
+        sql_data = self._query_record(
             data_name=data_name,
             team=team,
             version=version,

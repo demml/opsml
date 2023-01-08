@@ -1,18 +1,16 @@
-from typing import Any, Dict, List, Optional, Union, Set
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-import pandas as pd
-import pyarrow as pa
 from pandas import DataFrame
 from pyarrow import Table
 from pydantic import BaseModel, validator
 from pyshipt_logging import ShiptLogging
 
+from opsml_data.drift.data_drift import DriftReport
 from opsml_data.registry.formatter import ArrowTable, DataFormatter
 from opsml_data.registry.models import RegistryRecord
 from opsml_data.registry.splitter import DataHolder, DataSplitter
 from opsml_data.registry.storage import save_record_data_to_storage
-from opsml_data.drift.data_drift import DriftReport
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -122,7 +120,7 @@ class DataCard(ValidCard):
 
         return data_holder
 
-    def _convert_and_save_data(self, blob_path: str) -> None:
+    def _convert_and_save_data(self, blob_path: str, version: int) -> None:
 
         """Converts data into a pyarrow table or numpy array and saves to gcs.
 
@@ -136,7 +134,7 @@ class DataCard(ValidCard):
         storage_path = save_record_data_to_storage(
             data=converted_data.table,
             data_name=self.data_name,
-            version=self.version,
+            version=version,
             team=self.team,
             blob_path=blob_path,
         )
@@ -145,7 +143,7 @@ class DataCard(ValidCard):
         # manually overwrite
         self.overwrite_converted_data_attributes(converted_data=converted_data)
 
-    def _save_drift(self, blob_path: str) -> None:
+    def _save_drift(self, blob_path: str, version: int) -> None:
 
         """Saves drift report to gcs"""
 
@@ -154,7 +152,7 @@ class DataCard(ValidCard):
             storage_path = save_record_data_to_storage(
                 data=self.drift_report,
                 data_name="drift_report",
-                version=self.version,
+                version=version,
                 team=self.team,
                 blob_path=blob_path,
             )
@@ -175,7 +173,7 @@ class DataCard(ValidCard):
         """
         setattr(self, "uid", uid)
         setattr(self, "version", version)
-        self._convert_and_save_data(blob_path=data_registry)
-        self._save_drift(blob_path=data_registry)
+        self._convert_and_save_data(blob_path=data_registry, version=version)
+        self._save_drift(blob_path=data_registry, version=version)
 
         return RegistryRecord(**self.__dict__)

@@ -163,7 +163,7 @@ class GcpComputeClient(ComputeClient):
         return status
 
     def get_dataframe_from_query(self, table_name: str, gcs_uri: str, query: str):
-        dataframe = self.data_getter.run_query(query=query)
+        dataframe = self.data_getter.query_to_dataframe(query=query)
         self.storage_client.delete_object_from_url(gcs_uri=gcs_uri)
         self.data_getter.submit_query(query=f"DROP TABLE DATA_SCIENCE.{table_name}")
 

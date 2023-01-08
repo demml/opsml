@@ -3,15 +3,13 @@ from typing import Optional
 
 import gcsfs
 import pandas as pd
-import os
 import pyarrow.parquet as pq
+from pyshipt.helpers.connection_string import ConnectionString, DBType
+from pyshipt.helpers.database import SnowflakeDatabase
 from pyshipt_logging import ShiptLogging
 
 from opsml_data.connector.base import GcsFilePath, QueryRunner
-from opsml_data.helpers.settings import settings
-from opsml_data.helpers.settings import SnowflakeCredentials
-from pyshipt.helpers.connection_string import ConnectionString, DBType
-from pyshipt.helpers.database import SnowflakeDatabase
+from opsml_data.helpers.settings import SnowflakeCredentials, settings
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -35,7 +33,7 @@ class SnowflakeQueryRunner(QueryRunner):
             headers=headers,
         )
 
-    def _set_local_database(self) -> Optional[SnowflakeDatabase]:
+    def _set_local_database(self):
         if self.on_vpn:
             sf_kwargs = SnowflakeCredentials.credentials()
 
