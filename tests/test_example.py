@@ -78,8 +78,8 @@ def test_example2(setup_database):
     cat = np.random.randint(2, 5, 1000).reshape(-1, 1)
     X_test = np.hstack((X_test, cat))
 
-    y_train = np.random.randint(1, 100, size=(1000, 1))
-    y_test = np.random.randint(2, 100, size=(1000, 1))
+    y_train = np.random.normal(mu_1, 2.0, size=(1000, 1))
+    y_test = np.random.normal(mu_1, 2.0, size=(1000, 1))
 
     col_names = []
     for i in range(0, X_train.shape[1]):

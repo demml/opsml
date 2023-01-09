@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import altair as alt
 import numpy as np
 
-# from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import scale
 from sklearn.metrics import auc, roc_curve
 
 from opsml_data.drift.drift_utils import shipt_theme
@@ -40,20 +40,22 @@ class FeatureImportanceCalculator:
         data: DriftData,
         target_feature: Optional[str] = None,
     ):
-        self.reg = RandomForestClassifier(n_estimators=50, n_jobs=-1)
+        self.reg = LogisticRegression(max_iter=1000)
         self.features = features
         self.data = data
         self.features_and_target = [*self.features, *[target_feature]]
 
     def compute_auc(self, x_data: np.ndarray, y_data: np.ndarray) -> float:
-        self.reg.fit(x_data, y_data)
+        x_tr = scale(x_data)
+        self.reg.fit(x_tr, y_data)
         preds = self.reg.predict_proba(x_data)[::, 1]
         fpr, tpr, _ = roc_curve(y_data, preds, pos_label=1)
         return auc(fpr, tpr)
 
     def calculate_feature_importance(self):
-        self.reg.fit(self.data.X, self.data.y)
-        coefs = list(self.reg.feature_importances_)
+        x_tr = scale(self.data.X)
+        self.reg.fit(x_tr, self.data.y)
+        coefs = list(self.reg.coef_[0])
         coefs.append(None)  # for target
 
         return coefs
@@ -67,7 +69,6 @@ class FeatureImportanceCalculator:
                 y_data=self.data.y,
             )
             feature_aucs.append(computed_auc)
-
         return feature_aucs
 
     def combine_feature_importance_auc(
