@@ -5,7 +5,7 @@ import pandas as pd
 
 from opsml_data.connector.snowflake import SnowflakeQueryRunner
 from opsml_data.helpers.utils import FindPath
-from opsml_data.var_store.variable_models import DependentVariables
+from opsml_data.var_store.variables import DependentVariables
 
 
 class VarStoreTables(str, Enum):
