@@ -50,7 +50,7 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
         y_reference=y_train,
         x_current=X_test,
         y_current=y_test,
-        target_feature_name="target",
+        dependent_var_name="target",
         categorical_features=categorical,
     )
 

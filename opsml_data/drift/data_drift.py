@@ -1,8 +1,8 @@
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import altair as alt
 import numpy as np
-import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import auc, roc_curve
 
@@ -21,6 +21,9 @@ from opsml_data.drift.models import (
     ParsedFeatures,
 )
 from opsml_data.drift.visualize import AltairChart
+
+warnings.simplefilter(action="ignore", category=FutureWarning)  # type: ignore
+import pandas as pd  # noqa: E402 #pylint: disable=[wrong-import-position,wrong-import-order]
 
 alt.themes.register("shipt", shipt_theme)
 alt.themes.enable("shipt")
@@ -276,7 +279,7 @@ class DriftDetector:
         y_reference: np.ndarray,
         x_current: pd.DataFrame,
         y_current: np.ndarray,
-        target_feature_name: str,
+        dependent_var_name: str,
         categorical_features: Optional[List[Optional[str]]] = None,
     ):
 
@@ -297,7 +300,7 @@ class DriftDetector:
         self.drift_features = DriftFeatures(
             dtypes=dict(x_reference.dtypes),
             categorical_features=categorical_features,
-            target_feature=target_feature_name,
+            target_feature=dependent_var_name,
         )
 
         self.drift_data = DriftDetectorData(
@@ -311,7 +314,7 @@ class DriftDetector:
             features=self.drift_features.feature_list,
             target_feature=self.drift_features.target_feature,
         )
-        self.features_and_target = [*self.drift_features.feature_list, *[target_feature_name]]
+        self.features_and_target = [*self.drift_features.feature_list, *[dependent_var_name]]
 
     def run_drift_diagnostics(self, return_dataframe: bool = False) -> Union[pd.DataFrame, Dict[str, DriftReport]]:
         """Computes drift diagnostics between reference and current

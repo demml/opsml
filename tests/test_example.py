@@ -94,7 +94,7 @@ def test_example2(setup_database):
         x_current=X_test,
         y_reference=y_train,
         y_current=y_test,
-        target_feature_name="target",
+        dependent_var_name="target",
         categorical_features=["col_10"],
     )
 
@@ -184,7 +184,7 @@ def test_example3(setup_database):
         y_reference=splits.train[DEPENDENT_VAR].to_numpy().reshape(-1, 1),
         x_current=splits.test[features],
         y_current=splits.test[DEPENDENT_VAR].to_numpy().reshape(-1, 1),
-        target_feature_name=DEPENDENT_VAR,
+        dependent_var_name=DEPENDENT_VAR,
         categorical_features=["APT_FLG"],
     )
 

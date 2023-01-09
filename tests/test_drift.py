@@ -108,7 +108,7 @@ def test_drift_detector(drift_dataframe, categorical):
         y_reference=y_train,
         x_current=X_train,
         y_current=y_train,
-        target_feature_name="target",
+        dependent_var_name="target",
         categorical_features=categorical,
     )
 
@@ -132,7 +132,7 @@ def test_altair_plots(drift_dataframe, categorical):
         y_reference=y_train,
         x_current=X_test,
         y_current=y_test,
-        target_feature_name="target",
+        dependent_var_name="target",
         categorical_features=categorical,
     )
 
@@ -194,7 +194,7 @@ def test_drift_visualizer(drift_dataframe, categorical):
         y_reference=y_train,
         x_current=X_test,
         y_current=y_test,
-        target_feature_name="target",
+        dependent_var_name="target",
         categorical_features=categorical,
     )
     detector.run_drift_diagnostics(return_dataframe=False)
@@ -233,7 +233,7 @@ def _test_real_data():
         y_reference=y_train,
         x_current=X_test,
         y_current=y_test,
-        target_feature_name="DROP_OFF_TIME",
+        dependent_var_name="DROP_OFF_TIME",
         categorical_features=None,
     )
 
