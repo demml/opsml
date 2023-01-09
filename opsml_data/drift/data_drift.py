@@ -3,7 +3,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import altair as alt
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+
+# from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import auc, roc_curve
 
 from opsml_data.drift.drift_utils import shipt_theme
@@ -38,20 +40,20 @@ class FeatureImportanceCalculator:
         data: DriftData,
         target_feature: Optional[str] = None,
     ):
-        self.log_reg = LogisticRegression()
+        self.reg = RandomForestClassifier(n_estimators=50, n_jobs=-1)
         self.features = features
         self.data = data
         self.features_and_target = [*self.features, *[target_feature]]
 
     def compute_auc(self, x_data: np.ndarray, y_data: np.ndarray) -> float:
-        self.log_reg.fit(x_data, y_data)
-        preds = self.log_reg.predict_proba(x_data)[::, 1]
+        self.reg.fit(x_data, y_data)
+        preds = self.reg.predict_proba(x_data)[::, 1]
         fpr, tpr, _ = roc_curve(y_data, preds, pos_label=1)
         return auc(fpr, tpr)
 
     def calculate_feature_importance(self):
-        self.log_reg.fit(self.data.X, self.data.y)
-        coefs = list(self.log_reg.coef_[0])
+        self.reg.fit(self.data.X, self.data.y)
+        coefs = list(self.reg.feature_importances_)
         coefs.append(None)  # for target
 
         return coefs
@@ -121,14 +123,6 @@ class DriftFeatures:
     def create_feature_list(self) -> List[str]:
         feature_mapping = self.get_feature_types()
         return list(feature_mapping.keys())
-
-    # def get_categorical_features(self, categorical_features: List[str]):
-    #    if not bool(categorical_features):
-    #        features = []
-    #    else:
-    #        features = cast(List[Optional[str]], categorical_features)
-    #
-    #    return self.create_categorical_feature_list(cat_features=features)
 
     def create_categorical_feature_list(self, cat_features: List[Optional[str]]) -> List[Optional[str]]:
         return [feature for feature in self.feature_list if feature in cat_features]
