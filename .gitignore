@@ -102,3 +102,4 @@ tests/_test_scratch_estimator.py
 .vscode/settings.json
 .ruff_cache/
 
+examples/.DS_Store
