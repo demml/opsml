@@ -1,9 +1,12 @@
+import warnings
 from typing import Optional
 
 import altair as alt
-import pandas as pd
 
 from opsml_data.drift.models import ChartType
+
+warnings.simplefilter(action="ignore", category=FutureWarning)  # type: ignore
+import pandas as pd  # noqa: E402 #pylint: disable=[wrong-import-position,wrong-import-order]
 
 
 class AltairChart:
