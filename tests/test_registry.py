@@ -2,9 +2,9 @@ import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml_data.registry.cards.card import DataCard
-from opsml_data.registry.cards.registry import CardRegistry
-from opsml_data.registry.cards.card import ModelCardCreator
+from opsml_artifacts.registry.cards.card import DataCard
+from opsml_artifacts.registry.cards.registry import CardRegistry
+from opsml_artifacts.registry.cards.card import ModelCardCreator
 
 
 @pytest.mark.parametrize(

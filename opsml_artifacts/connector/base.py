@@ -5,7 +5,7 @@ from pydantic import BaseModel, root_validator
 from pyshipt_logging import ShiptLogging
 from requests.models import Response
 
-from opsml_data.helpers.utils import FindPath
+from opsml_artifacts.helpers.utils import FindPath
 
 logger = ShiptLogging.get_logger(__name__)
 
