@@ -10,8 +10,8 @@ from google.oauth2.service_account import Credentials
 from pydantic import BaseModel, Extra
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.helpers.models import SnowflakeParams
-from opsml_data.helpers.utils import GCPClient
+from opsml_artifacts.helpers.models import SnowflakeParams
+from opsml_artifacts.helpers.utils import GCPClient
 
 logger = ShiptLogging.get_logger(__name__)
 

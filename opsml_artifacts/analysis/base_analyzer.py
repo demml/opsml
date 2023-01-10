@@ -11,9 +11,9 @@ from pyshipt.helpers.model import ColumnType, Table
 from pyshipt.helpers.pandas import PandasHelper as ph
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.analysis.models import AnalysisAttributes, PayDataFrame
-from opsml_data.connector.snowflake import SnowflakeQueryRunner
-from opsml_data.helpers.settings import settings
+from opsml_artifacts.analysis.models import AnalysisAttributes, PayDataFrame
+from opsml_artifacts.connector.snowflake import SnowflakeQueryRunner
+from opsml_artifacts.helpers.settings import settings
 
 from ..helpers import exceptions
 from ..helpers.settings import SnowflakeCredentials

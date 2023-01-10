@@ -6,8 +6,8 @@ import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel, root_validator, validator
 
-from opsml_data.drift.models import DriftReport
-from opsml_data.registry.cards.storage import load_record_artifact_from_storage
+from opsml_artifacts.drift.models import DriftReport
+from opsml_artifacts.registry.cards.storage import load_record_artifact_from_storage
 
 
 class DataRegistryRecord(BaseModel):

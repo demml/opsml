@@ -1,22 +1,21 @@
 import uuid
-from typing import Any, Dict, Optional, Type, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
 from sqlalchemy import and_, func
 from sqlalchemy.orm import sessionmaker
 
-from opsml_data.registry.cards.card import ArtifactCard, DataCard, ModelCard
-from opsml_data.registry.cards.connection import create_sql_engine
-from opsml_data.registry.cards.record_models import (
+from opsml_artifacts.registry.cards.card import DataCard, ModelCard
+from opsml_artifacts.registry.cards.connection import create_sql_engine
+from opsml_artifacts.registry.cards.record_models import (
     ArtifactRegistryTables,
     DataRegistryRecord,
     LoadedDataRecord,
     LoadedModelRecord,
-    ModelRegistryRecord,
     ValidCards,
 )
-from opsml_data.registry.cards.sql_schema import TableSchema
+from opsml_artifacts.registry.cards.sql_schema import TableSchema
 
 logger = ShiptLogging.get_logger(__name__)
 
