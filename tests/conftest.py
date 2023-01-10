@@ -247,6 +247,7 @@ def setup_data_registry():
     registry = CardRegistry(registry_name="data_test")
 
     yield registry
+    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
 
 
 @pytest.fixture(scope="session")
@@ -258,6 +259,7 @@ def setup_model_registry():
     registry = CardRegistry(registry_name="model_test")
 
     yield registry
+    TestModelSchema.__table__.drop(bind=engine, checkfirst=True)
 
 
 @pytest.fixture(scope="session")
