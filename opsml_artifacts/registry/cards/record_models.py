@@ -7,32 +7,16 @@ import pyarrow as pa
 from pydantic import BaseModel, root_validator, validator
 
 from opsml_data.drift.models import DriftReport
-from opsml_data.registry.storage import load_record_data_from_storage
+from opsml_data.registry.cards.storage import load_record_artifact_from_storage
 
 
-class AllowedTableTypes(str, Enum):
-    NDARRAY = "ndarray"
-    TABLE = "Table"
-    DATAFRAME = "DataFrame"
-
-
-class ArrowTable(BaseModel):
-    table: Union[pa.Table, np.ndarray]
-    table_type: AllowedTableTypes
-    storage_uri: Optional[str] = None
-    feature_map: Optional[Dict[str, Union[str, None]]] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
-class RegistryRecord(BaseModel):
+class DataRegistryRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str] = None
     data_splits: Optional[Dict[str, List[Dict[str, Any]]]] = None
     version: int
     data_type: str
-    data_name: str
+    name: str
     team: str
     feature_map: Dict[str, str]
     user_email: str
@@ -47,13 +31,23 @@ class RegistryRecord(BaseModel):
         return splits
 
 
-class LoadedRecord(BaseModel):
+class ModelRegistryRecord(BaseModel):
+    uid: str
+    version: int
+    team: str
+    user_email: str
+    name: str
+    model_uri: str
+    model_type: str
+
+
+class LoadedDataRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str] = None
     data_splits: Optional[List[Dict[str, Any]]] = None
     version: int
     data_type: str
-    data_name: str
+    name: str
     team: str
     feature_map: Dict[str, str]
     user_email: str
@@ -67,9 +61,9 @@ class LoadedRecord(BaseModel):
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
-        values["data_splits"] = LoadedRecord.get_splits(splits=values["data_splits"])
-        values["data"] = LoadedRecord.load_data(values=values)
-        values["drift_report"] = LoadedRecord.load_drift_report(values=values)
+        values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
+        values["data"] = LoadedDataRecord.load_data(values=values)
+        values["drift_report"] = LoadedDataRecord.load_drift_report(values=values)
 
         return values
 
@@ -82,17 +76,54 @@ class LoadedRecord(BaseModel):
     @staticmethod
     def load_data(values):
 
-        return load_record_data_from_storage(
+        return load_record_artifact_from_storage(
             storage_uri=values["data_uri"],
-            data_type=values["data_type"],
+            artifact_type=values["data_type"],
         )
 
     @staticmethod
     def load_drift_report(values):
 
         if bool(values.get("drift_uri")):
-            return load_record_data_from_storage(
+            return load_record_artifact_from_storage(
                 storage_uri=values["drift_uri"],
-                data_type="dict",
+                artifact_type="dict",
             )
         return None
+
+
+class LoadedModelRecord(BaseModel):
+    uid: str
+    version: int
+    team: str
+    user_email: str
+    name: str
+    model_uri: str
+    model_type: str
+
+    def load_model_card_definition(self) -> Dict[str, Any]:
+
+        """Loads a model card definition from current attributes
+
+        Returns:
+            Dictionary to be parsed by ModelCard.parse_obj()
+        """
+
+        model_card_definition = load_record_artifact_from_storage(
+            storage_uri=self.model_uri,
+            artifact_type="dict",
+        )
+        model_card_definition["model_uri"] = self.model_uri
+        return model_card_definition
+
+
+class ArtifactRegistryTables(str, Enum):
+    DATA_REGISTRY = "data"
+    TEST_DATA_REGISTRY = "data_test"
+    MODEL_REGISTRY = "model"
+    TEST_MODEL_REGISTRY = "model_test"
+
+
+class ValidCards(str, Enum):
+    DATACARD = "data"
+    MODELCARD = "model"

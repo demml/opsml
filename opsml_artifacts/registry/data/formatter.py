@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 
-from opsml_data.registry.models import ArrowTable
+from .models import ArrowTable
 
 
 class ArrowFormatter(ABC):

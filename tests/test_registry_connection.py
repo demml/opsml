@@ -1,4 +1,4 @@
-from opsml_data.registry.connection import create_sql_engine
+from opsml_artifacts.registry.cards.connection import create_sql_engine
 
 
 def test_connection():

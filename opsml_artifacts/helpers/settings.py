@@ -100,10 +100,10 @@ class GCPEnvSetter:
             "gcs_pipeline_bucket",
             "snowflake_api_auth",
             "snowflake_api_url",
-            "data_registry_db_name",
-            "data_registry_instance_name",
-            "data_registry_username",
-            "data_registry_password",
+            "artifact_registry_db_name",
+            "artifact_registry_instance_name",
+            "artifact_registry_username",
+            "artifact_registry_password",
         ]
 
         self.set_gcp_env_secrets()
