@@ -75,7 +75,12 @@ class NumpyOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == np.ndarray and model_type == OnnxModelType.SKLEARN_ESTIMATOR.value:
+        if data_type == np.ndarray and model_type in [
+            OnnxModelType.SKLEARN_ESTIMATOR.value,
+            OnnxModelType.XGB_REGRESSOR.value,
+            OnnxModelType.LGBM_REGRESSOR.value,
+            OnnxModelType.STACKING_ESTIMATOR.value,
+        ]:
             return True
         return False
 
@@ -90,7 +95,12 @@ class PandasOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == pd.DataFrame and model_type == OnnxModelType.SKLEARN_ESTIMATOR.value:
+        if data_type == pd.DataFrame and model_type in [
+            OnnxModelType.SKLEARN_ESTIMATOR.value,
+            OnnxModelType.XGB_REGRESSOR.value,
+            OnnxModelType.LGBM_REGRESSOR.value,
+            OnnxModelType.STACKING_ESTIMATOR.value,
+        ]:
             return True
         return False
 
