@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 class OnnxModelType(str, Enum):
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
+    STACKING_ESTIMATOR = "stackingestimator"
     LGBM_REGRESSOR = "lgbmregressor"
     XGB_REGRESSOR = "xgbregressor"
-    STACKING_REGRESSOR = "stackingregressor"
 
 
 class InputDataType(Enum):
