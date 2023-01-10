@@ -1,4 +1,4 @@
-# OpsML Data
+# OpsML Artifacts
 
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
