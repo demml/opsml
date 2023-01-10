@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "opsml-data"
-version = "0.1.1a0"
+name = "opsml-artifacts"
+version = "0.1.0"
 description = "Package for handling data for machine learning projects"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -20,6 +20,10 @@ pyshipt = "2.1.8"
 gcsfs = "^2022.11.0"
 altair = "^4.2.0"
 scikit-learn = ">=1.0"
+skl2onnx = "^1.13"
+pydantic-yaml = "^0.9.0"
+onnxruntime = "^1.13.1"
+onnxmltools = "^1.11.1"
 
 [tool.poetry.group.dev]
 optional = true
@@ -40,6 +44,8 @@ isort = "^5.10.1"
 sqlalchemy2-stubs = "0.0.2a31"
 coverage = {extras = ["toml"], version = "^6.5.0"}
 mypy = "^0.991"
+lightgbm = "^3.3.3"
+xgboost = "^1.7.1"
 
 
 [tool.isort]

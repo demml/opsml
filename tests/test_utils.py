@@ -1,8 +1,8 @@
 import os
 from pathlib import PosixPath
 
-from opsml_data.helpers import utils
-from opsml_data.helpers.settings import settings
+from opsml_artifacts.helpers import utils
+from opsml_artifacts.helpers.settings import settings
 
 
 def test_find_path():

@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml_data.registry.data_card import DataCard
+from opsml_artifacts.registry.cards.card import DataCard
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ def test_data_card_splits(test_data):
 
     data_card = DataCard(
         data=test_data,
-        data_name="test_df",
+        name="test_df",
         team="mlops",
         user_email="mlops.com",
         data_splits=splits,
@@ -39,7 +39,7 @@ def test_data_card_splits(test_data):
 
         data_card = DataCard(
             data=test_data,
-            data_name="test_df",
+            name="test_df",
             team="mlops",
             user_email="mlops.com",
             data_splits=splits,

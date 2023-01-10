@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from opsml_data.connector import SnowflakeQueryRunner
-from opsml_data.drift.data_drift import (
+from opsml_artifacts.connector import SnowflakeQueryRunner
+from opsml_artifacts.drift.data_drift import (
     DriftFeatures,
     DriftDetectorData,
     FeatureImportanceCalculator,
@@ -17,8 +17,8 @@ from opsml_data.drift.data_drift import (
     ParsedFeatureDataFrames,
     DriftVisualizer,
 )
-from opsml_data.drift.visualize import NumericChart, CategoricalChart, AucChart
-from opsml_data.drift.models import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
+from opsml_artifacts.drift.visualize import NumericChart, CategoricalChart, AucChart
+from opsml_artifacts.drift.models import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
 import altair_viewer
 
 

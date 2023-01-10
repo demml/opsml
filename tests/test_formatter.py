@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml_data.registry.formatter import DataFormatter
+from opsml_artifacts.registry.data.formatter import DataFormatter
 
 
 @pytest.mark.parametrize(
