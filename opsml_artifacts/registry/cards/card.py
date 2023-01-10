@@ -25,7 +25,7 @@ from opsml_artifacts.registry.model.base_models import (
     InputDataType,
     ModelDefinition,
 )
-from opsml_artifacts.registry.model.converters import OnnxModelConverter
+from opsml_artifacts.registry.model.converters import OnnxModelConverter, OnnxDataConverter
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -310,8 +310,8 @@ class ModelCard(ArtifactCard):
             exclude={"model"},
         )
 
-    @cached_property
-    def model(self) -> ModelProto:
+    @cached_property  # need to find a better way to convert data instead of using model_type (type)
+    def __model(self) -> ModelProto:
 
         """Loads a model from serialized string
 
@@ -321,5 +321,33 @@ class ModelCard(ArtifactCard):
         """
 
         cipher = Fernet(key=self.onnx_model_def.encrypt_key)
-        model = ModelProto.FromString(cipher.decrypt(self.onnx_model_def.model_bytes))
-        return model
+        model_string = cipher.decrypt(self.onnx_model_def.model_bytes)
+
+        return model_string
+
+
+##class OnnxModelPredictor:
+##    def __init__(
+##        self,
+##        model_definition: str,
+##        model_type: str,
+##    ):
+##        self.model_definition = model_definition
+##        self.model_type = model_type
+##        self.sess = self.create_session()
+##
+##    def convert_data(self):
+##
+##        OnnxDataConverter.convert_data(
+##            input_data=self.input_data,
+##            model_type=self.model_type,
+##        )
+##
+##    def create_session(self, input_data):
+##        import onnxruntime as rt
+##
+##        return rt.InferenceSession(self.model_definition)
+##
+##    def predict(self):
+##        pass
+##        # pred_onx = np.ravel(self.sess.run(None, inputs))[0]
