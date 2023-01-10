@@ -1,4 +1,4 @@
-from opsml_data.registry.splitter import DataSplitter
+from opsml_artifacts.registry.data.splitter import DataSplitter
 import pandas as pd
 import numpy as np
 import pyarrow as pa

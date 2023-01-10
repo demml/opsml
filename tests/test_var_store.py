@@ -1,4 +1,4 @@
-from opsml_data.var_store.store import DependentVarStore
+from opsml_artifacts.var_store.store import DependentVarStore
 
 
 def test_var_store_stop(test_sql_file):

@@ -8,8 +8,8 @@ from pyshipt.helpers.connection_string import ConnectionString, DBType
 from pyshipt.helpers.database import SnowflakeDatabase
 from pyshipt_logging import ShiptLogging
 
-from opsml_data.connector.base import GcsFilePath, QueryRunner
-from opsml_data.helpers.settings import SnowflakeCredentials, settings
+from opsml_artifacts.connector.base import GcsFilePath, QueryRunner
+from opsml_artifacts.helpers.settings import SnowflakeCredentials, settings
 
 logger = ShiptLogging.get_logger(__name__)
 

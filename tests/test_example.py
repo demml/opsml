@@ -1,7 +1,7 @@
 def test_example1(setup_database):
 
     # import
-    from opsml_data import DataCard, DataRegistry
+    from opsml_artifacts import DataCard, DataRegistry
     import numpy as np
     import pandas as pd
     from sklearn.model_selection import train_test_split
@@ -59,7 +59,7 @@ def test_example1(setup_database):
 def test_example2(setup_database):
 
     # import
-    from opsml_data import DataCard, DataRegistry, DriftDetector, DriftVisualizer
+    from opsml_artifacts import DataCard, DataRegistry, DriftDetector, DriftVisualizer
     import numpy as np
     import pandas as pd
 
@@ -137,7 +137,7 @@ def test_example2(setup_database):
 
 def test_example3(setup_database):
     # import
-    from opsml_data import DataCard, DataRegistry, DriftDetector, DriftVisualizer, SnowflakeQueryRunner
+    from opsml_artifacts import DataCard, DataRegistry, DriftDetector, DriftVisualizer, SnowflakeQueryRunner
     import numpy as np
     import pandas as pd
 

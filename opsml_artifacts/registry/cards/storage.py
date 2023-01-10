@@ -10,8 +10,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import BaseModel
 
-from opsml_data.drift.data_drift import DriftReport
-from opsml_data.helpers.settings import settings
+from opsml_artifacts.drift.data_drift import DriftReport
+from opsml_artifacts.helpers.settings import settings
 
 
 class StoragePath(BaseModel):

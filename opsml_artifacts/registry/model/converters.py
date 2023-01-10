@@ -1,6 +1,5 @@
 # pylint: disable=import-outside-toplevel
 """Code for generating Onnx Models"""
-import abc
 from typing import Any, Dict, List, Tuple, Union, cast
 
 import numpy as np
@@ -19,7 +18,7 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import StackingRegressor
 from sklearn.pipeline import Pipeline
 
-from opsml_data.registry.model.base_models import (
+from opsml_artifacts.registry.model.base_models import (
     Feature,
     ModelDefinition,
     OnnxDataProto,

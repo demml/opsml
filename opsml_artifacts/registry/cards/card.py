@@ -12,20 +12,20 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import StackingRegressor
 from sklearn.pipeline import Pipeline
 
-from opsml_data.drift.data_drift import DriftReport
-from opsml_data.registry.cards.record_models import (
+from opsml_artifacts.drift.data_drift import DriftReport
+from opsml_artifacts.registry.cards.record_models import (
     DataRegistryRecord,
     ModelRegistryRecord,
 )
-from opsml_data.registry.cards.storage import save_record_artifact_to_storage
-from opsml_data.registry.data.formatter import ArrowTable, DataFormatter
-from opsml_data.registry.data.splitter import DataHolder, DataSplitter
-from opsml_data.registry.model.base_models import (
+from opsml_artifacts.registry.cards.storage import save_record_artifact_to_storage
+from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
+from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
+from opsml_artifacts.registry.model.base_models import (
     DataDict,
     InputDataType,
     ModelDefinition,
 )
-from opsml_data.registry.model.converters import OnnxModelConverter
+from opsml_artifacts.registry.model.converters import OnnxModelConverter
 
 logger = ShiptLogging.get_logger(__name__)
 

@@ -7,8 +7,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import scale
 
-from opsml_data.drift.drift_utils import shipt_theme
-from opsml_data.drift.models import (
+from opsml_artifacts.drift.drift_utils import shipt_theme
+from opsml_artifacts.drift.models import (
     ChartType,
     DriftData,
     DriftReport,
@@ -21,7 +21,7 @@ from opsml_data.drift.models import (
     ParsedFeatureImportance,
     ParsedFeatures,
 )
-from opsml_data.drift.visualize import AltairChart
+from opsml_artifacts.drift.visualize import AltairChart
 
 warnings.simplefilter(action="ignore", category=FutureWarning)  # type: ignore
 import pandas as pd  # noqa: E402 #pylint: disable=[wrong-import-position,wrong-import-order]

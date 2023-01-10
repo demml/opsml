@@ -5,7 +5,7 @@ import sqlalchemy
 from google.cloud.sql.connector import Connector, IPTypes
 from pyshipt_logging.logger import ShiptLogging
 
-from opsml_data.helpers.settings import settings
+from opsml_artifacts.helpers.settings import settings
 
 logger = ShiptLogging.get_default_logger()
 

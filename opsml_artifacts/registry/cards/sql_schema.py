@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin  # type: ignore
 
-from opsml_data.helpers.settings import settings
+from opsml_artifacts.helpers.settings import settings
 
 Base = declarative_base()
 
