@@ -1,5 +1,5 @@
-from opsml_data.analysis.analyzer import PayErrorAnalysis
-from opsml_data.analysis.base_analyzer import FlightPlanSQL, PayErrorAnalyzer
+from opsml_artifacts.analysis.analyzer import PayErrorAnalysis
+from opsml_artifacts.analysis.base_analyzer import FlightPlanSQL, PayErrorAnalyzer
 import pandas as pd
 import pytest
 
