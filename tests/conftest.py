@@ -343,3 +343,12 @@ def sklearn_pipeline():
     pipe.fit(train_data, data["y"])
 
     return pipe, train_data
+
+
+@pytest.fixture(scope="function")
+def xgb_df_regressor(drift_dataframe):
+
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = LinearRegression()
+    reg.fit(X_train.to_numpy(), y_train)
+    return reg, X_train[:100]

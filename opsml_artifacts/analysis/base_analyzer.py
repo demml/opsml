@@ -2,9 +2,9 @@ import os
 import tempfile
 from dataclasses import dataclass
 from typing import List
-
 import numpy as np
 import pandas as pd
+
 from pyshipt.helpers.connection_string import ConnectionString, DBType
 from pyshipt.helpers.database import SnowflakeDatabase
 from pyshipt.helpers.model import ColumnType, Table
@@ -41,6 +41,8 @@ class SqlArgs:
 
 
 # this code needs to be refactored (do it once networking is figured out)
+
+
 class FlightPlanSQL:
     def __init__(self, analysis_attributes: AnalysisAttributes):
         self.attributes = analysis_attributes
@@ -57,17 +59,18 @@ class FlightPlanSQL:
             sql_string = sql.read()
         return sql_string
 
-    def format_sql(self, sql_string) -> str:
+    def format_sql(self, sql_string: str) -> str:
         """Analyzer specific formatting"""
-        return "Test"
+        raise NotImplementedError
 
     def get_sql(self):
         sql_string = self.open_sql_file()
         return self.format_sql(sql_string=sql_string)
 
     @staticmethod
-    def validate(analysis_type: str):
+    def validate(analysis_type: str) -> bool:
         """Used for validating analysis type"""
+        raise NotImplementedError
 
 
 class PaySQL(FlightPlanSQL):
@@ -83,7 +86,7 @@ class PaySQL(FlightPlanSQL):
         return sql_string
 
     @staticmethod
-    def validate(analysis_type: str):
+    def validate(analysis_type: str) -> bool:
         if analysis_type.lower() == "pay":
             return True
         return False
@@ -101,7 +104,7 @@ class ErrorSQL(FlightPlanSQL):
         return sql_string
 
     @staticmethod
-    def validate(analysis_type: str):
+    def validate(analysis_type: str) -> bool:
         if analysis_type.lower() == "error":
             return True
         return False
@@ -112,16 +115,17 @@ class ComputeClient:
         pass
 
     @staticmethod
-    def validate(compute_env: str):
+    def validate(compute_env: str) -> bool:
         """Validate compute env"""
+        raise NotImplementedError
 
     def create_analysis_dataframe(
         self,
         prediction_dataframe: pd.DataFrame,
         table_name: str,
         query: str,
-    ):
-        """method for creating dataframe"""
+    ) -> pd.DataFrame:
+        raise NotImplementedError()
 
 
 class GcpComputeClient(ComputeClient):
@@ -169,7 +173,12 @@ class GcpComputeClient(ComputeClient):
 
         return dataframe
 
-    def create_analysis_dataframe(self, prediction_dataframe: pd.DataFrame, table_name: str, query: str):
+    def create_analysis_dataframe(
+        self,
+        prediction_dataframe: pd.DataFrame,
+        table_name: str,
+        query: str,
+    ) -> pd.DataFrame:
         gcs_uri = self.upload_dataframe_to_gcs(
             dataframe=prediction_dataframe,
             table_name=table_name,
@@ -188,7 +197,7 @@ class GcpComputeClient(ComputeClient):
         return dataframe
 
     @staticmethod
-    def validate(compute_env: str):
+    def validate(compute_env: str) -> bool:
         if compute_env.lower() == "gcp":
             return True
         return False
@@ -237,7 +246,7 @@ class LocalComputeClient(ComputeClient):
         prediction_dataframe: pd.DataFrame,
         table_name: str,
         query: str,
-    ):
+    ) -> pd.DataFrame:
         id_col = self.get_id_col(prediction_dataframe=prediction_dataframe)
         model = self.get_table_schema(id_col=id_col)
         ph.dataframe_to_table(
@@ -259,7 +268,7 @@ class LocalComputeClient(ComputeClient):
         return dataframe
 
     @staticmethod
-    def validate(compute_env: str):
+    def validate(compute_env: str) -> bool:
         if compute_env.lower() == "local":
             return True
         return False
