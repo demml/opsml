@@ -21,7 +21,7 @@ def test_data_card_splits(test_data):
 
     data_card = DataCard(
         data=test_data,
-        data_name="test_df",
+        name="test_df",
         team="mlops",
         user_email="mlops.com",
         data_splits=splits,
@@ -39,7 +39,7 @@ def test_data_card_splits(test_data):
 
         data_card = DataCard(
             data=test_data,
-            data_name="test_df",
+            name="test_df",
             team="mlops",
             user_email="mlops.com",
             data_splits=splits,
