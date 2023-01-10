@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from cryptography.fernet import Fernet
-from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
+
+# from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pandas import DataFrame
 from pyarrow import Table
 from pydantic import BaseModel, validator
@@ -25,7 +26,7 @@ from opsml_artifacts.registry.model.base_models import (
     InputDataType,
     ModelDefinition,
 )
-from opsml_artifacts.registry.model.converters import OnnxModelConverter, OnnxDataConverter
+from opsml_artifacts.registry.model.converters import OnnxModelConverter
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -311,7 +312,7 @@ class ModelCard(ArtifactCard):
         )
 
     @cached_property  # need to find a better way to convert data instead of using model_type (type)
-    def __model(self) -> ModelProto:
+    def _model(self) -> bytes:
 
         """Loads a model from serialized string
 
@@ -326,28 +327,28 @@ class ModelCard(ArtifactCard):
         return model_string
 
 
-##class OnnxModelPredictor:
-##    def __init__(
-##        self,
-##        model_definition: str,
-##        model_type: str,
-##    ):
-##        self.model_definition = model_definition
-##        self.model_type = model_type
-##        self.sess = self.create_session()
-##
-##    def convert_data(self):
-##
-##        OnnxDataConverter.convert_data(
-##            input_data=self.input_data,
-##            model_type=self.model_type,
-##        )
-##
-##    def create_session(self, input_data):
-##        import onnxruntime as rt
-##
-##        return rt.InferenceSession(self.model_definition)
-##
-##    def predict(self):
-##        pass
-##        # pred_onx = np.ravel(self.sess.run(None, inputs))[0]
+# class OnnxModelPredictor:
+#    def __init__(
+#        self,
+#        model_definition: str,
+#        model_type: str,
+#    ):
+#        self.model_definition = model_definition
+#        self.model_type = model_type
+#        self.sess = self.create_session()
+#
+#    def convert_data(self):
+#
+#        OnnxDataConverter.convert_data(
+#            input_data=self.input_data,
+#            model_type=self.model_type,
+#        )
+#
+#    def create_session(self, input_data):
+#        import onnxruntime as rt
+#
+#        return rt.InferenceSession(self.model_definition)
+#
+#    def predict(self):
+#        pass
+#        # pred_onx = np.ravel(self.sess.run(None, inputs))[0]
