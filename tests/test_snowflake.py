@@ -2,7 +2,7 @@ import time
 
 import pandas as pd
 
-from opsml_data.connector.snowflake import SnowflakeQueryRunner
+from opsml_artifacts.connector.snowflake import SnowflakeQueryRunner
 
 
 # remove these once networking is configured

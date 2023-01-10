@@ -20,7 +20,7 @@ class DataMixin:
     date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
     app_env = Column("app_env", String(512), default=settings.app_env)
-    data_name = Column("data_name", String(512))
+    name = Column("name", String(512))
     team = Column("team", String(512))
     data_uri = Column("data_uri", String(2048))
     drift_uri = Column("drift_uri", String(2048))
@@ -31,7 +31,7 @@ class DataMixin:
     user_email = Column("user_email", String(512))
     dependent_vars = Column("dependent_vars", JSON)
 
-    __table_args__ = {"schema": "ds-data-registry"}
+    __table_args__ = {"schema": "ds-artifact-registry"}
 
 
 class DataSchema(Base, DataMixin):  # type: ignore
@@ -43,6 +43,37 @@ class DataSchema(Base, DataMixin):  # type: ignore
 
 class TestDataSchema(Base, DataMixin):  # type: ignore
     __tablename__ = "test_data_registry"
+
+    def __repr__(self):
+        return f"<SqlMetric({self.__tablename__}"
+
+
+@declarative_mixin
+class ModelMixin:
+
+    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
+    date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
+    timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
+    app_env = Column("app_env", String(512), default=settings.app_env)
+    name = Column("name", String(512))
+    team = Column("team", String(512))
+    model_uri = Column("model_uri", String(2048))
+    model_type = Column("model_type", String(512))
+    version = Column("version", Integer, nullable=False)
+    user_email = Column("user_email", String(512))
+
+    __table_args__ = {"schema": "ds-artifact-registry"}
+
+
+class ModelSchema(Base, ModelMixin):  # type: ignore
+    __tablename__ = "model_registry"
+
+    def __repr__(self):
+        return f"<SqlMetric({self.__tablename__}"
+
+
+class TestModelSchema(Base, ModelMixin):  # type: ignore
+    __tablename__ = "test_model_registry"
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"

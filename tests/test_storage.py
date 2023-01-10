@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from opsml_data.registry.storage import NumpyStorage, ParquetStorage, DriftStorage, DataSaveInfo
-from opsml_data.drift.data_drift import DriftDetector
+from opsml_artifacts.registry.cards.storage import NumpyStorage, ParquetStorage, DriftStorage, DataSaveInfo
+from opsml_artifacts.drift.data_drift import DriftDetector
 
 
 def test_parquet(test_arrow_table, storage_client):

@@ -3,10 +3,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import altair as alt
 import numpy as np
-
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import scale
 from sklearn.metrics import auc, roc_curve
+from sklearn.preprocessing import scale
 
 from opsml_data.drift.drift_utils import shipt_theme
 from opsml_data.drift.models import (

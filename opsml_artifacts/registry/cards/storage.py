@@ -14,21 +14,21 @@ from opsml_data.drift.data_drift import DriftReport
 from opsml_data.helpers.settings import settings
 
 
-class DataStoragePath(BaseModel):
+class StoragePath(BaseModel):
     gcs_uri: str
 
 
-class DataSaveInfo(BaseModel):
+class SaveInfo(BaseModel):
     blob_path: str
-    data_name: str
+    name: str
     version: int
     team: str
 
 
-class RegistryDataStorage:
+class ArtifactStorage:
     def __init__(
         self,
-        save_info: Optional[DataSaveInfo] = None,
+        save_info: Optional[SaveInfo] = None,
         file_suffix: Optional[str] = None,
     ):
         self.gcs_bucket = settings.gcs_bucket
@@ -47,7 +47,7 @@ class RegistryDataStorage:
     def create_gcs_path(self) -> Tuple[str, str]:
         filename = f"{uuid.uuid4().hex}.{self.file_suffix}"
         gcs_base_path = f"gs://{self.gcs_bucket}/{self.save_info.blob_path}"
-        data_path = f"/{self.save_info.team}/{self.save_info.data_name}/version-{self.save_info.version}"
+        data_path = f"/{self.save_info.team}/{self.save_info.name}/version-{self.save_info.version}"
 
         return gcs_base_path + data_path + f"/{filename}", filename
 
@@ -70,31 +70,31 @@ class RegistryDataStorage:
 
         return files
 
-    def save_data(
+    def save_artifact(
         self,
-        data: Any,
+        artifact: Any,
     ):
         """Saves data"""
 
-    def load_data(self, storage_uri: str):
+    def load_artifact(self, storage_uri: str):
         """Loads data"""
 
     @staticmethod
-    def validate_type(data_type: str):
+    def validate(artifact_type: str):
         """validate table type"""
 
 
-class ParquetStorage(RegistryDataStorage):
+class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
-        save_info: Optional[DataSaveInfo] = None,
+        save_info: Optional[SaveInfo] = None,
     ):
         super().__init__(save_info=save_info, file_suffix="parquet")
 
-    def save_data(
+    def save_artifact(
         self,
-        data: pa.Table,
-    ) -> DataStoragePath:
+        artifact: pa.Table,
+    ) -> StoragePath:
         """Saves pyarrow table to gcs.
 
         Args:
@@ -103,16 +103,16 @@ class ParquetStorage(RegistryDataStorage):
 
         gcs_uri, _ = self.create_gcs_path()
         pq.write_table(
-            table=data,
+            table=artifact,
             where=gcs_uri,
             filesystem=self.storage_client,
         )
 
-        return DataStoragePath(
+        return StoragePath(
             gcs_uri=gcs_uri,
         )
 
-    def load_data(self, storage_uri: str) -> pd.DataFrame:
+    def load_artifact(self, storage_uri: str) -> pd.DataFrame:
 
         files = self.list_files(storage_uri=storage_uri)
 
@@ -128,31 +128,31 @@ class ParquetStorage(RegistryDataStorage):
         return dataframe
 
     @staticmethod
-    def validate_type(data_type: str):
-        if data_type.lower() in ["table", "dataframe"]:
+    def validate(artifact_type: str):
+        if artifact_type in ["Table", "DataFrame"]:
             return True
         return False
 
 
-class NumpyStorage(RegistryDataStorage):
-    def __init__(self, save_info: Optional[DataSaveInfo] = None):
+class NumpyStorage(ArtifactStorage):
+    def __init__(self, save_info: Optional[SaveInfo] = None):
         super().__init__(save_info=save_info, file_suffix="npy")
 
-    def save_data(  # type: ignore
+    def save_artifact(  # type: ignore
         self,
-        data: np.ndarray,
-    ) -> DataStoragePath:
+        artifact: np.ndarray,
+    ) -> StoragePath:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
-            np.save(file=local_path, arr=data)
+            np.save(file=local_path, arr=artifact)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
-        return DataStoragePath(
+        return StoragePath(
             gcs_uri=gcs_uri,
         )
 
-    def load_data(self, storage_uri: str) -> np.ndarray:
+    def load_artifact(self, storage_uri: str) -> np.ndarray:
 
         np_path = self.list_files(storage_uri=storage_uri)[0]
         with tempfile.NamedTemporaryFile(suffix=".npy") as tmpfile:  # noqa
@@ -162,31 +162,31 @@ class NumpyStorage(RegistryDataStorage):
         return data
 
     @staticmethod
-    def validate_type(data_type: str):
-        if data_type.lower() == "ndarray":
+    def validate(artifact_type: str):
+        if artifact_type == "ndarray":
             return True
         return False
 
 
-class DriftStorage(RegistryDataStorage):
-    def __init__(self, save_info: Optional[DataSaveInfo] = None):
+class DictionaryStorage(ArtifactStorage):
+    def __init__(self, save_info: Optional[SaveInfo] = None):
         super().__init__(save_info=save_info, file_suffix="joblib")
 
-    def save_data(  # type: ignore
+    def save_artifact(  # type: ignore
         self,
-        data: Dict[str, DriftReport],
-    ) -> DataStoragePath:
+        artifact: Dict[str, DriftReport],
+    ) -> StoragePath:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
-            joblib.dump(data, local_path)
+            joblib.dump(artifact, local_path)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
-        return DataStoragePath(
+        return StoragePath(
             gcs_uri=gcs_uri,
         )
 
-    def load_data(self, storage_uri: str) -> Dict[str, DriftReport]:
+    def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
         joblib_path = self.list_files(storage_uri=storage_uri)[0]
         with tempfile.NamedTemporaryFile(suffix=self.file_suffix) as tmpfile:  # noqa
             self.storage_client.download(rpath=joblib_path, lpath=tmpfile.name)
@@ -195,40 +195,40 @@ class DriftStorage(RegistryDataStorage):
         return data
 
     @staticmethod
-    def validate_type(data_type: str):
-        if data_type.lower() == "dict":
+    def validate(artifact_type: str):
+        if artifact_type == "dict":
             return True
         return False
 
 
-def save_record_data_to_storage(
-    data: Union[pa.Table, np.ndarray, Dict[str, DriftReport]],
+def save_record_artifact_to_storage(
+    artifact: Union[pa.Table, np.ndarray, Dict[str, DriftReport]],
     blob_path: str,
-    data_name: str,
+    name: str,
     version: int,
     team: str,
-) -> DataStoragePath:
+) -> StoragePath:
 
-    data_type = data.__class__.__name__
+    artifact_type = artifact.__class__.__name__
     storage_type = next(
         storage_type
-        for storage_type in RegistryDataStorage.__subclasses__()
-        if storage_type.validate_type(
-            data_type=data_type,
+        for storage_type in ArtifactStorage.__subclasses__()
+        if storage_type.validate(
+            artifact_type=artifact_type,
         )
     )
-    save_info = DataSaveInfo(
+    save_info = SaveInfo(
         blob_path=blob_path,
-        data_name=data_name,
+        name=name,
         version=version,
         team=team,
     )
-    return storage_type(save_info=save_info).save_data(data=data)
+    return storage_type(save_info=save_info).save_artifact(artifact=artifact)
 
 
-def load_record_data_from_storage(
+def load_record_artifact_from_storage(
     storage_uri: str,
-    data_type: str,
+    artifact_type: str,
 ):
 
     if not bool(storage_uri):
@@ -236,12 +236,12 @@ def load_record_data_from_storage(
 
     storage_type = next(
         storage_type
-        for storage_type in RegistryDataStorage.__subclasses__()
-        if storage_type.validate_type(
-            data_type=data_type,
+        for storage_type in ArtifactStorage.__subclasses__()
+        if storage_type.validate(
+            artifact_type=artifact_type,
         )
     )
 
-    return storage_type().load_data(
+    return storage_type().load_artifact(
         storage_uri=storage_uri,
     )
