@@ -1,5 +1,5 @@
-from opsml_data.helpers.settings import SnowflakeCredentials, Settings, GCPEnvSetter
-from opsml_data.helpers.models import SnowflakeParams
+from opsml_artifacts.helpers.settings import SnowflakeCredentials, Settings, GCPEnvSetter
+from opsml_artifacts.helpers.models import SnowflakeParams
 
 
 def test_params():

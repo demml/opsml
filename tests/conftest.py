@@ -7,11 +7,22 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 
-from opsml_data.helpers.settings import settings
-from opsml_data.helpers.utils import FindPath, GCPClient
-from opsml_data.registry.connection import create_sql_engine
-from opsml_data.registry.data_registry import DataRegistry
-from opsml_data.registry.sql_schema import TestDataSchema
+from lightgbm import LGBMRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.compose import ColumnTransformer
+from xgboost import XGBRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestRegressor
+
+from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.utils import FindPath, GCPClient
+from opsml_artifacts.registry.cards.connection import create_sql_engine
+from opsml_artifacts.registry.cards.registry import CardRegistry
+from opsml_artifacts.registry.cards.sql_schema import TestDataSchema, TestModelSchema
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import StackingRegressor
+from sklearn.linear_model import RidgeCV
 import joblib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -44,6 +55,18 @@ def pytest_sessionfinish(session, exitstatus):
     blobs = gcs_storage_client.list_objects(
         gcs_bucket=settings.gcs_bucket,
         prefix="test_data_registry/",
+    )
+
+    for blob in blobs:
+        gcs_storage_client.delete_object(
+            gcs_bucket=settings.gcs_bucket,
+            blob_path=blob.name,
+        )
+
+    # delete all test model registry files
+    blobs = gcs_storage_client.list_objects(
+        gcs_bucket=settings.gcs_bucket,
+        prefix="test_model_registry/",
     )
 
     for blob in blobs:
@@ -216,13 +239,23 @@ def test_arrow_table():
 
 
 @pytest.fixture(scope="session")
-def setup_database():
+def setup_data_registry():
 
     engine = create_sql_engine()
     TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
     TestDataSchema.__table__.create(bind=engine, checkfirst=True)
+    registry = CardRegistry(registry_name="data_test")
 
-    registry = DataRegistry(table_name="test_data_registry")
+    yield registry
+
+
+@pytest.fixture(scope="session")
+def setup_model_registry():
+
+    engine = create_sql_engine()
+    TestModelSchema.__table__.drop(bind=engine, checkfirst=True)
+    TestModelSchema.__table__.create(bind=engine, checkfirst=True)
+    registry = CardRegistry(registry_name="model_test")
 
     yield registry
 
@@ -248,3 +281,63 @@ def test_sql_file():
 @pytest.fixture(scope="function")
 def var_store_order_query():
     return """SELECT NG_ORDER_ID FROM OPSML_FP_ORDERS_TIME_ACTUALS LIMIT 10"""
+
+
+@pytest.fixture(scope="module")
+def linear_regression():
+    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    y = np.dot(X, np.array([1, 2])) + 3
+    reg = LinearRegression().fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="function")
+def model_list():
+
+    models = []
+
+    for model in [LinearRegression, LGBMRegressor, XGBRegressor]:
+        X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+        y = np.dot(X, np.array([1, 2])) + 3
+        reg = model().fit(X, y)
+        models.append(reg)
+
+    estimators = [("lr", RandomForestRegressor()), ("svr", LinearRegression())]
+
+    reg = StackingRegressor(
+        estimators=estimators,
+        final_estimator=RandomForestRegressor(n_estimators=10, random_state=42),
+        cv=2,
+    )
+
+    reg.fit(X, y)
+    models.append(reg)
+
+    return models, X
+
+
+@pytest.fixture(scope="module")
+def sklearn_pipeline():
+    data = pd.DataFrame(
+        [
+            dict(CAT1="a", CAT2="c", num1=0.5, num2=0.6, num3=0, y=0),
+            dict(CAT1="b", CAT2="d", num1=0.4, num2=0.8, num3=1, y=1),
+            dict(CAT1="a", CAT2="d", num1=0.5, num2=0.56, num3=0, y=0),
+            dict(CAT1="a", CAT2="d", num1=0.55, num2=0.56, num3=2, y=1),
+            dict(CAT1="a", CAT2="c", num1=0.35, num2=0.86, num3=0, y=0),
+            dict(CAT1="a", CAT2="c", num1=0.5, num2=0.68, num3=2, y=1),
+        ]
+    )
+
+    cat_cols = ["CAT1", "CAT2"]
+    train_data = data.drop("y", axis=1)
+
+    categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse=False, handle_unknown="ignore"))])
+    preprocessor = ColumnTransformer(
+        transformers=[("cat", categorical_transformer, cat_cols)],
+        remainder="passthrough",
+    )
+    pipe = Pipeline([("preprocess", preprocessor), ("rf", RandomForestRegressor())])
+    pipe.fit(train_data, data["y"])
+
+    return pipe, train_data

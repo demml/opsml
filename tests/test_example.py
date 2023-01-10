@@ -1,14 +1,14 @@
-def test_example1(setup_database):
+def test_example1(setup_data_registry):
 
     # import
-    from opsml_data import DataCard, DataRegistry
+    from opsml_artifacts import DataCard, CardRegistry
     import numpy as np
     import pandas as pd
     from sklearn.model_selection import train_test_split
 
     # registry
     # registry = DataRegistry()
-    registry: DataRegistry = setup_database
+    registry: CardRegistry = setup_data_registry
 
     # create fake data
     mu_1, mu_2 = -4, 4
@@ -34,7 +34,7 @@ def test_example1(setup_database):
     DATA_SPLITS = [{"label": "train", "indices": train_idx}, {"label": "test", "indices": test_idx}]
 
     data_card = DataCard(
-        data_name=DATA_NAME,
+        name=DATA_NAME,
         team=TEAM,
         user_email=USER_EMAIL,
         data=data,
@@ -45,27 +45,27 @@ def test_example1(setup_database):
     splits = data_card.split_data()
 
     # save to registry
-    registry.register_data(data_card=data_card)
+    registry.register_card(card=data_card)
 
     # list data
-    registry_data = registry.list_data(data_name=DATA_NAME, team=TEAM)
+    registry_data = registry.list_cards(name=DATA_NAME, team=TEAM)
     assert data_card.uid == registry_data["uid"].values[0]
 
     # load data_card
-    new_data_card = registry.load_data(data_name=DATA_NAME, team=TEAM)
+    new_data_card = registry.load_card(name=DATA_NAME, team=TEAM)
     assert new_data_card.uid == data_card.uid
 
 
-def test_example2(setup_database):
+def test_example2(setup_data_registry):
 
     # import
-    from opsml_data import DataCard, DataRegistry, DriftDetector, DriftVisualizer
+    from opsml_artifacts import DataCard, CardRegistry, DriftDetector, DriftVisualizer
     import numpy as np
     import pandas as pd
 
     # registry
     # registry = DataRegistry()
-    registry: DataRegistry = setup_database
+    registry: CardRegistry = setup_data_registry
 
     # create fake data
     mu_1 = -4  # mean of the first distribution
@@ -120,7 +120,7 @@ def test_example2(setup_database):
     ]
 
     data_card = DataCard(
-        data_name=DATA_NAME,
+        name=DATA_NAME,
         team=TEAM,
         user_email=USER_EMAIL,
         data=model_data,
@@ -128,22 +128,22 @@ def test_example2(setup_database):
         dependent_vars=["target"],
         drift_report=drift_report,
     )
-    registry.register_data(data_card=data_card)
+    registry.register_card(card=data_card)
 
     # reload data card and visualize drift report
-    loaded_data_card = registry.load_data(data_name=DATA_NAME, team=TEAM, version=data_card.version)
+    loaded_data_card = registry.load_card(name=DATA_NAME, team=TEAM, version=data_card.version)
     DriftVisualizer(drift_report=loaded_data_card.drift_report).visualize_report()
 
 
-def test_example3(setup_database):
+def test_example3(setup_data_registry):
     # import
-    from opsml_data import DataCard, DataRegistry, DriftDetector, DriftVisualizer, SnowflakeQueryRunner
+    from opsml_artifacts import DataCard, CardRegistry, DriftDetector, DriftVisualizer, SnowflakeQueryRunner
     import numpy as np
     import pandas as pd
 
     # registry
     # registry = DataRegistry()
-    registry: DataRegistry = setup_database
+    registry: CardRegistry = setup_data_registry
     runner = SnowflakeQueryRunner(on_vpn=True)
     df = runner.query_to_dataframe(sql_file="data.sql")
     features = [
@@ -170,7 +170,7 @@ def test_example3(setup_database):
 
     data_card = DataCard(
         data=df,
-        data_name=DATA_NAME,
+        name=DATA_NAME,
         team=TEAM,
         user_email=USER_EMAIL,
         data_splits=DATA_SPLITS,
@@ -190,6 +190,6 @@ def test_example3(setup_database):
 
     chart = detector.visualize_report()
     data_card.drift_report = detector.run_drift_diagnostics()
-    registry.register_data(data_card=data_card)
-    registry_data = registry.list_data(data_name=DATA_NAME, team=TEAM, version=data_card.version)
+    registry.register_card(card=data_card)
+    registry_data = registry.list_cards(name=DATA_NAME, team=TEAM, version=data_card.version)
     assert registry_data["drift_uri"].values[0] is not None
