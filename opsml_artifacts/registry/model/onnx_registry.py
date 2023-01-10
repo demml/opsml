@@ -15,8 +15,7 @@ class RegistryUpdater:
     @staticmethod
     def validate(model_estimator: str) -> bool:
         "Validates converter type"
-
-        return True
+        raise NotImplementedError
 
 
 class LightGBMRegistryUpdater(RegistryUpdater):

@@ -5,7 +5,7 @@ import numpy as np
 from cryptography.fernet import Fernet
 
 # from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
-from pandas import DataFrame
+import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, validator
 from pyshipt_logging import ShiptLogging
@@ -21,11 +21,7 @@ from opsml_artifacts.registry.cards.record_models import (
 from opsml_artifacts.registry.cards.storage import save_record_artifact_to_storage
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
-from opsml_artifacts.registry.model.base_models import (
-    DataDict,
-    InputDataType,
-    ModelDefinition,
-)
+from opsml_artifacts.registry.model.base_models import DataDict, InputDataType, ModelDefinition
 from opsml_artifacts.registry.model.converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType
 
@@ -91,7 +87,7 @@ class DataCard(ArtifactCard):
     name: str
     team: str
     user_email: str
-    data: Union[np.ndarray, DataFrame, Table]
+    data: Union[np.ndarray, pd.DataFrame, Table]
     drift_report: Optional[Dict[str, DriftReport]] = None
     data_splits: List[Dict[str, Any]] = []
     data_uri: Optional[str] = None
@@ -210,78 +206,6 @@ class DataCard(ArtifactCard):
         return DataRegistryRecord(**self.__dict__)
 
 
-class ModelCardCreator:
-    def __init__(
-        self,
-        model: Union[BaseEstimator, Pipeline, StackingRegressor],
-        input_data: Union[DataFrame, np.ndarray],
-    ):
-
-        """Instantiates ModelCardCreator that is used for converting models to Onnx and creating model cards
-
-        Args:
-            Model (BaseEstimator, Pipeline, StackingRegressor): Model to convert
-            input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
-        """
-        self.model = model
-        self.input_data = input_data
-        self.data_type = InputDataType(type(input_data)).name
-        self.model_type = self.get_onnx_model_type()
-
-    def get_onnx_model_type(self):
-        model_class_name = self.model.__class__.__name__
-        model_type = next(
-            (
-                model_type
-                for model_type in ModelType.__subclasses__()
-                if model_type.validate(
-                    model_class_name=model_class_name,
-                )
-            )
-        )
-
-        return model_type.get_type()
-
-    def create_model_card(
-        self,
-        model_name: str,
-        team: str,
-        user_email: str,
-        registered_data_uid: Optional[str] = None,
-    ):
-        """Create model card from current model and sample data
-
-        Args:
-            model_name (str): What to name the model
-            team (str): Team name
-            user_email (str): Email to associate with the model
-            registered_data_uid (str): Uid associated with registered data card.
-            A ModelCard can be created, but not registered without a DataCard uid.
-        Returns
-            ModelCard
-
-        """
-
-        model_definition, feature_dict = OnnxModelConverter(
-            model=self.model,
-            input_data=self.input_data,
-            model_type=self.model_type,
-        ).convert_model()
-
-        return ModelCard(
-            name=model_name,
-            team=team,
-            model_type=self.model_type,
-            user_email=user_email,
-            onnx_model_def=model_definition,
-            data_card_uid=registered_data_uid,
-            onnx_model_data=DataDict(
-                data_type=self.data_type,
-                features=feature_dict,
-            ),
-        )
-
-
 class ModelCard(ArtifactCard):
     name: str
     team: str
@@ -293,6 +217,7 @@ class ModelCard(ArtifactCard):
     onnx_model_def: ModelDefinition
     model_uri: Optional[str]
     model_type: str
+    data_schema: Optional[Dict[str, str]]
 
     class Config:
         arbitrary_types_allowed = True
@@ -344,6 +269,95 @@ class ModelCard(ArtifactCard):
         return model_string
 
 
+class ModelCardCreator:
+    def __init__(
+        self,
+        model: Union[BaseEstimator, Pipeline, StackingRegressor],
+        input_data: Union[pd.DataFrame, np.ndarray],
+    ):
+
+        """Instantiates ModelCardCreator that is used for converting models to Onnx and creating model cards
+
+        Args:
+            Model (BaseEstimator, Pipeline, StackingRegressor): Model to convert
+            input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
+        """
+        self.model = model
+        self.input_data = input_data
+        self.data_type = InputDataType(type(input_data)).name
+        self.model_type = self.get_onnx_model_type()
+        self.data_schema = self.get_data_schema()
+
+    def get_data_schema(self) -> Optional[Dict[str, str]]:
+        """Create a data schema from input data. This is a specific
+        method for pandas dataframes
+
+        Returns
+            Dictionary for features and types or None
+        """
+        if isinstance(self.input_data, pd.DataFrame):
+            return {
+                key: str(val)
+                for key, val in zip(
+                    self.input_data.columns,
+                    self.input_data.dtypes,
+                )
+            }
+        return None
+
+    def get_onnx_model_type(self) -> str:
+        model_class_name = self.model.__class__.__name__
+        model_type = next(
+            (
+                model_type
+                for model_type in ModelType.__subclasses__()
+                if model_type.validate(model_class_name=model_class_name)
+            )
+        )
+
+        return model_type.get_type()
+
+    def create_model_card(
+        self,
+        model_name: str,
+        team: str,
+        user_email: str,
+        registered_data_uid: Optional[str] = None,
+    ) -> ModelCard:
+        """Create model card from current model and sample data
+
+        Args:
+            model_name (str): What to name the model
+            team (str): Team name
+            user_email (str): Email to associate with the model
+            registered_data_uid (str): Uid associated with registered data card.
+            A ModelCard can be created, but not registered without a DataCard uid.
+        Returns
+            ModelCard
+
+        """
+
+        model_definition, feature_dict = OnnxModelConverter(
+            model=self.model,
+            input_data=self.input_data,
+            model_type=self.model_type,
+        ).convert_model()
+
+        return ModelCard(
+            name=model_name,
+            team=team,
+            model_type=self.model_type,
+            data_schema=self.data_schema,
+            user_email=user_email,
+            onnx_model_def=model_definition,
+            data_card_uid=registered_data_uid,
+            onnx_model_data=DataDict(
+                data_type=self.data_type,
+                features=feature_dict,
+            ),
+        )
+
+
 # class OnnxModelPredictor:
 #    def __init__(
 #        self,
@@ -355,7 +369,6 @@ class ModelCard(ArtifactCard):
 #        self.sess = self.create_session()
 #
 #    def convert_data(self):
-#
 #        OnnxDataConverter.convert_data(
 #            input_data=self.input_data,
 #            model_type=self.model_type,
@@ -368,4 +381,4 @@ class ModelCard(ArtifactCard):
 #
 #    def predict(self):
 #        pass
-#        # pred_onx = np.ravel(self.sess.run(None, inputs))[0]
+#        # pred_onx = np.ravel(self.sess.run(None, inputs))[0

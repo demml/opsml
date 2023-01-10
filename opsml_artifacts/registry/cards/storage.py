@@ -70,18 +70,18 @@ class ArtifactStorage:
 
         return files
 
-    def save_artifact(
-        self,
-        artifact: Any,
-    ):
+    def save_artifact(self, artifact: Any) -> StoragePath:
         """Saves data"""
+        raise NotImplementedError
 
-    def load_artifact(self, storage_uri: str):
+    def load_artifact(self, storage_uri: str) -> Any:
         """Loads data"""
+        raise NotImplementedError
 
     @staticmethod
-    def validate(artifact_type: str):
+    def validate(artifact_type: str) -> bool:
         """validate table type"""
+        raise NotImplementedError
 
 
 class ParquetStorage(ArtifactStorage):
@@ -91,10 +91,7 @@ class ParquetStorage(ArtifactStorage):
     ):
         super().__init__(save_info=save_info, file_suffix="parquet")
 
-    def save_artifact(
-        self,
-        artifact: pa.Table,
-    ) -> StoragePath:
+    def save_artifact(self, artifact: pa.Table) -> StoragePath:
         """Saves pyarrow table to gcs.
 
         Args:
@@ -128,7 +125,7 @@ class ParquetStorage(ArtifactStorage):
         return dataframe
 
     @staticmethod
-    def validate(artifact_type: str):
+    def validate(artifact_type: str) -> bool:
         if artifact_type in ["Table", "DataFrame"]:
             return True
         return False
@@ -138,10 +135,7 @@ class NumpyStorage(ArtifactStorage):
     def __init__(self, save_info: Optional[SaveInfo] = None):
         super().__init__(save_info=save_info, file_suffix="npy")
 
-    def save_artifact(  # type: ignore
-        self,
-        artifact: np.ndarray,
-    ) -> StoragePath:
+    def save_artifact(self, artifact: np.ndarray) -> StoragePath:  # type: ignore
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
@@ -162,7 +156,7 @@ class NumpyStorage(ArtifactStorage):
         return data
 
     @staticmethod
-    def validate(artifact_type: str):
+    def validate(artifact_type: str) -> bool:
         if artifact_type == "ndarray":
             return True
         return False
@@ -172,10 +166,7 @@ class DictionaryStorage(ArtifactStorage):
     def __init__(self, save_info: Optional[SaveInfo] = None):
         super().__init__(save_info=save_info, file_suffix="joblib")
 
-    def save_artifact(  # type: ignore
-        self,
-        artifact: Dict[str, DriftReport],
-    ) -> StoragePath:
+    def save_artifact(self, artifact: Dict[str, DriftReport]) -> StoragePath:  # type: ignore
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
@@ -195,7 +186,7 @@ class DictionaryStorage(ArtifactStorage):
         return data
 
     @staticmethod
-    def validate(artifact_type: str):
+    def validate(artifact_type: str) -> bool:
         if artifact_type == "dict":
             return True
         return False

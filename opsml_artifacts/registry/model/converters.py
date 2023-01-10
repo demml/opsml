@@ -1,7 +1,6 @@
 # pylint: disable=import-outside-toplevel
 """Code for generating Onnx Models"""
 from typing import Any, Dict, List, Tuple, Union, cast
-
 import numpy as np
 import onnxruntime as rt
 import pandas as pd
@@ -35,13 +34,19 @@ class DataConverter:
     def __init__(self, data: Union[pd.DataFrame, np.ndarray]):
         self.data = data
 
+    def get_data_schema(self) -> List[Any]:
+        """Gets schema from data.
+        Reproduces onnx_data_types in some instances
+        """
+        raise NotImplementedError
+
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
-        return ["placeholder"]
+        raise NotImplementedError
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         """Converts data to onnx schema"""
-        return {"placeholder": "placeholder"}
+        raise NotImplementedError
 
     def _convert_dataframe_schema(self) -> List[Any]:
         self.data = cast(pd.DataFrame, self.data)
@@ -61,12 +66,14 @@ class DataConverter:
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        "Validate data"
-
-        return True
+        """Validate data and model types"""
+        raise NotImplementedError
 
 
 class NumpyOnnxConverter(DataConverter):
+    def get_data_schema(self) -> List[Any]:
+        return [("inputs", FloatTensorType([None, self.data.shape[1]]))]
+
     def get_onnx_data_types(self) -> List[Any]:
         return [("inputs", FloatTensorType([None, self.data.shape[1]]))]
 
@@ -75,19 +82,18 @@ class NumpyOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == np.ndarray and model_type in [
-            OnnxModelType.SKLEARN_ESTIMATOR.value,
-            OnnxModelType.XGB_REGRESSOR.value,
-            OnnxModelType.LGBM_REGRESSOR.value,
-            OnnxModelType.STACKING_ESTIMATOR.value,
-        ]:
+        if data_type == np.ndarray and model_type in onnx_model_types:
             return True
         return False
 
 
 class PandasOnnxConverter(DataConverter):
-    def get_onnx_data_types(self) -> List[Any]:
+    def get_data_schema(self) -> List[Any]:
         return self._convert_dataframe_schema()
+
+    def get_onnx_data_types(self) -> List[Any]:
+        self.data = cast(pd.DataFrame, self.data)
+        return [("inputs", FloatTensorType([None, self.data.to_numpy().astype(np.float32).shape[1]]))]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         self.data = cast(pd.DataFrame, self.data)
@@ -106,6 +112,9 @@ class PandasOnnxConverter(DataConverter):
 
 
 class PandasPipelineOnnxConverter(DataConverter):
+    def get_data_schema(self) -> List[Any]:
+        return self._convert_dataframe_schema()
+
     def get_onnx_data_types(self) -> List[Any]:
         return self._convert_dataframe_schema()
 
@@ -199,9 +208,7 @@ class ModelConverter:
         Returns
             Encrypted model definition and feature dictionary
         """
-        model_def = ModelDefinition(model_bytes=b"placeholder", encrypt_key=b"placeholder")
-        dict_ = {"placeholder": Feature(feature_type="placeholder", shape=[10])}
-        return (model_def, dict_)
+        raise NotImplementedError
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
@@ -258,8 +265,7 @@ class ModelConverter:
     @staticmethod
     def validate(model_type: str) -> bool:
         """validates model base class"""
-
-        return True
+        raise NotImplementedError
 
 
 class SklearnOnnxModel(ModelConverter):

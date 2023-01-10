@@ -4,11 +4,11 @@ from opsml_artifacts.registry.model.base_models import OnnxModelType
 class ModelType:
     @staticmethod
     def get_type() -> str:
-        return "placeholder"
+        raise NotImplementedError
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        return True
+        raise NotImplementedError
 
 
 class SklearnPipeline(ModelType):
