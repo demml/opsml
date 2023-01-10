@@ -8,15 +8,15 @@ class DependentVariable:
 
     @property
     def column_name(self) -> str:
-        return "placeholder"
+        raise NotImplementedError
 
     @property
     def eval_flg(self) -> str:
-        return "placeholder"
+        raise NotImplementedError
 
     @property
     def eval_outlier(self) -> str:
-        return "placeholder"
+        raise NotImplementedError
 
     @staticmethod
     def validate(level: str) -> bool:
