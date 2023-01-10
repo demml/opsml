@@ -1,40 +1,40 @@
 import numpy as np
 import pandas as pd
 import pytest
-from opsml_artifacts.registry.cards.storage import NumpyStorage, ParquetStorage, DriftStorage, DataSaveInfo
+from opsml_artifacts.registry.cards.storage import NumpyStorage, ParquetStorage, DictionaryStorage, SaveInfo
 from opsml_artifacts.drift.data_drift import DriftDetector
 
 
 def test_parquet(test_arrow_table, storage_client):
 
-    save_info = DataSaveInfo(
+    save_info = SaveInfo(
         blob_path="blob",
         version=1,
         team="mlops",
-        data_name="test",
+        name="test",
     )
     pq_wrtier = ParquetStorage(save_info=save_info)
-    metadata = pq_wrtier.save_data(data=test_arrow_table)
+    metadata = pq_wrtier.save_artifact(artifact=test_arrow_table)
 
     assert isinstance(metadata.gcs_uri, str)
 
-    df = pq_wrtier.load_data(storage_uri=metadata.gcs_uri)
+    df = pq_wrtier.load_artifact(storage_uri=metadata.gcs_uri)
     assert isinstance(df, pd.DataFrame)
 
     storage_client.delete_object_from_url(gcs_uri=metadata.gcs_uri)
 
 
 def test_array(test_array, storage_client):
-    save_info = DataSaveInfo(
+    save_info = SaveInfo(
         blob_path="blob",
         version=1,
         team="mlops",
-        data_name="test",
+        name="test",
     )
     np_writer = NumpyStorage(save_info=save_info)
-    metadata = np_writer.save_data(data=test_array)
+    metadata = np_writer.save_artifact(artifact=test_array)
 
-    array = np_writer.load_data(storage_uri=metadata.gcs_uri)
+    array = np_writer.load_artifact(storage_uri=metadata.gcs_uri)
     assert isinstance(array, np.ndarray)
 
     storage_client.delete_object_from_url(gcs_uri=metadata.gcs_uri)
@@ -56,17 +56,17 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
 
     drift_report = detector.run_drift_diagnostics(return_dataframe=False)
 
-    save_info = DataSaveInfo(
+    save_info = SaveInfo(
         blob_path="blob",
         version=1,
         team="mlops",
-        data_name="test",
+        name="test",
     )
 
-    drift_writer = DriftStorage(save_info=save_info)
-    metadata = drift_writer.save_data(data=drift_report)
+    drift_writer = DictionaryStorage(save_info=save_info)
+    metadata = drift_writer.save_artifact(artifact=drift_report)
 
-    drift_report = drift_writer.load_data(storage_uri=metadata.gcs_uri)
+    drift_report = drift_writer.load_artifact(storage_uri=metadata.gcs_uri)
     assert isinstance(drift_report, dict)
 
     storage_client.delete_object_from_url(gcs_uri=metadata.gcs_uri)
