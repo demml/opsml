@@ -24,102 +24,11 @@ from opsml_artifacts.registry.model.base_models import (
     OnnxDataProto,
     OnnxModelType,
 )
+from opsml_artifacts.registry.model.onnx_registry import OnnxRegistryUpdater
 
 # Get logger
 logger = ShiptLogging.get_logger(__name__)
-
-
-class RegistryConverter:
-    def update_registry_converter(self):
-        pass
-
-    @staticmethod
-    def validate(model_estimator: str) -> bool:
-        "Validates converter type"
-
-        return True
-
-
-class LightGBMRegistryConverter(RegistryConverter):
-    def __init__(self):
-        self.alias = "LGBRegressor"
-
-    def update_registry_converter(self):
-        logger.info("Registering lightgbm onnx converter")
-
-        from lightgbm import LGBMRegressor
-        from onnxmltools.convert.lightgbm.operator_converters.LightGbm import (  # noqa
-            convert_lightgbm,
-        )
-        from skl2onnx import update_registered_converter
-        from skl2onnx.common.shape_calculator import (  # noqa
-            calculate_linear_regressor_output_shapes,
-        )
-
-        update_registered_converter(
-            model=LGBMRegressor,
-            alias=self.alias,
-            shape_fct=calculate_linear_regressor_output_shapes,
-            convert_fct=convert_lightgbm,
-            overwrite=True,
-        )
-
-    @staticmethod
-    def validate(model_estimator: str) -> bool:
-        if model_estimator == OnnxModelType.LGBM_REGRESSOR.value:
-            return True
-        return False
-
-
-class XGBoostRegistryConverter(RegistryConverter):
-    def __init__(self):
-        self.alias = "XGBRegressor"
-
-    def update_registry_converter(self):
-        logger.info("Registering xgboost onnx converter")
-
-        from onnxmltools.convert.xgboost.operator_converters.XGBoost import (
-            convert_xgboost,
-        )
-        from skl2onnx import update_registered_converter
-        from skl2onnx.common.shape_calculator import (  # noqa
-            calculate_linear_regressor_output_shapes,
-        )
-        from xgboost import XGBRegressor
-
-        update_registered_converter(
-            model=XGBRegressor,
-            alias=self.alias,
-            shape_fct=calculate_linear_regressor_output_shapes,
-            convert_fct=convert_xgboost,
-            overwrite=True,
-        )
-
-    @staticmethod
-    def validate(model_estimator: str) -> bool:
-        if model_estimator == OnnxModelType.XGB_REGRESSOR.value:
-            return True
-        return False
-
-
-class OnnxRegistryConverter:
-    @staticmethod
-    def update_onnx_registry(model_estimator_name: str) -> None:
-        """Loops through model estimator types and updates
-        the Onnx model registry if needed.
-        """
-
-        converter = next(
-            (
-                converter
-                for converter in RegistryConverter.__subclasses__()
-                if converter.validate(model_estimator=model_estimator_name)
-            ),
-            None,
-        )
-
-        if converter is not None:
-            converter().update_registry_converter()
+onnx_model_types = set(model_type.value for model_type in OnnxModelType)
 
 
 class DataConverter:
@@ -151,7 +60,7 @@ class DataConverter:
         return inputs
 
     @staticmethod
-    def validate(data_type: type, model_class: type) -> bool:
+    def validate(data_type: type, model_type: str) -> bool:
         "Validate data"
 
         return True
@@ -165,8 +74,8 @@ class NumpyOnnxConverter(DataConverter):
         return {"inputs": self.data.astype(np.float32)[:1]}
 
     @staticmethod
-    def validate(data_type: type, model_class: type) -> bool:
-        if data_type == np.ndarray and issubclass(model_class, BaseEstimator):
+    def validate(data_type: type, model_type: str) -> bool:
+        if data_type == np.ndarray and model_type == OnnxModelType.SKLEARN_ESTIMATOR.value:
             return True
         return False
 
@@ -180,10 +89,9 @@ class PandasOnnxConverter(DataConverter):
         return {"inputs": self.data.to_numpy().astype(np.float32)[:1]}
 
     @staticmethod
-    def validate(data_type: type, model_class: type) -> bool:
-        if data_type == pd.DataFrame and issubclass(model_class, BaseEstimator):
-            if not model_class == Pipeline:
-                return True
+    def validate(data_type: type, model_type: str) -> bool:
+        if data_type == pd.DataFrame and model_type == OnnxModelType.SKLEARN_ESTIMATOR.value:
+            return True
         return False
 
 
@@ -213,10 +121,9 @@ class PandasPipelineOnnxConverter(DataConverter):
         return inputs
 
     @staticmethod
-    def validate(data_type: type, model_class: type) -> bool:
-        if data_type == pd.DataFrame and issubclass(model_class, BaseEstimator):
-            if model_class == Pipeline:
-                return True
+    def validate(data_type: type, model_type: str) -> bool:
+        if data_type == pd.DataFrame and model_type == OnnxModelType.SKLEARN_PIPELINE.value:
+            return True
         return False
 
 
@@ -224,7 +131,7 @@ class OnnxDataConverter:
     @staticmethod
     def convert_data(
         input_data: Union[pd.DataFrame, np.ndarray],
-        model_type: type,
+        model_type: str,
     ) -> Dict[str, Any]:
         """Takes input data sample and model type and converts data to onnx format"""
 
@@ -233,7 +140,7 @@ class OnnxDataConverter:
             (
                 converter
                 for converter in DataConverter.__subclasses__()
-                if converter.validate(data_type=data_type, model_class=model_type)
+                if converter.validate(data_type=data_type, model_type=model_type)
             )
         )
 
@@ -242,7 +149,7 @@ class OnnxDataConverter:
     @staticmethod
     def get_onnx_data_types(
         input_data: Union[pd.DataFrame, np.ndarray],
-        model_type: type,
+        model_type: str,
     ) -> List[Any]:
         """Takes input data sample and model type and converts data to onnx format"""
 
@@ -251,7 +158,7 @@ class OnnxDataConverter:
             (
                 converter
                 for converter in DataConverter.__subclasses__()
-                if converter.validate(data_type=data_type, model_class=model_type)
+                if converter.validate(data_type=data_type, model_type=model_type)
             )
         )
 
@@ -263,7 +170,7 @@ class ModelConverter:
         self,
         model: Any,
         input_data: Any,
-        model_type: type,
+        model_type: str,
     ):
         self.model = model
         self.input_data = input_data
@@ -272,7 +179,7 @@ class ModelConverter:
 
     def update_onnx_registries(self):
         model_estimator_name = self.model.__class__.__name__.lower()
-        OnnxRegistryConverter.update_onnx_registry(
+        OnnxRegistryUpdater.update_onnx_registry(
             model_estimator_name=model_estimator_name,
         )
 
@@ -339,7 +246,7 @@ class ModelConverter:
         )
 
     @staticmethod
-    def validate(model_type: type) -> bool:
+    def validate(model_type: str) -> bool:
         """validates model base class"""
 
         return True
@@ -374,8 +281,8 @@ class SklearnOnnxModel(ModelConverter):
         return model_def, features
 
     @staticmethod
-    def validate(model_type: type) -> bool:
-        if issubclass(model_type, BaseEstimator):
+    def validate(model_type: str) -> bool:
+        if model_type in onnx_model_types:
             return True
         return False
 
@@ -385,10 +292,11 @@ class OnnxModelConverter:
         self,
         model: Union[BaseEstimator, Pipeline, StackingRegressor],
         input_data: Union[pd.DataFrame, np.ndarray],
+        model_type: str,
     ):
         self.model = model
         self.data = input_data
-        self.model_type = type(model)
+        self.model_type = model_type
 
         """Instantiates a helper class to convert machine learning models and their input data
         to onnx format for interoperability.

@@ -27,6 +27,7 @@ from opsml_artifacts.registry.model.base_models import (
     ModelDefinition,
 )
 from opsml_artifacts.registry.model.converters import OnnxModelConverter
+from opsml_artifacts.registry.model.model_types import ModelType
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -225,6 +226,21 @@ class ModelCardCreator:
         self.model = model
         self.input_data = input_data
         self.data_type = InputDataType(type(input_data)).name
+        self.model_type = self.get_onnx_model_type()
+
+    def get_onnx_model_type(self):
+        model_class_name = self.model.__class__.__name__
+        model_type = next(
+            (
+                model_type
+                for model_type in ModelType.__subclasses__()
+                if model_type.validate(
+                    model_class_name=model_class_name,
+                )
+            )
+        )
+
+        return model_type.get_type()
 
     def create_model_card(
         self,
@@ -249,12 +265,13 @@ class ModelCardCreator:
         model_definition, feature_dict = OnnxModelConverter(
             model=self.model,
             input_data=self.input_data,
+            model_type=self.model_type,
         ).convert_model()
 
         return ModelCard(
             name=model_name,
             team=team,
-            model_type=self.model.__class__.__name__,
+            model_type=self.model_type,
             user_email=user_email,
             onnx_model_def=model_definition,
             data_card_uid=registered_data_uid,
