@@ -224,19 +224,19 @@ reference = ""
 
 [[package]]
 name = "astroid"
-version = "2.12.13"
+version = "2.13.2"
 description = "An abstract syntax tree for Python with inference support."
 category = "dev"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "astroid-2.12.13-py3-none-any.whl", hash = "sha256:10e0ad5f7b79c435179d0d0f0df69998c4eef4597534aae44910db060baeb907"},
-    {file = "astroid-2.12.13.tar.gz", hash = "sha256:1493fe8bd3dfd73dc35bd53c9d5b6e49ead98497c47b2307662556a5692d29d7"},
+    {file = "astroid-2.13.2-py3-none-any.whl", hash = "sha256:8f6a8d40c4ad161d6fc419545ae4b2f275ed86d1c989c97825772120842ee0d2"},
+    {file = "astroid-2.13.2.tar.gz", hash = "sha256:3bc7834720e1a24ca797fd785d77efb14f7a28ee8e635ef040b6e2d80ccb3303"},
 ]
 
 [package.dependencies]
 lazy-object-proxy = ">=1.4.0"
-typing-extensions = {version = ">=3.10", markers = "python_version < \"3.10\""}
+typing-extensions = ">=4.0.0"
 wrapt = [
     {version = ">=1.11,<2", markers = "python_version < \"3.11\""},
     {version = ">=1.14,<2", markers = "python_version >= \"3.11\""},
@@ -594,6 +594,29 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "coloredlogs"
+version = "15.0.1"
+description = "Colored terminal output for Python's logging module"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+files = [
+    {file = "coloredlogs-15.0.1-py2.py3-none-any.whl", hash = "sha256:612ee75c546f53e92e70049c9dbfcc18c935a2b9a53b66085ce9ef6a6e5c0934"},
+    {file = "coloredlogs-15.0.1.tar.gz", hash = "sha256:7c991aa71a4577af2f82600d8f8f3a89f936baeaf9b50a9c197da014e5bf16b0"},
+]
+
+[package.dependencies]
+humanfriendly = ">=9.1"
+
+[package.extras]
+cron = ["capturer (>=2.4)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "comet-ml"
 version = "3.31.21"
 description = "Supercharging Machine Learning"
@@ -907,6 +930,29 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "deprecated"
+version = "1.2.13"
+description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = [
+    {file = "Deprecated-1.2.13-py2.py3-none-any.whl", hash = "sha256:64756e3e14c8c5eea9795d93c524551432a0be75629f8f29e67ab8caf076c76d"},
+    {file = "Deprecated-1.2.13.tar.gz", hash = "sha256:43ac5335da90c31c24ba028af536a91d41d53f9e6901ddb021bcc572ce44e38d"},
+]
+
+[package.dependencies]
+wrapt = ">=1.10,<2"
+
+[package.extras]
+dev = ["PyTest", "PyTest (<5)", "PyTest-Cov", "PyTest-Cov (<2.6)", "bump2version (<1)", "configparser (<5)", "importlib-metadata (<3)", "importlib-resources (<4)", "sphinx (<2)", "sphinxcontrib-websupport (<2)", "tox", "zipp (<2)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "dill"
 version = "0.3.6"
 description = "serialize all of python"
@@ -1162,6 +1208,23 @@ files = [
 mccabe = ">=0.6.0,<0.7.0"
 pycodestyle = ">=2.8.0,<2.9.0"
 pyflakes = ">=2.4.0,<2.5.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "flatbuffers"
+version = "23.1.4"
+description = "The FlatBuffers serialization format for Python"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "flatbuffers-23.1.4-py2.py3-none-any.whl", hash = "sha256:8bf47bcaef0deac76ae95586032e867e1d6d8fd429d00ca8d3d01e43fd3d1f8f"},
+    {file = "flatbuffers-23.1.4.tar.gz", hash = "sha256:04d2141ea38866600beda17ffebf739b23f4f500cc22606076cc83079155106d"},
+]
 
 [package.source]
 type = "legacy"
@@ -1802,6 +1865,26 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "humanfriendly"
+version = "10.0"
+description = "Human friendly output for text interfaces using Python"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+files = [
+    {file = "humanfriendly-10.0-py2.py3-none-any.whl", hash = "sha256:1697e1a8a8f550fd43c2865cd84542fc175a61dcb779b6fee18cf6b6ccba1477"},
+    {file = "humanfriendly-10.0.tar.gz", hash = "sha256:6b0b831ce8f15f7300721aa49829fc4e83921a9a301cc7f606be6686a2288ddc"},
+]
+
+[package.dependencies]
+pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_version >= \"3.8\""}
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -1861,14 +1944,14 @@ reference = ""
 
 [[package]]
 name = "iniconfig"
-version = "1.1.1"
-description = "iniconfig: brain-dead simple config-ini parsing"
+version = "2.0.0"
+description = "brain-dead simple config-ini parsing"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
-    {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
+    {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
+    {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
 
 [package.source]
@@ -2035,6 +2118,35 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "lightgbm"
+version = "3.3.4"
+description = "LightGBM Python Package"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "lightgbm-3.3.4-py3-none-macosx_10_15_x86_64.macosx_11_6_x86_64.macosx_12_0_x86_64.whl", hash = "sha256:eb11d83b2f6ba6f77c6f4765de0d646c1bfbc47b5aec9247576c3c0d60e52960"},
+    {file = "lightgbm-3.3.4-py3-none-manylinux1_x86_64.whl", hash = "sha256:bf79910a75ba6260cdefa3ddfe030707928ba2a0ffb204c0b6ab31f56fc27ebd"},
+    {file = "lightgbm-3.3.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5015ee512e4fbe2ca901b4a23dca650f1a423cae900646158f340ab84399fbe2"},
+    {file = "lightgbm-3.3.4-py3-none-win_amd64.whl", hash = "sha256:a3b29612af17096dbcc9419dd5ef5342dbb86cf77ec8f99064e2fa101722c3da"},
+    {file = "lightgbm-3.3.4.tar.gz", hash = "sha256:d6fa4d5b2a6f38d588434193f366757b20b301300b7385ca6924e2e402fc9063"},
+]
+
+[package.dependencies]
+numpy = "*"
+scikit-learn = "!=0.22.0"
+scipy = "*"
+wheel = "*"
+
+[package.extras]
+dask = ["dask[array] (>=2.0.0)", "dask[dataframe] (>=2.0.0)", "dask[distributed] (>=2.0.0)", "pandas"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -2117,6 +2229,27 @@ files = [
     {file = "more-itertools-8.14.0.tar.gz", hash = "sha256:c09443cd3d5438b8dafccd867a6bc1cb0894389e90cb53d227456b0b0bccb750"},
     {file = "more_itertools-8.14.0-py3-none-any.whl", hash = "sha256:1bc4f91ee5b1b31ac7ceacc17c09befe6a40a503907baf9c839c229b5095cfd2"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "mpmath"
+version = "1.2.1"
+description = "Python library for arbitrary-precision floating-point arithmetic"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mpmath-1.2.1-py3-none-any.whl", hash = "sha256:604bc21bd22d2322a177c73bdb573994ef76e62edd595d17e00aff24b0667e5c"},
+    {file = "mpmath-1.2.1.tar.gz", hash = "sha256:79ffb45cf9f4b101a807595bcb3e72e0396202e0b1d25d689134b48c4216a81a"},
+]
+
+[package.extras]
+develop = ["codecov", "pycodestyle", "pytest (>=4.6)", "pytest-cov", "wheel"]
+tests = ["pytest (>=4.6)"]
 
 [package.source]
 type = "legacy"
@@ -2351,6 +2484,158 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "onnx"
+version = "1.13.0"
+description = "Open Neural Network Exchange"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "onnx-1.13.0-cp310-cp310-macosx_10_12_universal2.whl", hash = "sha256:4d25aaf5b385937eb3d0846616ff8fdff65b4f5d2f55c82ffe0c6deb021f4714"},
+    {file = "onnx-1.13.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:ea9ce14eb7bc4ff3e236d44433ed6b9a5cdb2921d357d28f74268b43d04897c0"},
+    {file = "onnx-1.13.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c77074bb9c12bef5c0054c972bba0280de6df0712dfccfdd224b0ee3f0b56cab"},
+    {file = "onnx-1.13.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e1f4f217942f97aad8bd3b707259338045ed5804b3a0dfa453d9f108f53a9ce2"},
+    {file = "onnx-1.13.0-cp310-cp310-win32.whl", hash = "sha256:41953d6a9c1fc1c1023438c8aac8ed2ee29a1739fbfce68f8ece38f34d326d02"},
+    {file = "onnx-1.13.0-cp310-cp310-win_amd64.whl", hash = "sha256:9b2691ad78ddcac2244b4299e5f5132895e12f99dbd1cfb310d10cdb50cd2d90"},
+    {file = "onnx-1.13.0-cp311-cp311-macosx_10_12_universal2.whl", hash = "sha256:c1eeec79e3cc35b808df4616f9ddef769fb4e5912e0eaacbddfa3a60d93d36c0"},
+    {file = "onnx-1.13.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:8008d9dd4479445584a5e08cce5b8319777a145fdf397c1791a59efa347bb732"},
+    {file = "onnx-1.13.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bad429298470efa5da5589f518036a125ca8864a766ad706278531c05c723f48"},
+    {file = "onnx-1.13.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8faef7ee6e2012ad1ff13ffe248809218ac4ea7040bd62a7e0740978feffe926"},
+    {file = "onnx-1.13.0-cp311-cp311-win32.whl", hash = "sha256:1d443d3b895dda42355ea6281eff638cc53a1a0b12244421d9fc09046444ba94"},
+    {file = "onnx-1.13.0-cp311-cp311-win_amd64.whl", hash = "sha256:88199c7eecba6c4f0b822147cf40184e7de94bcf915b3cbd0e2728966f7305c1"},
+    {file = "onnx-1.13.0-cp37-cp37m-macosx_10_12_universal2.whl", hash = "sha256:99fb9e674e1244fed09afd2a3106485d803357beaea7c0ae2f5956bde8319c54"},
+    {file = "onnx-1.13.0-cp37-cp37m-macosx_10_12_x86_64.whl", hash = "sha256:6113b4491cf27c408272397405c2f0daf8751515a91ea86f03db05f953433be9"},
+    {file = "onnx-1.13.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9b9ff692dff87dc180045c055502ab0d91d042f1cd3058d94de4141cd4445286"},
+    {file = "onnx-1.13.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:603587b438bbf685860ead13a83b771cd7a6a0565f745d825260c1ad6904674a"},
+    {file = "onnx-1.13.0-cp37-cp37m-win32.whl", hash = "sha256:2b8429926423e83aba724ba8586ef1611d7bf7f4f9f2cc4312856da86fd9c5ba"},
+    {file = "onnx-1.13.0-cp37-cp37m-win_amd64.whl", hash = "sha256:098176b93b19323639831561618da91aa472745cd518527a540152d7f9b8f7d3"},
+    {file = "onnx-1.13.0-cp38-cp38-macosx_10_12_universal2.whl", hash = "sha256:4bac7453fa5fa969352778f759896c43e3b8337ae532cd6dda36758b9dc656d7"},
+    {file = "onnx-1.13.0-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:2e8ece71cb00c1e8f5fec93f306a071b8d2929fded6b1e6a71cab710de2e798d"},
+    {file = "onnx-1.13.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bd305274b199ad04ea6c185437f736981265f20d7ac2cbf16411d2d35e5e8e68"},
+    {file = "onnx-1.13.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2ad8208252f6d61dcd487c2c62f6fbc1eee24bf11addb56c500cf0feb8966f36"},
+    {file = "onnx-1.13.0-cp38-cp38-win32.whl", hash = "sha256:cef04e12123fef9f1e44078311fe7e9d9da0713e273ea13147b77d57cfd5eea0"},
+    {file = "onnx-1.13.0-cp38-cp38-win_amd64.whl", hash = "sha256:934a6497b2feb7a5ec31063afea5da1b06131fb2e9979f9bdeeec5c8cf0e03d2"},
+    {file = "onnx-1.13.0-cp39-cp39-macosx_10_12_universal2.whl", hash = "sha256:43e1ff72dcff4eabf3a75b119156c96603c7c3cbcf93ac7dba0c12687511aa9d"},
+    {file = "onnx-1.13.0-cp39-cp39-macosx_10_12_x86_64.whl", hash = "sha256:e27021a056dfecfdc6307d8b50e69a4e32e2137b54bfe215c82580e8dceb7d84"},
+    {file = "onnx-1.13.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a5d5e7efbf7d6b81edf358bbfb008d1110ab020de0d52d8c84ffddbf07cedfb2"},
+    {file = "onnx-1.13.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:257db1d357671d81f789f30d4e9358fd6427ae3ebf5fd90e4b0b418e6c8bb295"},
+    {file = "onnx-1.13.0-cp39-cp39-win32.whl", hash = "sha256:eb32853d94a61728ba4dd0809740e782896d10178d5593f472d24f51c13c2e5d"},
+    {file = "onnx-1.13.0-cp39-cp39-win_amd64.whl", hash = "sha256:925e9ecc4cca0da65126e5320577b81c0c2ac3c9e0418e77ff21da63d0f3bcdb"},
+    {file = "onnx-1.13.0.tar.gz", hash = "sha256:410b39950367857f97b65093681fe2495a2e23d63777a8aceaf96c56a16d166e"},
+]
+
+[package.dependencies]
+numpy = ">=1.16.6"
+protobuf = ">=3.20.2,<4"
+typing-extensions = ">=3.6.2.1"
+
+[package.extras]
+lint = ["black (>=22.3)", "clang-format (==13.0.0)", "flake8 (>=5.0.2)", "isort[colors] (>=5.10)", "mypy (>=0.971)", "types-protobuf (==3.18.4)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "onnxconverter-common"
+version = "1.13.0"
+description = "ONNX Converter and Optimization Tools"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "onnxconverter-common-1.13.0.tar.gz", hash = "sha256:03db8a6033a3d6590f22df3f64234079caa826375d1fcb0b37b8123c06bf598c"},
+    {file = "onnxconverter_common-1.13.0-py2.py3-none-any.whl", hash = "sha256:5ee1c025ef6c3b4abaede8425bc6b393248941a6cf8c21563d0d0e3f04634a0a"},
+]
+
+[package.dependencies]
+numpy = "*"
+onnx = "*"
+packaging = "*"
+protobuf = "*"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "onnxmltools"
+version = "1.11.1"
+description = "Converts Machine Learning models to ONNX"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "onnxmltools-1.11.1-py3-none-any.whl", hash = "sha256:c8a108e36cb12b5f1393b03ffba05d3f6be16f421de5666ae9e25bbc3b593594"},
+]
+
+[package.dependencies]
+numpy = "*"
+onnx = "*"
+skl2onnx = "*"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "onnxruntime"
+version = "1.13.1"
+description = "ONNX Runtime is a runtime accelerator for Machine Learning models"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "onnxruntime-1.13.1-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:3b4e8f2b915fe505ffdc99c80324130ff9da2c52d8d1326c0bce19948523bb6c"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:0f1087bc219e293194b5e3b2ea8b50bf3e9e1343a49ef51c5b06987e6269c042"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0df1240878f13204246453bcb645ffa759e7dd93e06d210b7fe0defe88942fd3"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:083ef4448790a7c1fa4efebf4c1b15db95c4e2dbd3c3984018f57fe982c30276"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-manylinux_2_27_aarch64.whl", hash = "sha256:b488fe1a0c3afce90d22040d898862fb24d3b331644f5e1aec8cfd6a807fc987"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-manylinux_2_27_x86_64.whl", hash = "sha256:f060f7883c27eaf4ed7490f90cd72cdf96c80e4d74133525c6db5ba06f71623d"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-win32.whl", hash = "sha256:68074af35c1a79c9ee856ef8192a72099d2b17ad240b45764e95e65f58ed71c9"},
+    {file = "onnxruntime-1.13.1-cp310-cp310-win_amd64.whl", hash = "sha256:f9011384e792befdcde20860ab57294b3b9de5504a85b85818a8b242600052d7"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:97e9e38bfa168f541c3996a4c4fd57f886d02958e7de97ac167fd27118334a33"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bc491fc9a3474cbb40f3e04ea28687791d43a5eb3f55b62a803f88826aa512b3"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6941cd11e514b4bbc7408de13d041430ac283f2e55446d9ae85a6cc133ab002b"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-manylinux_2_27_aarch64.whl", hash = "sha256:343d4205631daf3d18a251212d5a04daf1f1ea1c34323042e7fc8deae0a358da"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-manylinux_2_27_x86_64.whl", hash = "sha256:d85e6c5a12c1055fec9e24023dd22506d1243417bed0ac26caa9b6123c10c242"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-win32.whl", hash = "sha256:ad589c249efcba104f3147df00fbab828855783aa3748f49ee3e04ff69ddf65d"},
+    {file = "onnxruntime-1.13.1-cp37-cp37m-win_amd64.whl", hash = "sha256:aaa33c79cfe2ac145d27166c59a216783951090a679d19c5b49f40f71606cf2d"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:f19697f9846e5518ea4f6c8b78c0f3fbd7f1b9b2fdef8dfc6eb7751b8e7e1edc"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:f523192616479b7f8a50bd02aa775e1256c90a7bc4c034bdeed9bd78a55a6e7a"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:852d7f26da6bb060cbaedb1f92cbe3b0b6e874b3169c20f9a55e656ff2d62742"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a436eb49c488ef01b4bd42ecad0a363ebf32ea7af3daa3a9e1cc35fdb8a8ad01"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-manylinux_2_27_aarch64.whl", hash = "sha256:93d803c5e01f24a3c65434d2238093c2d10993fd96a6cfb34d67f1ccd4224dc8"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-manylinux_2_27_x86_64.whl", hash = "sha256:7973bb9d3dd886d6f36b6d97f434c052531cf0ec4b5c05fd5c4c90d0061f02cf"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-win32.whl", hash = "sha256:c19cf50f51c8e73b7c4c2978916d298b969c871bb8ea74c74c3f92c4f9811225"},
+    {file = "onnxruntime-1.13.1-cp38-cp38-win_amd64.whl", hash = "sha256:d541174f3d1d4371c09242faa2d6c84a2de861f1aee771d2248cfc7f67ffb708"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:5336f5b9f5ba2bfb2586eb23b7346b50bb102dd8a15d0ce21b20d098da8984b0"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:b2b833c0acee7790f553a70ffa94999278886efe55f6f6bcaf57996e54a6724b"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:af07e43158a24c7ce6056dcd58cfa5c990193889e7bb2bea8300ce93e9c0584b"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4dbec4f7c9aa5b09e4c5d3e4d2231820d23660d70939136215562e3ea9d9e629"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-manylinux_2_27_aarch64.whl", hash = "sha256:d31681cf8e3570631ce7305e5a09babcf6362112da1f0b88031f74d46efbe18c"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-manylinux_2_27_x86_64.whl", hash = "sha256:67785843d393c59c4183cfd3eabbddd23620d0b56472dff679b68c8b94dd4a07"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-win32.whl", hash = "sha256:5f9b4533bd8d879f4cfd015a17af021825a9a0ec68e2229971605dac5f4430d3"},
+    {file = "onnxruntime-1.13.1-cp39-cp39-win_amd64.whl", hash = "sha256:76fda2c7c797f799b679be043612de0da51ee91319581310b65f35658d6f0c0c"},
+]
+
+[package.dependencies]
+coloredlogs = "*"
+flatbuffers = "*"
+numpy = ">=1.21.6"
+packaging = "*"
+protobuf = "*"
+sympy = "*"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "orjson"
 version = "3.8.4"
 description = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
@@ -2431,14 +2716,14 @@ reference = ""
 
 [[package]]
 name = "packaging"
-version = "22.0"
+version = "23.0"
 description = "Core utilities for Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "packaging-22.0-py3-none-any.whl", hash = "sha256:957e2148ba0e1a3b282772e791ef1d8083648bc131c8ab0c1feba110ce1146c3"},
-    {file = "packaging-22.0.tar.gz", hash = "sha256:2198ec20bd4c017b8f9717e00f0c8714076fc2fd93816750ab48e2c41de2cfd3"},
+    {file = "packaging-23.0-py3-none-any.whl", hash = "sha256:714ac14496c3e68c99c29b00845f7a2b85f3bb6f1078fd9f72fd20f0570002b2"},
+    {file = "packaging-23.0.tar.gz", hash = "sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97"},
 ]
 
 [package.source]
@@ -2935,6 +3220,35 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "pydantic-yaml"
+version = "0.9.0"
+description = "\"Adds some YAML functionality to the excellent `pydantic` library.\""
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pydantic_yaml-0.9.0-py3-none-any.whl", hash = "sha256:8a64ed02517f37ee05a751e7351b264824660e71ce5e2cd2dd862d8d93a858f4"},
+    {file = "pydantic_yaml-0.9.0.tar.gz", hash = "sha256:26d95d83d6768fc7f80b226350dba3aa5dc9f52c13061695171e8d9e7cb4cf4a"},
+]
+
+[package.dependencies]
+deprecated = ">=1.2.5,<1.3.0"
+pydantic = ">=1.7.4,<2.0"
+semver = ">=2.13.0,<4"
+types-Deprecated = "*"
+
+[package.extras]
+dev = ["black", "bump2version", "flake8", "mypy", "pytest", "types-Deprecated"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "pygments", "pymdown-extensions"]
+pyyaml = ["pyyaml", "types-PyYAML"]
+ruamel = ["ruamel.yaml (>=0.15,<0.18)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "pyflakes"
 version = "2.4.0"
 description = "passive checker of Python programs"
@@ -2976,14 +3290,14 @@ reference = ""
 
 [[package]]
 name = "pylint"
-version = "2.15.9"
+version = "2.15.10"
 description = "python code static checker"
 category = "dev"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "pylint-2.15.9-py3-none-any.whl", hash = "sha256:349c8cd36aede4d50a0754a8c0218b43323d13d5d88f4b2952ddfe3e169681eb"},
-    {file = "pylint-2.15.9.tar.gz", hash = "sha256:18783cca3cfee5b83c6c5d10b3cdb66c6594520ffae61890858fe8d932e1c6b4"},
+    {file = "pylint-2.15.10-py3-none-any.whl", hash = "sha256:9df0d07e8948a1c3ffa3b6e2d7e6e63d9fb457c5da5b961ed63106594780cc7e"},
+    {file = "pylint-2.15.10.tar.gz", hash = "sha256:b3dc5ef7d33858f297ac0d06cc73862f01e4f2e74025ec3eff347ce0bc60baf5"},
 ]
 
 [package.dependencies]
@@ -3048,6 +3362,23 @@ cryptography = ">=38.0.0,<39"
 [package.extras]
 docs = ["sphinx (!=5.2.0,!=5.2.0.post0)", "sphinx-rtd-theme"]
 test = ["flaky", "pretend", "pytest (>=3.0.1)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "pyreadline3"
+version = "3.4.1"
+description = "A python implementation of GNU readline."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyreadline3-3.4.1-py3-none-any.whl", hash = "sha256:b0efb6516fd4fb07b45949053826a62fa4cb353db5be2bbb4a7aa1fdd1e345fb"},
+    {file = "pyreadline3-3.4.1.tar.gz", hash = "sha256:6f3d1f7b8a31ba32b73917cefc1f28cc660562f39aea8646d30bd6eff21f7bae"},
+]
 
 [package.source]
 type = "legacy"
@@ -3538,46 +3869,37 @@ reference = ""
 
 [[package]]
 name = "scikit-learn"
-version = "1.2.0"
+version = "1.1.1"
 description = "A set of python modules for machine learning and data mining"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "scikit-learn-1.2.0.tar.gz", hash = "sha256:680b65b3caee469541385d2ca5b03ff70408f6c618c583948312f0d2125df680"},
-    {file = "scikit_learn-1.2.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1beaa631434d1f17a20b1eef5d842e58c195875d2bc11901a1a70b5fe544745b"},
-    {file = "scikit_learn-1.2.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:d395730f26d8fc752321f1953ddf72647c892d8bed74fad4d7c816ec9b602dfa"},
-    {file = "scikit_learn-1.2.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fd3480c982b9e616b9f76ad8587804d3f4e91b4e2a6752e7dafb8a2e1f541098"},
-    {file = "scikit_learn-1.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:184a42842a4e698ffa4d849b6019de50a77a0aa24d26afa28fa49c9190bb144b"},
-    {file = "scikit_learn-1.2.0-cp310-cp310-win_amd64.whl", hash = "sha256:867023a044fdfe59e5014a7fec7a3086a8928f10b5dce9382eedf4135f6709a2"},
-    {file = "scikit_learn-1.2.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:5546a8894a0616e92489ef995b39a0715829f3df96e801bb55cbf196be0d9649"},
-    {file = "scikit_learn-1.2.0-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:bc7073e025b62c1067cbfb76e69d08650c6b9d7a0e7afdfa20cb92d4afe516f6"},
-    {file = "scikit_learn-1.2.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fc0a72237f0c56780cf550df87201a702d3bdcbbb23c6ef7d54c19326fa23f19"},
-    {file = "scikit_learn-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4e1ea0bc1706da45589bcf2490cde6276490a1b88f9af208dbb396fdc3a0babf"},
-    {file = "scikit_learn-1.2.0-cp311-cp311-win_amd64.whl", hash = "sha256:f17420a8e3f40129aeb7e0f5ee35822d6178617007bb8f69521a2cefc20d5f00"},
-    {file = "scikit_learn-1.2.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:25ba705ee1600ffc5df1dccd8fae129d7c6836e44ffcbb52d78536c9eaf8fcf9"},
-    {file = "scikit_learn-1.2.0-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:6b63ca2b0643d30fbf9d25d93017ed3fb8351f31175d82d104bfec60cba7bb87"},
-    {file = "scikit_learn-1.2.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:83c772fa8c64776ad769fd764752c8452844307adcf10dee3adcc43988260f21"},
-    {file = "scikit_learn-1.2.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0834e4cec2a2e0d8978f39cb8fe1cad3be6c27a47927e1774bf5737ea65ec228"},
-    {file = "scikit_learn-1.2.0-cp38-cp38-win_amd64.whl", hash = "sha256:da29d2e379c396a63af5ed4b671ad2005cd690ac373a23bee5a0f66504e05272"},
-    {file = "scikit_learn-1.2.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:23a88883ca60c571a06278e4726b3b51b3709cfa4c93cacbf5568b22ba960899"},
-    {file = "scikit_learn-1.2.0-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:40f3ff68c505cb9d1f3693397c73991875d609da905087e00e7b4477645ec67b"},
-    {file = "scikit_learn-1.2.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e9535e867281ae6987bb80620ba14cf1649e936bfe45f48727b978b7a2dbe835"},
-    {file = "scikit_learn-1.2.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de897720173b26842e21bed54362f5294e282422116b61cd931d4f5d870b9855"},
-    {file = "scikit_learn-1.2.0-cp39-cp39-win_amd64.whl", hash = "sha256:ceb0008f345188aa236e49c973dc160b9ed504a3abd7b321a0ecabcb669be0bd"},
+    {file = "scikit-learn-1.1.1.tar.gz", hash = "sha256:3e77b71e8e644f86c8b5be7f1c285ef597de4c384961389ee3e9ca36c445b256"},
+    {file = "scikit_learn-1.1.1-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:102f51797cd8944bf44a038d106848ddf2804f2c1edf7aea45fba81a4fdc4d80"},
+    {file = "scikit_learn-1.1.1-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:723cdb278b1fa57a55f68945bc4e501a2f12abe82f76e8d21e1806cbdbef6fc5"},
+    {file = "scikit_learn-1.1.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:33cf061ed0b79d647a3e4c3f6c52c412172836718a7cd4d11c1318d083300133"},
+    {file = "scikit_learn-1.1.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:47464c110eaa9ed9d1fe108cb403510878c3d3a40f110618d2a19b2190a3e35c"},
+    {file = "scikit_learn-1.1.1-cp310-cp310-win_amd64.whl", hash = "sha256:542ccd2592fe7ad31f5c85fed3a3deb3e252383960a85e4b49a629353fffaba4"},
+    {file = "scikit_learn-1.1.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:3be10d8d325821ca366d4fe7083d87c40768f842f54371a9c908d97c45da16fc"},
+    {file = "scikit_learn-1.1.1-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:b2db720e13e697d912a87c1a51194e6fb085dc6d8323caa5ca51369ca6948f78"},
+    {file = "scikit_learn-1.1.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e851f8874398dcd50d1e174e810e9331563d189356e945b3271c0e19ee6f4d6f"},
+    {file = "scikit_learn-1.1.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b928869072366dc138762fe0929e7dc88413f8a469aebc6a64adc10a9226180c"},
+    {file = "scikit_learn-1.1.1-cp38-cp38-win32.whl", hash = "sha256:e9d228ced1214d67904f26fb820c8abbea12b2889cd4aa8cda20a4ca0ed781c1"},
+    {file = "scikit_learn-1.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:f2d5b5d6e87d482e17696a7bfa03fe9515fdfe27e462a4ad37f3d7774a5e2fd6"},
+    {file = "scikit_learn-1.1.1-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:0403ad13f283e27d43b0ad875f187ec7f5d964903d92d1ed06c51439560ecea0"},
+    {file = "scikit_learn-1.1.1-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:8fe80df08f5b9cee5dd008eccc672e543976198d790c07e5337f7dfb67eaac05"},
+    {file = "scikit_learn-1.1.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8ff56d07b9507fbe07ca0f4e5c8f3e171f74a429f998da03e308166251316b34"},
+    {file = "scikit_learn-1.1.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c2dad2bfc502344b869d4a3f4aa7271b2a5f4fe41f7328f404844c51612e2c58"},
+    {file = "scikit_learn-1.1.1-cp39-cp39-win32.whl", hash = "sha256:22145b60fef02e597a8e7f061ebc7c51739215f11ce7fcd2ca9af22c31aa9f86"},
+    {file = "scikit_learn-1.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:45c0f6ae523353f1d99b85469d746f9c497410adff5ba8b24423705b6956a86e"},
 ]
 
 [package.dependencies]
-joblib = ">=1.1.1"
+joblib = ">=1.0.0"
 numpy = ">=1.17.3"
 scipy = ">=1.3.2"
 threadpoolctl = ">=2.0.0"
-
-[package.extras]
-benchmark = ["matplotlib (>=3.1.3)", "memory_profiler (>=0.57.0)", "pandas (>=1.0.5)"]
-docs = ["Pillow (>=7.1.2)", "matplotlib (>=3.1.3)", "memory_profiler (>=0.57.0)", "numpydoc (>=1.2.0)", "pandas (>=1.0.5)", "plotly (>=5.10.0)", "pooch (>=1.6.0)", "scikit-image (>=0.16.2)", "seaborn (>=0.9.0)", "sphinx (>=4.0.1)", "sphinx-gallery (>=0.7.0)", "sphinx-prompt (>=1.3.0)", "sphinxext-opengraph (>=0.4.2)"]
-examples = ["matplotlib (>=3.1.3)", "pandas (>=1.0.5)", "plotly (>=5.10.0)", "pooch (>=1.6.0)", "scikit-image (>=0.16.2)", "seaborn (>=0.9.0)"]
-tests = ["black (>=22.3.0)", "flake8 (>=3.8.2)", "matplotlib (>=3.1.3)", "mypy (>=0.961)", "numpydoc (>=1.2.0)", "pandas (>=1.0.5)", "pooch (>=1.6.0)", "pyamg (>=4.0.0)", "pytest (>=5.3.1)", "pytest-cov (>=2.9.0)", "scikit-image (>=0.16.2)"]
 
 [package.source]
 type = "legacy"
@@ -3836,6 +4158,31 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "skl2onnx"
+version = "1.13"
+description = "Convert scikit-learn models to ONNX"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "skl2onnx-1.13-py2.py3-none-any.whl", hash = "sha256:51011c52d445ecef71967c67522ca7d1a57fc15576556beefeef40895b960830"},
+    {file = "skl2onnx-1.13.tar.gz", hash = "sha256:5f352f6b9b855ffac6305a707f02c7d436f4368938ee9049092a95a3565c273d"},
+]
+
+[package.dependencies]
+numpy = ">=1.15"
+onnx = ">=1.2.1"
+onnxconverter-common = ">=1.7.0"
+protobuf = "*"
+scikit-learn = ">=0.19,<=1.1.1"
+scipy = ">=1.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "slackclient"
 version = "2.9.4"
 description = "Slack API clients for Web API and RTM API (Legacy) - Please use https://pypi.org/project/slack-sdk/ instead."
@@ -4040,6 +4387,26 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "sympy"
+version = "1.11.1"
+description = "Computer algebra system (CAS) in Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "sympy-1.11.1-py3-none-any.whl", hash = "sha256:938f984ee2b1e8eae8a07b884c8b7a1146010040fccddc6539c54f401c8f6fcf"},
+    {file = "sympy-1.11.1.tar.gz", hash = "sha256:e32380dce63cb7c0108ed525570092fd45168bdae2faa17e528221ef72e88658"},
+]
+
+[package.dependencies]
+mpmath = ">=0.19"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "tenacity"
 version = "8.1.0"
 description = "Retry code until it succeeds"
@@ -4146,6 +4513,23 @@ files = [
     {file = "tornado-6.2-cp37-abi3-win32.whl", hash = "sha256:5c87076709343557ef8032934ce5f637dbb552efa7b21d08e89ae7619ed0eb23"},
     {file = "tornado-6.2-cp37-abi3-win_amd64.whl", hash = "sha256:e5f923aa6a47e133d1cf87d60700889d7eae68988704e20c75fb2d65677a8e4b"},
     {file = "tornado-6.2.tar.gz", hash = "sha256:9b630419bde84ec666bfd7ea0a4cb2a8a651c2d5cccdbdd1972a0c859dfc3c13"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "types-deprecated"
+version = "1.2.9"
+description = "Typing stubs for Deprecated"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-Deprecated-1.2.9.tar.gz", hash = "sha256:e04ce58929509865359e91dcc38720123262b4cd68fa2a8a90312d50390bb6fa"},
+    {file = "types_Deprecated-1.2.9-py3-none-any.whl", hash = "sha256:53d05621e1d75de537f5a57d93508c8df17e37c07ee60b9fb09d39e1b7586c1e"},
 ]
 
 [package.source]
@@ -4269,6 +4653,26 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
+name = "wheel"
+version = "0.38.4"
+description = "A built-package format for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "wheel-0.38.4-py3-none-any.whl", hash = "sha256:b60533f3f5d530e971d6737ca6d58681ee434818fab630c83a734bb10c083ce8"},
+    {file = "wheel-0.38.4.tar.gz", hash = "sha256:965f5259b566725405b05e7cf774052044b1ed30119b5d586b2703aafe8719ac"},
+]
+
+[package.extras]
+test = ["pytest (>=3.0.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
 name = "wrapt"
 version = "1.14.1"
 description = "Module for decorators, wrappers and monkey patching."
@@ -4358,6 +4762,39 @@ files = [
     {file = "wurlitzer-3.0.3-py3-none-any.whl", hash = "sha256:ffcc584109f5ecd5244abfde4534f22140f8735a4890ce1abd90b4e503f5f427"},
     {file = "wurlitzer-3.0.3.tar.gz", hash = "sha256:224f5fe70618be3872c05dfddc8c457191ec1870654596279fcc1edadebe3e5b"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = ""
+
+[[package]]
+name = "xgboost"
+version = "1.7.3"
+description = "XGBoost Python Package"
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "xgboost-1.7.3-py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.macosx_12_0_x86_64.whl", hash = "sha256:4a8985b2a874bd65b31869c325bb80051a2c28cedc16805928e2dcfb55fa25ce"},
+    {file = "xgboost-1.7.3-py3-none-macosx_12_0_arm64.whl", hash = "sha256:86dfc7d7da6fae751dc5c316e862f3395d9eddef5d10622a43d47deceb3257df"},
+    {file = "xgboost-1.7.3-py3-none-manylinux2014_aarch64.whl", hash = "sha256:457fa32b39b8bfa8a94eea6b932cb4d945c7a41fcd26e69a1f1dd843179eaccc"},
+    {file = "xgboost-1.7.3-py3-none-manylinux2014_x86_64.whl", hash = "sha256:fab7aeb508f0dbbd4dc7a4569a80ed07632bca3bd91b5490d043d4a33b138a39"},
+    {file = "xgboost-1.7.3-py3-none-win_amd64.whl", hash = "sha256:719e13ac9246b297fb93dd4ee772947f6ec693c46f1adb8cdeb3d3e98e5c08fb"},
+    {file = "xgboost-1.7.3.tar.gz", hash = "sha256:d1ee270b67e8fc5b90002e17493d1c910ae6abe856e6d0d86c619c0002e7c7d1"},
+]
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[package.extras]
+dask = ["dask", "distributed", "pandas"]
+datatable = ["datatable"]
+pandas = ["pandas"]
+plotting = ["graphviz", "matplotlib"]
+pyspark = ["cloudpickle", "pyspark", "scikit-learn"]
+scikit-learn = ["scikit-learn"]
 
 [package.source]
 type = "legacy"
@@ -4481,4 +4918,4 @@ reference = ""
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<=3.11"
-content-hash = "5a389ac8725868d34d4ab7fd141f9679082b9784b000e54ca158510d0b1a6157"
+content-hash = "db1628d516a43cf50090979bd11fcb4376ba43d64540048aca9a87fe75171924"
