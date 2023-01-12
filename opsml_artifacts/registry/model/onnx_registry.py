@@ -2,13 +2,16 @@
 """Code for generating Onnx Models"""
 from pyshipt_logging import ShiptLogging
 
-from opsml_artifacts.registry.model.base_models import OnnxModelType
+from opsml_artifacts.registry.model.base_types import OnnxModelType
 
 # Get logger
 logger = ShiptLogging.get_logger(__name__)
 
 
 class RegistryUpdater:
+    def __init__(self, model_estimator: str):
+        self.model_estimator = model_estimator
+
     def update_registry_converter(self):
         pass
 
@@ -19,56 +22,79 @@ class RegistryUpdater:
 
 
 class LightGBMRegistryUpdater(RegistryUpdater):
-    def __init__(self):
-        self.alias = "LGBRegressor"
+    def determine_estimator(self) -> str:
+        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR.value:
+            return "LGBMRegressor"
+        return "LGBMClassifier"
+
+    def get_output_conversion_tools(self):
+        from skl2onnx.common.shape_calculator import (
+            calculate_linear_classifier_output_shapes,
+            calculate_linear_regressor_output_shapes,
+        )
+
+        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR.value:
+            return calculate_linear_regressor_output_shapes, None
+        return calculate_linear_classifier_output_shapes, {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
     def update_registry_converter(self):
         logger.info("Registering lightgbm onnx converter")
 
-        from lightgbm import LGBMRegressor
-        from onnxmltools.convert.lightgbm.operator_converters.LightGbm import (  # noqa
-            convert_lightgbm,
-        )
+        import lightgbm as lgb
+        from onnxmltools.convert.lightgbm.operator_converters.LightGbm import convert_lightgbm
         from skl2onnx import update_registered_converter
-        from skl2onnx.common.shape_calculator import (  # noqa
-            calculate_linear_regressor_output_shapes,
-        )
 
+        alias = self.determine_estimator()
+        output_calculator, options = self.get_output_conversion_tools()
         update_registered_converter(
-            model=LGBMRegressor,
-            alias=self.alias,
-            shape_fct=calculate_linear_regressor_output_shapes,
+            model=getattr(lgb, alias),
+            alias=alias,
+            shape_fct=output_calculator,
             convert_fct=convert_lightgbm,
             overwrite=True,
+            options=options,
         )
 
     @staticmethod
     def validate(model_estimator: str) -> bool:
-        if model_estimator == OnnxModelType.LGBM_REGRESSOR.value:
+        if model_estimator in [
+            OnnxModelType.LGBM_REGRESSOR.value,
+            OnnxModelType.LGBM_CLASSIFIER.value,
+        ]:
             return True
         return False
 
 
-class XGBoostRegistryUpdater(RegistryUpdater):
-    def __init__(self):
-        self.alias = "XGBRegressor"
+class XGBoostRegressorRegistryUpdater(RegistryUpdater):
+    def determine_estimator(self) -> str:
+        if self.model_estimator == OnnxModelType.XGB_REGRESSOR.value:
+            return "XGBRegressor"
+        return "XGBClassifier"
+
+    def get_output_conversion_tools(self):
+        from skl2onnx.common.shape_calculator import (
+            calculate_linear_classifier_output_shapes,
+            calculate_linear_regressor_output_shapes,
+        )
+
+        if self.model_estimator == OnnxModelType.XGB_REGRESSOR.value:
+            return calculate_linear_regressor_output_shapes
+        return calculate_linear_classifier_output_shapes
 
     def update_registry_converter(self):
         logger.info("Registering xgboost onnx converter")
 
-        from onnxmltools.convert.xgboost.operator_converters.XGBoost import (
-            convert_xgboost,
-        )
+        import xgboost as xgb
+        from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgboost
         from skl2onnx import update_registered_converter
-        from skl2onnx.common.shape_calculator import (  # noqa
-            calculate_linear_regressor_output_shapes,
-        )
-        from xgboost import XGBRegressor
+
+        alias = self.determine_estimator()
+        output_calculator = self.get_output_conversion_tools()
 
         update_registered_converter(
-            model=XGBRegressor,
-            alias=self.alias,
-            shape_fct=calculate_linear_regressor_output_shapes,
+            model=getattr(xgb, alias),
+            alias=alias,
+            shape_fct=output_calculator,
             convert_fct=convert_xgboost,
             overwrite=True,
         )
@@ -97,4 +123,4 @@ class OnnxRegistryUpdater:
         )
 
         if converter is not None:
-            converter().update_registry_converter()
+            converter(model_estimator=model_estimator_name).update_registry_converter()

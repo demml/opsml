@@ -7,13 +7,12 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 
-from lightgbm import LGBMRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
 from xgboost import XGBRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.utils import FindPath, GCPClient
@@ -22,7 +21,7 @@ from opsml_artifacts.registry.cards.registry import CardRegistry
 from opsml_artifacts.registry.cards.sql_schema import TestDataSchema, TestModelSchema
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import StackingRegressor
-from sklearn.linear_model import RidgeCV
+import lightgbm as lgb
 import joblib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -223,8 +222,8 @@ def drift_dataframe():
 
     X_train = pd.DataFrame(X_train, columns=col_names)
     X_test = pd.DataFrame(X_test, columns=col_names)
-    y_train = np.random.randint(1, 100, size=(1000, 1))
-    y_test = np.random.randint(2, 100, size=(1000, 1))
+    y_train = np.random.randint(1, 10, size=(1000, 1))
+    y_test = np.random.randint(1, 10, size=(1000, 1))
 
     return X_train, y_train, X_test, y_test
 
@@ -298,7 +297,7 @@ def model_list():
 
     models = []
 
-    for model in [LinearRegression, LGBMRegressor, XGBRegressor]:
+    for model in [LinearRegression, lgb.LGBMRegressor, XGBRegressor]:
         X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
         y = np.dot(X, np.array([1, 2])) + 3
         reg = model().fit(X, y)
@@ -349,6 +348,54 @@ def sklearn_pipeline():
 def xgb_df_regressor(drift_dataframe):
 
     X_train, y_train, X_test, y_test = drift_dataframe
-    reg = LinearRegression()
+    reg = XGBRegressor()
     reg.fit(X_train.to_numpy(), y_train)
     return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def random_forest_classifier(drift_dataframe):
+
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = RandomForestClassifier(n_estimators=10)
+    reg.fit(X_train.to_numpy(), y_train)
+    return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def lgb_classifier(drift_dataframe):
+
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = lgb.LGBMClassifier(n_estimators=3)
+    reg.fit(X_train.to_numpy(), y_train)
+    return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def lgb_booster_dataframe(drift_dataframe):
+
+    X_train, y_train, X_test, y_test = drift_dataframe
+    # create dataset for lightgbm
+    lgb_train = lgb.Dataset(X_train, y_train)
+    lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
+
+    # specify your configurations as a dict
+    params = {
+        "boosting_type": "gbdt",
+        "objective": "regression",
+        "metric": {"l2", "l1"},
+        "num_leaves": 31,
+        "learning_rate": 0.05,
+        "feature_fraction": 0.9,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 5,
+        "verbose": 0,
+    }
+
+    print("Starting training...")
+    # train
+    gbm = lgb.train(
+        params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
+    )
+
+    return gbm, X_train[:100]
