@@ -12,7 +12,26 @@ class OnnxModelType(str, Enum):
     SKLEARN_ESTIMATOR = "sklearn_estimator"
     STACKING_ESTIMATOR = "stackingestimator"
     LGBM_REGRESSOR = "lgbmregressor"
+    LGBM_CLASSIFIER = "lgbmclassifier"
     XGB_REGRESSOR = "xgbregressor"
+    LGBM_BOOSTER = "booster"
+
+
+SKLEARN_SUPPORTED_MODEL_TYPES = [
+    OnnxModelType.SKLEARN_ESTIMATOR.value,
+    OnnxModelType.STACKING_ESTIMATOR.value,
+    OnnxModelType.SKLEARN_PIPELINE.value,
+    OnnxModelType.LGBM_REGRESSOR.value,
+    OnnxModelType.LGBM_CLASSIFIER.value,
+    OnnxModelType.XGB_REGRESSOR.value,
+]
+
+LIGHTGBM_SUPPORTED_MODEL_TYPES = [
+    OnnxModelType.LGBM_BOOSTER.value,
+]
+
+
+AVAILABLE_MODEL_TYPES = set(model_type.value for model_type in OnnxModelType)
 
 
 class InputDataType(Enum):

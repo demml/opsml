@@ -1,4 +1,4 @@
-from opsml_artifacts.registry.model.base_models import OnnxModelType
+from opsml_artifacts.registry.model.base_types import OnnxModelType
 
 
 class ModelType:
@@ -35,7 +35,9 @@ class SklearnEstimator(ModelType):
             "StackingClassifier",
             "Pipeline",
             "LGBMRegressor",
+            "LGBMClassifier",
             "XGBRegressor",
+            "Booster",
         ]:
             return True
         return False
@@ -65,6 +67,18 @@ class LightGBMRegressor(ModelType):
         return False
 
 
+class LightGBMClassifier(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return OnnxModelType.LGBM_CLASSIFIER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        if model_class_name == "LGBMClassifier":
+            return True
+        return False
+
+
 class XGBRegressor(ModelType):
     @staticmethod
     def get_type() -> str:
@@ -73,5 +87,17 @@ class XGBRegressor(ModelType):
     @staticmethod
     def validate(model_class_name: str) -> bool:
         if model_class_name == "XGBRegressor":
+            return True
+        return False
+
+
+class LightGBMBooster(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return OnnxModelType.LGBM_BOOSTER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        if model_class_name == "Booster":
             return True
         return False

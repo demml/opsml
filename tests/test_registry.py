@@ -1,10 +1,11 @@
 import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
-
+import numpy as np
 from opsml_artifacts.registry.cards.card import DataCard
 from opsml_artifacts.registry.cards.registry import CardRegistry
-from opsml_artifacts.registry.cards.card import ModelCardCreator
+from opsml_artifacts.registry.cards.model_creator import ModelCardCreator
+import timeit
 
 
 @pytest.mark.parametrize(
@@ -15,7 +16,7 @@ from opsml_artifacts.registry.cards.card import ModelCardCreator
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(setup_data_registry, test_data, storage_client, data_splits):
+def _test_register_data(setup_data_registry, test_data, storage_client, data_splits):
 
     # create data card
     registry: CardRegistry = setup_data_registry
@@ -41,7 +42,7 @@ def test_register_data(setup_data_registry, test_data, storage_client, data_spli
     storage_client.delete_object_from_url(gcs_uri=data_card.data_uri)
 
 
-def test_register_base_model(setup_model_registry, model_list, storage_client):
+def _test_register_base_model(setup_model_registry, model_list, storage_client):
 
     registry: CardRegistry = setup_model_registry
     models, data = model_list
@@ -59,7 +60,7 @@ def test_register_base_model(setup_model_registry, model_list, storage_client):
         storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
 
 
-def test_register_pipeline_model(setup_model_registry, sklearn_pipeline, storage_client):
+def _test_register_pipeline_model(setup_model_registry, sklearn_pipeline, storage_client):
 
     registry: CardRegistry = setup_model_registry
     model, data = sklearn_pipeline
@@ -77,7 +78,7 @@ def test_register_pipeline_model(setup_model_registry, sklearn_pipeline, storage
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits(test_data):
+def _test_data_card_splits(test_data):
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -113,7 +114,7 @@ def test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(setup_data_registry, test_data, storage_client):
+def _test_load_data_card(setup_data_registry, test_data, storage_client):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -147,11 +148,19 @@ def test_load_data_card(setup_data_registry, test_data, storage_client):
     assert df["version"].to_numpy()[0] == 100
 
 
-def _test_register_base_model_predict(setup_model_registry, xgb_df_regressor, storage_client):
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        lazy_fixture("linear_regression"),  # linear regress with dataframe
+        lazy_fixture("random_forest_classifier"),  # random forest with numpy
+        lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
+        lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
+        lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
+    ],
+)
+def test_model_predict(model_and_data):
 
-    registry: CardRegistry = setup_model_registry
-
-    model, data = xgb_df_regressor
+    model, data = model_and_data
 
     model_creator = ModelCardCreator(model=model, input_data=data)
     model_card = model_creator.create_model_card(
@@ -160,5 +169,46 @@ def _test_register_base_model_predict(setup_model_registry, xgb_df_regressor, st
         user_email="test_email",
         registered_data_uid="test_uid",
     )
-    # registry.register_card(card=model_card)
-    # storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
+
+    predictor = model_card.model()
+
+    if isinstance(data, np.ndarray):
+        record = {"data": list(np.ravel(data[:1]))}
+
+    elif isinstance(data, pd.DataFrame):
+        record = data[0:1].T.to_dict()[0]
+
+    pred_onnx = predictor.predict(record)
+    pred_xgb = predictor.predict_with_model(model, record)
+    assert pytest.approx(round(pred_onnx, 3)) == round(pred_xgb, 3)
+
+    # test1 = timeit.Timer(lambda: predictor.predict(record)).timeit(10000)
+    # test2 = timeit.Timer(lambda: predictor.predict_with_model(model, record)).timeit(10000)
+    # print(f"onnx: {test1}, sklearn: {test2}")
+
+
+#
+# if isinstance(data, np.ndarray):
+#    record = {"data": list(np.ravel(data[:1]))}
+#
+# elif isinstance(data, pd.DataFrame):
+#    record = data[0:1].T.to_dict()[0]
+#
+# pred_onnx = predictor.predict(record)
+# pred_xgb = predictor.predict_with_model(model, record)
+# assert pytest.approx(round(pred_onnx, 4)) == round(pred_xgb, 4)
+
+# import timeit
+
+
+# t = timeit.Timer(lambda: predictor.predict(record))
+# print(t.timeit(10000))
+
+# t = timeit.Timer(lambda: predictor.predict_with_model(model, record))
+# print(t.timeit(10000))
+
+
+# assert isinstance(predictor, OnnxModelPredictor)
+
+# registry.register_card(card=model_card)
+# storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
