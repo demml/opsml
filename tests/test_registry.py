@@ -16,7 +16,7 @@ import timeit
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def _test_register_data(setup_data_registry, test_data, storage_client, data_splits):
+def test_register_data(setup_data_registry, test_data, storage_client, data_splits):
 
     # create data card
     registry: CardRegistry = setup_data_registry
@@ -42,7 +42,7 @@ def _test_register_data(setup_data_registry, test_data, storage_client, data_spl
     storage_client.delete_object_from_url(gcs_uri=data_card.data_uri)
 
 
-def _test_register_base_model(setup_model_registry, model_list, storage_client):
+def test_register_base_model(setup_model_registry, model_list, storage_client):
 
     registry: CardRegistry = setup_model_registry
     models, data = model_list
@@ -60,7 +60,8 @@ def _test_register_base_model(setup_model_registry, model_list, storage_client):
         storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
 
 
-def _test_register_pipeline_model(setup_model_registry, sklearn_pipeline, storage_client):
+@pytest.mark.parametrize("data_card_uid", [None, "test_uid"])
+def test_register_pipeline_model(setup_model_registry, sklearn_pipeline, storage_client, data_card_uid):
 
     registry: CardRegistry = setup_model_registry
     model, data = sklearn_pipeline
@@ -70,15 +71,20 @@ def _test_register_pipeline_model(setup_model_registry, sklearn_pipeline, storag
         model_name="test_model",
         team="mlops",
         user_email="test_email",
-        registered_data_uid="test_uid",
+        registered_data_uid=data_card_uid,
     )
-    # registry.register_card(card=model_card)
-    # registry.list_cards(name=model_card.name, team=model_card.team, version=model_card.version)
-    # storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
+
+    if data_card_uid is None:
+        with pytest.raises(ValueError):
+            registry.register_card(card=model_card)
+    else:
+        registry.register_card(card=model_card)
+        registry.list_cards(name=model_card.name, team=model_card.team, version=model_card.version)
+        storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_data_card_splits(test_data):
+def test_data_card_splits(test_data):
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -114,7 +120,7 @@ def _test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_load_data_card(setup_data_registry, test_data, storage_client):
+def test_load_data_card(setup_data_registry, test_data, storage_client):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
