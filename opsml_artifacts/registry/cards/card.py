@@ -233,6 +233,12 @@ class ModelCard(ArtifactCard):
     def create_registry_record(self, registry_name: str, uid: str, version: int) -> ModelRegistryRecord:
         """Creates a registry record from the current ModelCard"""
 
+        if self.data_card_uid is None:
+            raise ValueError(
+                """ModelCard is not associated with a DataCard uid. ModelCard's
+                must be associated with a DataCard prior to registration."""
+            )
+
         setattr(self, "uid", uid)
         setattr(self, "version", version)
         self.save_modelcard(blob_path=registry_name, version=version)
