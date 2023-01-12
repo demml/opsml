@@ -9,9 +9,6 @@ import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, validator
 from pyshipt_logging import ShiptLogging
-from sklearn.base import BaseEstimator
-from sklearn.ensemble import StackingRegressor
-from sklearn.pipeline import Pipeline
 
 from opsml_artifacts.drift.data_drift import DriftReport
 from opsml_artifacts.registry.cards.record_models import (
@@ -21,9 +18,8 @@ from opsml_artifacts.registry.cards.record_models import (
 from opsml_artifacts.registry.cards.storage import save_record_artifact_to_storage
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
-from opsml_artifacts.registry.model.base_models import DataDict, InputDataType, ModelDefinition
-from opsml_artifacts.registry.model.converters import OnnxModelConverter
-from opsml_artifacts.registry.model.model_types import ModelType
+from opsml_artifacts.registry.model.base_types import DataDict, ModelDefinition
+from opsml_artifacts.registry.cards.model_predictor import OnnxModelPredictor
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -243,18 +239,26 @@ class ModelCard(ArtifactCard):
 
         return ModelRegistryRecord(**self.__dict__)
 
-    def dict(self):
-        """Returns all attributes except for model.
+    def _decrypt_model_definition(self) -> bytes:
+        cipher = Fernet(key=self.onnx_model_def.encrypt_key)
+        model_bytes = cipher.decrypt(self.onnx_model_def.model_bytes)
 
-        Returns:
-            ModelCard dictionary
-        """
-        return super().dict(
-            exclude={"model"},
-        )
+        return model_bytes
 
-    @cached_property  # need to find a better way to convert data instead of using model_type (type)
-    def _model(self) -> bytes:
+    def _set_version_for_predictor(self) -> int:
+        if self.version is None:
+            logger.warning(
+                """ModelCard has no version (not registered).
+                Defaulting to 1 (for testing only)
+            """
+            )
+            version = 1
+        else:
+            version = self.version
+
+        return version
+
+    def model(self) -> OnnxModelPredictor:
 
         """Loads a model from serialized string
 
@@ -263,122 +267,13 @@ class ModelCard(ArtifactCard):
 
         """
 
-        cipher = Fernet(key=self.onnx_model_def.encrypt_key)
-        model_string = cipher.decrypt(self.onnx_model_def.model_bytes)
+        model_bytes = self._decrypt_model_definition()
+        version = self._set_version_for_predictor()
 
-        return model_string
-
-
-class ModelCardCreator:
-    def __init__(
-        self,
-        model: Union[BaseEstimator, Pipeline, StackingRegressor],
-        input_data: Union[pd.DataFrame, np.ndarray],
-    ):
-
-        """Instantiates ModelCardCreator that is used for converting models to Onnx and creating model cards
-
-        Args:
-            Model (BaseEstimator, Pipeline, StackingRegressor): Model to convert
-            input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
-        """
-        self.model = model
-        self.input_data = input_data
-        self.data_type = InputDataType(type(input_data)).name
-        self.model_type = self.get_onnx_model_type()
-        self.data_schema = self.get_data_schema()
-
-    def get_data_schema(self) -> Optional[Dict[str, str]]:
-        """Create a data schema from input data. This is a specific
-        method for pandas dataframes
-
-        Returns
-            Dictionary for features and types or None
-        """
-        if isinstance(self.input_data, pd.DataFrame):
-            return {
-                key: str(val)
-                for key, val in zip(
-                    self.input_data.columns,
-                    self.input_data.dtypes,
-                )
-            }
-        return None
-
-    def get_onnx_model_type(self) -> str:
-        model_class_name = self.model.__class__.__name__
-        model_type = next(
-            (
-                model_type
-                for model_type in ModelType.__subclasses__()
-                if model_type.validate(model_class_name=model_class_name)
-            )
-        )
-
-        return model_type.get_type()
-
-    def create_model_card(
-        self,
-        model_name: str,
-        team: str,
-        user_email: str,
-        registered_data_uid: Optional[str] = None,
-    ) -> ModelCard:
-        """Create model card from current model and sample data
-
-        Args:
-            model_name (str): What to name the model
-            team (str): Team name
-            user_email (str): Email to associate with the model
-            registered_data_uid (str): Uid associated with registered data card.
-            A ModelCard can be created, but not registered without a DataCard uid.
-        Returns
-            ModelCard
-
-        """
-
-        model_definition, feature_dict = OnnxModelConverter(
-            model=self.model,
-            input_data=self.input_data,
+        return OnnxModelPredictor(
             model_type=self.model_type,
-        ).convert_model()
-
-        return ModelCard(
-            name=model_name,
-            team=team,
-            model_type=self.model_type,
+            model_definition=model_bytes,
+            data_dict=self.onnx_model_data,
             data_schema=self.data_schema,
-            user_email=user_email,
-            onnx_model_def=model_definition,
-            data_card_uid=registered_data_uid,
-            onnx_model_data=DataDict(
-                data_type=self.data_type,
-                features=feature_dict,
-            ),
+            model_version=version,
         )
-
-
-# class OnnxModelPredictor:
-#    def __init__(
-#        self,
-#        model_definition: str,
-#        model_type: str,
-#    ):
-#        self.model_definition = model_definition
-#        self.model_type = model_type
-#        self.sess = self.create_session()
-#
-#    def convert_data(self):
-#        OnnxDataConverter.convert_data(
-#            input_data=self.input_data,
-#            model_type=self.model_type,
-#        )
-#
-#    def create_session(self, input_data):
-#        import onnxruntime as rt
-#
-#        return rt.InferenceSession(self.model_definition)
-#
-#    def predict(self):
-#        pass
-#        # pred_onx = np.ravel(self.sess.run(None, inputs))[0

@@ -1,3 +1,4 @@
-from opsml_artifacts.registry.cards.card import DataCard, ModelCardCreator
+from opsml_artifacts.registry.cards.card import DataCard, ModelCard
+from opsml_artifacts.registry.cards.model_creator import ModelCardCreator
 
-__all__ = ["DataCard", "ModelCardCreator"]
+__all__ = ["DataCard", "ModelCard", "ModelCardCreator"]
