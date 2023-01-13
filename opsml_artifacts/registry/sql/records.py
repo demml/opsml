@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
@@ -19,6 +18,7 @@ class DataRegistryRecord(BaseModel):
     name: str
     team: str
     feature_map: Dict[str, str]
+    feature_descriptions: Optional[Dict[str, str]]
     user_email: str
     uid: Optional[str] = None
     dependent_vars: Optional[List[str]] = None
@@ -41,6 +41,19 @@ class ModelRegistryRecord(BaseModel):
     model_type: str
 
 
+class ExperimentRegistryRecord(BaseModel):
+    name: str
+    team: str
+    user_email: str
+    uid: Optional[str] = None
+    version: Optional[int] = None
+    data_card_uid: Optional[str] = None
+    model_card_uid: Optional[str] = None
+    pipeline_card_uid: Optional[str] = None
+    artifact_uris: Optional[Dict[str, str]]
+    metrics: Optional[Dict[str, Union[float, int]]]
+
+
 class LoadedDataRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str] = None
@@ -50,6 +63,7 @@ class LoadedDataRecord(BaseModel):
     name: str
     team: str
     feature_map: Dict[str, str]
+    feature_descriptions: Optional[Dict[str, str]]
     user_email: str
     uid: Optional[str] = None
     dependent_vars: Optional[List[str]] = None
@@ -117,13 +131,30 @@ class LoadedModelRecord(BaseModel):
         return model_card_definition
 
 
-class ArtifactRegistryTables(str, Enum):
-    DATA_REGISTRY = "data"
-    TEST_DATA_REGISTRY = "data_test"
-    MODEL_REGISTRY = "model"
-    TEST_MODEL_REGISTRY = "model_test"
+class LoadedExperimentlRecord(BaseModel):
+    name: str
+    team: str
+    user_email: str
+    uid: Optional[str] = None
+    version: Optional[int] = None
+    data_card_uid: Optional[str] = None
+    model_card_uid: Optional[str] = None
+    pipeline_card_uid: Optional[str] = None
+    artifact_uris: Dict[str, str]
+    artifacts: Optional[Dict[str, Any]] = None
+    metrics: Optional[Dict[str, Union[int, float]]]
 
+    # @staticmethod
+    def load_artifacts(self) -> None:
+        """Loads experiment artifacts to pydantic model"""
 
-class ValidCards(str, Enum):
-    DATACARD = "data"
-    MODELCARD = "model"
+        loaded_artifacts: Dict[str, Any] = {}
+        if not bool(self.artifact_uris):
+            setattr(self, "artifacts", loaded_artifacts)
+
+        for name, uri in self.artifact_uris.items():
+            loaded_artifacts[name] = load_record_artifact_from_storage(
+                storage_uri=uri,
+                artifact_type="artifact",
+            )
+        setattr(self, "artifacts", loaded_artifacts)

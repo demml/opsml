@@ -16,9 +16,9 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.utils import FindPath, GCPClient
-from opsml_artifacts.registry.cards.connection import create_sql_engine
-from opsml_artifacts.registry.cards.registry import CardRegistry
-from opsml_artifacts.registry.cards.sql_schema import TestDataSchema, TestModelSchema
+from opsml_artifacts.registry.sql.connection import create_sql_engine
+from opsml_artifacts.registry.sql.registry import CardRegistry
+from opsml_artifacts.registry.sql.sql_schema import TestDataSchema, TestModelSchema, TestExperimentSchema
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import StackingRegressor
 import lightgbm as lgb
@@ -53,7 +53,7 @@ def pytest_sessionfinish(session, exitstatus):
     # delete all test data registry files
     blobs = gcs_storage_client.list_objects(
         gcs_bucket=settings.gcs_bucket,
-        prefix="test_data_registry/",
+        prefix="TEST_DATA_REGISTRY/",
     )
 
     for blob in blobs:
@@ -65,7 +65,7 @@ def pytest_sessionfinish(session, exitstatus):
     # delete all test model registry files
     blobs = gcs_storage_client.list_objects(
         gcs_bucket=settings.gcs_bucket,
-        prefix="test_model_registry/",
+        prefix="TEST_MODEL_REGISTRY/",
     )
 
     for blob in blobs:
@@ -73,6 +73,21 @@ def pytest_sessionfinish(session, exitstatus):
             gcs_bucket=settings.gcs_bucket,
             blob_path=blob.name,
         )
+
+    # delete all test experiment registry files
+    # blobs = gcs_storage_client.list_objects(
+    #    gcs_bucket=settings.gcs_bucket,
+    #    prefix="TEST_EXPERIMENT_REGISTRY/",
+    # )
+
+
+#
+# for blob in blobs:
+#    gcs_storage_client.delete_object(
+#        gcs_bucket=settings.gcs_bucket,
+#        blob_path=blob.name,
+#    )
+#
 
 
 @pytest.fixture(scope="session")
@@ -262,6 +277,18 @@ def setup_model_registry():
 
 
 @pytest.fixture(scope="session")
+def setup_experiment_registry():
+
+    engine = create_sql_engine()
+    TestExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
+    TestExperimentSchema.__table__.create(bind=engine, checkfirst=True)
+    registry = CardRegistry(registry_name="experiment_test")
+
+    yield registry
+    TestExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
+
+
+@pytest.fixture(scope="session")
 def storage_client():
 
     return gcs_storage_client
@@ -303,7 +330,7 @@ def model_list():
         reg = model().fit(X, y)
         models.append(reg)
 
-    estimators = [("lr", RandomForestRegressor()), ("svr", LinearRegression())]
+    estimators = [("lr", RandomForestRegressor()), ("svr", XGBRegressor())]
 
     reg = StackingRegressor(
         estimators=estimators,
@@ -315,6 +342,22 @@ def model_list():
     models.append(reg)
 
     return models, X
+
+
+@pytest.fixture(scope="function")
+def stacking_regressor():
+
+    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    y = np.dot(X, np.array([1, 2])) + 3
+    estimators = [("lr", RandomForestRegressor()), ("svr", XGBRegressor()), ("reg", lgb.LGBMRegressor())]
+
+    reg = StackingRegressor(
+        estimators=estimators,
+        final_estimator=RandomForestRegressor(n_estimators=10, random_state=42),
+        cv=2,
+    )
+    reg.fit(X, y)
+    return reg, X
 
 
 @pytest.fixture(scope="module")
@@ -338,7 +381,7 @@ def sklearn_pipeline():
         transformers=[("cat", categorical_transformer, cat_cols)],
         remainder="passthrough",
     )
-    pipe = Pipeline([("preprocess", preprocessor), ("rf", RandomForestRegressor())])
+    pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor())])
     pipe.fit(train_data, data["y"])
 
     return pipe, train_data

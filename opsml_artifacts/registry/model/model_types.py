@@ -1,4 +1,4 @@
-from opsml_artifacts.registry.model.base_types import OnnxModelType
+from opsml_artifacts.registry.model.types import OnnxModelType
 
 
 class ModelType:

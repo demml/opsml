@@ -8,7 +8,7 @@ import numpy as np
 
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
-from opsml_artifacts.registry.model.base_types import DataDict, InputDataType
+from opsml_artifacts.registry.model.types import DataDict, InputDataType
 from opsml_artifacts.registry.cards.card import ModelCard
 
 
@@ -44,8 +44,8 @@ class ModelCardCreator:
             data type (str)
         """
 
-        # Onnx supports dataframe schemas for pipelines and boosters
-        if self.model_type in [OnnxModelType.SKLEARN_PIPELINE, OnnxModelType.LGBM_BOOSTER]:
+        # Onnx supports dataframe schemas for pipelines
+        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
             return InputDataType(type(input_data)).name
 
         return InputDataType.NUMPY_ARRAY.name
@@ -88,11 +88,11 @@ class ModelCardCreator:
         ).convert_model()
 
         return ModelCard(
-            name=model_name,
-            team=team,
+            name=model_name.lower(),
+            team=team.lower(),
             model_type=self.model_type,
             data_schema=data_schema,
-            user_email=user_email,
+            user_email=user_email.lower(),
             onnx_model_def=model_definition,
             data_card_uid=registered_data_uid,
             onnx_model_data=DataDict(

@@ -4,23 +4,29 @@ from typing import Any, Dict, Optional, Union, cast
 import pandas as pd
 from pyshipt_logging import ShiptLogging
 from sqlalchemy import and_, func
-from sqlalchemy.orm import sessionmaker
 
-from opsml_artifacts.registry.cards.card import DataCard, ModelCard
-from opsml_artifacts.registry.cards.connection import create_sql_engine
-from opsml_artifacts.registry.cards.record_models import (
-    ArtifactRegistryTables,
+from opsml_artifacts.registry.cards.card import DataCard, ModelCard, ExperimentCard
+from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     LoadedDataRecord,
     LoadedModelRecord,
-    ValidCards,
+    LoadedExperimentlRecord,
 )
-from opsml_artifacts.registry.cards.sql_schema import TableSchema
+from opsml_artifacts.registry.sql.sql_schema import TableSchema, Session, engine, ArtifactTableNames
 
 logger = ShiptLogging.get_logger(__name__)
 
-engine = create_sql_engine()
-Session = sessionmaker(bind=engine)
+ARTIFACT_DATA_TABLES = [
+    ArtifactTableNames.DATA_REGISTRY,
+    ArtifactTableNames.TEST_DATA_REGISTRY,
+]
+
+ARTIFACT_MODEL_TABLES = [
+    ArtifactTableNames.MODEL_REGISTRY,
+    ArtifactTableNames.TEST_MODEL_REGISTRY,
+]
+
+ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard]
 
 
 class SQLRegistry:
@@ -28,6 +34,12 @@ class SQLRegistry:
         self._session = Session()
         self._table = TableSchema.get_table(table_name=table_name)
         self._create_table()
+        self.supported_card = "anycard"
+
+    def _is_correct_card_type(self, card: ArtifactCardTypes):
+        if self.supported_card.lower() != card.__class__.__name__.lower():
+            return False
+        return True
 
     def _create_table(self):
         self._table.__table__.create(bind=engine, checkfirst=True)
@@ -36,7 +48,6 @@ class SQLRegistry:
         return uuid.uuid4().hex
 
     def _set_version(self, name: str, team: str) -> int:
-
         last = (
             self._session.query(func.max(self._table.version))
             .filter(and_(self._table.name == name, self._table.team == team))
@@ -46,10 +57,10 @@ class SQLRegistry:
 
     def _query_record(
         self,
-        name: str,
-        team: str,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
+        name: Optional[str],
+        team: Optional[str],
+        version: Optional[int],
+        uid: Optional[str],
     ):
 
         query = self._session.query(self._table)
@@ -57,6 +68,12 @@ class SQLRegistry:
         if bool(uid):
             query = query.filter(self._table.uid == uid)
             return query.all()[0]
+
+        if not any([name, team]):
+            raise ValueError(
+                """If no uid is supplied then name and team are required.
+            Version can also be supplied with version and team."""
+            )
 
         query = query.filter(and_(self._table.name == name, self._table.team == team))
 
@@ -92,13 +109,20 @@ class SQLRegistry:
     # Create
     def register_card(
         self,
-        card: Union[DataCard, ModelCard],
+        card: ArtifactCardTypes,
     ) -> None:
         """
         Adds new data record to data registry.
         Args:
             data_card (DataCard or RegistryRecord): DataCard to register. RegistryRecord is also accepted.
         """
+
+        # check compatibility
+        if not self._is_correct_card_type(card=card):
+            raise ValueError(
+                f"""Card of type {card.__class__.__name__} is not supported by
+                registery {self._table.__tablename__}"""
+            )
 
         version = self._set_version(name=card.name, team=card.team)
         record = card.create_registry_record(  # type: ignore
@@ -151,12 +175,13 @@ class SQLRegistry:
     # Read
     def load_card(  # type: ignore
         self,
-        name: str,
-        team: str,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ) -> Union[ModelCard, DataCard]:
+        name: Optional[str],
+        team: Optional[str],
+        version: Optional[int],
+        uid: Optional[str],
+    ) -> ArtifactCardTypes:
         """Loads data or model card"""
+        raise NotImplementedError
 
     @staticmethod
     def validate(registry_name: str) -> bool:
@@ -166,14 +191,15 @@ class SQLRegistry:
 
 
 class DataCardRegistry(SQLRegistry):
-    def __init__(self, table_name: str = "data_registry"):
+    def __init__(self, table_name: str = "data"):
         super().__init__(table_name=table_name)
+        self.supported_card = "datacard"
 
     # specific loading logic
     def load_card(
         self,
-        name: str,
-        team: str,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
         version: Optional[int] = None,
         uid: Optional[str] = None,
     ) -> DataCard:
@@ -219,20 +245,24 @@ class DataCardRegistry(SQLRegistry):
 
     @staticmethod
     def validate(registry_name: str):
-        if "data_registry" in registry_name:
+        if registry_name in [
+            ArtifactTableNames.TEST_DATA_REGISTRY.name,
+            ArtifactTableNames.DATA_REGISTRY.name,
+        ]:
             return True
         return False
 
 
 class ModelCardRegistry(SQLRegistry):
-    def __init__(self, table_name: str = "model_registry"):
+    def __init__(self, table_name: str = "model"):
         super().__init__(table_name=table_name)
+        self.supported_card = "modelcard"
 
     # specific loading logic
     def load_card(
         self,
-        name: str,
-        team: str,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
         version: Optional[int] = None,
         uid: Optional[str] = None,
     ) -> ModelCard:
@@ -257,7 +287,51 @@ class ModelCardRegistry(SQLRegistry):
 
     @staticmethod
     def validate(registry_name: str):
-        if "model_registry" in registry_name:
+        if registry_name in [
+            ArtifactTableNames.TEST_MODEL_REGISTRY.name,
+            ArtifactTableNames.MODEL_REGISTRY.name,
+        ]:
+            return True
+        return False
+
+
+class ExperimentCardRegistry(SQLRegistry):
+    def __init__(self, table_name: str = "experiment"):
+        super().__init__(table_name=table_name)
+        self.supported_card = "experimentcard"
+
+    def load_card(
+        self,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
+        uid: Optional[str] = None,
+    ) -> ExperimentCard:
+
+        """Loads a data card from the data registry
+
+        Args:
+            name (str): Card name
+            team (str): Team data is assigned to
+            version (int): Optional version number of existing data. If not specified,
+            the most recent version will be used
+
+        Returns:
+            Data card
+        """
+
+        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
+        experiment_record = LoadedExperimentlRecord(**sql_data.__dict__)
+
+        experiment_record.load_artifacts()
+        return ExperimentCard(**experiment_record.dict())
+
+    @staticmethod
+    def validate(registry_name: str):
+        if registry_name in [
+            ArtifactTableNames.TEST_EXPERIMENT_REGISTRY.name,
+            ArtifactTableNames.EXPERIMENT_REGISTRY.name,
+        ]:
             return True
         return False
 
@@ -265,10 +339,10 @@ class ModelCardRegistry(SQLRegistry):
 class CardRegistry:
     def __init__(self, registry_name: str):
         self.registry: SQLRegistry = self.set_registry(registry_name=registry_name)
+        self.table_name = self.registry._table.__tablename__
 
     def set_registry(self, registry_name: str) -> SQLRegistry:
-        registry_name = ArtifactRegistryTables(registry_name).name.lower()
-
+        registry_name = ArtifactTableNames(registry_name.lower()).name
         registry = next(
             registry
             for registry in SQLRegistry.__subclasses__()
@@ -310,17 +384,17 @@ class CardRegistry:
 
     def load_card(
         self,
-        name: str,
-        team: str,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[int] = None,
-    ) -> Union[DataCard, ModelCard]:
+    ) -> ArtifactCardTypes:
 
         """Loads a specific card
 
         Args:
-            name (str): Card name
-            team (str): Team associated with card
+            name (str): Optional Card name
+            team (str): Optional team associated with card
             version (int): Optional version number of existing data. If not specified,
             the most recent version will be used
             uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
@@ -336,17 +410,9 @@ class CardRegistry:
             version=version,
         )
 
-    def _validate_card(self, card: Union[ModelCard, DataCard]):
-        if "data" in self.registry._table.__tablename__:  # pylint: disable=protected-access
-            if ValidCards("data").name.lower() != card.__class__.__name__.lower():
-                raise ValueError("Data registry only supports DataCard")
-        else:
-            if ValidCards("model").name.lower() != card.__class__.__name__.lower():
-                raise ValueError("Model registry only supports ModelCard")
-
     def register_card(
         self,
-        card: Union[ModelCard, DataCard],
+        card: ArtifactCardTypes,
     ) -> None:
         """Register an artifact card (DataCard or ModelCard) based on current registry
 
@@ -356,8 +422,6 @@ class CardRegistry:
         Returns:
             None
         """
-
-        self._validate_card(card=card)
         self.registry.register_card(card=card)
 
     def update_card(
