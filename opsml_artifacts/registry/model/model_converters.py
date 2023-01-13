@@ -12,14 +12,16 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import StackingRegressor
 from sklearn.pipeline import Pipeline
 
-from opsml_artifacts.registry.model.base_types import (
+from opsml_artifacts.registry.model.types import (
     Feature,
     ModelDefinition,
     OnnxDataProto,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
+    UPDATE_REGISTRY_MODELS,
+    OnnxModelType,
 )
-from opsml_artifacts.registry.model.onnx_registry import OnnxRegistryUpdater
+from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
 
 # Get logger
@@ -38,7 +40,6 @@ class ModelConverter:
         self.model = model
         self.input_data = input_data
         self.model_type = model_type
-        self.update_onnx_registries()
 
     def update_onnx_registries(self):
         OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_type)
@@ -123,11 +124,45 @@ class ModelConverter:
 
 
 class SklearnOnnxModel(ModelConverter):
+    def _is_stacking_estimator(self):
+        if self.model_type == OnnxModelType.STACKING_ESTIMATOR:
+            return True
+        return False
+
+    def _is_pipeline(self):
+        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+            return True
+        return False
+
+    def _update_onnx_registries_pipelines(self):
+        for model_step in self.model.steps:
+            estimator_name = model_step[1].__class__.__name__.lower()
+            if estimator_name in UPDATE_REGISTRY_MODELS:
+                OnnxRegistryUpdater.update_onnx_registry(
+                    model_estimator_name=estimator_name,
+                )
+
+    def _update_onnx_registries_stacking(self):
+        for estimator in [*self.model.estimators_, self.model.final_estimator]:
+            estimator_name = estimator.__class__.__name__.lower()
+            if estimator_name in UPDATE_REGISTRY_MODELS:
+                OnnxRegistryUpdater.update_onnx_registry(
+                    model_estimator_name=estimator_name,
+                )
+
+    def update_sklearn_onnx_registries(self):
+        if self._is_pipeline():
+            return self._update_onnx_registries_pipelines()
+        if self._is_stacking_estimator():
+            return self._update_onnx_registries_stacking()
+        return self.update_onnx_registries()
+
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
 
         """Converts sklearn model to ONNX ModelProto"""
         from skl2onnx import convert_sklearn
 
+        self.update_sklearn_onnx_registries()
         initial_types, data_schema = self.get_data_types()
         onnx_model = convert_sklearn(
             model=self.model,
@@ -191,7 +226,6 @@ class OnnxModelConverter:
     """
 
     def convert_model(self) -> ModelConvertOutput:
-
         converter = next(
             (
                 converter

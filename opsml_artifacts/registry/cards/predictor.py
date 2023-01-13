@@ -1,28 +1,11 @@
 from typing import Dict, Optional, Type, TYPE_CHECKING, Any, Callable, cast, Tuple
-from pydantic import create_model, BaseModel, conlist
-import numpy as np
-from opsml_artifacts.registry.model.base_types import OnnxModelType, InputDataType, DataDict
+from pydantic import create_model, conlist
+
+from opsml_artifacts.registry.model.types import OnnxModelType, InputDataType, DataDict
+from opsml_artifacts.registry.cards.types import NumpyBase, PandasBase, Base
 
 PydanticFields = Dict[str, Tuple[Any, ...]]
 PredictFunc = Callable[[Dict[str, Any]], Any]
-
-
-class Base(BaseModel):
-    def to_onnx(self):
-        raise NotImplementedError
-
-
-class NumpyBase(Base):
-    def to_onnx(self):
-        return np.array(
-            [list(self.dict().values())],
-            np.float32,
-        ).reshape(1, -1)
-
-
-class PandasBase(Base):
-    def to_onnx(self):
-        return {feat: np.array([feat_val]) for feat, feat_val in self}
 
 
 class ModelApiSigCreator:
@@ -80,7 +63,7 @@ class ModelApiSigCreator:
 
     def _create_api_sig(self):
         pydantic_fields = self._get_pydantic_sig()
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE.value:
+        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
             if self.data_dict.data_type == InputDataType.PANDAS_DATAFRAME.name:
                 base = PandasBase  # onnx sklearn pipelines can accept dictionaries
         else:
@@ -148,8 +131,9 @@ class OnnxModelPredictor:
         pred_data = self.api_sig(**data)
         prediction = self.sess.run(
             output_names=[self._label_name],
-            input_feed={self._input_name: pred_data.to_onnx()},
+            input_feed=pred_data.to_onnx(),
         )[0]
+        # prediction = self.sess.run(None, pred_data.to_onnx())[0]
 
         return float(prediction[0])
 
@@ -166,7 +150,13 @@ class OnnxModelPredictor:
         """
 
         pred_data = self.api_sig(**data)
-        prediction = model.predict(pred_data.to_onnx())[0]
+
+        if self.model_type == "sklearn_pipeline":
+            onnx_pred = pred_data.to_dataframe()
+        else:
+            onnx_pred = pred_data.to_onnx()["inputs"]
+
+        prediction = model.predict(onnx_pred)[0]
         return prediction
 
     def _create_onnx_session(self, model_definition: bytes):
