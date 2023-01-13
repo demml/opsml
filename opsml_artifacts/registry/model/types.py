@@ -18,20 +18,25 @@ class OnnxModelType(str, Enum):
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
-    OnnxModelType.SKLEARN_ESTIMATOR.value,
-    OnnxModelType.STACKING_ESTIMATOR.value,
-    OnnxModelType.SKLEARN_PIPELINE.value,
-    OnnxModelType.LGBM_REGRESSOR.value,
-    OnnxModelType.LGBM_CLASSIFIER.value,
-    OnnxModelType.XGB_REGRESSOR.value,
+    OnnxModelType.SKLEARN_ESTIMATOR,
+    OnnxModelType.STACKING_ESTIMATOR,
+    OnnxModelType.SKLEARN_PIPELINE,
+    OnnxModelType.LGBM_REGRESSOR,
+    OnnxModelType.LGBM_CLASSIFIER,
+    OnnxModelType.XGB_REGRESSOR,
 ]
 
 LIGHTGBM_SUPPORTED_MODEL_TYPES = [
-    OnnxModelType.LGBM_BOOSTER.value,
+    OnnxModelType.LGBM_BOOSTER,
 ]
 
+UPDATE_REGISTRY_MODELS = [
+    OnnxModelType.LGBM_CLASSIFIER,
+    OnnxModelType.LGBM_REGRESSOR,
+    OnnxModelType.XGB_REGRESSOR,
+]
 
-AVAILABLE_MODEL_TYPES = set(model_type.value for model_type in OnnxModelType)
+AVAILABLE_MODEL_TYPES = set(model_type for model_type in OnnxModelType)
 
 
 class InputDataType(Enum):

@@ -12,7 +12,7 @@ from skl2onnx.common.data_types import (
     StringTensorType,
 )
 
-from opsml_artifacts.registry.model.base_types import (
+from opsml_artifacts.registry.model.types import (
     Feature,
     ModelDefinition,
     OnnxModelType,
@@ -109,15 +109,9 @@ class PandasOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == pd.DataFrame and model_type in [
-            OnnxModelType.SKLEARN_ESTIMATOR.value,
-            OnnxModelType.XGB_REGRESSOR.value,
-            OnnxModelType.LGBM_REGRESSOR.value,
-            OnnxModelType.LGBM_CLASSIFIER.value,
-            OnnxModelType.STACKING_ESTIMATOR.value,
-            OnnxModelType.LGBM_BOOSTER.value,
-        ]:
-            return True
+        if data_type == pd.DataFrame:
+            if model_type != OnnxModelType.SKLEARN_PIPELINE:
+                return True
         return False
 
 
@@ -130,13 +124,17 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
 
-        """Converts pandas dataframe associated with SKLearn pipeline or LGB Booster"""
+        """Converts pandas dataframe associated with SKLearn pipeline"""
 
         self.data = cast(pd.DataFrame, self.data)
 
-        inputs = {col: self.data[col].values for col in self.data.columns}
+        data_columns = self.data.columns
+        rows_shape = self.data.shape[0]
+        dtypes = self.data.dtypes
 
-        for col, col_type in zip(self.data.columns, self.data.dtypes):
+        inputs = {col: self.data[col].values for col in data_columns}
+
+        for col, col_type in zip(data_columns, dtypes):
             if "int32" in str(col_type):
                 inputs[col] = inputs[col].astype(np.int32)
             elif "int64" in str(col_type):
@@ -145,14 +143,14 @@ class PandasPipelineOnnxConverter(DataConverter):
                 inputs[col] = inputs[col].astype(np.float32)
 
         for col in inputs:
-            inputs[col] = inputs[col].reshape((self.data.shape[0], 1))
+            inputs[col] = inputs[col].reshape((rows_shape, 1))
 
         return inputs
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
         if data_type == pd.DataFrame:
-            if model_type == OnnxModelType.SKLEARN_PIPELINE.value:
+            if model_type == OnnxModelType.SKLEARN_PIPELINE:
                 return True
         return False
 

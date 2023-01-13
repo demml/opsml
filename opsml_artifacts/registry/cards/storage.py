@@ -1,28 +1,15 @@
 import tempfile
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
-
+from typing import Any, Dict, List, Optional, Tuple
 import gcsfs
 import joblib
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from pydantic import BaseModel
-
 from opsml_artifacts.drift.data_drift import DriftReport
 from opsml_artifacts.helpers.settings import settings
-
-
-class StoragePath(BaseModel):
-    gcs_uri: str
-
-
-class SaveInfo(BaseModel):
-    blob_path: str
-    name: str
-    version: int
-    team: str
+from opsml_artifacts.registry.cards.types import SaveInfo, StoragePath, ArtifactStorageTypes, DATA_ARTIFACTS
 
 
 class ArtifactStorage:
@@ -126,7 +113,10 @@ class ParquetStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        if artifact_type in ["Table", "DataFrame"]:
+        if artifact_type in [
+            ArtifactStorageTypes.ARROW_TABLE,
+            ArtifactStorageTypes.DATAFRAME,
+        ]:
             return True
         return False
 
@@ -157,12 +147,12 @@ class NumpyStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        if artifact_type == "ndarray":
+        if artifact_type == ArtifactStorageTypes.NDARRAY:
             return True
         return False
 
 
-class DictionaryStorage(ArtifactStorage):
+class JoblibStorage(ArtifactStorage):
     def __init__(self, save_info: Optional[SaveInfo] = None):
         super().__init__(save_info=save_info, file_suffix="joblib")
 
@@ -187,13 +177,13 @@ class DictionaryStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        if artifact_type == "dict":
+        if artifact_type not in DATA_ARTIFACTS:
             return True
         return False
 
 
 def save_record_artifact_to_storage(
-    artifact: Union[pa.Table, np.ndarray, Dict[str, DriftReport]],
+    artifact: Any,
     blob_path: str,
     name: str,
     version: int,

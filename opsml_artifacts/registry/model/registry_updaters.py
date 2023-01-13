@@ -2,7 +2,7 @@
 """Code for generating Onnx Models"""
 from pyshipt_logging import ShiptLogging
 
-from opsml_artifacts.registry.model.base_types import OnnxModelType
+from opsml_artifacts.registry.model.types import OnnxModelType
 
 # Get logger
 logger = ShiptLogging.get_logger(__name__)
@@ -23,7 +23,7 @@ class RegistryUpdater:
 
 class LightGBMRegistryUpdater(RegistryUpdater):
     def determine_estimator(self) -> str:
-        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR.value:
+        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR:
             return "LGBMRegressor"
         return "LGBMClassifier"
 
@@ -33,7 +33,7 @@ class LightGBMRegistryUpdater(RegistryUpdater):
             calculate_linear_regressor_output_shapes,
         )
 
-        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR.value:
+        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR:
             return calculate_linear_regressor_output_shapes, None
         return calculate_linear_classifier_output_shapes, {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
@@ -58,8 +58,8 @@ class LightGBMRegistryUpdater(RegistryUpdater):
     @staticmethod
     def validate(model_estimator: str) -> bool:
         if model_estimator in [
-            OnnxModelType.LGBM_REGRESSOR.value,
-            OnnxModelType.LGBM_CLASSIFIER.value,
+            OnnxModelType.LGBM_REGRESSOR,
+            OnnxModelType.LGBM_CLASSIFIER,
         ]:
             return True
         return False
@@ -67,7 +67,7 @@ class LightGBMRegistryUpdater(RegistryUpdater):
 
 class XGBoostRegressorRegistryUpdater(RegistryUpdater):
     def determine_estimator(self) -> str:
-        if self.model_estimator == OnnxModelType.XGB_REGRESSOR.value:
+        if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
             return "XGBRegressor"
         return "XGBClassifier"
 
@@ -77,7 +77,7 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
             calculate_linear_regressor_output_shapes,
         )
 
-        if self.model_estimator == OnnxModelType.XGB_REGRESSOR.value:
+        if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
             return calculate_linear_regressor_output_shapes
         return calculate_linear_classifier_output_shapes
 
@@ -101,7 +101,7 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
 
     @staticmethod
     def validate(model_estimator: str) -> bool:
-        if model_estimator == OnnxModelType.XGB_REGRESSOR.value:
+        if model_estimator == OnnxModelType.XGB_REGRESSOR:
             return True
         return False
 
