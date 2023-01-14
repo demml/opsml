@@ -1,40 +1,128 @@
 import uuid
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Type, Union, cast
 
 import pandas as pd
 from pyshipt_logging import ShiptLogging
-from sqlalchemy import and_, func
+from sqlalchemy import func, select
+from sqlalchemy.sql import FromClause, Select
+from sqlalchemy.sql.expression import ColumnElement
 
-from opsml_artifacts.registry.cards.card import DataCard, ModelCard, ExperimentCard
+from opsml_artifacts.registry.cards.card import (
+    DataCard,
+    ExperimentCard,
+    ModelCard,
+    PipelineCard,
+)
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     LoadedDataRecord,
+    LoadedExperimentRecord,
     LoadedModelRecord,
-    LoadedExperimentlRecord,
+    LoadedPipelineRecord,
+    PipelineRegistryRecord,
 )
-from opsml_artifacts.registry.sql.sql_schema import TableSchema, Session, engine, ArtifactTableNames
+from opsml_artifacts.registry.sql.sql_schema import (
+    REGISTRY_TABLES,
+    ArtifactTableNames,
+    Session,
+    TableSchema,
+    engine,
+)
 
 logger = ShiptLogging.get_logger(__name__)
 
-ARTIFACT_DATA_TABLES = [
-    ArtifactTableNames.DATA_REGISTRY,
-    ArtifactTableNames.TEST_DATA_REGISTRY,
-]
+ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 
-ARTIFACT_MODEL_TABLES = [
-    ArtifactTableNames.MODEL_REGISTRY,
-    ArtifactTableNames.TEST_MODEL_REGISTRY,
-]
-
-ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard]
+SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
-class SQLRegistry:
+class QueryCreatorMixin:
+    def _create_max_version_query(self, name: str, team: str, table: Type[REGISTRY_TABLES]):
+        query = select(func.max(table.version))
+        query = self._filter(query=query, field="name", value=name, table=table)
+        query = self._filter(query=query, field="team", value=team, table=table)
+        return query
+
+    def _create_select_base(self, table: Type[REGISTRY_TABLES]) -> Select:
+        sql_table = cast(SqlTableType, table)
+        stmt: Select = select(sql_table)
+        return stmt
+
+    def _filter(
+        self,
+        query,
+        field: str,
+        value: Union[Optional[str], Optional[int]],
+        table: Type[REGISTRY_TABLES],
+    ):
+        return query.filter(getattr(table, field) == value)
+
+    def _get_version(self, query, table: Type[REGISTRY_TABLES], version: Optional[int] = None):
+        if version is None:
+            return query.order_by(table.version.desc())  # type: ignore
+        return query.filter(table.version == version)
+
+    def _create_record_query(
+        self,
+        table: Type[REGISTRY_TABLES],
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
+        uid: Optional[str] = None,
+    ):
+        query = self._create_select_base(table=table)
+        if bool(uid):
+            return self._filter(query=query, field="uid", value=uid, table=table)
+
+        if not any([name, team]):
+            raise ValueError(
+                """If no uid is supplied then name and team are required.
+            Version can also be supplied with version and team."""
+            )
+
+        query = self._filter(query=query, field="name", value=name, table=table)
+        query = self._filter(query=query, field="team", value=team, table=table)
+        query = self._get_version(query=query, version=version, table=table)
+        return query
+
+    def _create_list_query(
+        self,
+        table: Type[REGISTRY_TABLES],
+        uid: Optional[str] = None,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
+    ):
+        query = self._create_select_base(table=table)
+
+        if bool(uid):
+            return self._filter(query=query, field="uid", value=uid, table=table)
+        if name is not None:
+            query = self._filter(query=query, field="name", value=name, table=table)
+        if team is not None:
+            query = self._filter(query=query, field="team", value=team, table=table)
+        if version is not None:
+            query = self._get_version(query=query, version=version, table=table)
+
+        return query
+
+    def _create_check_uid_exists(self, uid: str, table_to_check: str):
+
+        table = TableSchema.get_table(table_name=table_to_check)
+        query = select(table.uid)  # type: ignore
+        sub_query = self._filter(query=query, field="uid", value=uid, table=table)
+        query = select(table.uid).filter(sub_query.exist())  # type: ignore
+
+        return query
+
+
+class SQLRegistry(QueryCreatorMixin):
     def __init__(self, table_name: str):
         self._session = Session()
         self._table = TableSchema.get_table(table_name=table_name)
         self._create_table()
         self.supported_card = "anycard"
+        self.table_name = self._table.__tablename__
 
     def _is_correct_card_type(self, card: ArtifactCardTypes):
         if self.supported_card.lower() != card.__class__.__name__.lower():
@@ -48,42 +136,31 @@ class SQLRegistry:
         return uuid.uuid4().hex
 
     def _set_version(self, name: str, team: str) -> int:
-        last = (
-            self._session.query(func.max(self._table.version))
-            .filter(and_(self._table.name == name, self._table.team == team))
-            .scalar()
-        )
+        query = self._create_max_version_query(name=name, team=team, table=self._table)
+        last = self._session.execute(query).scalar()
         return 1 + (last if last else 0)
 
     def _query_record(
         self,
-        name: Optional[str],
-        team: Optional[str],
-        version: Optional[int],
-        uid: Optional[str],
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
+        uid: Optional[str] = None,
     ):
 
-        query = self._session.query(self._table)
+        """Creates and executes a query to pull a given record based on
+        name, team, version, or uid
+        """
 
-        if bool(uid):
-            query = query.filter(self._table.uid == uid)
-            return query.all()[0]
+        query = self._create_record_query(
+            name=name,
+            team=team,
+            version=version,
+            uid=uid,
+            table=self._table,
+        )
 
-        if not any([name, team]):
-            raise ValueError(
-                """If no uid is supplied then name and team are required.
-            Version can also be supplied with version and team."""
-            )
-
-        query = query.filter(and_(self._table.name == name, self._table.team == team))
-
-        if version is None:
-            query = query.order_by(self._table.version.desc())
-
-        else:
-            query = query.filter(self._table.version == version)
-
-        return query.all()[0]
+        return self._session.scalars(query).first()
 
     def _add_and_commit(self, record: Dict[str, Any]):
         self._session.add(self._table(**record))
@@ -109,7 +186,7 @@ class SQLRegistry:
     # Create
     def register_card(
         self,
-        card: ArtifactCardTypes,
+        card: Any,
     ) -> None:
         """
         Adds new data record to data registry.
@@ -155,30 +232,34 @@ class SQLRegistry:
             pandas dataframe of records
         """
 
-        query = self._session.query(self._table)
+        query = self._create_list_query(
+            table=self._table,
+            uid=uid,
+            name=name,
+            team=team,
+            version=version,
+        )
 
-        if bool(uid):
-            query.filter(self._table.uid == uid)
-            return pd.read_sql(query.statement, self._session.bind)
+        return pd.read_sql(query, self._session.bind)
 
-        if name is not None:
-            query = query.filter(self._table.name == name)
+    def _check_uid(self, uid: str, table_to_check: str):
+        query = self._create_check_uid_exists(uid=uid, table_to_check=table_to_check)
+        if not self._session.execute(query).scalar():
+            return False
+        return True
 
-        if team is not None:
-            query = query.filter(self._table.team == team)
-
-        if version is not None:
-            query = query.filter(self._table.version == version)
-
-        return pd.read_sql(query.statement, self._session.bind)
+    def query_value_from_uid(self, uid: str, columns: List[str]) -> Dict[str, Any]:
+        results = self._query_record(uid=uid)
+        result_dict = results.__dict__
+        return {col: result_dict[col] for col in columns}
 
     # Read
     def load_card(  # type: ignore
         self,
-        name: Optional[str],
-        team: Optional[str],
-        version: Optional[int],
-        uid: Optional[str],
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
+        uid: Optional[str] = None,
     ) -> ArtifactCardTypes:
         """Loads data or model card"""
         raise NotImplementedError
@@ -217,13 +298,7 @@ class DataCardRegistry(SQLRegistry):
             DataCard
         """
 
-        sql_data = self._query_record(
-            name=name,
-            team=team,
-            version=version,
-            uid=uid,
-        )
-
+        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
         loaded_record = LoadedDataRecord(**sql_data.__dict__)
 
         return DataCard(**loaded_record.dict())
@@ -284,6 +359,32 @@ class ModelCardRegistry(SQLRegistry):
         model_definition = model_record.load_model_card_definition()
 
         return ModelCard.parse_obj(model_definition)
+        # registry = DataRegistryChecker(model_registry_name=model_registry_name)
+
+    def _get_data_table_name(self) -> str:
+        if ArtifactTableNames.TEST_MODEL_REGISTRY.name == self.table_name:
+            return ArtifactTableNames.TEST_DATA_REGISTRY.name
+        return ArtifactTableNames.DATA_REGISTRY.name
+
+    def _validate_datacard_uid(self, uid: str) -> None:
+        table_to_check = self._get_data_table_name()
+        exists = self._check_uid(uid=uid, table_to_check=table_to_check)
+        if not exists:
+            raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
+
+    def _is_data_uid_none(self, uid: Optional[str]) -> bool:
+        return bool(uid)
+
+    # custom registration
+    def register_card(self, card: ModelCard) -> None:
+
+        if self._is_data_uid_none(uid=card.data_card_uid):
+            raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
+
+        if card.data_card_uid is not None:
+            self._validate_datacard_uid(uid=card.data_card_uid)
+
+        return super().register_card(card)
 
     @staticmethod
     def validate(registry_name: str):
@@ -321,8 +422,7 @@ class ExperimentCardRegistry(SQLRegistry):
         """
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        experiment_record = LoadedExperimentlRecord(**sql_data.__dict__)
-
+        experiment_record = LoadedExperimentRecord(**sql_data.__dict__)
         experiment_record.load_artifacts()
         return ExperimentCard(**experiment_record.dict())
 
@@ -336,12 +436,56 @@ class ExperimentCardRegistry(SQLRegistry):
         return False
 
 
+class PipelineCardRegistry(SQLRegistry):
+    def __init__(self, table_name: str = "pipeline"):
+        super().__init__(table_name=table_name)
+        self.supported_card = "pipelinecard"
+
+    def load_card(
+        self,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[int] = None,
+        uid: Optional[str] = None,
+    ) -> PipelineCard:
+
+        """Loads a PipelineCard from the pipeline registry
+
+        Args:
+            name (str): Card name
+            team (str): Team data is assigned to
+            version (int): Optional version number of existing data. If not specified,
+            the most recent version will be used
+
+        Returns:
+            PipelineCard
+        """
+
+        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
+        pipeline_record = LoadedPipelineRecord(**sql_data.__dict__)
+        return PipelineCard(**pipeline_record.dict())
+
+    def update_card(self, card: PipelineCard) -> None:
+
+        """Updates an existing pipeline card in the pipeline registry
+
+        Args:
+            card (PipelineCard): Existing pipeline card
+
+        Returns:
+            None
+        """
+
+        record = PipelineRegistryRecord(**card.dict())
+        self._update_record(record=record.dict())
+
+
 class CardRegistry:
     def __init__(self, registry_name: str):
-        self.registry: SQLRegistry = self.set_registry(registry_name=registry_name)
+        self.registry: SQLRegistry = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
-    def set_registry(self, registry_name: str) -> SQLRegistry:
+    def _set_registry(self, registry_name: str) -> SQLRegistry:
         registry_name = ArtifactTableNames(registry_name.lower()).name
         registry = next(
             registry
@@ -368,7 +512,7 @@ class CardRegistry:
             team (str): Team associated with card
             version (int): Optional version number of existing data. If not specified,
             the most recent version will be used
-            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
+            uid (str): Unique identifier for Card. If present, the uid takes precedence.
 
 
         Returns:
@@ -426,7 +570,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: Union[ModelCard, DataCard],
+        card: ArtifactCardTypes,
     ) -> None:
         """Update and artifact card (DataCard only) based on current registry
 
@@ -443,3 +587,15 @@ class CardRegistry:
         self.registry = cast(DataCardRegistry, self.registry)
         card = cast(DataCard, card)
         return self.registry.update_card(card=card)
+
+    def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
+        """Query column values from a specific Card
+
+        Args:
+            uid (str): Uid of Card
+            columns (List[str]): List of columns to query
+
+        Returns:
+            Dictionary of column, values pairs
+        """
+        return self.registry.query_value_from_uid(uid=uid, columns=columns)
