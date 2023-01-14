@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from opsml_artifacts.registry.cards.storage import NumpyStorage, ParquetStorage, DictionaryStorage, SaveInfo
+from opsml_artifacts.registry.cards.storage import NumpyStorage, ParquetStorage, JoblibStorage, SaveInfo
 from opsml_artifacts.drift.data_drift import DriftDetector
 
 
@@ -63,7 +63,7 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
         name="test",
     )
 
-    drift_writer = DictionaryStorage(save_info=save_info)
+    drift_writer = JoblibStorage(save_info=save_info)
     metadata = drift_writer.save_artifact(artifact=drift_report)
 
     drift_report = drift_writer.load_artifact(storage_uri=metadata.gcs_uri)
