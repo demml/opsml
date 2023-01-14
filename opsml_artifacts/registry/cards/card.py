@@ -2,48 +2,28 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
-from cryptography.fernet import Fernet
 
 # from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 import pandas as pd
+from cryptography.fernet import Fernet
 from pyarrow import Table
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator, validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.drift.data_drift import DriftReport
-from opsml_artifacts.registry.sql.records import DataRegistryRecord, ModelRegistryRecord, ExperimentRegistryRecord
+from opsml_artifacts.registry.cards.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.cards.storage import save_record_artifact_to_storage
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
 from opsml_artifacts.registry.model.types import DataDict, ModelDefinition
-from opsml_artifacts.registry.cards.predictor import OnnxModelPredictor
-from opsml_artifacts.registry.sql.sql_schema import engine, Session, TableSchema, ArtifactTableNames
+from opsml_artifacts.registry.sql.records import (
+    DataRegistryRecord,
+    ExperimentRegistryRecord,
+    ModelRegistryRecord,
+    PipelineRegistryRecord,
+)
 
 logger = ShiptLogging.get_logger(__name__)
-
-
-class DataRegistryChecker:
-    def __init__(self, model_registry_name: str):
-        self._session = Session()
-
-        data_table_name = self._get_data_table_name(model_registry_name=model_registry_name)
-        self._table = TableSchema.get_table(table_name=data_table_name)
-        self._create_table()
-
-    def _create_table(self):
-        self._table.__table__.create(bind=engine, checkfirst=True)
-
-    def _get_data_table_name(self, model_registry_name: str) -> str:
-        if ArtifactTableNames.TEST_MODEL_REGISTRY.name == model_registry_name:
-            return ArtifactTableNames.TEST_DATA_REGISTRY.name
-        return ArtifactTableNames.DATA_REGISTRY.name
-
-    def validate_data_uid(self, uid: str):
-
-        record = self._session.query(self._table.uid).filter(self._table.uid == uid).scalar()
-        if record is None:
-            return False
-        return True
 
 
 class ArtifactCard(BaseModel):
@@ -53,7 +33,12 @@ class ArtifactCard(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = False
 
-    def create_registry_record(self, registry_name: str, uid: str, version: int) -> Any:
+    def create_registry_record(
+        self,
+        uid: str,
+        version: int,
+        registry_name: str,
+    ) -> Any:
         """Creates a registry record from self attributes
 
         Args:
@@ -228,7 +213,12 @@ class DataCard(ArtifactCard):
             )
             setattr(self, "drift_uri", storage_path.gcs_uri)
 
-    def create_registry_record(self, registry_name: str, uid: str, version: int) -> DataRegistryRecord:
+    def create_registry_record(
+        self,
+        uid: str,
+        version: int,
+        registry_name: str,
+    ) -> DataRegistryRecord:
 
         """Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
@@ -259,8 +249,8 @@ class ModelCard(ArtifactCard):
         name (str): What to name the model
         team (str): Team that this model is associated with
         user_email (str): Email to associate with card
-        uid (str): Unique id
-        version (int): Current version
+        uid (str): Unique id (assigned if card has been registered)
+        version (int): Current version (assigned if card has been registered)
         data_card_uid (str): Uid of the DataCard associated with training the model
         onnx_model_data (DataDict): Pydantic model containing onnx data schema
         onnx_model_def (ModelDefinition): Pydantic model containing OnnxModel definition
@@ -296,32 +286,18 @@ class ModelCard(ArtifactCard):
         )
         setattr(self, "model_uri", storage_path.gcs_uri)
 
-    def _validate_data_card(self, model_registry_name: str) -> None:
-
-        if self.data_card_uid is None:
-            raise ValueError(
-                """ModelCard is not associated with a DataCard uid. ModelCards
-                must be associated with a DataCard prior to registration."""
-            )
-
-        registry = DataRegistryChecker(model_registry_name=model_registry_name)
-        has_record = registry.validate_data_uid(uid=self.data_card_uid)
-
-        if not has_record:
-            raise ValueError(
-                """Invalid DataCard uid provided with ModelCard. Please verify correct DataCard.
-                """
-            )
-
-    def create_registry_record(self, registry_name: str, uid: str, version: int) -> ModelRegistryRecord:
+    def create_registry_record(
+        self,
+        uid: str,
+        version: int,
+        registry_name: str,
+    ) -> ModelRegistryRecord:
         """Creates a registry record from the current ModelCard
 
         registry_name (str): ModelCard Registry table making request
         uid (str): Unique id of ModelCard
 
         """
-
-        self._validate_data_card(model_registry_name=registry_name)
 
         setattr(self, "uid", uid)
         setattr(self, "version", version)
@@ -359,8 +335,6 @@ class ModelCard(ArtifactCard):
         model_bytes = self._decrypt_model_definition()
         version = self._set_version_for_predictor()
 
-        #
-
         return OnnxModelPredictor(
             model_type=self.model_type,
             model_definition=model_bytes,
@@ -371,14 +345,73 @@ class ModelCard(ArtifactCard):
 
 
 class PipelineCard(ArtifactCard):
+    """Create as PipelineCard from specified arguments
+
+    Args:
+        name (str): What to name the model
+        team (str): Team that this model is associated with
+        user_email (str): Email to associate with card
+        uid (str): Unique id (assigned if card has been registered)
+        version (int): Current version (assigned if card has been registered)
+        pipeline_code_uri (str): Storage uri of pipeline code
+        data_card_uids (dictionary): Optional dictionary of DataCard uids to associate with pipeline
+        model_card_uids (dictionary): Optional dictionary of ModelCard uids to associate with pipeline
+        experiment_card_uids (dictionary): Optional dictionary of ExperimentCard uids to associate with pipeline
+
+    """
+
     name: str
     team: str
     user_email: str
     uid: Optional[str] = None
     version: Optional[int] = None
-    data_card_uid: Optional[str] = None
-    model_card_uid: Optional[str] = None
-    experiment_card_uid: Optional[str] = None
+    pipeline_code_uri: str
+    data_card_uids: Optional[Dict[str, str]] = None
+    model_card_uids: Optional[Dict[str, str]] = None
+    experiment_card_uids: Optional[Dict[str, str]] = None
+
+    @root_validator(pre=True)
+    def set_data_uids(cls, values):  # pylint: disable=no-self-argument
+        for uid_type in ["data_card_uids", "model_card_uids", "experiment_card_uids"]:
+            if values.get(uid_type) is None:
+                values[uid_type]: Dict[str, str] = {}
+        return values
+
+    def add_card_uid(self, uid: str, card_type: str, name: Optional[str] = None):
+        """Adds Card uid to appropriate card type attribute
+
+        Args:
+            name (str): Optional name to associate with uid
+            uid (str): Card uid
+            card_type (str): Card type. Accepted values are "data", "model", "experiment"
+        """
+        card_type = card_type.lower()
+        if card_type.lower() not in ["data", "experiment", "model"]:
+            raise ValueError("""Only 'model', 'experiment' and 'data' are allowed values for card_type""")
+
+        current_ids = getattr(self, f"{card_type}_card_uids")
+        new_ids = {**current_ids, **{name: uid}}
+        setattr(self, f"{card_type}_card_uids", new_ids)
+
+    def load_pipeline_code(self):
+        raise NotImplementedError
+
+    def create_registry_record(
+        self,
+        uid: str,
+        version: int,
+        registry_name: str,
+    ) -> PipelineRegistryRecord:
+        """Creates a registry record from the current PipelineCard
+
+        registry_name (str): PipelineCard Registry table making request
+        uid (str): Unique id of PipelineCard
+
+        """
+
+        setattr(self, "uid", uid)
+        setattr(self, "version", version)
+        return PipelineRegistryRecord(**self.__dict__)
 
 
 class ExperimentCard(ArtifactCard):
@@ -442,7 +475,6 @@ class ExperimentCard(ArtifactCard):
         curr_artifacts = cast(Dict[str, Any], self.artifacts)
         new_artifact = {name: artifact}
         self.artifacts = {**new_artifact, **curr_artifacts}
-
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
     def save_artifacts(self, blob_path: str, version: int) -> None:
@@ -462,11 +494,16 @@ class ExperimentCard(ArtifactCard):
                 artifact_uris[name] = storage_path.gcs_uri
         setattr(self, "artifact_uris", artifact_uris)
 
-    def create_registry_record(self, registry_name: str, uid: str, version: int) -> ExperimentRegistryRecord:
-        """Creates a registry record from the current ModelCard
+    def create_registry_record(
+        self,
+        uid: str,
+        version: int,
+        registry_name: str,
+    ) -> ExperimentRegistryRecord:
+        """Creates a registry record from the current ExperimentCard
 
-        registry_name (str): ModelCard Registry table making request
-        uid (str): Unique id of ModelCard
+        registry_name (str): ExperimentCardRegistry table making request
+        uid (str): Unique id of ExperimentCard
 
         """
 

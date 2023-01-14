@@ -1,7 +1,8 @@
 from enum import Enum
-from pydantic import BaseModel
+
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel
 
 
 class StoragePath(BaseModel):

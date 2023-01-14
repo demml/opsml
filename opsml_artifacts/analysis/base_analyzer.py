@@ -2,9 +2,9 @@ import os
 import tempfile
 from dataclasses import dataclass
 from typing import List
+
 import numpy as np
 import pandas as pd
-
 from pyshipt.helpers.connection_string import ConnectionString, DBType
 from pyshipt.helpers.database import SnowflakeDatabase
 from pyshipt.helpers.model import ColumnType, Table
