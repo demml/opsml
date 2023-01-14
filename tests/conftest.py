@@ -18,7 +18,12 @@ from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.utils import FindPath, GCPClient
 from opsml_artifacts.registry.sql.connection import create_sql_engine
 from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.registry.sql.sql_schema import TestDataSchema, TestModelSchema, TestExperimentSchema
+from opsml_artifacts.registry.sql.sql_schema import (
+    TestDataSchema,
+    TestModelSchema,
+    TestExperimentSchema,
+    TestPipelineSchema,
+)
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import StackingRegressor
 import lightgbm as lgb
@@ -29,6 +34,8 @@ gcs_storage_client = GCPClient.get_service(
     service_name="storage",
     gcp_credentials=settings.gcp_creds,
 )
+
+engine = create_sql_engine()
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -56,6 +63,7 @@ def pytest_sessionfinish(session, exitstatus):
         prefix="TEST_DATA_REGISTRY/",
     )
 
+    #
     for blob in blobs:
         gcs_storage_client.delete_object(
             gcs_bucket=settings.gcs_bucket,
@@ -75,19 +83,15 @@ def pytest_sessionfinish(session, exitstatus):
         )
 
     # delete all test experiment registry files
-    # blobs = gcs_storage_client.list_objects(
-    #    gcs_bucket=settings.gcs_bucket,
-    #    prefix="TEST_EXPERIMENT_REGISTRY/",
-    # )
-
-
-#
-# for blob in blobs:
-#    gcs_storage_client.delete_object(
-#        gcs_bucket=settings.gcs_bucket,
-#        blob_path=blob.name,
-#    )
-#
+    blobs = gcs_storage_client.list_objects(
+        gcs_bucket=settings.gcs_bucket,
+        prefix="TEST_EXPERIMENT_REGISTRY/",
+    )
+    for blob in blobs:
+        gcs_storage_client.delete_object(
+            gcs_bucket=settings.gcs_bucket,
+            blob_path=blob.name,
+        )
 
 
 @pytest.fixture(scope="session")
@@ -253,39 +257,36 @@ def test_arrow_table():
 
 
 @pytest.fixture(scope="session")
-def setup_data_registry():
+def db_registries():
 
-    engine = create_sql_engine()
-    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
     TestDataSchema.__table__.create(bind=engine, checkfirst=True)
-    registry = CardRegistry(registry_name="data_test")
-
-    yield registry
-    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
-
-
-@pytest.fixture(scope="session")
-def setup_model_registry():
-
-    engine = create_sql_engine()
-    TestModelSchema.__table__.drop(bind=engine, checkfirst=True)
     TestModelSchema.__table__.create(bind=engine, checkfirst=True)
-    registry = CardRegistry(registry_name="model_test")
-
-    yield registry
-    TestModelSchema.__table__.drop(bind=engine, checkfirst=True)
-
-
-@pytest.fixture(scope="session")
-def setup_experiment_registry():
-
-    engine = create_sql_engine()
-    TestExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
     TestExperimentSchema.__table__.create(bind=engine, checkfirst=True)
-    registry = CardRegistry(registry_name="experiment_test")
+    TestPipelineSchema.__table__.create(bind=engine, checkfirst=True)
 
-    yield registry
+    model_registry = CardRegistry(registry_name="model_test")
+    data_registry = CardRegistry(registry_name="data_test")
+    experiment_registry = CardRegistry(registry_name="experiment_test")
+    pipeline_registry = CardRegistry(registry_name="pipeline_test")
+
+    yield {
+        "data": data_registry,
+        "model": model_registry,
+        "experiment": experiment_registry,
+        "pipeline": pipeline_registry,
+    }
+
+    # close sessions
+    data_registry.registry._session.close()
+    model_registry.registry._session.close()
+    experiment_registry.registry._session.close()
+    pipeline_registry.registry._session.close()
+
+    # drop tables
+    TestModelSchema.__table__.drop(bind=engine, checkfirst=True)
+    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
     TestExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
+    TestPipelineSchema.__table__.drop(bind=engine, checkfirst=True)
 
 
 @pytest.fixture(scope="session")

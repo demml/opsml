@@ -2,9 +2,11 @@ import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 import numpy as np
-from opsml_artifacts.registry.cards.card import DataCard, ExperimentCard
+from opsml_artifacts.registry.cards.card import DataCard, ExperimentCard, PipelineCard
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.registry.cards.creator import ModelCardCreator
+import uuid
+import random
 import timeit
 
 
@@ -16,10 +18,10 @@ import timeit
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(setup_data_registry, test_data, storage_client, data_splits):
+def test_register_data(db_registries, test_data, storage_client, data_splits):
 
     # create data card
-    registry: CardRegistry = setup_data_registry
+    registry = db_registries["data"]
     data_card = DataCard(
         data=test_data,
         name="test_df",
@@ -42,9 +44,9 @@ def test_register_data(setup_data_registry, test_data, storage_client, data_spli
     storage_client.delete_object_from_url(gcs_uri=data_card.data_uri)
 
 
-def test_experiment_card(linear_regression, setup_experiment_registry):
+def test_experiment_card(linear_regression, db_registries):
 
-    experiment_registry: CardRegistry = setup_experiment_registry
+    registry = db_registries["experiment"]
 
     experiment = ExperimentCard(
         name="test_df",
@@ -64,38 +66,16 @@ def test_experiment_card(linear_regression, setup_experiment_registry):
     experiment.add_artifact("reg_model", artifact=model)
     assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
 
-    experiment_registry.register_card(card=experiment)
-    loaded_exp = experiment_registry.load_card(uid=experiment.uid)
-    assert loaded_exp.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
-
-
-# def _test_register_base_model(setup_model_registry, model_list, storage_client):
-#
-#    registry: CardRegistry = setup_model_registry
-#    models, data = model_list
-#
-#    for model in models:
-#        model_creator = ModelCardCreator(model=model, input_data=data)
-#        model_card = model_creator.create_model_card(
-#            model_name="test_model",
-#            team="mlops",
-#            user_email="test_email",
-#            registered_data_uid="test_uid",
-#        )
-#
-#        registry.register_card(card=model_card)
-#        storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
+    registry.register_card(card=experiment)
 
 
 @pytest.mark.parametrize("data_card_uid", ["test_uid"])
-def test_register_pipeline_model(
-    setup_model_registry, setup_data_registry, sklearn_pipeline, storage_client, data_card_uid
-):
+def test_register_pipeline_model(db_registries, sklearn_pipeline, storage_client, data_card_uid):
 
     model, data = sklearn_pipeline
 
     # create data card
-    data_registry: CardRegistry = setup_data_registry
+    data_registry = db_registries["data"]
     data_card = DataCard(
         data=data,
         name="pipeline_data",
@@ -103,8 +83,8 @@ def test_register_pipeline_model(
         user_email="mlops.com",
     )
     data_registry.register_card(card=data_card)
-    model_registry: CardRegistry = setup_model_registry
 
+    model_registry = db_registries["model"]
     for data_card_id in [data_card.uid, None, "test_uid"]:
         model_creator = ModelCardCreator(model=model, input_data=data)
         model_card = model_creator.create_model_card(
@@ -114,13 +94,13 @@ def test_register_pipeline_model(
             registered_data_uid=data_card_id,
         )
 
-        if data_card_id != data_card.uid:
-            with pytest.raises(ValueError):
-                model_registry.register_card(card=model_card)
-
-        else:
+    if data_card_id != data_card.uid:
+        with pytest.raises(ValueError):
             model_registry.register_card(card=model_card)
-            storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
+
+    else:
+        model_registry.register_card(card=model_card)
+        storage_client.delete_object_from_url(gcs_uri=model_card.model_uri)
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
@@ -160,12 +140,12 @@ def test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(setup_data_registry, test_data, storage_client):
+def test_load_data_card(db_registries, test_data, storage_client):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
 
-    registry: CardRegistry = setup_data_registry
+    registry: CardRegistry = db_registries["data"]
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -185,13 +165,45 @@ def test_load_data_card(setup_data_registry, test_data, storage_client):
 
     # update
     loaded_data.version = 100
-
     registry.update_card(card=loaded_data)
     storage_client.delete_object_from_url(gcs_uri=loaded_data.data_uri)
 
-    df = registry.list_cards(name=data_name, team=team, version=100)
+    record = registry.query_value_from_card(uid=loaded_data.uid, columns=["version"])
 
-    assert df["version"].to_numpy()[0] == 100
+    assert record["version"] == 100
+
+
+def test_pipeline_registry(db_registries):
+
+    pipeline_card = PipelineCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        pipeline_code_uri="test_pipe_uri",
+    )
+
+    for card_type in ["data", "data", "model", "experiment"]:
+        pipeline_card.add_card_uid(
+            uid=uuid.uuid4().hex,
+            card_type=card_type,
+            name=f"{card_type}_{random.randint(0,100)}",
+        )
+
+    # register
+    registry: CardRegistry = db_registries["pipeline"]
+    registry.register_card(card=pipeline_card)
+
+    loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
+    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
+
+    registry.update_card(card=loaded_card)
+    df = registry.list_cards(uid=loaded_card.uid)
+    values = registry.query_value_from_card(
+        uid=loaded_card.uid,
+        columns=["data_card_uids"],
+    )
+
+    assert values["data_card_uids"].get("update") == "updated_uid"
 
 
 @pytest.mark.parametrize(
@@ -206,7 +218,7 @@ def test_load_data_card(setup_data_registry, test_data, storage_client):
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
     ],
 )
-def _test_model_predict(model_and_data):
+def test_model_predict(model_and_data):
 
     model, data = model_and_data
     model_creator = ModelCardCreator(model=model, input_data=data)

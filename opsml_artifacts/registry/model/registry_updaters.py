@@ -41,7 +41,9 @@ class LightGBMRegistryUpdater(RegistryUpdater):
         logger.info("Registering lightgbm onnx converter")
 
         import lightgbm as lgb
-        from onnxmltools.convert.lightgbm.operator_converters.LightGbm import convert_lightgbm
+        from onnxmltools.convert.lightgbm.operator_converters.LightGbm import (
+            convert_lightgbm,
+        )
         from skl2onnx import update_registered_converter
 
         alias = self.determine_estimator()
@@ -85,7 +87,9 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
         logger.info("Registering xgboost onnx converter")
 
         import xgboost as xgb
-        from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgboost
+        from onnxmltools.convert.xgboost.operator_converters.XGBoost import (
+            convert_xgboost,
+        )
         from skl2onnx import update_registered_converter
 
         alias = self.determine_estimator()

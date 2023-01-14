@@ -97,6 +97,7 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",
     "sqlalchemy.ext.mypy.plugin",
+    "sqlmypy",
 ]
 
 

@@ -1,7 +1,8 @@
 # pylint: disable=import-outside-toplevel
 # break this out into separate files at some point (data_converter.py, model_converter.py)
 """Code for generating Onnx Models"""
-from typing import Any, Dict, List, Tuple, Union, cast, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
+
 import numpy as np
 import pandas as pd
 from pyshipt_logging import ShiptLogging
@@ -13,10 +14,10 @@ from skl2onnx.common.data_types import (
 )
 
 from opsml_artifacts.registry.model.types import (
+    AVAILABLE_MODEL_TYPES,
     Feature,
     ModelDefinition,
     OnnxModelType,
-    AVAILABLE_MODEL_TYPES,
 )
 
 # Get logger

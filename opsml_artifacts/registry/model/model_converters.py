@@ -1,7 +1,8 @@
 # pylint: disable=import-outside-toplevel
 # break this out into separate files at some point (data_converter.py, model_converter.py)
 """Code for generating Onnx Models"""
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import onnxruntime as rt
 import pandas as pd
@@ -12,17 +13,17 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import StackingRegressor
 from sklearn.pipeline import Pipeline
 
+from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
+from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml_artifacts.registry.model.types import (
+    LIGHTGBM_SUPPORTED_MODEL_TYPES,
+    SKLEARN_SUPPORTED_MODEL_TYPES,
+    UPDATE_REGISTRY_MODELS,
     Feature,
     ModelDefinition,
     OnnxDataProto,
-    SKLEARN_SUPPORTED_MODEL_TYPES,
-    LIGHTGBM_SUPPORTED_MODEL_TYPES,
-    UPDATE_REGISTRY_MODELS,
     OnnxModelType,
 )
-from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
-from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
 
 # Get logger
 logger = ShiptLogging.get_logger(__name__)

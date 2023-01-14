@@ -54,6 +54,18 @@ class ExperimentRegistryRecord(BaseModel):
     metrics: Optional[Dict[str, Union[float, int]]]
 
 
+class PipelineRegistryRecord(BaseModel):
+    name: str
+    team: str
+    user_email: str
+    uid: Optional[str] = None
+    version: Optional[int] = None
+    pipeline_code_uri: str
+    data_card_uids: Optional[Dict[str, str]] = None
+    model_card_uids: Optional[Dict[str, str]] = None
+    experiment_card_uids: Optional[Dict[str, str]] = None
+
+
 class LoadedDataRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str] = None
@@ -131,7 +143,7 @@ class LoadedModelRecord(BaseModel):
         return model_card_definition
 
 
-class LoadedExperimentlRecord(BaseModel):
+class LoadedExperimentRecord(BaseModel):
     name: str
     team: str
     user_email: str
@@ -158,3 +170,16 @@ class LoadedExperimentlRecord(BaseModel):
                 artifact_type="artifact",
             )
         setattr(self, "artifacts", loaded_artifacts)
+
+
+# same as piplelineregistry (duplicating to stay with theme of separate records)
+class LoadedPipelineRecord(BaseModel):
+    name: str
+    team: str
+    user_email: str
+    uid: Optional[str] = None
+    version: Optional[int] = None
+    pipeline_code_uri: str
+    data_card_uids: Optional[Dict[str, str]] = None
+    model_card_uids: Optional[Dict[str, str]] = None
+    experiment_card_uids: Optional[Dict[str, str]] = None
