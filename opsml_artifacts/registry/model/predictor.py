@@ -2,8 +2,14 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, ca
 
 from pydantic import conlist, create_model
 
-from opsml_artifacts.registry.cards.types import Base, NumpyBase, PandasBase
-from opsml_artifacts.registry.model.types import DataDict, InputDataType, OnnxModelType
+from opsml_artifacts.registry.model.types import (
+    Base,
+    DataDict,
+    InputDataType,
+    NumpyBase,
+    OnnxModelType,
+    PandasBase,
+)
 
 PydanticFields = Dict[str, Tuple[Any, ...]]
 PredictFunc = Callable[[Dict[str, Any]], Any]

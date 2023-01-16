@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import StackingRegressor
 from sklearn.pipeline import Pipeline
 
-from opsml_artifacts.registry.cards.card import ModelCard
+from opsml_artifacts.registry.cards.cards import ModelCard
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
 from opsml_artifacts.registry.model.types import DataDict, InputDataType

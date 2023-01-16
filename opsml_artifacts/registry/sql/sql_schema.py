@@ -1,9 +1,11 @@
 import datetime
+import os
 import time
 import uuid
 from enum import Enum
-from typing import Type, Union, cast
+from typing import Any, Dict, Type, Union, cast
 
+from pyshipt_logging import ShiptLogging
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,18 +15,15 @@ from sqlalchemy.orm import sessionmaker
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.sql.connection import create_sql_engine
 
+logger = ShiptLogging.get_logger(__name__)
 Base = declarative_base()
 
 
-class ArtifactTableNames(str, Enum):
-    DATA_REGISTRY = "data"
-    MODEL_REGISTRY = "model"
-    EXPERIMENT_REGISTRY = "experiment"
-    PIPELINE_REGISTRY = "pipeline"
-    TEST_DATA_REGISTRY = "data_test"
-    TEST_MODEL_REGISTRY = "model_test"
-    TEST_EXPERIMENT_REGISTRY = "experiment_test"
-    TEST_PIPELINE_REGISTRY = "pipeline_test"
+class RegistryTableNames(str, Enum):
+    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "DATA_REGISTRTY")
+    MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "MODEL_REGISTRY")
+    EXPERIMENT = os.getenv("ML_EXPERIMENT_REGISTRY_NAME", "EXPERIMENT_REGISTRY")
+    PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "PIPELINE_REGISTRY")
 
 
 @declarative_mixin
@@ -50,14 +49,7 @@ class DataMixin:
 
 
 class DataSchema(Base, DataMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.DATA_REGISTRY.name
-
-    def __repr__(self):
-        return f"<SqlMetric({self.__tablename__}"
-
-
-class TestDataSchema(Base, DataMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.TEST_DATA_REGISTRY.name
+    __tablename__ = RegistryTableNames.DATA.value
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
@@ -81,14 +73,7 @@ class ModelMixin:
 
 
 class ModelSchema(Base, ModelMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.MODEL_REGISTRY.name
-
-    def __repr__(self):
-        return f"<SqlMetric({self.__tablename__}"
-
-
-class TestModelSchema(Base, ModelMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.TEST_MODEL_REGISTRY.name
+    __tablename__ = RegistryTableNames.MODEL.value
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
@@ -115,14 +100,7 @@ class ExperimentMixin:
 
 
 class ExperimentSchema(Base, ExperimentMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.EXPERIMENT_REGISTRY.name
-
-    def __repr__(self):
-        return f"<SqlMetric({self.__tablename__}"
-
-
-class TestExperimentSchema(Base, ExperimentMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.TEST_EXPERIMENT_REGISTRY.name
+    __tablename__ = RegistryTableNames.EXPERIMENT.value
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
@@ -148,14 +126,7 @@ class PipelineMixin:
 
 
 class PipelineSchema(Base, PipelineMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.PIPELINE_REGISTRY.name
-
-    def __repr__(self):
-        return f"<SqlMetric({self.__tablename__}"
-
-
-class TestPipelineSchema(Base, PipelineMixin):  # type: ignore
-    __tablename__ = ArtifactTableNames.TEST_PIPELINE_REGISTRY.name
+    __tablename__ = RegistryTableNames.PIPELINE.value
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
@@ -163,23 +134,9 @@ class TestPipelineSchema(Base, PipelineMixin):  # type: ignore
 
 REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
     DataSchema,
-    TestDataSchema,
     ModelSchema,
-    TestModelSchema,
     ExperimentSchema,
-    TestExperimentSchema,
     PipelineSchema,
-    TestPipelineSchema,
-]
-
-ARTIFACT_DATA_TABLES = [
-    ArtifactTableNames.DATA_REGISTRY,
-    ArtifactTableNames.TEST_DATA_REGISTRY,
-]
-
-ARTIFACT_MODEL_TABLES = [
-    ArtifactTableNames.MODEL_REGISTRY,
-    ArtifactTableNames.TEST_MODEL_REGISTRY,
 ]
 
 
@@ -195,3 +152,36 @@ class TableSchema:
 
 engine = create_sql_engine()
 Session = sessionmaker(bind=engine)
+
+
+class SqlManager:
+    def __init__(self, table_name: str):
+        self._session = Session
+        self._table = TableSchema.get_table(table_name=table_name)
+        self._create_table()
+        self.table_name = self._table.__tablename__
+
+    def _create_table(self):
+        self._table.__table__.create(bind=engine, checkfirst=True)
+
+    def _exceute_query(self, query: Any):
+        with self._session() as sess:
+            result = sess.scalars(query).first()
+            print(result)
+        return result
+
+    def _add_commit_transaction(self, record=Type[REGISTRY_TABLES]):
+        with self._session() as sess:
+            sess.add(record)
+            sess.commit()
+
+    def _update_record_transaction(
+        self,
+        table: Type[REGISTRY_TABLES],
+        record_uid: str,
+        record: Dict[str, Any],
+    ):
+        with self._session() as sess:
+            query = sess.query(table).filter(table.uid == record_uid)
+            query.update(record)
+            sess.commit()

@@ -2,174 +2,130 @@ import base64
 import json
 import os
 from datetime import datetime
-from typing import List, Tuple, Union
+from enum import Enum
+from typing import Optional, Tuple, cast
 
 import google.auth
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, BaseSettings, root_validator
 from pyshipt_logging import ShiptLogging
 
+from opsml_artifacts.helpers.gcp_utils import GCPClient, GCPSecretManager
 from opsml_artifacts.helpers.models import SnowflakeParams
-from opsml_artifacts.helpers.utils import GCPClient
 
 logger = ShiptLogging.get_logger(__name__)
 
 
-# specific for shipt
-class OpsmlCreds:
+class GcpVariables(str, Enum):
+    APP_ENV = "app_env"
+    DB_NAME = "artifact_registry_db_name"
+    DB_INSTANCE_NAME = "artifact_registry_instance_name"
+    DB_USERNAME = "artifact_registry_username"
+    DB_PASSWORD = "artifact_registry_password"
+    GCS_BUCKET = "gcs_bucket"
+    GCP_REGION = "gcp_region"
+    GCP_PROJECT = "gcp_project"
+    SNOWFLAKE_API_AUTH = "snowflake_api_auth"
+    SNOWFLAKE_API_URL = "snowflake_api_url"
+
+
+class GcpCreds(BaseModel):
+    creds: Credentials
+    project: str
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class GcpCredsSetter:
     def __init__(self):
-        self.user_creds = None
-        self.project_name = None
-        self.service_base_creds = None
-        self.secret_client = None
-        self.service_base64_creds = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")
+        self.service_base64_creds: Optional[str] = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")
 
-    def set_gcp_sdk_creds(self) -> None:
-        """Pulls google cloud sdk creds from local env
+    def get_creds(self) -> GcpCreds:
+        service_base64_creds = self.get_base64_creds()
+        service_creds, project_name = self.create_gcp_creds_from_base64(service_base64_creds=service_base64_creds)
 
-        Returns
-            Tuple containing user credentials and project name
-        """
-        self.user_creds, _ = google.auth.default()
-        self.project_name = self.user_creds.quota_project_id
+        return GcpCreds(
+            creds=service_creds,
+            project=project_name,
+        )
+
+    def get_base64_creds(self) -> str:
+        if not self.has_service_base64_creds:
+            return self.get_service_creds_from_user_info("ml_service_creds")
+        return cast(str, self.service_base64_creds)
 
     @property
     def has_service_base64_creds(self) -> bool:
         """Has environment creds"""
         return bool(self.service_base64_creds)
 
-    def create_secret_client(self):
-        self.secret_client = GCPClient.get_service(
-            service_name="secret_manager",
-            gcp_credentials=self.user_creds,
-        )
+    def get_gcp_sdk_creds(self) -> Tuple[Credentials, str]:
+        """Pulls google cloud sdk creds from local env
 
-    def decode_base64(self) -> str:
-        base_64 = base64.b64decode(s=self.service_base64_creds).decode("utf-8")
+        Returns
+            Tuple containing user credentials and project name
+        """
+        user_creds, _ = google.auth.default()
+        project_name = user_creds.quota_project_id
+
+        return user_creds, project_name
+
+    def create_secret_client(self, user_creds: Credentials) -> GCPSecretManager:
+        secret_client = GCPClient.get_service(
+            service_name="secret_manager",
+            gcp_credentials=user_creds,
+        )
+        return cast(GCPSecretManager, secret_client)
+
+    def decode_base64(self, service_base64_creds: str) -> str:
+        base_64 = base64.b64decode(s=service_base64_creds).decode("utf-8")
         return json.loads(base_64)
 
-    def create_gcp_creds_from_base64(self) -> Tuple[Credentials, str]:
+    def create_gcp_creds_from_base64(self, service_base64_creds: str) -> Tuple[Credentials, str]:
         """Decodes base64 encoded service creds into GCP Credentials
 
         Returns
             Tuple of gcp credentials and project name
         """
-        key = self.decode_base64()
+        key = self.decode_base64(service_base64_creds=service_base64_creds)
         service_creds: Credentials = service_account.Credentials.from_service_account_info(info=key)  # noqa
         project_name = service_creds.project_id
 
         return service_creds, project_name
 
-    def get_opsml_creds(
-        self,
-        service_account_secret_name: str,
-    ) -> Tuple[Credentials, str]:
-
-        if not self.has_service_base64_creds:
-            self.set_gcp_sdk_creds()
-            self.create_secret_client()
-            self.service_base64_creds = self.secret_client.get_secret(
-                project_name=self.project_name,
-                secret_name=service_account_secret_name,
-            )
-
-        service_creds, project_name = self.create_gcp_creds_from_base64()
-
-        return service_creds, project_name
-
-
-# to be used with Settings class
-class GCPEnvSetter:
-    def __init__(self):
-        self.attributes = {}
-        self.attributes["app_env"] = os.environ.get("APP_ENV", "staging")
-        self.env_vars = [
-            "gcp_region",
-            "gcs_bucket",
-            "snowflake_api_auth",
-            "snowflake_api_url",
-            "db_name",
-            "db_instance_name",
-            "db_username",
-            "db_password",
-        ]
-
-        self.secret_names = [
-            "gcp_pipeline_region",
-            "gcs_pipeline_bucket",
-            "snowflake_api_auth",
-            "snowflake_api_url",
-            "artifact_registry_db_name",
-            "artifact_registry_instance_name",
-            "artifact_registry_username",
-            "artifact_registry_password",
-        ]
-
-        self.set_gcp_env_secrets()
-
-    def set_gcp_credentials(self):
-        """Sets gcp credentials"""
-
-        secret_name = f"opsml_service_creds_{self.attributes['app_env']}"
-        gcp_creds, gcp_project = OpsmlCreds().get_opsml_creds(service_account_secret_name=secret_name)
-        service_account_email = getattr(gcp_creds, "service_account_email", None)
-
-        key_names = ["gcp_creds", "gcp_project", "service_account"]
-        values = [gcp_creds, gcp_project, service_account_email]
-
-        self._append_to_attributes(key_names=key_names, values=values)
-
-    def _append_to_attributes(
-        self,
-        key_names: List[str],
-        values: List[Union[str, int]],
-    ):
-        for key, value in zip(key_names, values):
-            self.attributes[key] = value
-
-    def set_env_variables_from_secrets(self, env_vars: List[str], secret_names: List[str]):
-
-        """Loads gcp project secrets
-
-        Args:
-            attributes (Dict): Dictionary of key value pairs of attributes
-            env_vars (List): List of environment variable names
-            secret_names (List): List of secret names in gcp
-
-
-        Returns
-            Dictionary of attributes
-        """
-
-        secret_client = GCPClient.get_service(
-            service_name="secret_manager", gcp_credentials=self.attributes["gcp_creds"]
+    def get_service_creds_from_user_info(self, service_account_secret_name: str) -> str:
+        user_creds, project_name = self.get_gcp_sdk_creds()
+        secret_client = self.create_secret_client(user_creds=user_creds)
+        service_base64_creds: str = secret_client.get_secret(
+            project_name=project_name,
+            secret=service_account_secret_name,
         )
 
-        secret_values = []
-        for secret_name in secret_names:
-            secret_values.append(
-                secret_client.get_secret(project_name=self.attributes["gcp_project"], secret=secret_name)
-            )
-
-        self._append_to_attributes(key_names=env_vars, values=secret_values)
-
-    def set_gcp_env_secrets(self):
-        self.set_gcp_credentials()
-        self.set_env_variables_from_secrets(env_vars=self.env_vars, secret_names=self.secret_names)
-
-        # remove this once networking is figured out
-        scopes = "https://www.googleapis.com/auth/devstorage.full_control"
-        self.attributes["gcsfs_creds"] = self.attributes["gcp_creds"].with_scopes([scopes])
+        return service_base64_creds
 
 
-class Settings(BaseModel):
-    """Creates base settings used through package"""
+class GcpSecretVarGetter:
+    def __init__(self, gcp_credentials: GcpCreds):
+        self.gcp_creds = gcp_credentials
+        client = GCPClient.get_service(
+            service_name="secret_manager",
+            gcp_credentials=self.gcp_creds.creds,
+        )
+        self.secret_client = cast(GCPSecretManager, client)
 
+    def get_secret(self, secret_name: str) -> str:
+        return self.secret_client.get_secret(
+            project_name=self.gcp_creds.project,
+            secret=secret_name,
+        )
+
+
+class GlobalSettings(BaseSettings):
     gcp_project: str
     gcs_bucket: str
     gcp_region: str
-    run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
     app_env: str
     path: str = os.getcwd()
     gcp_creds: Credentials
@@ -179,24 +135,42 @@ class Settings(BaseModel):
     db_password: str
     db_name: str
     db_instance_name: str
-    gcsfs_creds = str
+    gcsfs_creds: Credentials
+    run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
 
     class Config:
-        extra = Extra.allow
         arbitrary_types_allowed = True
 
+    @root_validator(pre=True)
+    def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
 
-env_setter = GCPEnvSetter()
-settings = Settings(**env_setter.attributes)
+        creds = GcpCredsSetter().get_creds()
+        env_vars["gcp_creds"] = creds.creds
+
+        # remove this once networking is figured out
+        scopes = "https://www.googleapis.com/auth/devstorage.full_control"
+        env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
+
+        secret_getter = GcpSecretVarGetter(gcp_credentials=creds)
+        for var_ in GcpVariables:
+            env_vars[var_.name.lower()] = secret_getter.get_secret(secret_name=var_.value)
+
+        return env_vars
+
+
+settings = GlobalSettings()
 
 
 class SnowflakeCredentials:
     @staticmethod
     def credentials() -> SnowflakeParams:
         login_vars = {}
-        secret_client = GCPClient.get_service(
-            service_name="secret_manager",
-            gcp_credentials=settings.gcp_creds,
+        secret_client = cast(
+            GCPSecretManager,
+            GCPClient.get_service(
+                service_name="secret_manager",
+                gcp_credentials=settings.gcp_creds,
+            ),
         )
         for secret in SnowflakeParams.__annotations__.keys():  # pylint: disable=no-member
             value = secret_client.get_secret(
