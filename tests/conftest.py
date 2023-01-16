@@ -314,7 +314,7 @@ def test_sql_file():
 
 @pytest.fixture(scope="function")
 def var_store_order_query():
-    return """SELECT NG_ORDER_ID FROM OPSML_FP_ORDERS_TIME_ACTUALS LIMIT 10"""
+    return """SELECT NG_ORDER_ID FROM DATA_SCIENCE.OPSML_FP_ORDERS_TIME_ACTUALS LIMIT 10"""
 
 
 @pytest.fixture(scope="module")
