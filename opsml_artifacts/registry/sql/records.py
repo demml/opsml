@@ -27,8 +27,7 @@ class DataRegistryRecord(BaseModel):
     def convert_to_dict(cls, splits):  # pylint: disable=no-self-argument
         if bool(splits):
             return {"splits": splits}
-
-        return splits
+        return None
 
 
 class ModelRegistryRecord(BaseModel):
@@ -97,7 +96,7 @@ class LoadedDataRecord(BaseModel):
     def get_splits(splits):
         if bool(splits):
             return splits.get("splits")
-        return splits
+        return None
 
     @staticmethod
     def load_data(values):

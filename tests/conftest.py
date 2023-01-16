@@ -1,4 +1,12 @@
 import os
+
+# set test names for registry tables
+os.environ["ML_DATA_REGISTRY_NAME"] = "TEST_DATA_REGISTRY"
+os.environ["ML_MODEL_REGISTRY_NAME"] = "TEST_MODEL_REGISTRY"
+os.environ["ML_EXPERIMENT_REGISTRY_NAME"] = "TEST_EXPERIMENT_REGISTRY"
+os.environ["ML_PIPELINE_REGISTRY_NAME"] = "TEST_PIPELINE_REGISTRY"
+
+
 from datetime import datetime
 from pathlib import Path
 
@@ -15,14 +23,15 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.helpers.utils import FindPath, GCPClient
+from opsml_artifacts.helpers.utils import FindPath
+from opsml_artifacts.helpers.gcp_utils import GCPClient
 from opsml_artifacts.registry.sql.connection import create_sql_engine
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.registry.sql.sql_schema import (
-    TestDataSchema,
-    TestModelSchema,
-    TestExperimentSchema,
-    TestPipelineSchema,
+    DataSchema,
+    ModelSchema,
+    ExperimentSchema,
+    PipelineSchema,
 )
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import StackingRegressor
@@ -259,15 +268,15 @@ def test_arrow_table():
 @pytest.fixture(scope="session")
 def db_registries():
 
-    TestDataSchema.__table__.create(bind=engine, checkfirst=True)
-    TestModelSchema.__table__.create(bind=engine, checkfirst=True)
-    TestExperimentSchema.__table__.create(bind=engine, checkfirst=True)
-    TestPipelineSchema.__table__.create(bind=engine, checkfirst=True)
+    DataSchema.__table__.create(bind=engine, checkfirst=True)
+    ModelSchema.__table__.create(bind=engine, checkfirst=True)
+    ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
+    PipelineSchema.__table__.create(bind=engine, checkfirst=True)
 
-    model_registry = CardRegistry(registry_name="model_test")
-    data_registry = CardRegistry(registry_name="data_test")
-    experiment_registry = CardRegistry(registry_name="experiment_test")
-    pipeline_registry = CardRegistry(registry_name="pipeline_test")
+    model_registry = CardRegistry(registry_name="model")
+    data_registry = CardRegistry(registry_name="data")
+    experiment_registry = CardRegistry(registry_name="experiment")
+    pipeline_registry = CardRegistry(registry_name="pipeline")
 
     yield {
         "data": data_registry,
@@ -277,16 +286,12 @@ def db_registries():
     }
 
     # close sessions
-    data_registry.registry._session.close()
-    model_registry.registry._session.close()
-    experiment_registry.registry._session.close()
-    pipeline_registry.registry._session.close()
 
     # drop tables
-    TestModelSchema.__table__.drop(bind=engine, checkfirst=True)
-    TestDataSchema.__table__.drop(bind=engine, checkfirst=True)
-    TestExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
-    TestPipelineSchema.__table__.drop(bind=engine, checkfirst=True)
+    ModelSchema.__table__.drop(bind=engine, checkfirst=True)
+    DataSchema.__table__.drop(bind=engine, checkfirst=True)
+    ExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
+    PipelineSchema.__table__.drop(bind=engine, checkfirst=True)
 
 
 @pytest.fixture(scope="session")

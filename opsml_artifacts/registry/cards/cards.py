@@ -11,10 +11,10 @@ from pydantic import BaseModel, root_validator, validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.drift.data_drift import DriftReport
-from opsml_artifacts.registry.cards.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.cards.storage import save_record_artifact_to_storage
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
+from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.types import DataDict, ModelDefinition
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
@@ -104,7 +104,7 @@ class DataCard(ArtifactCard):
     user_email: str
     data: Union[np.ndarray, pd.DataFrame, Table]
     drift_report: Optional[Dict[str, DriftReport]] = None
-    data_splits: List[Dict[str, Any]] = []
+    data_splits: Optional[List[Dict[str, Any]]]
     data_uri: Optional[str] = None
     drift_uri: Optional[str] = None
     version: Optional[int] = None
@@ -169,6 +169,7 @@ class DataCard(ArtifactCard):
     def _parse_data_splits(self) -> DataHolder:
 
         data_holder = DataHolder()
+        self.data_splits = cast(List[Dict[str, Any]], self.data_splits)
         for split in self.data_splits:
             label, data = DataSplitter(split_attributes=split).split(data=self.data)
             setattr(data_holder, label, data)

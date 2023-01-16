@@ -1,7 +1,5 @@
 from enum import Enum
 
-import numpy as np
-import pandas as pd
 from pydantic import BaseModel
 
 
@@ -22,45 +20,14 @@ class ArtifactStorageTypes(str, Enum):
     NDARRAY = "ndarray"
 
 
-DATA_ARTIFACTS = [
-    ArtifactStorageTypes.DATAFRAME,
-    ArtifactStorageTypes.ARROW_TABLE,
-    ArtifactStorageTypes.NDARRAY,
-]
+class CardNames(str, Enum):
+    DATA = "data"
+    EXPERIMENT = "experiment"
+    MODEL = "model"
+    PIPELINE = "pipeline"
 
 
-class Base(BaseModel):
-    def to_onnx(self):
-        raise NotImplementedError
-
-    def to_dataframe(self):
-        raise NotImplementedError
+NON_PIPELINE_CARDS = [card.value for card in CardNames if card.value != "pipeline"]
 
 
-class NumpyBase(Base):
-    def to_onnx(self):
-        return {
-            "inputs": np.array(
-                [list(self.dict().values())],
-                np.float32,
-            ).reshape(1, -1)
-        }
-
-    def to_dataframe(self):
-        raise NotImplementedError
-
-
-class PandasBase(Base):
-    def to_onnx(self):
-        feats = {}
-        for feat, feat_val in self:
-            if isinstance(feat_val, float):
-                feats[feat] = np.array([[feat_val]]).astype(np.float32)
-            elif isinstance(feat_val, int):
-                feats[feat] = np.array([[feat_val]]).astype(np.int64)
-            else:
-                feats[feat] = np.array([[feat_val]])
-        return feats
-
-    def to_dataframe(self):
-        return pd.DataFrame(self.dict(), index=[0])
+DATA_ARTIFACTS = list(ArtifactStorageTypes)
