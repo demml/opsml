@@ -33,7 +33,6 @@ from opsml_artifacts.registry.sql.sql_schema import (
     ExperimentSchema,
     PipelineSchema,
 )
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import StackingRegressor
 import lightgbm as lgb
 import joblib
