@@ -109,7 +109,6 @@ class ErrorSQL(FlightPlanSQL):
 class ComputeClient:
     def __init__(self) -> None:
         """Instantiates base compute client for analysis"""
-        pass
 
     @staticmethod
     def validate(compute_env: str) -> bool:

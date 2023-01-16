@@ -17,7 +17,7 @@ from opsml_artifacts.registry.sql.connection import create_sql_engine
 
 logger = ShiptLogging.get_logger(__name__)
 Base = declarative_base()
-year_month_date = "%Y-%m-%d"
+YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 class RegistryTableNames(str, Enum):
@@ -30,7 +30,7 @@ class RegistryTableNames(str, Enum):
 @declarative_mixin
 class BaseMixin:
     uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime(year_month_date))
+    date = Column("date", String(512), default=datetime.date.today().strftime(YEAR_MONTH_DATE))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
     app_env = Column("app_env", String(512), default=settings.app_env)
     name = Column("name", String(512))

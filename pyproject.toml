@@ -47,7 +47,6 @@ coverage = {extras = ["toml"], version = "^6.5.0"}
 mypy = "^0.991"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
-pylint-pydantic = "^0.1.4"
 
 
 [tool.isort]

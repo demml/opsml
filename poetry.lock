@@ -3325,26 +3325,6 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
-name = "pylint-pydantic"
-version = "0.1.4"
-description = "A Pylint plugin to help Pylint understand the Pydantic"
-category = "dev"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "pylint_pydantic-0.1.4-py3-none-any.whl", hash = "sha256:d42d9e95255b2f70f82a674cec159f417263363c7da0e28998964d83d7330c72"},
-]
-
-[package.dependencies]
-pydantic = "<2.0"
-pylint = ">2.0,<3.0"
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = "shipt-resolve"
-
-[[package]]
 name = "pymysql"
 version = "1.0.2"
 description = "Pure Python MySQL Driver"
@@ -4939,4 +4919,4 @@ reference = "shipt-resolve"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<=3.11"
-content-hash = "e15bc1104b0ca52c5504bf00573c0f3e92c14c9eadf3ed7469f98d61a8368889"
+content-hash = "0295dfd75c837020cb7c35155fe177fd7e88040442fd5b8976fbc2077adb4c6d"
