@@ -36,7 +36,7 @@ UPDATE_REGISTRY_MODELS = [
     OnnxModelType.XGB_REGRESSOR,
 ]
 
-AVAILABLE_MODEL_TYPES = set(model_type for model_type in OnnxModelType)
+AVAILABLE_MODEL_TYPES = list(OnnxModelType)
 
 
 class InputDataType(Enum):
@@ -70,3 +70,40 @@ class DataDict(BaseModel):
 class ModelDefinition(BaseModel):
     model_bytes: bytes = Field(..., description="Encrypted onnx model bytes")
     encrypt_key: bytes = Field(..., description="Key to user or decrypting model definition")
+
+
+class Base(BaseModel):
+    def to_onnx(self):
+        raise NotImplementedError
+
+    def to_dataframe(self):
+        raise NotImplementedError
+
+
+class NumpyBase(Base):
+    def to_onnx(self):
+        return {
+            "inputs": np.array(
+                [list(self.dict().values())],
+                np.float32,
+            ).reshape(1, -1)
+        }
+
+    def to_dataframe(self):
+        raise NotImplementedError
+
+
+class PandasBase(Base):
+    def to_onnx(self):
+        feats = {}
+        for feat, feat_val in self:
+            if isinstance(feat_val, float):
+                feats[feat] = np.array([[feat_val]]).astype(np.float32)
+            elif isinstance(feat_val, int):
+                feats[feat] = np.array([[feat_val]]).astype(np.int64)
+            else:
+                feats[feat] = np.array([[feat_val]])
+        return feats
+
+    def to_dataframe(self):
+        return pd.DataFrame(self.dict(), index=[0])

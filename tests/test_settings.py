@@ -1,12 +1,11 @@
-from opsml_artifacts.helpers.settings import SnowflakeCredentials, Settings, GCPEnvSetter
+from opsml_artifacts.helpers.settings import SnowflakeCredentials, GlobalSettings
 from opsml_artifacts.helpers.models import SnowflakeParams
 
 
 def test_params():
 
-    env_setter = GCPEnvSetter()
-    settings = Settings(**env_setter.attributes)
-    assert isinstance(settings, Settings)
+    settings = GlobalSettings()
+    assert isinstance(settings, GlobalSettings)
 
 
 def test_snowflake_creds():
