@@ -18,9 +18,7 @@ class SklearnPipeline(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name == "Pipeline":
-            return True
-        return False
+        return model_class_name == "Pipeline"
 
 
 class SklearnEstimator(ModelType):
@@ -30,7 +28,7 @@ class SklearnEstimator(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name not in [
+        return model_class_name not in [
             "StackingRegressor",
             "StackingClassifier",
             "Pipeline",
@@ -38,9 +36,7 @@ class SklearnEstimator(ModelType):
             "LGBMClassifier",
             "XGBRegressor",
             "Booster",
-        ]:
-            return True
-        return False
+        ]
 
 
 class SklearnStackingEstimator(ModelType):
@@ -50,9 +46,7 @@ class SklearnStackingEstimator(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name in ["StackingRegressor", "StackingClassifier"]:
-            return True
-        return False
+        return model_class_name in ["StackingRegressor", "StackingClassifier"]
 
 
 class LightGBMRegressor(ModelType):
@@ -62,9 +56,7 @@ class LightGBMRegressor(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name == "LGBMRegressor":
-            return True
-        return False
+        return model_class_name == "LGBMRegressor"
 
 
 class LightGBMClassifier(ModelType):
@@ -74,9 +66,7 @@ class LightGBMClassifier(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name == "LGBMClassifier":
-            return True
-        return False
+        return model_class_name == "LGBMClassifier"
 
 
 class XGBRegressor(ModelType):
@@ -86,9 +76,7 @@ class XGBRegressor(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name == "XGBRegressor":
-            return True
-        return False
+        return model_class_name == "XGBRegressor"
 
 
 class LightGBMBooster(ModelType):
@@ -98,6 +86,4 @@ class LightGBMBooster(ModelType):
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
-        if model_class_name == "Booster":
-            return True
-        return False
+        return model_class_name == "Booster"

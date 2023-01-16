@@ -127,7 +127,7 @@ class GlobalSettings(BaseSettings):
     gcs_bucket: str
     gcp_region: str
     app_env: str
-    path: str = os.getcwd()
+    path: str
     gcp_creds: Credentials
     snowflake_api_auth: str
     snowflake_api_url: str
@@ -143,7 +143,6 @@ class GlobalSettings(BaseSettings):
 
     @root_validator(pre=True)
     def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
-
         creds = GcpCredsSetter().get_creds()
         env_vars["gcp_creds"] = creds.creds
 
@@ -155,6 +154,7 @@ class GlobalSettings(BaseSettings):
         for var_ in GcpVariables:
             env_vars[var_.name.lower()] = secret_getter.get_secret(secret_name=var_.value)
 
+        env_vars["path"] = os.getcwd()
         return env_vars
 
 

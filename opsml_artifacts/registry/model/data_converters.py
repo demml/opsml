@@ -91,9 +91,7 @@ class NumpyOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == np.ndarray and model_type in AVAILABLE_MODEL_TYPES:
-            return True
-        return False
+        return data_type == np.ndarray and model_type in AVAILABLE_MODEL_TYPES
 
 
 class PandasOnnxConverter(DataConverter):
@@ -110,10 +108,7 @@ class PandasOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == pd.DataFrame:
-            if model_type != OnnxModelType.SKLEARN_PIPELINE:
-                return True
-        return False
+        return data_type == pd.DataFrame and model_type != OnnxModelType.SKLEARN_PIPELINE
 
 
 class PandasPipelineOnnxConverter(DataConverter):
@@ -150,10 +145,7 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
-        if data_type == pd.DataFrame:
-            if model_type == OnnxModelType.SKLEARN_PIPELINE:
-                return True
-        return False
+        return data_type == pd.DataFrame and model_type == OnnxModelType.SKLEARN_PIPELINE
 
 
 class OnnxDataConverter:

@@ -120,12 +120,7 @@ class ParquetStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        if artifact_type in [
-            ArtifactStorageTypes.ARROW_TABLE,
-            ArtifactStorageTypes.DATAFRAME,
-        ]:
-            return True
-        return False
+        return artifact_type in [ArtifactStorageTypes.ARROW_TABLE, ArtifactStorageTypes.DATAFRAME]
 
 
 class NumpyStorage(ArtifactStorage):
@@ -154,9 +149,7 @@ class NumpyStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        if artifact_type == ArtifactStorageTypes.NDARRAY:
-            return True
-        return False
+        return artifact_type == ArtifactStorageTypes.NDARRAY
 
 
 class JoblibStorage(ArtifactStorage):
@@ -184,9 +177,7 @@ class JoblibStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        if artifact_type not in DATA_ARTIFACTS:
-            return True
-        return False
+        return artifact_type not in DATA_ARTIFACTS
 
 
 def save_record_artifact_to_storage(

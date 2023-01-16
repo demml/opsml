@@ -65,11 +65,11 @@ class AltairChart:
         return chart
 
     def build_chart(self, chart_title: str):
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def validate_type(chart_type: int):
-        pass
+        raise NotImplementedError
 
 
 class CategoricalChart(AltairChart):
@@ -84,9 +84,7 @@ class CategoricalChart(AltairChart):
 
     @staticmethod
     def validate_type(chart_type: int):
-        if ChartType(chart_type) == ChartType.CATEGORICAL:
-            return True
-        return False
+        return ChartType(chart_type) == ChartType.CATEGORICAL
 
 
 class NumericChart(AltairChart):
@@ -101,9 +99,7 @@ class NumericChart(AltairChart):
 
     @staticmethod
     def validate_type(chart_type: int):
-        if ChartType(chart_type) == ChartType.NUMERIC:
-            return True
-        return False
+        return ChartType(chart_type) == ChartType.NUMERIC
 
 
 class AucChart(AltairChart):
@@ -136,6 +132,4 @@ class AucChart(AltairChart):
 
     @staticmethod
     def validate_type(chart_type: int):
-        if ChartType(chart_type) == ChartType.AUC:
-            return True
-        return False
+        return ChartType(chart_type) == ChartType.AUC

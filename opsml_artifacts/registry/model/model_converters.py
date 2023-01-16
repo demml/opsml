@@ -126,14 +126,10 @@ class ModelConverter:
 
 class SklearnOnnxModel(ModelConverter):
     def _is_stacking_estimator(self):
-        if self.model_type == OnnxModelType.STACKING_ESTIMATOR:
-            return True
-        return False
+        return self.model_type == OnnxModelType.STACKING_ESTIMATOR
 
     def _is_pipeline(self):
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
-            return True
-        return False
+        return self.model_type == OnnxModelType.SKLEARN_PIPELINE
 
     def _update_onnx_registries_pipelines(self):
         for model_step in self.model.steps:
@@ -176,9 +172,7 @@ class SklearnOnnxModel(ModelConverter):
 
     @staticmethod
     def validate(model_type: str) -> bool:
-        if model_type in SKLEARN_SUPPORTED_MODEL_TYPES:
-            return True
-        return False
+        return model_type in SKLEARN_SUPPORTED_MODEL_TYPES
 
 
 class LighGBMBoosterOnnxModel(ModelConverter):
@@ -199,9 +193,7 @@ class LighGBMBoosterOnnxModel(ModelConverter):
 
     @staticmethod
     def validate(model_type: str) -> bool:
-        if model_type in LIGHTGBM_SUPPORTED_MODEL_TYPES:
-            return True
-        return False
+        return model_type in LIGHTGBM_SUPPORTED_MODEL_TYPES
 
 
 class OnnxModelConverter:

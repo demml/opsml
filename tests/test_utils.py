@@ -2,6 +2,7 @@ import os
 from pathlib import PosixPath
 
 from opsml_artifacts.helpers import utils
+from opsml_artifacts.helpers import gcp_utils
 from opsml_artifacts.helpers.settings import settings
 
 
@@ -34,7 +35,7 @@ def test_gcs_storage_client_integration():
     # upload
     path = "test_upload/test.csv"
 
-    storage_client = utils.GCSStorageClient(
+    storage_client = gcp_utils.GCSStorageClient(
         gcp_credentials=settings.gcp_creds,
     )
 
