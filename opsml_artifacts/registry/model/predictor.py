@@ -140,7 +140,6 @@ class OnnxModelPredictor:
             output_names=[self._label_name],
             input_feed=pred_data.to_onnx(),
         )[0]
-        # prediction = self.sess.run(None, pred_data.to_onnx())[0]
 
         return float(prediction[0])
 

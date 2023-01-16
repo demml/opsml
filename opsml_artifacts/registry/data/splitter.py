@@ -53,9 +53,7 @@ class PandasIndexSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        if data_type == pd.DataFrame and split_dict.get("indices") is not None:
-            return True
-        return False
+        return data_type == pd.DataFrame and split_dict.get("indices") is not None
 
 
 class PandasRowSplitter(Splitter):
@@ -64,9 +62,7 @@ class PandasRowSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        if data_type == pd.DataFrame and split_dict.get("start") is not None:
-            return True
-        return False
+        return data_type == pd.DataFrame and split_dict.get("start") is not None
 
 
 class PandasColumnSplitter(Splitter):
@@ -76,9 +72,7 @@ class PandasColumnSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        if data_type == pd.DataFrame and split_dict.get("column") is not None:
-            return True
-        return False
+        return data_type == pd.DataFrame and split_dict.get("column") is not None
 
 
 class PyArrowIndexSplitter(Splitter):
@@ -87,9 +81,7 @@ class PyArrowIndexSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        if data_type == pa.Table and split_dict.get("indices") is not None:
-            return True
-        return False
+        return data_type == pa.Table and split_dict.get("indices") is not None
 
 
 class NumpyIndexSplitter(Splitter):
@@ -98,9 +90,7 @@ class NumpyIndexSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        if data_type == np.ndarray and split_dict.get("indices") is not None:
-            return True
-        return False
+        return data_type == np.ndarray and split_dict.get("indices") is not None
 
 
 class NumpyRowSplitter(Splitter):
@@ -110,9 +100,7 @@ class NumpyRowSplitter(Splitter):
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        if data_type == np.ndarray and split_dict.get("start") is not None:
-            return True
-        return False
+        return data_type == np.ndarray and split_dict.get("start") is not None
 
 
 class DataSplitter:

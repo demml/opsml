@@ -59,12 +59,7 @@ class LightGBMRegistryUpdater(RegistryUpdater):
 
     @staticmethod
     def validate(model_estimator: str) -> bool:
-        if model_estimator in [
-            OnnxModelType.LGBM_REGRESSOR,
-            OnnxModelType.LGBM_CLASSIFIER,
-        ]:
-            return True
-        return False
+        return model_estimator in [OnnxModelType.LGBM_REGRESSOR, OnnxModelType.LGBM_CLASSIFIER]
 
 
 class XGBoostRegressorRegistryUpdater(RegistryUpdater):

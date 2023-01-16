@@ -428,19 +428,9 @@ class ExperimentCard(ArtifactCard):
     artifacts: Optional[Dict[str, Any]] = None
     artifact_uris: Optional[Dict[str, str]] = None
 
-    @validator("metrics", pre=True, always=True)
+    @validator("metrics", "artifacts", pre=True, always=True)
     def set_metrics(cls, value):  # pylint: disable=no-self-argument
-        if not value:
-            value = {}
-            return value
-        return value
-
-    @validator("artifacts", pre=True, always=True)
-    def set_artifacts(cls, value):  # pylint: disable=no-self-argument
-        if not value:
-            value = {}
-            return value
-        return value
+        return value or {}
 
     def add_metric(self, name: str, value: Union[int, float]):
         """Adds metric to the existing ExperimentCard metric dictionary

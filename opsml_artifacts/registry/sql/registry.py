@@ -113,9 +113,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
     def _check_uid(self, uid: str, table_to_check: str):
         query = self._query_if_uid_exists(uid=uid, table_to_check=table_to_check)
         exists = self._exceute_query(query=query)
-        if not exists:
-            return False
-        return True
+        return bool(exists)
 
     # Read
     def load_card(  # type: ignore
@@ -184,9 +182,7 @@ class DataCardRegistry(SQLRegistry):
 
     @staticmethod
     def validate(registry_name: str):
-        if registry_name in RegistryTableNames.DATA:
-            return True
-        return False
+        return registry_name in RegistryTableNames.DATA
 
 
 class ModelCardRegistry(SQLRegistry):
@@ -245,9 +241,7 @@ class ModelCardRegistry(SQLRegistry):
 
     @staticmethod
     def validate(registry_name: str):
-        if registry_name in RegistryTableNames.MODEL:
-            return True
-        return False
+        return registry_name in RegistryTableNames.MODEL
 
 
 class ExperimentCardRegistry(SQLRegistry):
@@ -282,9 +276,7 @@ class ExperimentCardRegistry(SQLRegistry):
 
     @staticmethod
     def validate(registry_name: str):
-        if registry_name in RegistryTableNames.EXPERIMENT:
-            return True
-        return False
+        return registry_name in RegistryTableNames.EXPERIMENT
 
 
 class PipelineCardRegistry(SQLRegistry):
@@ -332,9 +324,7 @@ class PipelineCardRegistry(SQLRegistry):
 
     @staticmethod
     def validate(registry_name: str):
-        if registry_name in RegistryTableNames.PIPELINE:
-            return True
-        return False
+        return registry_name in RegistryTableNames.PIPELINE
 
 
 class CardRegistry:

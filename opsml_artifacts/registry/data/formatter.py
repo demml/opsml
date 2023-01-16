@@ -41,9 +41,7 @@ class PandasFormatter(ArrowFormatter):
 
     @staticmethod
     def validate_data(data: pd.DataFrame):
-        if isinstance(data, pd.DataFrame):
-            return True
-        return False
+        return isinstance(data, pd.DataFrame)
 
 
 class NumpyFormatter(ArrowFormatter):
@@ -67,9 +65,7 @@ class NumpyFormatter(ArrowFormatter):
 
     @staticmethod
     def validate_data(data: np.ndarray):
-        if isinstance(data, np.ndarray):
-            return True
-        return False
+        return isinstance(data, np.ndarray)
 
 
 class ArrowTableFormatter(ArrowFormatter):
@@ -92,9 +88,7 @@ class ArrowTableFormatter(ArrowFormatter):
 
     @staticmethod
     def validate_data(data: pa.Table):
-        if isinstance(data, pa.Table):
-            return True
-        return False
+        return isinstance(data, pa.Table)
 
 
 # Run tests for data formatter

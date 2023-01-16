@@ -38,9 +38,7 @@ class BundleVariable(DependentVariable):
 
     @staticmethod
     def validate(level: str) -> bool:
-        if level.upper() == "BUNDLE":
-            return True
-        return False
+        return level.upper() == "BUNDLE"
 
 
 class OrderVariable(DependentVariable):
@@ -58,9 +56,7 @@ class OrderVariable(DependentVariable):
 
     @staticmethod
     def validate(level: str) -> bool:
-        if level.upper() == "ORDER":
-            return True
-        return False
+        return level.upper() == "ORDER"
 
 
 class StopVariable(DependentVariable):
@@ -78,9 +74,7 @@ class StopVariable(DependentVariable):
 
     @staticmethod
     def validate(level: str) -> bool:
-        if level.upper() == "STOP":
-            return True
-        return False
+        return level.upper() == "STOP"
 
 
 class DependentVariables:

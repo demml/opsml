@@ -17,6 +17,7 @@ from opsml_artifacts.registry.sql.connection import create_sql_engine
 
 logger = ShiptLogging.get_logger(__name__)
 Base = declarative_base()
+year_month_date = "%Y-%m-%d"
 
 
 class RegistryTableNames(str, Enum):
@@ -27,28 +28,31 @@ class RegistryTableNames(str, Enum):
 
 
 @declarative_mixin
-class DataMixin:
-
+class BaseMixin:
     uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
+    date = Column("date", String(512), default=datetime.date.today().strftime(year_month_date))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
     app_env = Column("app_env", String(512), default=settings.app_env)
     name = Column("name", String(512))
     team = Column("team", String(512))
+    version = Column("version", Integer, nullable=False)
+    user_email = Column("user_email", String(512))
+
+
+@declarative_mixin
+class DataMixin:
     data_uri = Column("data_uri", String(2048))
     drift_uri = Column("drift_uri", String(2048))
     feature_map = Column("feature_map", JSON)
     feature_descriptions = Column("feature_descriptions", JSON)
     data_splits = Column("data_splits", JSON)
     data_type = Column("data_type", String(512))
-    version = Column("version", Integer, nullable=False)
-    user_email = Column("user_email", String(512))
     dependent_vars = Column("dependent_vars", JSON)
 
     __table_args__ = {"schema": "ds-artifact-registry"}
 
 
-class DataSchema(Base, DataMixin):  # type: ignore
+class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
     __tablename__ = RegistryTableNames.DATA.value
 
     def __repr__(self):
@@ -57,22 +61,13 @@ class DataSchema(Base, DataMixin):  # type: ignore
 
 @declarative_mixin
 class ModelMixin:
-
-    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
-    timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
-    app_env = Column("app_env", String(512), default=settings.app_env)
-    name = Column("name", String(512))
-    team = Column("team", String(512))
     model_uri = Column("model_uri", String(2048))
     model_type = Column("model_type", String(512))
-    version = Column("version", Integer, nullable=False)
-    user_email = Column("user_email", String(512))
 
     __table_args__ = {"schema": "ds-artifact-registry"}
 
 
-class ModelSchema(Base, ModelMixin):  # type: ignore
+class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
     __tablename__ = RegistryTableNames.MODEL.value
 
     def __repr__(self):
@@ -81,15 +76,6 @@ class ModelSchema(Base, ModelMixin):  # type: ignore
 
 @declarative_mixin
 class ExperimentMixin:
-
-    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
-    timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
-    app_env = Column("app_env", String(512), default=settings.app_env)
-    name = Column("name", String(512))
-    team = Column("team", String(512))
-    version = Column("version", Integer, nullable=False)
-    user_email = Column("user_email", String(512))
     data_card_uid = Column("data_card_uid", String(512))
     model_card_uid = Column("model_card_uid", String(512))
     pipeline_card_uid = Column("pipeline_card_uid", String(512))
@@ -99,7 +85,7 @@ class ExperimentMixin:
     __table_args__ = {"schema": "ds-artifact-registry"}
 
 
-class ExperimentSchema(Base, ExperimentMixin):  # type: ignore
+class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
     __tablename__ = RegistryTableNames.EXPERIMENT.value
 
     def __repr__(self):
@@ -108,15 +94,6 @@ class ExperimentSchema(Base, ExperimentMixin):  # type: ignore
 
 @declarative_mixin
 class PipelineMixin:
-
-    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime("%Y-%m-%d"))
-    timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
-    app_env = Column("app_env", String(512), default=settings.app_env)
-    name = Column("name", String(512))
-    team = Column("team", String(512))
-    version = Column("version", Integer, nullable=False)
-    user_email = Column("user_email", String(512))
     pipeline_code_uri = Column("pipeline_code_uri", String(512))
     data_card_uids = Column("data_card_uids", JSON)
     model_card_uids = Column("model_card_uids", JSON)
@@ -125,7 +102,7 @@ class PipelineMixin:
     __table_args__ = {"schema": "ds-artifact-registry"}
 
 
-class PipelineSchema(Base, PipelineMixin):  # type: ignore
+class PipelineSchema(Base, BaseMixin, PipelineMixin):  # type: ignore
     __tablename__ = RegistryTableNames.PIPELINE.value
 
     def __repr__(self):
@@ -167,7 +144,6 @@ class SqlManager:
     def _exceute_query(self, query: Any):
         with self._session() as sess:
             result = sess.scalars(query).first()
-            print(result)
         return result
 
     def _add_commit_transaction(self, record=Type[REGISTRY_TABLES]):

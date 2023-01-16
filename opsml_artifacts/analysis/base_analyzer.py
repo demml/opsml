@@ -87,9 +87,7 @@ class PaySQL(FlightPlanSQL):
 
     @staticmethod
     def validate(analysis_type: str) -> bool:
-        if analysis_type.lower() == "pay":
-            return True
-        return False
+        return analysis_type.lower() == "pay"
 
 
 class ErrorSQL(FlightPlanSQL):
@@ -105,13 +103,12 @@ class ErrorSQL(FlightPlanSQL):
 
     @staticmethod
     def validate(analysis_type: str) -> bool:
-        if analysis_type.lower() == "error":
-            return True
-        return False
+        return analysis_type.lower() == "error"
 
 
 class ComputeClient:
     def __init__(self) -> None:
+        """Instantiates base compute client for analysis"""
         pass
 
     @staticmethod
@@ -198,9 +195,7 @@ class GcpComputeClient(ComputeClient):
 
     @staticmethod
     def validate(compute_env: str) -> bool:
-        if compute_env.lower() == "gcp":
-            return True
-        return False
+        return compute_env.lower() == "gcp"
 
 
 class LocalComputeClient(ComputeClient):
@@ -269,9 +264,7 @@ class LocalComputeClient(ComputeClient):
 
     @staticmethod
     def validate(compute_env: str) -> bool:
-        if compute_env.lower() == "local":
-            return True
-        return False
+        return compute_env.lower() == "local"
 
 
 class PayErrorAnalyzer:
