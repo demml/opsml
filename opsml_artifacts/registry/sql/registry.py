@@ -19,6 +19,7 @@ from opsml_artifacts.registry.sql.records import (
     LoadedModelRecord,
     LoadedPipelineRecord,
     PipelineRegistryRecord,
+    ExperimentRegistryRecord,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
 
@@ -273,6 +274,20 @@ class ExperimentCardRegistry(SQLRegistry):
         experiment_record = LoadedExperimentRecord(**sql_data.__dict__)
         experiment_record.load_artifacts()
         return ExperimentCard(**experiment_record.dict())
+
+    def update_card(self, card: ExperimentCard) -> None:
+
+        """Updates an existing pipeline card in the pipeline registry
+
+        Args:
+            card (PipelineCard): Existing pipeline card
+
+        Returns:
+            None
+        """
+
+        record = ExperimentRegistryRecord(**card.dict())
+        self._update_record(record=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
