@@ -14,12 +14,12 @@ from opsml_artifacts.registry.cards.cards import (
 from opsml_artifacts.registry.sql.query import QueryCreatorMixin
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
+    ExperimentRegistryRecord,
     LoadedDataRecord,
     LoadedExperimentRecord,
     LoadedModelRecord,
     LoadedPipelineRecord,
     PipelineRegistryRecord,
-    ExperimentRegistryRecord,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
 
