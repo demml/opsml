@@ -19,6 +19,10 @@
 
 `OpsML-Artifacts` is a library for tracking,  storing, versioning, and reproducing artifacts (aka Artifact Cards) across the ML-lifecycle. Think of it as trading cards for machine learning.
 
+<p align="center">
+  <img src="images/Opsml-Artifacts.png"  width="230" height="200" alt="py opsml logo"/>
+</p>
+
 ## Key Features:
   - Simple Design:  Standardized design for all card types and registries to make switching between and registering different types easy.
 
@@ -26,4 +30,3 @@
 
   - Short: Easy to integrate into your existing workflows. You just need a card type and a registry to get started
 
-  [![Quality Gate Status](https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=alert_status&token=squ_06f8921843044242e5975ed012023f7b09066e9c)](https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq)
