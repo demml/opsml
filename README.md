@@ -29,7 +29,8 @@
   <a href="#create-a-card">Create a Card</a> •
   <a href="#datacard">DataCard</a> •
   <a href="#modelcard">ModelCard</a> •
-  <a href="#onnxpredictor">ModelCard Predictor</a> 
+  <a href="#modelcard-predictor">ModelCard Predictor</a> •
+  <a href="#benchmarks">Benchmarks</a> 
 </p>
 
 ## What is it?
@@ -85,6 +86,10 @@ export GOOGLE_ACCOUNT_JSON_BASE64='our shared key'
 ## Create a Card
 
 Think of ArtifactCards as trading cards that you can link together in a set or deck. Each card can exist independently and provides descriptive information related to the card type.
+
+<p align="center">
+  <img src="images/cards.png"  width="345" height="222"/>
+</p>
 
 There are 4 card types in `Opsml-Artifacts`.
 
@@ -184,7 +189,7 @@ print(loaded_card.data.head().to_markdown())
 ## ModelCard
 The following example shows how to create a ModelCard. For more information on what you can do with ModelCards, refer to additional examples in the example dir.
 
-- We will use the DataCard from the previous example to train and model and create as ModelCard
+- We will use the DataCard from the previous example to train a model and create a ModelCard
 
 ```python
 from opsml_artifacts.registry.model.creator import ModelCardCreator
@@ -281,13 +286,21 @@ onnx_pred = round(onnx_model.predict(record),4)
 # Compare to original model
 orig_pred = round(onnx_model.predict_with_model(lgb_model, record),4)
 
-print(f"Onnx: {onnx_pred}", f"Original: {orig_pred}")
+print(f"Onnx: {onnx_pred}", f"Lightgbm: {orig_pred}")
+```
+
+```text
+Onnx: 34.5272 Lightgbm: 34.5272
 ```
 
 ## Benchmarks
  - The following shows the performance imporvements of using a serialized onnx model vs its python equivalent (time for 1000 single predictions)
  - All times were normalized to the python model time
- 
+
 <p align="left">
   <img src="images/onnx-time-comparison.png"  width="398" height="237"/>
 </p>
+
+
+## Roadmap
+- Add in Tensorflow and Pytorch support for Onnx
