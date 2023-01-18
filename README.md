@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="images/opsml-artifacts-logo.png"  width="536" height="230" alt="py opsml logo"/>
+  <img src="images/opsml-artifacts-logo-cropped.png"  width="536" height="230" alt="py opsml logo"/>
   <br>
 </h1>
 
@@ -23,8 +23,8 @@
 </p>
 
 <p align="center">
-  <a href="#key-features">What is it?</a> •
-  <a href="#how-to-use">Features</a> •
+  <a href="#what-is-it">What is it?</a> •
+  <a href="#features">Features</a> •
   <a href="#download">Download</a> •
   <a href="#credits">Credits</a> •
   <a href="#related">Related</a> •
