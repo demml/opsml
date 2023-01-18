@@ -144,3 +144,18 @@ data_registry.register_card(card=data_card)
 ```text
 {"level": "INFO", "message": "Table: tarp_drop_off registered as version 1", "timestamp": "2023-01-18T16:47:04.772149Z", "app_env": "development", "host": null, "version": null}
 ```
+
+### Searching for and Loading Existing DataCards
+```python
+from opsml_artifacts import CardRegistry
+
+data_registry = CardRegistry(registry_name="data")
+tarp_list = data_registry.list_cards(team="SPMS", name="tarp_drop_off")
+
+print(tarp_list[["uid", "date", "user_email", "name", "version", "feature_map"]].to_markdown()) # Filter some of the columns for readability
+```
+#### Output
+|    | uid                              | date       | user_email                 | name          |   version | feature_map                                                                                                                                                                                                              |
+|---:|:---------------------------------|:-----------|:---------------------------|:--------------|----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  0 | 9e03984187034382b3ee74d30519f4eb | 2023-01-18 | steven.forrester@shipt.com | tarp_drop_off |         2 | {'NBR_RX': 'int64', 'APT_FLG': 'int8', 'METRO_X': 'double', 'METRO_Y': 'double', 'METRO_Z': 'double', 'NBR_APT': 'int64', 'EVAL_FLG': 'int8', 'NBR_ORDERS': 'int16', 'DROP_OFF_TIME': 'double', 'NBR_ADDRESSES': 'int8'} |
+|  1 | 0c551c4dbfe9478ab3094def3b5b2e5d | 2023-01-18 | steven.forrester@shipt.com | tarp_drop_off |         1 | {'NBR_RX': 'int64', 'APT_FLG': 'int8', 'METRO_X': 'double', 'METRO_Y': 'double', 'METRO_Z': 'double', 'NBR_APT': 'int64', 'EVAL_FLG': 'int8', 'NBR_ORDERS': 'int16', 'DROP_OFF_TIME': 'double', 'NBR_ADDRESSES': 'int8'} |
