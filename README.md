@@ -145,7 +145,7 @@ data_registry.register_card(card=data_card)
 ```
 
 #### Output
-```text
+```bash
 {"level": "INFO", "message": "Table: tarp_drop_off registered as version 1", "timestamp": "2023-01-18T16:47:04.772149Z", "app_env": "development", "host": null, "version": null}
 ```
 
@@ -178,3 +178,58 @@ print(loaded_card.data.head().to_markdown())
 |  2 |               4 |            4 |        0 |         4 |  1233.15  |  -4782.66 |   4024.31 |         1 |         9.23536 |          1 |
 |  3 |              11 |           12 |        0 |        12 |   971.158 |  -5637.71 |   2804.05 |         1 |        59.68    |          1 |
 |  4 |               3 |            3 |        0 |         3 |   746.07  |  -5612.94 |   2920.26 |         1 |         5.38533 |          1 |
+
+
+## ModelCard
+The following example shows how to create a ModelCard. For more information on what you can do with ModelCards, refer to additional examples in the example dir.
+
+- We will use the DataCard from the previous example to train and model and create as ModelCard
+
+```python
+from opsml_artifacts.registry.model.creator import ModelCardCreator
+from lightgbm import LGBMRegressor
+
+model_registry = CardRegistry(registry_name="model") #load the model registry
+
+data_splits = data_card.split_data() # get the data splits defined by split logic (data_card.data_splits)
+
+# Prepare train data
+data_splits.train.pop("EVAL_FLG") # pop off eval flg
+y_train = data_splits.train.pop("DROP_OFF_TIME") # get train target
+
+# Prepare test data
+data_splits.test.pop("EVAL_FLG") # pop off eval flg
+y_test = data_splits.test.pop("DROP_OFF_TIME") # get test target
+
+# fit model
+lgb_model = LGBMRegressor()
+lgb_model.fit(data_splits.train, y_train)
+
+# create the model card
+card_creator = ModelCardCreator(model=lgb_model, input_data=data_splits.train[:10])
+
+model_card = card_creator.create_model_card(
+    model_name="tarp_lgb",
+    team=TEAM, # defined above
+    user_email=USER_EMAIL, # defined above
+    registered_data_uid=data_card.uid # this is required if you are planning on registering the model
+)
+```
+#### Output
+
+```bash
+{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-01-18T18:29:19.587903Z", "app_env": "development", "host": null, "version": null}
+{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-01-18T18:29:20.031568Z", "app_env": "development", "host": null, "version": null}
+```
+
+ModelCardCreator returns a ModelCard containing your model serialized into Onnx format
+
+```python
+# Registering the ModelCard
+model_registry = CardRegistry(registry_name="model")
+model_registry.register_card(card=model_card)
+```
+
+```bash
+{"level": "INFO", "message": "Table: tarp_lgb registered as version 1", "timestamp": "2023-01-18T18:33:53.003721Z", "app_env": "development", "host": null, "version": null}
+```
