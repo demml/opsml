@@ -49,7 +49,6 @@ steps:
     commands:
       - pip install poetry==1.2.2
       - poetry install --with dev
-      - make format
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -118,5 +117,6 @@ steps:
       # tag events validate poetry version is equal to the tag
       # increment patch version for releases based on drone tag
       # manually updating toml is annoying
+      - pip install poetry==1.2.2
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
