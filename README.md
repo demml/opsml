@@ -1,5 +1,3 @@
-# OpsML Artifacts
-
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
   <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml-data/status.svg"/>
@@ -9,10 +7,21 @@
 
   <img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" />
 
-  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-data_AYTUBacTQq5Yye6S24hq">
-  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-data_AYTUBacTQq5Yye6S24hq&metric=alert_status&token=squ_52f05a6d9e8d193bcbd54d5142cae5652e35cc4f" />
+  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
+  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=alert_status&token=squ_06f8921843044242e5975ed012023f7b09066e9c" />
 
-  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-data_AYTUBacTQq5Yye6S24hq">
-  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-data_AYTUBacTQq5Yye6S24hq&metric=coverage&token=squ_52f05a6d9e8d193bcbd54d5142cae5652e35cc4f" />
+  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
+  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=coverage&token=squ_06f8921843044242e5975ed012023f7b09066e9c" />
 
 </p>
+
+# OpsML Artifacts
+
+`OpsML-Artifacts` is a library for tracking,  storing, versioning, and reproducing artifacts (aka Artifact Cards) across the ML-lifecycle. Think of it as trading cards for machine learning.
+
+## Key Features:
+  - Simple Design:  Standardized design for all card types and registries to make switching between and registering different types easy.
+
+  - Automation: Automatic type checking for card attributes. Automated processes depending on card type (Onnx conversion for model, api signature generation, data schema creation)
+
+  - Short: Easy to integrate into your existing workflows. You just need a card type and a registry to get started
