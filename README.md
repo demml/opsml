@@ -27,6 +27,8 @@
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#create-a-card">Create a Card</a> •
+  <a href="#datacard">DataCard</a> •
+  <a href="#modelcard">ModelCard</a> 
 </p>
 
 ## What is it?
@@ -34,13 +36,13 @@
 `OpsML-Artifacts` is a library for tracking,  storing, versioning, and reproducing artifacts (aka Artifact Cards) across the ML-lifecycle. Think of it as trading cards for machine learning.
 
 <p align="center">
-  <img src="images/artifacts-diagram.png"  width="480" height="400" alt="py opsml logo"/>
+  <img src="images/card-flow.png"  width="480" height="400" alt="py opsml logo"/>
 </p>
 
 ## Features:
-  - **Simple Design**:  Standardized design for all card types and registries to make switching between and registering different types easy.
+  - **Simple Design**:  Standardized design for all card types and registries to make switching between and registering different cards easy.
 
-  - **Automation**: Automatic type checking for card attributes. Automated processes depending on card type (Onnx conversion for model, api signature generation, data schema creation)
+  - **Automation**: Automatic type checking (the power of pydantic!) for card attributes. Automated processes depending on card type (Onnx conversion for model, api signature generation, data schema creation)
 
   - **Short**: Easy to integrate into your existing workflows. You just need a card type and a registry to get started
 
@@ -86,14 +88,16 @@ Think of ArtifactCards as trading cards that you can link together in a set or d
 There are 4 card types in `Opsml-Artifacts`.
 
 Card Types:
-- **DataCard**: Card used to store data-related information (data, dependent variables, feature descriptions, split logic, etc.)
-- **ModelCards**: Card used to store trained model and model information
-- **ExperimentCard**: Stores artifact and metric info related to Data, Model, or Pipeline cards.
-- **PipelineCard**: Stores information related to training pipeline and all other cards created within the pipeline (Data, Experiment, Model)
+- `DataCard`: Card used to store data-related information (data, dependent variables, feature descriptions, split logic, etc.)
+- `ModelCards`: Card used to store trained model and model information
+- `ExperimentCard`: Stores artifact and metric info related to Data, Model, or Pipeline cards.
+- `PipelineCard`: Stores information related to training pipeline and all other cards created within the pipeline (Data, Experiment, Model)
 
 Quit the yapping and show me an example!
 
-### Create and Register DataCard
+## DataCard
+The following example shows how to create a DataCard. For more information on what you can do with DataCards, refer to additional examples in the example dir.
+
 ```python
 from opsml_artifacts import SnowflakeQueryRunner, DataCard, CardRegistry
 
@@ -152,10 +156,25 @@ from opsml_artifacts import CardRegistry
 data_registry = CardRegistry(registry_name="data")
 tarp_list = data_registry.list_cards(team="SPMS", name="tarp_drop_off")
 
-print(tarp_list[["uid", "date", "user_email", "name", "version", "feature_map"]].to_markdown()) # Filter some of the columns for readability
+print(tarp_list.loc[:, ~tarp_list.columns.isin(["feature_map", "data_splits", "drift_uri"])].to_markdown()) # Filter some of the columns for readability
 ```
 #### Output
 |    | uid                              | date       |     timestamp | app_env   | name          | team   |   version | user_email                 | data_uri                                                                                                        | feature_descriptions   | data_type   | dependent_vars    |
 |---:|:---------------------------------|:-----------|--------------:|:----------|:--------------|:-------|----------:|:---------------------------|:----------------------------------------------------------------------------------------------------------------|:-----------------------|:------------|:------------------|
 |  0 | 9e03984187034382b3ee74d30519f4eb | 2023-01-18 | 1674059839649 | staging   | tarp_drop_off | SPMS   |         2 | steven.forrester@shipt.com | gs://shipt-spms-stg-bucket/DATA_REGISTRTY/SPMS/tarp_drop_off/version-2/1a7d7f2d1e4749f692654bced16b7d5b.parquet |                        | DataFrame   | ['DROP_OFF_TIME'] |
 |  1 | 0c551c4dbfe9478ab3094def3b5b2e5d | 2023-01-18 | 1674059839649 | staging   | tarp_drop_off | SPMS   |         1 | steven.forrester@shipt.com | gs://shipt-spms-stg-bucket/DATA_REGISTRTY/SPMS/tarp_drop_off/version-1/a51f81f7b64d4cf791a3585264ba18c9.parquet |                        | DataFrame   | ['DROP_OFF_TIME'] |
+
+```python
+
+loaded_card = data_registry.load_card(uid="9e03984187034382b3ee74d30519f4eb") # load_card can take a few arguments. Be sure to check the docstring
+print(loaded_card.data.head().to_markdown())
+```
+
+#### Output
+|    |   NBR_ADDRESSES |   NBR_ORDERS |   NBR_RX |   NBR_APT |   METRO_X |   METRO_Y |   METRO_Z |   APT_FLG |   DROP_OFF_TIME |   EVAL_FLG |
+|---:|----------------:|-------------:|---------:|----------:|----------:|----------:|----------:|----------:|----------------:|-----------:|
+|  0 |              11 |           11 |        0 |        11 | -1990.75  |  -4926.25 |   3515.48 |         1 |        34.4031  |          1 |
+|  1 |               2 |            2 |        0 |         2 | -1990.75  |  -4926.25 |   3515.48 |         1 |         4.54011 |          1 |
+|  2 |               4 |            4 |        0 |         4 |  1233.15  |  -4782.66 |   4024.31 |         1 |         9.23536 |          1 |
+|  3 |              11 |           12 |        0 |        12 |   971.158 |  -5637.71 |   2804.05 |         1 |        59.68    |          1 |
+|  4 |               3 |            3 |        0 |         3 |   746.07  |  -5612.94 |   2920.26 |         1 |         5.38533 |          1 |
