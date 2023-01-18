@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h4 align="center">Trading cards for machine learning workflows.</h4>
+<h4 align="center">Trading cards for machine learning workflows</h4>
 
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
