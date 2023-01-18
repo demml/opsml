@@ -28,7 +28,8 @@
   <a href="#installation">Installation</a> •
   <a href="#create-a-card">Create a Card</a> •
   <a href="#datacard">DataCard</a> •
-  <a href="#modelcard">ModelCard</a> 
+  <a href="#modelcard">ModelCard</a> •
+  <a href="#onnxpredictor">ModelCard Predictor</a> 
 </p>
 
 ## What is it?
@@ -233,3 +234,60 @@ model_registry.register_card(card=model_card)
 ```bash
 {"level": "INFO", "message": "Table: tarp_lgb registered as version 1", "timestamp": "2023-01-18T18:33:53.003721Z", "app_env": "development", "host": null, "version": null}
 ```
+
+## ModelCard Predictor
+ModelCards create serialized onnx model definitions from the provided model upon creation. The onnx model implementation can be accessed through your_model_card.model()
+
+```python
+onnx_model = model_card.model()
+
+# Checkout the automated api sig (inferred from training data sample)
+onnx_model.api_sig.schema()
+```
+
+```text
+{'title': 'Features',
+ 'type': 'object',
+ 'properties': {'NBR_ADDRESSES': {'title': 'Nbr Addresses', 'type': 'integer'},
+  'NBR_ORDERS': {'title': 'Nbr Orders', 'type': 'integer'},
+  'NBR_RX': {'title': 'Nbr Rx', 'type': 'integer'},
+  'NBR_APT': {'title': 'Nbr Apt', 'type': 'integer'},
+  'METRO_X': {'title': 'Metro X', 'type': 'number'},
+  'METRO_Y': {'title': 'Metro Y', 'type': 'number'},
+  'METRO_Z': {'title': 'Metro Z', 'type': 'number'},
+  'APT_FLG': {'title': 'Apt Flg', 'type': 'integer'}},
+ 'required': ['NBR_ADDRESSES',
+  'NBR_ORDERS',
+  'NBR_RX',
+  'NBR_APT',
+  'METRO_X',
+  'METRO_Y',
+  'METRO_Z',
+  'APT_FLG']}
+```
+
+```python
+# FastAPI models (like our production ML apis) expect a dictionary as input
+# Our input data was a pandas schema, so lets convert that
+# Numpy arrays are also supported 
+record = data_splits.test[0:1].T.to_dict()[0]
+
+# if testing a model that was trained on a numpy array, the model will expect a dictionary with a single list
+# record = {"data": list(np.ravel(data[:1]))}
+
+# test the onnx model 
+onnx_pred = round(onnx_model.predict(record),4)
+
+# Compare to original model
+orig_pred = round(onnx_model.predict_with_model(lgb_model, record),4)
+
+print(f"Onnx: {onnx_pred}", f"Original: {orig_pred}")
+```
+
+## Benchmarks
+ - The following shows the performance imporvements of using a serialized onnx model vs its python equivalent (time for 1000 single predictions)
+ - All times were normalized to the python model time
+ 
+<p align="left">
+  <img src="images/onnx-time-comparison.png"  width="398" height="237"/>
+</p>
