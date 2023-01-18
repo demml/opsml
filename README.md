@@ -1,4 +1,9 @@
 <p align="center">
+  <img src="images/opsml-artifact-logo.png"  width="536" height="230" alt="py opsml logo"/>
+</p>
+
+
+<p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
   <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml-data/status.svg"/>
 
