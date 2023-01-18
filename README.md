@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="images/opsml-artifacts-logo-cropped.png"  width="536" height="230" alt="py opsml logo"/>
+  <img src="images/opsml-artifacts-logo-cropped.png"  width="409" height="123" alt="py opsml logo"/>
   <br>
 </h1>
 
@@ -25,10 +25,8 @@
 <p align="center">
   <a href="#what-is-it">What is it?</a> •
   <a href="#features">Features</a> •
-  <a href="#download">Download</a> •
-  <a href="#credits">Credits</a> •
-  <a href="#related">Related</a> •
-  <a href="#license">License</a>
+  <a href="#installation">Installation</a> •
+  <a href="#create-a-card">Create a Card</a> •
 </p>
 
 ## What is it?
@@ -40,9 +38,109 @@
 </p>
 
 ## Features:
-  - Simple Design:  Standardized design for all card types and registries to make switching between and registering different types easy.
+  - **Simple Design**:  Standardized design for all card types and registries to make switching between and registering different types easy.
 
-  - Automation: Automatic type checking for card attributes. Automated processes depending on card type (Onnx conversion for model, api signature generation, data schema creation)
+  - **Automation**: Automatic type checking for card attributes. Automated processes depending on card type (Onnx conversion for model, api signature generation, data schema creation)
 
-  - Short: Easy to integrate into your existing workflows. You just need a card type and a registry to get started
+  - **Short**: Easy to integrate into your existing workflows. You just need a card type and a registry to get started
 
+## Installation:
+Before installing, you will need to set up your Artifactory credentials.
+
+#### Request credentials for [Artifactory](https://techhub.shipt.com/engineering/infrastructure/devops/artifactory/) in Slack `#ask-info-sec`
+
+Once you have your credentials, set the following variables.
+```bash
+export POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME=your_username
+export POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD=your_password
+```
+
+If using poetry, you must also add the following in your `pyproject.toml`
+```toml
+[[tool.poetry.source]]
+name = "shipt-resolve"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+default = true
+```
+
+Next, add opsml-artifacts to your environment
+```bash
+poetry add opsml-artifacts
+```
+
+### GCP Resources
+`OpsML-Artifacts` relies on GCP resources for managing Artifact Cards. As a result you will need to configure your GCP credentials (easy to do) in 1 of 2 ways.
+
+1. Set `GOOGLE_ACCOUNT_JSON_BASE64` as an env variable. This key can be found in our slack channel.
+
+```bash
+export GOOGLE_ACCOUNT_JSON_BASE64='our shared key'
+```
+
+2. Install the [google cloud sdk](https://cloud.google.com/sdk/docs/install) and make sure you are added to our core gcp project (tbd)
+
+## Create a Card
+
+Think of ArtifactCards as trading cards that you can link together in a set or deck. Each card can exist independently and provides descriptive information related to the card type.
+
+There are 4 card types in `Opsml-Artifacts`.
+
+Card Types:
+- **DataCard**: Card used to store data-related information (data, dependent variables, feature descriptions, split logic, etc.)
+- **ModelCards**: Card used to store trained model and model information
+- **ExperimentCard**: Stores artifact and metric info related to Data, Model, or Pipeline cards.
+- **PipelineCard**: Stores information related to training pipeline and all other cards created within the pipeline (Data, Experiment, Model)
+
+Quit the yapping and show me an example!
+
+### Create and Register DataCard
+```python
+from opsml_artifacts import SnowflakeQueryRunner, DataCard, CardRegistry
+
+query_runner = SnowflakeQueryRunner(on_vpn=True) #query runner is a temporary wrapper for pyshipt sql (needed for network issues in vertex, see opsml-pipelines docs)
+
+dataframe = query_runner.query_to_dataframe(sql_file="data.sql") #executes sql file or raw sql. data.sql is in examples dir
+
+# Subset features
+features = [
+    "NBR_ADDRESSES",
+    "NBR_ORDERS",
+    "NBR_RX",
+    "NBR_APT",
+    "METRO_X",
+    "METRO_Y",
+    "METRO_Z",
+    "APT_FLG",
+    "DROP_OFF_TIME",
+    "EVAL_FLG",
+]
+DEPENDENT_VAR = "DROP_OFF_TIME"
+
+# Define DataCard attributes (see examples dir for more detailed information)
+DATA_NAME = "tarp_drop_off"
+TEAM = "SPMS"
+USER_EMAIL = "steven.forrester@shipt.com"
+DATA_SPLITS = [
+    {"label": "train", "column": "EVAL_FLG", "column_value": 0},
+    {"label": "test", "column": "EVAL_FLG", "column_value": 1},
+]
+
+# Create DataCard
+data_card = DataCard(
+    data=dataframe[features],
+    name=DATA_NAME,
+    team=TEAM,
+    user_email=USER_EMAIL,
+    data_splits=DATA_SPLITS,
+    dependent_vars=[DEPENDENT_VAR],
+)
+
+#register card
+data_registry = CardRegistry(registry_name="data") # CardRegistry accepts "data", "model", "pipeline" and "experiment"
+data_registry.register_card(card=data_card)
+```
+
+#### Output
+```text
+{"level": "INFO", "message": "Table: tarp_drop_off registered as version 1", "timestamp": "2023-01-18T16:47:04.772149Z", "app_env": "development", "host": null, "version": null}
+```
