@@ -20,7 +20,7 @@
 `OpsML-Artifacts` is a library for tracking,  storing, versioning, and reproducing artifacts (aka Artifact Cards) across the ML-lifecycle. Think of it as trading cards for machine learning.
 
 <p align="center">
-  <img src="images/Opsml-Artifacts.png"  width="230" height="200" alt="py opsml logo"/>
+  <img src="images/Opsml-Artifacts.png"  width="480" height="400" alt="py opsml logo"/>
 </p>
 
 ## Key Features:
