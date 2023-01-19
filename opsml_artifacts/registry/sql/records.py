@@ -36,7 +36,10 @@ class ModelRegistryRecord(BaseModel):
     team: str
     user_email: str
     name: str
-    model_uri: str
+    model_card_uri: str
+    trained_model_uri: str
+    sample_data_uri: str
+    sample_data_type: str
     model_type: str
 
 
@@ -123,7 +126,10 @@ class LoadedModelRecord(BaseModel):
     team: str
     user_email: str
     name: str
-    model_uri: str
+    model_card_uri: str
+    trained_model_uri: str
+    sample_data_uri: str
+    sample_data_type: str
     model_type: str
 
     def load_model_card_definition(self) -> Dict[str, Any]:
@@ -135,10 +141,15 @@ class LoadedModelRecord(BaseModel):
         """
 
         model_card_definition = load_record_artifact_from_storage(
-            storage_uri=self.model_uri,
+            storage_uri=self.model_card_uri,
             artifact_type="dict",
         )
-        model_card_definition["model_uri"] = self.model_uri
+
+        model_card_definition["model_card_uri"] = self.model_card_uri
+        model_card_definition["trained_model_uri"] = self.trained_model_uri
+        model_card_definition["sample_data_uri"] = self.sample_data_uri
+        model_card_definition["sample_data_type"] = self.sample_data_type
+
         return model_card_definition
 
 

@@ -1,6 +1,6 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -70,6 +70,14 @@ class DataDict(BaseModel):
 class ModelDefinition(BaseModel):
     model_bytes: bytes = Field(..., description="Encrypted onnx model bytes")
     encrypt_key: bytes = Field(..., description="Key to user or decrypting model definition")
+
+
+class OnnxModelReturn(BaseModel):
+    model_definition: ModelDefinition
+    feature_dict: Dict[str, Feature]
+    data_schema: Optional[Dict[str, str]]
+    model_type: str
+    data_type: str
 
 
 class Base(BaseModel):

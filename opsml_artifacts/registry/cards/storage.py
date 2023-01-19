@@ -190,11 +190,14 @@ def save_record_artifact_to_storage(
 
     artifact_type = artifact.__class__.__name__
     storage_type = next(
-        storage_type
-        for storage_type in ArtifactStorage.__subclasses__()
-        if storage_type.validate(
-            artifact_type=artifact_type,
-        )
+        (
+            storage_type
+            for storage_type in ArtifactStorage.__subclasses__()
+            if storage_type.validate(
+                artifact_type=artifact_type,
+            )
+        ),
+        JoblibStorage,
     )
     save_info = SaveInfo(
         blob_path=blob_path,

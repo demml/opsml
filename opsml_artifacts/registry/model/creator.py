@@ -1,28 +1,24 @@
-from typing import Optional, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
-from sklearn.ensemble import StackingRegressor
-from sklearn.pipeline import Pipeline
 
-from opsml_artifacts.registry.cards.cards import ModelCard
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
-from opsml_artifacts.registry.model.types import DataDict, InputDataType
+from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn
 
 
-class ModelCardCreator:
+class OnnxModelCreator:
     def __init__(
         self,
-        model: Union[BaseEstimator, Pipeline, StackingRegressor],
+        model: Any,
         input_data: Union[pd.DataFrame, np.ndarray],
     ):
 
-        """Instantiates ModelCardCreator that is used for converting models to Onnx and creating model cards
+        """Instantiates OnnxModelCreator that is used for converting models to Onnx
 
         Args:
-            Model (BaseEstimator, Pipeline, StackingRegressor): Model to convert
+            Model (BaseEstimator, Pipeline, StackingRegressor, Booster): Model to convert
             input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
         """
         self.model = model
@@ -62,24 +58,11 @@ class ModelCardCreator:
 
         return model_type.get_type()
 
-    def create_model_card(
-        self,
-        model_name: str,
-        team: str,
-        user_email: str,
-        registered_data_uid: Optional[str] = None,
-    ) -> ModelCard:
+    def create_onnx_model(self) -> OnnxModelReturn:
         """Create model card from current model and sample data
 
-        Args:
-            model_name (str): What to name the model
-            team (str): Team name
-            user_email (str): Email to associate with the model
-            registered_data_uid (str): Uid associated with registered data card.
-            A ModelCard can be created, but not registered without a DataCard uid.
         Returns
-            ModelCard
-
+            OnnxModelReturn
         """
         model_definition, feature_dict, data_schema = OnnxModelConverter(
             model=self.model,
@@ -87,16 +70,26 @@ class ModelCardCreator:
             model_type=self.model_type,
         ).convert_model()
 
-        return ModelCard(
-            name=model_name.lower(),
-            team=team.lower(),
-            model_type=self.model_type,
+        return OnnxModelReturn(
+            model_definition=model_definition,
+            feature_dict=feature_dict,
             data_schema=data_schema,
-            user_email=user_email.lower(),
-            onnx_model_def=model_definition,
-            data_card_uid=registered_data_uid,
-            onnx_model_data=DataDict(
-                data_type=self.data_type,
-                features=feature_dict,
-            ),
+            model_type=self.model_type,
+            data_type=self.data_type,
         )
+
+        # return ModelCard(
+        #   name=model_name.lower(),
+        #   team=team.lower(),
+        #   model_type=self.model_type,
+        #   data_schema=data_schema,
+        #   user_email=user_email.lower(),
+        #   onnx_model_def=model_definition,
+        #   data_card_uid=registered_data_uid,
+        #   onnx_model_data=DataDict(
+        #       data_type=self.data_type,
+        #       features=feature_dict,
+        #   ),
+
+
+#
