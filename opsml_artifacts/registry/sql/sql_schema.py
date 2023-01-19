@@ -61,7 +61,10 @@ class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
 
 @declarative_mixin
 class ModelMixin:
-    model_uri = Column("model_uri", String(2048))
+    model_card_uri = Column("model_card_uri", String(2048))
+    trained_model_uri = Column("trained_model_uri", String(2048))
+    sample_data_uri = Column("sample_data_uri", String(2048))
+    sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
 
     __table_args__ = {"schema": "ds-artifact-registry"}
