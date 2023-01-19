@@ -9,9 +9,6 @@ import pandas as pd
 from cryptography.fernet import Fernet
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pyshipt_logging import ShiptLogging
-from sklearn.base import BaseEstimator
-from sklearn.ensemble import StackingRegressor
-from sklearn.pipeline import Pipeline
 
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
 from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
@@ -63,7 +60,7 @@ class ModelConverter:
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
         pred_onx = np.ravel(sess.run(None, inputs))[0]
-        logger.info(pred_onx)
+        logger.info("Test Onnx prediction: %s", pred_onx)
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, str]]]:
         return OnnxDataConverter.get_data_types(
@@ -199,7 +196,7 @@ class LighGBMBoosterOnnxModel(ModelConverter):
 class OnnxModelConverter:
     def __init__(
         self,
-        model: Union[BaseEstimator, Pipeline, StackingRegressor],
+        model: Any,
         input_data: Union[pd.DataFrame, np.ndarray],
         model_type: str,
     ):
