@@ -192,7 +192,7 @@ The following example shows how to create a ModelCard. For more information on w
 - We will use the DataCard from the previous example to train a model and create a ModelCard
 
 ```python
-from opsml_artifacts.registry.model.creator import ModelCardCreator
+from opsml_artifacts import ModelCard
 from lightgbm import LGBMRegressor
 
 model_registry = CardRegistry(registry_name="model") #load the model registry
@@ -211,21 +211,21 @@ y_test = data_splits.test.pop("DROP_OFF_TIME") # get test target
 lgb_model = LGBMRegressor()
 lgb_model.fit(data_splits.train, y_train)
 
-# create the model card
-card_creator = ModelCardCreator(model=lgb_model, input_data=data_splits.train[:10])
-
-model_card = card_creator.create_model_card(
-    model_name="tarp_lgb",
+model_card = ModelCard(
+    trained_model=lgb_model,
+    sample_input_data=data_splits.train[:10],
+    name="tarp_lgb",
     team=TEAM, # defined above
     user_email=USER_EMAIL, # defined above
-    registered_data_uid=data_card.uid # this is required if you are planning on registering the model
+    data_card_uid=data_card.uid # this is required if you are planning on registering the model
 )
 ```
 #### Output
 
 ```bash
-{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-01-18T18:29:19.587903Z", "app_env": "development", "host": null, "version": null}
-{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-01-18T18:29:20.031568Z", "app_env": "development", "host": null, "version": null}
+{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-01-19T18:09:22.782711Z", "app_env": "development", "host": null, "version": null}
+{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-01-19T18:09:23.403513Z", "app_env": "development", "host": null, "version": null}
+{"level": "INFO", "message": "Test Onnx prediction: 4.863347", "timestamp": "2023-01-19T18:09:23.439853Z", "app_env": "development", "host": null, "version": null}
 ```
 
 ModelCardCreator returns a ModelCard containing your model serialized into Onnx format
@@ -237,7 +237,7 @@ model_registry.register_card(card=model_card)
 ```
 
 ```bash
-{"level": "INFO", "message": "Table: tarp_lgb registered as version 1", "timestamp": "2023-01-18T18:33:53.003721Z", "app_env": "development", "host": null, "version": null}
+{"level": "INFO", "message": "Table: tarp_lgb registered as version 1", "timestamp": "2023-01-19T18:09:59.633155Z", "app_env": "development", "host": null, "version": null}
 ```
 
 ## ModelCard Predictor
@@ -275,7 +275,7 @@ onnx_model.api_sig.schema()
 # FastAPI models (like our production ML apis) expect a dictionary as input
 # Our input data was a pandas schema, so lets convert that
 # Numpy arrays are also supported 
-record = data_splits.test[0:1].T.to_dict()[0]
+record = data_splits.test[0:1].to_dict(orient='records')[0]
 
 # if testing a model that was trained on a numpy array, the model will expect a dictionary with a single list
 # record = {"data": list(np.ravel(data[:1]))}
@@ -284,13 +284,13 @@ record = data_splits.test[0:1].T.to_dict()[0]
 onnx_pred = round(onnx_model.predict(record),4)
 
 # Compare to original model
-orig_pred = round(onnx_model.predict_with_model(lgb_model, record),4)
+orig_pred = round(onnx_model.predict_with_model(model_card.trained_model, record),4)
 
 print(f"Onnx: {onnx_pred}", f"Lightgbm: {orig_pred}")
 ```
 
 ```text
-Onnx: 34.5272 Lightgbm: 34.5272
+Onnx: 19.7139 Lightgbm: 19.7139
 ```
 
 ## Benchmarks
