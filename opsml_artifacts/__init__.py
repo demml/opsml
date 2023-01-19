@@ -6,9 +6,9 @@ from opsml_artifacts.registry.cards.cards import (
     ModelCard,
     PipelineCard,
 )
+from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.var_store.store import DependentVarStore
-from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
 
 __all__ = [
     "CardRegistry",

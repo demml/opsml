@@ -1,11 +1,11 @@
-from typing import Union, Any
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
 
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
-from opsml_artifacts.registry.model.types import OnnxModelReturn, InputDataType
+from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn
 
 
 class OnnxModelCreator:

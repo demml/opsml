@@ -11,12 +11,19 @@ from pydantic import BaseModel, root_validator, validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.drift.data_drift import DriftReport
-from opsml_artifacts.registry.cards.storage import save_record_artifact_to_storage, load_record_artifact_from_storage
+from opsml_artifacts.registry.cards.storage import (
+    load_record_artifact_from_storage,
+    save_record_artifact_to_storage,
+)
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
-from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.creator import OnnxModelCreator
-from opsml_artifacts.registry.model.types import DataDict, ModelDefinition, OnnxModelReturn
+from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
+from opsml_artifacts.registry.model.types import (
+    DataDict,
+    ModelDefinition,
+    OnnxModelReturn,
+)
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
@@ -309,12 +316,10 @@ class ModelCard(ArtifactCard):
     @classmethod
     def _required_args_present(cls, values: Dict[str, Any]) -> bool:
         return all(
-            [
-                values.get(var_) is not None
-                for var_ in [
-                    "trained_model",
-                    "sample_input_data",
-                ]
+            values.get(var_) is not None
+            for var_ in [
+                "trained_model",
+                "sample_input_data",
             ]
         )
 
@@ -467,10 +472,10 @@ class PipelineCard(ArtifactCard):
     experiment_card_uids: Optional[Dict[str, str]] = None
 
     @root_validator(pre=True)
-    def set_data_uids(cls, values):  # pylint: disable=no-self-argument
+    def set_data_uids(cls, values) -> Dict[str, Dict[str, str]]:  # pylint: disable=no-self-argument
         for uid_type in ["data_card_uids", "model_card_uids", "experiment_card_uids"]:
             if values.get(uid_type) is None:
-                values[uid_type]: Dict[str, str] = {}
+                values[uid_type] = {}
         return values
 
     def add_card_uid(self, uid: str, card_type: str, name: Optional[str] = None):
