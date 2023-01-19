@@ -40,7 +40,7 @@ class GcpCreds(BaseModel):
 
 class GcpCredsSetter:
     def __init__(self):
-        self.service_base64_creds: Optional[str] = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")
+        self.service_base64_creds: Optional[str] = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
 
     def get_creds(self) -> GcpCreds:
         service_base64_creds = self.get_base64_creds()
