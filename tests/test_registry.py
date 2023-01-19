@@ -2,12 +2,12 @@ import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 import numpy as np
-from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, PipelineCard
+from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, PipelineCard, ModelCard
 from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
 from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.registry.model.creator import ModelCardCreator
 import uuid
 import random
+from pydantic import ValidationError
 import timeit
 
 
@@ -86,39 +86,61 @@ def test_register_pipeline_model(db_registries, sklearn_pipeline, storage_client
     )
     data_registry.register_card(card=data_card)
 
-    model_registry = db_registries["model"]
+    model_registry: CardRegistry = db_registries["model"]
     # for data_card_id in [data_card.uid, None, "test_uid"]:
-    model_creator = ModelCardCreator(model=model, input_data=data)
-    model_card1 = model_creator.create_model_card(
-        model_name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        registered_data_uid=data_card.uid,
-    )
-    model_registry.register_card(card=model_card1)
-    storage_client.delete_object_from_url(gcs_uri=model_card1.model_uri)
 
-    # test
-    model_creator = ModelCardCreator(model=model, input_data=data)
-    model_card2 = model_creator.create_model_card(
-        model_name="pipeline_model",
+    model_card1 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
-        registered_data_uid=None,
+        data_card_uid=data_card.uid,
+    )
+
+    model_registry.register_card(card=model_card1)
+
+    loaded_card = model_registry.load_card(uid=model_card1.uid)
+
+    # test loading trained model
+    loaded_card.load_trained_model()
+    assert getattr(loaded_card, "trained_model") is not None
+    assert getattr(loaded_card, "sample_input_data") is not None
+    storage_client.delete_object_from_url(gcs_uri=model_card1.model_card_uri)
+
+    model_card2 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        data_card_uid=None,
     )
 
     with pytest.raises(ValueError):
         model_registry.register_card(card=model_card2)
 
-    model_creator = ModelCardCreator(model=model, input_data=data)
-    model_card3 = model_creator.create_model_card(
-        model_name="pipeline_model",
+    model_card3 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
-        registered_data_uid="test_uid",
+        data_card_uid="test_uid",
     )
+
     with pytest.raises(ValueError):
         model_registry.register_card(card=model_card3)
+
+    with pytest.raises(ValidationError):
+        model_card3 = ModelCard(
+            trained_model=model,
+            sample_input_data=None,
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            data_card_uid="test_uid",
+        )
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
@@ -238,12 +260,14 @@ def test_pipeline_registry(db_registries):
 def test_model_predict(model_and_data):
 
     model, data = model_and_data
-    model_creator = ModelCardCreator(model=model, input_data=data)
-    model_card = model_creator.create_model_card(
-        model_name="test_model",
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="test_model",
         team="mlops",
         user_email="test_email",
-        registered_data_uid="test_uid",
+        data_card_uid="test_uid",
     )
 
     predictor = model_card.model()
@@ -286,11 +310,13 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
     data_registry.register_card(card=data_card)
 
     ###### ModelCard
-    model_card = ModelCardCreator(model=model, input_data=data[:10]).create_model_card(
-        model_name="test_model",
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:10],
+        name="test_model",
         team=team,
         user_email=user_email,
-        registered_data_uid=data_card.uid,
+        data_card_uid=data_card.uid,
     )
 
     model_registry.register_card(model_card)
