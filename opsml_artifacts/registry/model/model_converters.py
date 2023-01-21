@@ -193,6 +193,12 @@ class LighGBMBoosterOnnxModel(ModelConverter):
         return model_type in LIGHTGBM_SUPPORTED_MODEL_TYPES
 
 
+class TensorflowKerasOnnxModel(ModelConverter):
+    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
+        """Converts a tensorflow keras model"""
+        initial_types, data_schema = self.get_data_types()
+
+
 class OnnxModelConverter:
     def __init__(
         self,
