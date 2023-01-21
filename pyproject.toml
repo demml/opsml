@@ -25,6 +25,7 @@ skl2onnx = "^1.13"
 onnx = "^1.12.0"
 onnxruntime = "^1.13.1"
 onnxmltools = "^1.11.1"
+tf2onnx = "^1.13.0"
 
 [tool.poetry.group.dev]
 optional = true
@@ -48,6 +49,14 @@ mypy = "^0.991"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
 
+
+
+[tool.poetry.group.dev-tf.dependencies]
+tensorflow = "2.10.0"
+
+
+[tool.poetry.group.jupyter.dependencies]
+jupyterlab = "^3.5.2"
 
 [tool.isort]
 profile = "black"
