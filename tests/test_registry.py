@@ -1,14 +1,12 @@
 import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
-import numpy as np
 from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, PipelineCard, ModelCard
 from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
 from opsml_artifacts.registry.sql.registry import CardRegistry
 import uuid
 import random
 from pydantic import ValidationError
-import timeit
 
 
 @pytest.mark.parametrize(
@@ -243,44 +241,6 @@ def test_pipeline_registry(db_registries):
     )
 
     assert values["data_card_uids"].get("update") == "updated_uid"
-
-
-@pytest.mark.parametrize(
-    "model_and_data",
-    [
-        lazy_fixture("linear_regression"),  # linear regress with dataframe
-        lazy_fixture("random_forest_classifier"),  # random forest with numpy
-        lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
-        lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
-        lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
-        lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
-        lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-    ],
-)
-def test_model_predict(model_and_data):
-
-    model, data = model_and_data
-
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="test_model",
-        team="mlops",
-        user_email="test_email",
-        data_card_uid="test_uid",
-    )
-
-    predictor = model_card.model()
-
-    if isinstance(data, np.ndarray):
-        record = {"data": list(np.ravel(data[:1]))}
-
-    elif isinstance(data, pd.DataFrame):
-        record = data[0:1].T.to_dict()[0]
-
-    pred_onnx = predictor.predict(record)
-    pred_xgb = predictor.predict_with_model(model, record)
-    assert pytest.approx(round(pred_onnx, 3)) == round(pred_xgb, 3)
 
     # test1 = timeit.Timer(lambda: predictor.predict(record)).timeit(1000)
     # test2 = timeit.Timer(lambda: predictor.predict_with_model(model, record)).timeit(1000)

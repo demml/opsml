@@ -23,10 +23,11 @@ class OnnxModelCreator:
         """
         self.model = model
         self.input_data = input_data
+        self.model_class = self._get_model_class_name()
         self.model_type = self.get_onnx_model_type()
-        self.data_type = self.get_data_type(input_data=input_data)
+        self.data_type = self.get_input_data_type(input_data=input_data)
 
-    def get_data_type(self, input_data: Union[pd.DataFrame, np.ndarray]) -> str:
+    def get_input_data_type(self, input_data: Union[pd.DataFrame, np.ndarray]) -> str:
 
         """Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
@@ -46,13 +47,18 @@ class OnnxModelCreator:
 
         return InputDataType.NUMPY_ARRAY.name
 
+    def _get_model_class_name(self):
+        if "keras.engine" in self.model.__str__():
+            return "keras"
+        return self.model.__class__.__name__
+
     def get_onnx_model_type(self) -> str:
-        model_class_name = self.model.__class__.__name__
+
         model_type = next(
             (
                 model_type
                 for model_type in ModelType.__subclasses__()
-                if model_type.validate(model_class_name=model_class_name)
+                if model_type.validate(model_class_name=self.model_class)
             )
         )
 

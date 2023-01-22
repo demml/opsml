@@ -25,7 +25,11 @@ skl2onnx = "^1.13"
 onnx = "^1.12.0"
 onnxruntime = "^1.13.1"
 onnxmltools = "^1.11.1"
-tf2onnx = "^1.13.0"
+cryptography = "38.0.4"
+tf2onnx = {version="^1.13.0", optional = true}
+
+[tool.poetry.extras]
+tensorflow = ["tf2onnx"]
 
 [tool.poetry.group.dev]
 optional = true
@@ -50,13 +54,11 @@ lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
 
 
+[tool.poetry.group.dev-tf]
+optional = true
 
 [tool.poetry.group.dev-tf.dependencies]
 tensorflow = "2.10.0"
-
-
-[tool.poetry.group.jupyter.dependencies]
-jupyterlab = "^3.5.2"
 
 [tool.isort]
 profile = "black"
@@ -111,11 +113,11 @@ plugins = [
 
 
 [tool.coverage.paths]
-source = ["opsml_pipelines", "*/site-packages"]
+source = ["opsml_artifacts", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["opsml_pipelines"]
+source = ["opsml_artifacts"]
 
 [tool.coverage.report]
 show_missing = true

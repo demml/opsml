@@ -38,6 +38,11 @@ class ModelConverter:
         self.model = model
         self.input_data = input_data
         self.model_type = model_type
+        self.data_converter = OnnxDataConverter(
+            input_data=input_data,
+            model_type=model_type,
+            model=model,
+        )
 
     def update_onnx_registries(self):
         OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_type)
@@ -52,10 +57,7 @@ class ModelConverter:
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
-        inputs = OnnxDataConverter.convert_data(
-            input_data=self.input_data,
-            model_type=self.model_type,
-        )
+        inputs = self.data_converter.convert_data()
 
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
@@ -63,10 +65,7 @@ class ModelConverter:
         logger.info("Test Onnx prediction: %s", pred_onx)
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, str]]]:
-        return OnnxDataConverter.get_data_types(
-            input_data=self.input_data,
-            model_type=self.model_type,
-        )
+        return self.data_converter.get_data_types()
 
     def create_feature_dict(self, onnx_model: ModelProto) -> Dict[str, Feature]:
         feature_dict = {}
@@ -196,7 +195,19 @@ class LighGBMBoosterOnnxModel(ModelConverter):
 class TensorflowKerasOnnxModel(ModelConverter):
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
         """Converts a tensorflow keras model"""
+
+        import tf2onnx
+
         initial_types, data_schema = self.get_data_types()
+        onnx_model, _ = tf2onnx.convert.from_keras(self.model, initial_types, opset=13)
+
+        self.validate_model(onnx_model=onnx_model)
+
+        return onnx_model, data_schema
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type in OnnxModelType.TF_KERAS
 
 
 class OnnxModelConverter:
@@ -222,6 +233,7 @@ class OnnxModelConverter:
     """
 
     def convert_model(self) -> ModelConvertOutput:
+
         converter = next(
             (
                 converter
