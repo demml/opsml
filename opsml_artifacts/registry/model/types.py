@@ -15,6 +15,7 @@ class OnnxModelType(str, Enum):
     LGBM_CLASSIFIER = "lgbmclassifier"
     XGB_REGRESSOR = "xgbregressor"
     LGBM_BOOSTER = "booster"
+    TF_KERAS = "keras"
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
@@ -49,10 +50,23 @@ class InputDataType(Enum):
 class OnnxDataProto(Enum):
     """Maps onnx element types to their data types"""
 
+    UNDEFINED = 0
+    FLOAT = 1
+    UINT8 = 2
+    INT8 = 3
+    UINT16 = 4
+    INT16 = 5
     INT32 = 6
     INT64 = 7
-    FLOAT = 1
     STRING = 8
+    BOOL = 9
+    FLOAT16 = 10
+    DOUBLE = 11
+    UINT32 = 12
+    UINT64 = 13
+    COMPLEX64 = 14
+    COMPLEX128 = 15
+    BFLOAT16 = 16
 
 
 class Feature(BaseModel):
