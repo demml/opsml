@@ -157,6 +157,36 @@ class PandasPipelineOnnxConverter(DataConverter):
         return data_type == pd.DataFrame and model_type == OnnxModelType.SKLEARN_PIPELINE
 
 
+class TensorflowDictOnnxConverter(DataConverter):
+    def get_data_schema(self) -> Optional[Dict[str, str]]:
+        return None
+
+    def get_onnx_data_types(self) -> List[Any]:
+        """Takes multi input model spec and gets input shape and type for
+        tensorspec
+        """
+        import tensorflow as tf
+
+        self.model = cast(tf.keras.Model, self.model)
+        spec = []
+        for input_ in self.model.inputs:
+            shape_, dtype = list(input_.shape), input_.dtype
+            shape_[0] = None
+            input_name = getattr(input_, "name", "inputs")
+            spec.append(tf.TensorSpec(shape_, dtype, name=input_name))
+        return spec
+
+    def convert_data_to_onnx(self) -> Dict[str, Any]:
+        onnx_data = {}
+        for key, val in self.data:
+            onnx_data[key] = val.astype(np.float32)[0:1]
+        return onnx_data
+
+    @staticmethod
+    def validate(data_type: type, model_type: str) -> bool:
+        return data_type == dict and model_type == OnnxModelType.TF_KERAS
+
+
 class TensorflowNumpyOnnxConverter(DataConverter):
     def get_data_schema(self) -> Optional[Dict[str, str]]:
         return None
