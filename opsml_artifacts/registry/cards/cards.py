@@ -18,6 +18,7 @@ from opsml_artifacts.registry.cards.storage import (
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
 from opsml_artifacts.registry.model.creator import OnnxModelCreator
+from opsml_artifacts.registry.cards.types import StoragePath
 from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.types import (
     DataDict,
@@ -348,11 +349,26 @@ class ModelCard(ArtifactCard):
 
         trained_model = load_record_artifact_from_storage(
             storage_uri=self.trained_model_uri,
-            artifact_type="joblib",
+            artifact_type=self.model_type,
         )
 
         setattr(self, "sample_input_data", sample_data)
         setattr(self, "trained_model", trained_model)
+
+    def _save_model(self, blob_path: str, version: int) -> StoragePath:
+        if self.model_type == "keras":
+            artifact_type = self.model_type
+        else:
+            artifact_type = None
+
+        return save_record_artifact_to_storage(
+            artifact=self.trained_model,
+            name=f"{self.name}-trained-model",
+            version=version,
+            team=self.team,
+            blob_path=blob_path,
+            artifact_type=artifact_type,
+        )
 
     def save_modelcard(self, blob_path: str, version: int):
 
@@ -364,13 +380,7 @@ class ModelCard(ArtifactCard):
             blob_path=blob_path,
         )
 
-        trained_model_storage_path = save_record_artifact_to_storage(
-            artifact=self.trained_model,
-            name=f"{self.name}-trained-model",
-            version=version,
-            team=self.team,
-            blob_path=blob_path,
-        )
+        trained_model_storage_path = self._save_model(blob_path=blob_path, version=version)
 
         # convert and store sample data
         converted_data: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.sample_input_data)

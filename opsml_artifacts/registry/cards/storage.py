@@ -1,9 +1,11 @@
 import tempfile
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import gcsfs
 import joblib
+import glob
+import os
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -30,7 +32,7 @@ class ArtifactStorage:
             project=settings.gcp_project,
             token=settings.gcsfs_creds,
         )
-        self.file_suffix = "placeholder"
+        self.file_suffix = None
 
         if save_info is not None:
             self.save_info = save_info
@@ -39,7 +41,9 @@ class ArtifactStorage:
             self.file_suffix = file_suffix
 
     def create_gcs_path(self) -> Tuple[str, str]:
-        filename = f"{uuid.uuid4().hex}.{self.file_suffix}"
+        filename = uuid.uuid4().hex
+        if self.file_suffix is not None:
+            filename = f"{filename}.{self.file_suffix}"
         gcs_base_path = f"gs://{self.gcs_bucket}/{self.save_info.blob_path}"
         data_path = f"/{self.save_info.team}/{self.save_info.name}/version-{self.save_info.version}"
 
@@ -156,16 +160,14 @@ class JoblibStorage(ArtifactStorage):
     def __init__(self, save_info: Optional[SaveInfo] = None):
         super().__init__(save_info=save_info, file_suffix="joblib")
 
-    def save_artifact(self, artifact: Dict[str, DriftReport]) -> StoragePath:  # type: ignore
+    def save_artifact(self, artifact: Any) -> StoragePath:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
             joblib.dump(artifact, local_path)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
-        return StoragePath(
-            gcs_uri=gcs_uri,
-        )
+        return StoragePath(gcs_uri=gcs_uri)
 
     def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
         joblib_path = self.list_files(storage_uri=storage_uri)[0]
@@ -180,15 +182,50 @@ class JoblibStorage(ArtifactStorage):
         return artifact_type not in DATA_ARTIFACTS
 
 
+class TensorflowModelStorage(ArtifactStorage):
+    def __init__(self, save_info: Optional[SaveInfo] = None):
+        super().__init__(save_info=save_info, file_suffix=None)
+
+    def save_artifact(self, artifact: Any) -> StoragePath:
+
+        import tensorflow as tf
+
+        artifact = cast(tf.keras.Model, artifact)
+
+        with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+            gcs_uri, local_path = self.create_tmp_path(tmp_dir=tmpdirname)
+            artifact.save(local_path)
+            self.storage_client.upload(lpath=local_path, rpath=f"{gcs_uri}/", recursive=True)
+
+        return StoragePath(gcs_uri=gcs_uri)
+
+    def load_artifact(self, storage_uri: str) -> Any:
+
+        import tensorflow as tf
+
+        model_path = self.list_files(storage_uri=storage_uri)[0]
+        with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+            self.storage_client.download(rpath=model_path, lpath=f"{tmpdirname}/", recursive=True)
+            model = tf.keras.models.load_model(tmpdirname)
+
+        return model
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageTypes.TF_MODEL
+
+
 def save_record_artifact_to_storage(
     artifact: Any,
     blob_path: str,
     name: str,
     version: int,
     team: str,
+    artifact_type: Optional[str] = None,
 ) -> StoragePath:
 
-    artifact_type = artifact.__class__.__name__
+    artifact_type: str = artifact_type or artifact.__class__.__name__
+
     storage_type = next(
         (
             storage_type
