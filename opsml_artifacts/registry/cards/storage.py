@@ -4,14 +4,11 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import gcsfs
 import joblib
-import glob
-import os
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml_artifacts.drift.data_drift import DriftReport
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.types import (
     DATA_ARTIFACTS,
@@ -188,7 +185,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     def save_artifact(self, artifact: Any) -> StoragePath:
 
-        import tensorflow as tf
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
         artifact = cast(tf.keras.Model, artifact)
 
@@ -201,7 +198,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     def load_artifact(self, storage_uri: str) -> Any:
 
-        import tensorflow as tf
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
         model_path = self.list_files(storage_uri=storage_uri)[0]
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
@@ -224,14 +221,14 @@ def save_record_artifact_to_storage(
     artifact_type: Optional[str] = None,
 ) -> StoragePath:
 
-    artifact_type: str = artifact_type or artifact.__class__.__name__
+    _artifact_type: str = artifact_type or artifact.__class__.__name__
 
     storage_type = next(
         (
             storage_type
             for storage_type in ArtifactStorage.__subclasses__()
             if storage_type.validate(
-                artifact_type=artifact_type,
+                artifact_type=_artifact_type,
             )
         ),
         JoblibStorage,
