@@ -15,10 +15,10 @@ from opsml_artifacts.registry.cards.storage import (
     load_record_artifact_from_storage,
     save_record_artifact_to_storage,
 )
+from opsml_artifacts.registry.cards.types import StoragePath
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
 from opsml_artifacts.registry.model.creator import OnnxModelCreator
-from opsml_artifacts.registry.cards.types import StoragePath
 from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.types import (
     DataDict,
