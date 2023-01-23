@@ -9,14 +9,14 @@ import timeit
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        # lazy_fixture("linear_regression"),  # linear regress with dataframe
+        # lazy_fixture("linear_regression"),  # linear regress with numpy
         # lazy_fixture("random_forest_classifier"),  # random forest with numpy
-        # lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
+        lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
         # lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
         # lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
         # lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         # lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-        lazy_fixture("load_transformer_example"),
+        # lazy_fixture("load_transformer_example"),
     ],
 )
 def test_model_predict(model_and_data):
@@ -32,18 +32,24 @@ def test_model_predict(model_and_data):
         data_card_uid="test_uid",
     )
 
+    print(model_card.data_schema)
+    a
+
     predictor = model_card.model()
 
+    print(predictor.input_sig.schema())
+    print(predictor.output_sig.schema())
+    a
+
     if isinstance(data, np.ndarray):
-        input_name = next(iter(predictor.data_dict.features.keys()))
+        input_name = next(iter(predictor.data_dict.input_features.keys()))
         record = {input_name: np.ravel(data[:1]).tolist()}
 
     elif isinstance(data, pd.DataFrame):
         record = data[0:1].T.to_dict()[0]
 
     pred_onnx = predictor.predict(record)
-    pred_xgb = predictor.predict_with_model(model, record)
-    assert pytest.approx(round(pred_onnx, 3)) == round(pred_xgb, 3)
+    pred_orig = predictor.predict_with_model(model, record)
 
 
 def _test_tensorflow(db_registries, load_transformer_example):
