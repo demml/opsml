@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,7 @@ class OnnxModelCreator:
     def __init__(
         self,
         model: Any,
-        input_data: Union[pd.DataFrame, np.ndarray],
+        input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
     ):
 
         """Instantiates OnnxModelCreator that is used for converting models to Onnx
@@ -42,7 +42,7 @@ class OnnxModelCreator:
         """
 
         # Onnx supports dataframe schemas for pipelines
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+        if self.model_type in [OnnxModelType.SKLEARN_PIPELINE, OnnxModelType.TF_KERAS]:
             return InputDataType(type(input_data)).name
 
         return InputDataType.NUMPY_ARRAY.name
