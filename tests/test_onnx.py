@@ -1,4 +1,4 @@
-from opsml_artifacts.registry.cards.cards import ModelCard
+from opsml_artifacts.registry.cards.cards import ModelCard, DataCard
 import numpy as np
 import pytest
 import pandas as pd
@@ -18,7 +18,7 @@ import timeit
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
     ],
 )
-def _test_model_predict(model_and_data):
+def test_model_predict(model_and_data):
 
     model, data = model_and_data
 
@@ -44,14 +44,29 @@ def _test_model_predict(model_and_data):
     assert pytest.approx(round(pred_onnx, 3)) == round(pred_xgb, 3)
 
 
-def test_tensorflow(load_transformer_example):
+def test_tensorflow(db_registries, load_transformer_example):
     model, data = load_transformer_example
 
+    registry = db_registries["data"]
+    data_card = DataCard(
+        data=data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    registry.register_card(card=data_card)
+
+    model_registry = db_registries["model"]
     model_card = ModelCard(
         trained_model=model,
         sample_input_data=data[0:1],
         name="test_model",
         team="mlops",
         user_email="test_email",
-        data_card_uid="test_uid",
+        data_card_uid=data_card.uid,
     )
+
+    model_registry.register_card(card=model_card)
+
+    model_card.load_trained_model()
