@@ -333,7 +333,8 @@ class ModelCard(ArtifactCard):
 
         values["onnx_model_data"] = DataDict(
             data_type=onnx_model.data_type,
-            features=onnx_model.feature_dict,
+            input_features=onnx_model.onnx_input_features,
+            output_features=onnx_model.onnx_output_features,
         )
         values["onnx_model_def"] = onnx_model.model_definition
         values["data_schema"] = onnx_model.data_schema
