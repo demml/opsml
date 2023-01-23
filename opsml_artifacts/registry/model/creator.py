@@ -48,7 +48,7 @@ class OnnxModelCreator:
         return InputDataType.NUMPY_ARRAY.name
 
     def _get_model_class_name(self):
-        if "keras.engine" in self.model.__str__():
+        if "keras.engine" in str(self.model):
             return "keras"
         return self.model.__class__.__name__
 
