@@ -7,9 +7,9 @@ import numpy as np
 import onnxruntime as rt
 import pandas as pd
 from cryptography.fernet import Fernet
+from google.protobuf.pyext._message import RepeatedCompositeContainer
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pyshipt_logging import ShiptLogging
-from google.protobuf.pyext._message import RepeatedCompositeContainer
 
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
 from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
@@ -65,8 +65,8 @@ class ModelConverter:
             valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
         else:
             valid_list = []
-            for idx in range(len(onnx_preds)):
-                valid = np.sum(abs(onnx_preds[idx] - model_preds[idx])) <= 0.001
+            for onnx_pred, model_pred in zip(onnx_preds, model_preds):
+                valid = np.sum(abs(onnx_pred - model_pred)) <= 0.001
                 valid_list.append(valid)
 
         return all(valid_list)
@@ -76,7 +76,7 @@ class ModelConverter:
         inputs = self.data_converter.convert_data()
 
         # Get original prediction
-        model_preds = self.model.predict(self.input_data[0:1])
+        model_preds = self.model.predict(self.input_data)
 
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
@@ -90,16 +90,26 @@ class ModelConverter:
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, str]]]:
         return self.data_converter.get_data_types()
 
+    def _get_data_elem_type(self, sig: Any) -> int:
+        return sig.type.tensor_type.elem_type
+
+    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[int, Optional[int]]:
+        row = shape_dims[0].dim_value
+        col = shape_dims[1].dim_value
+
+        if row == 0:
+            row = None
+
+        return row, col
+
     def _parse_onnx_sigature(self, signature: RepeatedCompositeContainer):
         feature_dict = {}
-        for sig in signature:
-            data_type = sig.type.tensor_type.elem_type
-            row = sig.type.tensor_type.shape.dim[0].dim_value
-            col = sig.type.tensor_type.shape.dim[1].dim_value
 
-            # default to None for a model with varying length input
-            if row == 0:
-                row = None
+        for sig in signature:
+
+            data_type = self._get_data_elem_type(sig=sig)
+            shape_dims = sig.type.tensor_type.shape.dim
+            row, col = self._get_shape_dims(shape_dims)
 
             feature_dict[sig.name] = Feature(
                 feature_type=OnnxDataProto(data_type).name,
@@ -107,9 +117,7 @@ class ModelConverter:
             )
         return feature_dict
 
-    def create_feature_dict(
-        self, onnx_model: ModelProto
-    ) -> Tuple[Dict[str, Feature], Dict[str, Feature],]:
+    def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
 
         input_dict = self._parse_onnx_sigature(onnx_model.graph.input)
         output_dict = self._parse_onnx_sigature(onnx_model.graph.output)
@@ -152,6 +160,24 @@ class ModelConverter:
 
 
 class SklearnOnnxModel(ModelConverter):
+    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], int]:
+
+        if len(shape_dims) == 0:
+            return None, None
+
+        row = shape_dims[0].dim_value
+
+        if row == 0:
+            row = None
+
+        if len(shape_dims) > 1:
+            col = shape_dims[1].dim_value
+
+        else:
+            col = 1
+
+        return row, col
+
     def _is_stacking_estimator(self):
         return self.model_type == OnnxModelType.STACKING_ESTIMATOR
 
@@ -224,6 +250,11 @@ class LighGBMBoosterOnnxModel(ModelConverter):
 
 
 class TensorflowKerasOnnxModel(ModelConverter):
+    def _get_onnx_model_from_tuple(self, model: Any):
+        if isinstance(model, tuple):
+            return model[0]
+        return model
+
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
         """Converts a tensorflow keras model"""
 
@@ -231,7 +262,6 @@ class TensorflowKerasOnnxModel(ModelConverter):
 
         initial_types, data_schema = self.get_data_types()
         onnx_model, _ = tf2onnx.convert.from_keras(self.model, initial_types, opset=13)
-
         self.validate_model(onnx_model=onnx_model)
 
         return onnx_model, data_schema

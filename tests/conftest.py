@@ -457,3 +457,13 @@ def load_transformer_example():
     data = np.load("tests/assets/transformer_data.npy")
 
     return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_multi_input_keras_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
+    data = joblib.load("tests/assets/multi_input_data.joblib")
+
+    return loaded_model, data
