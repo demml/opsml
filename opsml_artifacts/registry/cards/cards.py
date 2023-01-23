@@ -22,6 +22,7 @@ from opsml_artifacts.registry.model.creator import OnnxModelCreator
 from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.types import (
     DataDict,
+    Feature,
     ModelDefinition,
     OnnxModelReturn,
 )
@@ -273,7 +274,7 @@ class ModelCard(ArtifactCard):
     team: str
     user_email: str
     trained_model: Optional[Any]
-    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray]]
+    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]]
     uid: Optional[str] = None
     version: Optional[int] = None
     data_card_uid: Optional[str] = None
@@ -284,7 +285,7 @@ class ModelCard(ArtifactCard):
     sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
     model_type: str
-    data_schema: Optional[Dict[str, str]]
+    data_schema: Optional[Dict[str, Feature]]
 
     class Config:
         arbitrary_types_allowed = True
@@ -307,6 +308,7 @@ class ModelCard(ArtifactCard):
             input_data=values["sample_input_data"],
         )
         onnx_model = model_creator.create_onnx_model()
+
         values = cls._add_onnx_attributes(
             onnx_model=onnx_model,
             values=values,

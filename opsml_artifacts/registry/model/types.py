@@ -1,6 +1,6 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -45,6 +45,7 @@ class InputDataType(Enum):
 
     PANDAS_DATAFRAME = pd.DataFrame
     NUMPY_ARRAY = np.ndarray
+    DICT = dict
 
 
 class OnnxDataProto(Enum):
@@ -91,7 +92,7 @@ class OnnxModelReturn(BaseModel):
     model_definition: ModelDefinition
     onnx_input_features: Dict[str, Feature]
     onnx_output_features: Dict[str, Feature]
-    data_schema: Optional[Dict[str, str]]
+    data_schema: Optional[Dict[str, Feature]]
     model_type: str
     data_type: str
 
@@ -104,7 +105,36 @@ class Base(BaseModel):
         raise NotImplementedError
 
 
-class APIBase(Base):
+class NumpyBase(Base):
+    def to_onnx(self):
+        return {
+            "inputs": np.array(
+                list(self.dict().values()),
+                np.float32,
+            ).reshape(1, -1)
+        }
+
+    def to_dataframe(self):
+        raise NotImplementedError
+
+
+class DictBase(Base):
+    def to_onnx(self):
+        feats = {}
+        for feat, feat_val in self:
+            if isinstance(feat_val, float):
+                feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
+            elif isinstance(feat_val, int):
+                feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
+            else:
+                feats[feat] = np.array(feat_val).reshape(1, -1)
+        return feats
+
+    def to_dataframe(self):
+        return pd.DataFrame(self.dict(), index=[0])
+
+
+class KerasNumpyBase(Base):
     def to_onnx(self):
         return {
             feat: np.array(
@@ -118,20 +148,32 @@ class APIBase(Base):
         raise NotImplementedError
 
 
-class ApiBase(Base):
+class KerasDictBase(Base):
+    """API base class for tensorflow/keras multi-input models.
+    Multi-input models typically allow for a dictionary of arrays
+    """
+
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
-            if isinstance(feat_val, float):
+            if isinstance(feat_val[0], float):
                 feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
-            elif isinstance(feat_val, int):
+            elif isinstance(feat_val[0], int):
                 feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
             else:
                 feats[feat] = np.array(feat_val).reshape(1, -1)
         return feats
 
+    def to_dataframe(self):
+        raise NotImplementedError
+
 
 class ApiSigTypes(Enum):
-    FLOAT = float
+    UNDEFINED = Any
     INT = int
+    INT32 = int
+    INT64 = int
+    FLOAT = float
+    FLOAT32 = float
+    FLOAT64 = float
     STR = str
