@@ -9,6 +9,7 @@ import pandas as pd
 from cryptography.fernet import Fernet
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pyshipt_logging import ShiptLogging
+from google.protobuf.pyext._message import RepeatedCompositeContainer
 
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
 from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
@@ -55,35 +56,63 @@ class ModelConverter:
         """
         raise NotImplementedError
 
+    def _predictions_close(
+        self,
+        onnx_preds: Union[List[Any], Union[float, int]],
+        model_preds: Union[List[Any], Union[float, int]],
+    ) -> bool:
+        if not isinstance(model_preds, list):
+            valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+        else:
+            valid_list = []
+            for idx in range(len(onnx_preds)):
+                valid = np.sum(abs(onnx_preds[idx] - model_preds[idx])) <= 0.001
+                valid_list.append(valid)
+
+        return all(valid_list)
+
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
 
+        # Get original prediction
+        model_preds = self.model.predict(self.input_data[0:1])
+
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
-        pred_onx = np.ravel(sess.run(None, inputs))[0]
-        logger.info("Test Onnx prediction: %s", pred_onx)
+        onnx_preds = sess.run(None, inputs)
+
+        if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
+            raise ValueError("Model prediction validation failed")
+
+        logger.info("[✓] Onnx model validated")
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, str]]]:
         return self.data_converter.get_data_types()
 
-    def create_feature_dict(self, onnx_model: ModelProto) -> Dict[str, Feature]:
+    def _parse_onnx_sigature(self, signature:RepeatedCompositeContainer):
         feature_dict = {}
-        for input_ in onnx_model.graph.input:
-            data_type = input_.type.tensor_type.elem_type
-            row = input_.type.tensor_type.shape.dim[0].dim_value
-            col = input_.type.tensor_type.shape.dim[1].dim_value
+        for sig in signature:
+            data_type = sig.type.tensor_type.elem_type
+            row = sig.type.tensor_type.shape.dim[0].dim_value
+            col = sig.type.tensor_type.shape.dim[1].dim_value
 
             # default to None for a model with varying length input
             if row == 0:
                 row = None
 
-            feature_dict[input_.name] = Feature(
+            feature_dict[sig.name] = Feature(
                 feature_type=OnnxDataProto(data_type).name,
                 shape=[row, col],
             )
-
         return feature_dict
+
+    def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
+    
+        input_dict = self._parse_onnx_sigature(onnx_model.graph.input)
+        output_dict = self._parse_onnx_sigature(onnx_model.graph.output)
+           
+        return input_dict, ouput_dict
 
     def encrypt_model(self, onnx_model: ModelProto) -> ModelDefinition:
         """Encrypts an Onnx model

@@ -35,12 +35,12 @@ class ModelApiSigCreator:
 
     def _infer_pydantic_list(self) -> PydanticFields:
         pydantic_fields: PydanticFields = {}
-        feature_length = self.data_dict.features["inputs"].shape[1]
-        pydantic_fields["data"] = (
+        input_name, feature = next(iter(self.data_dict.features.items()))
+        pydantic_fields[input_name] = (
             conlist(
                 float,
-                min_items=feature_length,
-                max_items=feature_length,
+                min_items=feature.shape[1],
+                max_items=feature.shape[1],
             ),
             ...,
         )
@@ -79,7 +79,7 @@ class ModelApiSigCreator:
         feature_sig = create_model("Features", **pydantic_fields, __base__=base)
         return feature_sig
 
-    def get_api_sig(self) -> Type[Base]:
+    def get_input_api_sig(self) -> Type[Base]:
         if not TYPE_CHECKING:
             feature_sig = self._create_api_sig()
         else:
@@ -112,14 +112,10 @@ class OnnxModelPredictor:
 
         # methods
         self.sess = self._create_onnx_session(model_definition=model_definition)
-        self._label_name = self.sess.get_outputs()[0].name
-        self._input_name = self.sess.get_inputs()[0].name
+        self._label_name = [output.name for output in self.sess.get_outputs()]
 
-        self.api_sig = ModelApiSigCreator(
-            data_dict=data_dict,
-            model_type=model_type,
-            data_schema=data_schema,
-        ).get_api_sig()
+        api_sig_creator = ModelApiSigCreator(data_dict=data_dict, model_type=model_type, data_schema=data_schema)
+        self.input_sig = api_sig_creator.get_input_api_sig()
 
     def predict(self, data: Dict[str, Any]):
 
@@ -135,11 +131,12 @@ class OnnxModelPredictor:
             Prediction (array or float depending on model type)
         """
 
-        pred_data = self.api_sig(**data)
+        pred_data = self.input_sig(**data)
+
         prediction = self.sess.run(
-            output_names=[self._label_name],
+            output_names=self._label_name,
             input_feed=pred_data.to_onnx(),
-        )[0]
+        )
 
         return float(prediction[0])
 
