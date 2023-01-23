@@ -78,7 +78,8 @@ class DataDict(BaseModel):
     """Datamodel for feature info"""
 
     data_type: str
-    features: Dict[str, Feature]
+    input_features: Dict[str, Feature]
+    output_features: Dict[str, Feature]
 
 
 class ModelDefinition(BaseModel):
@@ -88,7 +89,8 @@ class ModelDefinition(BaseModel):
 
 class OnnxModelReturn(BaseModel):
     model_definition: ModelDefinition
-    feature_dict: Dict[str, Feature]
+    onnx_input_features: Dict[str, Feature]
+    onnx_output_features: Dict[str, Feature]
     data_schema: Optional[Dict[str, str]]
     model_type: str
     data_type: str
@@ -102,7 +104,7 @@ class Base(BaseModel):
         raise NotImplementedError
 
 
-class NumpyBase(Base):
+class APIBase(Base):
     def to_onnx(self):
         return {
             feat: np.array(
@@ -116,17 +118,20 @@ class NumpyBase(Base):
         raise NotImplementedError
 
 
-class PandasBase(Base):
+class ApiBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
             if isinstance(feat_val, float):
-                feats[feat] = np.array([[feat_val]]).astype(np.float32)
+                feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
             elif isinstance(feat_val, int):
-                feats[feat] = np.array([[feat_val]]).astype(np.int64)
+                feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
             else:
-                feats[feat] = np.array([[feat_val]])
+                feats[feat] = np.array(feat_val).reshape(1, -1)
         return feats
 
-    def to_dataframe(self):
-        return pd.DataFrame(self.dict(), index=[0])
+
+class ApiSigTypes(Enum):
+    FLOAT = float
+    INT = int
+    STR = str

@@ -70,7 +70,7 @@ class OnnxModelCreator:
         Returns
             OnnxModelReturn
         """
-        model_definition, feature_dict, data_schema = OnnxModelConverter(
+        model_definition, input_onnx_features, output_onnx_features, data_schema = OnnxModelConverter(
             model=self.model,
             input_data=self.input_data,
             model_type=self.model_type,
@@ -78,7 +78,8 @@ class OnnxModelCreator:
 
         return OnnxModelReturn(
             model_definition=model_definition,
-            feature_dict=feature_dict,
+            onnx_input_features=input_onnx_features,
+            onnx_output_features=output_onnx_features,
             data_schema=data_schema,
             model_type=self.model_type,
             data_type=self.data_type,

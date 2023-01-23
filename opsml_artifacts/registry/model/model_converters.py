@@ -85,12 +85,12 @@ class ModelConverter:
         if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
             raise ValueError("Model prediction validation failed")
 
-        logger.info("[✓] Onnx model validated")
+        logger.info("Onnx model validated")
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, str]]]:
         return self.data_converter.get_data_types()
 
-    def _parse_onnx_sigature(self, signature:RepeatedCompositeContainer):
+    def _parse_onnx_sigature(self, signature: RepeatedCompositeContainer):
         feature_dict = {}
         for sig in signature:
             data_type = sig.type.tensor_type.elem_type
@@ -107,12 +107,14 @@ class ModelConverter:
             )
         return feature_dict
 
-    def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
-    
+    def create_feature_dict(
+        self, onnx_model: ModelProto
+    ) -> Tuple[Dict[str, Feature], Dict[str, Feature],]:
+
         input_dict = self._parse_onnx_sigature(onnx_model.graph.input)
         output_dict = self._parse_onnx_sigature(onnx_model.graph.output)
-           
-        return input_dict, ouput_dict
+
+        return input_dict, output_dict
 
     def encrypt_model(self, onnx_model: ModelProto) -> ModelDefinition:
         """Encrypts an Onnx model
@@ -139,9 +141,9 @@ class ModelConverter:
         """
         onnx_model, data_schema = self.convert_model()
         model_def = self.encrypt_model(onnx_model=onnx_model)
-        features = self.create_feature_dict(onnx_model=onnx_model)
+        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return model_def, features, data_schema
+        return model_def, input_onnx_features, output_onnx_features, data_schema
 
     @staticmethod
     def validate(model_type: str) -> bool:

@@ -72,11 +72,11 @@ class DataConverter:
         feature_dict: Dict[str, str] = {}
         for feature, feature_type in zip(self.data.columns, self.data.dtypes):
             if "int" in str(feature_type):
-                feature_dict[feature] = "int"
+                feature_dict[feature] = Feature(feature_type="INT", shape=[None, 1])
             elif "float" in str(feature_type):
-                feature_dict[feature] = "float"
+                feature_dict[feature] = Feature(feature_type="FLOAT", shape=[None, 1])
             else:
-                feature_dict[feature] = "str"
+                feature_dict[feature] = Feature(feature_type="STR", shape=[None, 1])
         return feature_dict
 
     @staticmethod
