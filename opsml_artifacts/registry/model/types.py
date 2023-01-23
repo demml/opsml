@@ -105,10 +105,11 @@ class Base(BaseModel):
 class NumpyBase(Base):
     def to_onnx(self):
         return {
-            "inputs": np.array(
-                [list(self.dict().values())],
+            feat: np.array(
+                feat_val,
                 np.float32,
             ).reshape(1, -1)
+            for feat, feat_val in self
         }
 
     def to_dataframe(self):
