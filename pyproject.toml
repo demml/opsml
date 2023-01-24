@@ -26,10 +26,8 @@ onnx = "^1.12.0"
 onnxruntime = "^1.13.1"
 onnxmltools = "^1.11.1"
 cryptography = "38.0.4"
-tf2onnx = {version="^1.13.0", optional = true}
+tf2onnx = "^1.13.0"
 
-[tool.poetry.extras]
-tfonnx = ["tf2onnx"]
 
 [tool.poetry.group.dev]
 optional = true
