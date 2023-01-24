@@ -25,14 +25,22 @@
 <h4 align="left">Supported Model Types</h4>
 
 <a href="https://www.tensorflow.org/">
-  <img alt="coverage" src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white"/>
+  <img alt="coverage" src="https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white"/>
 
 <a href="https://keras.io/">
-  <img alt="coverage" src="https://img.shields.io/badge/Keras-FF0000?style=for-the-badge&logo=keras&logoColor=white"/>
+  <img alt="coverage" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
 
 <a href="https://scikit-learn.org/stable/">
-  <img alt="coverage" src="https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white"/>
+  <img alt="coverage" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
+
+<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
+  <img alt="coverage" src=https://img.shields.io/badge/LightGBM-success?"/>
 </p>
+
+<a href="https://xgboost.readthedocs.io/en/stable/">
+  <img alt="coverage" src=https://img.shields.io/badge/XGBoost-blueviolet?"/>
+</p>
+
 
 <p align="center">
   <a href="#what-is-it">What is it?</a> •
