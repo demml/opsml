@@ -223,9 +223,9 @@ model_card = ModelCard(
 #### Output
 
 ```bash
-{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-01-19T18:09:22.782711Z", "app_env": "development", "host": null, "version": null}
-{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-01-19T18:09:23.403513Z", "app_env": "development", "host": null, "version": null}
-{"level": "INFO", "message": "Test Onnx prediction: 4.863347", "timestamp": "2023-01-19T18:09:23.439853Z", "app_env": "development", "host": null, "version": null}
+{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-01-24T01:47:27.912424Z", "app_env": "staging", "host": null, "version": null}
+{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-01-24T01:47:28.189532Z", "app_env": "staging", "host": null, "version": null}
+{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-01-24T01:47:28.209281Z", "app_env": "staging", "host": null, "version": null}
 ```
 
 ModelCardCreator returns a ModelCard containing your model serialized into Onnx format
@@ -247,7 +247,7 @@ ModelCards create serialized onnx model definitions from the provided model upon
 onnx_model = model_card.model()
 
 # Checkout the automated api sig (inferred from training data sample)
-onnx_model.api_sig.schema()
+onnx_model.input_sig.schema()
 ```
 
 ```text
@@ -281,16 +281,16 @@ record = data_splits.test[0:1].to_dict(orient='records')[0]
 # record = {"data": list(np.ravel(data[:1]))}
 
 # test the onnx model 
-onnx_pred = round(onnx_model.predict(record),4)
+onnx_pred = float(np.ravel(onnx_model.predict(record))[0])
 
 # Compare to original model
-orig_pred = round(onnx_model.predict_with_model(model_card.trained_model, record),4)
+orig_pred = float(onnx_model.predict_with_model(model_card.trained_model, record)[0])
 
-print(f"Onnx: {onnx_pred}", f"Lightgbm: {orig_pred}")
+print(f"Onnx: {round(onnx_pred,4)}", f"Lightgbm: {round(orig_pred,4)}")
 ```
 
 ```text
-Onnx: 19.7139 Lightgbm: 19.7139
+Onnx: 5.1914 Lightgbm: 5.1914
 ```
 
 ## Benchmarks
@@ -303,4 +303,4 @@ Onnx: 19.7139 Lightgbm: 19.7139
 
 
 ## Roadmap
-- Add in Tensorflow and Pytorch support for Onnx
+- Add in Pytorch support for Onnx
