@@ -1,3 +1,5 @@
+# pylint: disable=[import-outside-toplevel,import-error]
+
 import tempfile
 import uuid
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -185,7 +187,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     def save_artifact(self, artifact: Any) -> StoragePath:
 
-        import tensorflow as tf  # pylint: disable=import-outside-toplevel
+        import tensorflow as tf
 
         artifact = cast(tf.keras.Model, artifact)
 
@@ -198,7 +200,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     def load_artifact(self, storage_uri: str) -> Any:
 
-        import tensorflow as tf  # pylint: disable=import-outside-toplevel
+        import tensorflow as tf
 
         model_path = self.list_files(storage_uri=storage_uri)[0]
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa

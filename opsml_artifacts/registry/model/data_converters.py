@@ -1,5 +1,4 @@
-# pylint: disable=import-outside-toplevel
-# break this out into separate files at some point (data_converter.py, model_converter.py)
+# pylint: disable=[import-outside-toplevel,import-error]
 """Code for generating Onnx Models"""
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
