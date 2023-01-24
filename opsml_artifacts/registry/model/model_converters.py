@@ -1,5 +1,5 @@
-# pylint: disable=import-outside-toplevel
-# break this out into separate files at some point (data_converter.py, model_converter.py)
+# pylint: disable=[import-outside-toplevel,import-error]
+
 """Code for generating Onnx Models"""
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -136,7 +136,7 @@ class ModelConverter:
         Args:
             onnx_model (ModelProto): Onnx model
         """
-        key = Fernet.generate_key()  # this is your "password"
+        key = Fernet.generate_key()
         cipher_suite = Fernet(key)
         encoded_text = cipher_suite.encrypt(
             onnx_model.SerializeToString(),
