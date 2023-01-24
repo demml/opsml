@@ -16,10 +16,31 @@
   <img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" />
 
   <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
-  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=alert_status&token=squ_06f8921843044242e5975ed012023f7b09066e9c" />
+  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=alert_status&token=squ_06f8921843044242e5975ed012023f7b09066e9c"/>
 
   <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
-  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=coverage&token=squ_06f8921843044242e5975ed012023f7b09066e9c" />
+  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=coverage&token=squ_06f8921843044242e5975ed012023f7b09066e9c"/>
+</p>
+
+<h4 align="left">Supported Model Types</h4>
+
+<a href="https://www.tensorflow.org/">
+  <img alt="tensorflow" src="https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white"/>
+
+<a href="https://keras.io/">
+  <img alt="keras"" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
+
+<a href="https://scikit-learn.org/stable/">
+  <img alt="scikit-learn" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
+
+
+<a href="https://xgboost.readthedocs.io/en/stable/">
+  <img alt="xgboost" src=https://img.shields.io/badge/Package-XGBoost-blueviolet"/>
+
+
+<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
+  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
+
 </p>
 
 <p align="center">
