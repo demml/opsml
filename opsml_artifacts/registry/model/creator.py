@@ -27,7 +27,14 @@ class OnnxModelCreator:
         self.model_type = self.get_onnx_model_type()
         self.data_type = self.get_input_data_type(input_data=input_data)
 
-    def get_input_data_type(self, input_data: Union[pd.DataFrame, np.ndarray]) -> str:
+    def get_input_data_type(
+        self,
+        input_data: Union[
+            pd.DataFrame,
+            np.ndarray,
+            Dict[str, np.ndarray],
+        ],
+    ) -> str:
 
         """Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
@@ -84,19 +91,3 @@ class OnnxModelCreator:
             model_type=self.model_type,
             data_type=self.data_type,
         )
-
-        # return ModelCard(
-        #   name=model_name.lower(),
-        #   team=team.lower(),
-        #   model_type=self.model_type,
-        #   data_schema=data_schema,
-        #   user_email=user_email.lower(),
-        #   onnx_model_def=model_definition,
-        #   data_card_uid=registered_data_uid,
-        #   onnx_model_data=DataDict(
-        #       data_type=self.data_type,
-        #       features=feature_dict,
-        #   ),
-
-
-#
