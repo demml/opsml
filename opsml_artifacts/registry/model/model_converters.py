@@ -1,13 +1,13 @@
 # pylint: disable=import-outside-toplevel
 # break this out into separate files at some point (data_converter.py, model_converter.py)
 """Code for generating Onnx Models"""
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import onnxruntime as rt
 import pandas as pd
 from cryptography.fernet import Fernet
-from google.protobuf.pyext._message import RepeatedCompositeContainer
+from google.protobuf.pyext._message import RepeatedCompositeContainer  # type:ignore
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pyshipt_logging import ShiptLogging
 
@@ -26,7 +26,12 @@ from opsml_artifacts.registry.model.types import (
 # Get logger
 logger = ShiptLogging.get_logger(__name__)
 
-ModelConvertOutput = Tuple[ModelDefinition, Dict[str, Feature], Optional[Dict[str, str]]]
+ModelConvertOutput = Tuple[
+    ModelDefinition,
+    Dict[str, Feature],
+    Dict[str, Feature],
+    Optional[Dict[str, Feature]],
+]
 
 
 class ModelConverter:
@@ -48,7 +53,7 @@ class ModelConverter:
     def update_onnx_registries(self):
         OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_type)
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
+    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
         """Converts a model to onnx format
 
         Returns
@@ -58,10 +63,11 @@ class ModelConverter:
 
     def _predictions_close(
         self,
-        onnx_preds: Union[List[Any], Union[float, int]],
+        onnx_preds: List[Any],
         model_preds: Union[List[Any], Union[float, int]],
     ) -> bool:
         if not isinstance(model_preds, list):
+            model_preds = cast(Union[float, int], model_preds)
             valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
         else:
             valid_list = []
@@ -87,13 +93,13 @@ class ModelConverter:
 
         logger.info("Onnx model validated")
 
-    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, str]]]:
+    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         return self.data_converter.get_data_types()
 
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[int, Optional[int]]:
+    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
         row = shape_dims[0].dim_value
         col = shape_dims[1].dim_value
 
@@ -160,7 +166,7 @@ class ModelConverter:
 
 
 class SklearnOnnxModel(ModelConverter):
-    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], int]:
+    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
 
         if len(shape_dims) == 0:
             return None, None
@@ -207,7 +213,7 @@ class SklearnOnnxModel(ModelConverter):
             return self._update_onnx_registries_stacking()
         return self.update_onnx_registries()
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
+    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
 
         """Converts sklearn model to ONNX ModelProto"""
         from skl2onnx import convert_sklearn
@@ -229,7 +235,7 @@ class SklearnOnnxModel(ModelConverter):
 
 
 class LighGBMBoosterOnnxModel(ModelConverter):
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
+    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
 
         """Converts sklearn model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
@@ -255,7 +261,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
             return model[0]
         return model
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, str]]]:
+    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
         """Converts a tensorflow keras model"""
 
         import tf2onnx
@@ -275,7 +281,7 @@ class OnnxModelConverter:
     def __init__(
         self,
         model: Any,
-        input_data: Union[pd.DataFrame, np.ndarray],
+        input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
         model_type: str,
     ):
         self.model = model

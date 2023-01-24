@@ -96,10 +96,10 @@ class NumpyOnnxConverter(DataConverter):
         return None
 
     def get_onnx_data_types(self) -> List[Any]:
-        return [(self.input_name, FloatTensorType([None, self.sample_data[1]]))]
+        return [(self.input_name, FloatTensorType([None, self.sample_data.shape[1]]))]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.sample_data.astype(np.float32)[:1]}
+        return {self.input_name: self.sample_data.astype(np.float32)}
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
