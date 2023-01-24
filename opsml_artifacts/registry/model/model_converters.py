@@ -79,8 +79,10 @@ class ModelConverter:
 
     def _get_single_record(self):
         if any(
-            isinstance(self.input_data, np.ndarray),
-            isinstance(self.input_data, pd.DataFrame),
+            [
+                isinstance(self.input_data, np.ndarray),
+                isinstance(self.input_data, pd.DataFrame),
+            ]
         ):
             return self.input_data[0:1]
         return self.input_data
@@ -89,6 +91,7 @@ class ModelConverter:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
         orig_model_data = self._get_single_record()
+
         model_preds = self.model.predict(orig_model_data)
 
         logger.info("Validating converted onnx model")
