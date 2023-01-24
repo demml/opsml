@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type
+
 from pydantic import conlist, create_model
 
 from opsml_artifacts.registry.model.types import (
