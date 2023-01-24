@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,7 @@ class OnnxModelCreator:
     def __init__(
         self,
         model: Any,
-        input_data: Union[pd.DataFrame, np.ndarray],
+        input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
     ):
 
         """Instantiates OnnxModelCreator that is used for converting models to Onnx
@@ -23,10 +23,11 @@ class OnnxModelCreator:
         """
         self.model = model
         self.input_data = input_data
+        self.model_class = self._get_model_class_name()
         self.model_type = self.get_onnx_model_type()
-        self.data_type = self.get_data_type(input_data=input_data)
+        self.data_type = self.get_input_data_type(input_data=input_data)
 
-    def get_data_type(self, input_data: Union[pd.DataFrame, np.ndarray]) -> str:
+    def get_input_data_type(self, input_data: Union[pd.DataFrame, np.ndarray]) -> str:
 
         """Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
@@ -41,18 +42,23 @@ class OnnxModelCreator:
         """
 
         # Onnx supports dataframe schemas for pipelines
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+        if self.model_type in [OnnxModelType.SKLEARN_PIPELINE, OnnxModelType.TF_KERAS]:
             return InputDataType(type(input_data)).name
 
         return InputDataType.NUMPY_ARRAY.name
 
+    def _get_model_class_name(self):
+        if "keras.engine" in str(self.model):
+            return "keras"
+        return self.model.__class__.__name__
+
     def get_onnx_model_type(self) -> str:
-        model_class_name = self.model.__class__.__name__
+
         model_type = next(
             (
                 model_type
                 for model_type in ModelType.__subclasses__()
-                if model_type.validate(model_class_name=model_class_name)
+                if model_type.validate(model_class_name=self.model_class)
             )
         )
 
@@ -64,7 +70,7 @@ class OnnxModelCreator:
         Returns
             OnnxModelReturn
         """
-        model_definition, feature_dict, data_schema = OnnxModelConverter(
+        model_definition, input_onnx_features, output_onnx_features, data_schema = OnnxModelConverter(
             model=self.model,
             input_data=self.input_data,
             model_type=self.model_type,
@@ -72,7 +78,8 @@ class OnnxModelCreator:
 
         return OnnxModelReturn(
             model_definition=model_definition,
-            feature_dict=feature_dict,
+            onnx_input_features=input_onnx_features,
+            onnx_output_features=output_onnx_features,
             data_schema=data_schema,
             model_type=self.model_type,
             data_type=self.data_type,
