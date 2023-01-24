@@ -18,6 +18,7 @@ class ArtifactStorageTypes(str, Enum):
     DATAFRAME = "DataFrame"
     ARROW_TABLE = "Table"
     NDARRAY = "ndarray"
+    TF_MODEL = "keras"
 
 
 class CardNames(str, Enum):
