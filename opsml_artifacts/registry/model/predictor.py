@@ -24,7 +24,7 @@ class ApiSigCreator:
         data_type: str,
         data_dict: DataDict,
         model_type: str,
-        data_schema: Optional[Dict[str, str]],
+        data_schema: Optional[Dict[str, Feature]],
     ):
         self.data_schema = data_schema
         self.data_type = data_type
@@ -149,7 +149,7 @@ class ApiSigCreatorGetter:
         data_type: str,
         data_dict: DataDict,
         model_type: str,
-        data_schema: Optional[Dict[str, str]],
+        data_schema: Optional[Dict[str, Feature]],
     ):
 
         creator = next(
@@ -175,7 +175,7 @@ class OnnxModelPredictor:
         model_type: str,
         model_definition: bytes,
         data_dict: DataDict,
-        data_schema: Optional[Dict[str, str]],
+        data_schema: Optional[Dict[str, Feature]],
         model_version: int,
     ):
 
