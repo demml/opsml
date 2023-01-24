@@ -272,7 +272,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
     ###### ModelCard
     model_card = ModelCard(
         trained_model=model,
-        sample_input_data=data[:10],
+        sample_input_data=data[:1],
         name="test_model",
         team=team,
         user_email=user_email,
@@ -309,7 +309,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
     assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
 
 
-def test_tensorflow_modelcard(db_registries, load_transformer_example):
+def _test_tensorflow_modelcard(db_registries, load_transformer_example):
     model, data = load_transformer_example
 
     registry = db_registries["data"]

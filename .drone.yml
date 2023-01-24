@@ -15,7 +15,7 @@ steps:
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
       - export GOOGLE_APPLICATION_CREDENTIALS=account.json
       - pip install poetry==1.2.2
-      - poetry install --with dev
+      - poetry install --all-extras --with dev,dev-tf
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -32,7 +32,7 @@ steps:
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
       - export GOOGLE_APPLICATION_CREDENTIALS=account.json
       - pip install poetry==1.2.2
-      - poetry install --with dev
+      - poetry install --all-extras --with dev,dev-tf
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
