@@ -1335,7 +1335,7 @@ reference = ""
 
 [[package]]
 name = "lightgbm"
-version = "3.3.4"
+version = "3.3.5"
 description = "LightGBM Python Package"
 category = "dev"
 optional = false
@@ -2875,7 +2875,7 @@ name = "tf2onnx"
 version = "1.13.0"
 description = "Tensorflow to ONNX converter"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -3192,13 +3192,10 @@ type = "legacy"
 url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
-[extras]
-tfonnx = ["tf2onnx"]
-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "c0e68a75fc3109f9e6ea30c93f5831d8653b4fbd6cd68e6db46266656492dd44"
+content-hash = "bb1b690c318a80d49ef7eccf435cdb9d0b3c5c8750b1594a434ece66ce0b0ef0"
 
 [metadata.files]
 absl-py = [
@@ -4187,11 +4184,11 @@ libclang = [
     {file = "libclang-15.0.6.1.tar.gz", hash = "sha256:a1a8fe038af2962c787c5bac81bfa4b82bb8e279e61e70cc934c10f6e20c73ec"},
 ]
 lightgbm = [
-    {file = "lightgbm-3.3.4-py3-none-macosx_10_15_x86_64.macosx_11_6_x86_64.macosx_12_0_x86_64.whl", hash = "sha256:eb11d83b2f6ba6f77c6f4765de0d646c1bfbc47b5aec9247576c3c0d60e52960"},
-    {file = "lightgbm-3.3.4-py3-none-manylinux1_x86_64.whl", hash = "sha256:bf79910a75ba6260cdefa3ddfe030707928ba2a0ffb204c0b6ab31f56fc27ebd"},
-    {file = "lightgbm-3.3.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5015ee512e4fbe2ca901b4a23dca650f1a423cae900646158f340ab84399fbe2"},
-    {file = "lightgbm-3.3.4-py3-none-win_amd64.whl", hash = "sha256:a3b29612af17096dbcc9419dd5ef5342dbb86cf77ec8f99064e2fa101722c3da"},
-    {file = "lightgbm-3.3.4.tar.gz", hash = "sha256:d6fa4d5b2a6f38d588434193f366757b20b301300b7385ca6924e2e402fc9063"},
+    {file = "lightgbm-3.3.5-py3-none-macosx_10_15_x86_64.macosx_11_6_x86_64.macosx_12_0_x86_64.whl", hash = "sha256:843dd37c00a1096a8898b80e368b3eef7f5a5d327d1fd9eb770b6f3c2e1edc49"},
+    {file = "lightgbm-3.3.5-py3-none-manylinux1_x86_64.whl", hash = "sha256:044f65664c1a32c98cb619bafa97d8cd9d93c2c2d5053376aadfe509a3a3e7fa"},
+    {file = "lightgbm-3.3.5-py3-none-manylinux2014_aarch64.whl", hash = "sha256:ef01e46939293a0a36729350a7384dc17a36880176d0f17d82b738bbe77e4528"},
+    {file = "lightgbm-3.3.5-py3-none-win_amd64.whl", hash = "sha256:02a40745c1972cf4a2cde764c7739228f45178c2237af2df40fde7063a58ac6a"},
+    {file = "lightgbm-3.3.5.tar.gz", hash = "sha256:10b8fbdcf851e4f68a1f02f38d99bdc44c7c7fb9b1a62dcf924a0d29ff73395c"},
 ]
 markdown = [
     {file = "Markdown-3.4.1-py3-none-any.whl", hash = "sha256:08fb8465cffd03d10b9dd34a5c3fea908e20391a2a90b88d66362cb05beed186"},
