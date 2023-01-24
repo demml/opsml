@@ -35,11 +35,11 @@
 
 
 <a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
-  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-brightgreen"/>
+  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success?"/>
 
 
 <a href="https://xgboost.readthedocs.io/en/stable/">
-  <img alt="xgboost" src=https://img.shields.io/badge/Package-XGBoost-blueviolet"/>
+  <img alt="xgboost" src=https://img.shields.io/badge/Package-XGBoost-blueviolet?"/>
 
 </p>
 
