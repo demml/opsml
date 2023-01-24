@@ -1,6 +1,6 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ class OnnxModelType(str, Enum):
     LGBM_CLASSIFIER = "lgbmclassifier"
     XGB_REGRESSOR = "xgbregressor"
     LGBM_BOOSTER = "booster"
+    TF_KERAS = "keras"
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
@@ -44,15 +45,29 @@ class InputDataType(Enum):
 
     PANDAS_DATAFRAME = pd.DataFrame
     NUMPY_ARRAY = np.ndarray
+    DICT = dict
 
 
 class OnnxDataProto(Enum):
     """Maps onnx element types to their data types"""
 
+    UNDEFINED = 0
+    FLOAT = 1
+    UINT8 = 2
+    INT8 = 3
+    UINT16 = 4
+    INT16 = 5
     INT32 = 6
     INT64 = 7
-    FLOAT = 1
     STRING = 8
+    BOOL = 9
+    FLOAT16 = 10
+    DOUBLE = 11
+    UINT32 = 12
+    UINT64 = 13
+    COMPLEX64 = 14
+    COMPLEX128 = 15
+    BFLOAT16 = 16
 
 
 class Feature(BaseModel):
@@ -64,7 +79,8 @@ class DataDict(BaseModel):
     """Datamodel for feature info"""
 
     data_type: str
-    features: Dict[str, Feature]
+    input_features: Dict[str, Feature]
+    output_features: Dict[str, Feature]
 
 
 class ModelDefinition(BaseModel):
@@ -74,8 +90,9 @@ class ModelDefinition(BaseModel):
 
 class OnnxModelReturn(BaseModel):
     model_definition: ModelDefinition
-    feature_dict: Dict[str, Feature]
-    data_schema: Optional[Dict[str, str]]
+    onnx_input_features: Dict[str, Feature]
+    onnx_output_features: Dict[str, Feature]
+    data_schema: Optional[Dict[str, Feature]]
     model_type: str
     data_type: str
 
@@ -92,7 +109,7 @@ class NumpyBase(Base):
     def to_onnx(self):
         return {
             "inputs": np.array(
-                [list(self.dict().values())],
+                list(self.dict().values()),
                 np.float32,
             ).reshape(1, -1)
         }
@@ -101,17 +118,62 @@ class NumpyBase(Base):
         raise NotImplementedError
 
 
-class PandasBase(Base):
+class DictBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
             if isinstance(feat_val, float):
-                feats[feat] = np.array([[feat_val]]).astype(np.float32)
+                feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
             elif isinstance(feat_val, int):
-                feats[feat] = np.array([[feat_val]]).astype(np.int64)
+                feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
             else:
-                feats[feat] = np.array([[feat_val]])
+                feats[feat] = np.array(feat_val).reshape(1, -1)
         return feats
 
     def to_dataframe(self):
         return pd.DataFrame(self.dict(), index=[0])
+
+
+class KerasNumpyBase(Base):
+    def to_onnx(self):
+        return {
+            feat: np.array(
+                feat_val,
+                np.float32,
+            ).reshape(1, -1)
+            for feat, feat_val in self
+        }
+
+    def to_dataframe(self):
+        raise NotImplementedError
+
+
+class KerasDictBase(Base):
+    """API base class for tensorflow/keras multi-input models.
+    Multi-input models typically allow for a dictionary of arrays
+    """
+
+    def to_onnx(self):
+        feats = {}
+        for feat, feat_val in self:
+            if isinstance(feat_val[0], float):
+                feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
+            elif isinstance(feat_val[0], int):
+                feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
+            else:
+                feats[feat] = np.array(feat_val).reshape(1, -1)
+        return feats
+
+    def to_dataframe(self):
+        raise NotImplementedError
+
+
+class ApiSigTypes(Enum):
+    UNDEFINED = Any
+    INT = int
+    INT32 = int
+    INT64 = int
+    FLOAT = float
+    FLOAT32 = float
+    FLOAT64 = float
+    STR = str
