@@ -73,7 +73,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
         record_uid = cast(str, record.get("uid"))
         self._update_record_transaction(table=self._table, record_uid=record_uid, record=record)
         logger.info(
-            "%s: %s, version:%s updated [%s]",
+            "%s: %s, version:%s updated",
             self._table.__tablename__,
             record.get("name"),
             record.get("version"),
