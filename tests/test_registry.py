@@ -17,7 +17,7 @@ from pydantic import ValidationError
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def _test_register_data(db_registries, test_data, storage_client, data_splits):
+def test_register_data(db_registries, test_data, storage_client, data_splits):
 
     # create data card
     registry = db_registries["data"]
@@ -43,7 +43,7 @@ def _test_register_data(db_registries, test_data, storage_client, data_splits):
     storage_client.delete_object_from_url(gcs_uri=data_card.data_uri)
 
 
-def _test_experiment_card(linear_regression, db_registries):
+def test_experiment_card(linear_regression, db_registries):
 
     registry: CardRegistry = db_registries["experiment"]
 
@@ -70,7 +70,7 @@ def _test_experiment_card(linear_regression, db_registries):
     assert loaded_card.uid == experiment.uid
 
 
-def _test_register_pipeline_model(db_registries, sklearn_pipeline, storage_client):
+def test_register_pipeline_model(db_registries, sklearn_pipeline, storage_client):
 
     model, data = sklearn_pipeline
 
@@ -142,7 +142,7 @@ def _test_register_pipeline_model(db_registries, sklearn_pipeline, storage_clien
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_data_card_splits(test_data):
+def test_data_card_splits(test_data):
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -178,7 +178,7 @@ def _test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_load_data_card(db_registries, test_data, storage_client):
+def test_load_data_card(db_registries, test_data, storage_client):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -210,7 +210,7 @@ def _test_load_data_card(db_registries, test_data, storage_client):
     assert record["version"] == 100
 
 
-def _test_pipeline_registry(db_registries):
+def test_pipeline_registry(db_registries):
 
     pipeline_card = PipelineCard(
         name="test_df",
