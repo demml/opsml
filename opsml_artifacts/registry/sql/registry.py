@@ -84,6 +84,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
 
         version = self._set_version(name=card.name, team=card.team)
         record = card.create_registry_record(registry_name=self.table_name, uid=self._set_uid(), version=version)
+
         self._add_and_commit(record=record.dict())
 
     def list_cards(
