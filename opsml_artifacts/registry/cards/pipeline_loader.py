@@ -32,3 +32,15 @@ class PipelineLoader:
                 self._load_cards(cards=cards, card_type=card_type)
 
         return self._card_deck
+
+    def get_card_uids(self) -> Dict[str, Dict[str, str]]:
+        card_uids = cast(Dict[str, Dict[str, str]], {})
+        for card_type in NON_PIPELINE_CARDS:
+            cards = getattr(self.pipline_card, f"{card_type}_card_uids")
+            if bool(cards):
+                for card_name, card_uid in cards.items():
+                    card_uids[card_name] = {
+                        "card_type": card_type,
+                        "uid": card_uid,
+                    }
+        return card_uids
