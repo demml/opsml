@@ -535,7 +535,7 @@ class ExperimentCard(ArtifactCard):
     uid: Optional[str] = None
     version: Optional[int] = None
     data_card_uid: Optional[str] = None
-    model_card_uid: Optional[str] = None
+    model_card_uids: Optional[List[str]] = None
     pipeline_card_uid: Optional[str] = None
     metrics: Optional[Dict[str, Union[float, int]]] = None
     artifacts: Optional[Dict[str, Any]] = None
@@ -611,7 +611,7 @@ class ExperimentCard(ArtifactCard):
 
         """
 
-        if not any([self.data_card_uid, self.pipeline_card_uid, self.model_card_uid]):
+        if not any([self.data_card_uid, self.pipeline_card_uid, bool(self.model_card_uids)]):
             raise ValueError(
                 """One of DataCard, ModelCard, or PipelineCard must be specified
             """
