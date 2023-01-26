@@ -306,7 +306,10 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
 
     loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
     deck = loader.load_cards()
+    uids = loader.get_card_uids()
+
     assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
+    assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
 
 
 def _test_tensorflow_modelcard(db_registries, load_transformer_example):
