@@ -287,7 +287,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
         team=team,
         user_email=user_email,
         data_card_uid=data_card.uid,
-        model_card_uid=model_card.uid,
+        model_card_uids=[model_card.uid],
     )
     exp_card.add_metric("test_metric", 10)
     experiment_registry.register_card(card=exp_card)
