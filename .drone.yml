@@ -5,7 +5,6 @@ type: docker
 trigger:
   event:
   - pull_request
-  - push
 
 steps:
   - name: py38
@@ -88,6 +87,62 @@ trigger:
     - main
 
 steps:
+
+  - name: py39
+    when:
+      event:
+        - push
+    image: python:3.9
+    commands:
+      - apt update
+      - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
+      - export GOOGLE_APPLICATION_CREDENTIALS=account.json
+      - pip install poetry==1.2.2
+      - poetry install --all-extras --with dev,dev-tf
+      - make test.unit
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+
+  - name: quality-checks
+    when:
+      event:
+        - push
+    image: python:3.9
+    commands:
+      - pip install poetry==1.2.2
+      - poetry install --with dev
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+
+  - name: code-analysis
+    when:
+      event:
+        - push
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+    depends_on:
+      - py39
+      - quality-checks
+
   - name: publish-release-candidate
     when:
       event:
@@ -102,6 +157,10 @@ steps:
       - pip install poetry==1.2.2
       - make prep.pre.patch
       - make publish
+    depends_on:
+      - py39
+      - quality-checks
+      - code-analysis
 
   - name: artifactory-poetry-publish
     when:

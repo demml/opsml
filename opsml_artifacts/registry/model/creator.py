@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -22,10 +22,36 @@ class OnnxModelCreator:
             input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
         """
         self.model = model
-        self.input_data = input_data
+        self.input_data = self._get_one_sample(input_data)
         self.model_class = self._get_model_class_name()
         self.model_type = self.get_onnx_model_type()
         self.data_type = self.get_input_data_type(input_data=input_data)
+
+    def _get_one_sample(
+        self,
+        input_data: Union[
+            pd.DataFrame,
+            np.ndarray,
+            Dict[str, np.ndarray],
+        ],
+    ) -> Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]:
+
+        """Parses input data and returns a single record to be used during ONNX conversion and validation"""
+
+        data_type = type(input_data)
+        if data_type in [
+            InputDataType.PANDAS_DATAFRAME.value,
+            InputDataType.NUMPY_ARRAY.value,
+        ]:
+            return cast(
+                Union[pd.DataFrame, np.ndarray],
+                input_data,
+            )[0:1]
+
+        sample_dict = cast(Dict[str, np.ndarray], {})
+        for key in cast(Dict[str, np.ndarray], input_data).keys():
+            sample_dict[key] = input_data[key][0:1]
+        return sample_dict
 
     def get_input_data_type(
         self,

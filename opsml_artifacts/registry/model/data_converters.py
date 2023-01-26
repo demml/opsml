@@ -118,7 +118,7 @@ class PandasOnnxConverter(DataConverter):
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         self.data = cast(pd.DataFrame, self.data)
-        return {self.input_name: self.data.to_numpy().astype(np.float32)[:1]}
+        return {self.input_name: self.data.to_numpy().astype(np.float32)}
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
@@ -189,7 +189,7 @@ class TensorflowDictOnnxConverter(DataConverter):
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         onnx_data = {}
         for key, val in self.sample_data.items():
-            onnx_data[key] = val.astype(np.float32)[0:1]
+            onnx_data[key] = val.astype(np.float32)
         return onnx_data
 
     @staticmethod
@@ -221,7 +221,7 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         return [tf.TensorSpec(shape_, dtype, name=self.input_name)]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.sample_data.astype(np.float32)[:1]}
+        return {self.input_name: self.sample_data.astype(np.float32)}
 
     @staticmethod
     def validate(data_type: type, model_type: str) -> bool:
