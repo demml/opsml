@@ -62,12 +62,22 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
 
     def _add_and_commit(self, record: Dict[str, Any]):
         self._add_commit_transaction(record=self._table(**record))
-        logger.info("Table: %s registered as version %s", record.get("name"), record.get("version"))
+        logger.info(
+            "%s: %s registered as version %s",
+            self._table.__tablename__,
+            record.get("name"),
+            record.get("version"),
+        )
 
     def _update_record(self, record: Dict[str, Any]):
         record_uid = cast(str, record.get("uid"))
         self._update_record_transaction(table=self._table, record_uid=record_uid, record=record)
-        logger.info("Data: %s, version:%s updated", record.get("name"), record.get("version"))
+        logger.info(
+            "%s: %s, version:%s updated [%s]",
+            self._table.__tablename__,
+            record.get("name"),
+            record.get("version"),
+        )
 
     def register_card(self, card: Any) -> None:
         """
