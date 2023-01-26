@@ -50,7 +50,7 @@ class ExperimentRegistryRecord(BaseModel):
     uid: Optional[str] = None
     version: Optional[int] = None
     data_card_uid: Optional[str] = None
-    model_card_uid: Optional[str] = None
+    model_card_uids: Optional[List[str]] = None
     pipeline_card_uid: Optional[str] = None
     artifact_uris: Optional[Dict[str, str]]
     metrics: Optional[Dict[str, Union[float, int]]]
