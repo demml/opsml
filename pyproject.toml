@@ -52,12 +52,11 @@ lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
 types-protobuf = "^4.21.0.3"
 
-
 [tool.poetry.group.dev-tf]
 optional = true
 
 [tool.poetry.group.dev-tf.dependencies]
-tensorflow = "2.10.0"
+tensorflow = "2.10.1"
 
 [tool.isort]
 profile = "black"
