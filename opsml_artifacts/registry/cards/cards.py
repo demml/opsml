@@ -2,8 +2,6 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
-
-# from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 import pandas as pd
 from cryptography.fernet import Fernet
 from pyarrow import Table
@@ -102,6 +100,10 @@ class DataCard(ArtifactCard):
         feature_map (dictionary): Map of features in data (inferred when converting to pyrarrow table)
         data_type (str): Data type inferred from supplied data
         uid (str): Unique id assigned to the DataCard
+        dependent_vars (list): List of dependent variables. Can be string or index if using numpy
+        feature_descriptions (dict): Dictionary of features and their descriptions
+        additional_info (dict): Dictionary of additional info to associate with data
+        (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})
 
 
     Returns:
@@ -112,7 +114,7 @@ class DataCard(ArtifactCard):
     name: str
     team: str
     user_email: str
-    data: Union[np.ndarray, pd.DataFrame, Table]
+    data: Optional[Union[np.ndarray, pd.DataFrame, Table]]
     drift_report: Optional[Dict[str, DriftReport]] = None
     data_splits: Optional[List[Dict[str, Any]]]
     data_uri: Optional[str] = None
@@ -121,19 +123,29 @@ class DataCard(ArtifactCard):
     feature_map: Optional[Dict[str, Union[str, None]]] = None
     data_type: Optional[str] = None
     uid: Optional[str] = None
-    dependent_vars: Optional[List[str]] = None
+    dependent_vars: Optional[List[Union[int, str]]] = None
     feature_descriptions: Optional[Dict[str, str]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
 
     class Config:
         arbitrary_types_allowed = True
         validate_assignment = False
+        smart_union = True
 
     @property
     def has_data_splits(self):
         return bool(self.data_splits)
 
+    @validator("data_uri", pre=True, always=True)
+    def check_data(cls, data_uri, values):  # pylint: disable=no-self-argument
+
+        if data_uri is None and values["data"] is None:
+            raise ValueError("Data must be supplied when no data_uri is present")
+
+        return data_uri
+
     @validator("data_splits", pre=True, always=True)
-    def convert_none(cls, splits):  # pylint: disable=no-self-argument
+    def check_splits(cls, splits):  # pylint: disable=no-self-argument
         if splits is None:
             return []
 
@@ -155,6 +167,10 @@ class DataCard(ArtifactCard):
             feat_dict[feature.lower()] = description.lower()
 
         return feat_dict
+
+    @validator("additional_info", pre=True, always=True)
+    def check_info(cls, value):  # pylint: disable=no-self-argument
+        return value or {}
 
     def overwrite_converted_data_attributes(self, converted_data: ArrowTable):
         setattr(self, "data_uri", converted_data.storage_uri)
@@ -224,6 +240,15 @@ class DataCard(ArtifactCard):
             )
             setattr(self, "drift_uri", storage_path.gcs_uri)
 
+    def load_data(self):
+
+        data = load_record_artifact_from_storage(
+            storage_uri=self.data_uri,
+            artifact_type=self.data_type,
+        )
+
+        setattr(self, "data", data)
+
     def create_registry_record(
         self,
         uid: str,
@@ -249,17 +274,30 @@ class DataCard(ArtifactCard):
 
         return DataRegistryRecord(**self.__dict__)
 
+    def add_info(self, info: Dict[str, Union[float, int, str]]):
+        """Adds metadata to the existing DataCard metadatda dictionary
+
+        Args:
+            Metadata (dictionary): Dictionary containing name (str) and value (float, int, str) pairs
+        to add to the current metadata set
+        """
+
+        curr_info = cast(Dict[str, Union[int, float, str]], self.additional_info)
+        self.additional_info = {**info, **curr_info}
+
 
 class ModelCard(ArtifactCard):
     """Create a ModelCard from your trained machine learning model.
     This Card is used in conjunction with the ModelCardCreator class.
 
     Args:
-        data (np.ndarray, pd.DataFrame, pa.Table): Data to use for
-        data card.
-        name (str): What to name the model
+        name (str): Name for the model specific to your current project
         team (str): Team that this model is associated with
         user_email (str): Email to associate with card
+        trained_model (any): Trained model. Can be of type sklearn, xgboost,
+        ightgbm or tensorflow
+        sample_input_data (pandas dataframe, numpy array, or dictionary of numpy arrays):
+        Sample of data model was trained on
         uid (str): Unique id (assigned if card has been registered)
         version (int): Current version (assigned if card has been registered)
         data_card_uid (str): Uid of the DataCard associated with training the model
@@ -459,11 +497,11 @@ class ModelCard(ArtifactCard):
 
 
 class PipelineCard(ArtifactCard):
-    """Create as PipelineCard from specified arguments
+    """Create a PipelineCard from specified arguments
 
     Args:
-        name (str): What to name the model
-        team (str): Team that this model is associated with
+        name (str): Pipeline name
+        team (str): Team that this card is associated with
         user_email (str): Email to associate with card
         uid (str): Unique id (assigned if card has been registered)
         version (int): Current version (assigned if card has been registered)
@@ -529,6 +567,30 @@ class PipelineCard(ArtifactCard):
 
 
 class ExperimentCard(ArtifactCard):
+
+    """Create an ExperimentCard from specified arguments.
+    Apart from required args, an Experiment card must be associated with one of data_card_uid,
+    model_card_uids or pipeline_card_uid
+
+    Args:
+        name (str): Experiment name
+        team (str): Team that this card is associated with
+        user_email (str): Email to associate with card
+        data_card_uid (str): Optional DataCard uid associated with pipeline
+        model_card_uids (list): Optional List of ModelCard uids to associate with this experiment
+        pipeline_card_uid (str): Optional PipelineCard uid to associate with this experiment
+        metrics (dict): Optional dictionary of key (str), value (int, float) metric paris.
+        Metrics can also be added via class methods.
+        artifacts (dict): Optional dictionary of artifacts (i.e. plots, reports) to associate with
+        the current experiment
+        artifact_uris (dict): Optional dictionary of artifact uris associated with experiment artifacts.
+        This is set when registering the experiment
+        uid (str): Unique id (assigned if card has been registered)
+        version (int): Current version (assigned if card has been registered)
+
+
+    """
+
     name: str
     team: str
     user_email: str
