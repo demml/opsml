@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 from pydantic import BaseModel, root_validator, validator
 
 from opsml_artifacts.drift.models import DriftReport
