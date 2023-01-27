@@ -284,8 +284,6 @@ def db_registries():
         "pipeline": pipeline_registry,
     }
 
-    # close sessions
-
     # drop tables
     ModelSchema.__table__.drop(bind=engine, checkfirst=True)
     DataSchema.__table__.drop(bind=engine, checkfirst=True)
