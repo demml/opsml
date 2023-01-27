@@ -54,7 +54,7 @@ reference = ""
 
 [[package]]
 name = "altair"
-version = "4.2.0"
+version = "4.2.1"
 description = "Altair: A declarative statistical visualization library for Python."
 category = "main"
 optional = false
@@ -3218,7 +3218,7 @@ reference = ""
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "a87cbe19ebf2cb81759aa10e5e9b6d9bbc903828c5a9dc15c853b0f466a510ab"
+content-hash = "0ba1a8de1e4f4c8a5802b92b92335a3fe4392730e4504452511cca52ef473a7d"
 
 [metadata.files]
 absl-py = [
@@ -3319,8 +3319,8 @@ aiosignal = [
     {file = "aiosignal-1.3.1.tar.gz", hash = "sha256:54cd96e15e1649b75d6c87526a6ff0b6c1b0dd3459f43d9ca11d48c339b68cfc"},
 ]
 altair = [
-    {file = "altair-4.2.0-py3-none-any.whl", hash = "sha256:0c724848ae53410c13fa28be2b3b9a9dcb7b5caa1a70f7f217bd663bb419935a"},
-    {file = "altair-4.2.0.tar.gz", hash = "sha256:d87d9372e63b48cd96b2a6415f0cf9457f50162ab79dc7a31cd7e024dd840026"},
+    {file = "altair-4.2.1-py3-none-any.whl", hash = "sha256:67e099a651c78028c4e135e3b5bd9680ed7dd928ca7b61c9c7376c58e41d2b02"},
+    {file = "altair-4.2.1.tar.gz", hash = "sha256:4939fd9119c57476bf305af9ca0bd1aa7779b2450b874d3623660e879d0fcad1"},
 ]
 altair-data-server = [
     {file = "altair_data_server-0.4.1-py3-none-any.whl", hash = "sha256:bd1414d69dbfec22c804b34210491d7313e5edc7736504dfb8c405ded0e2015b"},

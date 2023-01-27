@@ -196,10 +196,22 @@ def test_load_data_card(db_registries, test_data, storage_client):
         team=team,
         user_email=user_email,
         data_splits=data_split,
+        additional_info={"input_metadata": 20},
+        dependent_vars=[200, "test"],
     )
 
+    data_card.add_info(info={"added_metadata": 10})
+
     registry.register_card(card=data_card)
-    loaded_data = registry.load_card(name=data_name, team=team, version=data_card.version)
+    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
+
+    loaded_data.load_data()
+
+    assert int(loaded_data.additional_info["input_metadata"]) == 20
+    assert int(loaded_data.additional_info["added_metadata"]) == 10
+    assert isinstance(loaded_data.dependent_vars[0], int)
+    assert isinstance(loaded_data.dependent_vars[1], str)
+    assert bool(loaded_data)
 
     # update
     loaded_data.version = 100
@@ -208,6 +220,17 @@ def test_load_data_card(db_registries, test_data, storage_client):
 
     record = registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
     assert record["version"] == 100
+
+    # test assertion error
+    with pytest.raises(ValueError):
+        data_card = DataCard(
+            name=data_name,
+            team=team,
+            user_email=user_email,
+            data_splits=data_split,
+            additional_info={"input_metadata": 20},
+            dependent_vars=[200, "test"],
+        )
 
 
 def test_pipeline_registry(db_registries):
