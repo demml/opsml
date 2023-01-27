@@ -2,7 +2,6 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
-
 import pandas as pd
 from cryptography.fernet import Fernet
 from pyarrow import Table
