@@ -47,6 +47,7 @@ class DataMixin:
     feature_descriptions = Column("feature_descriptions", JSON)
     data_splits = Column("data_splits", JSON)
     data_type = Column("data_type", String(512))
+    additional_info = Column("additional_info", JSON)
     dependent_vars = Column("dependent_vars", JSON)
 
     __table_args__ = {"schema": "ds-artifact-registry"}

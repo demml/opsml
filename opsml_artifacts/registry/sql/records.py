@@ -1,8 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
-import pandas as pd
-import pyarrow as pa
 from pydantic import BaseModel, root_validator, validator
 
 from opsml_artifacts.drift.models import DriftReport
@@ -21,7 +18,11 @@ class DataRegistryRecord(BaseModel):
     feature_descriptions: Optional[Dict[str, str]]
     user_email: str
     uid: Optional[str] = None
-    dependent_vars: Optional[List[str]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    dependent_vars: Optional[List[Union[int, str]]] = None
+
+    class Config:
+        smart_union = True
 
     @validator("data_splits", pre=True)
     def convert_to_dict(cls, splits):  # pylint: disable=no-self-argument
@@ -80,17 +81,17 @@ class LoadedDataRecord(BaseModel):
     feature_descriptions: Optional[Dict[str, str]]
     user_email: str
     uid: Optional[str] = None
-    dependent_vars: Optional[List[str]] = None
-    data: Union[np.ndarray, pd.DataFrame, pa.Table]
+    dependent_vars: Optional[List[Union[int, str]]] = None
     drift_report: Optional[Dict[str, DriftReport]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
 
     class Config:
         arbitrary_types_allowed = True
+        smart_union = True
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
         values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
-        values["data"] = LoadedDataRecord.load_data(values=values)
         values["drift_report"] = LoadedDataRecord.load_drift_report(values=values)
 
         return values
@@ -100,14 +101,6 @@ class LoadedDataRecord(BaseModel):
         if bool(splits):
             return splits.get("splits")
         return None
-
-    @staticmethod
-    def load_data(values):
-
-        return load_record_artifact_from_storage(
-            storage_uri=values["data_uri"],
-            artifact_type=values["data_type"],
-        )
 
     @staticmethod
     def load_drift_report(values):
