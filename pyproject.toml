@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml-artifacts"
-version = "0.2.2"
+version = "0.2.3"
 description = "Package for handling data for machine learning projects"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
