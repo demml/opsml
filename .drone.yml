@@ -1,6 +1,9 @@
 kind: pipeline
-name: test-and-build
+name: test-and-build-py38
 type: docker
+workspace:
+  base: /usr/src/py38
+  path: ${DRONE_REPO_NAME}
 
 trigger:
   event:
@@ -23,6 +26,20 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+    depends_on:
+      - clone
+
+---
+kind: pipeline
+name: test-and-build-py39
+type: docker
+workspace:
+  base: /usr/src/py39
+  path: ${DRONE_REPO_NAME}
+
+trigger:
+  event:
+  - pull_request
 
   - name: py39
     image: python:3.9
@@ -41,7 +58,7 @@ steps:
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
     depends_on:
-      - py38
+      - clone
 
   - name: quality-checks
     image: python:3.9
@@ -56,6 +73,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+    depends_on:
+      - clone
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -69,7 +88,6 @@ steps:
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
     depends_on:
-      - py39
       - py38
       - quality-checks
 
