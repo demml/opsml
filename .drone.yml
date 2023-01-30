@@ -27,3 +27,165 @@ steps:
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
 
+---
+kind: pipeline
+name: test-and-build-py39
+type: docker
+workspace:
+  base: /usr/src/py39
+  path: ${DRONE_REPO_NAME}
+
+trigger:
+  event:
+  - pull_request
+
+  - name: py39
+    image: python:3.9
+    commands:
+      - apt update
+      - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
+      - export GOOGLE_APPLICATION_CREDENTIALS=account.json
+      - pip install poetry==1.2.2
+      - poetry install --all-extras --with dev,dev-tf
+      - make test.unit
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+
+  - name: quality-checks
+    image: python:3.9
+    commands:
+      - pip install poetry==1.2.2
+      - poetry install --with dev
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+
+  - name: code-analysis
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+    depends_on:
+      - py39
+      - quality-checks
+
+---
+name: publish-release
+kind: pipeline
+type: docker
+trigger:
+  event:
+    - tag
+    - push
+  branch:
+    - main
+
+steps:
+
+  - name: py39
+    when:
+      event:
+        - push
+    image: python:3.9
+    commands:
+      - apt update
+      - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
+      - export GOOGLE_APPLICATION_CREDENTIALS=account.json
+      - pip install poetry==1.2.2
+      - poetry install --all-extras --with dev,dev-tf
+      - make test.unit
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+
+  - name: quality-checks
+    when:
+      event:
+        - push
+    image: python:3.9
+    commands:
+      - pip install poetry==1.2.2
+      - poetry install --with dev
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      GOOGLE_ACCOUNT_JSON_BASE64:
+        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+
+  - name: code-analysis
+    when:
+      event:
+        - push
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+    depends_on:
+      - py39
+      - quality-checks
+
+  - name: publish-release-candidate
+    when:
+      event:
+        - push
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.12_poetry_1.1.13
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      - pip install poetry==1.2.2
+      - make prep.pre.patch
+      - make publish
+    depends_on:
+      - py39
+      - quality-checks
+      - code-analysis
+
+  - name: artifactory-poetry-publish
+    when:
+      event:
+        - tag
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.12_poetry_1.1.13
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      # tag events validate poetry version is equal to the tag
+      # increment patch version for releases based on drone tag
+      # manually updating toml is annoying
+      - pip install poetry==1.2.2
+      - test "v$(poetry version --short)" "=" "$DRONE_TAG"
+      - make publish
