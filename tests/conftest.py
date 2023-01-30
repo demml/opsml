@@ -1,10 +1,10 @@
 import os
 
 # set test names for registry tables
-os.environ["ML_DATA_REGISTRY_NAME"] = "TEST_DATA_REGISTRY"
-os.environ["ML_MODEL_REGISTRY_NAME"] = "TEST_MODEL_REGISTRY"
-os.environ["ML_EXPERIMENT_REGISTRY_NAME"] = "TEST_EXPERIMENT_REGISTRY"
-os.environ["ML_PIPELINE_REGISTRY_NAME"] = "TEST_PIPELINE_REGISTRY"
+os.environ["ML_DATA_REGISTRY_NAME"] = os.environ.get("TEST_DATA_REGISTRY")
+os.environ["ML_MODEL_REGISTRY_NAME"] = os.environ.get("TEST_DATA_REGISTRY")
+os.environ["ML_EXPERIMENT_REGISTRY_NAME"] = os.environ.get("TEST_DATA_REGISTRY")
+os.environ["ML_PIPELINE_REGISTRY_NAME"] = os.environ.get("TEST_DATA_REGISTRY")
 
 
 from datetime import datetime
