@@ -26,8 +26,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-    depends_on:
-      - clone
 
 ---
 kind: pipeline
@@ -57,8 +55,6 @@ trigger:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-    depends_on:
-      - clone
 
   - name: quality-checks
     image: python:3.9
@@ -73,8 +69,6 @@ trigger:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-    depends_on:
-      - clone
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -88,7 +82,7 @@ trigger:
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
     depends_on:
-      - py38
+      - py39
       - quality-checks
 
 ---
