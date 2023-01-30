@@ -151,6 +151,7 @@ class GlobalSettings(BaseSettings):
         env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
 
         secret_getter = GcpSecretVarGetter(gcp_credentials=creds)
+        logger.info("Loading environment variables")
         for var_ in GcpVariables:
             env_vars[var_.name.lower()] = secret_getter.get_secret(secret_name=var_.value)
 
