@@ -241,13 +241,17 @@ class DataCard(ArtifactCard):
             setattr(self, "drift_uri", storage_path.gcs_uri)
 
     def load_data(self):
+        """Loads data"""
 
-        data = load_record_artifact_from_storage(
-            storage_uri=self.data_uri,
-            artifact_type=self.data_type,
-        )
+        if not bool(self.data):
+            data = load_record_artifact_from_storage(
+                storage_uri=self.data_uri,
+                artifact_type=self.data_type,
+            )
 
-        setattr(self, "data", data)
+            setattr(self, "data", data)
+        else:
+            logger.info("Data has already been loaded")
 
     def create_registry_record(
         self,
