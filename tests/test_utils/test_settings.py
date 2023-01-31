@@ -11,5 +11,7 @@ def test_params():
 
 def test_snowflake_creds():
     snow_creds = SnowflakeCredentials.credentials()
+    print(snow_creds)
+    a
 
     assert isinstance(snow_creds, SnowflakeParams)

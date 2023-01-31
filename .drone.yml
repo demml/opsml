@@ -1,6 +1,8 @@
 kind: pipeline
 name: test-and-build-py38
 type: docker
+node:
+  env: platform
 workspace:
   base: /usr/src/py38
   path: ${DRONE_REPO_NAME}
@@ -86,6 +88,8 @@ steps:
 name: publish-release
 kind: pipeline
 type: docker
+node:
+  env: platform
 trigger:
   event:
     - tag
