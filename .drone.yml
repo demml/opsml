@@ -47,6 +47,8 @@ steps:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
       GCP_TESTING_BASE64:
         from_secret: GCP_TESTING_BASE64
+    depends_on:
+      - py38
     
   - name: quality-checks
     image: python:3.9
