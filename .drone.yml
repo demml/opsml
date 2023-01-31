@@ -26,6 +26,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+      GCP_TESTING_BASE64:
+        from_secret: GCP_TESTING_BASE64
 
   - name: py39
     image: python:3.9
@@ -43,6 +45,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+      GCP_TESTING_BASE64:
+        from_secret: GCP_TESTING_BASE64
     
   - name: quality-checks
     image: python:3.9
@@ -57,6 +61,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+      GCP_TESTING_BASE64:
+        from_secret: GCP_TESTING_BASE64
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -106,6 +112,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+      GCP_TESTING_BASE64:
+        from_secret: GCP_TESTING_BASE64
 
   - name: quality-checks
     when:
@@ -123,6 +131,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
       GOOGLE_ACCOUNT_JSON_BASE64:
         from_secret: GOOGLE_ACCOUNT_JSON_BASE64
+      GCP_TESTING_BASE64:
+        from_secret: GCP_TESTING_BASE64
 
   - name: code-analysis
     when:
