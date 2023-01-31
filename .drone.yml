@@ -1,6 +1,8 @@
 kind: pipeline
 name: test-and-build
 type: docker
+node:
+  env: platform
 
 trigger:
   event:
@@ -77,6 +79,8 @@ steps:
 name: publish-release
 kind: pipeline
 type: docker
+node:
+  env: platform
 depends_on:
   - test-and-build
 trigger:
