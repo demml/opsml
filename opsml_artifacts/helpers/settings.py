@@ -2,44 +2,25 @@ import base64
 import json
 import os
 from datetime import datetime
-from enum import Enum
-from typing import Optional, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 import google.auth
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
-from pydantic import BaseModel, BaseSettings, root_validator
+from pydantic import BaseSettings, root_validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.helpers.gcp_utils import GCPClient, GCPSecretManager
 from opsml_artifacts.helpers.models import SnowflakeParams
+from opsml_artifacts.helpers.types import GcpCreds, GcpVariables, db_secrets
 
 logger = ShiptLogging.get_logger(__name__)
 
 
-class GcpVariables(str, Enum):
-    APP_ENV = "app_env"
-    DB_NAME = "artifact_registry_db_name"
-    DB_INSTANCE_NAME = "artifact_registry_instance_name"
-    DB_USERNAME = "artifact_registry_username"
-    DB_PASSWORD = "artifact_registry_password"
-    GCS_BUCKET = "gcs_bucket"
-    GCP_REGION = "gcp_region"
-    GCP_PROJECT = "gcp_project"
-    SNOWFLAKE_API_AUTH = "snowflake_api_auth"
-    SNOWFLAKE_API_URL = "snowflake_api_url"
-
-
-class GcpCreds(BaseModel):
-    creds: Credentials
-    project: str
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
 class GcpCredsSetter:
     def __init__(self):
+        """Set credentials"""
+
         self.service_base64_creds: Optional[str] = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
 
     def get_creds(self) -> GcpCreds:
@@ -145,17 +126,41 @@ class GlobalSettings(BaseSettings):
     def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
         creds = GcpCredsSetter().get_creds()
         env_vars["gcp_creds"] = creds.creds
+        env_vars["path"] = os.getcwd()
 
         # remove this once networking is figured out
         scopes = "https://www.googleapis.com/auth/devstorage.full_control"
         env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
 
-        secret_getter = GcpSecretVarGetter(gcp_credentials=creds)
-        for var_ in GcpVariables:
-            env_vars[var_.name.lower()] = secret_getter.get_secret(secret_name=var_.value)
+        env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
 
-        env_vars["path"] = os.getcwd()
         return env_vars
+
+    @classmethod
+    def load_vars_from_gcp(cls, env_vars: Dict[str, Any], gcp_credentials: GcpCreds):
+        secret_getter = GcpSecretVarGetter(gcp_credentials=gcp_credentials)
+        db_secret_names = cls.get_db_secret_names(service_account_email=gcp_credentials.creds.service_account_email)
+
+        logger.info("Loading environment variables")
+
+        for name, value in {**{i.name.lower(): i.value for i in GcpVariables}, **db_secret_names}.items():
+            env_vars[name] = secret_getter.get_secret(secret_name=value)
+
+        return env_vars
+
+    @classmethod
+    def get_db_secret_names(cls, service_account_email: str) -> Dict[str, str]:
+        env = cls.validate_env(service_account_email=service_account_email)
+        secret_names = getattr(db_secrets, env)
+        return secret_names.dict()
+
+    @classmethod
+    def validate_env(cls, service_account_email: str) -> str:
+        if bool(os.getenv("ARTIFACT_TESTING_MODE")):
+            if "testing" not in service_account_email:
+                raise ValueError("Only the testing service account may be used while running pytest")
+            return "testing"
+        return "non_testing"
 
 
 settings = GlobalSettings()
