@@ -1,20 +1,11 @@
 import os
 
-# set test names for registry tables
-os.environ["ML_DATA_REGISTRY_NAME"] = "TEST_DATA_REGISTRY"
-os.environ["ML_MODEL_REGISTRY_NAME"] = "TEST_MODEL_REGISTRY"
-os.environ["ML_EXPERIMENT_REGISTRY_NAME"] = "TEST_EXPERIMENT_REGISTRY"
-os.environ["ML_PIPELINE_REGISTRY_NAME"] = "TEST_PIPELINE_REGISTRY"
-
-
 from datetime import datetime
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
 from xgboost import XGBRegressor
@@ -26,13 +17,8 @@ from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.utils import FindPath
 from opsml_artifacts.helpers.gcp_utils import GCPClient
 from opsml_artifacts.registry.sql.connection import create_sql_engine
+from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.registry.sql.sql_schema import (
-    DataSchema,
-    ModelSchema,
-    ExperimentSchema,
-    PipelineSchema,
-)
 from sklearn.ensemble import StackingRegressor
 import lightgbm as lgb
 import joblib

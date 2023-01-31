@@ -5,6 +5,7 @@ from opsml_artifacts.helpers.models import SnowflakeParams
 def test_params():
 
     settings = GlobalSettings()
+
     assert isinstance(settings, GlobalSettings)
 
 

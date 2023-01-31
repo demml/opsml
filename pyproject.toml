@@ -51,6 +51,7 @@ mypy = "^0.991"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
 types-protobuf = "^4.21.0.3"
+pytest-env = "^0.8.1"
 
 [tool.poetry.group.dev-tf]
 optional = true
@@ -95,6 +96,10 @@ ignore = ["E203", "W503"]
 log_cli = true
 log_cli_level = "INFO"
 testpaths = ["tests"]
+env = [
+    "ARTIFACT_TESTING_MODE = 1",
+    "GOOGLE_ACCOUNT_JSON_BASE64 = {GCP_TESTING_BASE64}",
+]
 
 [tool.mypy]
 # platform configuration
