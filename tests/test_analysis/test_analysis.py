@@ -8,7 +8,7 @@ import pytest
 @pytest.mark.parametrize("outlier_removal", [True, False])
 @pytest.mark.parametrize("analysis_level", ["order", "bundle"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-def _test_sql_getters(compute_env, outlier_removal, analysis_level, analysis_type):
+def test_sql_getters(compute_env, outlier_removal, analysis_level, analysis_type):
 
     pay_error_analysis = PayErrorAnalysis(
         analysis_type=analysis_type,
@@ -40,7 +40,7 @@ def _test_sql_getters(compute_env, outlier_removal, analysis_level, analysis_typ
 @pytest.mark.parametrize("outlier_removal", [True, False])
 @pytest.mark.parametrize("analysis_level", ["order"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-def _test_order_analysis_df(
+def test_order_analysis_df(
     compute_env,
     outlier_removal,
     analysis_level,
@@ -78,7 +78,7 @@ def _test_order_analysis_df(
 @pytest.mark.parametrize("outlier_removal", [True, False])
 @pytest.mark.parametrize("analysis_level", ["bundle"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-def _test_bundle_analysis_df(
+def test_bundle_analysis_df(
     compute_env,
     outlier_removal,
     analysis_level,
@@ -153,7 +153,7 @@ def test_analysis_local(
 @pytest.mark.parametrize("outlier_removal", [False])
 @pytest.mark.parametrize("analysis_level", ["order"])
 @pytest.mark.parametrize("analysis_type", ["pay", "error"])
-def _test_analysis_gcp(
+def test_analysis_gcp(
     compute_env,
     outlier_removal,
     analysis_level,
