@@ -141,6 +141,7 @@ def mock_gcs(test_df):
 
     with patch.multiple(
         "opsml_artifacts.helpers.gcp_utils.GCSStorageClient",
+        __init__=MagicMock(return_value=None),
         upload=MagicMock(return_value=None),
         download_object=MagicMock(return_value=None),
         list_objects=MagicMock(return_value=[blob1, blob2]),
