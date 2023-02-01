@@ -1,18 +1,21 @@
 import base64
 import json
 import os
-from datetime import datetime
 from typing import Any, Dict, Optional, Tuple, cast
 
 import google.auth
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
-from pydantic import BaseSettings, root_validator
+from pydantic import root_validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.helpers.gcp_utils import GCPClient, GCPSecretManager
-from opsml_artifacts.helpers.models import SnowflakeParams
-from opsml_artifacts.helpers.types import GcpCreds, GcpVariables
+from opsml_artifacts.helpers.models import (
+    GcpCreds,
+    GcpVariables,
+    Settings,
+    SnowflakeParams,
+)
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -103,26 +106,6 @@ class GcpSecretVarGetter:
         )
 
 
-class Settings(BaseSettings):
-    gcp_project: str
-    gcs_bucket: str
-    gcp_region: str
-    app_env: str
-    path: str
-    gcp_creds: Credentials
-    snowflake_api_auth: str
-    snowflake_api_url: str
-    db_username: str
-    db_password: str
-    db_name: str
-    db_instance_name: str
-    gcsfs_creds: Credentials
-    run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
 class GlobalSettings(Settings):
     @root_validator(pre=True)
     def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
@@ -130,7 +113,7 @@ class GlobalSettings(Settings):
         env_vars["gcp_creds"] = creds.creds
         env_vars["path"] = os.getcwd()
 
-        # remove this once networking is figured out
+        # replace gcsfs with gcs
         scopes = "https://www.googleapis.com/auth/devstorage.full_control"
         env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
         env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
@@ -153,13 +136,15 @@ class MockSettings(Settings):
         arbitrary_types_allowed = True
 
 
-if bool(os.getenv("ARTIFACT_TESTING_MODE")):
-    from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars
+def get_settings():
+    if bool(os.getenv("ARTIFACT_TESTING_MODE")):
+        from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars
 
-    settings = MockSettings(**mock_vars)
+        return MockSettings(**mock_vars)
+    return GlobalSettings()
 
-else:
-    settings = GlobalSettings()
+
+settings = get_settings()
 
 
 class SnowflakeCredentials:

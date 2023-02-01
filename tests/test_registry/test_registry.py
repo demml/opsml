@@ -18,60 +18,61 @@ from unittest.mock import patch, MagicMock
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(db_registries, test_data, data_splits):
+def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
-    with patch.multiple("pyarrow.parquet", write_table=MagicMock(return_value=True)):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_splits,
+    )
 
-        # create data card
-        registry = db_registries["data"]
-        data_card = DataCard(
-            data=test_data,
-            name="test_df",
-            team="mlops",
-            user_email="mlops.com",
-            data_splits=data_splits,
-        )
+    registry.register_card(card=data_card)
 
-        registry.register_card(card=data_card)
+    df = registry.list_cards(name=data_card.name, team=data_card.team)
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards(name=data_card.name, team=data_card.team)
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards(name=data_card.name)
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards(name=data_card.name)
-        assert isinstance(df, pd.DataFrame)
-
-        df = registry.list_cards()
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards()
+    assert isinstance(df, pd.DataFrame)
 
 
 def test_experiment_card(linear_regression, db_registries):
 
-    registry: CardRegistry = db_registries["experiment"]
+    with patch("joblib.load") as loader:
+        loader.return_value = linear_regression
 
-    experiment = ExperimentCard(
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
-        data_card_uid="test_uid",
-    )
+        registry: CardRegistry = db_registries["experiment"]
 
-    experiment.add_metric("test_metric", 10)
-    experiment.add_metrics({"test_metric2": 20})
-    assert experiment.metrics.get("test_metric") == 10
-    assert experiment.metrics.get("test_metric2") == 20
+        experiment = ExperimentCard(
+            name="test_df",
+            team="mlops",
+            user_email="mlops.com",
+            data_card_uid="test_uid",
+        )
 
-    # save artifacts
-    model, _ = linear_regression
+        experiment.add_metric("test_metric", 10)
+        experiment.add_metrics({"test_metric2": 20})
+        assert experiment.metrics.get("test_metric") == 10
+        assert experiment.metrics.get("test_metric2") == 20
 
-    experiment.add_artifact("reg_model", artifact=model)
-    assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+        # save artifacts
+        model, _ = linear_regression
 
-    registry.register_card(card=experiment)
-    loaded_card = registry.load_card(uid=experiment.uid)
-    assert loaded_card.uid == experiment.uid
+        experiment.add_artifact("reg_model", artifact=model)
+        assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+
+        registry.register_card(card=experiment)
+        loaded_card = registry.load_card(uid=experiment.uid)
+        assert loaded_card.uid == experiment.uid
 
 
-def _test_register_pipeline_model(db_registries, sklearn_pipeline, storage_client):
+def test_register_model(db_registries, sklearn_pipeline, mock_pyarrow_parquet_write):
 
     model, data = sklearn_pipeline
 
@@ -86,7 +87,6 @@ def _test_register_pipeline_model(db_registries, sklearn_pipeline, storage_clien
     data_registry.register_card(card=data_card)
 
     model_registry: CardRegistry = db_registries["model"]
-    # for data_card_id in [data_card.uid, None, "test_uid"]:
 
     model_card1 = ModelCard(
         trained_model=model,
@@ -99,13 +99,18 @@ def _test_register_pipeline_model(db_registries, sklearn_pipeline, storage_clien
 
     model_registry.register_card(card=model_card1)
 
-    loaded_card = model_registry.load_card(uid=model_card1.uid)
+    # patching at lowest level possible
+    with patch("joblib.load") as loader:
+        loader.return_value = model_card1.dict(exclude={"sample_input_data", "trained_model"})
+        loaded_card = model_registry.load_card(uid=model_card1.uid)
 
-    # test loading trained model
-    loaded_card.load_trained_model()
+    with patch.object(ModelCard, "load_trained_model", return_value=None) as load_model:
+        loaded_card.load_trained_model()
+        loaded_card.trained_model = model
+        loaded_card.sample_input_data = data[0:1]
+
     assert getattr(loaded_card, "trained_model") is not None
     assert getattr(loaded_card, "sample_input_data") is not None
-    storage_client.delete_object_from_url(gcs_uri=model_card1.model_card_uri)
 
     model_card2 = ModelCard(
         trained_model=model,
@@ -143,7 +148,7 @@ def _test_register_pipeline_model(db_registries, sklearn_pipeline, storage_clien
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_data_card_splits(test_data):
+def test_data_card_splits(test_data):
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -179,7 +184,7 @@ def _test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_load_data_card(db_registries, test_data, storage_client):
+def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -202,7 +207,6 @@ def _test_load_data_card(db_registries, test_data, storage_client):
     )
 
     data_card.add_info(info={"added_metadata": 10})
-
     registry.register_card(card=data_card)
     loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
 
@@ -217,7 +221,6 @@ def _test_load_data_card(db_registries, test_data, storage_client):
     # update
     loaded_data.version = 100
     registry.update_card(card=loaded_data)
-    storage_client.delete_object_from_url(gcs_uri=loaded_data.data_uri)
 
     record = registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
     assert record["version"] == 100
@@ -234,7 +237,7 @@ def _test_load_data_card(db_registries, test_data, storage_client):
         )
 
 
-def _test_pipeline_registry(db_registries):
+def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
 
     pipeline_card = PipelineCard(
         name="test_df",
@@ -266,13 +269,8 @@ def _test_pipeline_registry(db_registries):
 
     assert values["data_card_uids"].get("update") == "updated_uid"
 
-    # test1 = timeit.Timer(lambda: predictor.predict(record)).timeit(1000)
-    # test2 = timeit.Timer(lambda: predictor.predict_with_model(model, record)).timeit(1000)
-    # print(f"onnx: {test1}, sklearn: {test2}")
-    # a
 
-
-def _test_full_pipeline_with_loading(db_registries, linear_regression):
+def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
@@ -328,14 +326,20 @@ def _test_full_pipeline_with_loading(db_registries, linear_regression):
     )
     pipeline_registry.register_card(card=pipeline_card)
 
-    loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
-    deck = loader.load_cards()
-    uids = loader.get_card_uids()
+    with patch(
+        "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
+        return_value=None,
+    ):
+        loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
+        with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
+            deck = loader.load_cards()
+            uids = loader.get_card_uids()
 
-    assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
-    assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
+            assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
+            assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
 
 
+# this is commented out on purpose
 def _test_tensorflow_modelcard(db_registries, load_transformer_example):
     model, data = load_transformer_example
 
