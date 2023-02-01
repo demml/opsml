@@ -22,10 +22,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      GOOGLE_ACCOUNT_JSON_BASE64:
-        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-      GCP_TESTING_BASE64:
-        from_secret: GCP_TESTING_BASE64
 
   - name: py39
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
@@ -37,10 +33,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      GOOGLE_ACCOUNT_JSON_BASE64:
-        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-      GCP_TESTING_BASE64:
-        from_secret: GCP_TESTING_BASE64
     depends_on:
       - py38
     
@@ -54,10 +46,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      GOOGLE_ACCOUNT_JSON_BASE64:
-        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-      GCP_TESTING_BASE64:
-        from_secret: GCP_TESTING_BASE64
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -104,10 +92,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      GOOGLE_ACCOUNT_JSON_BASE64:
-        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-      GCP_TESTING_BASE64:
-        from_secret: GCP_TESTING_BASE64
 
   - name: quality-checks
     when:
@@ -122,10 +106,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-      GOOGLE_ACCOUNT_JSON_BASE64:
-        from_secret: GOOGLE_ACCOUNT_JSON_BASE64
-      GCP_TESTING_BASE64:
-        from_secret: GCP_TESTING_BASE64
 
   - name: code-analysis
     when:
@@ -149,14 +129,13 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.12_poetry_1.1.13
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     commands:
-      - pip install poetry==1.2.2
       - make prep.pre.patch
       - make publish
     depends_on:
@@ -168,7 +147,7 @@ steps:
     when:
       event:
         - tag
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.12_poetry_1.1.13
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -178,6 +157,5 @@ steps:
       # tag events validate poetry version is equal to the tag
       # increment patch version for releases based on drone tag
       # manually updating toml is annoying
-      - pip install poetry==1.2.2
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
