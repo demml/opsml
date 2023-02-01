@@ -13,12 +13,8 @@ trigger:
 
 steps:
   - name: py38
-    image: python:3.8
+    image: harbor.shipttech.com/apps/pyopsml/py38:poetry-1.2.2
     commands:
-      - apt update
-      - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
-      - export GOOGLE_APPLICATION_CREDENTIALS=account.json
-      - pip install poetry==1.2.2
       - poetry install --all-extras --with dev,dev-tf
       - make test.unit
     environment:
@@ -55,7 +51,6 @@ steps:
   - name: quality-checks
     image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
-      - pip install poetry==1.2.2
       - poetry install --with dev
       - make lints.ci
     environment:
@@ -105,10 +100,6 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
-      - apt update
-      - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
-      - export GOOGLE_APPLICATION_CREDENTIALS=account.json
-      - pip install poetry==1.2.2
       - poetry install --all-extras --with dev,dev-tf
       - make test.unit
     environment:
@@ -127,7 +118,6 @@ steps:
         - push
     image: python:3.9
     commands:
-      - pip install poetry==1.2.2
       - poetry install --with dev
       - make lints.ci
     environment:
@@ -169,7 +159,6 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     commands:
-      - pip install poetry==1.2.2
       - make prep.pre.patch
       - make publish
     depends_on:
