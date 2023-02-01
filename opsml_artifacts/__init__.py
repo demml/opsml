@@ -8,7 +8,6 @@ from opsml_artifacts.registry.cards.cards import (
 )
 from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
 from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.var_store.store import DependentVarStore
 
 __all__ = [
     "CardRegistry",
@@ -17,7 +16,6 @@ __all__ = [
     "SnowflakeQueryRunner",
     "DriftDetector",
     "DriftVisualizer",
-    "DependentVarStore",
     "PipelineCard",
     "ExperimentCard",
     "PipelineLoader",
