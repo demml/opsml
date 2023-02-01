@@ -1,38 +1,8 @@
+from datetime import datetime
+from enum import Enum
+
 from google.oauth2.service_account import Credentials
-from pydantic import BaseModel, Extra, root_validator
-
-
-class Settings(BaseModel):
-    """Creates pipeline params associated
-    with the current pipeline run.
-    """
-
-    gcp_project: str
-    gcs_bucket: str
-    gcp_region: str
-    run_id: str
-    app_env: str
-    gcp_creds: Credentials
-    snowflake_api_auth: str
-    snowflake_api_url: str
-    db_username: str
-    db_password: str
-    db_name: str
-    db_instance_name: str
-    gcsfs_creds = str
-
-    class Config:
-        extra = Extra.allow
-        arbitrary_types_allowed = True
-
-    @root_validator(pre=True)
-    def set_extras(cls, values):  # pylint: disable=no-self-argument
-        """Pre checks"""
-
-        scopes = "https://www.googleapis.com/auth/devstorage.full_control"
-        values["gcsfs_creds"] = values["gcp_creds"].with_scopes([scopes])
-
-        return values
+from pydantic import BaseModel, BaseSettings
 
 
 class SnowflakeParams(BaseModel):
@@ -44,3 +14,44 @@ class SnowflakeParams(BaseModel):
     database: str
     warehouse: str
     role: str
+
+
+class Settings(BaseSettings):
+    gcp_project: str
+    gcs_bucket: str
+    gcp_region: str
+    app_env: str
+    path: str
+    gcp_creds: Credentials
+    snowflake_api_auth: str
+    snowflake_api_url: str
+    db_username: str
+    db_password: str
+    db_name: str
+    db_instance_name: str
+    gcsfs_creds: Credentials
+    run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class GcpVariables(str, Enum):
+    APP_ENV = "app_env"
+    GCS_BUCKET = "gcs_bucket"
+    GCP_REGION = "gcp_region"
+    GCP_PROJECT = "gcp_project"
+    SNOWFLAKE_API_AUTH = "snowflake_api_auth"
+    SNOWFLAKE_API_URL = "snowflake_api_url"
+    DB_NAME = ("artifact_registry_db_name",)
+    DB_INSTANCE_NAME = ("artifact_registry_instance_name",)
+    DB_USERNAME = ("artifact_registry_username",)
+    DB_PASSWORD = ("artifact_registry_password",)
+
+
+class GcpCreds(BaseModel):
+    creds: Credentials
+    project: str
+
+    class Config:
+        arbitrary_types_allowed = True

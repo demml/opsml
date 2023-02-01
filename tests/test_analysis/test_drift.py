@@ -1,9 +1,8 @@
 import os
-
-import numpy as np
 import pandas as pd
 import pytest
 
+import tempfile
 from opsml_artifacts.connector import SnowflakeQueryRunner
 from opsml_artifacts.drift.data_drift import (
     DriftFeatures,
@@ -152,8 +151,10 @@ def test_altair_plots(drift_dataframe, categorical):
         dropdown_field_name="feature",
     )
     chart = numeric_chart.build_chart(chart_title="Numeric Data")
-    chart.save("numeric_chart.html")
-    assert os.path.isfile("numeric_chart.html")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        chart.save(f"{tmpdirname}/numeric_chart.html")
+        assert os.path.isfile(f"{tmpdirname}/numeric_chart.html")
 
     # test categorical
     categorical_data = df.loc[df["feature_type"] == 0]
@@ -168,8 +169,10 @@ def test_altair_plots(drift_dataframe, categorical):
     )
 
     chart = cat_chart.build_chart(chart_title="Categorical")
-    chart.save("categorical_chart.html")
-    assert os.path.isfile("categorical_chart.html")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        chart.save(f"{tmpdirname}/categorical_chart.html")
+        assert os.path.isfile(f"{tmpdirname}/categorical_chart.html")
 
     importance_data = parsed_dfs.importance_dataframe
 
@@ -180,8 +183,10 @@ def test_altair_plots(drift_dataframe, categorical):
     )
 
     chart = importance_chart.build_chart(chart_title="AUC")
-    chart.save("auc_chart.html")
-    assert os.path.isfile("auc_chart.html")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        chart.save(f"{tmpdirname}/auc_chart.html")
+        assert os.path.isfile(f"{tmpdirname}/auc_chart.html")
 
 
 @pytest.mark.parametrize("categorical", [["col_10"], None])
@@ -200,42 +205,9 @@ def test_drift_visualizer(drift_dataframe, categorical):
     detector.run_drift_diagnostics(return_dataframe=False)
 
     visualizer = DriftVisualizer(drift_report=detector.drift_report)
-    chart = visualizer.visualize_report()
 
     # try drift detector by itself
-    chart = detector.visualize_report()
-    assert os.path.isfile("chart.html")
-
-
-def _test_real_data():
-
-    runner = SnowflakeQueryRunner()
-    df = runner.run_query(sql_file="data.sql")
-    features = [
-        "NBR_ADDRESSES",
-        "NBR_ORDERS",
-        "NBR_RX",
-        "NBR_APT",
-        "METRO_X",
-        "METRO_Y",
-        "METRO_Z",
-        "DROP_OFF_TIME",
-    ]
-
-    X_train = df.loc[(df["EVAL_FLG"] == 0) & (df["TRAIN_OUTLIER"] == 0)][features]
-    X_test = df.loc[df["EVAL_FLG"] == 1][features]
-
-    y_train = X_train.pop("DROP_OFF_TIME").to_numpy().reshape(-1, 1)
-    y_test = X_test.pop("DROP_OFF_TIME").to_numpy().reshape(-1, 1)
-
-    detector = DriftDetector(
-        x_reference=X_train,
-        y_reference=y_train,
-        x_current=X_test,
-        y_current=y_test,
-        dependent_var_name="DROP_OFF_TIME",
-        categorical_features=None,
-    )
-
-    chart = detector.visualize_report()
-    altair_viewer.show(chart)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        chart = visualizer.visualize_report(f"{tmpdirname}/chart.html")
+        chart.save(f"{tmpdirname}/chart.html")
+        chart = detector.visualize_report(f"{tmpdirname}/chart.html")

@@ -137,10 +137,14 @@ Session = sessionmaker(bind=engine)
 
 class SqlManager:
     def __init__(self, table_name: str):
-        self._session = Session
+        self._session = self._sql_session
         self._table = TableSchema.get_table(table_name=table_name)
         self._create_table()
         self.table_name = self._table.__tablename__
+
+    @property
+    def _sql_session(self):
+        return Session
 
     def _create_table(self):
         self._table.__table__.create(bind=engine, checkfirst=True)

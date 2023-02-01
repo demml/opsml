@@ -13,7 +13,7 @@ def test_find_path():
 
 def test_find_dir_path():
     path = utils.FindPath.find_dirpath(
-        dir_name="example_project",
+        dir_name="assets",
         path=os.getcwd(),
         anchor_file="anchor.py",
     )
@@ -25,12 +25,12 @@ def test_find_src_dir():
         settings.path,
         "anchor.py",
     )
-    assert src_dir == "example_project"
+    assert src_dir == "assets"
 
 
-def test_gcs_storage_client_integration():
+def test_gcs_storage_client_integration(mock_gcs):
     file_path = utils.FindPath.find_filepath(
-        name="pick_time_example.csv",
+        name="example.csv",
     )
     # upload
     path = "test_upload/test.csv"
@@ -65,6 +65,3 @@ def test_gcs_storage_client_integration():
         gcs_bucket=settings.gcs_bucket,
         blob_path=path,
     )
-
-    # remove local
-    os.remove("test.csv")
