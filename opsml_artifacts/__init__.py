@@ -1,4 +1,3 @@
-from opsml_artifacts.connector.snowflake import SnowflakeQueryRunner
 from opsml_artifacts.drift import DriftDetector, DriftVisualizer
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
@@ -13,7 +12,6 @@ __all__ = [
     "CardRegistry",
     "DataCard",
     "ModelCard",
-    "SnowflakeQueryRunner",
     "DriftDetector",
     "DriftVisualizer",
     "PipelineCard",
