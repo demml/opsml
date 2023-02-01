@@ -113,7 +113,7 @@ steps:
     when:
       event:
         - push
-    image: python:3.9
+    image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
       - poetry install --with dev
       - make lints.ci
