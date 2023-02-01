@@ -1,5 +1,5 @@
 PROJECT=poetry-template
-PYTHON_VERSION=3.9.9
+PYTHON_VERSION=3.9.16
 SOURCE_OBJECTS=opsml_artifacts
 
 
@@ -32,6 +32,8 @@ lints: lints.flake8 lints.pylint lints.ruff lints.mypy
 lints.ci: lints.flake8.ci lints.pylint lints.ruff lints.format_check lints.mypy
 
 setup: setup.python setup.sysdep.poetry setup.poetry-template
+setup.project:
+	poetry install --extras all
 setup.uninstall:
 	poetry env remove ${PYTHON_VERSION} || true
 setup.ci: setup.ci.poetry setup.poetry-template
