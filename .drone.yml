@@ -115,8 +115,7 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
-      - ls
-      - make setup.project
+      - poetry install --with dev
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
