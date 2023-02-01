@@ -1,18 +1,23 @@
+# pylint: disable=import-outside-toplevel
+
 import base64
 import json
 import os
-from datetime import datetime
 from typing import Any, Dict, Optional, Tuple, cast
 
 import google.auth
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
-from pydantic import BaseSettings, root_validator
+from pydantic import root_validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.helpers.gcp_utils import GCPClient, GCPSecretManager
-from opsml_artifacts.helpers.models import SnowflakeParams
-from opsml_artifacts.helpers.types import GcpCreds, GcpVariables, db_secrets
+from opsml_artifacts.helpers.models import (
+    GcpCreds,
+    GcpVariables,
+    Settings,
+    SnowflakeParams,
+)
 
 logger = ShiptLogging.get_logger(__name__)
 
@@ -103,35 +108,16 @@ class GcpSecretVarGetter:
         )
 
 
-class GlobalSettings(BaseSettings):
-    gcp_project: str
-    gcs_bucket: str
-    gcp_region: str
-    app_env: str
-    path: str
-    gcp_creds: Credentials
-    snowflake_api_auth: str
-    snowflake_api_url: str
-    db_username: str
-    db_password: str
-    db_name: str
-    db_instance_name: str
-    gcsfs_creds: Credentials
-    run_id: str = str(datetime.now().strftime("%Y%m%d%H%M%S"))
-
-    class Config:
-        arbitrary_types_allowed = True
-
+class GlobalSettings(Settings):
     @root_validator(pre=True)
     def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
         creds = GcpCredsSetter().get_creds()
         env_vars["gcp_creds"] = creds.creds
         env_vars["path"] = os.getcwd()
 
-        # remove this once networking is figured out
+        # replace gcsfs with gcs
         scopes = "https://www.googleapis.com/auth/devstorage.full_control"
         env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
-
         env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
 
         return env_vars
@@ -139,31 +125,28 @@ class GlobalSettings(BaseSettings):
     @classmethod
     def load_vars_from_gcp(cls, env_vars: Dict[str, Any], gcp_credentials: GcpCreds):
         secret_getter = GcpSecretVarGetter(gcp_credentials=gcp_credentials)
-        db_secret_names = cls.get_db_secret_names(service_account_email=gcp_credentials.creds.service_account_email)
-
         logger.info("Loading environment variables")
 
-        for name, value in {**{i.name.lower(): i.value for i in GcpVariables}, **db_secret_names}.items():
+        for name, value in {i.name.lower(): i.value for i in GcpVariables}.items():
             env_vars[name] = secret_getter.get_secret(secret_name=value)
 
         return env_vars
 
-    @classmethod
-    def get_db_secret_names(cls, service_account_email: str) -> Dict[str, str]:
-        env = cls.validate_env(service_account_email=service_account_email)
-        secret_names = getattr(db_secrets, env)
-        return secret_names.dict()
 
-    @classmethod
-    def validate_env(cls, service_account_email: str) -> str:
-        if bool(os.getenv("ARTIFACT_TESTING_MODE")):
-            if "testing" not in service_account_email:
-                raise ValueError("Only the testing service account may be used while running pytest")
-            return "testing"
-        return "non_testing"
+class MockSettings(Settings):
+    class Config:
+        arbitrary_types_allowed = True
 
 
-settings = GlobalSettings()
+def get_settings():
+    if bool(os.getenv("ARTIFACT_TESTING_MODE")):
+        from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars
+
+        return MockSettings(**mock_vars)
+    return GlobalSettings()
+
+
+settings = get_settings()
 
 
 class SnowflakeCredentials:

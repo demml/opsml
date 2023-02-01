@@ -4,9 +4,9 @@ from typing import Optional
 import gcsfs
 import pandas as pd
 import pyarrow.parquet as pq
-from pyshipt.helpers.connection_string import ConnectionString, DBType
-from pyshipt.helpers.database import SnowflakeDatabase
 from pyshipt_logging import ShiptLogging
+from pyshipt_sql.connection_string import ConnectionString, DBType
+from pyshipt_sql.engine import SnowflakeEngine
 
 from opsml_artifacts.connector.base import GcsFilePath, QueryRunner
 from opsml_artifacts.helpers.settings import SnowflakeCredentials, settings
@@ -15,9 +15,13 @@ logger = ShiptLogging.get_logger(__name__)
 
 file_sys = gcsfs.GCSFileSystem(project=settings.gcp_project)
 
+# Remove entire file once networking is figured out for vertex
+# Pyshipt-sql should be used for sql connections
+
 
 class SnowflakeQueryRunner(QueryRunner):
     def __init__(self, on_vpn: bool = False):
+
         self.on_vpn = on_vpn
         self.local_db = self._set_local_database()
 
@@ -37,11 +41,6 @@ class SnowflakeQueryRunner(QueryRunner):
         if self.on_vpn:
             sf_kwargs = SnowflakeCredentials.credentials()
 
-            query = {
-                "warehouse": [sf_kwargs.warehouse],
-                "role": [sf_kwargs.role],
-            }
-
             conn_str = ConnectionString(
                 dbtype=DBType.SNOWFLAKE,
                 username=sf_kwargs.username,
@@ -49,9 +48,8 @@ class SnowflakeQueryRunner(QueryRunner):
                 host=sf_kwargs.host,
                 port=None,
                 dbname=sf_kwargs.database,
-                query=query,
             )
-            return SnowflakeDatabase(conn_str)
+            return SnowflakeEngine(conn_str)
         return None
 
     @property
@@ -168,7 +166,6 @@ class SnowflakeQueryRunner(QueryRunner):
             response = self.query_status(
                 query_id=query_id,
             )
-
             status = response.json()["query_status"]
 
             if status.lower() == "success":
