@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     class Config:
         arbitrary_types_allowed = True
+        extra = "allow"
 
 
 class GcpVariables(str, Enum):
@@ -43,10 +44,13 @@ class GcpVariables(str, Enum):
     GCP_PROJECT = "gcp_project"
     SNOWFLAKE_API_AUTH = "snowflake_api_auth"
     SNOWFLAKE_API_URL = "snowflake_api_url"
-    DB_NAME = ("artifact_registry_db_name",)
-    DB_INSTANCE_NAME = ("artifact_registry_instance_name",)
-    DB_USERNAME = ("artifact_registry_username",)
-    DB_PASSWORD = ("artifact_registry_password",)
+    DB_NAME = "artifact_registry_db_name"
+    DB_INSTANCE_NAME = "artifact_registry_instance_name"
+    DB_USERNAME = "artifact_registry_username"
+    DB_PASSWORD = "artifact_registry_password"
+    GCP_ARTIFACT_REGISTRY = "ml_container_registry"
+    NETWORK = "ml_network"
+    PIPELINE_SCHEDULER_URI = "ml_pipeline_scheduler_uri"
 
 
 class GcpCreds(BaseModel):
