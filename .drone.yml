@@ -32,7 +32,7 @@ steps:
         from_secret: GCP_TESTING_BASE64
 
   - name: py39
-    image: python:3.9
+    image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
       - apt update
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
@@ -53,7 +53,7 @@ steps:
       - py38
     
   - name: quality-checks
-    image: python:3.9
+    image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
       - pip install poetry==1.2.2
       - poetry install --with dev
@@ -103,7 +103,7 @@ steps:
     when:
       event:
         - push
-    image: python:3.9
+    image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
       - apt update
       - echo $GOOGLE_ACCOUNT_JSON_BASE64 | base64 -d > account.json
