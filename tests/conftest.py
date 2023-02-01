@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from opsml_artifacts.helpers.settings import SnowflakeParams
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
+from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient
 import pytest
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import sessionmaker
@@ -24,6 +25,25 @@ from pydantic import BaseModel
 
 class Blob(BaseModel):
     name: str = "test_upload/test.csv"
+
+    def download_to_filename(self, destination_filename):
+        return True
+
+    def upload_from_filename(self, filename):
+        return True
+
+    def delete(self):
+        return True
+
+
+class Bucket(BaseModel):
+    name: str = "bucket"
+
+    def blob(self, path: str):
+        return Blob()
+
+    def list_blobs(self, prefix: str):
+        return [Blob()]
 
 
 @pytest.fixture(scope="session")
@@ -137,18 +157,52 @@ def mock_snowflake_query_runner(test_df):
 
 @pytest.fixture(scope="function")
 def mock_gcs(test_df):
-    blob1, blob2 = Blob(), Blob()
+    class StorageClient:
+        def bucket(self, gcs_bucket: str):
+            return Bucket()
 
-    with patch.multiple(
-        "opsml_artifacts.helpers.gcp_utils.GCSStorageClient",
-        __init__=MagicMock(return_value=None),
-        upload=MagicMock(return_value=None),
-        download_object=MagicMock(return_value=None),
-        list_objects=MagicMock(return_value=[blob1, blob2]),
-        delete_object=MagicMock(return_value=None),
-    ) as mock_runner:
+        def blob(self, blob_path: str):
+            return Blob()
 
-        yield mock_runner
+        def list_blobs(self, prefix: str):
+            return [Blob(), Blob()]
+
+    class MockStorage(GCSStorageClient):
+        def __init__(self):
+            self.client = StorageClient()
+
+    with patch("opsml_artifacts.helpers.gcp_utils.GCSStorageClient", MockStorage) as mock_storage:
+
+        yield mock_storage
+
+
+@pytest.fixture(scope="function")
+def mock_gcp_scheduler():
+    class ScheduleClient:
+        def common_location_path(self, project: str, location: str):
+            return f"{project}-{location}"
+
+        def list_jobs(self, parent: str):
+            return [Blob(name="test")]
+
+        def delete_job(self, job_name: str):
+            return True
+
+        def create_job(self, parent: str, job: str):
+            return "test_job"
+
+    class MockScheduler(GCPMLScheduler):
+        def __init__(self):
+            self.schedule_client = ScheduleClient()
+            self.oidc_token = "test"
+            self.parent_path = "test"
+
+        def _create_job_class(self, job: dict):
+            return "job"
+
+    with patch("opsml_artifacts.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
+
+        yield mock_scheduler
 
 
 ######## Data for registry tests

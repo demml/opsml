@@ -4,6 +4,7 @@ from pathlib import PosixPath
 from opsml_artifacts.helpers import utils
 from opsml_artifacts.helpers import gcp_utils
 from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.gcp_utils import GCPClient
 
 
 def test_find_path():
@@ -35,9 +36,7 @@ def test_gcs_storage_client_integration(mock_gcs):
     # upload
     path = "test_upload/test.csv"
 
-    storage_client = gcp_utils.GCSStorageClient(
-        gcp_credentials=settings.gcp_creds,
-    )
+    storage_client = gcp_utils.GCSStorageClient()
 
     storage_client.upload(
         gcs_bucket=settings.gcs_bucket,
@@ -64,4 +63,21 @@ def test_gcs_storage_client_integration(mock_gcs):
     storage_client.delete_object(
         gcs_bucket=settings.gcs_bucket,
         blob_path=path,
+    )
+
+
+def test_gcp_scheduler_integration(mock_gcp_scheduler):
+    payload = {
+        "name": "test",
+        "team": "test",
+        "user_email": "test",
+    }
+    scheduler = gcp_utils.GCPMLScheduler()
+    scheduler.submit_schedule(
+        payload=payload,
+        job_name="test",
+        schedule="* * * * *",
+        scheduler_uri="test",
+        gcp_project="test",
+        gcp_region="test",
     )
