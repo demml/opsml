@@ -97,7 +97,7 @@ steps:
     image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
       - ls
-      - poetry install --all-extras --with dev,dev-tf
+      - make setup.project
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -115,7 +115,8 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
-      - poetry install --with dev
+      - ls
+      - make setup.project
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
