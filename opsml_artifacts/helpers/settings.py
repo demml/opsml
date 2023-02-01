@@ -1,3 +1,5 @@
+# pylint: disable=import-outside-toplevel
+
 import base64
 import json
 import os
@@ -138,7 +140,7 @@ class MockSettings(Settings):
 
 def get_settings():
     if bool(os.getenv("ARTIFACT_TESTING_MODE")):
-        from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars  # pylint: disable=import-outside-toplevel
+        from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars
 
         return MockSettings(**mock_vars)
     return GlobalSettings()
