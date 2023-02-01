@@ -96,6 +96,7 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/py39:poetry-1.2.2
     commands:
+      - ls
       - poetry install --all-extras --with dev,dev-tf
       - make test.unit
     environment:
