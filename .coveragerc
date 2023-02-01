@@ -1,2 +1,2 @@
 [run]
-omit = [ */test*, opsml_artifacts/connector/*, /tmp/*, opsml_artifacts/helpers/settings.py,]
+omit = [ */test*, opsml_artifacts/connector/*, /tmp/*, opsml_artifacts/helpers/settings.py, /opt/*]
