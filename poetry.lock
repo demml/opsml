@@ -1188,25 +1188,6 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = ""
 
 [[package]]
-name = "mirakuru"
-version = "2.4.2"
-description = "Process executor (not only) for tests."
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-psutil = {version = ">=4.0.0", markers = "sys_platform != \"cygwin\""}
-
-[package.extras]
-tests = ["pytest", "pytest-cov", "python-daemon"]
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = ""
-
-[[package]]
 name = "mpmath"
 version = "1.2.1"
 description = "Python library for arbitrary-precision floating-point arithmetic"
@@ -1267,19 +1248,6 @@ description = "Experimental type system extensions for programs checked with the
 category = "main"
 optional = false
 python-versions = "*"
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = ""
-
-[[package]]
-name = "mysqlclient"
-version = "2.1.1"
-description = "Python interface to MySQL"
-category = "dev"
-optional = false
-python-versions = ">=3.5"
 
 [package.source]
 type = "legacy"
@@ -1524,19 +1492,6 @@ python-versions = ">=3.6"
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = ""
-
-[[package]]
-name = "port-for"
-version = "0.6.3"
-description = "Utility that helps with local TCP ports management. It can find an unused TCP localhost port and remember the association."
-category = "dev"
-optional = false
-python-versions = ">=3.7"
 
 [package.source]
 type = "legacy"
@@ -1976,28 +1931,6 @@ python-versions = "*"
 
 [package.dependencies]
 pytest = ">=3.2.5"
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = ""
-
-[[package]]
-name = "pytest-mysql"
-version = "2.3.1"
-description = "MySQL process and client fixtures for pytest"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-mirakuru = "*"
-mysqlclient = "*"
-port-for = ">=0.6.0"
-pytest = ">=6.2"
-
-[package.extras]
-tests = ["pytest-cov", "pytest-xdist"]
 
 [package.source]
 type = "legacy"
@@ -2800,7 +2733,7 @@ reference = ""
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "8d3142b7a368379fc2c47e6971bc9c933a05b0313adb5c0ed2849c913084c23f"
+content-hash = "614c7d0cbe512d4524ff32dceae7a68fd888c57e40bcc5aa4b59bd38087881e3"
 
 [metadata.files]
 absl-py = [
@@ -3655,10 +3588,6 @@ mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
-mirakuru = [
-    {file = "mirakuru-2.4.2-py3-none-any.whl", hash = "sha256:fdb67d141cc9f7abd485a515d618daf3272c3e6ff48380749997ff8e8c5f2cb2"},
-    {file = "mirakuru-2.4.2.tar.gz", hash = "sha256:ec84d4d81b4bca96cb0e598c6b3d198a92f036a0c1223c881482c02a98508226"},
-]
 mpmath = [
     {file = "mpmath-1.2.1-py3-none-any.whl", hash = "sha256:604bc21bd22d2322a177c73bdb573994ef76e62edd595d17e00aff24b0667e5c"},
     {file = "mpmath-1.2.1.tar.gz", hash = "sha256:79ffb45cf9f4b101a807595bcb3e72e0396202e0b1d25d689134b48c4216a81a"},
@@ -3774,15 +3703,6 @@ mypy = [
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
-]
-mysqlclient = [
-    {file = "mysqlclient-2.1.1-cp310-cp310-win_amd64.whl", hash = "sha256:c1ed71bd6244993b526113cca3df66428609f90e4652f37eb51c33496d478b37"},
-    {file = "mysqlclient-2.1.1-cp311-cp311-win_amd64.whl", hash = "sha256:c812b67e90082a840efb82a8978369e6e69fc62ce1bda4ca8f3084a9d862308b"},
-    {file = "mysqlclient-2.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:0d1cd3a5a4d28c222fa199002810e8146cffd821410b67851af4cc80aeccd97c"},
-    {file = "mysqlclient-2.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:b355c8b5a7d58f2e909acdbb050858390ee1b0e13672ae759e5e784110022994"},
-    {file = "mysqlclient-2.1.1-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:996924f3483fd36a34a5812210c69e71dea5a3d5978d01199b78b7f6d485c855"},
-    {file = "mysqlclient-2.1.1-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:dea88c8d3f5a5d9293dfe7f087c16dd350ceb175f2f6631c9cf4caf3e19b7a96"},
-    {file = "mysqlclient-2.1.1.tar.gz", hash = "sha256:828757e419fb11dd6c5ed2576ec92c3efaa93a0f7c39e263586d1ee779c3d782"},
 ]
 numpy = [
     {file = "numpy-1.24.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:179a7ef0889ab769cc03573b6217f54c8bd8e16cef80aad369e1e8185f994cd7"},
@@ -3937,10 +3857,6 @@ platformdirs = [
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
-]
-port-for = [
-    {file = "port-for-0.6.3.tar.gz", hash = "sha256:232bd999015b7fbdf19f90f3a9298cc742252d67650108123940bfc75c6f4d4e"},
-    {file = "port_for-0.6.3-py3-none-any.whl", hash = "sha256:31860afde6cb552e1830c927def3288350c8fbbe9aea8aed8150ed9d1aa0de81"},
 ]
 portpicker = [
     {file = "portpicker-1.5.2-py3-none-any.whl", hash = "sha256:01113f51c3cc63290a44dd7ae6e3eb9f8fe1b8a1f9d7988a897944230c39cd52"},
@@ -4194,10 +4110,6 @@ pytest-env = [
 pytest-lazy-fixture = [
     {file = "pytest-lazy-fixture-0.6.3.tar.gz", hash = "sha256:0e7d0c7f74ba33e6e80905e9bfd81f9d15ef9a790de97993e34213deb5ad10ac"},
     {file = "pytest_lazy_fixture-0.6.3-py3-none-any.whl", hash = "sha256:e0b379f38299ff27a653f03eaa69b08a6fd4484e46fd1c9907d984b9f9daeda6"},
-]
-pytest-mysql = [
-    {file = "pytest-mysql-2.3.1.tar.gz", hash = "sha256:c66f5e76fcf17d189086d310b5febf3a8057bdc0106d18b2fd59a361ce64d42f"},
-    {file = "pytest_mysql-2.3.1-py3-none-any.whl", hash = "sha256:a62bfd317d34f7ac21c1f28decb6c3f1dbb8aa445622316b2317378baa90249f"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
