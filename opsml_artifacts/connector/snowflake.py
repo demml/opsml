@@ -15,7 +15,7 @@ logger = ShiptLogging.get_logger(__name__)
 
 file_sys = gcsfs.GCSFileSystem(project=settings.gcp_project)
 
-# Remove entire file once networking is figured out for vertex
+# Remove entire module once networking is figured out for vertex
 # Pyshipt-sql should be used for sql connections
 
 
@@ -41,6 +41,11 @@ class SnowflakeQueryRunner(QueryRunner):
         if self.on_vpn:
             sf_kwargs = SnowflakeCredentials.credentials()
 
+            query = {
+                "warehouse": [sf_kwargs.warehouse],
+                "role": [sf_kwargs.role],
+            }
+
             conn_str = ConnectionString(
                 dbtype=DBType.SNOWFLAKE,
                 username=sf_kwargs.username,
@@ -48,6 +53,7 @@ class SnowflakeQueryRunner(QueryRunner):
                 host=sf_kwargs.host,
                 port=None,
                 dbname=sf_kwargs.database,
+                query=query,
             )
             return SnowflakeEngine(conn_str)
         return None

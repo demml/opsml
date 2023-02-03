@@ -11,7 +11,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml_artifacts.helpers.settings import settings
+# from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.types import (
     DATA_ARTIFACTS,
     ArtifactStorageTypes,
@@ -20,16 +20,56 @@ from opsml_artifacts.registry.cards.types import (
 )
 
 
+class FileSystem:
+
+    def create_save_path(self)-> Tuple[str, str]:
+        raise NotImplementedError
+    
+    def create_tmp_path(self, tmp_dir:str):
+        raise NotImplementedError
+    
+    def ist_files(self, storage_uri: str) -> List[str]:
+        raise NotImplementedError
+    
+class GCSFileSystem:
+    def __init__(self):
+        pass
+    storage_client = 
+    def create_save_path(self)-> Tuple[str, str]:
+        raise NotImplementedError
+    
+    def create_tmp_path(self, tmp_dir:str):
+        raise NotImplementedError
+    
+    def ist_files(self, storage_uri: str) -> List[str]:
+        raise NotImplementedError
+
+class LocalFileSystem:
+    def create_save_path(self)-> Tuple[str, str]:
+        raise NotImplementedError
+    
+    def create_tmp_path(self, tmp_dir:str):
+        raise NotImplementedError
+    
+    def ist_files(self, storage_uri: str) -> List[str]:
+        raise NotImplementedError
+
+
+# this become files system
 class ArtifactStorage:
     def __init__(
         self,
+        gcs_bucket: str,
+        gcp_project: str,
+        gcsfs_creds: str,
         save_info: Optional[SaveInfo] = None,
         file_suffix: Optional[str] = None,
+        # storage_type: str # depends on client info local or gcs at the moment
     ):
-        self.gcs_bucket = settings.gcs_bucket
+        self.gcs_bucket = gcs_bucket
         self.storage_client = gcsfs.GCSFileSystem(
-            project=settings.gcp_project,
-            token=settings.gcsfs_creds,
+            project=gcp_project,
+            token=gcsfs_creds,
         )
         self.file_suffix = None
 
@@ -39,6 +79,7 @@ class ArtifactStorage:
         if file_suffix is not None:
             self.file_suffix = file_suffix
 
+    # create_storage_path
     def create_gcs_path(self) -> Tuple[str, str]:
         filename = uuid.uuid4().hex
         if self.file_suffix is not None:
@@ -103,7 +144,7 @@ class ParquetStorage(ArtifactStorage):
         )
 
         return StoragePath(
-            gcs_uri=gcs_uri,
+            uri=gcs_uri,
         )
 
     def load_artifact(self, storage_uri: str) -> pd.DataFrame:
@@ -138,7 +179,7 @@ class NumpyStorage(ArtifactStorage):
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
         return StoragePath(
-            gcs_uri=gcs_uri,
+            uri=gcs_uri,
         )
 
     def load_artifact(self, storage_uri: str) -> np.ndarray:
@@ -166,7 +207,7 @@ class JoblibStorage(ArtifactStorage):
             joblib.dump(artifact, local_path)
             self.storage_client.upload(lpath=local_path, rpath=gcs_uri)
 
-        return StoragePath(gcs_uri=gcs_uri)
+        return StoragePath(uri=gcs_uri)
 
     def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
         joblib_path = self.list_files(storage_uri=storage_uri)[0]
@@ -196,7 +237,7 @@ class TensorflowModelStorage(ArtifactStorage):
             artifact.save(local_path)
             self.storage_client.upload(lpath=local_path, rpath=f"{gcs_uri}/", recursive=True)
 
-        return StoragePath(gcs_uri=gcs_uri)
+        return StoragePath(uri=gcs_uri)
 
     def load_artifact(self, storage_uri: str) -> Any:
 
