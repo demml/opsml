@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class StoragePath(BaseModel):
-    gcs_uri: str
+    uri: str
 
 
 class SaveInfo(BaseModel):

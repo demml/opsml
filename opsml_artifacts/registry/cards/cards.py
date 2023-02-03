@@ -220,7 +220,7 @@ class DataCard(ArtifactCard):
             team=self.team,
             blob_path=blob_path,
         )
-        converted_data.storage_uri = storage_path.gcs_uri
+        converted_data.storage_uri = storage_path.uri
 
         # manually overwrite
         self.overwrite_converted_data_attributes(converted_data=converted_data)
@@ -238,7 +238,7 @@ class DataCard(ArtifactCard):
                 team=self.team,
                 blob_path=blob_path,
             )
-            setattr(self, "drift_uri", storage_path.gcs_uri)
+            setattr(self, "drift_uri", storage_path.uri)
 
     def load_data(self):
         """Loads data"""
@@ -437,9 +437,9 @@ class ModelCard(ArtifactCard):
             blob_path=blob_path,
         )
 
-        setattr(self, "model_card_uri", modelcard_storage_path.gcs_uri)
-        setattr(self, "trained_model_uri", trained_model_storage_path.gcs_uri)
-        setattr(self, "sample_data_uri", sample_data_storage_path.gcs_uri)
+        setattr(self, "model_card_uri", modelcard_storage_path.uri)
+        setattr(self, "trained_model_uri", trained_model_storage_path.uri)
+        setattr(self, "sample_data_uri", sample_data_storage_path.uri)
         setattr(self, "sample_data_type", converted_data.table_type)
 
     def create_registry_record(
@@ -661,7 +661,7 @@ class ExperimentCard(ArtifactCard):
                     blob_path=blob_path,
                 )
 
-                artifact_uris[name] = storage_path.gcs_uri
+                artifact_uris[name] = storage_path.uri
         setattr(self, "artifact_uris", artifact_uris)
 
     def create_registry_record(

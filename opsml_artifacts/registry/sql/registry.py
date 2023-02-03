@@ -1,9 +1,9 @@
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Union, cast, Type
 
 import pandas as pd
-from pyshipt_logging import ShiptLogging
 from sqlalchemy.sql.expression import ColumnElement, FromClause
+from sqlalchemy.engine.base import Engine
 
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
@@ -22,8 +22,10 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
+from opsml_artifacts.registry.sql.connectors.base_connection import BaseSQLConnection
+import logging
 
-logger = ShiptLogging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 
@@ -31,9 +33,9 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
 class SQLRegistry(QueryCreatorMixin, SqlManager):
-    def __init__(self, table_name: str):
-        super().__init__(table_name=table_name)
-        self.supported_card = "anycard"
+    def __init__(self, table_name: str, engine: Engine):
+        super().__init__(table_name=table_name, engine=engine)
+        self.supported_card = "to_be_overwritten"
 
     def _is_correct_card_type(self, card: ArtifactCardTypes):
         return self.supported_card.lower() == card.__class__.__name__.lower()
@@ -92,6 +94,14 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
                 f"""Card of type {card.__class__.__name__} is not supported by registery {self._table.__tablename__}"""
             )
 
+        if self._check_uid(uid=card.uid, table_to_check=self.table_name):
+            raise ValueError(
+                """This Card has already been registered. 
+            If the card has been modified try upating the Card in the registry.
+            If registering a new Card, create a new Card of the correct type.
+            """
+            )
+
         version = self._set_version(name=card.name, team=card.team)
         record = card.create_registry_record(registry_name=self.table_name, uid=self._set_uid(), version=version)
 
@@ -146,8 +156,8 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
 
 
 class DataCardRegistry(SQLRegistry):
-    def __init__(self, table_name: str = "data"):
-        super().__init__(table_name=table_name)
+    def __init__(self, engine: Engine, table_name: str = "data"):
+        super().__init__(table_name=table_name, engine=engine)
         self.supported_card = "datacard"
 
     # specific loading logic
@@ -198,8 +208,8 @@ class DataCardRegistry(SQLRegistry):
 
 
 class ModelCardRegistry(SQLRegistry):
-    def __init__(self, table_name: str = "model"):
-        super().__init__(table_name=table_name)
+    def __init__(self, engine: Engine, table_name: str = "model"):
+        super().__init__(table_name=table_name, engine=engine)
         self.supported_card = "modelcard"
 
     # specific loading logic
@@ -257,8 +267,8 @@ class ModelCardRegistry(SQLRegistry):
 
 
 class ExperimentCardRegistry(SQLRegistry):
-    def __init__(self, table_name: str = "experiment"):
-        super().__init__(table_name=table_name)
+    def __init__(self, engine: Engine, table_name: str = "experiment"):
+        super().__init__(table_name=table_name, engine=engine)
         self.supported_card = "experimentcard"
 
     def load_card(
@@ -306,8 +316,8 @@ class ExperimentCardRegistry(SQLRegistry):
 
 
 class PipelineCardRegistry(SQLRegistry):
-    def __init__(self, table_name: str = "pipeline"):
-        super().__init__(table_name=table_name)
+    def __init__(self, engine: Engine, table_name: str = "pipeline"):
+        super().__init__(table_name=table_name, engine=engine)
         self.supported_card = "pipelinecard"
 
     def load_card(
@@ -354,11 +364,22 @@ class PipelineCardRegistry(SQLRegistry):
 
 
 class CardRegistry:
-    def __init__(self, registry_name: str):
-        self.registry: SQLRegistry = self._set_registry(registry_name=registry_name)
+    def __init__(
+        self,
+        registry_name: str,
+        connection_client: Type[BaseSQLConnection],
+    ):
+        self.registry: SQLRegistry = self._set_registry(
+            registry_name=registry_name,
+            engine=connection_client.get_engine(),
+        )
         self.table_name = self.registry._table.__tablename__
 
-    def _set_registry(self, registry_name: str) -> SQLRegistry:
+    def _set_registry(
+        self,
+        registry_name: str,
+        engine: Engine,
+    ) -> SQLRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
 
         registry = next(
@@ -369,7 +390,7 @@ class CardRegistry:
             )
         )
 
-        return registry(table_name=registry_name)
+        return registry(table_name=registry_name, engine=engine)
 
     def list_cards(
         self,
