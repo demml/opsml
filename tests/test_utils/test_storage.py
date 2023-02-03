@@ -17,9 +17,9 @@ def test_parquet(test_arrow_table, mock_pyarrow_parquet_write, mock_pyarrow_parq
     pq_writer = ParquetStorage(save_info=save_info)
     metadata = pq_writer.save_artifact(artifact=test_arrow_table)
 
-    assert isinstance(metadata.gcs_uri, str)
+    assert isinstance(metadata.uri, str)
 
-    df = pq_writer.load_artifact(storage_uri=metadata.gcs_uri)
+    df = pq_writer.load_artifact(storage_uri=metadata.uri)
     assert isinstance(df, pd.DataFrame)
 
 
@@ -34,7 +34,7 @@ def test_array(test_array, mock_pyarrow_parquet_write):
     metadata = np_writer.save_artifact(artifact=test_array)
 
     with patch("numpy.load", return_value=test_array):
-        array = np_writer.load_artifact(storage_uri=metadata.gcs_uri)
+        array = np_writer.load_artifact(storage_uri=metadata.uri)
         assert isinstance(array, np.ndarray)
 
 
@@ -69,5 +69,5 @@ def test_drift_storage(drift_dataframe, categorical):
         drift_writer = JoblibStorage(save_info=save_info)
         metadata = drift_writer.save_artifact(artifact=drift_report)
 
-        drift_report = drift_writer.load_artifact(storage_uri=metadata.gcs_uri)
+        drift_report = drift_writer.load_artifact(storage_uri=metadata.uri)
         assert isinstance(drift_report, dict)

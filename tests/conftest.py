@@ -1,6 +1,7 @@
 import os
 from sqlalchemy import create_engine
-from opsml_artifacts.helpers.settings import SnowflakeParams
+
+# from opsml_artifacts.helpers.settings import SnowflakeParams
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient
@@ -46,11 +47,11 @@ class Bucket(BaseModel):
         return [Blob()]
 
 
-@pytest.fixture(scope="session")
-def test_settings():
-    from opsml_artifacts.helpers.settings import settings
-
-    return settings
+# @pytest.fixture(scope="session")
+# def test_settings():
+#    from opsml_artifacts.helpers.settings import settings
+#
+#    return settings
 
 
 @pytest.fixture(scope="function")
