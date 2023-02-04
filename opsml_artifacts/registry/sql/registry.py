@@ -22,7 +22,7 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
-from opsml_artifacts.registry.sql.connectors.base_connection import BaseSQLConnection
+from opsml_artifacts.registry.sql.connectors import BaseSQLConnection
 import logging
 
 logger = logging.getLogger(__name__)
@@ -367,20 +367,53 @@ class CardRegistry:
     def __init__(
         self,
         registry_name: str,
-        connection_client: Type[BaseSQLConnection],
+        connection_client: Optional[Type[BaseSQLConnection]] = None,
+        connection_type: Optional[str] = None,
     ):
+
+        """Interface for connecting to any of the ArtifactCard registries
+        
+        Args:
+            registry_name (str): Name of the registry to connect to. Options are
+            "pipeline", "model", "data" and "experiment".
+            connection_client (Type[BaseSQLConnection]): Optional connection client for
+            connecting to a SQL database. See list of connectors for available options.
+            connection_type (str): Type of connection client to create. This is used for
+            when you wish to call a connection client without having to specify the 
+            "connection_client" arg. For this arg, it is assumed you have the appropriate env 
+            variables set for the connection_type that is specified.
+
+        Returns:
+            Instantiated connection to specific Card registry
+
+        Example:
+
+            # With connection type
+
+            data_registry = CardRegistry(registry_name="data", connection_type="gcp")
+
+            # With connection client
+            data_registry = CardRegistry(registry_name="data", connection_type="gcp")
+        
+        """
         self.registry: SQLRegistry = self._set_registry(
             registry_name=registry_name,
             engine=connection_client.get_engine(),
         )
         self.table_name = self.registry._table.__tablename__
 
+    def _get_connection(self, ):
+
     def _set_registry(
         self,
         registry_name: str,
-        engine: Engine,
+        connection_client: Optional[Type[BaseSQLConnection]] = None,
+        connection_type: Optional[str] = None,
     ) -> SQLRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
+
+        if not bool(connection_client):
+            self._get_connection
 
         registry = next(
             registry

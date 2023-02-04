@@ -9,10 +9,27 @@ from google.oauth2 import service_account
 from pydantic import BaseModel
 from google.oauth2.service_account import Credentials
 from google.protobuf import duration_pb2
+from enum import Enum
 
-import logging
+from opsml_artifacts.helpers.settings import ArtifactLogger
 
-logger = logging.getLogger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
+
+
+class GcpVariables(str, Enum):
+    APP_ENV = "app_env"
+    GCS_BUCKET = "gcs_bucket"
+    GCP_REGION = "gcp_region"
+    GCP_PROJECT = "gcp_project"
+    SNOWFLAKE_API_AUTH = "snowflake_api_auth"
+    SNOWFLAKE_API_URL = "snowflake_api_url"
+    DB_NAME = "artifact_registry_db_name"
+    DB_INSTANCE_NAME = "artifact_registry_instance_name"
+    DB_USERNAME = "artifact_registry_username"
+    DB_PASSWORD = "artifact_registry_password"
+    GCP_ARTIFACT_REGISTRY = "ml_container_registry"
+    NETWORK = "ml_network"
+    PIPELINE_SCHEDULER_URI = "ml_pipeline_scheduler_uri"
 
 
 class GcpCreds(BaseModel):
@@ -486,3 +503,19 @@ class GcpCredsSetter:
         )
 
         return service_base64_creds
+
+
+class GcpSecretVarGetter:
+    def __init__(self, gcp_credentials: GcpCreds):
+        self.gcp_creds = gcp_credentials
+        client = GCPClient.get_service(
+            service_name="secret_manager",
+            gcp_credentials=self.gcp_creds.creds,
+        )
+        self.secret_client = cast(GCPSecretManager, client)
+
+    def get_secret(self, secret_name: str) -> str:
+        return self.secret_client.get_secret(
+            project_name=self.gcp_creds.project,
+            secret=secret_name,
+        )

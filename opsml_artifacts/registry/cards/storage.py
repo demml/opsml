@@ -21,36 +21,38 @@ from opsml_artifacts.registry.cards.types import (
 
 
 class FileSystem:
+    def create_save_path(self) -> Tuple[str, str]:
+        raise NotImplementedError
 
-    def create_save_path(self)-> Tuple[str, str]:
+    def create_tmp_path(self, tmp_dir: str):
         raise NotImplementedError
-    
-    def create_tmp_path(self, tmp_dir:str):
-        raise NotImplementedError
-    
+
     def ist_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
-    
+
+
 class GCSFileSystem:
     def __init__(self):
         pass
-    storage_client = 
-    def create_save_path(self)-> Tuple[str, str]:
+
+    # storage_client =
+    def create_save_path(self) -> Tuple[str, str]:
         raise NotImplementedError
-    
-    def create_tmp_path(self, tmp_dir:str):
+
+    def create_tmp_path(self, tmp_dir: str):
         raise NotImplementedError
-    
+
     def ist_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
 
+
 class LocalFileSystem:
-    def create_save_path(self)-> Tuple[str, str]:
+    def create_save_path(self) -> Tuple[str, str]:
         raise NotImplementedError
-    
-    def create_tmp_path(self, tmp_dir:str):
+
+    def create_tmp_path(self, tmp_dir: str):
         raise NotImplementedError
-    
+
     def ist_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
 
