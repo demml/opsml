@@ -1,6 +1,4 @@
-from opsml_artifacts.registry.sql.connectors.gcp_connection import CloudSQLConnection
-from opsml_artifacts.registry.sql.connectors.local_connection import LocalSQLConnection
-from opsml_artifacts.registry.sql.connectors import SQLConnector
+from opsml_artifacts.registry.sql.connectors import SQLConnector, CloudSQLConnection, LocalSQLConnection
 from opsml_artifacts.registry.sql.registry import CardRegistry
 
 
