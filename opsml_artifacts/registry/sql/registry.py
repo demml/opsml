@@ -396,7 +396,7 @@ class CardRegistry:
             data_registry = CardRegistry(registry_name="data", connection_type="gcp")
 
         """
-        self._validate_args(
+        self._validate_connection_args(
             connection_type=connection_type,
             connection_client=connection_client,
         )
@@ -409,16 +409,27 @@ class CardRegistry:
 
         self.table_name = self.registry._table.__tablename__
 
-    def _validate_args(
+    def _validate_connection_args(
         self,
-        connection_client: Optional[str],
-        connection_type: Optional[str],
-    ) -> None:
+        connection_client: Type[BaseSQLConnection] = None,
+        connection_type: Optional[str] = None,
+    ) -> Optional[str]:
 
-        if all([bool(arg) for arg in [connection_client, connection_type]]):
-            raise ValueError(
-                """Either connection_client or connection_type must be passed""",
-            )
+        """Checks if a connection client or type was passed. Returns "local" if neither was specified
+
+        Args:
+            connection_client (Type[BaseSQLConnection]): Connection subclass
+            connection_type (str): Type of connection
+
+        Returns
+            "local" or None
+
+        """
+
+        if not any([bool(connection_client), bool(connection_type)]):
+            logger.info("No connection args provided. Defaulting to local registry")
+            return "local"
+        return None
 
     def _get_connection(self, connection_type: str) -> Type[BaseSQLConnection]:
         """Loads a subclass of BaseSQLConnection given a connection type
@@ -445,7 +456,7 @@ class CardRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
 
         if not bool(connection_client):
-            connection_cliet = self._get_connection(connection_type=connection_type)
+            connection_client = self._get_connection(connection_type=connection_type)
 
         registry = next(
             registry
