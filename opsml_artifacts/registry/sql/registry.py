@@ -22,7 +22,7 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
-from opsml_artifacts.registry.sql.connectors import BaseSQLConnection
+from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
 import logging
 
 logger = logging.getLogger(__name__)
@@ -372,15 +372,15 @@ class CardRegistry:
     ):
 
         """Interface for connecting to any of the ArtifactCard registries
-        
+
         Args:
             registry_name (str): Name of the registry to connect to. Options are
             "pipeline", "model", "data" and "experiment".
             connection_client (Type[BaseSQLConnection]): Optional connection client for
             connecting to a SQL database. See list of connectors for available options.
             connection_type (str): Type of connection client to create. This is used for
-            when you wish to call a connection client without having to specify the 
-            "connection_client" arg. For this arg, it is assumed you have the appropriate env 
+            when you wish to call a connection client without having to specify the
+            "connection_client" arg. For this arg, it is assumed you have the appropriate env
             variables set for the connection_type that is specified.
 
         Returns:
@@ -389,20 +389,52 @@ class CardRegistry:
         Example:
 
             # With connection type
-
-            data_registry = CardRegistry(registry_name="data", connection_type="gcp")
+            cloud_sql = CloudSQLConnection(...)
+            data_registry = CardRegistry(registry_name="data", connection_client=cloud_sql)
 
             # With connection client
             data_registry = CardRegistry(registry_name="data", connection_type="gcp")
-        
+
         """
+        self._validate_args(
+            connection_type=connection_type,
+            connection_client=connection_client,
+        )
+
         self.registry: SQLRegistry = self._set_registry(
             registry_name=registry_name,
-            engine=connection_client.get_engine(),
+            connection_client=connection_client,
+            connection_type=connection_type,
         )
+
         self.table_name = self.registry._table.__tablename__
 
-    def _get_connection(self, ):
+    def _validate_args(
+        self,
+        connection_client: Optional[str],
+        connection_type: Optional[str],
+    ) -> None:
+
+        if all([bool(arg) for arg in [connection_client, connection_type]]):
+            raise ValueError(
+                """Either connection_client or connection_type must be passed""",
+            )
+
+    def _get_connection(self, connection_type: str) -> Type[BaseSQLConnection]:
+        """Loads a subclass of BaseSQLConnection given a connection type
+
+        Args:
+            connection_type (str): Connection type
+
+        Returns:
+            SQL onnection client
+        """
+
+        connector = SQLConnector.get_connector(
+            connector_type=connection_type,
+        )
+
+        return connector()
 
     def _set_registry(
         self,
@@ -413,7 +445,7 @@ class CardRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
 
         if not bool(connection_client):
-            self._get_connection
+            connection_cliet = self._get_connection(connection_type=connection_type)
 
         registry = next(
             registry
@@ -423,7 +455,10 @@ class CardRegistry:
             )
         )
 
-        return registry(table_name=registry_name, engine=engine)
+        return registry(
+            table_name=registry_name,
+            engine=connection_client.get_engine(),
+        )
 
     def list_cards(
         self,
