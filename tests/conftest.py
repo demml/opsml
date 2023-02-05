@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GCPSecretManager
+from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.registry.sql.connectors import LocalSQLConnection, CloudSQLConnection
 from opsml_artifacts.registry.sql.connectors import LocalSQLConnection
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
@@ -71,6 +73,22 @@ def mock_gcp_vars():
     return mock_vars
 
 
+@pytest.fixture(scope="function")
+def gcp_storage_client(mock_gcp_vars):
+    sql_connection = CloudSQLConnection(db_type="mysql", **mock_gcp_vars)
+    storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
+
+    return storage_client
+
+
+@pytest.fixture(scope="function")
+def local_storage_client():
+    sql_connection = LocalSQLConnection(db_file_path=":memory:")
+    storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
+
+    return storage_client
+
+
 # @pytest.fixture(scope="session")
 # def test_settings():
 #    from opsml_artifacts.helpers.settings import settings
@@ -101,10 +119,10 @@ def db_registries():
     ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
     PipelineSchema.__table__.create(bind=engine, checkfirst=True)
 
-    model_registry = CardRegistry(registry_name="model")
-    data_registry = CardRegistry(registry_name="data")
-    experiment_registry = CardRegistry(registry_name="experiment")
-    pipeline_registry = CardRegistry(registry_name="pipeline")
+    model_registry = CardRegistry(registry_name="model", connection_client=local_client)
+    data_registry = CardRegistry(registry_name="data", connection_client=local_client)
+    experiment_registry = CardRegistry(registry_name="experiment", connection_client=local_client)
+    pipeline_registry = CardRegistry(registry_name="pipeline", connection_client=local_client)
 
     yield {
         "data": data_registry,
