@@ -1,5 +1,5 @@
 from enum import Enum
-
+from typing import Any
 from pydantic import BaseModel
 
 
@@ -12,6 +12,14 @@ class SaveInfo(BaseModel):
     name: str
     version: int
     team: str
+
+    class Config:
+        allow_mutation = True
+
+
+class StorageClientInfo(BaseModel):
+    storage_folder: str = "opsml_storage"
+    storage_client: Any
 
 
 class ArtifactStorageTypes(str, Enum):

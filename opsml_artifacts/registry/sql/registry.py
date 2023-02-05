@@ -10,7 +10,9 @@ from opsml_artifacts.registry.cards.cards import (
     ExperimentCard,
     ModelCard,
     PipelineCard,
+    ArtifactCard,
 )
+
 from opsml_artifacts.registry.sql.query import QueryCreatorMixin
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
@@ -23,9 +25,12 @@ from opsml_artifacts.registry.sql.records import (
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
 from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
-import logging
 
-logger = logging.getLogger(__name__)
+from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.helpers.settings import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
+
 
 ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 
@@ -33,9 +38,21 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
 class SQLRegistry(QueryCreatorMixin, SqlManager):
-    def __init__(self, table_name: str, engine: Engine):
+    def __init__(
+        self,
+        table_name: str,
+        engine: Engine,
+        connection_args: Dict[str, Any],
+    ):
         super().__init__(table_name=table_name, engine=engine)
-        self.supported_card = "to_be_overwritten"
+        self.supported_card = f"{table_name}card"
+
+        # Get backend storage system to save artifacts to
+        # Not sure how I feel about this: Registry is only losely coupled with storing artifacts
+        # An artifact only knows which storage system to use based on Registry connection args
+        self.storage_client = StorageClientGetter.get_storage_client(
+            connection_args=connection_args,
+        )
 
     def _is_correct_card_type(self, card: ArtifactCardTypes):
         return self.supported_card.lower() == card.__class__.__name__.lower()
@@ -81,7 +98,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
             record.get("version"),
         )
 
-    def register_card(self, card: Any) -> None:
+    def register_card(self, card: Type[ArtifactCard]) -> None:
         """
         Adds new record to registry.
         Args:
@@ -103,7 +120,12 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
             )
 
         version = self._set_version(name=card.name, team=card.team)
-        record = card.create_registry_record(registry_name=self.table_name, uid=self._set_uid(), version=version)
+        record = card.create_registry_record(
+            registry_name=self.table_name,
+            uid=self._set_uid(),
+            version=version,
+            storage_client=self.storage_client,
+        )
 
         self._add_and_commit(record=record.dict())
 
@@ -152,14 +174,10 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
     def validate(registry_name: str) -> bool:
         """Validate registry type"""
 
-        return True
+        raise NotImplementedError
 
 
 class DataCardRegistry(SQLRegistry):
-    def __init__(self, engine: Engine, table_name: str = "data"):
-        super().__init__(table_name=table_name, engine=engine)
-        self.supported_card = "datacard"
-
     # specific loading logic
     def load_card(
         self,
@@ -208,10 +226,6 @@ class DataCardRegistry(SQLRegistry):
 
 
 class ModelCardRegistry(SQLRegistry):
-    def __init__(self, engine: Engine, table_name: str = "model"):
-        super().__init__(table_name=table_name, engine=engine)
-        self.supported_card = "modelcard"
-
     # specific loading logic
     def load_card(
         self,
@@ -267,10 +281,6 @@ class ModelCardRegistry(SQLRegistry):
 
 
 class ExperimentCardRegistry(SQLRegistry):
-    def __init__(self, engine: Engine, table_name: str = "experiment"):
-        super().__init__(table_name=table_name, engine=engine)
-        self.supported_card = "experimentcard"
-
     def load_card(
         self,
         name: Optional[str] = None,
@@ -316,10 +326,6 @@ class ExperimentCardRegistry(SQLRegistry):
 
 
 class PipelineCardRegistry(SQLRegistry):
-    def __init__(self, engine: Engine, table_name: str = "pipeline"):
-        super().__init__(table_name=table_name, engine=engine)
-        self.supported_card = "pipelinecard"
-
     def load_card(
         self,
         name: Optional[str] = None,
@@ -363,6 +369,7 @@ class PipelineCardRegistry(SQLRegistry):
         return registry_name in RegistryTableNames.PIPELINE
 
 
+# CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(
         self,
@@ -425,7 +432,6 @@ class CardRegistry:
             "local" or None
 
         """
-
         if not any([bool(connection_client), bool(connection_type)]):
             logger.info("No connection args provided. Defaulting to local registry")
             return "local"
@@ -453,6 +459,18 @@ class CardRegistry:
         connection_client: Optional[Type[BaseSQLConnection]] = None,
         connection_type: Optional[str] = None,
     ) -> SQLRegistry:
+
+        """Returns a SQL registry to be used to register Cards
+
+        Args:
+            registry_name (str): Name of the registry (pipeline, model, data, experiment)
+            connection_client (Type[BaseSQLConnection]): Optional SQL connection
+            connection_type (str): Optional name of connection type
+
+        Returns:
+            SQL Registry
+        """
+
         registry_name = RegistryTableNames[registry_name.upper()].value
 
         if not bool(connection_client):
@@ -469,6 +487,7 @@ class CardRegistry:
         return registry(
             table_name=registry_name,
             engine=connection_client.get_engine(),
+            connection_args=connection_client.dict(),
         )
 
     def list_cards(

@@ -11,18 +11,20 @@ from .models import ArrowTable
 class ArrowFormatter(ABC):
     @staticmethod
     @abstractmethod
-    def convert(data: Union[pd.DataFrame, np.ndarray, pa.Table]):
+    def convert(data: Union[pa.Table, np.ndarray, pd.DataFrame]) -> ArrowTable:
         """Converts data to pyarrow"""
+        raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def validate_data(data: Union[pa.Table, np.ndarray]):
+    def validate_data(data: Union[pa.Table, np.ndarray, pd.DataFrame]) -> bool:
         """Validate data to formatter"""
+        raise NotImplementedError
 
 
 class PandasFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: Union[pd.DataFrame, np.ndarray, pa.Table]) -> ArrowTable:
+    def convert(data: pd.DataFrame) -> ArrowTable:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -46,7 +48,7 @@ class PandasFormatter(ArrowFormatter):
 
 class NumpyFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: Union[pd.DataFrame, np.ndarray, pa.Table]) -> ArrowTable:
+    def convert(data: np.ndarray) -> ArrowTable:
 
         """Convert numpy array to pyarrow table
 
@@ -70,7 +72,7 @@ class NumpyFormatter(ArrowFormatter):
 
 class ArrowTableFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: Union[pd.DataFrame, np.ndarray, pa.Table]) -> ArrowTable:
+    def convert(data: pa.Table) -> ArrowTable:
 
         """Take pyarrow table and returns pyarrow table
 

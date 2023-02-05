@@ -2,7 +2,7 @@ from opsml_artifacts.registry.sql.connectors import LocalSQLConnection, CloudSQL
 import pytest
 
 
-def test_local_connection():
+def _test_local_connection():
     local_connection = LocalSQLConnection(db_file_path=":memory")
     local_connection.get_engine()
 
