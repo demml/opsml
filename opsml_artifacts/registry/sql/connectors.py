@@ -42,6 +42,7 @@ class CloudSQLConnection(BaseSQLConnection):
         db_username (str): Username for CloudSQL connection
         db_password (str): Password for CloudSql connection
         db_type (str): database type. Either "mysql" or "postgres"
+        storage_backend (str): Which storage system to use. Defaults to GCP
 
     Returns:
         Instantiated class with required CloudSQL connection arguments
@@ -55,6 +56,7 @@ class CloudSQLConnection(BaseSQLConnection):
     db_password: str = os.getenv("ARTIFACT_DB_PASSWORD")
     db_name: str = os.getenv("ARTIFACT_DB_NAME")
     db_type: str = os.getenv("ARTIFACT_DB_TYPE")
+    storage_backend: str = "gcp"
     load_from_secrets: bool = False
 
     @root_validator(pre=True)
@@ -153,11 +155,13 @@ class LocalSQLConnection(BaseSQLConnection):
         new database named "opsml_artifacts.db" will be created in the home user directory.
         If the "opsml_artifacts.db" already exists, a connection will be re-established (the
         database will not be overwritten)
+        storage_backend (str): Which storage system to use. Defaults to local
     Returns:
         Instantiated class with required SQLite arguments
     """
 
-    db_file_path: Optional[str]
+    db_file_path: Optional[str] = None
+    storage_backend: str = "local"
 
     def _get_db_path(self):
         if not bool(self.db_file_path):

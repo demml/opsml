@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast, Type
 
 import numpy as np
 import pandas as pd
@@ -9,11 +9,12 @@ from pydantic import BaseModel, root_validator, validator
 from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.drift.data_drift import DriftReport
-from opsml_artifacts.registry.cards.storage import (
+from opsml_artifacts.registry.cards.artifact_storage import (
     load_record_artifact_from_storage,
     save_record_artifact_to_storage,
 )
-from opsml_artifacts.registry.cards.types import StoragePath
+from opsml_artifacts.registry.cards.storage_system import StorageClient
+from opsml_artifacts.registry.cards.types import StoragePath, SaveInfo
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
 from opsml_artifacts.registry.model.creator import OnnxModelCreator
@@ -41,11 +42,17 @@ class ArtifactCard(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = False
 
+    def _set_additional_attr(self, uid: str, version: int, storage_client: Type[StorageClient]):
+        setattr(self, "uid", uid)
+        setattr(self, "version", version)
+        setattr(self, "storage_client", storage_client)
+
     def create_registry_record(
         self,
         uid: str,
         version: int,
         registry_name: str,
+        storage_client: Type[StorageClient],
     ) -> Any:
         """Creates a registry record from self attributes
 
@@ -126,6 +133,7 @@ class DataCard(ArtifactCard):
     dependent_vars: Optional[List[Union[int, str]]] = None
     feature_descriptions: Optional[Dict[str, str]] = None
     additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    storage_client: Optional[Type[StorageClient]] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -213,12 +221,16 @@ class DataCard(ArtifactCard):
 
         converted_data: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.data)
         converted_data.feature_map = DataFormatter.create_table_schema(converted_data.table)
-        storage_path = save_record_artifact_to_storage(
-            artifact=converted_data.table,
+        save_info = SaveInfo(
+            blob_path=blob_path,
             name=self.name,
             version=version,
             team=self.team,
-            blob_path=blob_path,
+        )
+        storage_path = save_record_artifact_to_storage(
+            artifact=converted_data.table,
+            save_info=save_info,
+            storage_client=self.storage_client,
         )
         converted_data.storage_uri = storage_path.uri
 
@@ -227,16 +239,21 @@ class DataCard(ArtifactCard):
 
     def _save_drift(self, blob_path: str, version: int) -> None:
 
-        """Saves drift report to gcs"""
+        """Saves drift report to to backend storage"""
 
         if bool(self.drift_report):
 
-            storage_path = save_record_artifact_to_storage(
-                artifact=self.drift_report,
+            save_info = SaveInfo(
+                blob_path=blob_path,
                 name="drift_report",
                 version=version,
                 team=self.team,
-                blob_path=blob_path,
+            )
+
+            storage_path = save_record_artifact_to_storage(
+                artifact=self.drift_report,
+                save_info=save_info,
+                storage_client=self.storage_client,
             )
             setattr(self, "drift_uri", storage_path.uri)
 
@@ -247,6 +264,7 @@ class DataCard(ArtifactCard):
             data = load_record_artifact_from_storage(
                 storage_uri=self.data_uri,
                 artifact_type=self.data_type,
+                storage_client=self.storage_client,
             )
 
             setattr(self, "data", data)
@@ -258,6 +276,7 @@ class DataCard(ArtifactCard):
         uid: str,
         version: int,
         registry_name: str,
+        storage_client: Type[StorageClient],
     ) -> DataRegistryRecord:
 
         """Creates required metadata for registering the current data card.
@@ -271,8 +290,7 @@ class DataCard(ArtifactCard):
             Regsitry metadata
 
         """
-        setattr(self, "uid", uid)
-        setattr(self, "version", version)
+        self._set_additional_attr(uid=uid, version=version, storage_client=storage_client)
         self._convert_and_save_data(blob_path=registry_name, version=version)
         self._save_drift(blob_path=registry_name, version=version)
 
@@ -328,6 +346,7 @@ class ModelCard(ArtifactCard):
     sample_data_type: Optional[str]
     model_type: str
     data_schema: Optional[Dict[str, Feature]]
+    storage_client: Optional[Type[StorageClient]] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -390,51 +409,61 @@ class ModelCard(ArtifactCard):
         sample_data = load_record_artifact_from_storage(
             storage_uri=self.sample_data_uri,
             artifact_type=self.sample_data_type,
+            storage_client=self.storage_client,
         )
 
         trained_model = load_record_artifact_from_storage(
             storage_uri=self.trained_model_uri,
             artifact_type=self.model_type,
+            storage_client=self.storage_client,
         )
 
         setattr(self, "sample_input_data", sample_data)
         setattr(self, "trained_model", trained_model)
 
     def _save_model(self, blob_path: str, version: int) -> StoragePath:
+
         if self.model_type == "keras":
             artifact_type = self.model_type
         else:
             artifact_type = None
 
-        return save_record_artifact_to_storage(
-            artifact=self.trained_model,
+        save_info = SaveInfo(
+            blob_path=blob_path,
             name=f"{self.name}-trained-model",
             version=version,
             team=self.team,
-            blob_path=blob_path,
+        )
+        return save_record_artifact_to_storage(
+            artifact=self.trained_model,
+            save_info=save_info,
             artifact_type=artifact_type,
+            storage_client=self.storage_client,
         )
 
     def save_modelcard(self, blob_path: str, version: int):
 
-        modelcard_storage_path = save_record_artifact_to_storage(
-            artifact=self.dict(exclude={"sample_input_data", "trained_model"}),
+        save_info = SaveInfo(
+            blob_path=blob_path,
             name=self.name,
             version=version,
             team=self.team,
-            blob_path=blob_path,
+        )
+        modelcard_storage_path = save_record_artifact_to_storage(
+            artifact=self.dict(exclude={"sample_input_data", "trained_model"}),
+            save_info=save_info,
+            storage_client=self.storage_client,
         )
 
         trained_model_storage_path = self._save_model(blob_path=blob_path, version=version)
 
         # convert and store sample data
         converted_data: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.sample_input_data)
+        save_info.name = f"{self.name}-sample-data"
         sample_data_storage_path = save_record_artifact_to_storage(
             artifact=converted_data.table,
-            name=f"{self.name}-sample-data",
-            version=version,
-            team=self.team,
-            blob_path=blob_path,
+            save_info=save_info,
+            storage_client=self.storage_client,
         )
 
         setattr(self, "model_card_uri", modelcard_storage_path.uri)
@@ -447,6 +476,7 @@ class ModelCard(ArtifactCard):
         uid: str,
         version: int,
         registry_name: str,
+        storage_client: Type[StorageClient],
     ) -> ModelRegistryRecord:
         """Creates a registry record from the current ModelCard
 
@@ -455,8 +485,7 @@ class ModelCard(ArtifactCard):
 
         """
 
-        setattr(self, "uid", uid)
-        setattr(self, "version", version)
+        self._set_additional_attr(uid=uid, version=version, storage_client=storage_client)
         self.save_modelcard(blob_path=registry_name, version=version)
         return ModelRegistryRecord(**self.__dict__)
 
@@ -557,6 +586,7 @@ class PipelineCard(ArtifactCard):
         uid: str,
         version: int,
         registry_name: str,
+        storage_client: Type[StorageClient],
     ) -> PipelineRegistryRecord:
         """Creates a registry record from the current PipelineCard
 
@@ -606,6 +636,7 @@ class ExperimentCard(ArtifactCard):
     metrics: Optional[Dict[str, Union[float, int]]] = None
     artifacts: Optional[Dict[str, Any]] = None
     artifact_uris: Optional[Dict[str, str]] = None
+    storage_client: Optional[Type[StorageClient]] = None
 
     @validator("metrics", "artifacts", pre=True, always=True)
     def set_metrics(cls, value):  # pylint: disable=no-self-argument
@@ -652,15 +683,14 @@ class ExperimentCard(ArtifactCard):
         artifact_uris: Dict[str, str] = {}
 
         if self.artifacts is not None:
+            save_info = SaveInfo(
+                name=self.name,
+                version=version,
+                team=self.team,
+                blob_path=blob_path,
+            )
             for name, artifact in self.artifacts.items():
-                storage_path = save_record_artifact_to_storage(
-                    artifact=artifact,
-                    name=self.name,
-                    version=version,
-                    team=self.team,
-                    blob_path=blob_path,
-                )
-
+                storage_path = save_record_artifact_to_storage(artifact=artifact, save_info=save_info)
                 artifact_uris[name] = storage_path.uri
         setattr(self, "artifact_uris", artifact_uris)
 
@@ -669,6 +699,7 @@ class ExperimentCard(ArtifactCard):
         uid: str,
         version: int,
         registry_name: str,
+        storage_client: Type[StorageClient],
     ) -> ExperimentRegistryRecord:
         """Creates a registry record from the current ExperimentCard
 
@@ -683,7 +714,6 @@ class ExperimentCard(ArtifactCard):
             """
             )
 
-        setattr(self, "uid", uid)
-        setattr(self, "version", version)
-        self.save_artifacts(blob_path=registry_name, version=version)
+        self._set_additional_attr(uid=uid, version=version, storage_client=storage_client)
+        self.save_artifacts(blob_path=registry_name, version=version, storage_client=self.storage_client)
         return ExperimentRegistryRecord(**self.__dict__)
