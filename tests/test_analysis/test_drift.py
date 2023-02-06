@@ -3,7 +3,6 @@ import pandas as pd
 import pytest
 
 import tempfile
-from opsml_artifacts.connector import SnowflakeQueryRunner
 from opsml_artifacts.drift.data_drift import (
     DriftFeatures,
     DriftDetectorData,
@@ -18,7 +17,6 @@ from opsml_artifacts.drift.data_drift import (
 )
 from opsml_artifacts.drift.visualize import NumericChart, CategoricalChart, AucChart
 from opsml_artifacts.drift.models import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
-import altair_viewer
 
 
 @pytest.mark.parametrize("categorical", [[], ["col_10"]])

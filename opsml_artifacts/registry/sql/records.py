@@ -1,9 +1,12 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, root_validator, validator
 
 from opsml_artifacts.drift.models import DriftReport
-from opsml_artifacts.registry.cards.artifact_storage import load_record_artifact_from_storage
+from opsml_artifacts.registry.cards.artifact_storage import (
+    load_record_artifact_from_storage,
+)
+from opsml_artifacts.registry.cards.storage_system import StorageClientObj
 
 
 class DataRegistryRecord(BaseModel):
@@ -84,6 +87,7 @@ class LoadedDataRecord(BaseModel):
     dependent_vars: Optional[List[Union[int, str]]] = None
     drift_report: Optional[Dict[str, DriftReport]] = None
     additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    storage_client: Optional[StorageClientObj] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -109,6 +113,7 @@ class LoadedDataRecord(BaseModel):
             return load_record_artifact_from_storage(
                 storage_uri=values["drift_uri"],
                 artifact_type="dict",
+                storage_client=values["storage_client"],
             )
         return None
 
@@ -124,6 +129,10 @@ class LoadedModelRecord(BaseModel):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
+    storage_client: Optional[StorageClientObj] = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def load_model_card_definition(self) -> Dict[str, Any]:
 
@@ -136,6 +145,7 @@ class LoadedModelRecord(BaseModel):
         model_card_definition = load_record_artifact_from_storage(
             storage_uri=self.model_card_uri,
             artifact_type="dict",
+            storage_client=cast(StorageClientObj, self.storage_client),
         )
 
         model_card_definition["model_card_uri"] = self.model_card_uri
@@ -158,8 +168,11 @@ class LoadedExperimentRecord(BaseModel):
     artifact_uris: Dict[str, str]
     artifacts: Optional[Dict[str, Any]] = None
     metrics: Optional[Dict[str, Union[int, float]]]
+    storage_client: Optional[StorageClientObj] = None
 
-    # @staticmethod
+    class Config:
+        arbitrary_types_allowed = True
+
     def load_artifacts(self) -> None:
         """Loads experiment artifacts to pydantic model"""
 
@@ -171,6 +184,7 @@ class LoadedExperimentRecord(BaseModel):
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 storage_uri=uri,
                 artifact_type="artifact",
+                storage_client=cast(StorageClientObj, self.storage_client),
             )
         setattr(self, "artifacts", loaded_artifacts)
 

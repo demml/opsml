@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import time
 import uuid
@@ -7,11 +8,10 @@ from typing import Any, Dict, Type, Union, cast
 
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin  # type: ignore
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine.base import Engine
-import logging
 
 # from opsml_artifacts.helpers.settings import settings
 # from opsml_artifacts.registry.sql.connection import create_sql_engine
@@ -22,7 +22,7 @@ YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 class RegistryTableNames(str, Enum):
-    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "DATA_REGISTRTY")
+    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "MODEL_REGISTRY")
     EXPERIMENT = os.getenv("ML_EXPERIMENT_REGISTRY_NAME", "EXPERIMENT_REGISTRY")
     PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "PIPELINE_REGISTRY")
