@@ -47,6 +47,7 @@ class ArtifactCard(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         validate_assignment = False
+        smart_union = True
 
     def _set_additional_attr(
         self,
@@ -140,11 +141,6 @@ class DataCard(ArtifactCard):
     feature_descriptions: Optional[Dict[str, str]] = None
     additional_info: Optional[Dict[str, Union[float, int, str]]] = None
     storage_client: Optional[StorageClientObj] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = False
-        smart_union = True
 
     @property
     def has_data_splits(self):
