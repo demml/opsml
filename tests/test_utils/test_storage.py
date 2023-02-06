@@ -9,6 +9,7 @@ from opsml_artifacts.registry.cards.artifact_storage import (
     JoblibStorage,
     SaveInfo,
     StoragePath,
+    NumpyStorage,
     TensorflowModelStorage,
 )
 from opsml_artifacts.drift.data_drift import DriftDetector
@@ -46,18 +47,18 @@ def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
     )
 
     with patch.multiple(
-        "joblib",
-        dump=MagicMock(return_value=None),
+        "zarr",
+        save=MagicMock(return_value=None),
         load=MagicMock(return_value=test_array),
     ):
-        drift_writer = JoblibStorage(
+        numpy_writer = NumpyStorage(
             save_info=save_info,
             storage_client=storage_client,
-            artifact_type="joblib",
+            artifact_type="ndarray",
         )
-        metadata = drift_writer.save_artifact(artifact=test_array)
+        metadata = numpy_writer.save_artifact(artifact=test_array)
 
-        array = drift_writer.load_artifact(storage_uri=metadata.uri)
+        array = numpy_writer.load_artifact(storage_uri=metadata.uri)
         assert isinstance(array, np.ndarray)
 
 

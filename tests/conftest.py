@@ -109,27 +109,40 @@ def local_storage_client():
 
 
 @pytest.fixture(scope="function")
-def db_registries():
-
+def mock_local_engine():
     local_client = LocalSQLConnection(db_file_path=":memory:")
     engine = local_client.get_engine()
 
-    DataSchema.__table__.create(bind=engine, checkfirst=True)
-    ModelSchema.__table__.create(bind=engine, checkfirst=True)
-    ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
-    PipelineSchema.__table__.create(bind=engine, checkfirst=True)
+    return engine
 
-    model_registry = CardRegistry(registry_name="model", connection_client=local_client)
-    data_registry = CardRegistry(registry_name="data", connection_client=local_client)
-    experiment_registry = CardRegistry(registry_name="experiment", connection_client=local_client)
-    pipeline_registry = CardRegistry(registry_name="pipeline", connection_client=local_client)
 
-    yield {
-        "data": data_registry,
-        "model": model_registry,
-        "experiment": experiment_registry,
-        "pipeline": pipeline_registry,
-    }
+@pytest.fixture(scope="function")
+def db_registries(mock_local_engine):
+
+    with patch.multiple(
+        "opsml_artifacts.registry.sql.connectors.LocalSQLConnection",
+        get_engine=MagicMock(return_value=mock_local_engine),
+    ) as engine_mock:
+
+        local_client = LocalSQLConnection(db_file_path=":memory:")
+        engine = local_client.get_engine()
+
+        DataSchema.__table__.create(bind=engine, checkfirst=True)
+        ModelSchema.__table__.create(bind=engine, checkfirst=True)
+        ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
+        PipelineSchema.__table__.create(bind=engine, checkfirst=True)
+
+        model_registry = CardRegistry(registry_name="model", connection_client=local_client)
+        data_registry = CardRegistry(registry_name="data", connection_client=local_client)
+        experiment_registry = CardRegistry(registry_name="experiment", connection_client=local_client)
+        pipeline_registry = CardRegistry(registry_name="pipeline", connection_client=local_client)
+
+        yield {
+            "data": data_registry,
+            "model": model_registry,
+            "experiment": experiment_registry,
+            "pipeline": pipeline_registry,
+        }
 
 
 ##### Mocked classes as fixtures
@@ -149,6 +162,12 @@ def mock_gcsfs():
         download=MagicMock(return_value=True),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_pathlib():
+    with patch.multiple("pathlib.Path", mkdir=MagicMock(return_value=None)) as mocked_pathlib:
+        yield mocked_pathlib
 
 
 @pytest.fixture(scope="function")

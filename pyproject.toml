@@ -27,6 +27,7 @@ cryptography = "38.0.4"
 tf2onnx = "^1.13.0"
 pyshipt-sql = "^1.2.7"
 google-cloud-scheduler = "^2.9.0"
+zarr = "^2.13.6"
 
 
 [tool.poetry.group.dev]
@@ -96,9 +97,6 @@ ignore = ["E203", "W503"]
 log_cli = true
 log_cli_level = "INFO"
 testpaths = ["tests"]
-env = [
-    "ARTIFACT_TESTING_MODE = 1",
-]
 
 [tool.mypy]
 # platform configuration

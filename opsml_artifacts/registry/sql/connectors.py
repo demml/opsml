@@ -1,31 +1,31 @@
-from pydantic import BaseModel, root_validator
+# pylint: disable=[import-outside-toplevel,import-outside-toplevel]
+
 import os
+from typing import Any, Dict, Optional, Tuple, Type, Union
+
 import sqlalchemy
-from typing import Dict, Tuple, Any, Optional, Type
-from abc import ABC, abstractmethod, abstractstaticmethod
+from pydantic import BaseModel, root_validator
 
 from opsml_artifacts.helpers.settings import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-class BaseSQLConnection(BaseModel, ABC):
+class BaseSQLConnection(BaseModel):
     """Base Connection model that all connections inherit from"""
 
     class Config:
         arbitrary_types_allowed = True
         extra = "allow"
 
-    @abstractmethod
     def _set_sqlalchemy_url(self):
         raise NotImplementedError
 
-    @abstractmethod
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
         raise NotImplementedError
 
-    @abstractstaticmethod
-    def validate(connector_type: str) -> bool:
+    @staticmethod
+    def validate_type(connector_type: str) -> bool:
         raise NotImplementedError
 
 
@@ -48,14 +48,14 @@ class CloudSQLConnection(BaseSQLConnection):
         Instantiated class with required CloudSQL connection arguments
     """
 
-    gcp_project: str = os.getenv("GCP_PROJECT")
-    gcs_bucket: str = os.getenv("GCS_BUCKET")
-    gcp_region: str = os.getenv("GCS_REGION")
-    db_instance_name: str = os.getenv("ARTIFACT_DB_INSTANCE_NAME")
-    db_username: str = os.getenv("ARTIFACT_DB_USERNAME")
-    db_password: str = os.getenv("ARTIFACT_DB_PASSWORD")
-    db_name: str = os.getenv("ARTIFACT_DB_NAME")
-    db_type: str = os.getenv("ARTIFACT_DB_TYPE")
+    gcp_project: Optional[str] = os.getenv("GCP_PROJECT")
+    gcs_bucket: Optional[str] = os.getenv("GCS_BUCKET")
+    gcp_region: Optional[str] = os.getenv("GCS_REGION")
+    db_instance_name: Optional[str] = os.getenv("ARTIFACT_DB_INSTANCE_NAME")
+    db_username: Optional[str] = os.getenv("ARTIFACT_DB_USERNAME")
+    db_password: Optional[str] = os.getenv("ARTIFACT_DB_PASSWORD")
+    db_name: Optional[str] = os.getenv("ARTIFACT_DB_NAME")
+    db_type: Optional[str] = os.getenv("ARTIFACT_DB_TYPE")
     storage_backend: str = "gcp"
     load_from_secrets: bool = False
 
@@ -117,7 +117,7 @@ class CloudSQLConnection(BaseSQLConnection):
 
         ip_type, db_type, connection_name = self._get_defaults()
 
-        with Connector(ip_type=ip_type, credentials=self.gcp_creds) as connector:
+        with Connector(ip_type=ip_type, credentials=self.gcp_creds) as connector:  # pylint: disable=no-member
             conn = connector.connect(
                 connection_name,
                 db_type,
@@ -142,7 +142,7 @@ class CloudSQLConnection(BaseSQLConnection):
         return engine
 
     @staticmethod
-    def validate(connector_type: str) -> bool:
+    def validate_type(connector_type: str) -> bool:
         return connector_type == "gcp"
 
 
@@ -179,8 +179,11 @@ class LocalSQLConnection(BaseSQLConnection):
         return engine
 
     @staticmethod
-    def validate(connector_type: str) -> bool:
+    def validate_type(connector_type: str) -> bool:
         return connector_type == "local"
+
+
+SqlConnectorType = Union[CloudSQLConnection, LocalSQLConnection]
 
 
 class SQLConnector:
@@ -190,14 +193,15 @@ class SQLConnector:
     def get_connector(connector_type: Optional[str] = None) -> Type[BaseSQLConnection]:
         """Gets the appropriate SQL connector given the type specified"""
 
-        if not bool(connector_type):
-            connector_type = "local"
+        if connector_type is None:
+            conn_type = "local"
+        conn_type = str(connector_type).lower()
 
         connector = next(
             (
                 connector
                 for connector in BaseSQLConnection.__subclasses__()
-                if connector.validate(connector_type=connector_type.lower())
+                if connector.validate_type(connector_type=conn_type)
             ),
             LocalSQLConnection,
         )

@@ -1,9 +1,10 @@
 import logging
 import os
-from typing import IO, Any
 import sys
-from pythonjsonlogger.jsonlogger import JsonFormatter
 from datetime import datetime
+from typing import IO, Any
+
+from pythonjsonlogger.jsonlogger import JsonFormatter
 
 
 class LogFormatter(JsonFormatter):

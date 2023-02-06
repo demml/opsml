@@ -1,13 +1,16 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
 import tempfile
-from typing import Any, Dict, Optional, cast, Type, Union, List
+from typing import Any, Dict, List, Optional, Union, cast
 
 import joblib
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import zarr
+
+from opsml_artifacts.registry.cards.storage_system import StorageSystem, StorageClientObj
 
 # from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.types import (
@@ -16,13 +19,12 @@ from opsml_artifacts.registry.cards.types import (
     SaveInfo,
     StoragePath,
 )
-from opsml_artifacts.registry.cards.storage_system import StorageClient, StorageSystem
 
 
 class ArtifactStorage:
     def __init__(
         self,
-        storage_client: Type[StorageClient],
+        storage_client: StorageClientObj,
         artifact_type: str,
         save_info: Optional[SaveInfo] = None,
         file_suffix: Optional[str] = None,
@@ -36,7 +38,7 @@ class ArtifactStorage:
             self.save_info = save_info
 
         if file_suffix is not None:
-            self.file_suffix = file_suffix
+            self.file_suffix = str(file_suffix)
 
     def save_artifact(self, artifact: Any) -> StoragePath:
         """Saves data"""
@@ -56,7 +58,7 @@ class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: Type[StorageClient],
+        storage_client: StorageClientObj,
         save_info: Optional[SaveInfo] = None,
     ):
         super().__init__(
@@ -115,11 +117,64 @@ class ParquetStorage(ArtifactStorage):
         ]
 
 
+class NumpyStorage(ArtifactStorage):
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientObj,
+        save_info: Optional[SaveInfo] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            save_info=save_info,
+            file_suffix="zarr",
+        )
+
+    def save_artifact(self, artifact: np.ndarray) -> StoragePath:
+        """Saves a numpy n-dimensional array as a Zarr array
+
+        Args:
+            artifact (np.ndarray): Numpy nd array
+
+        Returns:
+            StoragePath
+        """
+
+        storage_uri, _ = self.storage_client.create_save_path(
+            save_info=self.save_info,
+            file_suffix=self.file_suffix,
+        )
+        store = self.storage_client.store(storage_uri=storage_uri)
+        zarr.save(store, artifact)
+
+        return StoragePath(uri=storage_uri)
+
+    def load_artifact(self, storage_uri: str) -> np.ndarray:
+        """Loads a numpy ndarray from a zarr directory
+
+        Args:
+            storage_uri (str): Storage uri of zarr array
+
+        Returns:
+            numpy ndarray
+        """
+
+        files = self.storage_client.list_files(storage_uri=storage_uri)[0]
+        store = self.storage_client.store(storage_uri=files)
+
+        return zarr.load(store)
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageTypes.NDARRAY
+
+
 class JoblibStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: Type[StorageClient],
+        storage_client: StorageClientObj,
         save_info: Optional[SaveInfo] = None,
     ):
         super().__init__(
@@ -146,7 +201,8 @@ class JoblibStorage(ArtifactStorage):
                 save_info=self.save_info,
                 file_suffix=self.file_suffix,
             )
-            joblib.dump(artifact, storage_uri)
+
+            joblib.dump(artifact, filename=storage_uri)
 
         return StoragePath(uri=storage_uri)
 
@@ -168,7 +224,7 @@ class TensorflowModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: Type[StorageClient],
+        storage_client: StorageClientObj,
         save_info: Optional[SaveInfo] = None,
     ):
         super().__init__(
@@ -223,7 +279,7 @@ class TensorflowModelStorage(ArtifactStorage):
 def save_record_artifact_to_storage(
     artifact: Any,
     save_info: SaveInfo,
-    storage_client: Type[StorageClient],
+    storage_client: StorageClientObj,
     artifact_type: Optional[str] = None,
 ) -> StoragePath:
 
@@ -249,7 +305,7 @@ def save_record_artifact_to_storage(
 def load_record_artifact_from_storage(
     storage_uri: str,
     artifact_type: str,
-    storage_client: Type[StorageClient],
+    storage_client: StorageClientObj,
 ):
 
     if not bool(storage_uri):
