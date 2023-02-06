@@ -1,3 +1,6 @@
+# pylint: disable=no-member
+# this file will eventually be removed
+
 import time
 from typing import Optional
 
@@ -9,11 +12,14 @@ from pyshipt_sql.connection_string import ConnectionString, DBType
 from pyshipt_sql.engine import SnowflakeEngine
 
 from opsml_artifacts.connector.base import GcsFilePath, QueryRunner
-from opsml_artifacts.helpers.settings import SnowflakeCredentials, settings
+from opsml_artifacts.connector.settings import SnowflakeCredentials
 
 logger = ShiptLogging.get_logger(__name__)
 
-file_sys = gcsfs.GCSFileSystem(project=settings.gcp_project)
+
+credentials = SnowflakeCredentials.credentials()
+file_sys = gcsfs.GCSFileSystem(project=credentials.gcp_project)  # type: ignore
+
 
 # Remove entire module once networking is figured out for vertex
 # Pyshipt-sql should be used for sql connections
@@ -27,10 +33,10 @@ class SnowflakeQueryRunner(QueryRunner):
 
         headers = {
             "Accept": "application/json",
-            "Authorization": settings.snowflake_api_auth,
+            "Authorization": credentials.snowflake_api_auth,
         }
         super().__init__(
-            api_prefix=settings.snowflake_api_url,
+            api_prefix=credentials.snowflake_api_url,
             status_suffix="/v2/query_status",
             submit_suffix="/v2/async_query",
             results_suffix="/v2/query_results",
