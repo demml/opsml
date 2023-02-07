@@ -9,9 +9,9 @@ def test_local_connection():
 
 
 @pytest.mark.parametrize("load_secrets", [True, False])
-def test_cloudsql_connection(load_secrets, mock_gcp_vars, mock_gcp_secrets):
+def test_cloudsql_connection(mock_cloud_sql_connection, load_secrets, mock_gcp_vars, mock_gcp_secrets):
 
-    cloudsql_connection = CloudSQLConnection(
+    cloudsql_connection = mock_cloud_sql_connection(
         load_from_secrets=load_secrets,
         **mock_gcp_vars,
     )

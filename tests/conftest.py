@@ -75,14 +75,20 @@ def mock_gcp_vars():
 
 
 @pytest.fixture(scope="function")
-def gcp_storage_client(mock_gcp_vars):
+def mock_cloud_sql_connection(mock_gcp_vars):
     class MockCloudSqlConnection(CloudSQLConnection):
         @classmethod
         def set_gcp_creds(cls, env_vars: Dict[str, Any]):
             creds = GcpCreds(creds=mock_gcp_vars["gcp_creds"], project=mock_gcp_vars["gcp_project"])
             return creds, mock_gcp_vars
 
-    sql_connection = MockCloudSqlConnection(**mock_gcp_vars)
+    return MockCloudSqlConnection
+
+
+@pytest.fixture(scope="function")
+def gcp_storage_client(mock_cloud_sql_connection, mock_gcp_vars):
+
+    sql_connection = mock_cloud_sql_connection(**mock_gcp_vars)
     storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
 
     return storage_client
