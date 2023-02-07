@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Tuple, cast, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from opsml_artifacts.registry.cards.cards import PipelineCard
 from opsml_artifacts.registry.cards.types import NON_PIPELINE_CARDS, CardNames
