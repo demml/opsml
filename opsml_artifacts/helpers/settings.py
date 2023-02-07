@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import IO, Any
+from typing import IO
 
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
