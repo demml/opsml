@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import sqlalchemy
-from pydantic import BaseModel, root_validator, Field
+from pydantic import BaseModel, Field, root_validator
 
 from opsml_artifacts.helpers.settings import ArtifactLogger
 
@@ -41,7 +41,7 @@ class CloudSQLConnection(BaseSQLConnection):
         db_name (str): Database name
         db_username (str): Username for CloudSQL connection
         db_password (str): Password for CloudSql connection
-        db_type (str): database type. Either "mysql" or "postgres"
+        db_type (str): database type. Either "mysql" or "postgres". Default is "mysql"
         storage_backend (str): Which storage system to use. Defaults to GCP
 
     Returns:
@@ -55,7 +55,7 @@ class CloudSQLConnection(BaseSQLConnection):
     db_username: str = Field(..., env="ARTIFACT_DB_USERNAME")
     db_password: str = Field(..., env="ARTIFACT_DB_PASSWORD")
     db_name: str = Field(..., env="ARTIFACT_DB_NAME")
-    db_type: str = Field(..., env="ARTIFACT_DB_TYPE")
+    db_type: str = Field("mysql", env="ARTIFACT_DB_TYPE")
     storage_backend: str = "gcp"
     load_from_secrets: bool = False
 

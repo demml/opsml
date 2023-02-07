@@ -1,9 +1,8 @@
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Union, cast, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
-from cryptography.fernet import Fernet
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 from pyshipt_logging import ShiptLogging
@@ -133,16 +132,16 @@ class DataCard(ArtifactCard):
     """
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table]]
-    drift_report: Optional[Dict[str, DriftReport]] = None
+    drift_report: Optional[Dict[str, DriftReport]]
     data_splits: Optional[List[Dict[str, Any]]]
-    data_uri: Optional[str] = None
-    drift_uri: Optional[str] = None
-    feature_map: Optional[Dict[str, Union[str, None]]] = None
-    data_type: Optional[str] = None
-    dependent_vars: Optional[List[Union[int, str]]] = None
-    feature_descriptions: Optional[Dict[str, str]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
-    storage_client: Optional[StorageClientObj] = None
+    data_uri: Optional[str]
+    drift_uri: Optional[str]
+    feature_map: Optional[Dict[str, Union[str, None]]]
+    data_type: Optional[str]
+    dependent_vars: Optional[List[Union[int, str]]]
+    feature_descriptions: Optional[Dict[str, str]]
+    additional_info: Optional[Dict[str, Union[float, int, str]]]
+    storage_client: Optional[StorageClientObj]
 
     @property
     def has_data_splits(self):
@@ -334,9 +333,9 @@ class ModelCard(ArtifactCard):
         data_schema (Dictionary): Optional dictionary of the data schema used in model training
     """
 
-    trained_model: Optional[Any] = None
-    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]] = None
-    data_card_uid: Optional[str] = None
+    trained_model: Optional[Any]
+    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]]
+    data_card_uid: Optional[str]
     onnx_model_data: Optional[DataDict]
     onnx_model_def: Optional[ModelDefinition]
     model_card_uri: Optional[str]
@@ -345,7 +344,7 @@ class ModelCard(ArtifactCard):
     sample_data_type: Optional[str]
     model_type: Optional[str]
     data_schema: Optional[Dict[str, Feature]]
-    storage_client: Optional[StorageClientObj] = None
+    storage_client: Optional[StorageClientObj]
 
     class Config:
         arbitrary_types_allowed = True
@@ -475,7 +474,7 @@ class ModelCard(ArtifactCard):
 
         return version
 
-    def _set_onnx_attributes(self, onnx_model: OnnxModelReturn) -> Dict[str, Any]:
+    def _set_onnx_attributes(self, onnx_model: OnnxModelReturn) -> None:
 
         setattr(
             self,
@@ -513,10 +512,15 @@ class ModelCard(ArtifactCard):
 
         version = self._set_version_for_predictor()
 
+        # recast to make mypy happy
+        model_def = cast(ModelDefinition, self.onnx_model_def)
+        model_type = str(self.model_type)
+        model_data = cast(DataDict, self.onnx_model_data)
+
         return OnnxModelPredictor(
-            model_type=self.model_type,
-            model_definition=self.onnx_model_def.model_bytes,
-            data_dict=self.onnx_model_data,
+            model_type=model_type,
+            model_definition=model_def.model_bytes,
+            data_dict=model_data,
             data_schema=self.data_schema,
             model_version=version,
         )
@@ -539,9 +543,9 @@ class PipelineCard(ArtifactCard):
     """
 
     pipeline_code_uri: str
-    data_card_uids: Optional[Dict[str, str]] = None
-    model_card_uids: Optional[Dict[str, str]] = None
-    experiment_card_uids: Optional[Dict[str, str]] = None
+    data_card_uids: Optional[Dict[str, str]]
+    model_card_uids: Optional[Dict[str, str]]
+    experiment_card_uids: Optional[Dict[str, str]]
 
     @root_validator(pre=True)
     def set_data_uids(cls, values) -> Dict[str, Dict[str, str]]:  # pylint: disable=no-self-argument
@@ -613,13 +617,13 @@ class ExperimentCard(ArtifactCard):
 
     """
 
-    data_card_uid: Optional[str] = None
-    model_card_uids: Optional[List[str]] = None
-    pipeline_card_uid: Optional[str] = None
-    metrics: Optional[Dict[str, Union[float, int]]] = None
-    artifacts: Optional[Dict[str, Any]] = None
-    artifact_uris: Optional[Dict[str, str]] = None
-    storage_client: Optional[StorageClientObj] = None
+    data_card_uid: Optional[str]
+    model_card_uids: Optional[List[str]]
+    pipeline_card_uid: Optional[str]
+    metrics: Optional[Dict[str, Union[float, int]]]
+    artifacts: Optional[Dict[str, Any]]
+    artifact_uris: Optional[Dict[str, str]]
+    storage_client: Optional[StorageClientObj]
 
     @validator("metrics", "artifacts", pre=True, always=True)
     def set_metrics(cls, value):  # pylint: disable=no-self-argument

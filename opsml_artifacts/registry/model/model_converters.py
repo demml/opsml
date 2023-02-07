@@ -4,11 +4,10 @@
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
+import onnx
 import onnxruntime as rt
 import pandas as pd
-from cryptography.fernet import Fernet
 from google.protobuf.pyext._message import RepeatedCompositeContainer  # type:ignore
-import onnx
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pyshipt_logging import ShiptLogging
 
@@ -21,10 +20,9 @@ from opsml_artifacts.registry.model.types import (
     Feature,
     ModelDefinition,
     OnnxDataProto,
-    OnnxModelType,
     OnnxModelReturn,
+    OnnxModelType,
 )
-import onnx
 
 ONNX_VERSION = onnx.__version__
 
