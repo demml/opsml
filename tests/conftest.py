@@ -1,11 +1,12 @@
 import os
 import pytest
 from sqlalchemy import create_engine
+from typing import Dict, Any
 
 # from opsml_artifacts.helpers.settings import SnowflakeParams
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GCPSecretManager
+from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GCPSecretManager, GcpCreds
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors import LocalSQLConnection, CloudSQLConnection
 from opsml_artifacts.registry.sql.connectors import LocalSQLConnection
@@ -75,7 +76,13 @@ def mock_gcp_vars():
 
 @pytest.fixture(scope="function")
 def gcp_storage_client(mock_gcp_vars):
-    sql_connection = CloudSQLConnection(db_type="mysql", **mock_gcp_vars)
+    class MockCloudSqlConnection(CloudSQLConnection):
+        @classmethod
+        def set_gcp_creds(cls, env_vars: Dict[str, Any]):
+            creds = GcpCreds(creds=mock_gcp_vars["gcp_creds"], project=mock_gcp_vars["gcp_project"])
+            return creds, mock_gcp_vars
+
+    sql_connection = MockCloudSqlConnection(**mock_gcp_vars)
     storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
 
     return storage_client
