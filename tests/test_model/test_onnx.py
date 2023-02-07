@@ -38,7 +38,7 @@ def test_model_predict(model_and_data):
         data_card_uid="test_uid",
     )
 
-    predictor = model_card.model()
+    predictor = model_card.onnx_model()
 
     if isinstance(data, np.ndarray):
         input_name = next(iter(predictor.data_dict.input_features.keys()))

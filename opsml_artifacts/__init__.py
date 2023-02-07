@@ -1,4 +1,5 @@
 from opsml_artifacts.drift import DriftDetector, DriftVisualizer
+from opsml_artifacts.registry.sql.connectors import CloudSQLConnection, LocalSQLConnection, SQLConnector
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -17,4 +18,7 @@ __all__ = [
     "PipelineCard",
     "ExperimentCard",
     "PipelineLoader",
+    "CloudSQLConnection",
+    "LocalSQLConnection",
+    "SQLConnector",
 ]
