@@ -102,5 +102,6 @@ tests/_test_scratch_estimator.py
 .vscode/settings.json
 .ruff_cache/
 notebooks/
+.test_script.py
 
 examples/.DS_Store
