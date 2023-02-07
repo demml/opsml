@@ -58,7 +58,7 @@ def test_experiment_card(linear_regression, db_registries):
             name="test_df",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid="test_uid",
+            data_card_uids=["test_uid"],
         )
 
         experiment.add_metric("test_metric", 10)
@@ -292,6 +292,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
     model_registry: CardRegistry = db_registries["model"]
     experiment_registry: CardRegistry = db_registries["experiment"]
     pipeline_registry: CardRegistry = db_registries["pipeline"]
+    local_client = db_registries["connection_client"]
 
     model, data = linear_regression
 
@@ -323,7 +324,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
         name="test_experiment",
         team=team,
         user_email=user_email,
-        data_card_uid=data_card.uid,
+        data_card_uids=[data_card.uid],
         model_card_uids=[model_card.uid],
     )
     exp_card.add_metric("test_metric", 10)
@@ -345,13 +346,18 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
         "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
         return_value=None,
     ):
-        loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
+        loader = PipelineLoader(
+            pipeline_card_uid=pipeline_card.uid,
+            connection_client=local_client,
+        )
         with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
             deck = loader.load_cards()
-            uids = loader.get_card_uids()
+            uids = loader.card_uids
 
             assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
             assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
+
+            loader.visualize()
 
 
 # this is commented out on purpose
