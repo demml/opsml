@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, TypeVar
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.engine.base import Engine
@@ -7,7 +7,6 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml_artifacts.helpers.settings import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
-    ArtifactCard,
     DataCard,
     ExperimentCard,
     ModelCard,

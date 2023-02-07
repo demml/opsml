@@ -4,7 +4,7 @@ import os
 import uuid
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from pyarrow.parquet import LocalFileSystem
 
@@ -37,8 +37,16 @@ class StorageClient:
 
         return base_path + data_path + f"/{filename}", filename
 
-    def create_tmp_path(self, save_info: SaveInfo, tmp_dir: str, file_suffix: Optional[str] = None) -> Tuple[str, str]:
-        raise NotImplementedError
+    def create_tmp_path(
+        self,
+        save_info: SaveInfo,
+        tmp_dir: str,
+        file_suffix: Optional[str] = None,
+    ):
+        gcs_path, filename = self.create_save_path(save_info=save_info, file_suffix=file_suffix)
+        local_path = f"{tmp_dir}/{filename}"
+
+        return gcs_path, local_path
 
     def list_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
@@ -63,20 +71,6 @@ class GCSFSStorageClient(StorageClient):
         )
         self.backend = StorageSystem.GCP.name
         self.base_path_prefix = f"gs://{self.gcs_bucket}"
-
-    def create_tmp_path(
-        self,
-        save_info: SaveInfo,
-        tmp_dir: str,
-        file_suffix: Optional[str] = None,
-    ):
-        gcs_path, filename = self.create_save_path(
-            save_info=save_info,
-            file_suffix=file_suffix,
-        )
-        local_path = f"{tmp_dir}/{filename}"
-
-        return gcs_path, local_path
 
     def list_files(self, storage_uri: str) -> List[str]:
         bucket = storage_uri.split("/")[2]
@@ -114,9 +108,6 @@ class LocalStorageClient(StorageClient):
         self._make_path("/".join(save_path.split("/")[:-1]))
 
         return save_path, filename
-
-    def create_tmp_path(self, save_info: SaveInfo, tmp_dir: str, file_suffix: Optional[str] = None) -> Tuple[str, str]:
-        return super().create_tmp_path(save_info, tmp_dir, file_suffix)
 
     def list_files(self, storage_uri: str) -> List[str]:
         return [self.client.get_file_info(storage_uri)]

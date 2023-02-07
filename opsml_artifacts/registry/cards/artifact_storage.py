@@ -10,7 +10,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
 
-from opsml_artifacts.registry.cards.storage_system import StorageSystem, StorageClientObj
+from opsml_artifacts.registry.cards.storage_system import (
+    StorageClientObj,
+    StorageSystem,
+)
 
 # from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.types import (
