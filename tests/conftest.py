@@ -142,6 +142,7 @@ def db_registries(mock_local_engine):
             "model": model_registry,
             "experiment": experiment_registry,
             "pipeline": pipeline_registry,
+            "connection_client": local_client,
         }
 
 

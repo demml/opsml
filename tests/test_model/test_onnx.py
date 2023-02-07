@@ -35,7 +35,7 @@ def test_model_predict(model_and_data):
         name="test_model",
         team="mlops",
         user_email="test_email",
-        data_card_uid="test_uid",
+        data_card_uids=["test_uid"],
     )
 
     predictor = model_card.onnx_model()

@@ -64,6 +64,7 @@ class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
 @declarative_mixin
 class ModelMixin:
     model_card_uri = Column("model_card_uri", String(2048))
+    data_card_uid = Column("data_card_uid", String(2048))
     trained_model_uri = Column("trained_model_uri", String(2048))
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
@@ -81,7 +82,7 @@ class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
 
 @declarative_mixin
 class ExperimentMixin:
-    data_card_uid = Column("data_card_uid", String(512))
+    data_card_uids = Column("data_card_uids", JSON)
     model_card_uids = Column("model_card_uids", JSON)
     pipeline_card_uid = Column("pipeline_card_uid", String(512))
     artifact_uris = Column("artifact_uris", JSON)

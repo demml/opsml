@@ -27,6 +27,7 @@ tf2onnx = "^1.13.0"
 pyshipt-sql = "^1.2.7"
 google-cloud-scheduler = "^2.9.0"
 zarr = "^2.13.6"
+graphviz = "^0.20.1"
 
 
 [tool.poetry.group.dev]
@@ -66,6 +67,9 @@ profile = "black"
 line-length = 120
 target-version = ['py310']
 include = '\.pyi?$'
+
+[tool.pylint.MASTER]
+ignore-paths = [ "opsml_artifacts/.local_tests/*"]
 
 [tool.pylint.messages_control]
 max-line-length = 120
@@ -109,6 +113,7 @@ plugins = [
     "sqlalchemy.ext.mypy.plugin",
     "sqlmypy",
 ]
+exclude = "opsml_artifacts/.local_tests/*"
 
 
 [tool.coverage.paths]
