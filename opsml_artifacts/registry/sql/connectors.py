@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import sqlalchemy
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, Field
 
 from opsml_artifacts.helpers.settings import ArtifactLogger
 
@@ -48,19 +48,30 @@ class CloudSQLConnection(BaseSQLConnection):
         Instantiated class with required CloudSQL connection arguments
     """
 
-    gcp_project: Optional[str] = os.getenv("GCP_PROJECT")
-    gcs_bucket: Optional[str] = os.getenv("GCS_BUCKET")
-    gcp_region: Optional[str] = os.getenv("GCS_REGION")
-    db_instance_name: Optional[str] = os.getenv("ARTIFACT_DB_INSTANCE_NAME")
-    db_username: Optional[str] = os.getenv("ARTIFACT_DB_USERNAME")
-    db_password: Optional[str] = os.getenv("ARTIFACT_DB_PASSWORD")
-    db_name: Optional[str] = os.getenv("ARTIFACT_DB_NAME")
-    db_type: Optional[str] = os.getenv("ARTIFACT_DB_TYPE")
+    gcp_project: str = Field(..., env="GCP_PROJECT")
+    gcs_bucket: str = Field(..., env="GCS_BUCKET")
+    gcp_region: str = Field(..., env="GCS_REGION")
+    db_instance_name: str = Field(..., env="ARTIFACT_DB_INSTANCE_NAME")
+    db_username: str = Field(..., env="ARTIFACT_DB_USERNAME")
+    db_password: str = Field(..., env="ARTIFACT_DB_PASSWORD")
+    db_name: str = Field(..., env="ARTIFACT_DB_NAME")
+    db_type: str = Field(..., env="ARTIFACT_DB_TYPE")
     storage_backend: str = "gcp"
     load_from_secrets: bool = False
 
     @root_validator(pre=True)
     def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
+        creds, env_vars = cls.set_gcp_creds(env_vars=env_vars)
+
+        if bool(env_vars.get("load_from_secrets")):
+            logger.info("Loading environment variables")
+            env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
+
+        return env_vars
+
+    @classmethod
+    def set_gcp_creds(cls, env_vars: Dict[str, Any]):
+
         from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
 
         creds = GcpCredsSetter().get_creds()
@@ -71,11 +82,7 @@ class CloudSQLConnection(BaseSQLConnection):
         scopes = "https://www.googleapis.com/auth/devstorage.full_control"
         env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
 
-        if bool(env_vars.get("load_from_secrets")):
-            logger.info("Loading environment variables")
-            env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
-
-        return env_vars
+        return creds, env_vars
 
     @classmethod
     def load_vars_from_gcp(cls, env_vars: Dict[str, Any], gcp_credentials):
@@ -101,7 +108,7 @@ class CloudSQLConnection(BaseSQLConnection):
 
         return "pg8000"
 
-    def _get_defaults(self) -> Tuple[Any, str, str]:
+    def _get_conn_defaults(self) -> Tuple[Any, str, str]:
         from google.cloud.sql.connector import IPTypes
 
         ip_type = IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
@@ -115,7 +122,7 @@ class CloudSQLConnection(BaseSQLConnection):
         """Creates the mysql or postgres CloudSQL client"""
         from google.cloud.sql.connector import Connector
 
-        ip_type, db_type, connection_name = self._get_defaults()
+        ip_type, db_type, connection_name = self._get_conn_defaults()
 
         with Connector(ip_type=ip_type, credentials=self.gcp_creds) as connector:  # pylint: disable=no-member
             conn = connector.connect(
@@ -160,22 +167,16 @@ class LocalSQLConnection(BaseSQLConnection):
         Instantiated class with required SQLite arguments
     """
 
-    db_file_path: Optional[str] = None
+    db_file_path: str = f"{os.path.expanduser('~')}/opsml_artifacts_database.db"
     storage_backend: str = "local"
-
-    def _get_db_path(self):
-        if not bool(self.db_file_path):
-            return f"{os.path.expanduser('~')}/opsml_artifacts_database.db"
-        return self.db_file_path
 
     def _set_sqlalchemy_url(self):
         return "sqlite://"
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
         url = self._set_sqlalchemy_url()
-        file_path = self._get_db_path()
         execution_options = {"schema_translate_map": {"ds-artifact-registry": None}}
-        engine = sqlalchemy.create_engine(f"{url}/{file_path}", execution_options=execution_options)
+        engine = sqlalchemy.create_engine(f"{url}/{self.db_file_path}", execution_options=execution_options)
         return engine
 
     @staticmethod

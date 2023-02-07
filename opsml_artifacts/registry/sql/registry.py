@@ -31,7 +31,6 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
-ArtifactCardObj = TypeVar("ArtifactCardObj", bound=ArtifactCard)
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 

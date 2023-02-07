@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -33,6 +33,8 @@ from opsml_artifacts.registry.sql.records import (
 )
 
 logger = ShiptLogging.get_logger(__name__)
+
+CardObj = TypeVar("CardObj", bound="ArtifactCard")
 
 
 class ArtifactCard(BaseModel):
@@ -335,13 +337,13 @@ class ModelCard(ArtifactCard):
     trained_model: Optional[Any] = None
     sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]] = None
     data_card_uid: Optional[str] = None
-    onnx_model_data: DataDict
-    onnx_model_def: ModelDefinition
+    onnx_model_data: Optional[DataDict]
+    onnx_model_def: Optional[ModelDefinition]
     model_card_uri: Optional[str]
     trained_model_uri: Optional[str]
     sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
-    model_type: str
+    model_type: Optional[str]
     data_schema: Optional[Dict[str, Feature]]
     storage_client: Optional[StorageClientObj] = None
 
@@ -350,7 +352,7 @@ class ModelCard(ArtifactCard):
         keep_untouched = (cached_property,)
 
     @root_validator(pre=True)
-    def create_onnx_model(cls, values: Dict[str, Any]):  # pylint: disable=no-self-argument
+    def check_args(cls, values: Dict[str, Any]):  # pylint: disable=no-self-argument
         """Converts trained model to modelcard"""
 
         if all([values.get("uid"), values.get("version")]):
@@ -358,19 +360,8 @@ class ModelCard(ArtifactCard):
 
         if not cls._required_args_present(values=values):
             raise ValueError(
-                """trained_model and sample_input_data are required when creating a ModelCard""",
+                """trained_model and sample_input_data are required for instantiating a ModelCard""",
             )
-
-        model_creator = OnnxModelCreator(
-            model=values["trained_model"],
-            input_data=values["sample_input_data"],
-        )
-        onnx_model = model_creator.create_onnx_model()
-
-        values = cls._add_onnx_attributes(
-            onnx_model=onnx_model,
-            values=values,
-        )
 
         return values
 
@@ -383,24 +374,6 @@ class ModelCard(ArtifactCard):
                 "sample_input_data",
             ]
         )
-
-    @classmethod
-    def _add_onnx_attributes(
-        cls,
-        onnx_model: OnnxModelReturn,
-        values: Dict[str, Any],
-    ) -> Dict[str, Any]:
-
-        values["onnx_model_data"] = DataDict(
-            data_type=onnx_model.data_type,
-            input_features=onnx_model.onnx_input_features,
-            output_features=onnx_model.onnx_output_features,
-        )
-        values["onnx_model_def"] = onnx_model.model_definition
-        values["data_schema"] = onnx_model.data_schema
-        values["model_type"] = onnx_model.model_type
-
-        return values
 
     def load_trained_model(self):
         sample_data = load_record_artifact_from_storage(
@@ -482,15 +455,12 @@ class ModelCard(ArtifactCard):
 
         """
 
+        if not bool(self.onnx_model_def):
+            self._create_and_set_onnx_attr()
+
         self._set_additional_attr(uid=uid, version=version, storage_client=storage_client)
         self.save_modelcard(blob_path=registry_name, version=version)
         return ModelRegistryRecord(**self.__dict__)
-
-    def _decrypt_model_definition(self) -> bytes:
-        cipher = Fernet(key=self.onnx_model_def.encrypt_key)
-        model_bytes = cipher.decrypt(self.onnx_model_def.model_bytes)
-
-        return model_bytes
 
     def _set_version_for_predictor(self) -> int:
         if self.version is None:
@@ -505,7 +475,31 @@ class ModelCard(ArtifactCard):
 
         return version
 
-    def model(self) -> OnnxModelPredictor:
+    def _set_onnx_attributes(self, onnx_model: OnnxModelReturn) -> Dict[str, Any]:
+
+        setattr(
+            self,
+            "onnx_model_data",
+            DataDict(
+                data_type=onnx_model.data_type,
+                input_features=onnx_model.onnx_input_features,
+                output_features=onnx_model.onnx_output_features,
+            ),
+        )
+
+        setattr(self, "onnx_model_def", onnx_model.model_definition)
+        setattr(self, "data_schema", onnx_model.data_schema)
+        setattr(self, "model_type", onnx_model.model_type)
+
+    def _create_and_set_onnx_attr(self) -> None:
+        """Creates Onnx model from trained model and sample input data
+        and sets Card attributes
+        """
+        model_creator = OnnxModelCreator(model=self.trained_model, input_data=self.sample_input_data)
+        onnx_model = model_creator.create_onnx_model()
+        self._set_onnx_attributes(onnx_model=onnx_model)
+
+    def onnx_model(self) -> OnnxModelPredictor:
 
         """Loads a model from serialized string
 
@@ -514,12 +508,14 @@ class ModelCard(ArtifactCard):
 
         """
 
-        model_bytes = self._decrypt_model_definition()
+        if not bool(self.onnx_model_def):
+            self._create_and_set_onnx_attr()
+
         version = self._set_version_for_predictor()
 
         return OnnxModelPredictor(
             model_type=self.model_type,
-            model_definition=model_bytes,
+            model_definition=self.onnx_model_def.model_bytes,
             data_dict=self.onnx_model_data,
             data_schema=self.data_schema,
             model_version=version,
