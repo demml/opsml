@@ -1,10 +1,16 @@
 import os
+import pytest
 from sqlalchemy import create_engine
-from opsml_artifacts.helpers.settings import SnowflakeParams
+from typing import Dict, Any
+
+# from opsml_artifacts.helpers.settings import SnowflakeParams
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient
-import pytest
+from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GCPSecretManager, GcpCreds
+from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.registry.sql.connectors import LocalSQLConnection, CloudSQLConnection
+from opsml_artifacts.registry.sql.connectors import LocalSQLConnection
+from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import sessionmaker
 import numpy as np
@@ -46,65 +52,114 @@ class Bucket(BaseModel):
         return [Blob()]
 
 
-@pytest.fixture(scope="session")
-def test_settings():
-    from opsml_artifacts.helpers.settings import settings
-
-    return settings
+@pytest.fixture(scope="function")
+def mock_gcp_vars():
+    cred_path = os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
+    creds, _ = load_credentials_from_file(cred_path)
+    mock_vars = {
+        "gcp_project": "test",
+        "gcs_bucket": "test",
+        "gcp_region": "test",
+        "app_env": "staging",
+        "path": os.getcwd(),
+        "snowflake_api_auth": "test",
+        "snowflake_api_url": "test",
+        "db_username": "test",
+        "db_password": "test",
+        "db_name": "test",
+        "db_instance_name": "test",
+        "gcp_creds": creds,
+        "gcsfs_creds": creds,
+    }
+    return mock_vars
 
 
 @pytest.fixture(scope="function")
-def fake_snowflake_params():
-    return SnowflakeParams(
-        username="test",
-        password="test",
-        host="host",
-        database="test",
-        warehouse="test",
-        role="test",
-    )
+def mock_cloud_sql_connection(mock_gcp_vars):
+    class MockCloudSqlConnection(CloudSQLConnection):
+        @classmethod
+        def set_gcp_creds(cls, env_vars: Dict[str, Any]):
+            creds = GcpCreds(creds=mock_gcp_vars["gcp_creds"], project=mock_gcp_vars["gcp_project"])
+            return creds, mock_gcp_vars
+
+    return MockCloudSqlConnection
 
 
 @pytest.fixture(scope="function")
-def db_registries():
+def gcp_storage_client(mock_cloud_sql_connection, mock_gcp_vars):
 
-    url = "sqlite:///:memory:"
-    execution_options = {"schema_translate_map": {"ds-artifact-registry": None}}
-    engine = create_engine(url=url, execution_options=execution_options)
-    mock_session = sessionmaker(bind=engine)
+    sql_connection = mock_cloud_sql_connection(**mock_gcp_vars)
+    storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
+
+    return storage_client
+
+
+@pytest.fixture(scope="function")
+def local_storage_client():
+    sql_connection = LocalSQLConnection(db_file_path=":memory:")
+    storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
+
+    return storage_client
+
+
+# @pytest.fixture(scope="session")
+# def test_settings():
+#    from opsml_artifacts.helpers.settings import settings
+#
+#    return settings
+
+
+# @pytest.fixture(scope="function")
+# def fake_snowflake_params():
+#    return SnowflakeParams(
+#        username="test",
+#        password="test",
+#        host="host",
+#        database="test",
+#        warehouse="test",
+#        role="test",
+#    )
+
+
+@pytest.fixture(scope="function")
+def mock_local_engine():
+    local_client = LocalSQLConnection(db_file_path=":memory:")
+    engine = local_client.get_engine()
+
+    return engine
+
+
+@pytest.fixture(scope="function")
+def db_registries(mock_local_engine):
+
     with patch.multiple(
-        "opsml_artifacts.registry.sql.sql_schema.SqlManager",
-        _sql_session=mock_session,
-        _create_table=MagicMock(return_value=True),
-    ):
+        "opsml_artifacts.registry.sql.connectors.LocalSQLConnection",
+        get_engine=MagicMock(return_value=mock_local_engine),
+    ) as engine_mock:
+
+        local_client = LocalSQLConnection(db_file_path=":memory:")
+        engine = local_client.get_engine()
 
         DataSchema.__table__.create(bind=engine, checkfirst=True)
         ModelSchema.__table__.create(bind=engine, checkfirst=True)
         ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
         PipelineSchema.__table__.create(bind=engine, checkfirst=True)
 
-        model_registry = CardRegistry(registry_name="model")
-        data_registry = CardRegistry(registry_name="data")
-        experiment_registry = CardRegistry(registry_name="experiment")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
+        model_registry = CardRegistry(registry_name="model", connection_client=local_client)
+        data_registry = CardRegistry(registry_name="data", connection_client=local_client)
+        experiment_registry = CardRegistry(registry_name="experiment", connection_client=local_client)
+        pipeline_registry = CardRegistry(registry_name="pipeline", connection_client=local_client)
 
         yield {
             "data": data_registry,
             "model": model_registry,
             "experiment": experiment_registry,
             "pipeline": pipeline_registry,
+            "connection_client": local_client,
         }
-
-        # drop tables
-        ModelSchema.__table__.drop(bind=engine, checkfirst=True)
-        DataSchema.__table__.drop(bind=engine, checkfirst=True)
-        ExperimentSchema.__table__.drop(bind=engine, checkfirst=True)
-        PipelineSchema.__table__.drop(bind=engine, checkfirst=True)
 
 
 ##### Mocked classes as fixtures
-
-
 @pytest.fixture()
 def test_query():
     query = "SELECT ORDER_ID FROM PRD_DATALAKEHOUSE.DATA_SCIENCE.ORDER_STATS limit 100"
@@ -121,6 +176,12 @@ def mock_gcsfs():
         download=MagicMock(return_value=True),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_pathlib():
+    with patch.multiple("pathlib.Path", mkdir=MagicMock(return_value=None)) as mocked_pathlib:
+        yield mocked_pathlib
 
 
 @pytest.fixture(scope="function")
@@ -153,6 +214,21 @@ def mock_snowflake_query_runner(test_df):
     ) as mock_runner:
 
         yield mock_runner
+
+
+@pytest.fixture(scope="function")
+def mock_gcp_secrets():
+    class SecretClient:
+        def get_secret(self, project_name: str, secret: str):
+            return "test"
+
+    class MockSecret(GCPSecretManager):
+        def __init__(self):
+            self.client = SecretClient()
+
+    with patch("opsml_artifacts.helpers.gcp_utils.GCPSecretManager", MockSecret) as mock_secret:
+
+        yield mock_secret
 
 
 @pytest.fixture(scope="function")
