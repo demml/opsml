@@ -30,22 +30,27 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         data_splits=data_splits,
     )
 
-    registry.register_card(card=data_card)
+    # for numpy array
+    with patch.multiple("zarr", save=MagicMock(return_value=None)):
+        registry.register_card(card=data_card)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team)
-    assert isinstance(df, pd.DataFrame)
+        df = registry.list_cards(name=data_card.name, team=data_card.team)
+        assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name)
-    assert isinstance(df, pd.DataFrame)
+        df = registry.list_cards(name=data_card.name)
+        assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards()
-    assert isinstance(df, pd.DataFrame)
+        df = registry.list_cards()
+        assert isinstance(df, pd.DataFrame)
 
 
 def test_experiment_card(linear_regression, db_registries):
 
-    with patch("joblib.load") as loader:
-        loader.return_value = linear_regression
+    with patch.multiple(
+        "joblib",
+        dump=MagicMock(return_value=None),
+        load=MagicMock(return_value=linear_regression),
+    ):
 
         registry: CardRegistry = db_registries["experiment"]
 
@@ -53,7 +58,7 @@ def test_experiment_card(linear_regression, db_registries):
             name="test_df",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid="test_uid",
+            data_card_uids=["test_uid"],
         )
 
         experiment.add_metric("test_metric", 10)
@@ -72,12 +77,18 @@ def test_experiment_card(linear_regression, db_registries):
         assert loaded_card.uid == experiment.uid
 
 
-def test_register_model(db_registries, sklearn_pipeline, mock_pyarrow_parquet_write):
+@patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
+@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
+def test_register_model(
+    loaded_model_record, model_card_mock, db_registries, sklearn_pipeline, mock_pyarrow_parquet_write
+):
 
+    model_card_mock.return_value = None
     model, data = sklearn_pipeline
 
     # create data card
     data_registry: CardRegistry = db_registries["data"]
+
     data_card = DataCard(
         data=data,
         name="pipeline_data",
@@ -85,8 +96,6 @@ def test_register_model(db_registries, sklearn_pipeline, mock_pyarrow_parquet_wr
         user_email="mlops.com",
     )
     data_registry.register_card(card=data_card)
-
-    model_registry: CardRegistry = db_registries["model"]
 
     model_card1 = ModelCard(
         trained_model=model,
@@ -97,14 +106,17 @@ def test_register_model(db_registries, sklearn_pipeline, mock_pyarrow_parquet_wr
         data_card_uid=data_card.uid,
     )
 
-    model_registry.register_card(card=model_card1)
+    with patch.multiple(
+        "joblib",
+        dump=MagicMock(return_value=None),
+        load=MagicMock(return_value=model_card1.dict(exclude={"sample_input_data", "trained_model"})),
+    ):
 
-    # patching at lowest level possible
-    with patch("joblib.load") as loader:
-        loader.return_value = model_card1.dict(exclude={"sample_input_data", "trained_model"})
+        model_registry: CardRegistry = db_registries["model"]
+        model_registry.register_card(model_card1)
+        loaded_model_record.return_value = model_card1.dict()
         loaded_card = model_registry.load_card(uid=model_card1.uid)
 
-    with patch.object(ModelCard, "load_trained_model", return_value=None) as load_model:
         loaded_card.load_trained_model()
         loaded_card.trained_model = model
         loaded_card.sample_input_data = data[0:1]
@@ -271,6 +283,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
 
 
 def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write):
+
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
@@ -279,6 +292,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
     model_registry: CardRegistry = db_registries["model"]
     experiment_registry: CardRegistry = db_registries["experiment"]
     pipeline_registry: CardRegistry = db_registries["pipeline"]
+    local_client = db_registries["connection_client"]
 
     model, data = linear_regression
 
@@ -289,26 +303,28 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
         team=team,
         user_email=user_email,
     )
-    data_registry.register_card(card=data_card)
+    with patch.multiple("zarr", save=MagicMock(return_value=None)):
+        data_registry.register_card(card=data_card)
 
-    ###### ModelCard
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
-        name="test_model",
-        team=team,
-        user_email=user_email,
-        data_card_uid=data_card.uid,
-    )
+        ###### ModelCard
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data=data[:1],
+            name="test_model",
+            team=team,
+            user_email=user_email,
+            data_card_uid=data_card.uid,
+        )
 
-    model_registry.register_card(model_card)
+        with patch.multiple("joblib", dump=MagicMock(return_value=None)):
+            model_registry.register_card(model_card)
 
     ##### ExperimentCard
     exp_card = ExperimentCard(
         name="test_experiment",
         team=team,
         user_email=user_email,
-        data_card_uid=data_card.uid,
+        data_card_uids=[data_card.uid],
         model_card_uids=[model_card.uid],
     )
     exp_card.add_metric("test_metric", 10)
@@ -330,13 +346,18 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
         "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
         return_value=None,
     ):
-        loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
+        loader = PipelineLoader(
+            pipeline_card_uid=pipeline_card.uid,
+            connection_client=local_client,
+        )
         with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
             deck = loader.load_cards()
-            uids = loader.get_card_uids()
+            uids = loader.card_uids
 
             assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
             assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
+
+            loader.visualize()
 
 
 # this is commented out on purpose

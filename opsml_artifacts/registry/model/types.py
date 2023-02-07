@@ -84,8 +84,8 @@ class DataDict(BaseModel):
 
 
 class ModelDefinition(BaseModel):
-    model_bytes: bytes = Field(..., description="Encrypted onnx model bytes")
-    encrypt_key: bytes = Field(..., description="Key to user or decrypting model definition")
+    onnx_version: str = Field(..., description="Version of onnx model used to create proto")
+    model_bytes: bytes = Field(..., description="Onnx model as serialized string")
 
 
 class OnnxModelReturn(BaseModel):
@@ -93,8 +93,11 @@ class OnnxModelReturn(BaseModel):
     onnx_input_features: Dict[str, Feature]
     onnx_output_features: Dict[str, Feature]
     data_schema: Optional[Dict[str, Feature]]
-    model_type: str
-    data_type: str
+    model_type: str = "None"
+    data_type: str = "None"
+
+    class Config:
+        allow_mutation = True
 
 
 class Base(BaseModel):

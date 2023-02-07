@@ -1,15 +1,18 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, root_validator, validator
 
 from opsml_artifacts.drift.models import DriftReport
-from opsml_artifacts.registry.cards.storage import load_record_artifact_from_storage
+from opsml_artifacts.registry.cards.artifact_storage import (
+    load_record_artifact_from_storage,
+)
+from opsml_artifacts.registry.cards.storage_system import StorageClientObj
 
 
 class DataRegistryRecord(BaseModel):
     data_uri: str
-    drift_uri: Optional[str] = None
-    data_splits: Optional[Dict[str, List[Dict[str, Any]]]] = None
+    drift_uri: Optional[str]
+    data_splits: Optional[Dict[str, List[Dict[str, Any]]]]
     version: int
     data_type: str
     name: str
@@ -17,9 +20,9 @@ class DataRegistryRecord(BaseModel):
     feature_map: Dict[str, str]
     feature_descriptions: Optional[Dict[str, str]]
     user_email: str
-    uid: Optional[str] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
-    dependent_vars: Optional[List[Union[int, str]]] = None
+    uid: Optional[str]
+    additional_info: Optional[Dict[str, Union[float, int, str]]]
+    dependent_vars: Optional[List[Union[int, str]]]
 
     class Config:
         smart_union = True
@@ -38,6 +41,7 @@ class ModelRegistryRecord(BaseModel):
     user_email: str
     name: str
     model_card_uri: str
+    data_card_uid: str
     trained_model_uri: str
     sample_data_uri: str
     sample_data_type: str
@@ -48,11 +52,11 @@ class ExperimentRegistryRecord(BaseModel):
     name: str
     team: str
     user_email: str
-    uid: Optional[str] = None
-    version: Optional[int] = None
-    data_card_uid: Optional[str] = None
-    model_card_uids: Optional[List[str]] = None
-    pipeline_card_uid: Optional[str] = None
+    uid: Optional[str]
+    version: Optional[int]
+    data_card_uids: Optional[List[str]]
+    model_card_uids: Optional[List[str]]
+    pipeline_card_uid: Optional[str]
     artifact_uris: Optional[Dict[str, str]]
     metrics: Optional[Dict[str, Union[float, int]]]
 
@@ -61,18 +65,18 @@ class PipelineRegistryRecord(BaseModel):
     name: str
     team: str
     user_email: str
-    uid: Optional[str] = None
-    version: Optional[int] = None
-    pipeline_code_uri: str
-    data_card_uids: Optional[Dict[str, str]] = None
-    model_card_uids: Optional[Dict[str, str]] = None
-    experiment_card_uids: Optional[Dict[str, str]] = None
+    uid: Optional[str]
+    version: Optional[int]
+    pipeline_code_uri: Optional[str]
+    data_card_uids: Optional[Dict[str, str]]
+    model_card_uids: Optional[Dict[str, str]]
+    experiment_card_uids: Optional[Dict[str, str]]
 
 
 class LoadedDataRecord(BaseModel):
     data_uri: str
-    drift_uri: Optional[str] = None
-    data_splits: Optional[List[Dict[str, Any]]] = None
+    drift_uri: Optional[str]
+    data_splits: Optional[List[Dict[str, Any]]]
     version: int
     data_type: str
     name: str
@@ -80,10 +84,11 @@ class LoadedDataRecord(BaseModel):
     feature_map: Dict[str, str]
     feature_descriptions: Optional[Dict[str, str]]
     user_email: str
-    uid: Optional[str] = None
-    dependent_vars: Optional[List[Union[int, str]]] = None
-    drift_report: Optional[Dict[str, DriftReport]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    uid: Optional[str]
+    dependent_vars: Optional[List[Union[int, str]]]
+    drift_report: Optional[Dict[str, DriftReport]]
+    additional_info: Optional[Dict[str, Union[float, int, str]]]
+    storage_client: Optional[StorageClientObj]
 
     class Config:
         arbitrary_types_allowed = True
@@ -109,6 +114,7 @@ class LoadedDataRecord(BaseModel):
             return load_record_artifact_from_storage(
                 storage_uri=values["drift_uri"],
                 artifact_type="dict",
+                storage_client=values["storage_client"],
             )
         return None
 
@@ -120,10 +126,15 @@ class LoadedModelRecord(BaseModel):
     user_email: str
     name: str
     model_card_uri: str
+    data_card_uid: str
     trained_model_uri: str
     sample_data_uri: str
     sample_data_type: str
     model_type: str
+    storage_client: Optional[StorageClientObj]
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def load_model_card_definition(self) -> Dict[str, Any]:
 
@@ -136,6 +147,7 @@ class LoadedModelRecord(BaseModel):
         model_card_definition = load_record_artifact_from_storage(
             storage_uri=self.model_card_uri,
             artifact_type="dict",
+            storage_client=cast(StorageClientObj, self.storage_client),
         )
 
         model_card_definition["model_card_uri"] = self.model_card_uri
@@ -150,16 +162,19 @@ class LoadedExperimentRecord(BaseModel):
     name: str
     team: str
     user_email: str
-    uid: Optional[str] = None
-    version: Optional[int] = None
-    data_card_uid: Optional[str] = None
-    model_card_uid: Optional[str] = None
-    pipeline_card_uid: Optional[str] = None
+    uid: Optional[str]
+    version: Optional[int]
+    data_card_uids: Optional[List[str]]
+    model_card_uids: Optional[List[str]]
+    pipeline_card_uid: Optional[str]
     artifact_uris: Dict[str, str]
-    artifacts: Optional[Dict[str, Any]] = None
+    artifacts: Optional[Dict[str, Any]]
     metrics: Optional[Dict[str, Union[int, float]]]
+    storage_client: Optional[StorageClientObj]
 
-    # @staticmethod
+    class Config:
+        arbitrary_types_allowed = True
+
     def load_artifacts(self) -> None:
         """Loads experiment artifacts to pydantic model"""
 
@@ -171,6 +186,7 @@ class LoadedExperimentRecord(BaseModel):
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 storage_uri=uri,
                 artifact_type="artifact",
+                storage_client=cast(StorageClientObj, self.storage_client),
             )
         setattr(self, "artifacts", loaded_artifacts)
 
@@ -180,9 +196,9 @@ class LoadedPipelineRecord(BaseModel):
     name: str
     team: str
     user_email: str
-    uid: Optional[str] = None
-    version: Optional[int] = None
-    pipeline_code_uri: str
-    data_card_uids: Optional[Dict[str, str]] = None
-    model_card_uids: Optional[Dict[str, str]] = None
-    experiment_card_uids: Optional[Dict[str, str]] = None
+    uid: Optional[str]
+    version: Optional[int]
+    pipeline_code_uri: Optional[str]
+    data_card_uids: Optional[Dict[str, str]]
+    model_card_uids: Optional[Dict[str, str]]
+    experiment_card_uids: Optional[Dict[str, str]]

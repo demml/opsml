@@ -1,27 +1,28 @@
 import datetime
+import logging
 import os
 import time
 import uuid
 from enum import Enum
 from typing import Any, Dict, Type, Union, cast
 
-from pyshipt_logging import ShiptLogging
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin  # type: ignore
 from sqlalchemy.orm import sessionmaker
 
-from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.registry.sql.connection import create_sql_engine
+# from opsml_artifacts.helpers.settings import settings
+# from opsml_artifacts.registry.sql.connection import create_sql_engine
 
-logger = ShiptLogging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 Base = declarative_base()
 YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 class RegistryTableNames(str, Enum):
-    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "DATA_REGISTRTY")
+    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "MODEL_REGISTRY")
     EXPERIMENT = os.getenv("ML_EXPERIMENT_REGISTRY_NAME", "EXPERIMENT_REGISTRY")
     PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "PIPELINE_REGISTRY")
@@ -32,7 +33,7 @@ class BaseMixin:
     uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
     date = Column("date", String(512), default=datetime.date.today().strftime(YEAR_MONTH_DATE))
     timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
-    app_env = Column("app_env", String(512), default=settings.app_env)
+    app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(512))
     team = Column("team", String(512))
     version = Column("version", Integer, nullable=False)
@@ -63,6 +64,7 @@ class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
 @declarative_mixin
 class ModelMixin:
     model_card_uri = Column("model_card_uri", String(2048))
+    data_card_uid = Column("data_card_uid", String(2048))
     trained_model_uri = Column("trained_model_uri", String(2048))
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
@@ -80,7 +82,7 @@ class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
 
 @declarative_mixin
 class ExperimentMixin:
-    data_card_uid = Column("data_card_uid", String(512))
+    data_card_uids = Column("data_card_uids", JSON)
     model_card_uids = Column("model_card_uids", JSON)
     pipeline_card_uid = Column("pipeline_card_uid", String(512))
     artifact_uris = Column("artifact_uris", JSON)
@@ -131,23 +133,20 @@ class TableSchema:
         raise ValueError(f"""Incorrect table name provided {table_name}""")
 
 
-engine = create_sql_engine()
-Session = sessionmaker(bind=engine)
-
-
 class SqlManager:
-    def __init__(self, table_name: str):
-        self._session = self._sql_session
+    def __init__(self, table_name: str, engine):
+        self.engine = engine
+        self._session = self._get_session(engine=engine)
         self._table = TableSchema.get_table(table_name=table_name)
         self._create_table()
         self.table_name = self._table.__tablename__
 
-    @property
-    def _sql_session(self):
-        return Session
+    def _get_session(self, engine: Engine):
+        session = sessionmaker(bind=engine)
+        return session
 
     def _create_table(self):
-        self._table.__table__.create(bind=engine, checkfirst=True)
+        self._table.__table__.create(bind=self.engine, checkfirst=True)
 
     def _exceute_query(self, query: Any):
         with self._session() as sess:

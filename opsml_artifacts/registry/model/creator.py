@@ -43,10 +43,7 @@ class OnnxModelCreator:
             InputDataType.PANDAS_DATAFRAME.value,
             InputDataType.NUMPY_ARRAY.value,
         ]:
-            return cast(
-                Union[pd.DataFrame, np.ndarray],
-                input_data,
-            )[0:1]
+            return cast(Union[pd.DataFrame, np.ndarray], input_data)[0:1]
 
         sample_dict = cast(Dict[str, np.ndarray], {})
         for key in cast(Dict[str, np.ndarray], input_data).keys():
@@ -103,17 +100,14 @@ class OnnxModelCreator:
         Returns
             OnnxModelReturn
         """
-        model_definition, input_onnx_features, output_onnx_features, data_schema = OnnxModelConverter(
+        onnx_model_return = OnnxModelConverter(
             model=self.model,
             input_data=self.input_data,
             model_type=self.model_type,
         ).convert_model()
 
-        return OnnxModelReturn(
-            model_definition=model_definition,
-            onnx_input_features=input_onnx_features,
-            onnx_output_features=output_onnx_features,
-            data_schema=data_schema,
-            model_type=self.model_type,
-            data_type=self.data_type,
-        )
+        onnx_model_return.model_type = self.model_type
+        onnx_model_return.data_type = self.data_type
+
+        # add onnx version
+        return onnx_model_return

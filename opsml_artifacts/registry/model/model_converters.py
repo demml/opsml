@@ -4,9 +4,9 @@
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
+import onnx
 import onnxruntime as rt
 import pandas as pd
-from cryptography.fernet import Fernet
 from google.protobuf.pyext._message import RepeatedCompositeContainer  # type:ignore
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from pyshipt_logging import ShiptLogging
@@ -20,18 +20,14 @@ from opsml_artifacts.registry.model.types import (
     Feature,
     ModelDefinition,
     OnnxDataProto,
+    OnnxModelReturn,
     OnnxModelType,
 )
 
+ONNX_VERSION = onnx.__version__
+
 # Get logger
 logger = ShiptLogging.get_logger(__name__)
-
-ModelConvertOutput = Tuple[
-    ModelDefinition,
-    Dict[str, Feature],
-    Dict[str, Feature],
-    Optional[Dict[str, Feature]],
-]
 
 
 class ModelConverter:
@@ -129,23 +125,18 @@ class ModelConverter:
 
         return input_dict, output_dict
 
-    def encrypt_model(self, onnx_model: ModelProto) -> ModelDefinition:
-        """Encrypts an Onnx model
+    def create_model_def(self, onnx_model: ModelProto) -> ModelDefinition:
+        """Creates Model definition
 
         Args:
             onnx_model (ModelProto): Onnx model
         """
-        key = Fernet.generate_key()
-        cipher_suite = Fernet(key)
-        encoded_text = cipher_suite.encrypt(
-            onnx_model.SerializeToString(),
-        )
         return ModelDefinition(
-            model_bytes=encoded_text,
-            encrypt_key=key,
+            onnx_version=ONNX_VERSION,
+            model_bytes=onnx_model.SerializeToString(),
         )
 
-    def convert(self) -> ModelConvertOutput:
+    def convert(self) -> OnnxModelReturn:
         """Converts model to onnx model, validates it, and create an
         onnx feature dictionary
 
@@ -153,10 +144,15 @@ class ModelConverter:
             Onnx ModelDefinition and Dictionary of Onnx features
         """
         onnx_model, data_schema = self.convert_model()
-        model_def = self.encrypt_model(onnx_model=onnx_model)
+        model_def = self.create_model_def(onnx_model=onnx_model)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return model_def, input_onnx_features, output_onnx_features, data_schema
+        return OnnxModelReturn(
+            model_definition=model_def,
+            onnx_input_features=input_onnx_features,
+            onnx_output_features=output_onnx_features,
+            data_schema=data_schema,
+        )
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -298,7 +294,7 @@ class OnnxModelConverter:
 
     """
 
-    def convert_model(self) -> ModelConvertOutput:
+    def convert_model(self) -> OnnxModelReturn:
 
         converter = next(
             (
