@@ -2971,7 +2971,7 @@ reference = "shipt-resolve"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "35740a04812e7f8a9a3ce962a235288a8cee31ca91974df288e2451b2263d5a7"
+content-hash = "3b413bffd46a6c49d4171f8b87b402e974293f1c573f4b6fa5aecded08bf6519"
 
 [metadata.files]
 absl-py = [
