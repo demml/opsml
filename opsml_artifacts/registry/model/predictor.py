@@ -1,16 +1,18 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type
+# pylint: disable=import-outside-toplevel
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type
 
-from pydantic import conlist, create_model
+import numpy as np
+from pydantic import create_model
 
 from opsml_artifacts.registry.model.types import (
     ApiSigTypes,
     Base,
     DataDict,
+    DeepLearningDictBase,
+    DeepLearningNumpyBase,
     DictBase,
     Feature,
     InputDataType,
-    KerasDictBase,
-    KerasNumpyBase,
     NumpyBase,
     OnnxModelType,
 )
@@ -35,27 +37,35 @@ class ApiSigCreator:
     def _is_list_type(self, feature: Feature):
         if feature.feature_type == "UNDEFINED":
             return True
-        if self.model_type == OnnxModelType.TF_KERAS:
+        if self.model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]:
             return True
-        if feature.shape[1] > 1:
+        if len(feature.shape) > 1 and feature.shape[1] > 1:
             return True
         return False
 
     def _get_feature_shape(self, feature: Feature):
-        if feature.shape[1] is not None:
+        feature_len = len(feature.shape)
+        if feature_len > 1:
+            if feature_len > 2:
+                return feature.shape[1:]
             return None if feature.shape[1] == 0 else feature.shape[1]
         return None
 
     def _infer_pydantic_fields(self, features: Dict[str, Feature]) -> PydanticFields:
         pydantic_fields: PydanticFields = {}
+
         for input_name, feature in features.items():
             if self._is_list_type(feature=feature):
                 feature_shape = self._get_feature_shape(feature=feature)
-                field_info = conlist(
-                    ApiSigTypes[feature.feature_type].value,
-                    min_items=feature_shape,
-                    max_items=feature_shape,
-                )
+                field_info = ApiSigTypes[feature.feature_type].value
+
+                if isinstance(feature_shape, list):
+                    shape_len = len(feature_shape)
+                else:
+                    shape_len = 1
+                for _ in range(shape_len):
+                    field_info = List[field_info]  # type: ignore
+
             else:
                 field_info = ApiSigTypes[feature.feature_type].value
             pydantic_fields[input_name] = (field_info, ...)
@@ -130,18 +140,18 @@ class SklearnSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type != "keras"
+        return model_type not in ["keras", "pytorch"]
 
 
-class TensorflowSigCreator(ApiSigCreator):
+class DeepLearningSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
         if self.data_type == InputDataType.DICT.name:
-            return KerasDictBase
-        return KerasNumpyBase
+            return DeepLearningDictBase
+        return DeepLearningNumpyBase
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type == "keras"
+        return model_type in ["keras", "pytorch"]
 
 
 class ApiSigCreatorGetter:
@@ -245,6 +255,13 @@ class OnnxModelPredictor:
 
         elif self.model_type == "keras":
             new_data = pred_data.to_onnx()
+
+        elif self.model_type == "pytorch":
+            import torch
+
+            feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
+            new_data = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
+            return model(*new_data)
 
         else:
             new_data = list(pred_data.to_onnx().values())[0]

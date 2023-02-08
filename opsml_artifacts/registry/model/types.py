@@ -1,6 +1,6 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,7 @@ class OnnxModelType(str, Enum):
     XGB_REGRESSOR = "xgbregressor"
     LGBM_BOOSTER = "booster"
     TF_KERAS = "keras"
+    PYTORCH = "pytorch"
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
@@ -137,21 +138,15 @@ class DictBase(Base):
         return pd.DataFrame(self.dict(), index=[0])
 
 
-class KerasNumpyBase(Base):
+class DeepLearningNumpyBase(Base):
     def to_onnx(self):
-        return {
-            feat: np.array(
-                feat_val,
-                np.float32,
-            ).reshape(1, -1)
-            for feat, feat_val in self
-        }
+        return {feat: np.expand_dims(np.array(feat_val, np.float32), axis=0) for feat, feat_val in self}
 
     def to_dataframe(self):
         raise NotImplementedError
 
 
-class KerasDictBase(Base):
+class DeepLearningDictBase(Base):
     """API base class for tensorflow/keras multi-input models.
     Multi-input models typically allow for a dictionary of arrays
     """
@@ -160,11 +155,11 @@ class KerasDictBase(Base):
         feats = {}
         for feat, feat_val in self:
             if isinstance(feat_val[0], float):
-                feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
+                feats[feat] = np.expand_dims(np.array(feat_val, np.float32), axis=0)
             elif isinstance(feat_val[0], int):
-                feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
+                feats[feat] = np.expand_dims(np.array(feat_val, np.int64), axis=0)
             else:
-                feats[feat] = np.array(feat_val).reshape(1, -1)
+                feats[feat] = np.expand_dims(np.array(feat_val), axis=0)
         return feats
 
     def to_dataframe(self):
@@ -180,3 +175,17 @@ class ApiSigTypes(Enum):
     FLOAT32 = float
     FLOAT64 = float
     STR = str
+
+
+class TorchOnnxArgs(BaseModel):
+    """
+    tinput_names (List[str]): Optional list containing input names for model inputs.
+    This is a PyTorch-specific attribute
+    output_names (List[str]): Optional list containing output names for model outputs.
+    This is a PyTorch-specific attribute
+    dynamic_axes (Dictionary): Optional PyTorch attribute that defines dynamic axes
+    """
+
+    input_names: List[str] = ["inputs"]
+    output_names: List[str] = ["outputs"]
+    dynamic_axes: Dict[str, Dict[int, str]] = {"inputs": {0: "bs"}}
