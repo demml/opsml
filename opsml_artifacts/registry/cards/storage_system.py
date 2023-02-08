@@ -62,8 +62,10 @@ class StorageClient:
 class GCSFSStorageClient(StorageClient):
     def __init__(self, connection_args: Dict[str, Any]):
         super().__init__(connection_args=connection_args)
-        import gcsfs  # pylint: disable=import-outside-toplevel
 
+        import gcsfs
+
+        self.connection_args = connection_args
         self.gcs_bucket = connection_args.get("gcs_bucket")
         self.client = gcsfs.GCSFileSystem(
             project=connection_args.get("gcp_project"),
@@ -110,7 +112,7 @@ class LocalStorageClient(StorageClient):
         return save_path, filename
 
     def list_files(self, storage_uri: str) -> List[str]:
-        return [self.client.get_file_info(storage_uri)]
+        return [storage_uri]
 
     def store(self, storage_uri: str):
         return storage_uri

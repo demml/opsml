@@ -5,7 +5,11 @@ import pandas as pd
 
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
-from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn
+from opsml_artifacts.registry.model.types import (
+    InputDataType,
+    OnnxModelReturn,
+    TorchOnnxArgs,
+)
 
 
 class OnnxModelCreator:
@@ -13,6 +17,7 @@ class OnnxModelCreator:
         self,
         model: Any,
         input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
+        additional_onnx_args: TorchOnnxArgs,
     ):
 
         """Instantiates OnnxModelCreator that is used for converting models to Onnx
@@ -26,6 +31,7 @@ class OnnxModelCreator:
         self.model_class = self._get_model_class_name()
         self.model_type = self.get_onnx_model_type()
         self.data_type = self.get_input_data_type(input_data=input_data)
+        self.additional_model_args = additional_onnx_args
 
     def _get_one_sample(
         self,
@@ -78,12 +84,17 @@ class OnnxModelCreator:
         return InputDataType.NUMPY_ARRAY.name
 
     def _get_model_class_name(self):
+        """Gets class name from model"""
+
         if "keras.engine" in str(self.model):
             return "keras"
+
+        if "torch" in str(self.model.__class__.__bases__):
+            return "pytorch"
+
         return self.model.__class__.__name__
 
     def get_onnx_model_type(self) -> str:
-
         model_type = next(
             (
                 model_type
@@ -104,6 +115,7 @@ class OnnxModelCreator:
             model=self.model,
             input_data=self.input_data,
             model_type=self.model_type,
+            additional_model_args=self.additional_model_args,
         ).convert_model()
 
         onnx_model_return.model_type = self.model_type

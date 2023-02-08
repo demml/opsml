@@ -100,7 +100,6 @@ class FindPath:
         Returns:
             dirpath (str)
         """
-        # print(path)
         paths = glob.glob(f"{path}/**/{runner_file}", recursive=True)
         if len(paths) <= 1:
             source_path = "/".join(paths[0].split("/")[:-1])

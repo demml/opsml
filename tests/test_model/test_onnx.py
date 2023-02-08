@@ -18,6 +18,7 @@ import timeit
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
         lazy_fixture("load_transformer_example"),
         lazy_fixture("load_multi_input_keras_example"),
+        lazy_fixture("load_pytorch_resnet"),
     ],
 )
 def test_model_predict(model_and_data):
@@ -42,7 +43,8 @@ def test_model_predict(model_and_data):
 
     if isinstance(data, np.ndarray):
         input_name = next(iter(predictor.data_dict.input_features.keys()))
-        record = {input_name: np.ravel(data[:1]).tolist()}
+
+        record = {input_name: data[0, :].tolist()}
 
     elif isinstance(data, pd.DataFrame):
         record = data[0:1].T.to_dict()[0]
@@ -54,16 +56,21 @@ def test_model_predict(model_and_data):
 
     pred_onnx = predictor.predict(record)
 
-    # test output sig
+    #
+    ## test output sig
     pred_dict = {}
     for label, pred in zip(predictor._output_names, pred_onnx):
-        if "keras" in str(model):
+        if predictor.model_type in ["keras", "pytorch"]:
             pred_dict[label] = np.ravel(pred).tolist()
+
         else:
             pred_dict[label] = pred
 
     out_sig = predictor.output_sig(**pred_dict)
     pred_orig = predictor.predict_with_model(model, record)
+
+
+#
 
 
 def _test_tensorflow(db_registries, load_transformer_example):
