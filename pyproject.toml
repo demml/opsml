@@ -60,6 +60,11 @@ optional = true
 [tool.poetry.group.dev-tf.dependencies]
 tensorflow = "2.10.1"
 
+
+[tool.poetry.group.dev-pytorch.dependencies]
+torch = "^1.13.1"
+torchvision = "^0.14.1"
+
 [tool.isort]
 profile = "black"
 
