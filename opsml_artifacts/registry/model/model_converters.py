@@ -1,6 +1,7 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
 """Code for generating Onnx Models"""
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
@@ -22,6 +23,7 @@ from opsml_artifacts.registry.model.types import (
     OnnxDataProto,
     OnnxModelReturn,
     OnnxModelType,
+    TorchOnnxArgs,
 )
 
 ONNX_VERSION = onnx.__version__
@@ -36,14 +38,17 @@ class ModelConverter:
         model: Any,
         input_data: Any,
         model_type: str,
+        additional_model_args: TorchOnnxArgs,
     ):
         self.model = model
         self.input_data = input_data
         self.model_type = model_type
+        self.additional_model_args = additional_model_args
         self.data_converter = OnnxDataConverter(
             input_data=input_data,
             model_type=model_type,
             model=model,
+            additional_model_args=additional_model_args,
         )
 
     def update_onnx_registries(self):
@@ -94,14 +99,14 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
-        row = shape_dims[0].dim_value
-        col = shape_dims[1].dim_value
-
-        if row == 0:
-            row = None
-
-        return row, col
+    # def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
+    #    row = shape_dims[0].dim_value
+    #    col = shape_dims[1].dim_value
+    #
+    #    if row == 0:
+    #        row = None
+    #
+    #    return row, col
 
     def _parse_onnx_sigature(self, signature: RepeatedCompositeContainer):
         feature_dict = {}
@@ -110,11 +115,13 @@ class ModelConverter:
 
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
-            row, col = self._get_shape_dims(shape_dims)
+            dim_shape = [dim.dim_value for dim in shape_dims]
+            if dim_shape:
+                dim_shape[0] = None  # set None for dynamic batch size
 
             feature_dict[sig.name] = Feature(
                 feature_type=OnnxDataProto(data_type).name,
-                shape=[row, col],
+                shape=dim_shape,
             )
         return feature_dict
 
@@ -272,24 +279,104 @@ class TensorflowKerasOnnxModel(ModelConverter):
         return model_type in OnnxModelType.TF_KERAS
 
 
+class PyTorchOnnxModel(ModelConverter):
+    def _predictions_close(
+        self,
+        onnx_preds: List[Any],
+        model_preds: Any,
+    ) -> bool:
+        if not isinstance(model_preds, list):
+            model_preds = cast(Union[float, int], model_preds)
+            valid_list = [np.sum(abs(onnx_preds[0] - model_preds.detach().numpy())) <= 0.001]
+
+        return all(valid_list)
+
+    def _model_predict(self):
+        torch_data = self._get_torch_data()
+
+        if isinstance(torch_data, tuple):
+            return self.model(*torch_data)
+        return self.model(torch_data)
+
+    def validate_model(self, onnx_model: ModelProto) -> None:
+
+        """Validates an onnx model on training data"""
+        inputs = self.data_converter.convert_data()
+        model_preds = self._model_predict()
+
+        logger.info("Validating converted onnx model")
+
+        model_string = onnx_model.SerializeToString()
+        sess = rt.InferenceSession(model_string)
+        onnx_preds = sess.run(None, inputs)
+
+        if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
+            raise ValueError("Model prediction validation failed")
+
+        logger.info("Onnx model validated")
+
+    def _get_torch_data(self) -> Any:
+        import torch
+
+        if isinstance(self.input_data, dict):
+            return (torch.from_numpy(data) for data in self.input_data.values())  # pylint: disable=no-member
+        return torch.from_numpy(self.input_data)  # pylint: disable=no-member
+
+    def _get_onnx_model(self) -> ModelProto:
+        import torch
+
+        arg_data = self._get_torch_data()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            filename = f"{tmp_dir}/model.onnx"
+            self.model.eval()  # force model into evaluation mode
+            torch.onnx.export(
+                model=self.model,
+                args=arg_data,
+                f=filename,
+                verbose=False,
+                input_names=self.additional_model_args.input_names,
+                output_names=self.additional_model_args.output_names,
+                dynamic_axes=self.additional_model_args.dynamic_axes,
+                export_params=True,
+            )
+            model = onnx.load(filename)
+            onnx.checker.check_model(model)
+        return model
+
+    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+        """Converts a tensorflow keras model"""
+
+        _, data_schema = self.get_data_types()
+        onnx_model = self._get_onnx_model()
+        self.validate_model(onnx_model=onnx_model)
+
+        return onnx_model, data_schema
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type in OnnxModelType.PYTORCH
+
+
 class OnnxModelConverter:
     def __init__(
         self,
         model: Any,
         input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
         model_type: str,
+        additional_model_args: TorchOnnxArgs,
     ):
         self.model = model
         self.data = input_data
         self.model_type = model_type
+        self.additional_model_args = additional_model_args
 
         """Instantiates a helper class to convert machine learning models and their input data
         to onnx format for interoperability.
 
         Args:
-            model (BaseEstimator, Pipeline): A machine learning model or pipeline to convert.
+            model (BaseEstimator, Pipeline, Tensorflow, Keras): A machine learning model or pipeline to convert.
             Currently accepted types are any Sklearn model flavor, lightgbm and xgboost
-            (sklearn flavors, e.g., LGBRegressor), as well as Sklearn pipelines.
+            (sklearn flavors, e.g., LGBRegressor), as well as Sklearn pipelines, Tensorflow/Keras and PyTorch.
             input_data (pd.DataFrame, np.ndarray): Sample model input data.
 
     """
@@ -310,4 +397,5 @@ class OnnxModelConverter:
             model=self.model,
             input_data=self.data,
             model_type=self.model_type,
+            additional_model_args=self.additional_model_args,
         ).convert()
