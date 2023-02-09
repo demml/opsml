@@ -279,6 +279,62 @@ class TensorflowModelStorage(ArtifactStorage):
         return artifact_type == ArtifactStorageTypes.TF_MODEL
 
 
+class PyTorchModelStorage(ArtifactStorage):
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientObj,
+        save_info: Optional[SaveInfo] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            save_info=save_info,
+            file_suffix="pt",
+        )
+
+    def save_artifact(self, artifact: Any) -> StoragePath:
+
+        import torch
+
+        artifact = cast(torch.nn.Module, artifact)
+
+        if self.storage_client.backend != StorageSystem.LOCAL.name:
+            with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+                storage_uri, local_path = self.storage_client.create_tmp_path(
+                    save_info=self.save_info,
+                    file_suffix=self.file_suffix,
+                    tmp_dir=tmpdirname,
+                )
+                torch.save(artifact, local_path)
+                self.storage_client.client.upload(lpath=local_path, rpath=storage_uri)
+
+        else:
+            storage_uri, _ = self.storage_client.create_save_path(
+                save_info=self.save_info,
+                file_suffix=self.file_suffix,
+            )
+            torch.save(artifact, storage_uri)
+
+        return StoragePath(uri=storage_uri)
+
+    def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
+        import torch
+
+        model_path = self.storage_client.list_files(storage_uri=storage_uri)[0]
+
+        if self.storage_client.backend != StorageSystem.LOCAL.name:
+            with tempfile.NamedTemporaryFile(suffix=self.file_suffix) as tmpfile:  # noqa
+                self.storage_client.client.download(rpath=model_path, lpath=tmpfile.name)
+                return torch.load(tmpfile)
+
+        return torch.load(model_path)
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageTypes.PYTORCH
+
+
 def save_record_artifact_to_storage(
     artifact: Any,
     save_info: SaveInfo,

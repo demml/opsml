@@ -33,10 +33,10 @@ class SnowflakeQueryRunner(QueryRunner):
 
         headers = {
             "Accept": "application/json",
-            "Authorization": credentials.snowflake_api_auth,
+            "Authorization": credentials.api_auth,
         }
         super().__init__(
-            api_prefix=credentials.snowflake_api_url,
+            api_prefix=credentials.api_url,
             status_suffix="/v2/query_status",
             submit_suffix="/v2/async_query",
             results_suffix="/v2/query_results",

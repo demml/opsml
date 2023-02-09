@@ -491,3 +491,13 @@ def load_multi_input_keras_example():
     data = joblib.load("tests/assets/multi_input_data.joblib")
 
     return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_pytorch_resnet():
+    import torch
+
+    loaded_model = torch.load("tests/assets/resnet.pt")
+    data = torch.randn(1, 3, 224, 224).numpy()
+
+    return loaded_model, data

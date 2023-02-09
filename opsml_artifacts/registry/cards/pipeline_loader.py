@@ -260,11 +260,3 @@ class PipelineLoader:
                 format="png",
             )
         return viz.graph()
-
-
-# card_dependencies[card] =
-
-# record = getattr(self, f"_{card_type}_registry").list_cards(uid=metadata.get("uid"))
-# print(record)
-
-# def visualize_pipeline(self):
