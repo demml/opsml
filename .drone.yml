@@ -1,5 +1,5 @@
 kind: pipeline
-name: test-and-build-py38
+name: test-and-build
 type: docker
 node:
   env: platform
