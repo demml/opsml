@@ -30,6 +30,9 @@
 <a href="https://keras.io/">
   <img alt="keras"" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
 
+<a href="https://pytorch.org/">
+  <img alt="pytorch" src=https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logoColor=white"/>
+
 <a href="https://scikit-learn.org/stable/">
   <img alt="scikit-learn" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
 
@@ -51,7 +54,8 @@
   <a href="#datacard">DataCard</a> •
   <a href="#modelcard">ModelCard</a> •
   <a href="#modelcard-predictor">ModelCard Predictor</a> •
-  <a href="#benchmarks">Benchmarks</a> 
+  <a href="#benchmarks">Benchmarks</a> •
+  <a href="#contributing">Contributing</a> 
 </p>
 
 ## What is it?
@@ -170,7 +174,7 @@ Quit the yapping and show me an example!
 The following example shows how to create a DataCard. For more information on what you can do with DataCards, refer to additional examples in the example dir.
 
 ```python
-from opsml_artifacts import SnowflakeQueryRunner, DataCard, CardRegistry, LocalSQLConnection,
+from opsml_artifacts import SnowflakeQueryRunner, DataCard, CardRegistry, LocalSQLConnection
 
 query_runner = SnowflakeQueryRunner(on_vpn=True) #query runner is a temporary wrapper for pyshipt sql (needed for network issues in vertex, see opsml-pipelines docs)
 
@@ -363,5 +367,5 @@ Onnx: 7.1003 Lightgbm: 7.1003
 </p>
 
 
-## Roadmap
-- Add in Pytorch support for Onnx
+## Contributing
+- If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `to_dos` directory readme and get started :smiley:
