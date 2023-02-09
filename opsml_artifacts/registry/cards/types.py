@@ -28,6 +28,7 @@ class ArtifactStorageTypes(str, Enum):
     ARROW_TABLE = "Table"
     NDARRAY = "ndarray"
     TF_MODEL = "keras"
+    PYTORCH = "pytorch"
 
 
 class CardNames(str, Enum):

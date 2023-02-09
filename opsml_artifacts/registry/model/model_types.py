@@ -37,6 +37,7 @@ class SklearnEstimator(ModelType):
             "XGBRegressor",
             "Booster",
             "keras",
+            "pytorch",
         ]
 
 
@@ -98,3 +99,13 @@ class TensorflowKeras(ModelType):
     @staticmethod
     def validate(model_class_name: str) -> bool:
         return model_class_name == "keras"
+
+
+class PyTorch(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return OnnxModelType.PYTORCH.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "pytorch"
