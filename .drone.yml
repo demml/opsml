@@ -99,7 +99,7 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
     commands:
-      - poetry install --with dev
+      - poetry install --all-extras --with dev
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
