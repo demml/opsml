@@ -27,9 +27,11 @@ tf2onnx = "^1.13.0"
 pyshipt-sql = "^1.2.7"
 google-cloud-scheduler = "^2.9.0"
 zarr = ">2.12.0"
-graphviz = "^0.20.1"
-cryptography = ">=39.0.1"
+graphviz = {version="^0.20.1", optional = true}
+cryptography = "<39.0.0"
 
+[tool.poetry.extras]
+graphviz = ["graphviz"]
 
 [tool.poetry.group.dev]
 optional = true
@@ -65,6 +67,14 @@ tensorflow = "2.10.1"
 [tool.poetry.group.dev-pytorch.dependencies]
 torch = "^1.13.1"
 torchvision = "^0.14.1"
+
+
+[tool.poetry.group.dev-jupyter.dependencies]
+jupyterlab = "^3.6.1"
+
+
+[tool.poetry.group.dev-jupyterlab.dependencies]
+tabulate = "^0.9.0"
 
 [tool.isort]
 profile = "black"

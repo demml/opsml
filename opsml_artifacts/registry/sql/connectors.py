@@ -48,14 +48,14 @@ class CloudSQLConnection(BaseSQLConnection):
         Instantiated class with required CloudSQL connection arguments
     """
 
-    gcp_project: str = Field(..., env="GCP_PROJECT")
-    gcs_bucket: str = Field(..., env="GCS_BUCKET")
-    gcp_region: str = Field(..., env="GCS_REGION")
-    db_instance_name: str = Field(..., env="ARTIFACT_DB_INSTANCE_NAME")
-    db_username: str = Field(..., env="ARTIFACT_DB_USERNAME")
-    db_password: str = Field(..., env="ARTIFACT_DB_PASSWORD")
-    db_name: str = Field(..., env="ARTIFACT_DB_NAME")
-    db_type: str = Field("mysql", env="ARTIFACT_DB_TYPE")
+    gcp_project: str = Field(..., env="OPSML_GCP_PROJECT")
+    gcs_bucket: str = Field(..., env="OPSML_GCS_BUCKET")
+    gcp_region: str = Field(..., env="OPSML_GCS_REGION")
+    db_instance_name: str = Field(..., env="OPSML_DB_INSTANCE_NAME")
+    db_username: str = Field(..., env="OPSML_DB_USERNAME")
+    db_password: str = Field(..., env="OPSML_DB_PASSWORD")
+    db_name: str = Field(..., env="OPSML_DB_NAME")
+    db_type: str = Field("mysql", env="OPSML_DB_TYPE")
     storage_backend: str = "gcp"
     load_from_secrets: bool = False
 
