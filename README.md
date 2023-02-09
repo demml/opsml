@@ -93,8 +93,9 @@ Next, add opsml-artifacts to your environment
 poetry add opsml-artifacts
 ```
 
-### GCP Resources
-`OpsML-Artifacts` relies on GCP resources for managing Artifact Cards. As a result you will need to configure your GCP credentials (easy to do) in 1 of 2 ways.
+## SQL DB Resources
+
+`OpsML-Artifacts` currently works out of the box with a local SQLite database or GCP CloudSQL. If you would like to use GCP resources you will need to configure you GCP credentials in 1 or 2 ways.
 
 1. Set `GOOGLE_ACCOUNT_JSON_BASE64` as an env variable. This key can be found in our slack channel.
 
@@ -103,6 +104,49 @@ export GOOGLE_ACCOUNT_JSON_BASE64='our shared key'
 ```
 
 2. Install the [google cloud sdk](https://cloud.google.com/sdk/docs/install) and make sure you are added to our core gcp project (tbd)
+
+
+## Connecting to the ArtifactCard registries
+When connecting to the ArtifactCard registries you will need to supply either a connection client or pass a connection type (string). 
+
+### Local Connection
+Run the following to create a local connection
+
+```python
+from opsml_artifacts import LocalSQLConnection
+
+local_conn = LocalSQLConnection()
+```
+
+### GCP Cloud SQL
+There are a few ways to create a Cloud SQL connection
+
+```python
+from opsml_artifacts import CloudSQLConnection
+
+cloud_sql = CloudSQLConnection(
+    gcp_project="your_gcp_project",
+    gcs_bucket="your_gcs_bucket",
+    gcp_region="your_gcp_region",
+    db_instance_name="your_db_instance_name",
+    db_name="your_db_name",
+    db_username="your_username",
+    db_password="your_password",
+    db_type="mysql"
+    )
+```
+
+In the example above, we created a cloud sql connection by manually inputing the required args.
+
+If you prefer not to do this, you can also set these required args as env variables using the "OPSML" prefix (e.g. `OPSML_GCP_PROJECT`)
+
+It's also possible to use GCP Secret Manager to set and call the required args (same naming convention as with env vars).
+
+```python
+cloud_sql = CloudSQLConnection(load_from_secrets=True)
+```
+
+You will see how to use these connections in the examples below
 
 ## Create a Card
 
@@ -126,7 +170,7 @@ Quit the yapping and show me an example!
 The following example shows how to create a DataCard. For more information on what you can do with DataCards, refer to additional examples in the example dir.
 
 ```python
-from opsml_artifacts import SnowflakeQueryRunner, DataCard, CardRegistry
+from opsml_artifacts import SnowflakeQueryRunner, DataCard, CardRegistry, LocalSQLConnection,
 
 query_runner = SnowflakeQueryRunner(on_vpn=True) #query runner is a temporary wrapper for pyshipt sql (needed for network issues in vertex, see opsml-pipelines docs)
 
@@ -167,45 +211,47 @@ data_card = DataCard(
 )
 
 #register card
-data_registry = CardRegistry(registry_name="data") # CardRegistry accepts "data", "model", "pipeline" and "experiment"
+data_registry = CardRegistry(registry_name="data", connection_client=local_conn) # CardRegistry accepts "data", "model", "pipeline" and "experiment"
 data_registry.register_card(card=data_card)
 ```
 
 #### Output
 ```bash
-{"level": "INFO", "message": "Table: tarp_drop_off registered as version 1", "timestamp": "2023-01-18T16:47:04.772149Z", "app_env": "development", "host": null, "version": null}
+{"message": "DATA_REGISTRY: tarp_drop_off registered as version 2", "timestamp": "2023-02-09T00:57:22.131787Z", "app_env": "development", "level": "INFO"}
 ```
 
 ### Searching for and Loading Existing DataCards
 ```python
-from opsml_artifacts import CardRegistry
+from opsml_artifacts import CardRegistry, LocalSQLConnection
 
-data_registry = CardRegistry(registry_name="data")
+local_conn = LocalSQLConnection()
+data_registry = CardRegistry(registry_name="data", connection_client=local_conn)
 tarp_list = data_registry.list_cards(team="SPMS", name="tarp_drop_off")
 
 print(tarp_list.loc[:, ~tarp_list.columns.isin(["feature_map", "data_splits", "drift_uri"])].to_markdown()) # Filter some of the columns for readability
 ```
 #### Output
-|    | uid                              | date       |     timestamp | app_env   | name          | team   |   version | user_email                 | data_uri                                                                                                        | feature_descriptions   | data_type   | dependent_vars    |
-|---:|:---------------------------------|:-----------|--------------:|:----------|:--------------|:-------|----------:|:---------------------------|:----------------------------------------------------------------------------------------------------------------|:-----------------------|:------------|:------------------|
-|  0 | 9e03984187034382b3ee74d30519f4eb | 2023-01-18 | 1674059839649 | staging   | tarp_drop_off | SPMS   |         2 | steven.forrester@shipt.com | gs://shipt-spms-stg-bucket/DATA_REGISTRTY/SPMS/tarp_drop_off/version-2/1a7d7f2d1e4749f692654bced16b7d5b.parquet |                        | DataFrame   | ['DROP_OFF_TIME'] |
-|  1 | 0c551c4dbfe9478ab3094def3b5b2e5d | 2023-01-18 | 1674059839649 | staging   | tarp_drop_off | SPMS   |         1 | steven.forrester@shipt.com | gs://shipt-spms-stg-bucket/DATA_REGISTRTY/SPMS/tarp_drop_off/version-1/a51f81f7b64d4cf791a3585264ba18c9.parquet |                        | DataFrame   | ['DROP_OFF_TIME'] |
+|    | uid                              | date       |     timestamp | app_env     | name          | team   |   version | user_email                 | data_uri                                                                                                   | feature_descriptions   | data_type   | additional_info   | dependent_vars    |
+|---:|:---------------------------------|:-----------|--------------:|:------------|:--------------|:-------|----------:|:---------------------------|:-----------------------------------------------------------------------------------------------------------|:-----------------------|:------------|:------------------|:------------------|
+|  0 | e18e5bd3fbb145a182d0fe61e24b1d66 | 2023-02-09 | 1675904151384 | development | tarp_drop_off | SPMS   |         2 | steven.forrester@shipt.com | /home/steven.forrester/DATA_REGISTRY/SPMS/tarp_drop_off/version-2/6de7a703618e4718a39f301b50dda8dc.parquet |                        | DataFrame   | {}                | ['DROP_OFF_TIME'] |
+|  1 | 66f62d5cb36b43939f45d3dc6ed1244a | 2023-02-09 | 1675904151384 | development | tarp_drop_off | SPMS   |         1 | steven.forrester@shipt.com | /home//DATA_REGISTRY/SPMS/tarp_drop_off/version-1/3bb215cfb7634d95992d6f6a1a6ecc26.parquet |                        | DataFrame   | {}                | ['DROP_OFF_TIME'] |
 
 ```python
 
-loaded_card = data_registry.load_card(uid="9e03984187034382b3ee74d30519f4eb") # load_card can take a few arguments. Be sure to check the docstring
+data_card = data_registry.load_card(uid="e18e5bd3fbb145a182d0fe61e24b1d66") 
+data_card.load_data() # data is not automatically loaded with the card (prevents loading issues with big data)
+# load_card can take a few arguments. Be sure to check to docstring
 print(loaded_card.data.head().to_markdown())
 ```
 
 #### Output
 |    |   NBR_ADDRESSES |   NBR_ORDERS |   NBR_RX |   NBR_APT |   METRO_X |   METRO_Y |   METRO_Z |   APT_FLG |   DROP_OFF_TIME |   EVAL_FLG |
 |---:|----------------:|-------------:|---------:|----------:|----------:|----------:|----------:|----------:|----------------:|-----------:|
-|  0 |              11 |           11 |        0 |        11 | -1990.75  |  -4926.25 |   3515.48 |         1 |        34.4031  |          1 |
-|  1 |               2 |            2 |        0 |         2 | -1990.75  |  -4926.25 |   3515.48 |         1 |         4.54011 |          1 |
-|  2 |               4 |            4 |        0 |         4 |  1233.15  |  -4782.66 |   4024.31 |         1 |         9.23536 |          1 |
-|  3 |              11 |           12 |        0 |        12 |   971.158 |  -5637.71 |   2804.05 |         1 |        59.68    |          1 |
-|  4 |               3 |            3 |        0 |         3 |   746.07  |  -5612.94 |   2920.26 |         1 |         5.38533 |          1 |
-
+|  0 |               1 |            1 |        0 |         0 |   824.547 |  -5135.84 |   3678.71 |         0 |         4.39407 |          0 |
+|  1 |               2 |            2 |        0 |         0 | -2498.36  |  -3835.84 |   4431.04 |         0 |         9.75429 |          0 |
+|  2 |               6 |            6 |        0 |         1 |  -676.719 |  -5314.67 |   3447.6  |         1 |        20.2536  |          0 |
+|  3 |               1 |            2 |        0 |         0 | -2499.95  |  -4649.47 |   3566.83 |         0 |         8.03023 |          0 |
+|  4 |               2 |            2 |        0 |         2 | -2476.13  |  -4684.47 |   3537.54 |         1 |        11.7914  |          0 |
 
 ## ModelCard
 The following example shows how to create a ModelCard. For more information on what you can do with ModelCards, refer to additional examples in the example dir.
@@ -216,7 +262,7 @@ The following example shows how to create a ModelCard. For more information on w
 from opsml_artifacts import ModelCard
 from lightgbm import LGBMRegressor
 
-model_registry = CardRegistry(registry_name="model") #load the model registry
+model_registry = CardRegistry(registry_name="model", connection_client=local_conn) #load the model registry
 
 data_splits = data_card.split_data() # get the data splits defined by split logic (data_card.data_splits)
 
@@ -240,32 +286,26 @@ model_card = ModelCard(
     user_email=USER_EMAIL, # defined above
     data_card_uid=data_card.uid # this is required if you are planning on registering the model
 )
+
+model_registry = CardRegistry(registry_name="model", connection_client=local_conn)
+model_registry.register_card(card=model_card)
 ```
 #### Output
 
 ```bash
-{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-01-24T01:47:27.912424Z", "app_env": "staging", "host": null, "version": null}
-{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-01-24T01:47:28.189532Z", "app_env": "staging", "host": null, "version": null}
-{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-01-24T01:47:28.209281Z", "app_env": "staging", "host": null, "version": null}
+{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-02-09T01:04:18.498558Z", "app_env": "development", "host": null, "pid": 742575}
+{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-02-09T01:04:18.808954Z", "app_env": "development", "host": null, "pid": 742575}
+{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-02-09T01:04:18.841828Z", "app_env": "development", "host": null, "pid": 742575}
+{"message": "MODEL_REGISTRY: tarp_lgb registered as version 1", "timestamp": "2023-02-09T01:04:18.874386Z", "app_env": "development", "level": "INFO"}
 ```
 
 ModelCardCreator returns a ModelCard containing your model serialized into Onnx format
 
-```python
-# Registering the ModelCard
-model_registry = CardRegistry(registry_name="model")
-model_registry.register_card(card=model_card)
-```
-
-```bash
-{"level": "INFO", "message": "Table: tarp_lgb registered as version 1", "timestamp": "2023-01-19T18:09:59.633155Z", "app_env": "development", "host": null, "version": null}
-```
-
 ## ModelCard Predictor
-ModelCards create serialized onnx model definitions from the provided model upon creation. The onnx model implementation can be accessed through your_model_card.model()
+ModelCards create serialized onnx model definitions from the provided model. The onnx model implementation can be accessed through `your_model_card.onnx_model()`. Onnx models are also created when registering a model card.
 
 ```python
-onnx_model = model_card.model()
+onnx_model = model_card.onnx_model()
 
 # Checkout the automated api sig (inferred from training data sample)
 onnx_model.input_sig.schema()
@@ -311,7 +351,7 @@ print(f"Onnx: {round(onnx_pred,4)}", f"Lightgbm: {round(orig_pred,4)}")
 ```
 
 ```text
-Onnx: 5.1914 Lightgbm: 5.1914
+Onnx: 7.1003 Lightgbm: 7.1003
 ```
 
 ## Benchmarks
