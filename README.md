@@ -31,7 +31,7 @@
   <img alt="keras"" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
 
 <a href="https://pytorch.org/">
-  <img alt="pytorch" src=https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logoColor=white"/>
+  <img alt="pytorch" src=https://img.shields.io/badge/PyTorch-%23EE4C2C?logoColor=white"/>
 
 <a href="https://scikit-learn.org/stable/">
   <img alt="scikit-learn" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
