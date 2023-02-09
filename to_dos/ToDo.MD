@@ -17,5 +17,6 @@
 - [ ] Fully test Tensorflow and Pytorch implementations for onnx conversion
 - [ ] Auto-generate api sig for Seldon (When modelcard is called from registry/gcs it should come with the Onnx Proto and the API sig for Seldon). Ideally, it would be great if only model args are needed to spin up a Seldon api (standardized env)
 - [ ] Create Onnx auto converters for simple pre and post-processing through extension libraries (https://github.com/microsoft/onnxruntime-extensions) - this may only apply to deep learning models. Artifacts already supports sklearn pipelines, which can include pre and post-processors
+- [ ] Huggingface integration for pre-trained models?
 
 
