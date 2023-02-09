@@ -23,6 +23,7 @@ from opsml_artifacts.registry.model.types import (
     Feature,
     ModelDefinition,
     OnnxModelReturn,
+    TorchOnnxArgs,
 )
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
@@ -331,6 +332,9 @@ class ModelCard(ArtifactCard):
         model_uri (str): GCS uri where model is stored
         model_type (str): Type of model
         data_schema (Dictionary): Optional dictionary of the data schema used in model training
+        additional_onnx_args (TorchOnnxArgs): Optional pydantic model containing optional
+        Torch args for model conversion.
+        Can be expanded at a later date to handle other model type args.
     """
 
     trained_model: Optional[Any]
@@ -343,6 +347,7 @@ class ModelCard(ArtifactCard):
     sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
     model_type: Optional[str]
+    additional_onnx_args: TorchOnnxArgs = TorchOnnxArgs()
     data_schema: Optional[Dict[str, Feature]]
     storage_client: Optional[StorageClientObj]
 
@@ -392,11 +397,6 @@ class ModelCard(ArtifactCard):
 
     def _save_model(self, blob_path: str, version: int) -> StoragePath:
 
-        if self.model_type == "keras":
-            artifact_type = self.model_type
-        else:
-            artifact_type = None
-
         save_info = SaveInfo(
             blob_path=blob_path,
             name=f"{self.name}-trained-model",
@@ -406,7 +406,7 @@ class ModelCard(ArtifactCard):
         return save_record_artifact_to_storage(
             artifact=self.trained_model,
             save_info=save_info,
-            artifact_type=artifact_type,
+            artifact_type=self.model_type,
             storage_client=cast(StorageClientObj, self.storage_client),
         )
 
@@ -494,7 +494,11 @@ class ModelCard(ArtifactCard):
         """Creates Onnx model from trained model and sample input data
         and sets Card attributes
         """
-        model_creator = OnnxModelCreator(model=self.trained_model, input_data=self.sample_input_data)
+        model_creator = OnnxModelCreator(
+            model=self.trained_model,
+            input_data=self.sample_input_data,
+            additional_onnx_args=self.additional_onnx_args,
+        )
         onnx_model = model_creator.create_onnx_model()
         self._set_onnx_attributes(onnx_model=onnx_model)
 
