@@ -20,8 +20,8 @@ class SnowflakeParams(BaseModel):
     database: str
     warehouse: str
     role: str
-    snowflake_api_auth: str
-    snowflake_api_url: str
+    api_auth: str
+    api_url: str
 
     class Config:
         extra = "allow"
@@ -35,17 +35,16 @@ class SnowflakeCredentials:
             GCPSecretManager,
             GCPClient.get_service(
                 service_name="secret_manager",
-                gcp_credentials=creds,
+                gcp_credentials=creds.creds,
             ),
         )
+
         for secret in SnowflakeParams.__annotations__.keys():  # pylint: disable=no-member
             value = secret_client.get_secret(
                 project_name=creds.project,
                 secret=f"snowflake_{secret}",
             )
-
             login_vars[secret] = value
-            login_vars["gcp_creds"] = creds
-            login_vars["gcp_project"] = creds.project
-
+        login_vars["gcp_creds"] = creds.creds
+        login_vars["gcp_project"] = creds.project
         return SnowflakeParams(**login_vars)
