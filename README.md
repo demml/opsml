@@ -140,7 +140,7 @@ In the example above, we created a cloud sql connection by manually inputing the
 
 If you prefer not to do this, you can also set these required args as env variables using the "OPSML" prefix (e.g. `OPSML_GCP_PROJECT`)
 
-It's also possible to use GCP Secret Manager to set and call the required args (same naming convention as with env vars).
+It's also possible to use GCP Secret Manager to set and call the required args (same naming convention as with env vars). Make sure your user credentials or the service account credentials have access to read these secrets.
 
 ```python
 cloud_sql = CloudSQLConnection(load_from_secrets=True)
