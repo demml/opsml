@@ -287,7 +287,7 @@ class GCPMLScheduler(GCPService):
             credentials=credentials,
         )
         self.oidc_token = scheduler_v1.OidcToken(
-            service_account_email=credentials.service_account_email,
+            service_account_email=getattr(credentials, "service_account_email"),
         )
         self.parent_path: Optional[str] = None
 
@@ -443,8 +443,7 @@ class GcpCredsSetter:
         self.service_base64_creds: Optional[str] = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
 
     def get_creds(self) -> GcpCreds:
-        service_base64_creds = self.get_base64_creds()
-        service_creds, project_name = self.create_gcp_creds_from_base64(service_base64_creds=service_base64_creds)
+        service_creds, project_name = self.get_base64_creds()
 
         return GcpCreds(
             creds=service_creds,
@@ -453,8 +452,12 @@ class GcpCredsSetter:
 
     def get_base64_creds(self) -> str:
         if not self.has_service_base64_creds:
-            return self.get_service_creds_from_user_info("ml_service_creds")
-        return cast(str, self.service_base64_creds)
+            return self.get_gcp_sdk_creds()
+        return self.create_gcp_creds_from_base64(
+            service_base64_creds=str(
+                self.service_base64_creds,
+            )
+        )
 
     @property
     def has_service_base64_creds(self) -> bool:
@@ -472,13 +475,6 @@ class GcpCredsSetter:
 
         return user_creds, project_name
 
-    def create_secret_client(self, user_creds: Credentials) -> GCPSecretManager:
-        secret_client = GCPClient.get_service(
-            service_name="secret_manager",
-            gcp_credentials=user_creds,
-        )
-        return cast(GCPSecretManager, secret_client)
-
     def decode_base64(self, service_base64_creds: str) -> str:
         base_64 = base64.b64decode(s=service_base64_creds).decode("utf-8")
         return json.loads(base_64)
@@ -494,16 +490,6 @@ class GcpCredsSetter:
         project_name = service_creds.project_id
 
         return service_creds, project_name
-
-    def get_service_creds_from_user_info(self, service_account_secret_name: str) -> str:
-        user_creds, project_name = self.get_gcp_sdk_creds()
-        secret_client = self.create_secret_client(user_creds=user_creds)
-        service_base64_creds: str = secret_client.get_secret(
-            project_name=project_name,
-            secret=service_account_secret_name,
-        )
-
-        return service_base64_creds
 
 
 class GcpSecretVarGetter:

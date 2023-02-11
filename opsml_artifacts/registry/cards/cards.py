@@ -243,7 +243,7 @@ class DataCard(ArtifactCard):
 
     def _save_drift(self, blob_path: str, version: int) -> None:
 
-        """Saves drift report to to backend storage"""
+        """Saves drift report to backend storage"""
 
         if bool(self.drift_report):
 
