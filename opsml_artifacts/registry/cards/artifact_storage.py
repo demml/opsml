@@ -25,6 +25,8 @@ from opsml_artifacts.registry.cards.types import (
 
 
 class ArtifactStorage:
+    """Artifact storage base class to inherit from"""
+
     def __init__(
         self,
         storage_client: StorageClientObj,
@@ -81,6 +83,8 @@ class ArtifactStorage:
 
 
 class ParquetStorage(ArtifactStorage):
+    """Class that saves and loads a parquet file"""
+
     def __init__(
         self,
         artifact_type: str,
@@ -141,6 +145,8 @@ class ParquetStorage(ArtifactStorage):
 
 
 class NumpyStorage(ArtifactStorage):
+    """Class that saves and loads a numpy ndarray"""
+
     def __init__(
         self,
         artifact_type: str,
@@ -191,6 +197,8 @@ class NumpyStorage(ArtifactStorage):
 
 
 class JoblibStorage(ArtifactStorage):
+    """Class that saves and loads a joblib object"""
+
     def __init__(
         self,
         artifact_type: str,
@@ -233,6 +241,8 @@ class JoblibStorage(ArtifactStorage):
 
 
 class TensorflowModelStorage(ArtifactStorage):
+    """Class that saves and loads a tensorflow model"""
+
     def __init__(
         self,
         artifact_type: str,
@@ -278,6 +288,8 @@ class TensorflowModelStorage(ArtifactStorage):
 
 
 class PyTorchModelStorage(ArtifactStorage):
+    """Class that saves and loads a pytorch model"""
+
     def __init__(
         self,
         artifact_type: str,
