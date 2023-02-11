@@ -5,9 +5,9 @@ import uuid
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
 from pyarrow.parquet import LocalFileSystem
-
+import tempfile
+from contextlib import contextmanager
 from opsml_artifacts.registry.cards.types import SaveInfo
 
 
@@ -20,15 +20,21 @@ class StorageClient:
     def __init__(
         self,
         connection_args: Dict[str, Any],
+        client: Any = LocalFileSystem(),
+        backend: str = StorageSystem.LOCAL.name,
+        storage_folder: str = os.path.expanduser("~"),
+        base_path_prefix: str = None,
     ):
-        self.connection_args = connection_args
-        self.base_path_prefix = "overwrite"
-        self.client = LocalFileSystem()
-        self.backend = StorageSystem.LOCAL.name
-        self.storage_folder = os.path.expanduser("~")
-        self.base_path_prefix = self.storage_folder
 
-    def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None) -> Tuple[str, str]:
+        self.connection_args = connection_args
+        self.client = client
+        self.backend = backend
+        self.base_path_prefix = base_path_prefix
+
+        if self.base_path_prefix is None:
+            self.base_path_prefix: str = storage_folder
+
+    def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None, **kwargs) -> Tuple[str, str]:
         filename = uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
@@ -48,6 +54,16 @@ class StorageClient:
 
         return gcs_path, local_path
 
+    @contextmanager
+    def create_temp_save_path(self, save_info: SaveInfo, file_suffix: str, **kwargs) -> Tuple[str, str]:
+        with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+            storage_uri, local_path = self.create_tmp_path(
+                save_info=save_info,
+                file_suffix=file_suffix,
+                tmp_dir=tmpdirname,
+            )
+            yield storage_uri, local_path
+
     def list_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
 
@@ -61,18 +77,18 @@ class StorageClient:
 
 class GCSFSStorageClient(StorageClient):
     def __init__(self, connection_args: Dict[str, Any]):
-        super().__init__(connection_args=connection_args)
-
         import gcsfs
 
-        self.connection_args = connection_args
-        self.gcs_bucket = connection_args.get("gcs_bucket")
-        self.client = gcsfs.GCSFileSystem(
+        client = gcsfs.GCSFileSystem(
             project=connection_args.get("gcp_project"),
             token=connection_args.get("gcsfs_creds"),
         )
-        self.backend = StorageSystem.GCP.name
-        self.base_path_prefix = f"gs://{self.gcs_bucket}"
+        super().__init__(
+            connection_args=connection_args,
+            client=client,
+            backend=StorageSystem.GCP.name,
+            base_path_prefix=f"gs://{connection_args.get('gcs_bucket')}",
+        )
 
     def list_files(self, storage_uri: str) -> List[str]:
         bucket = storage_uri.split("/")[2]
