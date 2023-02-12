@@ -51,7 +51,7 @@ pylint = "^2.14.5"
 isort = "^5.10.1"
 sqlalchemy2-stubs = "0.0.2a31"
 coverage = {extras = ["toml"], version = "^6.5.0"}
-mypy = "^0.991"
+mypy = "1.0.0"
 types-protobuf = "^4.21.0.3"
 python-dotenv = "^0.21.1"
 

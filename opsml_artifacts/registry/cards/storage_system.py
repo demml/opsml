@@ -1,14 +1,16 @@
 # pylint: disable=import-outside-toplevel
 
 import os
+import tempfile
 import uuid
+from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, cast
+
 from pyarrow.parquet import LocalFileSystem
-import tempfile
-from contextlib import contextmanager
-from opsml_artifacts.registry.cards.types import SaveInfo
+
+from opsml_artifacts.registry.cards.types import SaveInfo, StorageClientProto
 
 
 class StorageSystem(str, Enum):
@@ -22,8 +24,7 @@ class StorageClient:
         connection_args: Dict[str, Any],
         client: Any = LocalFileSystem(),
         backend: str = StorageSystem.LOCAL.name,
-        storage_folder: str = os.path.expanduser("~"),
-        base_path_prefix: str = None,
+        base_path_prefix: str = os.path.expanduser("~"),
     ):
 
         self.connection_args = connection_args
@@ -31,10 +32,7 @@ class StorageClient:
         self.backend = backend
         self.base_path_prefix = base_path_prefix
 
-        if self.base_path_prefix is None:
-            self.base_path_prefix: str = storage_folder
-
-    def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None, **kwargs) -> Tuple[str, str]:
+    def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None) -> Tuple[str, str]:
         filename = uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
@@ -55,7 +53,9 @@ class StorageClient:
         return gcs_path, local_path
 
     @contextmanager
-    def create_temp_save_path(self, save_info: SaveInfo, file_suffix: str, **kwargs) -> Tuple[str, str]:
+    def create_temp_save_path(
+        self, save_info: SaveInfo, file_suffix: Optional[str]
+    ) -> Generator[Tuple[Any, Any], None, None]:
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
                 save_info=save_info,
@@ -97,7 +97,7 @@ class GCSFSStorageClient(StorageClient):
 
         return files
 
-    def store(self, storage_uri: str):
+    def store(self, storage_uri: str) -> Any:
         """Create store for use with Zarr arrays"""
         import gcsfs  # pylint: disable=import-outside-toplevel
 
@@ -120,6 +120,7 @@ class LocalStorageClient(StorageClient):
         self,
         save_info: SaveInfo,
         file_suffix: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[str, str]:
 
         save_path, filename = super().create_save_path(save_info=save_info, file_suffix=file_suffix)
@@ -138,14 +139,11 @@ class LocalStorageClient(StorageClient):
         return storage_backend == "local"
 
 
-StorageClientObj = Union[GCSFSStorageClient, LocalStorageClient]
-
-
 class StorageClientGetter:
     @staticmethod
     def get_storage_client(
         connection_args: Dict[str, Any],
-    ) -> Union[GCSFSStorageClient, LocalStorageClient]:
+    ) -> StorageClientProto:
 
         storage_backend = str(connection_args.get("storage_backend"))
         storage_client = next(
@@ -157,4 +155,4 @@ class StorageClientGetter:
             LocalStorageClient,
         )
 
-        return cast(StorageClientObj, storage_client(connection_args=connection_args))
+        return cast(StorageClientProto, storage_client(connection_args=connection_args))

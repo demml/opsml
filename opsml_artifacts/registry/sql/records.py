@@ -6,7 +6,7 @@ from opsml_artifacts.drift.models import DriftReport
 from opsml_artifacts.registry.cards.artifact_storage import (
     load_record_artifact_from_storage,
 )
-from opsml_artifacts.registry.cards.storage_system import StorageClientObj
+from opsml_artifacts.registry.cards.storage_system import StorageClientProto
 
 
 class DataRegistryRecord(BaseModel):
@@ -88,7 +88,7 @@ class LoadedDataRecord(BaseModel):
     dependent_vars: Optional[List[Union[int, str]]]
     drift_report: Optional[Dict[str, DriftReport]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
-    storage_client: Optional[StorageClientObj]
+    storage_client: Optional[StorageClientProto]
 
     class Config:
         arbitrary_types_allowed = True
@@ -131,7 +131,7 @@ class LoadedModelRecord(BaseModel):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
-    storage_client: Optional[StorageClientObj]
+    storage_client: Optional[StorageClientProto]
 
     class Config:
         arbitrary_types_allowed = True
@@ -147,7 +147,7 @@ class LoadedModelRecord(BaseModel):
         model_card_definition = load_record_artifact_from_storage(
             storage_uri=self.model_card_uri,
             artifact_type="dict",
-            storage_client=cast(StorageClientObj, self.storage_client),
+            storage_client=cast(StorageClientProto, self.storage_client),
         )
 
         model_card_definition["model_card_uri"] = self.model_card_uri
@@ -170,7 +170,7 @@ class LoadedExperimentRecord(BaseModel):
     artifact_uris: Dict[str, str]
     artifacts: Optional[Dict[str, Any]]
     metrics: Optional[Dict[str, Union[int, float]]]
-    storage_client: Optional[StorageClientObj]
+    storage_client: Optional[StorageClientProto]
 
     class Config:
         arbitrary_types_allowed = True
@@ -186,7 +186,7 @@ class LoadedExperimentRecord(BaseModel):
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 storage_uri=uri,
                 artifact_type="artifact",
-                storage_client=cast(StorageClientObj, self.storage_client),
+                storage_client=cast(StorageClientProto, self.storage_client),
             )
         setattr(self, "artifacts", loaded_artifacts)
 
