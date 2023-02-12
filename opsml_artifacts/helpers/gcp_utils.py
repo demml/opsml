@@ -49,8 +49,9 @@ class GCPService:
         """Generic init"""
 
     @staticmethod
-    def valid_service_name(service_name: str):
+    def valid_service_name(service_name: str) -> bool:
         """Validates service name"""
+        raise NotImplementedError
 
 
 class GCPSecretManager(GCPService):
@@ -450,9 +451,10 @@ class GcpCredsSetter:
             project=project_name,
         )
 
-    def get_base64_creds(self) -> str:
+    def get_base64_creds(self) -> Tuple[Credentials, str]:
         if not self.has_service_base64_creds:
             return self.get_gcp_sdk_creds()
+
         return self.create_gcp_creds_from_base64(
             service_base64_creds=str(
                 self.service_base64_creds,
