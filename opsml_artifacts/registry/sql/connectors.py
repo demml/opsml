@@ -1,8 +1,8 @@
 # pylint: disable=[import-outside-toplevel,import-outside-toplevel]
 
 import os
-from typing import Any, Dict, Optional, Tuple, Type, Union
 from enum import Enum
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import sqlalchemy
 from pydantic import BaseModel, Field, root_validator
@@ -128,7 +128,7 @@ class CloudSQLConnection(BaseSQLConnection):
     def _get_conn_defaults(self) -> Tuple[str, str, str]:
 
         ip_type = self._get_ip_type()
-        db_type = self._get_db_type()
+        db_type = self._get_python_db_type()
         connection_name = self._get_connection_name()
 
         return ip_type, db_type, connection_name
@@ -142,10 +142,8 @@ class CloudSQLConnection(BaseSQLConnection):
             db=self.db_name,
         )
 
-    def _get_conn_type(self, connection_name: str, db_type: str) -> Tuple[str, bool]:
-        """Sets the appropriate CloudSQL Args based on DB type.
-        Defaults to IAM auth for Postgres
-        """
+    def _get_conn_type(self, connection_name: str, db_type: str) -> Union[Dict[str, str], Dict[str, Union[str, bool]]]:
+        """Sets the appropriate CloudSQL Args based on DB type.Defaults to IAM auth for Postgres"""
 
         connection_args = {
             "instance_connection_string": connection_name,
@@ -155,10 +153,10 @@ class CloudSQLConnection(BaseSQLConnection):
         }
 
         if db_type == CloudSqlType.MYSQL or not self.iam_auth:
-            connection_args["password"] = self.db_password
+            connection_args["password"] = str(self.db_password)
             return connection_args
 
-        connection_args["enable_iam_auth"] = True
+        connection_args["enable_iam_auth"] = True  # type: ignore
         return connection_args
 
     def _get_conn(self):
