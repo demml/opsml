@@ -13,6 +13,7 @@ from opsml_artifacts.registry.model.types import (
     DictBase,
     Feature,
     InputDataType,
+    ModelApiDef,
     NumpyBase,
     OnnxModelType,
 )
@@ -185,6 +186,7 @@ class OnnxModelPredictor:
         self,
         model_type: str,
         model_definition: bytes,
+        onnx_version: str,
         data_dict: DataDict,
         data_schema: Optional[Dict[str, Feature]],
         model_version: int,
@@ -200,6 +202,8 @@ class OnnxModelPredictor:
         self.data_dict = data_dict
         self.data_schema = data_schema
         self.model_version = model_version
+        self.model_definition = model_definition
+        self.onnx_version = onnx_version
 
         # methods
         self.sess = self._create_onnx_session(model_definition=model_definition)
