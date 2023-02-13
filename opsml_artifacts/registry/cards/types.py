@@ -1,6 +1,7 @@
-from enum import Enum
-from typing import Any, Protocol, Optional, Tuple, List, Generator
 from contextlib import contextmanager
+from enum import Enum
+from typing import Any, Generator, List, Optional, Protocol, Tuple
+
 from pydantic import BaseModel
 
 

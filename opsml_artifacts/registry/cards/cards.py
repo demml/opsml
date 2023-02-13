@@ -422,7 +422,13 @@ class ModelCard(ArtifactCard):
             team=self.team,
         )
         modelcard_storage_path = save_record_artifact_to_storage(
-            artifact=self.dict(exclude={"sample_input_data", "trained_model"}),
+            artifact=self.dict(
+                exclude={
+                    "sample_input_data",
+                    "trained_model",
+                    "storage_client",
+                }
+            ),
             save_info=save_info,
             storage_client=cast(StorageClientProto, self.storage_client),
         )
@@ -530,6 +536,7 @@ class ModelCard(ArtifactCard):
             data_dict=model_data,
             data_schema=self.data_schema,
             model_version=version,
+            onnx_version=model_def.onnx_version,
         )
 
 
