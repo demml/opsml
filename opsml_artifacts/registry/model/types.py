@@ -189,3 +189,14 @@ class TorchOnnxArgs(BaseModel):
     input_names: List[str] = ["inputs"]
     output_names: List[str] = ["outputs"]
     dynamic_axes: Dict[str, Dict[int, str]] = {"inputs": {0: "bs"}}
+
+
+class ModelApiDef(BaseModel):
+    onnx_definition: bytes
+    onnx_version: str
+    input_signature: dict
+    output_signature: dict
+    model_version: int
+
+    class Config:
+        json_encoders = {bytes: lambda bs: bs.hex()}
