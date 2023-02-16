@@ -33,7 +33,7 @@ lints.ci: lints.flake8.ci lints.pylint lints.ruff lints.format_check lints.mypy
 
 setup: setup.python setup.sysdep.poetry setup.poetry-template
 setup.project:
-	poetry install --all-extras --with dev,test
+	poetry install --all-extras --with dev,dev-lints
 setup.uninstall:
 	poetry env remove ${PYTHON_VERSION} || true
 setup.ci: setup.ci.poetry setup.poetry-template
