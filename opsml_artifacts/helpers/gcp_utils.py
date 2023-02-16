@@ -12,7 +12,7 @@ from google.oauth2.service_account import Credentials
 from google.protobuf import duration_pb2
 from pydantic import BaseModel
 
-from opsml_artifacts.helpers.settings import ArtifactLogger
+from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 

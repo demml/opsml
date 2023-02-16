@@ -5,14 +5,15 @@ from typing import Dict, Any
 
 # from opsml_artifacts.helpers.settings import SnowflakeParams
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
-from opsml_artifacts.registry.sql.registry import CardRegistry
+from opsml_artifacts.registry.sql.registry import CardRegistry, SQLRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GCPSecretManager, GcpCreds
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors import LocalSQLConnection, CloudSQLConnection
-from opsml_artifacts.registry.sql.connectors import LocalSQLConnection
+from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
+from opsml_artifacts.registry.model.types import ModelApiDef
+from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
-from sqlalchemy.orm import sessionmaker
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -250,6 +251,25 @@ def mock_gcs(test_df):
     with patch("opsml_artifacts.helpers.gcp_utils.GCSStorageClient", MockStorage) as mock_storage:
 
         yield mock_storage
+
+
+@pytest.fixture(scope="function")
+def mock_model_cli_loader(db_registries):
+    model_registry = db_registries["model"]
+
+    class MockModelLoaderCli(ModelLoaderCli):
+        def _save_api_def(self, api_def: ModelApiDef) -> None:
+            pass
+
+        def _set_registry(self, storage_type: str) -> SQLRegistry:
+            return model_registry
+
+    with patch(
+        "opsml_artifacts.scripts.load_model_card.ModelLoaderCli",
+        MockModelLoaderCli,
+    ) as model_cli_loader:
+
+        yield model_cli_loader
 
 
 @pytest.fixture(scope="function")
@@ -501,3 +521,18 @@ def load_pytorch_resnet():
     data = torch.randn(1, 3, 224, 224).numpy()
 
     return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def test_model_card(sklearn_pipeline):
+    # create data card
+    model, data = sklearn_pipeline
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    return model_card

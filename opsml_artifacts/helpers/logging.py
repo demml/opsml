@@ -49,31 +49,3 @@ class ArtifactLogger:
         log.propagate = False
 
         return log
-
-
-# class MockSettings(BaseSettings):
-#    class Config:
-#        arbitrary_types_allowed = True
-#        extra = "allow"
-#
-#
-# def get_settings():
-#    if bool(os.getenv("ARTIFACT_TESTING_MODE")):
-#        from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars
-#
-#        return MockSettings(**mock_vars)
-
-
-# might be a better way to do this in the future
-# def get_settings():
-#    if bool(os.getenv("ARTIFACT_TESTING_MODE")):
-#        from opsml_artifacts.helpers.fixtures.mock_vars import mock_vars
-#        return MockSettings(**mock_vars)
-#    else:
-#        if os.getenv("OPMSL_ARTIFACT_ENV").lower() == "gcp":
-#
-#
-#    return GlobalSettings()
-#
-#
-# settings = get_settings()
