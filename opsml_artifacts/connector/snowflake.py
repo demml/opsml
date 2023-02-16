@@ -7,14 +7,14 @@ from typing import Optional
 import gcsfs
 import pandas as pd
 import pyarrow.parquet as pq
-from pyshipt_logging import ShiptLogging
 from pyshipt_sql.connection_string import ConnectionString, DBType
 from pyshipt_sql.engine import SnowflakeEngine
 
 from opsml_artifacts.connector.base import GcsFilePath, QueryRunner
 from opsml_artifacts.connector.settings import SnowflakeCredentials
+from opsml_artifacts.helpers.logging import ArtifactLogger
 
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 
 credentials = SnowflakeCredentials.credentials()

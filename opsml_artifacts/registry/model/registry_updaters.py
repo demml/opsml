@@ -1,11 +1,11 @@
 # pylint: disable=import-outside-toplevel
 """Code for generating Onnx Models"""
-from pyshipt_logging import ShiptLogging
-
-from opsml_artifacts.registry.model.types import OnnxModelType
 
 # Get logger
-logger = ShiptLogging.get_logger(__name__)
+from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.model.types import OnnxModelType
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class RegistryUpdater:

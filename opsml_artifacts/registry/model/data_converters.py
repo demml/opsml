@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
-from pyshipt_logging import ShiptLogging
 from skl2onnx.common.data_types import (
     FloatTensorType,
     Int32TensorType,
@@ -12,6 +11,7 @@ from skl2onnx.common.data_types import (
     StringTensorType,
 )
 
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.model.types import (
     AVAILABLE_MODEL_TYPES,
     Feature,
@@ -20,8 +20,7 @@ from opsml_artifacts.registry.model.types import (
     TorchOnnxArgs,
 )
 
-# Get logger
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 ModelConvertOutput = Tuple[ModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
 

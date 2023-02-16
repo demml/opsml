@@ -1,24 +1,37 @@
 # pylint: disable=[import-outside-toplevel,import-outside-toplevel]
 
 import os
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from enum import Enum
+from functools import cached_property
+from typing import Any, Dict, Optional, Type, Union
 
 import sqlalchemy
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseSettings, Field, root_validator
 
-from opsml_artifacts.helpers.settings import ArtifactLogger
+from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-class BaseSQLConnection(BaseModel):
+class CloudSqlType(str, Enum):
+    MYSQL = "mysql"
+    POSTGRES = "postgres"
+
+
+class PythonCloudSqlType(str, Enum):
+    MYSQL = "pymysql"
+    POSTGRES = "pg8000"
+
+
+class BaseSQLConnection(BaseSettings):
     """Base Connection model that all connections inherit from"""
 
     class Config:
         arbitrary_types_allowed = True
         extra = "allow"
 
-    def _set_sqlalchemy_url(self):
+    @cached_property
+    def _sqlalchemy_prefix(self):
         raise NotImplementedError
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
@@ -42,6 +55,7 @@ class CloudSQLConnection(BaseSQLConnection):
         db_username (str): Username for CloudSQL connection
         db_password (str): Password for CloudSql connection
         db_type (str): database type. Either "mysql" or "postgres". Default is "mysql"
+        iam_auth (bool): Whether to use IAM auth when connecting to the DB. Only applicable for Postgres
         storage_backend (str): Which storage system to use. Defaults to GCP
 
     Returns:
@@ -55,7 +69,7 @@ class CloudSQLConnection(BaseSQLConnection):
     db_username: str = Field(..., env="OPSML_DB_USERNAME")
     db_password: str = Field(..., env="OPSML_DB_PASSWORD")
     db_name: str = Field(..., env="OPSML_DB_NAME")
-    db_type: str = Field("mysql", env="OPSML_DB_TYPE")
+    db_type: str = Field(CloudSqlType.MYSQL.value, env="OPSML_DB_TYPE")
     storage_backend: str = "gcp"
     load_from_secrets: bool = False
 
@@ -63,10 +77,9 @@ class CloudSQLConnection(BaseSQLConnection):
     def get_env_vars(cls, env_vars):  # pylint: disable=no-self-argument)
         creds, env_vars = cls.set_gcp_creds(env_vars=env_vars)
 
-        if bool(env_vars.get("load_from_secrets")):
+        if env_vars.get("load_from_secrets"):
             logger.info("Loading environment variables")
             env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
-
         return env_vars
 
     @classmethod
@@ -78,7 +91,7 @@ class CloudSQLConnection(BaseSQLConnection):
         env_vars["gcp_creds"] = creds.creds
         env_vars["path"] = os.getcwd()
 
-        # replace gcsfs with gcs
+        # try removing this (dont want to do this long term- need to limit permissions)
         scopes = "https://www.googleapis.com/auth/devstorage.full_control"
         env_vars["gcsfs_creds"] = creds.creds.with_scopes([scopes])
 
@@ -99,54 +112,74 @@ class CloudSQLConnection(BaseSQLConnection):
 
         return env_vars
 
-    def _set_connection_name(self):
-        return f"{self.gcp_project}:{self.gcp_region}:{self.db_instance_name}"
-
-    def _set_db_type(self):
-        if self.db_type == "mysql":
-            return "pymysql"
-
-        return "pg8000"
-
-    def _get_conn_defaults(self) -> Tuple[Any, str, str]:
+    def _get_ip_type(self) -> str:
+        """Sets IP type for CloudSql"""
         from google.cloud.sql.connector import IPTypes
 
-        ip_type = IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
-        db_type = self._set_db_type()
-        connection_name = self._set_connection_name()
+        return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
-        return ip_type, db_type, connection_name
+    def _get_connection_name(self) -> str:
+        """Creates connection name"""
+        return f"{self.gcp_project}:{self.gcp_region}:{self.db_instance_name}"
+
+    def _get_python_db_type(self) -> str:
+        """Gets db type for sqlalchemy connection prefix"""
+
+        if self.db_type == CloudSqlType.MYSQL:
+            return PythonCloudSqlType.MYSQL.value
+        return PythonCloudSqlType.POSTGRES.value
+
+    def _get_conn_args(self, connection_name: str, driver_db_type: str, ip_type: str) -> Dict[str, str]:
+        """Sets the appropriate CloudSQL Args based on DB type.Defaults to IAM auth for Postgres"""
+
+        connection_args = {
+            "instance_connection_string": connection_name,
+            "driver": driver_db_type,
+            "db": self.db_name,
+            "user": self.db_username,
+            "password": self.db_password,
+            "ip_type": ip_type,
+        }
+        return connection_args
+
+    @cached_property
+    def _get_conn_defaults(self) -> Dict[str, str]:
+        """Sets default kwargs for mysql and postgres cloudsql instances"""
+
+        ip_type = self._get_ip_type()
+        db_type = self._get_python_db_type()
+        connection_name = self._get_connection_name()
+
+        return self._get_conn_args(
+            connection_name=connection_name,
+            driver_db_type=db_type,
+            ip_type=ip_type,
+        )
 
     def _get_conn(self):
 
         """Creates the mysql or postgres CloudSQL client"""
         from google.cloud.sql.connector import Connector
 
-        ip_type, db_type, connection_name = self._get_conn_defaults()
+        connection_args = self._get_conn_defaults
+        connector = Connector(credentials=self.gcp_creds)  # pylint: disable=no-member
+        return connector.connect(**connection_args)
 
-        with Connector(ip_type=ip_type, credentials=self.gcp_creds) as connector:  # pylint: disable=no-member
-            conn = connector.connect(
-                connection_name,
-                db_type,
-                user=self.db_username,
-                password=self.db_password,
-                db=self.db_name,
-            )
-
-            return conn
-
-    def _set_sqlalchemy_url(self):
+    @cached_property
+    def _sqlalchemy_prefix(self):
         """Sets sqalchemy url depending on type of CloudSQL db"""
 
-        if self.db_type == "mysql":
+        if self.db_type == CloudSqlType.MYSQL:
             return "mysql+pymysql://"
         return "postgresql+pg8000://"
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
         """Creates SQLAlchemy engine"""
-        url = self._set_sqlalchemy_url()
-        engine = sqlalchemy.create_engine(url, creator=self._get_conn)
-        return engine
+
+        return sqlalchemy.create_engine(
+            self._sqlalchemy_prefix,
+            creator=self._get_conn,
+        )
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:
@@ -170,13 +203,15 @@ class LocalSQLConnection(BaseSQLConnection):
     db_file_path: str = f"{os.path.expanduser('~')}/opsml_artifacts_database.db"
     storage_backend: str = "local"
 
-    def _set_sqlalchemy_url(self):
+    @cached_property
+    def _sqlalchemy_prefix(self):
         return "sqlite://"
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        url = self._set_sqlalchemy_url()
         execution_options = {"schema_translate_map": {"ds-artifact-registry": None}}
-        engine = sqlalchemy.create_engine(f"{url}/{self.db_file_path}", execution_options=execution_options)
+        engine = sqlalchemy.create_engine(
+            f"{self._sqlalchemy_prefix}/{self.db_file_path}", execution_options=execution_options
+        )
         return engine
 
     @staticmethod

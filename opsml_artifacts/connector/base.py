@@ -2,12 +2,12 @@ from typing import Any, Dict, Optional, Tuple
 
 import requests
 from pydantic import BaseModel, root_validator
-from pyshipt_logging import ShiptLogging
 from requests.models import Response
 
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.utils import FindPath
 
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class QueryRunner:

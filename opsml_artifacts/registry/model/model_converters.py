@@ -10,8 +10,8 @@ import onnxruntime as rt
 import pandas as pd
 from google.protobuf.pyext._message import RepeatedCompositeContainer  # type:ignore
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
-from pyshipt_logging import ShiptLogging
 
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
 from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml_artifacts.registry.model.types import (
@@ -27,9 +27,7 @@ from opsml_artifacts.registry.model.types import (
 )
 
 ONNX_VERSION = onnx.__version__
-
-# Get logger
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class ModelConverter:

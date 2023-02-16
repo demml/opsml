@@ -4,11 +4,11 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
-from pyshipt_logging import ShiptLogging
+from opsml_artifacts.helpers.logging import ArtifactLogger
 
 from . import exceptions
 
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class FindPath:

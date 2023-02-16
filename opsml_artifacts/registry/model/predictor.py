@@ -13,6 +13,7 @@ from opsml_artifacts.registry.model.types import (
     DictBase,
     Feature,
     InputDataType,
+    ModelApiDef,
     NumpyBase,
     OnnxModelType,
 )
@@ -185,6 +186,7 @@ class OnnxModelPredictor:
         self,
         model_type: str,
         model_definition: bytes,
+        onnx_version: str,
         data_dict: DataDict,
         data_schema: Optional[Dict[str, Feature]],
         model_version: int,
@@ -200,6 +202,8 @@ class OnnxModelPredictor:
         self.data_dict = data_dict
         self.data_schema = data_schema
         self.model_version = model_version
+        self.model_definition = model_definition
+        self.onnx_version = onnx_version
 
         # methods
         self.sess = self._create_onnx_session(model_definition=model_definition)
@@ -212,6 +216,15 @@ class OnnxModelPredictor:
             data_dict=data_dict,
         )
         self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
+
+    def get_api_model(self) -> ModelApiDef:
+        return ModelApiDef(
+            onnx_definition=self.model_definition,
+            onnx_version=self.onnx_version,
+            input_signature=self.input_sig.schema(),
+            output_signature=self.output_sig.schema(),
+            model_version=self.model_version,
+        )
 
     def predict(self, data: Dict[str, Any]) -> Any:
 
