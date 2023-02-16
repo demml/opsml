@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "opsml-artifacts"
 version = "0.2.3"
-description = "Package for handling data for machine learning projects"
+description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
@@ -12,13 +12,15 @@ google-auth = {version="1.35.0", optional = true}
 google-cloud-storage = {version="1.44.0", optional = true}
 google-cloud-scheduler = {version="^2.9.0", optional = true}
 gcsfs = {version="^2022.11.0", optional = true}
-
 sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
+tf2onnx = {version="^1.13.0", optional = true}
+graphviz = {version="^0.20.1", optional = true}
+pg8000 = {version="^1.29.4", optional = true}
+pymysql = {version="^1.0.2", optional = true}
 numpy = ">=1.21.6,<=1.24.1"
 pandas = ">=1.4.0,<=1.5.3"
 pyarrow = "8.0.0"
 pydantic = ">=1.10.0, <=1.10.4"
-
 altair = "^4.2.0"
 scikit-learn = ">=1.0"
 pydantic-yaml = "^0.9.0"
@@ -26,13 +28,9 @@ skl2onnx = "^1.13"
 onnx = "^1.12.0"
 onnxruntime = "^1.13.1"
 onnxmltools = "^1.11.1"
-tf2onnx = {version="^1.13.0", optional = true}
 zarr = ">2.12.0"
-graphviz = {version="^0.20.1", optional = true}
 cryptography = "<39.0.0"
 datamodel-code-generator = "^0.17.1"
-pg8000 = {version="^1.29.4", optional = true}
-pymysql = {version="^1.0.2", optional = true}
 
 [tool.poetry.extras]
 graphviz = ["graphviz"]
@@ -40,33 +38,15 @@ tf_onnx = ["tf2onnx"]
 gcp_mysql = ["cloud-sql-python-connector", "google-cloud-secret-manager","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
 gcp_postgres = ["cloud-sql-python-connector", "google-cloud-secret-manager","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pg8000" ]
 
-[tool.poetry.group.lint-dep]
-optional = true
-
-[tool.poetry.group.lint-dep.dependencies]
-pytest-lazy-fixture = "^0.6.3"
-ruff = "^0.0.242"
-altair-viewer = "^0.4.0"
-sqlalchemy-stubs = "^0.4"
-types-pymysql = "^1.0.19.1"
-types-requests = "^2.28.11.7"
-pytest-cov = "^3.0.0"
-black = "22.3.0"
-pytest = "^7.1.2"
-flake8 = "^4.0.1"
-pylint = "^2.14.5"
-isort = "^5.10.1"
-sqlalchemy2-stubs = "0.0.2a31"
-coverage = {extras = ["toml"], version = "^6.5.0"}
-mypy = "1.0.0"
-types-protobuf = "^4.21.0.3"
-python-dotenv = "^0.21.1"
-
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-jupyterlab = "^3.6.1"
+pytest = "^7.1.2"
+pytest-lazy-fixture = "^0.6.3"
+altair-viewer = "^0.4.0"
+pytest-cov = "^3.0.0"
+coverage = {extras = ["toml"], version = "^6.5.0"}
 tensorflow = "2.10.1"
 torch = "^1.13.1"
 torchvision = "^0.14.1"
@@ -74,6 +54,29 @@ tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
 
+[tool.poetry.group.dev-lints]
+optional = true
+
+[tool.poetry.group.dev-lints.dependencies]
+ruff = "^0.0.242"
+sqlalchemy-stubs = "^0.4"
+types-pymysql = "^1.0.19.1"
+types-requests = "^2.28.11.7"
+black = "22.3.0"
+flake8 = "^4.0.1"
+pylint = "^2.14.5"
+isort = "^5.10.1"
+sqlalchemy2-stubs = "0.0.2a31"
+mypy = "1.0.0"
+types-protobuf = "^4.21.0.3"
+python-dotenv = "^0.21.1"
+
+
+[tool.poetry.group.jupyter]
+optional = true
+
+[tool.poetry.group.jupyter.dependencies]
+jupyterlab = "^3.6.1"
 
 [tool.isort]
 profile = "black"
