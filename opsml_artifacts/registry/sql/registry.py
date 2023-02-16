@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
-from opsml_artifacts.helpers.settings import ArtifactLogger
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -13,6 +13,7 @@ from opsml_artifacts.registry.cards.cards import (
     PipelineCard,
 )
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.connectors import SQLConnector, SqlConnectorType
 from opsml_artifacts.registry.sql.query import QueryCreatorMixin
 from opsml_artifacts.registry.sql.records import (
@@ -29,8 +30,8 @@ from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManag
 logger = ArtifactLogger.get_logger(__name__)
 
 
-ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
+CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
 
 class SQLRegistry(QueryCreatorMixin, SqlManager):
@@ -50,7 +51,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
             connection_args=connection_args,
         )
 
-    def _is_correct_card_type(self, card: ArtifactCardTypes):
+    def _is_correct_card_type(self, card: ArtifactCardProto):
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
     def _set_uid(self):
@@ -94,7 +95,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
             record.get("version"),
         )
 
-    def register_card(self, card: ArtifactCardTypes) -> None:
+    def register_card(self, card: ArtifactCardProto) -> None:
         """
         Adds new record to registry.
         Args:
@@ -116,6 +117,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
             )
 
         version = self._set_version(name=card.name, team=card.team)
+
         record = card.create_registry_record(
             registry_name=self.table_name,
             uid=self._set_uid(),
@@ -162,7 +164,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
         team: Optional[str] = None,
         version: Optional[int] = None,
         uid: Optional[str] = None,
-    ) -> ArtifactCardTypes:
+    ) -> CardTypes:
         """Loads data or model card"""
         raise NotImplementedError
 
@@ -235,7 +237,6 @@ class ModelCardRegistry(SQLRegistry):
         version: Optional[int] = None,
         uid: Optional[str] = None,
     ) -> ModelCard:
-
         """Loads a data card from the data registry
 
         Args:
@@ -267,15 +268,15 @@ class ModelCardRegistry(SQLRegistry):
         return bool(uid)
 
     # custom registration
-    def register_card(self, card: ArtifactCardTypes) -> None:
+    def register_card(self, card: ArtifactCardProto) -> None:
 
-        card = cast(ModelCard, card)
+        model_card = cast(ModelCard, card)
 
-        if not self._has_data_card_uid(uid=card.data_card_uid):
+        if not self._has_data_card_uid(uid=model_card.data_card_uid):
             raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
 
-        if card.data_card_uid is not None:
-            self._validate_datacard_uid(uid=card.data_card_uid)
+        if model_card.data_card_uid is not None:
+            self._validate_datacard_uid(uid=model_card.data_card_uid)
 
         return super().register_card(card)
 
@@ -311,7 +312,7 @@ class ExperimentCardRegistry(SQLRegistry):
         experiment_record.load_artifacts()
         return ExperimentCard(**experiment_record.dict())
 
-    def update_card(self, card: ArtifactCardTypes) -> None:
+    def update_card(self, card: ExperimentCard) -> None:
 
         """Updates an existing pipeline card in the pipeline registry
 
@@ -518,6 +519,11 @@ class CardRegistry:
         Returns:
             pandas dataframe of records
         """
+        if name is not None:
+            name = name.lower()
+
+        if team is not None:
+            team = team.lower()
 
         return self.registry.list_cards(uid=uid, name=name, team=team, version=version)
 
@@ -527,7 +533,7 @@ class CardRegistry:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[int] = None,
-    ) -> ArtifactCardTypes:
+    ) -> CardTypes:
 
         """Loads a specific card
 
@@ -541,12 +547,17 @@ class CardRegistry:
         Returns
             ModelCard or DataCard
         """
+        if name is not None:
+            name = name.lower()
+
+        if team is not None:
+            team = team.lower()
 
         return self.registry.load_card(uid=uid, name=name, team=team, version=version)
 
     def register_card(
         self,
-        card: ArtifactCardTypes,
+        card: ArtifactCardProto,
     ) -> None:
         """Register an artifact card (DataCard or ModelCard) based on current registry
 
@@ -560,7 +571,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: ArtifactCardTypes,
+        card: CardTypes,
     ) -> None:
         """Update and artifact card (DataCard only) based on current registry
 
@@ -572,7 +583,7 @@ class CardRegistry:
         """
 
         if not hasattr(self.registry, "update_card"):
-            raise ValueError(f"""{card.__class__.__name__} as no 'update_card' attribute""")
+            raise ValueError(f"""{card.__class__.__name__} has no 'update_card' attribute""")
 
         self.registry = cast(DataCardRegistry, self.registry)
         card = cast(DataCard, card)

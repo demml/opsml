@@ -1,10 +1,10 @@
 from typing import Any, Iterable, List, Optional, Type, Union, cast
 
-from pyshipt_logging import ShiptLogging
 from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
 
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -13,7 +13,7 @@ from opsml_artifacts.registry.cards.cards import (
 )
 from opsml_artifacts.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 
