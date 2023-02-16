@@ -33,7 +33,7 @@ lints.ci: lints.flake8.ci lints.pylint lints.ruff lints.format_check lints.mypy
 
 setup: setup.python setup.sysdep.poetry setup.poetry-template
 setup.project:
-	poetry install --all-extras --with dev,dev-tf,dev-pytorch
+	poetry install --all-extras --with dev,test
 setup.uninstall:
 	poetry env remove ${PYTHON_VERSION} || true
 setup.ci: setup.ci.poetry setup.poetry-template
@@ -79,5 +79,6 @@ poetry.sub.pre.tag:
 prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
 
 publish:
-	poetry config repositories.shipt-deploy https://artifactory.shipt.com/artifactory/api/pypi/pypi-local
+	poetry config repositories.shipt-deploy https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-local
 	poetry publish --repository shipt-deploy --build
+	
