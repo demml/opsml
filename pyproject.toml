@@ -40,10 +40,10 @@ tf_onnx = ["tf2onnx"]
 gcp_mysql = ["cloud-sql-python-connector", "google-cloud-secret-manager","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
 gcp_postgres = ["cloud-sql-python-connector", "google-cloud-secret-manager","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pg8000" ]
 
-[tool.poetry.group.test]
+[tool.poetry.group.lint-dep]
 optional = true
 
-[tool.poetry.group.test.dependencies]
+[tool.poetry.group.lint-dep.dependencies]
 pytest-lazy-fixture = "^0.6.3"
 ruff = "^0.0.242"
 altair-viewer = "^0.4.0"
