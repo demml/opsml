@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
-from opsml_artifacts.helpers.settings import ArtifactLogger
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -117,6 +117,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
             )
 
         version = self._set_version(name=card.name, team=card.team)
+
         record = card.create_registry_record(
             registry_name=self.table_name,
             uid=self._set_uid(),
@@ -518,6 +519,11 @@ class CardRegistry:
         Returns:
             pandas dataframe of records
         """
+        if name is not None:
+            name = name.lower()
+
+        if team is not None:
+            team = team.lower()
 
         return self.registry.list_cards(uid=uid, name=name, team=team, version=version)
 
@@ -541,6 +547,11 @@ class CardRegistry:
         Returns
             ModelCard or DataCard
         """
+        if name is not None:
+            name = name.lower()
+
+        if team is not None:
+            team = team.lower()
 
         return self.registry.load_card(uid=uid, name=name, team=team, version=version)
 

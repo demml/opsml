@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 import time
 import uuid
@@ -10,13 +9,12 @@ from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_mixin  # type: ignore
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_mixin, sessionmaker, validates  # type: ignore
 
-# from opsml_artifacts.helpers.settings import settings
-# from opsml_artifacts.registry.sql.connection import create_sql_engine
+from opsml_artifacts.helpers.logging import ArtifactLogger
 
-logger = logging.getLogger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
+
 Base = declarative_base()
 YEAR_MONTH_DATE = "%Y-%m-%d"
 
@@ -38,6 +36,14 @@ class BaseMixin:
     team = Column("team", String(512))
     version = Column("version", Integer, nullable=False)
     user_email = Column("user_email", String(512))
+
+    @validates("team")
+    def lower_team(self, key, team):
+        return team.lower()
+
+    @validates("name")
+    def lower_name(self, key, name):
+        return name.lower()
 
 
 @declarative_mixin

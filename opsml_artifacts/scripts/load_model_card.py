@@ -1,92 +1,98 @@
-from typing import Optional
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional, cast
 
 import click
-import joblib
 
-from opsml_artifacts import CardRegistry
-from opsml_artifacts.registry.cards.artifact_storage import (
-    save_record_artifact_to_storage,
-)
-from opsml_artifacts.registry.cards.storage_system import LocalStorageClient
-from opsml_artifacts.registry.cards.types import SaveInfo
-from opsml_artifacts.registry.sql.registry import SQLRegistry
+from opsml_artifacts import CardRegistry, ModelCard
+from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.model.types import ModelApiDef
 
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from datamodel_code_generator import InputFileType, generate
+logger = ArtifactLogger.get_logger(__name__)
+
+BASE_SAVE_PATH = "app/onnx_model"
+MODEL_FILE = "model_def.json"
 
 
-class ModelLoader:
-    def __init__(
-        self,
-        storage_type: str,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ):
+@dataclass
+class ModelLoaderCli:
+    """Class for loading ModelCard Onnx definition"""
 
-        self.registry = self._set_registry(storage_type=storage_type)
-        self.model_card = self.registry.load_card(name=name, team=team, version=version, uid=uid)
-        self.storage_client = LocalStorageClient(connection_args={}, base_path_prefix=f"app")
+    storage_type: str
+    versions: List[Optional[int]]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    uid: Optional[str] = None
 
-    def _set_registry(self, storage_type: str) -> SQLRegistry:
+    def __post_init__(self):
+        self.registry = self._set_registry(storage_type=self.storage_type)
+
+    def _set_registry(self, storage_type: str) -> CardRegistry:
         return CardRegistry(registry_name="model", connection_type=storage_type)
 
-    def save_to_local_file(self) -> str:
-        onnx_model = self.model_card.onnx_model()
+    def _set_path(self, api_def: ModelApiDef) -> Path:
+        path = Path(f"{BASE_SAVE_PATH}/{self.name}/{api_def.model_version}/")
+        path.mkdir(parents=True, exist_ok=True)
+        return path / MODEL_FILE
 
-        output = Path("onnx_model/")
-        output.mkdir(parents=True, exist_ok=True)
-        output = output.parent.joinpath("input_model.py")
-        print(output)
-        # generate(
-        #    onnx_model.input_sig.schema_json(),
-        #    input_file_type=InputFileType.JsonSchema,
-        #    output=output,
-        # )
+    def _save_api_def(self, api_def: ModelApiDef):
+        filepath = self._set_path(api_def=api_def)
 
+        with filepath.open("w", encoding="utf-8") as file_:
+            file_.write(api_def.json())
+        logger.info("Saved api model def to %s", filepath)
 
-#
-# model: str = output.read_text()
-# print(model)
-# save_info = SaveInfo(
-#    blob_path="onnx_model",
-#    name=self.model_card.name,
-#    team=self.model_card.team,
-#    version=self.model_card.version,
-# )
-# storage_path = save_record_artifact_to_storage(
-#    artifact=onnx_model,
-#    save_info=save_info,
-#    storage_client=self.storage_client,
-#    artifact_type="joblib",
-# )
-# return storage_path.uri
+    def load_and_save_model(self, version: Optional[int] = None):
+        model_card = self.registry.load_card(name=self.name, team=self.team, version=version)
+        api_def = self._get_model_api_def(model_card=model_card)
+        self._save_api_def(api_def=api_def)
+
+    def save_model_api_def_from_versions(self) -> None:
+        if bool(self.versions):
+            version_list = self.versions
+            for version in version_list:
+                self.load_and_save_model(version=version)
+        else:
+            self.load_and_save_model()
+
+    def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
+        onnx_model = model_card.onnx_model()
+        api_model = onnx_model.get_api_model()
+
+        return api_model
+
+    def save_to_local_file(self) -> None:
+        # overrides everything
+        if self.uid is not None:
+            self.load_and_save_model()
+        self.save_model_api_def_from_versions()
 
 
 @click.command()
 @click.option("--name", help="Name of the model", required=False, type=str)
 @click.option("--team", help="Name of team that model belongs to", required=False, type=str)
-@click.option("--version", help="Version of model to load", required=False, type=int)
+@click.option("--version", help="Version of model to load", required=False, multiple=True, type=int)
 @click.option("--uid", help="Unique id of modelcard", required=False, type=str)
-@click.option(
-    "--storage_type", help="Storage client to use when loading model", default="local", required=False, type=str
-)
+@click.option("--storage_type", help="Storage client for loading model", default="local", required=False, type=str)
 def load_model_card_to_file(name: str, team: str, version: int, uid: str, storage_type: str):
-    click.echo(f"{name}, {team}, {version}")
     if uid is None:
-        if not all([bool(arg) for arg in [name, team, version]]):
+        if not all(bool(arg) for arg in [name, team]):
             raise ValueError(
-                """A uid is required if any of name, team and version are missing
-            """
+                """A uid is required if name and team are not specified
+           """
             )
 
-        loader = ModelLoader(storage_type="local", name=name, team=team, version=version, uid=uid)
-        storage_uri = loader.save_to_local_file()
-
-        click.echo(f"Saved onnx predictor to {storage_uri}")
+    model_versions = cast(tuple, version)  # version is a multiple of ints that click converts to a tuple
+    versions = list(model_versions)
+    loader = ModelLoaderCli(
+        storage_type=storage_type,
+        name=name,
+        team=team,
+        versions=versions,
+        uid=uid,
+    )
+    loader.save_to_local_file()
 
 
 if __name__ == "__main__":
-    load_model_card_to_file()
+    load_model_card_to_file()  # pylint: disable=no-value-for-parameter

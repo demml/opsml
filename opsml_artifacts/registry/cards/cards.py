@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
-from pyshipt_logging import ShiptLogging
 
 from opsml_artifacts.drift.data_drift import DriftReport
+from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.artifact_storage import (
     load_record_artifact_from_storage,
     save_record_artifact_to_storage,
@@ -36,7 +36,7 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
 )
 
-logger = ShiptLogging.get_logger(__name__)
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class ArtifactCard(BaseModel):
@@ -52,6 +52,17 @@ class ArtifactCard(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = False
         smart_union = True
+
+    @root_validator(pre=True)
+    def lowercase(cls, env_vars):  # pylint: disable=no-self-argument)
+        """Lowercase name and team"""
+        lowercase_vars = {}
+        for key, val in env_vars.items():
+            if key in ["name", "team"]:
+                val = val.lower()
+            lowercase_vars[key] = val
+
+        return lowercase_vars
 
     def _set_additional_attr(
         self,
