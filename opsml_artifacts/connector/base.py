@@ -4,8 +4,8 @@ import requests
 from pydantic import BaseModel, root_validator
 from requests.models import Response
 
-from opsml_artifacts.helpers.utils import FindPath
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.utils import FindPath
 
 logger = ArtifactLogger.get_logger(__name__)
 
