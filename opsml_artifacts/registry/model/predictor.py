@@ -217,6 +217,15 @@ class OnnxModelPredictor:
         )
         self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
 
+    def get_api_model(self) -> ModelApiDef:
+        return ModelApiDef(
+            onnx_definition=self.model_definition,
+            onnx_version=self.onnx_version,
+            input_signature=self.input_sig.schema(),
+            output_signature=self.output_sig.schema(),
+            model_version=self.model_version,
+        )
+
     def predict(self, data: Dict[str, Any]) -> Any:
 
         """Run prediction on onnx model. Data is expected to conform to pydantic

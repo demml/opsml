@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
-from pydantic_yaml import YamlModel
 
 
 class OnnxModelType(str, Enum):
@@ -195,5 +194,9 @@ class TorchOnnxArgs(BaseModel):
 class ModelApiDef(BaseModel):
     onnx_definition: bytes
     onnx_version: str
-    input_signature: Any
-    output_signature: Any
+    input_signature: dict
+    output_signature: dict
+    model_version: int
+
+    class Config:
+        json_encoders = {bytes: lambda bs: bs.hex()}
