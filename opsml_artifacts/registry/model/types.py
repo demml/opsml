@@ -192,11 +192,14 @@ class TorchOnnxArgs(BaseModel):
 
 
 class ModelApiDef(BaseModel):
+    model_name: str
     onnx_definition: bytes
     onnx_version: str
     input_signature: dict
     output_signature: dict
     model_version: int
+    data_dict: dict
+    sample_data: dict
 
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
