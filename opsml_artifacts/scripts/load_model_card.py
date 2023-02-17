@@ -36,6 +36,9 @@ class ModelLoaderCli:
         return path / MODEL_FILE
 
     def _save_api_def(self, api_def: ModelApiDef):
+        if self.name is None:
+            self.name = api_def.model_name
+
         filepath = self._set_path(api_def=api_def)
 
         with filepath.open("w", encoding="utf-8") as file_:
@@ -43,7 +46,13 @@ class ModelLoaderCli:
         logger.info("Saved api model def to %s", filepath)
 
     def load_and_save_model(self, version: Optional[int] = None):
-        model_card = self.registry.load_card(name=self.name, team=self.team, version=version)
+        model_card = self.registry.load_card(
+            name=self.name,
+            team=self.team,
+            version=version,
+            uid=self.uid,
+        )
+
         api_def = self._get_model_api_def(model_card=model_card)
         self._save_api_def(api_def=api_def)
 
@@ -65,7 +74,8 @@ class ModelLoaderCli:
         # overrides everything
         if self.uid is not None:
             self.load_and_save_model()
-        self.save_model_api_def_from_versions()
+        else:
+            self.save_model_api_def_from_versions()
 
 
 @click.command()

@@ -253,7 +253,14 @@ class ModelCardRegistry(SQLRegistry):
         model_record = LoadedModelRecord(**sql_data.__dict__)
         model_record.storage_client = self.storage_client
         modelcard_definition = model_record.load_model_card_definition()
-        return ModelCard.parse_obj(modelcard_definition)
+
+        model_card = ModelCard.parse_obj(
+            {
+                **model_record.dict(),
+                **modelcard_definition,
+            }
+        )
+        return model_card
 
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
