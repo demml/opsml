@@ -393,12 +393,21 @@ class ModelCard(ArtifactCard):
             ]
         )
 
-    def load_trained_model(self):
+    def load_sample_data(self):
+        """Loads sample data associated with original non-onnx model"""
+
         sample_data = load_record_artifact_from_storage(
             storage_uri=self.sample_data_uri,
             artifact_type=self.sample_data_type,
             storage_client=cast(StorageClientProto, self.storage_client),
         )
+
+        setattr(self, "sample_input_data", sample_data)
+
+    def load_trained_model(self):
+        """Loads original trained model"""
+
+        self.load_sample_data()
 
         trained_model = load_record_artifact_from_storage(
             storage_uri=self.trained_model_uri,
@@ -406,7 +415,6 @@ class ModelCard(ArtifactCard):
             storage_client=cast(StorageClientProto, self.storage_client),
         )
 
-        setattr(self, "sample_input_data", sample_data)
         setattr(self, "trained_model", trained_model)
 
     def _save_model(self, blob_path: str, version: int) -> StoragePath:
@@ -522,7 +530,35 @@ class ModelCard(ArtifactCard):
         onnx_model = model_creator.create_onnx_model()
         self._set_onnx_attributes(onnx_model=onnx_model)
 
-    def onnx_model(self) -> OnnxModelPredictor:
+    def _get_sample_data_for_api(self) -> Dict[str, Any]:
+
+        """Converts sample data to dictionary that can be used to validate an onnx model"""
+
+        if self.sample_input_data is None:
+            self.load_sample_data()
+
+        sample_data = cast(
+            Union[pd.DataFrame, np.ndarray, Dict[str, Any]],
+            self.sample_input_data,
+        )
+
+        if isinstance(sample_data, np.ndarray):
+            model_data = cast(DataDict, self.onnx_model_data)
+            input_name = next(iter(model_data.input_features.keys()))
+            return {input_name: sample_data[0, :].tolist()}
+
+        if isinstance(sample_data, pd.DataFrame):
+            return sample_data[0:1].T.to_dict()[0]
+
+        record = {}
+        for feat, val in sample_data.items():
+            record[feat] = np.ravel(val).tolist()
+        return record
+
+    def onnx_model(
+        self,
+        start_onnx_runtime: bool = True,
+    ) -> OnnxModelPredictor:
 
         """Loads a model from serialized string
 
@@ -541,13 +577,18 @@ class ModelCard(ArtifactCard):
         model_type = str(self.model_type)
         model_data = cast(DataDict, self.onnx_model_data)
 
+        sample_api_data = self._get_sample_data_for_api()
+
         return OnnxModelPredictor(
+            model_name=self.name,
             model_type=model_type,
             model_definition=model_def.model_bytes,
             data_dict=model_data,
             data_schema=self.data_schema,
             model_version=version,
             onnx_version=model_def.onnx_version,
+            sample_api_data=sample_api_data,
+            start_sess=start_onnx_runtime,
         )
 
 
