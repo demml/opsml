@@ -184,12 +184,15 @@ class ApiSigCreatorGetter:
 class OnnxModelPredictor:
     def __init__(
         self,
+        model_name: str,
         model_type: str,
         model_definition: bytes,
         onnx_version: str,
         data_dict: DataDict,
         data_schema: Optional[Dict[str, Feature]],
         model_version: int,
+        sample_api_data: Dict[str, Any],
+        start_sess: bool = True,
     ):
 
         """Instantiates predictor class from ModelCard.
@@ -198,16 +201,19 @@ class OnnxModelPredictor:
             predictor_args (PredictorArgs) Args for predictor creation
         """
 
+        self.model_name = model_name
         self.model_type = model_type
         self.data_dict = data_dict
         self.data_schema = data_schema
         self.model_version = model_version
         self.model_definition = model_definition
         self.onnx_version = onnx_version
+        self.sample_api_data = sample_api_data
 
         # methods
-        self.sess = self._create_onnx_session(model_definition=model_definition)
-        self._output_names = [output.name for output in self.sess.get_outputs()]
+        if start_sess:
+            self.sess = self._create_onnx_session(model_definition=model_definition)
+            self._output_names = [output.name for output in self.sess.get_outputs()]
 
         api_sig_creator = ApiSigCreatorGetter.get_sig_creator(
             data_type=data_dict.data_type,
@@ -218,12 +224,16 @@ class OnnxModelPredictor:
         self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
 
     def get_api_model(self) -> ModelApiDef:
+
         return ModelApiDef(
+            model_name=self.model_name,
             onnx_definition=self.model_definition,
             onnx_version=self.onnx_version,
             input_signature=self.input_sig.schema(),
             output_signature=self.output_sig.schema(),
             model_version=self.model_version,
+            data_dict=self.data_dict.dict(),
+            sample_data=self.sample_api_data,
         )
 
     def predict(self, data: Dict[str, Any]) -> Any:
