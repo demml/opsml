@@ -227,6 +227,7 @@ class OnnxModelPredictor:
 
         return ModelApiDef(
             model_name=self.model_name,
+            model_type=self.model_type,
             onnx_definition=self.model_definition,
             onnx_version=self.onnx_version,
             input_signature=self.input_sig.schema(),
