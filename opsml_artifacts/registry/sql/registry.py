@@ -464,7 +464,12 @@ class CardRegistry:
             connector_type=connection_type,
         )
 
-        return cast(SqlConnectorType, connector())
+        if connection_type == "gcp":
+            kwargs = {"load_from_secrets": True}
+        else:
+            kwargs = {}
+
+        return cast(SqlConnectorType, connector(**kwargs))
 
     def _set_registry(
         self,
