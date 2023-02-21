@@ -193,6 +193,7 @@ class TorchOnnxArgs(BaseModel):
 
 class ModelApiDef(BaseModel):
     model_name: str
+    model_type: str
     onnx_definition: bytes
     onnx_version: str
     input_signature: dict
