@@ -68,7 +68,7 @@ name: publish-release
 kind: pipeline
 type: docker
 node:
-  env: platform
+  env: production
 trigger:
   event:
     - tag
@@ -84,7 +84,6 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
     commands:
-      - ls
       - poetry install --all-extras --with dev
       - make test.unit
     environment:
