@@ -215,6 +215,7 @@ data_card = DataCard(
 )
 
 #register card
+local_conn = LocalSQLConnection()
 data_registry = CardRegistry(registry_name="data", connection_client=local_conn) # CardRegistry accepts "data", "model", "pipeline" and "experiment"
 data_registry.register_card(card=data_card)
 ```
