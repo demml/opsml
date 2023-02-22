@@ -78,7 +78,7 @@ class CloudSQLConnection(BaseSQLConnection):
         creds, env_vars = cls.set_gcp_creds(env_vars=env_vars)
 
         if env_vars.get("load_from_secrets"):
-            logger.info("Loading environment variables")
+            logger.info("Loading environment vrs for secret manager")
             env_vars = cls.load_vars_from_gcp(env_vars=env_vars, gcp_credentials=creds)
         return env_vars
 
