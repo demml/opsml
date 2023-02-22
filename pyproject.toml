@@ -200,5 +200,6 @@ build-backend = "poetry.core.masonry.api"
 # export POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME=${ARTIFACTORY_PYPI_USERNAME}
 # export POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD=${ARTIFACTORY_PYPI_PASSWORD}
 name = "shipt-resolve"
+#url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-local"
 url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 default = true
