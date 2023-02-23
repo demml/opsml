@@ -155,6 +155,5 @@ steps:
     commands:
       # tag events validate poetry version is equal to the tag
       # increment patch version for releases based on drone tag
-      # manually updating toml is annoying
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
