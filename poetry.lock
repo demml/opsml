@@ -501,11 +501,11 @@ reference = "shipt-resolve"
 
 [[package]]
 name = "chardet"
-version = "4.0.0"
-description = "Universal encoding detector for Python 2 and 3"
+version = "5.1.0"
+description = "Universal encoding detector for Python 3"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.7"
 
 [package.source]
 type = "legacy"
@@ -1186,20 +1186,21 @@ reference = "shipt-resolve"
 
 [[package]]
 name = "google-cloud-storage"
-version = "1.44.0"
+version = "2.7.0"
 description = "Google Cloud Storage API client library"
 category = "main"
 optional = true
-python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
+python-versions = ">=3.7"
 
 [package.dependencies]
-google-api-core = {version = ">=1.29.0,<3.0dev", markers = "python_version >= \"3.6\""}
-google-auth = {version = ">=1.25.0,<3.0dev", markers = "python_version >= \"3.6\""}
-google-cloud-core = {version = ">=1.6.0,<3.0dev", markers = "python_version >= \"3.6\""}
-google-resumable-media = {version = ">=1.3.0,<3.0dev", markers = "python_version >= \"3.6\""}
-protobuf = {version = "*", markers = "python_version >= \"3.6\""}
+google-api-core = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev"
+google-auth = ">=1.25.0,<3.0dev"
+google-cloud-core = ">=2.3.0,<3.0dev"
+google-resumable-media = ">=2.3.2"
 requests = ">=2.18.0,<3.0.0dev"
-six = "*"
+
+[package.extras]
+protobuf = ["protobuf (<5.0.0dev)"]
 
 [package.source]
 type = "legacy"
@@ -2916,25 +2917,25 @@ reference = "shipt-resolve"
 
 [[package]]
 name = "prance"
-version = "0.21.8.0"
+version = "0.22.2.22.0"
 description = "Resolving Swagger/OpenAPI 2.0 and 3.0.0 Parser"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 
 [package.dependencies]
-chardet = ">=3.0,<5.0"
-requests = ">=2.25,<3.0"
-"ruamel.yaml" = ">=0.17.10,<0.18.0"
-semver = ">=2.13,<3.0"
+chardet = ">=3.0"
+packaging = ">=21.3"
+requests = ">=2.25"
+"ruamel.yaml" = ">=0.17.10"
 six = ">=1.15,<2.0"
 
 [package.extras]
-cli = ["click (>=7.0,<8.0)"]
+cli = ["click (>=7.0)"]
 dev = ["bumpversion (>=0.6)", "pytest (>=6.1)", "pytest-cov (>=2.11)", "sphinx (>=3.4)", "towncrier (>=19.2)", "tox (>=3.4)"]
 flex = ["flex (>=6.13,<7.0)"]
 icu = ["PyICU (>=2.4,<3.0)"]
-osv = ["openapi-spec-validator (>=0.2.1)"]
+osv = ["openapi-spec-validator (>=0.5.1,<0.6.0)"]
 ssv = ["swagger-spec-validator (>=2.4,<3.0)"]
 
 [package.source]
@@ -4416,7 +4417,7 @@ reference = "shipt-resolve"
 
 [[package]]
 name = "types-pymysql"
-version = "1.0.19.4"
+version = "1.0.19.5"
 description = "Typing stubs for PyMySQL"
 category = "dev"
 optional = false
@@ -4732,7 +4733,7 @@ tf-onnx = ["tf2onnx"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "f940c48ac8a1c68a581b2f8e8ff2cf04dbe1b330af2f24d5256b96b267179cee"
+content-hash = "9c87f726880b456ccb03da27d696103c723fba37ffedbad07386061ac164b168"
 
 [metadata.files]
 absl-py = [
@@ -5038,8 +5039,8 @@ cffi = [
     {file = "cffi-1.15.1.tar.gz", hash = "sha256:d400bfb9a37b1351253cb402671cea7e89bdecc294e8016a707f6d1d8ac934f9"},
 ]
 chardet = [
-    {file = "chardet-4.0.0-py2.py3-none-any.whl", hash = "sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5"},
-    {file = "chardet-4.0.0.tar.gz", hash = "sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa"},
+    {file = "chardet-5.1.0-py3-none-any.whl", hash = "sha256:362777fb014af596ad31334fde1e8c327dfdb076e1960d1694662d46a6917ab9"},
+    {file = "chardet-5.1.0.tar.gz", hash = "sha256:0d62712b956bc154f85fb0a266e2a3c5913c2967e00348701b32411d6def31e5"},
 ]
 charset-normalizer = [
     {file = "charset-normalizer-2.1.1.tar.gz", hash = "sha256:5a3d016c7c547f69d6f81fb0db9449ce888b418b5b9952cc5e6e66843e9dd845"},
@@ -5345,8 +5346,8 @@ google-cloud-secret-manager = [
     {file = "google_cloud_secret_manager-2.15.1-py2.py3-none-any.whl", hash = "sha256:b58ff057bfddb1d69fd78a12e6c47a4c2c264882d3390053a27f6e1145516617"},
 ]
 google-cloud-storage = [
-    {file = "google-cloud-storage-1.44.0.tar.gz", hash = "sha256:29edbfeedd157d853049302bf5d104055c6f0cb7ef283537da3ce3f730073001"},
-    {file = "google_cloud_storage-1.44.0-py2.py3-none-any.whl", hash = "sha256:cd4a223e9c18d771721a85c98a9c01b97d257edddff833ba63b7b1f0b9b4d6e9"},
+    {file = "google-cloud-storage-2.7.0.tar.gz", hash = "sha256:1ac2d58d2d693cb1341ebc48659a3527be778d9e2d8989697a2746025928ff17"},
+    {file = "google_cloud_storage-2.7.0-py2.py3-none-any.whl", hash = "sha256:f78a63525e72dd46406b255bbdf858a22c43d6bad8dc5bdeb7851a42967e95a1"},
 ]
 google-crc32c = [
     {file = "google-crc32c-1.5.0.tar.gz", hash = "sha256:89284716bc6a5a415d4eaa11b1726d2d60a0cd12aadf5439828353662ede9dd7"},
@@ -6262,8 +6263,8 @@ portpicker = [
     {file = "portpicker-1.5.2.tar.gz", hash = "sha256:c55683ad725f5c00a41bc7db0225223e8be024b1fa564d039ed3390e4fd48fb3"},
 ]
 prance = [
-    {file = "prance-0.21.8.0-py3-none-any.whl", hash = "sha256:51ec41d10b317bf5d4e74782a7f7f0c0488c6042433b5b4fde2a988cd069d235"},
-    {file = "prance-0.21.8.0.tar.gz", hash = "sha256:ce06feef8814c3436645f3b094e91067b1a111bc860a51f239f93437a8d4b00e"},
+    {file = "prance-0.22.2.22.0-py3-none-any.whl", hash = "sha256:57deeb67b7e93ef27c1c17845bf3ccb4af288ccfb5748c7e01779c01a8507f27"},
+    {file = "prance-0.22.2.22.0.tar.gz", hash = "sha256:9a83f8a4f5fe0f2d896d238d4bec6b5788b10b94155414b3d88c21c1579b85bf"},
 ]
 prometheus-client = [
     {file = "prometheus_client-0.16.0-py3-none-any.whl", hash = "sha256:0836af6eb2c8f4fed712b2f279f6c0a8bbab29f9f4aa15276b91c7cb0d1616ab"},
@@ -7121,8 +7122,8 @@ types-protobuf = [
     {file = "types_protobuf-4.21.0.7-py3-none-any.whl", hash = "sha256:5f4c0ba5840d66a9f32bcfd153a5d41c503f409223eae4fda876cdd6b50a638a"},
 ]
 types-pymysql = [
-    {file = "types-PyMySQL-1.0.19.4.tar.gz", hash = "sha256:b0ea3716404f34b64213bbf406c8bccb89ffe3a94d6ddc2d275eafa01556c3b6"},
-    {file = "types_PyMySQL-1.0.19.4-py3-none-any.whl", hash = "sha256:594ee62779629fc6eeea011038bf775dcd32212e2daa4db8d300d920cc6c9d2f"},
+    {file = "types-PyMySQL-1.0.19.5.tar.gz", hash = "sha256:e6362b5a4825db528db5c05dda4c30154614ed72abf69ef442666586bda59ace"},
+    {file = "types_PyMySQL-1.0.19.5-py3-none-any.whl", hash = "sha256:66a2e0ad3af390d09f2818b9c907c4fd5bbc6d9f5c0fecd35a28a71f47bc2b15"},
 ]
 types-requests = [
     {file = "types-requests-2.28.11.14.tar.gz", hash = "sha256:232792870b60adb07d23175451ab4e6190021b0c584edf052d92d9b993118f06"},
