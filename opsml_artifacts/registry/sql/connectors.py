@@ -23,6 +23,11 @@ class PythonCloudSqlType(str, Enum):
     POSTGRES = "pg8000"
 
 
+class CloudSqlPrefix(str, Enum):
+    MYSQL = "mysql+pymysql://"
+    POSTGRES = "postgresql+pg8000://"
+
+
 class BaseSQLConnection(BaseSettings):
     """Base Connection model that all connections inherit from"""
 
@@ -69,7 +74,6 @@ class CloudSQLConnection(BaseSQLConnection):
     db_username: str = Field(..., env="OPSML_DB_USERNAME")
     db_password: str = Field(..., env="OPSML_DB_PASSWORD")
     db_name: str = Field(..., env="OPSML_DB_NAME")
-    db_type: str = Field(CloudSqlType.MYSQL.value, env="OPSML_DB_TYPE")
     storage_backend: str = "gcp"
     load_from_secrets: bool = False
 
@@ -125,9 +129,7 @@ class CloudSQLConnection(BaseSQLConnection):
     def _get_python_db_type(self) -> str:
         """Gets db type for sqlalchemy connection prefix"""
 
-        if self.db_type == CloudSqlType.MYSQL:
-            return PythonCloudSqlType.MYSQL.value
-        return PythonCloudSqlType.POSTGRES.value
+        raise NotImplementedError
 
     def _get_conn_args(self, connection_name: str, driver_db_type: str, ip_type: str) -> Dict[str, str]:
         """Sets the appropriate CloudSQL Args based on DB type.Defaults to IAM auth for Postgres"""
@@ -166,12 +168,10 @@ class CloudSQLConnection(BaseSQLConnection):
         return connector.connect(**connection_args)
 
     @cached_property
-    def _sqlalchemy_prefix(self):
+    def _sqlalchemy_prefix(self) -> str:
         """Sets sqalchemy url depending on type of CloudSQL db"""
 
-        if self.db_type == CloudSqlType.MYSQL:
-            return "mysql+pymysql://"
-        return "postgresql+pg8000://"
+        raise NotImplementedError
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
         """Creates SQLAlchemy engine"""
@@ -183,7 +183,43 @@ class CloudSQLConnection(BaseSQLConnection):
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:
-        return connector_type == "gcp"
+        raise NotImplementedError
+
+
+class CloudSQLPostgres(CloudSQLConnection):
+    @cached_property
+    def _sqlalchemy_prefix(self) -> str:
+        """Sets postgres prefix for sqlalchemy"""
+
+        return CloudSqlPrefix.POSTGRES.value
+
+    def _get_python_db_type(self) -> str:
+        """Gets db type for sqlalchemy connection prefix"""
+
+        return PythonCloudSqlType.POSTGRES.value
+
+    @staticmethod
+    def validate_type(connector_type: str) -> bool:
+        """Validates CloudSQL postgres type"""
+        return connector_type == CloudSqlType.POSTGRES
+
+
+class CloudSQMysql(CloudSQLConnection):
+    @cached_property
+    def _sqlalchemy_prefix(self) -> str:
+        """Sets mysql prefix for sqlalchemy"""
+
+        return CloudSqlPrefix.MYSQL.value
+
+    def _get_python_db_type(self) -> str:
+        """Gets db type for sqlalchemy connection prefix"""
+
+        return PythonCloudSqlType.MYSQL.value
+
+    @staticmethod
+    def validate_type(connector_type: str) -> bool:
+        """Validates CloudSQL postgres type"""
+        return connector_type == CloudSqlType.MYSQL
 
 
 class LocalSQLConnection(BaseSQLConnection):
