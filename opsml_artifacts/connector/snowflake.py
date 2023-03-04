@@ -18,7 +18,10 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 credentials = SnowflakeCredentials.credentials()
-file_sys = gcsfs.GCSFileSystem(project=credentials.gcp_project)  # type: ignore
+file_sys = gcsfs.GCSFileSystem(
+    project=credentials.gcp_project,
+    token=credentials.gcp_creds,
+)  # type: ignore
 
 
 # Remove entire module once networking is figured out for vertex
