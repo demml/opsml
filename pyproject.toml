@@ -80,6 +80,9 @@ optional = true
 [tool.poetry.group.jupyter.dependencies]
 jupyterlab = "^3.6.1"
 
+[tool.poetry.scripts]
+load_model_card_to_file = "opsml_artifacts.scripts.load_model_card:load_model_card_to_file"
+
 [tool.isort]
 profile = "black"
 
