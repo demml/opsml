@@ -34,7 +34,7 @@ class BaseMixin:
     app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(512))
     team = Column("team", String(512))
-    version = Column("version", Integer, nullable=False)
+    version = Column("version", String(512), nullable=False)
     user_email = Column("user_email", String(512))
 
     @validates("team")
@@ -146,9 +146,14 @@ class SqlManager:
     def _create_table(self):
         self._table.__table__.create(bind=self.engine, checkfirst=True)
 
-    def _exceute_query(self, query: Any):
+    def _get_first(self, query: Any):
         with self._session() as sess:
             result = sess.scalars(query).first()
+        return result
+
+    def _execute_query(self, query: Any):
+        with self._session() as sess:
+            result = sess.execute(query).all()
         return result
 
     def _add_commit_transaction(self, record=Type[REGISTRY_TABLES]):
