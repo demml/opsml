@@ -17,22 +17,6 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger(__name__)
 
 
-class GcpVariables(str, Enum):
-    APP_ENV = "app_env"
-    GCS_BUCKET = "OPSML_GCS_BUCKET"
-    GCP_REGION = "OPSML_GCP_REGION"
-    GCP_PROJECT = "OPSML_GCP_PROJECT"
-    SNOWFLAKE_API_AUTH = "snowflake_api_auth"
-    SNOWFLAKE_API_URL = "snowflake_api_url"
-    DB_NAME = "OPSML_REGISTRY_DB_NAME"
-    DB_INSTANCE_NAME = "OPSML_REGISTRY_INSTANCE_NAME"
-    DB_USERNAME = "OPSML_REGISTRY_USERNAME"
-    DB_PASSWORD = "OPSML_REGISTRY_PASSWORD"
-    GCP_ARTIFACT_REGISTRY = "ml_container_registry"
-    NETWORK = "ml_network"
-    PIPELINE_SCHEDULER_URI = "ml_pipeline_scheduler_uri"
-
-
 class GcpCreds(BaseModel):
     creds: Credentials
     project: str

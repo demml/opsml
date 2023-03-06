@@ -387,8 +387,9 @@ class CardRegistry:
     def __init__(
         self,
         registry_name: str,
-        connection_client: Optional[SqlConnectorType] = None,
-        connection_type: Optional[str] = None,
+        metadata_store_url: Optional[str],
+        storage_url: Optional[str],
+        secret_client: Optional[None],
     ):
 
         """Interface for connecting to any of the ArtifactCard registries
@@ -396,12 +397,10 @@ class CardRegistry:
         Args:
             registry_name (str): Name of the registry to connect to. Options are
             "pipeline", "model", "data" and "experiment".
-            connection_client (Type[BaseSQLConnection]): Optional connection client for
-            connecting to a SQL database. See list of connectors for available options.
-            connection_type (str): Type of connection client to create. This is used for
-            when you wish to call a connection client without having to specify the
-            "connection_client" arg. For this arg, it is assumed you have the appropriate env
-            variables set for the connection_type that is specified.
+            metadata_store_url (str): Optional sql url to use for artifact metadata tracking.
+            If not connection_url is provideded, it will be inferred from the environment variable
+            "OPSML_METADATA_STORE_URL".
+
 
         Returns:
             Instantiated connection to specific Card registry

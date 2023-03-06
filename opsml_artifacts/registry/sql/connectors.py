@@ -244,10 +244,7 @@ class LocalSQLConnection(BaseSQLConnection):
         return "sqlite://"
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        execution_options = {"schema_translate_map": {"ds-artifact-registry": None}}
-        engine = sqlalchemy.create_engine(
-            f"{self._sqlalchemy_prefix}/{self.db_file_path}", execution_options=execution_options
-        )
+        engine = sqlalchemy.create_engine(f"{self._sqlalchemy_prefix}/{self.db_file_path}")
         return engine
 
     @staticmethod

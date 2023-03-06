@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from opsml_artifacts.registry.cards.cards import PipelineCard
 from opsml_artifacts.registry.cards.types import NON_PIPELINE_CARDS, CardNames
-from opsml_artifacts.registry.sql.connectors import SqlConnectorType
 from opsml_artifacts.registry.sql.registry import CardRegistry, CardTypes
 
 DATA_ATTRS = ["name", "team", "version", "data_type", "dependent_vars"]
@@ -178,7 +177,7 @@ class PipelineLoader:
     def __init__(
         self,
         pipeline_card_uid: str,
-        connection_client: Optional[SqlConnectorType] = None,
+        connection_client: Optional[Any] = None,
         connection_type: Optional[str] = None,
     ):
         """Loads all cards assoicated with a PipelineCard.
