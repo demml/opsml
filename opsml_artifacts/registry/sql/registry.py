@@ -14,7 +14,6 @@ from opsml_artifacts.registry.cards.cards import (
 )
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
-from opsml_artifacts.registry.sql.connectors import SQLConnector, SqlConnectorType
 from opsml_artifacts.registry.sql.query import QueryCreatorMixin
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
@@ -59,7 +58,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
 
     def _set_version(self, name: str, team: str) -> int:
         query = self._query_record_from_table(table=self._table, name=name, team=team)
-        last = self._exceute_query(query)
+        last = self._get_first(query)
         return 1 + (last.version if last else 0)
 
     def _query_record(
@@ -74,7 +73,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
         name, team, version, or uid
         """
         query = self._query_record_from_table(name=name, team=team, version=version, uid=uid, table=self._table)
-        return self._exceute_query(query=query)
+        return self._get_first(query=query)
 
     def _add_and_commit(self, record: Dict[str, Any]):
         self._add_commit_transaction(record=self._table(**record))
@@ -133,7 +132,7 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> Dict[str, Any]:
 
         """Retrieves records from registry
 
@@ -146,15 +145,16 @@ class SQLRegistry(QueryCreatorMixin, SqlManager):
 
 
         Returns:
-            pandas dataframe of records
+            Dictionary of records
         """
 
         query = self._list_records_from_table(table=self._table, uid=uid, name=name, team=team, version=version)
-        return pd.read_sql(query, self._session().bind)
+        result = self._execute_query(query=query)
+        return result.__dict__
 
     def _check_uid(self, uid: str, table_to_check: str):
         query = self._query_if_uid_exists(uid=uid, table_to_check=table_to_check)
-        exists = self._exceute_query(query=query)
+        exists = self._get_first(query=query)
         return bool(exists)
 
     # Read
@@ -388,7 +388,7 @@ class CardRegistry:
         self,
         registry_name: str,
         metadata_store_url: Optional[str],
-        storage_url: Optional[str],
+        artifact_storage_url: Optional[str],
         secret_client: Optional[None],
     ):
 
@@ -400,6 +400,15 @@ class CardRegistry:
             metadata_store_url (str): Optional sql url to use for artifact metadata tracking.
             If not connection_url is provideded, it will be inferred from the environment variable
             "OPSML_METADATA_STORE_URL".
+
+            Example format for cloudsql postgres using pyscop2 or pg8000:
+                  "postgresql+psycopg2://{db_username}:{db_password}@/{db_name}?host=/cloudsql/{db_connection_name}"
+                  "postgresql+pg8000://{db_username}:{db_password}@/{db_name}?host=/cloudsql/{db_connection_name}"
+
+            Example format for cloudsql mysql:
+                "postgresql+psycopg2://{db_username}:{db_password}@/{db_name}?host=/cloudsql/{db_connection_name}"
+
+            artifact_storage_url (str): Optional url to use for storing artifacts (data, models, etc.)
 
 
         Returns:

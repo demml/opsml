@@ -6,31 +6,30 @@ import uuid
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple, cast
+from typing import Any, Generator, List, Optional, Tuple, cast, Union
 
 from pyarrow.parquet import LocalFileSystem
 
 from opsml_artifacts.registry.cards.types import SaveInfo, StorageClientProto
+from opsml_artifacts.helpers.models import StorageInfo, GcsStorageClientInfo
 
 
 class StorageSystem(str, Enum):
-    GCP = "gcp"
+    GCS = "gcs"
     LOCAL = "local"
 
 
 class StorageClient:
     def __init__(
         self,
-        connection_args: Dict[str, Any],
+        storage_info: StorageInfo,
         client: Any = LocalFileSystem(),
         backend: str = StorageSystem.LOCAL.name,
-        base_path_prefix: str = os.path.expanduser("~"),
     ):
 
-        self.connection_args = connection_args
         self.client = client
         self.backend = backend
-        self.base_path_prefix = base_path_prefix
+        self.base_path_prefix = storage_info.storage_url
 
     def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None) -> Tuple[str, str]:
         filename = uuid.uuid4().hex
@@ -76,18 +75,21 @@ class StorageClient:
 
 
 class GCSFSStorageClient(StorageClient):
-    def __init__(self, connection_args: Dict[str, Any]):
+    def __init__(
+        self,
+        storage_info: StorageInfo,
+    ):
         import gcsfs
 
+        storage_info = cast(GcsStorageClientInfo, storage_info)
         client = gcsfs.GCSFileSystem(
-            project=connection_args.get("gcp_project"),
-            token=connection_args.get("gcsfs_creds"),
+            project=storage_info.gcp_project,
+            token=storage_info.credentials,
         )
         super().__init__(
-            connection_args=connection_args,
+            storage_info=storage_info,
             client=client,
             backend=StorageSystem.GCP.name,
-            base_path_prefix=f"gs://{connection_args.get('gcs_bucket')}",
         )
 
     def list_files(self, storage_uri: str) -> List[str]:
@@ -109,7 +111,7 @@ class GCSFSStorageClient(StorageClient):
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
-        return storage_backend == "gcp"
+        return storage_backend == StorageSystem.GCS
 
 
 class LocalStorageClient(StorageClient):
@@ -136,23 +138,25 @@ class LocalStorageClient(StorageClient):
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
-        return storage_backend == "local"
+        return storage_backend == StorageSystem.LOCAL
 
 
 class StorageClientGetter:
     @staticmethod
     def get_storage_client(
-        connection_args: Dict[str, Any],
+        storage_info: StorageInfo,
     ) -> StorageClientProto:
 
-        storage_backend = str(connection_args.get("storage_backend"))
         storage_client = next(
             (
                 storage_client
                 for storage_client in StorageClient.__subclasses__()
-                if storage_client.validate(storage_backend=storage_backend)
+                if storage_client.validate(storage_backend=storage_info.storage_type)
             ),
             LocalStorageClient,
         )
 
-        return cast(StorageClientProto, storage_client(connection_args=connection_args))
+        return cast(StorageClientProto, storage_client(storage_info=storage_info))
+
+
+StorageClientTypes = Union[LocalStorageClient, GCSFSStorageClient]
