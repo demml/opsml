@@ -20,10 +20,10 @@ YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 class RegistryTableNames(str, Enum):
-    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "DATA_REGISTRY")
-    MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "MODEL_REGISTRY")
-    EXPERIMENT = os.getenv("ML_EXPERIMENT_REGISTRY_NAME", "EXPERIMENT_REGISTRY")
-    PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "PIPELINE_REGISTRY")
+    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
+    MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
+    EXPERIMENT = os.getenv("ML_EXPERIMENT_REGISTRY_NAME", "OPSML_EXPERIMENT_REGISTRY")
+    PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
 
 
 @declarative_mixin
@@ -57,8 +57,6 @@ class DataMixin:
     additional_info = Column("additional_info", JSON)
     dependent_vars = Column("dependent_vars", JSON)
 
-    __table_args__ = {"schema": "ds-artifact-registry"}
-
 
 class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
     __tablename__ = RegistryTableNames.DATA.value
@@ -76,8 +74,6 @@ class ModelMixin:
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
 
-    __table_args__ = {"schema": "ds-artifact-registry"}
-
 
 class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
     __tablename__ = RegistryTableNames.MODEL.value
@@ -94,8 +90,6 @@ class ExperimentMixin:
     artifact_uris = Column("artifact_uris", JSON)
     metrics = Column("metrics", JSON)
 
-    __table_args__ = {"schema": "ds-artifact-registry"}
-
 
 class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
     __tablename__ = RegistryTableNames.EXPERIMENT.value
@@ -110,8 +104,6 @@ class PipelineMixin:
     data_card_uids = Column("data_card_uids", JSON)
     model_card_uids = Column("model_card_uids", JSON)
     experiment_card_uids = Column("experiment_card_uids", JSON)
-
-    __table_args__ = {"schema": "ds-artifact-registry"}
 
 
 class PipelineSchema(Base, BaseMixin, PipelineMixin):  # type: ignore
