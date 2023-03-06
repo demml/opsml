@@ -1,9 +1,11 @@
-from typing import Any, Dict, Optional, Union, Tuple
+from typing import Any, Dict, Union, Tuple, Type
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from pydantic import BaseSettings, Field, root_validator, BaseModel
+from pydantic import BaseSettings, Field, root_validator
 import os
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.models import GcsStorageClientInfo, StorageClientInfo, StorageInfo
+from opsml_artifacts.registry.cards.storage_system import StorageClientGetter, StorageClientTypes
 
 # Set retries for calling api
 retries = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
@@ -13,13 +15,8 @@ session.mount("http://", HTTPAdapter(max_retries=retries))
 OPSML_PREFIX = "opsml"
 STORAGE_CLIENT_PATH = "storage_client"
 
+
 logger = ArtifactLogger.get_logger(__name__)
-
-
-class StorageClientInfo(BaseModel):
-    credentials: Optional[Any] = None
-    storage_type: str = "local"
-    storage_url: str = os.path.expanduser("~")
 
 
 class OpsmlSettings(BaseSettings):
@@ -27,7 +24,8 @@ class OpsmlSettings(BaseSettings):
 
     app_env: str = Field("development", env="APP_ENV")
     opsml_tacking_url: str = Field(..., env="OPSML_TRACKING_URL")
-    storage_info: StorageClientInfo
+    storage_info: StorageInfo
+    storage_client: StorageClientTypes
 
     class Config:
         arbitrary_types_allowed = True
@@ -35,14 +33,18 @@ class OpsmlSettings(BaseSettings):
     @root_validator(pre=True)
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:
         env_vars, tracking_url = cls._set_tracking_url(env_vars=env_vars)
-        env_vars["storage_info"] = cls._get_storage_info(opsml_tracking_url=tracking_url)
+        storage_info = cls._get_storage_info(opsml_tracking_url=tracking_url)
+        env_vars["storage_info"]
+
+        # set storage client
+        env_vars["storage_client"] = StorageClientGetter.get_storage_client(storage_info=storage_info)
 
         return env_vars
 
     @classmethod
     def _set_tracking_url(
-        cls, env_vars: Dict[str, Union[str, StorageClientInfo]]
-    ) -> Tuple[Dict[str, Union[str, StorageClientInfo]], str]:
+        cls, env_vars: Dict[str, Union[str, StorageInfo]]
+    ) -> Tuple[Dict[str, Union[str, StorageInfo]], str]:
         """Sets tracking url to use for database entries
 
         Args:
@@ -64,7 +66,7 @@ class OpsmlSettings(BaseSettings):
         return env_vars, tracking_url
 
     @classmethod
-    def _get_storage_info(cls, opsml_tracking_url: str) -> StorageClientInfo:
+    def _get_storage_info(cls, opsml_tracking_url: str) -> StorageInfo:
         """Sets storage info based on tracking url. If tracking url is
         http then external api will be used to get storage info. If no
         external api is detected, local defaults will be used.
@@ -81,7 +83,7 @@ class OpsmlSettings(BaseSettings):
         return cls._get_storage_info_from_local()
 
     @classmethod
-    def _get_storage_info_from_api(cls, opsml_tracking_url: str) -> StorageClientInfo:
+    def _get_storage_info_from_api(cls, opsml_tracking_url: str) -> StorageInfo:
         """Gets storage info from external opsml api
 
         Args:
@@ -100,7 +102,12 @@ class OpsmlSettings(BaseSettings):
         if "gcs" in storage_info.get("storage_type"):
             from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
 
-            storage_info["credentials"] = GcpCredsSetter().get_creds()
+            gcp_creds = GcpCredsSetter().get_creds().creds
+            storage_info["credentials"] = gcp_creds
+            storage_info["gcp_project"] = gcp_creds.quota_project_id
+
+            return GcsStorageClientInfo(*storage_info)
+
         return StorageClientInfo(**storage_info)
 
     @classmethod
@@ -111,15 +118,20 @@ class OpsmlSettings(BaseSettings):
             StorageClientInfo
 
         """
-        storage_info: Dict[str, Any]
+        storage_info: Dict[str, Any] = {}
         storage_url = os.environ.get("OPSML_STORAGE_URL")
         if bool(storage_url):
             if "gcs" in storage_url:
                 from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
 
-                storage_info["credentials"] = GcpCredsSetter().get_creds()
+                gcp_creds = GcpCredsSetter().get_creds().creds
+                storage_info["credentials"] = gcp_creds
                 storage_info["storage_type"] = "gcs"
-            storage_info["storage_url"] = storage_url
+                storage_info["storage_url"] = storage_url
+                storage_info["gcp_project"] = gcp_creds.quota_project_id
+
+                return GcsStorageClientInfo(**storage_info)
+
         else:
             logger.info(
                 """No storage specified for local client. Default to local host""",
@@ -139,3 +151,6 @@ class OpsmlSettings(BaseSettings):
             else:
                 return True
         return False
+
+
+settings = OpsmlSettings()
