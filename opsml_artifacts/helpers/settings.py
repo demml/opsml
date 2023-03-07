@@ -38,9 +38,11 @@ class OpsmlSettings(BaseSettings):
 
     class Config:
         arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
     @root_validator(pre=True)
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:
+
         env_vars, tracking_url = cls._set_tracking_url(env_vars=env_vars)
         env_vars = cls._get_api_client(env_vars=env_vars, tracking_url=tracking_url)
         storage_info = cls._get_storage_info(env_vars=env_vars, tracking_url=tracking_url)
@@ -70,7 +72,7 @@ class OpsmlSettings(BaseSettings):
         logger.info("""No tracking url set. Defaulting to Sqlite""")
 
         tracking_url = "sqlite://"
-        env_vars["OPSML_TRACKING_URL"] = tracking_url
+        env_vars["opsml_tacking_url"] = tracking_url
         return env_vars, tracking_url
 
     @classmethod
@@ -180,7 +182,16 @@ class OpsmlSettings(BaseSettings):
             connector_type = f"cloudsql_{connector_type}"
 
         connector = SQLConnector.get_connector(connector_type=connector_type)
-        return connector(tracking_url=self.opsml_tacking_url)
+
+        if hasattr(self.storage_info, "credentials"):
+            credentials = self.storage_info.credentials
+        else:
+            credentials = None
+
+        return connector(
+            tracking_url=self.opsml_tacking_url,
+            credentials=credentials,
+        )
 
 
 settings = OpsmlSettings()
