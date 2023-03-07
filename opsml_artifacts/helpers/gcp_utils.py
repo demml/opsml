@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import google.auth
-from google.cloud import scheduler_v1, secretmanager, storage  # type: ignore
+from google.cloud import scheduler_v1, storage  # type: ignore
 from google.cloud.scheduler_v1.types import Job
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
@@ -36,55 +36,6 @@ class GCPService:
     def valid_service_name(service_name: str) -> bool:
         """Validates service name"""
         raise NotImplementedError
-
-
-class GCPSecretManager(GCPService):
-    def __init__(
-        self,
-        gcp_credentials: Optional[Credentials] = None,
-    ):
-        """Class for interacting with GCP secrets related to
-        a project.
-
-        Args:
-            gcp_credentials (gcp Credentials): Credentials associated with
-            a given gcp account that has permissions for accessing secrets.
-            If not supplied, gcp will infer credentials for you local environment.
-        """
-        self.client = secretmanager.SecretManagerServiceClient(
-            credentials=gcp_credentials,
-        )
-
-    def get_secret(
-        self,
-        project_name: str,
-        secret: str,
-        version: str = "latest",
-    ):
-
-        """Gets secret for GCP secrets manager.
-
-        Args:
-            project (str): GCP Project
-            secret (str): Name of secret
-            version (str) Version of secret to pull
-
-        Returns
-            secret value
-
-        """
-
-        response = self.client.access_secret_version(
-            request={"name": f"projects/{project_name}/secrets/{secret}/versions/{version}"}  # noqa
-        )
-
-        payload = response.payload.data.decode("UTF-8")
-
-        return payload
-
-    @staticmethod
-    def valid_service_name(service_name: str):
-        return bool(service_name == "secret_manager")
 
 
 class GCSStorageClient(GCPService):
@@ -401,7 +352,7 @@ class GCPMLScheduler(GCPService):
         return bool(service_name == "scheduler")
 
 
-ClientTypes = Union[GCPSecretManager, GCSStorageClient]
+ClientTypes = Union[GCPMLScheduler, GCSStorageClient]
 
 
 class GCPClient:
@@ -476,19 +427,3 @@ class GcpCredsSetter:
         project_name = service_creds.project_id
 
         return service_creds, project_name
-
-
-class GcpSecretVarGetter:
-    def __init__(self, gcp_credentials: GcpCreds):
-        self.gcp_creds = gcp_credentials
-        client = GCPClient.get_service(
-            service_name="secret_manager",
-            gcp_credentials=self.gcp_creds.creds,
-        )
-        self.secret_client = cast(GCPSecretManager, client)
-
-    def get_secret(self, secret_name: str) -> str:
-        return self.secret_client.get_secret(
-            project_name=self.gcp_creds.project,
-            secret=secret_name,
-        )
