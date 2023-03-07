@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Type, Union
+from typing import Type, Union, Any
 import os
 from functools import cached_property
 import sqlalchemy
@@ -51,7 +51,11 @@ class CloudSqlMySql(CloudSQLConnection):
 
 
 class LocalSQLConnection(BaseSQLConnection):
-    def __init__(self):
+    def __init__(
+        self,
+        tracking_url: str,
+        credentials: Any = None,
+    ):
         """
         Args:
             new database named "opsml_artifacts.db" will be created in the home user directory.
@@ -64,10 +68,12 @@ class LocalSQLConnection(BaseSQLConnection):
 
         self.db_file_path: str = f"{os.path.expanduser('~')}/opsml_artifacts_database.db"
         self.storage_backend: str = SqlType.LOCAL.value
+        self._tracking_url = tracking_url
+        self.credentials = credentials
 
     @cached_property
     def _sqlalchemy_prefix(self):
-        return "sqlite://"
+        return self._tracking_url
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
         engine = sqlalchemy.create_engine(f"{self._sqlalchemy_prefix}/{self.db_file_path}")
