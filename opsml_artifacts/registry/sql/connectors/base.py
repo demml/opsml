@@ -1,5 +1,5 @@
 # pylint: disable=[import-outside-toplevel,import-outside-toplevel]
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from functools import cached_property
 import os
 import sqlalchemy
@@ -11,11 +11,12 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class BaseSQLConnection:
-    def __init__(self, tracking_url: str):
+    def __init__(self, tracking_url: str, credentials: Any = None):
         """Base Connection model that all connections inherit from"""
 
         self.tracking_url = tracking_url
         self.connection_parts = make_url(tracking_url)
+        self.credentials = credentials
 
     @cached_property
     def _sqlalchemy_prefix(self):
@@ -34,10 +35,6 @@ class CloudSQLConnection(BaseSQLConnection):
     a connection to a MySql or Postgres cloudsql DB
 
     """
-
-    def __init__(self, tracking_url: str, gcp_credentials: Any):
-        super().__init__(tracking_url=tracking_url)
-        self.gcp_creds = gcp_credentials
 
     def _ip_type(self) -> str:
         """Sets IP type for CloudSql"""
@@ -63,7 +60,7 @@ class CloudSQLConnection(BaseSQLConnection):
         """Creates the mysql or postgres CloudSQL client"""
         from google.cloud.sql.connector import Connector
 
-        connector = Connector(credentials=self.gcp_creds)
+        connector = Connector(credentials=self.credentials)
 
         return connector.connect(
             instance_connection_string=self._connection_name,
