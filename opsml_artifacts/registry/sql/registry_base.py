@@ -1,8 +1,5 @@
 import uuid
-from typing import Any, Dict, Iterable, Optional, Union, cast
-import requests
-from sqlalchemy import select
-from sqlalchemy import create_engine
+from typing import Any, Dict, Iterable, Optional, Union, cast, Type
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
@@ -50,11 +47,7 @@ class SQLRegistryBase:
     def _get_session(self):
         raise NotImplementedError
 
-    def _increment_version(
-        self,
-        version: str,
-        version_type: str,
-    ) -> str:
+    def _increment_version(self, version: str, version_type: str) -> str:
         """Increments a version based on version type
 
         Args:
@@ -83,14 +76,14 @@ class SQLRegistryBase:
 
         return ".".join(version_splits)
 
-    def _set_version(self, name: str, team: str) -> int:
+    def _set_version(self, name: str, team: str) -> str:
         raise NotImplementedError
 
     def _is_correct_card_type(self, card: ArtifactCardProto):
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
-    def _set_uid(self):
+    def _get_uid(self) -> str:
         """Sets a unique id to be applied to a card"""
         return uuid.uuid4().hex
 
@@ -98,7 +91,7 @@ class SQLRegistryBase:
         self,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
         uid: Optional[str] = None,
     ):
         raise NotImplementedError
@@ -117,7 +110,7 @@ class SQLRegistryBase:
         uid: Optional[str] = None,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
     ) -> Dict[str, Any]:
         raise NotImplementedError
 
@@ -128,7 +121,7 @@ class SQLRegistryBase:
         self,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
         uid: Optional[str] = None,
     ) -> CardTypes:
         raise NotImplementedError
@@ -145,7 +138,7 @@ class SQLRegistry(SQLRegistryBase):
         self.table_name = self._table.__tablename__
 
     def _get_engine(self):
-        return create_engine(settings.opsml_tacking_url)
+        return settings.connection_client.get_engine()
 
     def _get_session(self):
         """Sets the sqlalchemy session to be used for all queries"""
@@ -177,10 +170,12 @@ class SQLRegistry(SQLRegistryBase):
         with self._session() as sess:
             result = sess.scalars(query).first()
 
-        return self._increment_version(
-            version=result.version,
-            version_type=version_type,
-        )
+        if bool(result):
+            return self._increment_version(
+                version=result.version,
+                version_type=version_type,
+            )
+        return "1.0.0"
 
     def _query_record(
         self,
@@ -261,21 +256,19 @@ class SQLRegistry(SQLRegistryBase):
 
         record = card.create_registry_record(
             registry_name=self.table_name,
-            uid=self._set_uid(),
+            uid=self._get_uid(),
             version=version,
             storage_client=self.storage_client,
         )
 
-        with self._session() as sess:
-            sess.add(record.dict())
-            sess.commit()
+        self._add_and_commit(record=record.dict())
 
     def list_cards(
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
     ) -> Dict[str, Any]:
 
         """Retrieves records from registry
@@ -292,28 +285,72 @@ class SQLRegistry(SQLRegistryBase):
             Dictionary of records
         """
 
-        query = self._list_records_from_table(table=self._table, uid=uid, name=name, team=team, version=version)
-        result = self._execute_query(query=query)
+        query = query_creator.record_from_table_query(
+            table=self._table,
+            name=name,
+            team=team,
+            version=version,
+            uid=uid,
+        )
+
+        with self._session() as sess:
+            result = sess.execute(query).all()
+
         return result.__dict__
 
     def _check_uid(self, uid: str, table_to_check: str):
-        query = self._query_if_uid_exists(uid=uid, table_to_check=table_to_check)
-        exists = self._get_first(query=query)
-        return bool(exists)
+        query = query_creator.uid_exists_query(
+            uid=uid,
+            table_to_check=table_to_check,
+        )
+        with self._session() as sess:
+            result = sess.scalars(query).first()
+        return bool(result)
 
     # Read
     def load_card(  # type: ignore
         self,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
         uid: Optional[str] = None,
     ) -> CardTypes:
         """Loads data or model card"""
         raise NotImplementedError
 
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        """Validate registry type"""
 
-        raise NotImplementedError
+# work in progress
+# class SQLRegistryAPI(SQLRegistryBase):
+#    def __init__(self, table_name: str):
+#        super().__init__(table_name)
+#
+#        self._session = self._get_session()
+#        self._api_url = settings.opsml_tacking_url
+#
+#    def _get_session(self):
+#        """Gets the requests session for connecting to the opsml api"""
+#        return request_session
+#
+#    def _set_version(self, name: str, team: str, version_type: str) -> str:
+#        url = f"{self._api_url}/set_version"
+#
+#        response = post(
+#            session=self._session,
+#            url=url,
+#            json={
+#                "name": name,
+#                "team": team,
+#                "table": self.self.table_name,
+#            },
+#        )
+#
+#        self._increment_version(version=response.get("version"))
+
+
+def get_sql_registry_base() -> Type[SQLRegistryBase]:
+    # if settings.request_client is not None:
+    # return None
+    return SQLRegistry
+
+
+Registry = get_sql_registry_base()
