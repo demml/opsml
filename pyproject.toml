@@ -33,6 +33,7 @@ cryptography = "<39.0.0"
 datamodel-code-generator = "^0.17.1"
 python-json-logger = "^2.0.6"
 pyshipt-sql = "^1.2.7"
+fastapi = "^0.92.0"
 
 [tool.poetry.extras]
 graphviz = ["graphviz"]
