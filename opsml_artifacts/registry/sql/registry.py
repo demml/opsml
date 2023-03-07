@@ -1,9 +1,6 @@
-import uuid
-from typing import Any, Dict, Iterable, List, Optional, Union, cast
-
-import pandas as pd
-from sqlalchemy.engine.base import Engine
+from typing import Any, Dict, Iterable, List, Optional, Union, cast, Type
 from sqlalchemy.sql.expression import ColumnElement, FromClause
+import pandas as pd
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
@@ -12,9 +9,7 @@ from opsml_artifacts.registry.cards.cards import (
     ModelCard,
     PipelineCard,
 )
-from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
-from opsml_artifacts.registry.sql.query import QueryCreatorMixin
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
@@ -24,7 +19,8 @@ from opsml_artifacts.registry.sql.records import (
     LoadedPipelineRecord,
     PipelineRegistryRecord,
 )
-from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, SqlManager
+from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
+from opsml_artifacts.registry.sql.registry_base import Registry, SQLRegistryBase
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -33,149 +29,7 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
 
-class SQLRegistry(QueryCreatorMixin, SqlManager):
-    def __init__(
-        self,
-        table_name: str,
-        engine: Engine,
-        connection_args: Dict[str, Any],
-    ):
-        super().__init__(table_name=table_name, engine=engine)
-        self.supported_card = f"{table_name.split('_')[0]}Card"
-
-        # Get backend storage system to save artifacts to
-        # Not sure how I feel about this: Registry is only losely coupled with storing artifacts
-        # An artifact only knows which storage system to use based on Registry connection args
-        self.storage_client = StorageClientGetter.get_storage_client(
-            connection_args=connection_args,
-        )
-
-    def _is_correct_card_type(self, card: ArtifactCardProto):
-        return self.supported_card.lower() == card.__class__.__name__.lower()
-
-    def _set_uid(self):
-        return uuid.uuid4().hex
-
-    def _set_version(self, name: str, team: str) -> int:
-        query = self._query_record_from_table(table=self._table, name=name, team=team)
-        last = self._get_first(query)
-        return 1 + (last.version if last else 0)
-
-    def _query_record(
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ):
-
-        """Creates and executes a query to pull a given record based on
-        name, team, version, or uid
-        """
-        query = self._query_record_from_table(name=name, team=team, version=version, uid=uid, table=self._table)
-        return self._get_first(query=query)
-
-    def _add_and_commit(self, record: Dict[str, Any]):
-        self._add_commit_transaction(record=self._table(**record))
-        logger.info(
-            "%s: %s registered as version %s",
-            self._table.__tablename__,
-            record.get("name"),
-            record.get("version"),
-        )
-
-    def _update_record(self, record: Dict[str, Any]):
-        record_uid = cast(str, record.get("uid"))
-        self._update_record_transaction(table=self._table, record_uid=record_uid, record=record)
-        logger.info(
-            "%s: %s, version:%s updated",
-            self._table.__tablename__,
-            record.get("name"),
-            record.get("version"),
-        )
-
-    def register_card(self, card: ArtifactCardProto) -> None:
-        """
-        Adds new record to registry.
-        Args:
-            data_card (DataCard or RegistryRecord): DataCard to register. RegistryRecord is also accepted.
-        """
-
-        # check compatibility
-        if not self._is_correct_card_type(card=card):
-            raise ValueError(
-                f"""Card of type {card.__class__.__name__} is not supported by registery {self._table.__tablename__}"""
-            )
-
-        if self._check_uid(uid=str(card.uid), table_to_check=self.table_name):
-            raise ValueError(
-                """This Card has already been registered.
-            If the card has been modified try upating the Card in the registry.
-            If registering a new Card, create a new Card of the correct type.
-            """
-            )
-
-        version = self._set_version(name=card.name, team=card.team)
-
-        record = card.create_registry_record(
-            registry_name=self.table_name,
-            uid=self._set_uid(),
-            version=version,
-            storage_client=self.storage_client,
-        )
-
-        self._add_and_commit(record=record.dict())
-
-    def list_cards(
-        self,
-        uid: Optional[str] = None,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-    ) -> Dict[str, Any]:
-
-        """Retrieves records from registry
-
-        Args:
-            name (str): Artifact ecord name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
-
-
-        Returns:
-            Dictionary of records
-        """
-
-        query = self._list_records_from_table(table=self._table, uid=uid, name=name, team=team, version=version)
-        result = self._execute_query(query=query)
-        return result.__dict__
-
-    def _check_uid(self, uid: str, table_to_check: str):
-        query = self._query_if_uid_exists(uid=uid, table_to_check=table_to_check)
-        exists = self._get_first(query=query)
-        return bool(exists)
-
-    # Read
-    def load_card(  # type: ignore
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ) -> CardTypes:
-        """Loads data or model card"""
-        raise NotImplementedError
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        """Validate registry type"""
-
-        raise NotImplementedError
-
-
-class DataCardRegistry(SQLRegistry):
+class DataCardRegistry(Registry):
     # specific loading logic
     def load_card(
         self,
@@ -228,7 +82,7 @@ class DataCardRegistry(SQLRegistry):
         return registry_name in RegistryTableNames.DATA
 
 
-class ModelCardRegistry(SQLRegistry):
+class ModelCardRegistry(Registry):
     # specific loading logic
     def load_card(
         self,
@@ -251,7 +105,6 @@ class ModelCardRegistry(SQLRegistry):
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
         model_record = LoadedModelRecord(**sql_data.__dict__)
-        model_record.storage_client = self.storage_client
         modelcard_definition = model_record.load_model_card_definition()
 
         model_card = ModelCard.parse_obj(
@@ -292,7 +145,7 @@ class ModelCardRegistry(SQLRegistry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class ExperimentCardRegistry(SQLRegistry):
+class ExperimentCardRegistry(Registry):
     def load_card(
         self,
         name: Optional[str] = None,
@@ -315,7 +168,6 @@ class ExperimentCardRegistry(SQLRegistry):
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
         experiment_record = LoadedExperimentRecord(**sql_data.__dict__)
-        experiment_record.storage_client = self.storage_client
         experiment_record.load_artifacts()
         return ExperimentCard(**experiment_record.dict())
 
@@ -338,7 +190,7 @@ class ExperimentCardRegistry(SQLRegistry):
         return registry_name in RegistryTableNames.EXPERIMENT
 
 
-class PipelineCardRegistry(SQLRegistry):
+class PipelineCardRegistry(Registry):
     def load_card(
         self,
         name: Optional[str] = None,
@@ -384,32 +236,13 @@ class PipelineCardRegistry(SQLRegistry):
 
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
-    def __init__(
-        self,
-        registry_name: str,
-        metadata_store_url: Optional[str],
-        artifact_storage_url: Optional[str],
-        secret_client: Optional[None],
-    ):
+    def __init__(self, registry_name: str):
 
         """Interface for connecting to any of the ArtifactCard registries
 
         Args:
             registry_name (str): Name of the registry to connect to. Options are
             "pipeline", "model", "data" and "experiment".
-            metadata_store_url (str): Optional sql url to use for artifact metadata tracking.
-            If not connection_url is provideded, it will be inferred from the environment variable
-            "OPSML_METADATA_STORE_URL".
-
-            Example format for cloudsql postgres using pyscop2 or pg8000:
-                  "postgresql+psycopg2://{db_username}:{db_password}@/{db_name}?host=/cloudsql/{db_connection_name}"
-                  "postgresql+pg8000://{db_username}:{db_password}@/{db_name}?host=/cloudsql/{db_connection_name}"
-
-            Example format for cloudsql mysql:
-                "postgresql+psycopg2://{db_username}:{db_password}@/{db_name}?host=/cloudsql/{db_connection_name}"
-
-            artifact_storage_url (str): Optional url to use for storing artifacts (data, models, etc.)
-
 
         Returns:
             Instantiated connection to specific Card registry
@@ -424,74 +257,16 @@ class CardRegistry:
             data_registry = CardRegistry(registry_name="data", connection_type="gcp")
 
         """
-        self._validate_connection_args(
-            connection_type=connection_type,
-            connection_client=connection_client,
-        )
 
-        self.registry: SQLRegistry = self._set_registry(
-            registry_name=registry_name,
-            connection_client=connection_client,
-            connection_type=connection_type,
-        )
-
+        self.registry: Type[SQLRegistryBase] = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
-    def _validate_connection_args(
-        self,
-        connection_client: Optional[SqlConnectorType] = None,
-        connection_type: Optional[str] = None,
-    ) -> Optional[str]:
-
-        """Checks if a connection client or type was passed. Returns "local" if neither was specified
-
-        Args:
-            connection_client (Type[BaseSQLConnection]): Connection subclass
-            connection_type (str): Type of connection
-
-        Returns
-            "local" or None
-
-        """
-        if not any([bool(connection_client), bool(connection_type)]):
-            logger.info("No connection args provided. Defaulting to local registry")
-            return "local"
-        return None
-
-    def _get_connection(self, connection_type: str) -> SqlConnectorType:
-        """Loads a subclass of BaseSQLConnection given a connection type
-
-        Args:
-            connection_type (str): Connection type
-
-        Returns:
-            SQL onnection client
-        """
-
-        connector = SQLConnector.get_connector(
-            connector_type=connection_type,
-        )
-
-        if connection_type == "gcp":
-            kwargs = {"load_from_secrets": True}
-        else:
-            kwargs = {}
-
-        return cast(SqlConnectorType, connector(**kwargs))
-
-    def _set_registry(
-        self,
-        registry_name: str,
-        connection_client: Optional[SqlConnectorType] = None,
-        connection_type: Optional[str] = None,
-    ) -> SQLRegistry:
+    def _set_registry(self, registry_name: str) -> Registry:
 
         """Returns a SQL registry to be used to register Cards
 
         Args:
             registry_name (str): Name of the registry (pipeline, model, data, experiment)
-            connection_client (Type[BaseSQLConnection]): Optional SQL connection
-            connection_type (str): Optional name of connection type
 
         Returns:
             SQL Registry
@@ -499,24 +274,15 @@ class CardRegistry:
 
         registry_name = RegistryTableNames[registry_name.upper()].value
 
-        if not bool(connection_client):
-            connection_client = self._get_connection(connection_type=str(connection_type))
-
         registry = next(
             registry
-            for registry in SQLRegistry.__subclasses__()
+            for registry in Registry.__subclasses__()
             if registry.validate(
                 registry_name=registry_name,
             )
         )
 
-        connection_client = cast(SqlConnectorType, connection_client)
-
-        return registry(
-            table_name=registry_name,
-            engine=connection_client.get_engine(),
-            connection_args=connection_client.dict(),
-        )
+        return registry(table_name=registry_name)
 
     def list_cards(
         self,
@@ -524,7 +290,7 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> Dict[str, Any]:
 
         """Retrieves records from registry
 
@@ -539,6 +305,7 @@ class CardRegistry:
         Returns:
             pandas dataframe of records
         """
+
         if name is not None:
             name = name.lower()
 
