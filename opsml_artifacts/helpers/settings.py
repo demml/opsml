@@ -1,13 +1,12 @@
 from typing import Any, Dict, Tuple, Optional, Type
 from functools import cached_property
 import requests
-from requests.adapters import HTTPAdapter, Retry
 from pydantic import BaseSettings, Field, root_validator
 import os
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.models import GcsStorageClientInfo, StorageClientInfo, StorageInfo
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter, StorageClientTypes
-from opsml_artifacts.registry.sql.request_helpers import get_request
+from opsml_artifacts.helpers.request_helpers import get_request
 from opsml_artifacts.registry.sql.connectors import SQLConnector, BaseSQLConnection
 
 OPSML_PREFIX = "opsml"
@@ -17,17 +16,7 @@ STORAGE_CLIENT_PATH = "storage_client"
 logger = ArtifactLogger.get_logger(__name__)
 
 
-class RequestClient:
-    @property
-    def client(self):
-        retries = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
-        request_session = requests.Session()
-        request_session.mount("http://", HTTPAdapter(max_retries=retries))
-
-        return request_session
-
-
-class OpsmlSettings(BaseSettings):
+class DefaultSettings(BaseSettings):
     """Default variables to load"""
 
     app_env: str = Field("development", env="APP_ENV")
@@ -46,6 +35,7 @@ class OpsmlSettings(BaseSettings):
         env_vars, tracking_url = cls._set_tracking_url(env_vars=env_vars)
         env_vars = cls._get_api_client(env_vars=env_vars, tracking_url=tracking_url)
         storage_info = cls._get_storage_info(env_vars=env_vars, tracking_url=tracking_url)
+
         env_vars["storage_info"] = storage_info
 
         # set storage client
@@ -64,7 +54,7 @@ class OpsmlSettings(BaseSettings):
             env_vars dictionary and tracking_url string
 
         """
-        tracking_url = env_vars.get("OPSML_TRACKING_URL")
+        tracking_url = env_vars.get("opsml_tacking_url")
 
         if tracking_url is not None:
             return env_vars, tracking_url
@@ -86,7 +76,7 @@ class OpsmlSettings(BaseSettings):
         PASSWORD = os.environ.get("OPSML_USERNAME")
 
         if "http" in tracking_url:
-            request_client = RequestClient().client
+            request_client = requests.Session()
             if all(bool(cred) for cred in [USERNAME, PASSWORD]):
                 request_client.auth = (USERNAME, PASSWORD)
             env_vars["request_client"] = request_client
@@ -130,13 +120,14 @@ class OpsmlSettings(BaseSettings):
         )
 
         if "gcs" in storage_info.get("storage_type"):
+
             from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
 
-            gcp_creds = GcpCredsSetter().get_creds().creds
-            storage_info["credentials"] = gcp_creds
-            storage_info["gcp_project"] = gcp_creds.quota_project_id
+            gcp_creds = GcpCredsSetter().get_creds()
+            storage_info["credentials"] = gcp_creds.creds
+            storage_info["gcp_project"] = gcp_creds.project
 
-            return GcsStorageClientInfo(*storage_info)
+            return GcsStorageClientInfo(**storage_info)
 
         return StorageClientInfo(**storage_info)
 
@@ -150,15 +141,16 @@ class OpsmlSettings(BaseSettings):
         """
         storage_info: Dict[str, Any] = {}
         storage_url = os.environ.get("OPSML_STORAGE_URL")
+
         if storage_url is not None:
-            if "gcs" in storage_url:
+            if "gs://" in storage_url:
                 from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
 
-                gcp_creds = GcpCredsSetter().get_creds().creds
-                storage_info["credentials"] = gcp_creds
+                gcp_creds = GcpCredsSetter().get_creds()
+                storage_info["credentials"] = gcp_creds.creds
                 storage_info["storage_type"] = "gcs"
                 storage_info["storage_url"] = storage_url
-                storage_info["gcp_project"] = gcp_creds.quota_project_id
+                storage_info["gcp_project"] = gcp_creds.project
 
                 return GcsStorageClientInfo(**storage_info)
 
@@ -183,6 +175,8 @@ class OpsmlSettings(BaseSettings):
 
         connector = SQLConnector.get_connector(connector_type=connector_type)
 
+        print(connector)
+
         if hasattr(self.storage_info, "credentials"):
             credentials = self.storage_info.credentials
         else:
@@ -194,4 +188,4 @@ class OpsmlSettings(BaseSettings):
         )
 
 
-settings = OpsmlSettings()
+settings = DefaultSettings()

@@ -1,19 +1,24 @@
-# import os
-# import pytest
-# from sqlalchemy import create_engine
-# from typing import Dict, Any
+import os
+import pytest
+from sqlalchemy import create_engine
+from typing import Dict, Any
+import requests
+
 #
 ## from opsml_artifacts.helpers.settings import SnowflakeParams
 # from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 # from opsml_artifacts.registry.sql.registry import CardRegistry, SQLRegistry
-# from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GCPSecretManager, GcpCreds
-# from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
+
+from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+
 # from opsml_artifacts.registry.sql.connectors import LocalSQLConnection, CloudSQLConnection
 # from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
 # from opsml_artifacts.registry.model.types import ModelApiDef
 # from opsml_artifacts import ModelCard
-# from google.auth import load_credentials_from_file
-# from unittest.mock import patch, MagicMock
+from google.auth import load_credentials_from_file
+from unittest.mock import patch, MagicMock
+
 # import numpy as np
 # import pandas as pd
 # import pyarrow as pa
@@ -53,28 +58,28 @@
 #        return [Blob()]
 #
 #
-# @pytest.fixture(scope="function")
-# def mock_gcp_vars():
-#    cred_path = os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
-#    creds, _ = load_credentials_from_file(cred_path)
-#    mock_vars = {
-#        "gcp_project": "test",
-#        "gcs_bucket": "test",
-#        "gcp_region": "test",
-#        "app_env": "staging",
-#        "path": os.getcwd(),
-#        "snowflake_api_auth": "test",
-#        "snowflake_api_url": "test",
-#        "db_username": "test",
-#        "db_password": "test",
-#        "db_name": "test",
-#        "db_instance_name": "test",
-#        "gcp_creds": creds,
-#        "gcsfs_creds": creds,
-#    }
-#    return mock_vars
-#
-#
+@pytest.fixture(scope="function")
+def mock_gcp_vars():
+    cred_path = os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
+    creds, _ = load_credentials_from_file(cred_path)
+    mock_vars = {
+        "gcp_project": "test",
+        "gcs_bucket": "test",
+        "gcp_region": "test",
+        "app_env": "staging",
+        "path": os.getcwd(),
+        "snowflake_api_auth": "test",
+        "snowflake_api_url": "test",
+        "db_username": "test",
+        "db_password": "test",
+        "db_name": "test",
+        "db_instance_name": "test",
+        "gcp_creds": creds,
+        "gcsfs_creds": creds,
+    }
+    return mock_vars
+
+
 # @pytest.fixture(scope="function")
 # def mock_cloud_sql_connection(mock_gcp_vars):
 #    class MockCloudSqlConnection(CloudSQLConnection):
@@ -84,17 +89,31 @@
 #            return creds, mock_gcp_vars
 #
 #    return MockCloudSqlConnection
-#
-#
-# @pytest.fixture(scope="function")
-# def gcp_storage_client(mock_cloud_sql_connection, mock_gcp_vars):
-#
-#    sql_connection = mock_cloud_sql_connection(**mock_gcp_vars)
-#    storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
-#
-#    return storage_client
-#
-#
+
+
+@pytest.fixture(scope="function")
+def mock_gcp_creds(mock_gcp_vars):
+
+    creds = GcpCreds(
+        creds=mock_gcp_vars["gcp_creds"],
+        project=mock_gcp_vars["gcp_project"],
+    )
+
+    with patch.multiple(
+        "opsml_artifacts.helpers.gcp_utils.GcpCredsSetter",
+        get_creds=MagicMock(return_value=creds),
+    ) as mock_gcp_creds:
+
+        yield mock_gcp_creds
+
+
+@pytest.fixture(scope="function")
+def gcp_storage_client(mock_cloud_sql_connection, mock_gcp_vars):
+    sql_connection = mock_cloud_sql_connection(**mock_gcp_vars)
+    storage_client = StorageClientGetter.get_storage_client(connection_args=sql_connection.dict())
+    return storage_client
+
+
 # @pytest.fixture(scope="function")
 # def local_storage_client():
 #    sql_connection = LocalSQLConnection(db_file_path=":memory:")
@@ -537,3 +556,20 @@
 #    )
 #    return model_card
 #
+
+
+@pytest.fixture(scope="function")
+def mock_gcs_storage_response():
+    class MockResponse:
+        def __init__(self):
+            self.status_code = 200
+
+        def json(self):
+            return {"storage_type": "gcs"}
+
+    class MockRequests(requests.Session):
+        def get(self, url, **kwargs):
+            return MockResponse()
+
+    with patch("requests.Session", MockRequests) as mock_requests:
+        yield mock_requests

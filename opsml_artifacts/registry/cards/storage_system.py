@@ -89,7 +89,7 @@ class GCSFSStorageClient(StorageClient):
         super().__init__(
             storage_info=storage_info,
             client=client,
-            backend=StorageSystem.GCP.name,
+            backend=StorageSystem.GCS.name,
         )
 
     def list_files(self, storage_uri: str) -> List[str]:
