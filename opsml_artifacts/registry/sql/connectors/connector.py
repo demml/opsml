@@ -8,7 +8,7 @@ from opsml_artifacts.registry.sql.connectors.base import CloudSQLConnection, Bas
 
 class SqlType(str, Enum):
     CLOUDSQL_MYSQL = "cloudsql_mysql"
-    CLOUDSQL_POSTGRES = "cloudsql_postgres"
+    CLOUDSQL_POSTGRES = "cloudsql_postgresql"
     LOCAL = "local"
 
 
@@ -22,7 +22,7 @@ class CloudSqlPrefix(str, Enum):
     POSTGRES = "postgresql+pg8000://"
 
 
-class CloudSqlPostgres(CloudSQLConnection):
+class CloudSqlPostgresql(CloudSQLConnection):
     @property
     def _sqlalchemy_prefix(self) -> str:
         return CloudSqlPrefix.POSTGRES.value
@@ -84,7 +84,14 @@ class LocalSQLConnection(BaseSQLConnection):
         return connector_type == SqlType.LOCAL
 
 
-SqlConnectorType = Union[CloudSqlMySql, CloudSqlPostgres, LocalSQLConnection]
+SqlConnectorType = Union[CloudSqlMySql, CloudSqlPostgresql, LocalSQLConnection]
+
+
+def all_subclasses(cls):
+    """Gets all subclasses associated with parent class"""
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in all_subclasses(c)],
+    )
 
 
 class SQLConnector:
@@ -97,7 +104,7 @@ class SQLConnector:
         connector = next(
             (
                 connector
-                for connector in BaseSQLConnection.__subclasses__()
+                for connector in all_subclasses(BaseSQLConnection)
                 if connector.validate_type(connector_type=connector_type)
             ),
             LocalSQLConnection,

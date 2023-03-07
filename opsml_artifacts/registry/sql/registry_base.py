@@ -65,7 +65,7 @@ class SQLRegistryBase:
         except KeyError as error:
             raise ValueError(
                 f"""f{version_type} is not a recognized sem_var type.
-            Valid types are "major", "minor", and "patch".
+            Valid types are "major", "minor", and "patch". {error}
             """
             )
 
@@ -241,7 +241,8 @@ class SQLRegistry(SQLRegistryBase):
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
-                f"""Card of type {card.__class__.__name__} is not supported by registery {self._table.__tablename__}"""
+                f"""Card of type {card.__class__.__name__} is not supported by registery 
+                {self._table.__tablename__}"""
             )
 
         if self._check_uid(uid=str(card.uid), table_to_check=self.table_name):
