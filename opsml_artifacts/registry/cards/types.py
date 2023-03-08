@@ -80,6 +80,6 @@ class ArtifactCardProto(Protocol):
     uid: str
 
     def create_registry_record(
-        self, uid: str, version: int, registry_name: str, storage_client: StorageClientProto
+        self, uid: str, version: str, registry_name: str, storage_client: StorageClientProto
     ) -> RegistryRecordProto:
         """Create registry record"""

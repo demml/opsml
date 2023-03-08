@@ -34,7 +34,7 @@ class QueryCreator:
                 table.name == name,
                 table.team == team,
             )
-            .order_by(table.timestamp.desc())
+            .order_by(table.timestamp.desc())  # type: ignore
         )
 
     def record_from_table_query(
@@ -59,7 +59,7 @@ class QueryCreator:
             query = query.filter(*filters)
 
         if version is None:
-            query = query.order_by(table.timestamp.desc())
+            query = query.order_by(table.timestamp.desc())  # type: ignore
 
         return query
 

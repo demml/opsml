@@ -1,4 +1,6 @@
-from typing import Any, Dict, Iterable, List, Optional, Type, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
+
+import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -127,7 +129,16 @@ class ModelCardRegistry(Registry):
         return bool(uid)
 
     # custom registration
-    def register_card(self, card: ArtifactCardProto) -> None:
+    def register_card(self, card: ArtifactCardProto, version_type: str = "minor") -> None:
+
+        """
+        Adds new record to registry.
+
+        Args:
+            Card (ArtifactCard): Card to register
+            version_type (str): Version type for increment. Options are "major", "minor" and
+            "patch". Defaults to "minor"
+        """
 
         model_card = cast(ModelCard, card)
 
@@ -137,7 +148,7 @@ class ModelCardRegistry(Registry):
         if model_card.data_card_uid is not None:
             self._validate_datacard_uid(uid=model_card.data_card_uid)
 
-        return super().register_card(card)
+        return super().register_card(card=card, version_type=version_type)
 
     @staticmethod
     def validate(registry_name: str):
@@ -257,7 +268,7 @@ class CardRegistry:
 
         """
 
-        self.registry: Type[SQLRegistryBase] = self._set_registry(registry_name=registry_name)
+        self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
@@ -288,8 +299,8 @@ class CardRegistry:
         uid: Optional[str] = None,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        version: Optional[str] = None,
+    ) -> pd.DataFrame:
 
         """Retrieves records from registry
 
@@ -318,7 +329,7 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         uid: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
     ) -> CardTypes:
 
         """Loads a specific card
@@ -341,19 +352,20 @@ class CardRegistry:
 
         return self.registry.load_card(uid=uid, name=name, team=team, version=version)
 
-    def register_card(
-        self,
-        card: ArtifactCardProto,
-    ) -> None:
-        """Register an artifact card (DataCard or ModelCard) based on current registry
+    def register_card(self, card: ArtifactCardProto, version_type: str = "minor") -> None:
+
+        """
+        Adds new record to registry.
 
         Args:
-            card (DataCard or ModelCard): Card to register
-
-        Returns:
-            None
+            Card (ArtifactCard): Card to register
+            version_type (str): Version type for increment. Options are "major", "minor" and
+            "patch". Defaults to "minor"
         """
-        self.registry.register_card(card=card)
+        self.registry.register_card(
+            card=card,
+            version_type=version_type,
+        )
 
     def update_card(
         self,

@@ -42,7 +42,7 @@ class ModelLoaderCli:
             file_.write(api_def.json())
         logger.info("Saved api model def to %s", filepath)
 
-    def load_and_save_model(self, version: Optional[int] = None):
+    def load_and_save_model(self, version: Optional[str] = None):
         model_card = self.registry.load_card(
             name=self.name,
             team=self.team,
