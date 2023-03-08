@@ -31,13 +31,12 @@ class StorageClient:
         self.base_path_prefix = storage_info.storage_url
 
     def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None) -> Tuple[str, str]:
-        filename = uuid.uuid4().hex
+        filename = save_info.filename or uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
         base_path = f"{self.base_path_prefix}/{save_info.blob_path}"
-        data_path = f"/{save_info.team}/{save_info.name}/version-{save_info.version}"
 
-        return base_path + data_path + f"/{filename}", filename
+        return base_path + f"/{filename}", filename
 
     def create_tmp_path(
         self,
