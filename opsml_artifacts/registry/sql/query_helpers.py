@@ -1,4 +1,4 @@
-from typing import Any, Iterable, List, Optional, Type, Union, cast
+from typing import Any, Iterable, Optional, Type, Union, cast
 
 from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
