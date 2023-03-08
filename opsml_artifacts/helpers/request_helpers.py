@@ -1,6 +1,7 @@
-import requests
-from typing import Optional, Dict, Any
 import functools
+from typing import Any, Dict, Optional
+
+import requests
 
 
 def retry(func):

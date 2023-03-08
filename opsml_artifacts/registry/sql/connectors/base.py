@@ -1,7 +1,8 @@
 # pylint: disable=[import-outside-toplevel,import-outside-toplevel]
-from typing import Dict, Any, Optional
-from functools import cached_property
 import os
+from functools import cached_property
+from typing import Any
+
 import sqlalchemy
 from sqlalchemy.engine.url import make_url
 
