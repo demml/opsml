@@ -23,10 +23,10 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
         version="1.0.0",
         team="mlops",
         name="test",
+        storage_client=storage_client,
     )
     pq_writer = ParquetStorage(
         save_info=save_info,
-        storage_client=storage_client,
         artifact_type="Table",
     )
     metadata = pq_writer.save_artifact(artifact=test_arrow_table)
@@ -44,6 +44,7 @@ def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
         version="1.0.0",
         team="mlops",
         name="test",
+        storage_client=storage_client,
     )
 
     with patch.multiple(
@@ -53,7 +54,6 @@ def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
     ):
         numpy_writer = NumpyStorage(
             save_info=save_info,
-            storage_client=storage_client,
             artifact_type="ndarray",
         )
         metadata = numpy_writer.save_artifact(artifact=test_array)
@@ -84,6 +84,7 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
         version="1.0.0",
         team="mlops",
         name="test",
+        storage_client=storage_client,
     )
 
     with patch.multiple(
@@ -93,7 +94,6 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
     ):
         drift_writer = JoblibStorage(
             save_info=save_info,
-            storage_client=storage_client,
             artifact_type="joblib",
         )
         metadata = drift_writer.save_artifact(artifact=drift_report)
@@ -110,12 +110,12 @@ def test_tensorflow_model(storage_client, load_transformer_example):
         version="1.0.0",
         team="mlops",
         name="test",
+        storage_client=storage_client,
     )
 
     model_storage = TensorflowModelStorage(
         artifact_type="keras",
         save_info=save_info,
-        storage_client=storage_client,
     )
 
     with patch.multiple(
@@ -139,12 +139,12 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
         version="1.0.0",
         team="mlops",
         name="test",
+        storage_client=storage_client,
     )
 
     model_storage = PyTorchModelStorage(
         artifact_type="pytorch",
         save_info=save_info,
-        storage_client=storage_client,
     )
 
     with patch.multiple(

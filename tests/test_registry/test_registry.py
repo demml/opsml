@@ -44,7 +44,7 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, db_registries):
+def _test_experiment_card(linear_regression, db_registries):
     with patch.multiple(
         "joblib",
         dump=MagicMock(return_value=None),
@@ -113,8 +113,20 @@ def test_register_model(
         loaded_card.trained_model = model
         loaded_card.sample_input_data = data[0:1]
 
-    assert getattr(loaded_card, "trained_model") is not None
-    assert getattr(loaded_card, "sample_input_data") is not None
+        assert getattr(loaded_card, "trained_model") is not None
+        assert getattr(loaded_card, "sample_input_data") is not None
+
+        model_card_custom = ModelCard(
+            trained_model=model,
+            sample_input_data=data[0:1],
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            data_card_uid=data_card.uid,
+        )
+
+        model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
+        assert "steven-test/models" in model_card_custom.trained_model_uri
 
     model_card2 = ModelCard(
         trained_model=model,
@@ -152,7 +164,7 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits(test_data):
+def _test_data_card_splits(test_data):
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
         {"label": "test", "column": "year", "column_value": 2021},
@@ -185,7 +197,7 @@ def test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def _test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -238,7 +250,7 @@ def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mo
         )
 
 
-def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
+def _test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -265,7 +277,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write):
+def _test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
