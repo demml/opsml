@@ -105,3 +105,4 @@ notebooks/
 .local_tests/
 
 examples/.DS_Store
+opsml_artifacts/api/

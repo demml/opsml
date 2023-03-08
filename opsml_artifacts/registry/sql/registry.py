@@ -1,6 +1,5 @@
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, Type
+from typing import Any, Dict, Iterable, List, Optional, Type, Union, cast
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-import pandas as pd
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
@@ -19,8 +18,8 @@ from opsml_artifacts.registry.sql.records import (
     LoadedPipelineRecord,
     PipelineRegistryRecord,
 )
-from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 from opsml_artifacts.registry.sql.registry_base import Registry, SQLRegistryBase
+from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
 

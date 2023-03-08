@@ -1,9 +1,14 @@
-from enum import Enum
-from typing import Type, Union, Any
 import os
+from enum import Enum
 from functools import cached_property
+from typing import Any, Type, Union
+
 import sqlalchemy
-from opsml_artifacts.registry.sql.connectors.base import CloudSQLConnection, BaseSQLConnection
+
+from opsml_artifacts.registry.sql.connectors.base import (
+    BaseSQLConnection,
+    CloudSQLConnection,
+)
 
 
 class SqlType(str, Enum):

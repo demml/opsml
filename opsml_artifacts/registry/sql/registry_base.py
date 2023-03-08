@@ -1,9 +1,12 @@
 import uuid
-from typing import Any, Dict, Iterable, Optional, Union, cast, Type
+from typing import Any, Dict, Iterable, Optional, Type, Union, cast
+
+import pandas as pd
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-import pandas as pd
+
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -12,10 +15,7 @@ from opsml_artifacts.registry.cards.cards import (
 )
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator
-
-
 from opsml_artifacts.registry.sql.sql_schema import TableSchema
-from opsml_artifacts.helpers.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -244,7 +244,7 @@ class SQLRegistry(SQLRegistryBase):
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
-                f"""Card of type {card.__class__.__name__} is not supported by registery 
+                f"""Card of type {card.__class__.__name__} is not supported by registery
                 {self._table.__tablename__}"""
             )
 

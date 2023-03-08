@@ -1,17 +1,16 @@
 # pylint: disable=import-outside-toplevel
 
-import os
 import tempfile
 import uuid
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generator, List, Optional, Tuple, cast, Union
+from typing import Any, Generator, List, Optional, Tuple, Union, cast
 
 from pyarrow.parquet import LocalFileSystem
 
+from opsml_artifacts.helpers.models import GcsStorageClientInfo, StorageInfo
 from opsml_artifacts.registry.cards.types import SaveInfo, StorageClientProto
-from opsml_artifacts.helpers.models import StorageInfo, GcsStorageClientInfo
 
 
 class StorageSystem(str, Enum):
