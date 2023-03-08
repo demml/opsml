@@ -106,23 +106,23 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
 
-  #- name: code-analysis
-  #  when:
-  #    event:
-  #      - push
-  #  image: plugins/sonarqube-drone-plugin
-  #  environment:
-  #    POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-  #      from_secret: ARTIFACTORY_PYPI_USERNAME
-  #    POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-  #      from_secret: ARTIFACTORY_PYPI_PASSWORD
-  #    SONAR_HOST:
-  #      from_secret: SONAR_HOST
-  #    SONAR_TOKEN:
-  #      from_secret: SONAR_TOKEN
-  #  depends_on:
-  #    - py39
-  #    - quality-checks
+  - name: code-analysis
+    when:
+      event:
+        - push
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+    depends_on:
+      - py39
+      - quality-checks
 
   - name: publish-release-candidate
     when:

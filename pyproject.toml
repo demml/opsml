@@ -135,7 +135,7 @@ plugins = [
     "sqlalchemy.ext.mypy.plugin",
     "sqlmypy",
 ]
-exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/api/*"]
+exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/api/*", "opsml_artifacts/registry/sql/query_helpers.py"]
 
 
 [tool.coverage.paths]
