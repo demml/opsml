@@ -198,7 +198,7 @@ class ModelApiDef(BaseModel):
     onnx_version: str
     input_signature: dict
     output_signature: dict
-    model_version: int
+    model_version: str
     data_dict: dict
     sample_data: dict
 

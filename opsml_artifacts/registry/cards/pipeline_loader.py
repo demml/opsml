@@ -174,28 +174,17 @@ class DependencyParser:
 
 
 class PipelineLoader:
-    def __init__(
-        self,
-        pipeline_card_uid: str,
-        connection_client: Optional[Any] = None,
-        connection_type: Optional[str] = None,
-    ):
+    def __init__(self, pipeline_card_uid: str):
         """Loads all cards assoicated with a PipelineCard.
 
         Args:
             pipeline_card_uid (str) Uid of a PipelineCard
         """
-        self.connection_client = connection_client
-        self.connection_type = connection_type
         self.pipline_card = self._load_pipeline_card(uid=pipeline_card_uid)
         self._card_deck: Dict[str, CardTypes] = {}
 
     def _load_pipeline_card(self, uid: str) -> PipelineCard:
-        registry = CardRegistry(
-            registry_name=CardNames.PIPELINE.value,
-            connection_client=self.connection_client,
-            connection_type=self.connection_type,
-        )
+        registry = CardRegistry(registry_name=CardNames.PIPELINE.value)
         loaded_card = registry.load_card(uid=uid)
         return cast(PipelineCard, loaded_card)
 
@@ -228,11 +217,7 @@ class PipelineLoader:
     def _registries(self):
         registries = {}
         for name in ["data", "model", "experiment"]:
-            registries[name] = CardRegistry(
-                name,
-                connection_client=self.connection_client,
-                connection_type=self.connection_type,
-            )
+            registries[name] = CardRegistry(name)
         return registries
 
     def _get_relationships(self):
