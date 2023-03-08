@@ -6,6 +6,7 @@ from opsml_artifacts.drift.models import DriftReport
 from opsml_artifacts.registry.cards.artifact_storage import (
     load_record_artifact_from_storage,
 )
+from opsml_artifacts.registry.sql.models import SaveInfo
 from opsml_artifacts.registry.cards.storage_system import StorageClientProto
 
 
@@ -111,10 +112,17 @@ class LoadedDataRecord(BaseModel):
     def load_drift_report(values):
 
         if bool(values.get("drift_uri")):
-            return load_record_artifact_from_storage(
-                storage_uri=values["drift_uri"],
-                artifact_type="dict",
+            save_info = SaveInfo(
+                blob_path=values["drift_uri"],
+                name=values["name"],
+                team=values["team"],
+                version=values["version"],
                 storage_client=values["storage_client"],
+            )
+
+            return load_record_artifact_from_storage(
+                save_info=save_info,
+                artifact_type="dict",
             )
         return None
 
@@ -136,7 +144,7 @@ class LoadedModelRecord(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def load_model_card_definition(self) -> Dict[str, Any]:
+    def load_model_card_definition(self, storage_client: StorageClientProto) -> Dict[str, Any]:
 
         """Loads a model card definition from current attributes
 
@@ -144,10 +152,17 @@ class LoadedModelRecord(BaseModel):
             Dictionary to be parsed by ModelCard.parse_obj()
         """
 
+        save_info = SaveInfo(
+            blob_path=self.model_card_uri,
+            name=self.name,
+            version=self.version,
+            team=self.team,
+            storage_client=storage_client,
+        )
+
         model_card_definition = load_record_artifact_from_storage(
-            storage_uri=self.model_card_uri,
+            save_info=save_info,
             artifact_type="dict",
-            storage_client=cast(StorageClientProto, self.storage_client),
         )
 
         model_card_definition["model_card_uri"] = self.model_card_uri
@@ -183,10 +198,17 @@ class LoadedExperimentRecord(BaseModel):
             setattr(self, "artifacts", loaded_artifacts)
 
         for name, uri in self.artifact_uris.items():
-            loaded_artifacts[name] = load_record_artifact_from_storage(
-                storage_uri=uri,
-                artifact_type="artifact",
+
+            save_info = SaveInfo(
+                blob_path=uri,
+                name=self.name,
+                team=self.team,
+                version=self.version,
                 storage_client=storage_client,
+            )
+            loaded_artifacts[name] = load_record_artifact_from_storage(
+                save_info=save_info,
+                artifact_type="artifact",
             )
         setattr(self, "artifacts", loaded_artifacts)
         setattr(self, "storage_client", storage_client)

@@ -106,7 +106,7 @@ class ModelCardRegistry(Registry):
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
         model_record = LoadedModelRecord(**sql_data.__dict__)
-        modelcard_definition = model_record.load_model_card_definition()
+        modelcard_definition = model_record.load_model_card_definition(storage_client=self.storage_client)
 
         model_card = ModelCard.parse_obj(
             {
@@ -114,6 +114,7 @@ class ModelCardRegistry(Registry):
                 **modelcard_definition,
             }
         )
+        model_card.storage_client = self.storage_client
         return model_card
 
     def _get_data_table_name(self) -> str:
@@ -129,8 +130,12 @@ class ModelCardRegistry(Registry):
         return bool(uid)
 
     # custom registration
-    def register_card(self, card: ArtifactCardProto, version_type: str = "minor") -> None:
-
+    def register_card(
+        self,
+        card: ArtifactCardProto,
+        version_type: str = "minor",
+        save_path: Optional[str] = None,
+    ) -> None:
         """
         Adds new record to registry.
 
@@ -138,6 +143,9 @@ class ModelCardRegistry(Registry):
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
+            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
+            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            env variables. In addition, save_path should specify a directory.
         """
 
         model_card = cast(ModelCard, card)
@@ -148,7 +156,11 @@ class ModelCardRegistry(Registry):
         if model_card.data_card_uid is not None:
             self._validate_datacard_uid(uid=model_card.data_card_uid)
 
-        return super().register_card(card=card, version_type=version_type)
+        return super().register_card(
+            card=card,
+            version_type=version_type,
+            save_path=save_path,
+        )
 
     @staticmethod
     def validate(registry_name: str):
@@ -352,8 +364,12 @@ class CardRegistry:
 
         return self.registry.load_card(uid=uid, name=name, team=team, version=version)
 
-    def register_card(self, card: ArtifactCardProto, version_type: str = "minor") -> None:
-
+    def register_card(
+        self,
+        card: ArtifactCardProto,
+        version_type: str = "minor",
+        save_path: Optional[str] = None,
+    ) -> None:
         """
         Adds new record to registry.
 
@@ -361,10 +377,15 @@ class CardRegistry:
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
+            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
+            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            env variables. In addition, save_path should specify a directory.
         """
+
         self.registry.register_card(
             card=card,
             version_type=version_type,
+            save_path=save_path,
         )
 
     def update_card(

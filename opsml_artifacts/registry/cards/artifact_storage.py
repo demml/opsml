@@ -25,18 +25,15 @@ class ArtifactStorage:
 
     def __init__(
         self,
-        storage_client: StorageClientProto,
         artifact_type: str,
-        save_info: Optional[SaveInfo] = None,
+        save_info: SaveInfo,
         file_suffix: Optional[str] = None,
     ):
 
         self.file_suffix = None
         self.artifact_type = artifact_type
-        self.storage_client = storage_client
-
-        if save_info is not None:
-            self.save_info = save_info
+        self.storage_client: StorageClientProto = save_info.storage_client
+        self.save_info = save_info
 
         if file_suffix is not None:
             self.file_suffix = str(file_suffix)
@@ -80,12 +77,10 @@ class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
-        save_info: Optional[SaveInfo] = None,
+        save_info: SaveInfo,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             save_info=save_info,
             file_suffix="parquet",
         )
@@ -142,12 +137,10 @@ class NumpyStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
-        save_info: Optional[SaveInfo] = None,
+        save_info: SaveInfo,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             save_info=save_info,
             file_suffix="zarr",
         )
@@ -194,12 +187,10 @@ class JoblibStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
-        save_info: Optional[SaveInfo] = None,
+        save_info: SaveInfo,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             save_info=save_info,
             file_suffix="joblib",
         )
@@ -238,12 +229,10 @@ class TensorflowModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
-        save_info: Optional[SaveInfo] = None,
+        save_info: SaveInfo,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             save_info=save_info,
             file_suffix=None,
         )
@@ -282,15 +271,9 @@ class TensorflowModelStorage(ArtifactStorage):
 class PyTorchModelStorage(ArtifactStorage):
     """Class that saves and loads a pytorch model"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-        storage_client: StorageClientProto,
-        save_info: Optional[SaveInfo] = None,
-    ):
+    def __init__(self, artifact_type: str, save_info: SaveInfo):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             save_info=save_info,
             file_suffix="pt",
         )
@@ -334,7 +317,6 @@ class PyTorchModelStorage(ArtifactStorage):
 def save_record_artifact_to_storage(
     artifact: Any,
     save_info: SaveInfo,
-    storage_client: StorageClientProto,
     artifact_type: Optional[str] = None,
 ) -> StoragePath:
 
@@ -353,17 +335,15 @@ def save_record_artifact_to_storage(
     return storage_type(
         save_info=save_info,
         artifact_type=_artifact_type,
-        storage_client=storage_client,
     ).save_artifact(artifact=artifact)
 
 
 def load_record_artifact_from_storage(
-    storage_uri: str,
     artifact_type: str,
-    storage_client: StorageClientProto,
+    save_info: SaveInfo,
 ):
 
-    if not bool(storage_uri):
+    if not bool(save_info.blob_path):
         return None
 
     storage_type = next(
@@ -374,6 +354,6 @@ def load_record_artifact_from_storage(
         )
     )
 
-    return storage_type(artifact_type=artifact_type, storage_client=storage_client).load_artifact(
-        storage_uri=storage_uri,
+    return storage_type(artifact_type=artifact_type, save_info=save_info).load_artifact(
+        storage_uri=save_info.blob_path,
     )

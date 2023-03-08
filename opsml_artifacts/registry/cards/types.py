@@ -1,22 +1,13 @@
 from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Generator, List, Optional, Protocol, Tuple
-
 from pydantic import BaseModel
+
+from opsml_artifacts.registry.sql.models import SaveInfo
 
 
 class StoragePath(BaseModel):
     uri: str
-
-
-class SaveInfo(BaseModel):
-    blob_path: str
-    name: str
-    version: str
-    team: str
-
-    class Config:
-        allow_mutation = True
 
 
 class ArtifactStorageTypes(str, Enum):
@@ -79,7 +70,5 @@ class ArtifactCardProto(Protocol):
     team: str
     uid: str
 
-    def create_registry_record(
-        self, uid: str, version: str, registry_name: str, storage_client: StorageClientProto
-    ) -> RegistryRecordProto:
+    def create_registry_record(self, uid: str, save_info: SaveInfo) -> RegistryRecordProto:
         """Create registry record"""

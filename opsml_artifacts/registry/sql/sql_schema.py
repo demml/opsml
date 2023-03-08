@@ -38,11 +38,11 @@ class BaseMixin:
 
     @validates("team")
     def lower_team(self, key, team):
-        return team.lower()
+        return team.lower().replace("_", "-")
 
     @validates("name")
     def lower_name(self, key, name):
-        return name.lower()
+        return name.lower().replace("_", "-")
 
 
 @declarative_mixin
