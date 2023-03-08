@@ -1,6 +1,6 @@
 import os
 from functools import cached_property
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 from pydantic import BaseSettings, Field, root_validator
@@ -40,7 +40,7 @@ class DefaultSettings(BaseSettings):
         keep_untouched = (cached_property,)
 
     @root_validator(pre=True)
-    def set_base_settings(cls, env_vars) -> Dict[str, Any]:
+    def set_base_settings(cls, env_vars) -> Dict[str, Any]:  # pylint: disable=no-self-argument
 
         env_vars, tracking_url = cls._set_tracking_url(env_vars=env_vars)
         env_vars = cls._get_api_client(env_vars=env_vars, tracking_url=tracking_url)
@@ -82,13 +82,13 @@ class DefaultSettings(BaseSettings):
         tracking_url: str,
     ) -> Dict[str, Any]:
 
-        USERNAME = os.environ.get("OPSML_USERNAME")
-        PASSWORD = os.environ.get("OPSML_USERNAME")
+        username = os.environ.get("OPSML_USERNAME")
+        password = os.environ.get("OPSML_USERNAME")
 
         if "http" in tracking_url:
             request_client = requests.Session()
-            if all(bool(cred) for cred in [USERNAME, PASSWORD]):
-                request_client.auth = (USERNAME, PASSWORD)
+            if all(bool(cred) for cred in [username, password]):
+                request_client.auth = (str(username), str(password))
             env_vars["request_client"] = request_client
         return env_vars
 
@@ -130,7 +130,9 @@ class DefaultSettings(BaseSettings):
 
         if "gcs" in storage_info.get("storage_type"):
 
-            from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
+            from opsml_artifacts.helpers.gcp_utils import (  # pylint: disable=import-outside-toplevel
+                GcpCredsSetter,
+            )
 
             gcp_creds = GcpCredsSetter().get_creds()
             storage_info["credentials"] = gcp_creds.creds
@@ -153,7 +155,9 @@ class DefaultSettings(BaseSettings):
 
         if storage_url is not None:
             if "gs://" in storage_url:
-                from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
+                from opsml_artifacts.helpers.gcp_utils import (  # pylint: disable=import-outside-toplevel
+                    GcpCredsSetter,
+                )
 
                 gcp_creds = GcpCredsSetter().get_creds()
                 storage_info["credentials"] = gcp_creds.creds
@@ -171,7 +175,7 @@ class DefaultSettings(BaseSettings):
         return StorageClientInfo(**storage_info)
 
     @cached_property
-    def connection_client(self) -> Type[BaseSQLConnection]:
+    def connection_client(self) -> BaseSQLConnection:
         """Retrieve sql connection client"""
 
         connector_type = "local"

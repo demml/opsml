@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 from functools import cached_property
-from typing import Any, Type, Union
+from typing import Any, Type, cast
 
 import sqlalchemy
 
@@ -71,14 +71,17 @@ class LocalSQLConnection(BaseSQLConnection):
             Instantiated class with required SQLite arguments
         """
 
+        super().__init__(
+            tracking_url=tracking_url,
+            credentials=credentials,
+        )
+
         self.db_file_path: str = f"{os.path.expanduser('~')}/opsml_artifacts_database.db"
         self.storage_backend: str = SqlType.LOCAL.value
-        self._tracking_url = tracking_url
-        self.credentials = credentials
 
     @cached_property
     def _sqlalchemy_prefix(self):
-        return self._tracking_url
+        return self.tracking_url
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
         engine = sqlalchemy.create_engine(f"{self._sqlalchemy_prefix}/{self.db_file_path}")
@@ -87,9 +90,6 @@ class LocalSQLConnection(BaseSQLConnection):
     @staticmethod
     def validate_type(connector_type: str) -> bool:
         return connector_type == SqlType.LOCAL
-
-
-SqlConnectorType = Union[CloudSqlMySql, CloudSqlPostgresql, LocalSQLConnection]
 
 
 def all_subclasses(cls):
@@ -114,4 +114,4 @@ class SQLConnector:
             ),
             LocalSQLConnection,
         )
-        return connector
+        return cast(Type[BaseSQLConnection], connector)

@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Iterable, Optional, Type, Union, cast
+from typing import Any, Dict, Iterable, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
@@ -43,6 +43,7 @@ class SQLRegistryBase:
         self.table_name = table_name
         self.supported_card = f"{table_name.split('_')[1]}Card"
         self.storage_client = settings.storage_client
+        self._table = TableSchema.get_table(table_name=table_name)
 
     def _get_session(self):
         raise NotImplementedError
@@ -63,11 +64,11 @@ class SQLRegistryBase:
         try:
             version_idx = sem_var_map[version_type.lower()]
         except KeyError as error:
-            raise ValueError(
+            raise KeyError(
                 f"""f{version_type} is not a recognized sem_var type.
             Valid types are "major", "minor", and "patch". {error}
             """
-            )
+            ) from error
 
         version_splits[version_idx] = str(int(version_splits[version_idx]) + 1)
         for idx in range(len(sem_var_map.keys())):
@@ -76,7 +77,7 @@ class SQLRegistryBase:
 
         return ".".join(version_splits)
 
-    def _set_version(self, name: str, team: str) -> str:
+    def _set_version(self, name: str, team: str, version_type: str) -> str:
         raise NotImplementedError
 
     def _is_correct_card_type(self, card: ArtifactCardProto):
@@ -102,7 +103,7 @@ class SQLRegistryBase:
     def _update_record(self, record: Dict[str, Any]):
         raise NotImplementedError
 
-    def register_card(self, card: ArtifactCardProto) -> None:
+    def register_card(self, card: ArtifactCardProto, version_type: str) -> None:
         raise NotImplementedError
 
     def list_cards(
@@ -111,7 +112,7 @@ class SQLRegistryBase:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> pd.DataFrame:
         raise NotImplementedError
 
     def _check_uid(self, uid: str, table_to_check: str):
@@ -133,7 +134,6 @@ class SQLRegistry(SQLRegistryBase):
 
         self._engine = self._get_engine()
         self._session = self._get_session()
-        self._table = TableSchema.get_table(table_name=table_name)
         self._create_table_if_not_exists()
         self.table_name = self._table.__tablename__
 
@@ -279,7 +279,7 @@ class SQLRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> pd.DataFrame:
 
         """Retrieves records from registry
 
@@ -363,10 +363,11 @@ class SQLRegistry(SQLRegistryBase):
 #        self._increment_version(version=response.get("version"))
 
 
-def get_sql_registry_base() -> Type[SQLRegistryBase]:
+# mypy isnt good with dynamic class creation
+def get_sql_registry_base() -> Any:
     # if settings.request_client is not None:
     # return None
-    return SQLRegistry
+    return cast(Any, SQLRegistry)
 
 
 Registry = get_sql_registry_base()

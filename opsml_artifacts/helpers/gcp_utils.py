@@ -1,7 +1,6 @@
 import base64
 import json
 import os
-from enum import Enum
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import google.auth

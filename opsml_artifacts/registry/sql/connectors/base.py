@@ -46,10 +46,12 @@ class CloudSQLConnection(BaseSQLConnection):
     def _connection_name(self) -> str:
         """Gets connection name from connection parts"""
 
-        connection_name = self.connection_parts.normalized_query.get("host")[0]
+        connection_name = self.connection_parts.normalized_query.get("host")[0]  # type: ignore
         if "cloudsql" in connection_name:
             return connection_name.split("cloudsql/")[-1]
+        return connection_name
 
+    @property
     def _python_db_type(self) -> str:
         """Gets db type for sqlalchemy connection prefix"""
 
