@@ -16,6 +16,7 @@ from opsml_artifacts.registry.cards.cards import (
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator
 from opsml_artifacts.registry.sql.sql_schema import TableSchema
+from opsml_artifacts.registry.sql.models import SaveInfo
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -103,7 +104,23 @@ class SQLRegistryBase:
     def _update_record(self, record: Dict[str, Any]):
         raise NotImplementedError
 
-    def register_card(self, card: ArtifactCardProto, version_type: str) -> None:
+    def register_card(
+        self,
+        card: ArtifactCardProto,
+        version_type: str = "minor",
+        save_path: Optional[str] = None,
+    ) -> None:
+        """
+        Adds new record to registry.
+
+        Args:
+            Card (ArtifactCard): Card to register
+            version_type (str): Version type for increment. Options are "major", "minor" and
+            "patch". Defaults to "minor"
+            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
+            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            env variables. In addition, save_path should specify a directory.
+        """
         raise NotImplementedError
 
     def list_cards(
@@ -231,7 +248,12 @@ class SQLRegistry(SQLRegistryBase):
             record.get("version"),
         )
 
-    def register_card(self, card: ArtifactCardProto, version_type: str = "minor") -> None:
+    def register_card(
+        self,
+        card: ArtifactCardProto,
+        version_type: str = "minor",
+        save_path: Optional[str] = None,
+    ) -> None:
         """
         Adds new record to registry.
 
@@ -239,6 +261,9 @@ class SQLRegistry(SQLRegistryBase):
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
+            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
+            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            env variables. In addition, save_path should specify a directory.
         """
 
         # check compatibility
@@ -264,11 +289,18 @@ class SQLRegistry(SQLRegistryBase):
             version_type=version_type,
         )
 
+        if save_path is None:
+            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{version}"
+
         record = card.create_registry_record(
-            registry_name=self.table_name,
+            save_info=SaveInfo(
+                blob_path=save_path,
+                name=card.name,
+                team=card.team,
+                version=version,
+                storage_client=self.storage_client,
+            ),
             uid=self._get_uid(),
-            version=version,
-            storage_client=self.storage_client,
         )
 
         self._add_and_commit(record=record.dict())
@@ -284,7 +316,7 @@ class SQLRegistry(SQLRegistryBase):
         """Retrieves records from registry
 
         Args:
-            name (str): Artifact ecord name
+            name (str): Artifact record name
             team (str): Team data is assigned to
             version (int): Optional version number of existing data. If not specified,
             the most recent version will be used
