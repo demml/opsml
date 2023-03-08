@@ -2,7 +2,7 @@ import uuid
 from typing import Any, Dict, Iterable, Optional, Union, cast, Type
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-
+import pandas as pd
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
@@ -41,7 +41,7 @@ class SQLRegistryBase:
             table_name (str): CardRegistry table name
         """
         self.table_name = table_name
-        self.supported_card = f"{table_name.split('_')[0]}Card"
+        self.supported_card = f"{table_name.split('_')[1]}Card"
         self.storage_client = settings.storage_client
 
     def _get_session(self):
@@ -142,11 +142,11 @@ class SQLRegistry(SQLRegistryBase):
 
     def _get_session(self):
         """Sets the sqlalchemy session to be used for all queries"""
-        session = sessionmaker(bind=self.engine)
+        session = sessionmaker(bind=self._engine)
         return session
 
     def _create_table_if_not_exists(self):
-        self._table.__table__.create(bind=self.engine, checkfirst=True)
+        self._table.__table__.create(bind=self._engine, checkfirst=True)
 
     def _set_version(self, name: str, team: str, version_type: str) -> str:
         """Sets a version following semantic version standards
@@ -203,10 +203,10 @@ class SQLRegistry(SQLRegistryBase):
         return result
 
     def _add_and_commit(self, record: Dict[str, Any]):
-        record = self._table(**record)
+        sql_record = self._table(**record)
 
         with self._session() as sess:
-            sess.add(record)
+            sess.add(sql_record)
             sess.commit()
 
         logger.info(
@@ -231,11 +231,14 @@ class SQLRegistry(SQLRegistryBase):
             record.get("version"),
         )
 
-    def register_card(self, card: ArtifactCardProto) -> None:
+    def register_card(self, card: ArtifactCardProto, version_type: str = "minor") -> None:
         """
         Adds new record to registry.
+
         Args:
-            data_card (DataCard or RegistryRecord): DataCard to register. RegistryRecord is also accepted.
+            Card (ArtifactCard): Card to register
+            version_type (str): Version type for increment. Options are "major", "minor" and
+            "patch". Defaults to "minor"
         """
 
         # check compatibility
@@ -253,7 +256,13 @@ class SQLRegistry(SQLRegistryBase):
             """
             )
 
-        version = self._set_version(name=card.name, team=card.team)
+        # need to find way to compare previous cards and automatically
+        # determine if change is major or minor
+        version = self._set_version(
+            name=card.name,
+            team=card.team,
+            version_type=version_type,
+        )
 
         record = card.create_registry_record(
             registry_name=self.table_name,
@@ -294,10 +303,16 @@ class SQLRegistry(SQLRegistryBase):
             uid=uid,
         )
 
+        results_list = []
         with self._session() as sess:
-            result = sess.execute(query).all()
+            results = sess.execute(query).all()
 
-        return result.__dict__
+        for row in results:
+            result_dict = row[0].__dict__
+            result_dict.pop("_sa_instance_state")
+            results_list.append(result_dict)
+
+        return pd.DataFrame(results_list)
 
     def _check_uid(self, uid: str, table_to_check: str):
         query = query_creator.uid_exists_query(

@@ -26,6 +26,7 @@ class DefaultSettings(BaseSettings):
     request_client: Optional[requests.Session] = Field(None)
 
     class Config:
+        allow_mutation = True
         arbitrary_types_allowed = True
         keep_untouched = (cached_property,)
 
@@ -82,8 +83,8 @@ class DefaultSettings(BaseSettings):
             env_vars["request_client"] = request_client
         return env_vars
 
-    @classmethod
-    def _get_storage_info(cls, env_vars: Dict[str, Any], tracking_url: str) -> StorageInfo:
+    @staticmethod
+    def _get_storage_info(env_vars: Dict[str, Any], tracking_url: str) -> StorageInfo:
         """Sets storage info based on tracking url. If tracking url is
         http then external api will be used to get storage info. If no
         external api is detected, local defaults will be used.
@@ -96,12 +97,11 @@ class DefaultSettings(BaseSettings):
         """
         request_client = env_vars.get("request_client")
         if request_client is not None:
-            return cls._get_storage_info_from_api(request_client, tracking_url)
-        return cls._get_storage_info_from_local()
+            return DefaultSettings._get_storage_info_from_api(request_client, tracking_url)
+        return DefaultSettings._get_storage_info_from_local()
 
-    @classmethod
+    @staticmethod
     def _get_storage_info_from_api(
-        cls,
         request_client: requests.Session,
         tracking_url: str,
     ) -> StorageInfo:
@@ -131,8 +131,8 @@ class DefaultSettings(BaseSettings):
 
         return StorageClientInfo(**storage_info)
 
-    @classmethod
-    def _get_storage_info_from_local(cls) -> StorageClientInfo:
+    @staticmethod
+    def _get_storage_info_from_local(storage_url: Optional[str] = None) -> StorageClientInfo:
         """Gets storage info from external opsml api
 
         Returns:
@@ -140,7 +140,7 @@ class DefaultSettings(BaseSettings):
 
         """
         storage_info: Dict[str, Any] = {}
-        storage_url = os.environ.get("OPSML_STORAGE_URL")
+        storage_url = os.environ.get("OPSML_STORAGE_URL", storage_url)
 
         if storage_url is not None:
             if "gs://" in storage_url:
@@ -175,8 +175,6 @@ class DefaultSettings(BaseSettings):
 
         connector = SQLConnector.get_connector(connector_type=connector_type)
 
-        print(connector)
-
         if hasattr(self.storage_info, "credentials"):
             credentials = self.storage_info.credentials
         else:
@@ -186,6 +184,19 @@ class DefaultSettings(BaseSettings):
             tracking_url=self.opsml_tacking_url,
             credentials=credentials,
         )
+
+    def set_storage_url(self, storage_url: str) -> None:
+        """Set storage url and storage client from storage_url
+
+        Args:
+            storage_url (str): Optional storage url
+        """
+
+        storage_info = self._get_storage_info_from_local(storage_url=storage_url)
+        storage_client = StorageClientGetter.get_storage_client(storage_info=storage_info)
+
+        setattr(self, "storage_info", storage_info)
+        setattr(self, "storage_client", storage_client)
 
 
 settings = DefaultSettings()

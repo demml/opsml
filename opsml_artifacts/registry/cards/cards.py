@@ -45,7 +45,7 @@ class ArtifactCard(BaseModel):
     name: str
     team: str
     user_email: str
-    version: Optional[int] = None
+    version: Optional[str] = None
     uid: Optional[str] = None
 
     class Config:
@@ -67,7 +67,7 @@ class ArtifactCard(BaseModel):
     def _set_additional_attr(
         self,
         uid: str,
-        version: int,
+        version: str,
         storage_client: StorageClientProto,
     ):
         setattr(self, "uid", uid)
@@ -77,7 +77,7 @@ class ArtifactCard(BaseModel):
     def create_registry_record(
         self,
         uid: str,
-        version: int,
+        version: str,
         registry_name: str,
         storage_client: StorageClientProto,
     ) -> RegistryRecordProto:
@@ -86,7 +86,7 @@ class ArtifactCard(BaseModel):
         Args:
             registry_name (str): Name of registry
             uid (str): Unique id associated with artifact
-            version (int): Version for artifact
+            version (str): Version for artifact
         """
         raise NotImplementedError
 
@@ -131,7 +131,7 @@ class DataCard(ArtifactCard):
 
         data_uri (str): GCS location where converted pyarrow table is stored
         drift_uri (str): GCS location where drift report is stored
-        version (int): DataCard version
+        version (str): DataCard version
         feature_map (dictionary): Map of features in data (inferred when converting to pyrarrow table)
         data_type (str): Data type inferred from supplied data
         uid (str): Unique id assigned to the DataCard
@@ -228,7 +228,7 @@ class DataCard(ArtifactCard):
 
         return data_holder
 
-    def _convert_and_save_data(self, blob_path: str, version: int) -> None:
+    def _convert_and_save_data(self, blob_path: str, version: str) -> None:
 
         """Converts data into a pyarrow table or numpy array and saves to gcs.
 
@@ -255,7 +255,7 @@ class DataCard(ArtifactCard):
         # manually overwrite
         self.overwrite_converted_data_attributes(converted_data=converted_data)
 
-    def _save_drift(self, blob_path: str, version: int) -> None:
+    def _save_drift(self, blob_path: str, version: str) -> None:
 
         """Saves drift report to backend storage"""
 
@@ -292,7 +292,7 @@ class DataCard(ArtifactCard):
     def create_registry_record(
         self,
         uid: str,
-        version: int,
+        version: str,
         registry_name: str,
         storage_client: StorageClientProto,
     ) -> RegistryRecordProto:
@@ -339,7 +339,7 @@ class ModelCard(ArtifactCard):
         sample_input_data (pandas dataframe, numpy array, or dictionary of numpy arrays):
         Sample of data model was trained on
         uid (str): Unique id (assigned if card has been registered)
-        version (int): Current version (assigned if card has been registered)
+        version (str): Current version (assigned if card has been registered)
         data_card_uid (str): Uid of the DataCard associated with training the model
         onnx_model_data (DataDict): Pydantic model containing onnx data schema
         onnx_model_def (ModelDefinition): Pydantic model containing OnnxModel definition
@@ -417,7 +417,7 @@ class ModelCard(ArtifactCard):
 
         setattr(self, "trained_model", trained_model)
 
-    def _save_model(self, blob_path: str, version: int) -> StoragePath:
+    def _save_model(self, blob_path: str, version: str) -> StoragePath:
 
         save_info = SaveInfo(
             blob_path=blob_path,
@@ -432,7 +432,7 @@ class ModelCard(ArtifactCard):
             storage_client=cast(StorageClientProto, self.storage_client),
         )
 
-    def save_modelcard(self, blob_path: str, version: int):
+    def save_modelcard(self, blob_path: str, version: str):
 
         save_info = SaveInfo(
             blob_path=blob_path,
@@ -471,7 +471,7 @@ class ModelCard(ArtifactCard):
     def create_registry_record(
         self,
         uid: str,
-        version: int,
+        version: str,
         registry_name: str,
         storage_client: StorageClientProto,
     ) -> RegistryRecordProto:
@@ -489,14 +489,14 @@ class ModelCard(ArtifactCard):
         self.save_modelcard(blob_path=registry_name, version=version)
         return cast(RegistryRecordProto, ModelRegistryRecord(**self.__dict__))
 
-    def _set_version_for_predictor(self) -> int:
+    def _set_version_for_predictor(self) -> str:
         if self.version is None:
             logger.warning(
                 """ModelCard has no version (not registered).
                 Defaulting to 1 (for testing only)
             """
             )
-            version = 1
+            version = "1.0.0"
         else:
             version = self.version
 
@@ -600,7 +600,7 @@ class PipelineCard(ArtifactCard):
         team (str): Team that this card is associated with
         user_email (str): Email to associate with card
         uid (str): Unique id (assigned if card has been registered)
-        version (int): Current version (assigned if card has been registered)
+        version (str): Current version (assigned if card has been registered)
         pipeline_code_uri (str): Storage uri of pipeline code
         data_card_uids (dictionary): Optional dictionary of DataCard uids to associate with pipeline
         model_card_uids (dictionary): Optional dictionary of ModelCard uids to associate with pipeline
@@ -642,7 +642,7 @@ class PipelineCard(ArtifactCard):
     def create_registry_record(
         self,
         uid: str,
-        version: int,
+        version: str,
         registry_name: str,
         storage_client: StorageClientProto,
     ) -> RegistryRecordProto:
@@ -678,7 +678,7 @@ class ExperimentCard(ArtifactCard):
         artifact_uris (dict): Optional dictionary of artifact uris associated with experiment artifacts.
         This is set when registering the experiment
         uid (str): Unique id (assigned if card has been registered)
-        version (int): Current version (assigned if card has been registered)
+        version (str): Current version (assigned if card has been registered)
 
 
     """
@@ -731,7 +731,7 @@ class ExperimentCard(ArtifactCard):
         self.artifacts = {**new_artifact, **curr_artifacts}
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
-    def save_artifacts(self, blob_path: str, version: int) -> None:
+    def save_artifacts(self, blob_path: str, version: str) -> None:
 
         artifact_uris: Dict[str, str] = {}
 
@@ -754,7 +754,7 @@ class ExperimentCard(ArtifactCard):
     def create_registry_record(
         self,
         uid: str,
-        version: int,
+        version: str,
         registry_name: str,
         storage_client: StorageClientProto,
     ) -> RegistryRecordProto:

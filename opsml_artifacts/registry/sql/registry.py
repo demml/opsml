@@ -150,7 +150,7 @@ class ExperimentCardRegistry(Registry):
         self,
         name: Optional[str] = None,
         team: Optional[str] = None,
-        version: Optional[int] = None,
+        version: Optional[str] = None,
         uid: Optional[str] = None,
     ) -> ExperimentCard:
 
@@ -168,7 +168,7 @@ class ExperimentCardRegistry(Registry):
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
         experiment_record = LoadedExperimentRecord(**sql_data.__dict__)
-        experiment_record.load_artifacts()
+        experiment_record.load_artifacts(storage_client=self.storage_client)
         return ExperimentCard(**experiment_record.dict())
 
     def update_card(self, card: ExperimentCard) -> None:
@@ -332,7 +332,7 @@ class CardRegistry:
             uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
 
         Returns
-            ModelCard or DataCard
+            ArtifactCard
         """
         if name is not None:
             name = name.lower()
