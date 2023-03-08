@@ -20,7 +20,7 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
 
     save_info = SaveInfo(
         blob_path="blob",
-        version=1,
+        version="1.0.0",
         team="mlops",
         name="test",
     )
@@ -41,7 +41,7 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
 def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
     save_info = SaveInfo(
         blob_path="blob",
-        version=1,
+        version="1.0.0",
         team="mlops",
         name="test",
     )
@@ -81,7 +81,7 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
 
     save_info = SaveInfo(
         blob_path="blob",
-        version=1,
+        version="1.0.0",
         team="mlops",
         name="test",
     )
@@ -107,7 +107,7 @@ def test_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
     save_info = SaveInfo(
         blob_path="blob",
-        version=1,
+        version="1.0.0",
         team="mlops",
         name="test",
     )
@@ -136,7 +136,7 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
     model, data = load_pytorch_resnet
     save_info = SaveInfo(
         blob_path="blob",
-        version=1,
+        version="1.0.0",
         team="mlops",
         name="test",
     )

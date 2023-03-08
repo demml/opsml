@@ -12,7 +12,6 @@ import zarr
 
 from opsml_artifacts.registry.cards.storage_system import StorageSystem
 
-# from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.types import (
     DATA_ARTIFACTS,
     ArtifactStorageTypes,

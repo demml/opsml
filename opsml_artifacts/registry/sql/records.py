@@ -13,7 +13,7 @@ class DataRegistryRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str]
     data_splits: Optional[Dict[str, List[Dict[str, Any]]]]
-    version: int
+    version: str
     data_type: str
     name: str
     team: str
@@ -36,7 +36,7 @@ class DataRegistryRecord(BaseModel):
 
 class ModelRegistryRecord(BaseModel):
     uid: str
-    version: int
+    version: str
     team: str
     user_email: str
     name: str
@@ -53,7 +53,7 @@ class ExperimentRegistryRecord(BaseModel):
     team: str
     user_email: str
     uid: Optional[str]
-    version: Optional[int]
+    version: Optional[str]
     data_card_uids: Optional[List[str]]
     model_card_uids: Optional[List[str]]
     pipeline_card_uid: Optional[str]
@@ -66,7 +66,7 @@ class PipelineRegistryRecord(BaseModel):
     team: str
     user_email: str
     uid: Optional[str]
-    version: Optional[int]
+    version: Optional[str]
     pipeline_code_uri: Optional[str]
     data_card_uids: Optional[Dict[str, str]]
     model_card_uids: Optional[Dict[str, str]]
@@ -77,7 +77,7 @@ class LoadedDataRecord(BaseModel):
     data_uri: str
     drift_uri: Optional[str]
     data_splits: Optional[List[Dict[str, Any]]]
-    version: int
+    version: str
     data_type: str
     name: str
     team: str
@@ -121,7 +121,7 @@ class LoadedDataRecord(BaseModel):
 
 class LoadedModelRecord(BaseModel):
     uid: str
-    version: int
+    version: str
     team: str
     user_email: str
     name: str
@@ -163,7 +163,7 @@ class LoadedExperimentRecord(BaseModel):
     team: str
     user_email: str
     uid: Optional[str]
-    version: Optional[int]
+    version: Optional[str]
     data_card_uids: Optional[List[str]]
     model_card_uids: Optional[List[str]]
     pipeline_card_uid: Optional[str]
@@ -175,7 +175,7 @@ class LoadedExperimentRecord(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def load_artifacts(self) -> None:
+    def load_artifacts(self, storage_client: StorageClientProto) -> None:
         """Loads experiment artifacts to pydantic model"""
 
         loaded_artifacts: Dict[str, Any] = {}
@@ -186,9 +186,10 @@ class LoadedExperimentRecord(BaseModel):
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 storage_uri=uri,
                 artifact_type="artifact",
-                storage_client=cast(StorageClientProto, self.storage_client),
+                storage_client=storage_client,
             )
         setattr(self, "artifacts", loaded_artifacts)
+        setattr(self, "storage_client", storage_client)
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -197,7 +198,7 @@ class LoadedPipelineRecord(BaseModel):
     team: str
     user_email: str
     uid: Optional[str]
-    version: Optional[int]
+    version: Optional[str]
     pipeline_code_uri: Optional[str]
     data_card_uids: Optional[Dict[str, str]]
     model_card_uids: Optional[Dict[str, str]]

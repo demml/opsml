@@ -12,7 +12,7 @@ class StoragePath(BaseModel):
 class SaveInfo(BaseModel):
     blob_path: str
     name: str
-    version: int
+    version: str
     team: str
 
     class Config:
