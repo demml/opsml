@@ -19,16 +19,13 @@ class ModelLoaderCli:
     """Class for loading ModelCard Onnx definition"""
 
     storage_type: str
-    versions: List[Optional[int]]
+    versions: List[Optional[str]]
     name: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
 
     def __post_init__(self):
-        self.registry = self._set_registry(storage_type=self.storage_type)
-
-    def _set_registry(self, storage_type: str) -> CardRegistry:
-        return CardRegistry(registry_name="model", connection_type=storage_type)
+        self.registry = CardRegistry(registry_name="model")
 
     def _set_path(self, api_def: ModelApiDef) -> Path:
         path = Path(f"{BASE_SAVE_PATH}/{self.name}/{api_def.model_version}/")
