@@ -83,7 +83,7 @@ class DefaultSettings(BaseSettings):
     ) -> Dict[str, Any]:
 
         username = os.environ.get("OPSML_USERNAME")
-        password = os.environ.get("OPSML_USERNAME")
+        password = os.environ.get("OPSML_PASSWORD")
 
         if "http" in tracking_url:
             request_client = requests.Session()
