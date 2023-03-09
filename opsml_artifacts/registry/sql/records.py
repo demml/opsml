@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, root_validator, validator
 
@@ -6,8 +6,8 @@ from opsml_artifacts.drift.models import DriftReport
 from opsml_artifacts.registry.cards.artifact_storage import (
     load_record_artifact_from_storage,
 )
-from opsml_artifacts.registry.sql.models import SaveInfo
 from opsml_artifacts.registry.cards.storage_system import StorageClientProto
+from opsml_artifacts.registry.sql.models import SaveInfo
 
 
 class DataRegistryRecord(BaseModel):

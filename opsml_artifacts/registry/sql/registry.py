@@ -143,8 +143,9 @@ class ModelCardRegistry(Registry):
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
-            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            save_path (str): Blob path to save card artifacts too.
+            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
+            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
             env variables. In addition, save_path should specify a directory.
         """
 
@@ -377,8 +378,9 @@ class CardRegistry:
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
-            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            save_path (str): Blob path to save card artifacts too.
+            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
+            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
             env variables. In addition, save_path should specify a directory.
         """
 
