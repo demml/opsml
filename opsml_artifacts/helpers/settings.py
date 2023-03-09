@@ -151,7 +151,7 @@ class DefaultSettings(BaseSettings):
 
         """
         storage_info: Dict[str, Any] = {}
-        storage_url = os.environ.get("OPSML_STORAGE_URL", storage_url)
+        storage_url = storage_url or os.environ.get("OPSML_STORAGE_URL")
 
         if storage_url is not None:
             if "gs://" in storage_url:
