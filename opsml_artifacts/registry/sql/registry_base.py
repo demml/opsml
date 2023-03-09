@@ -14,9 +14,9 @@ from opsml_artifacts.registry.cards.cards import (
     PipelineCard,
 )
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
+from opsml_artifacts.registry.sql.models import SaveInfo
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator
 from opsml_artifacts.registry.sql.sql_schema import TableSchema
-from opsml_artifacts.registry.sql.models import SaveInfo
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -118,8 +118,9 @@ class SQLRegistryBase:
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
             save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
-            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
-            env variables. In addition, save_path should specify a directory.
+            (e.g. "gs://my_bucket") - this prefix is already inferred using either
+            "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL" env variables. In addition, save_path should
+            specify a directory.
         """
         raise NotImplementedError
 
@@ -261,8 +262,9 @@ class SQLRegistry(SQLRegistryBase):
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
-            (e.g. "gs://my_bucket") - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            save_path (str): Blob path to save card artifacts too.
+            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
+            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
             env variables. In addition, save_path should specify a directory.
         """
 
