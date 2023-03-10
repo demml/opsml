@@ -46,6 +46,6 @@ def test_server():
 
     test_app.start()
 
-    yield
+    yield test_app
 
     test_app.shutdown()

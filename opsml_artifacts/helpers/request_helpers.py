@@ -14,7 +14,7 @@ class ApiClient:
     @retry(stop=stop_after_attempt(3))
     def post_request(self, url: str, json: Optional[Dict[str, Any]]) -> Dict[str, Any]:
 
-        response = self._client.post(url=url, json=json)
+        response = self.client.post(url=url, json=json)
         if response.status_code == 200:
             return response.json()
         raise ValueError(

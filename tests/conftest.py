@@ -4,6 +4,9 @@ from sqlalchemy import create_engine
 from typing import Dict, Any
 import requests
 import httpx
+from multiprocessing import Process
+import uvicorn
+import time
 
 #
 ## from opsml_artifacts.helpers.settings import SnowflakeParams
@@ -34,7 +37,9 @@ import lightgbm as lgb
 import joblib
 from pydantic import BaseModel
 
+session = requests.Session()
 
+################ Test Classes
 class Blob(BaseModel):
     name: str = "test_upload/test.csv"
 
@@ -58,7 +63,23 @@ class Bucket(BaseModel):
         return [Blob()]
 
 
-#
+@pytest.fixture(scope="function")
+def mock_opsml_server(monkeypatch):
+
+    monkeypatch.setenv(name="OPSML_TRACKING_URL", value="sqlite://")
+    monkeypatch.setenv(name="OPSML_STORAGE_URL", value=None)
+
+    from opsml_artifacts.helpers.settings import settings
+
+    settings.opsml_tacking_url = "sqlite://"
+    from tests.server import TestApp
+
+    app = TestApp()
+    app.start()
+    yield app
+    app.shutdown()
+
+
 @pytest.fixture(scope="function")
 def mock_gcp_vars():
     cred_path = os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")

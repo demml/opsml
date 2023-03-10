@@ -58,7 +58,7 @@ class CloudSqlMySql(CloudSQLConnection):
 class LocalSQLConnection(BaseSQLConnection):
     def __init__(
         self,
-        tracking_url: str = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db",
+        tracking_url: str,
         credentials: Any = None,
     ):
         """
