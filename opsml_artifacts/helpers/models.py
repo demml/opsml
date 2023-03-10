@@ -1,6 +1,6 @@
 import os
 from typing import Any, Optional, Union
-
+from enum import Enum
 from pydantic import BaseModel
 
 
@@ -15,3 +15,15 @@ class GcsStorageClientInfo(StorageClientInfo):
 
 
 StorageInfo = Union[StorageClientInfo, GcsStorageClientInfo]
+
+PATH_PREFIX = "opsml"
+
+
+class ApiRoutes(str, Enum):
+    CHECK_UID = f"{PATH_PREFIX}/check_uid"
+    SET_VERSION = f"{PATH_PREFIX}/set_version"
+    LIST_CARDS = f"{PATH_PREFIX}/list_cards"
+    STORAGE_PATH = f"{PATH_PREFIX}/storage_path"
+    ADD_RECORD = f"{PATH_PREFIX}/add_record"
+    UPDATE_RECORD = f"{PATH_PREFIX}/update_record"
+    QUERY_RECORD = f"{PATH_PREFIX}/query_record"
