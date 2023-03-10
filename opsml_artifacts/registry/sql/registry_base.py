@@ -17,6 +17,7 @@ from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.models import SaveInfo
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator
 from opsml_artifacts.registry.sql.sql_schema import TableSchema
+from opsml_artifacts.helpers.request_helpers import post_request, get_request
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -370,31 +371,41 @@ class SQLRegistry(SQLRegistryBase):
 
 
 # work in progress
-# class SQLRegistryAPI(SQLRegistryBase):
-#    def __init__(self, table_name: str):
-#        super().__init__(table_name)
-#
-#        self._session = self._get_session()
-#        self._api_url = settings.opsml_tacking_url
-#
-#    def _get_session(self):
-#        """Gets the requests session for connecting to the opsml api"""
-#        return request_session
-#
-#    def _set_version(self, name: str, team: str, version_type: str) -> str:
-#        url = f"{self._api_url}/set_version"
-#
-#        response = post(
-#            session=self._session,
-#            url=url,
-#            json={
-#                "name": name,
-#                "team": team,
-#                "table": self.self.table_name,
-#            },
-#        )
-#
-#        self._increment_version(version=response.get("version"))
+class SQLRegistryAPI(SQLRegistryBase):
+    def __init__(self, table_name: str):
+        super().__init__(table_name)
+
+        self._session = self._get_session()
+        self._api_url = settings.opsml_tacking_url
+
+    def _get_session(self):
+        """Gets the requests session for connecting to the opsml api"""
+        return settings.request_client
+
+    def _set_version(self, name: str, team: str, version_type: str = "minor") -> str:
+        url = f"{self._api_url}/set_version"
+
+        response = post_request(
+            session=self._session,
+            url=url,
+            json={
+                "name": name,
+                "team": team,
+                "version_type": version_type,
+                "table": self.table_name,
+            },
+        )
+
+        data = response.json()
+        if bool(getattr(data, "uid_exists")):
+            raise ValueError(
+                """This Card has already been registered.
+            If the card has been modified try upating the Card in the registry.
+            If registering a new Card, create a new Card of the correct type.
+            """
+            )
+
+        return data["version"]
 
 
 # mypy isnt good with dynamic class creation
