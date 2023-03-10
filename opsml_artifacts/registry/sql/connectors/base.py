@@ -16,8 +16,13 @@ class BaseSQLConnection:
         """Base Connection model that all connections inherit from"""
 
         self.tracking_url = tracking_url
-        self.connection_parts = make_url(tracking_url)
+        self.connection_parts = self._make_url()
         self.credentials = credentials
+
+    def _make_url(self) -> Any:
+        if ":memory:" in self.tracking_url:
+            return None
+        return make_url(self.tracking_url)
 
     @cached_property
     def _sqlalchemy_prefix(self):

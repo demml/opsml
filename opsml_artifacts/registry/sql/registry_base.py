@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.settings import settings, OPSML_PREFIX
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -17,7 +17,6 @@ from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.models import SaveInfo
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator
 from opsml_artifacts.registry.sql.sql_schema import TableSchema
-from opsml_artifacts.helpers.request_helpers import post_request, get_request
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -376,7 +375,7 @@ class SQLRegistryAPI(SQLRegistryBase):
         super().__init__(table_name)
 
         self._session = self._get_session()
-        self._api_url = settings.opsml_tacking_url
+        self._api_url = f"{settings.opsml_tacking_url}/{OPSML_PREFIX}"
 
     def _get_session(self):
         """Gets the requests session for connecting to the opsml api"""
@@ -385,8 +384,7 @@ class SQLRegistryAPI(SQLRegistryBase):
     def _set_version(self, name: str, team: str, version_type: str = "minor") -> str:
         url = f"{self._api_url}/set_version"
 
-        response = post_request(
-            session=self._session,
+        response = self._session.post_request(
             url=url,
             json={
                 "name": name,
@@ -410,8 +408,8 @@ class SQLRegistryAPI(SQLRegistryBase):
 
 # mypy isnt good with dynamic class creation
 def get_sql_registry_base() -> Any:
-    # if settings.request_client is not None:
-    # return None
+    if settings.request_client is not None:
+        return cast(Any, SQLRegistryAPI)
     return cast(Any, SQLRegistry)
 
 

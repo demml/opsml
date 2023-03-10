@@ -58,7 +58,7 @@ class CloudSqlMySql(CloudSQLConnection):
 class LocalSQLConnection(BaseSQLConnection):
     def __init__(
         self,
-        tracking_url: str,
+        tracking_url: str = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db",
         credentials: Any = None,
     ):
         """
@@ -76,7 +76,6 @@ class LocalSQLConnection(BaseSQLConnection):
             credentials=credentials,
         )
 
-        self.db_file_path: str = f"{os.path.expanduser('~')}/opsml_artifacts_database.db"
         self.storage_backend: str = SqlType.LOCAL.value
 
     @cached_property
@@ -84,7 +83,7 @@ class LocalSQLConnection(BaseSQLConnection):
         return self.tracking_url
 
     def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        engine = sqlalchemy.create_engine(f"{self._sqlalchemy_prefix}/{self.db_file_path}")
+        engine = sqlalchemy.create_engine(self._sqlalchemy_prefix)
         return engine
 
     @staticmethod

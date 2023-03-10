@@ -1,37 +1,37 @@
 import functools
 from typing import Any, Dict, Optional
-
-import requests
-
+import httpx
+from tenacity import retry, stop_after_attempt
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def retry(api_call):
-    @functools.wraps(api_call)
-    def wrapper_decorator(*args, **kwargs) -> Dict[str, Any]:
-        retries = 0
-        while retries < 5:
-            response: requests.Response = api_call(*args, **kwargs)
-            if response.status_code == 200:
-                return response.json()
-            retries += 1
-        raise ValueError(f"Failed to retrieve data from api. {response.json()}")
+class ApiClient:
+    def __init__(self):
+        self.client = httpx.Client()
 
-    return wrapper_decorator
+    @retry(stop=stop_after_attempt(3))
+    def post_request(self, url: str, json: Optional[Dict[str, Any]]) -> Dict[str, Any]:
 
+        response = self._client.post(url=url, json=json)
+        if response.status_code == 200:
+            return response.json()
+        raise ValueError(
+            """Failed to to make server call for post request
+            Url: %s""",
+            url,
+        )
 
-@retry
-def post_request(session: requests.Session, url: str, json: Optional[Dict[str, Any]]) -> Any:
+    @retry(stop=stop_after_attempt(3))
+    def get_request(self, url: str) -> Dict[str, Any]:
 
-    response = session.post(url=url, json=json)
-    return response
+        response = self.client.get(url=url)
+        if response.status_code == 200:
+            return response.json()
 
-
-@retry
-def get_request(session: requests.Session, url: str) -> Any:
-
-    response = session.get(url=url)
-
-    return response
+        raise ValueError(
+            """Failed to to make server call for get request
+            Url: %s""",
+            url,
+        )

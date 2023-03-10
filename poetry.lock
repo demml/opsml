@@ -735,7 +735,7 @@ reference = "shipt-resolve"
 
 [[package]]
 name = "databricks-cli"
-version = "0.17.4"
+version = "0.17.5"
 description = "A command line interface for Databricks"
 category = "dev"
 optional = false
@@ -1555,7 +1555,7 @@ name = "h11"
 version = "0.14.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.source]
@@ -1583,8 +1583,8 @@ reference = "shipt-resolve"
 name = "httpcore"
 version = "0.16.3"
 description = "A minimal low-level HTTP client."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -1606,8 +1606,8 @@ reference = "shipt-resolve"
 name = "httpx"
 version = "0.23.3"
 description = "The next generation HTTP client."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -3963,8 +3963,8 @@ reference = "shipt-resolve"
 name = "rfc3986"
 version = "1.5.0"
 description = "Validating URI References per RFC 3986"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = "*"
 
 [package.dependencies]
@@ -4470,6 +4470,22 @@ python-versions = ">=3.7"
 
 [package.extras]
 widechars = ["wcwidth"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = "shipt-resolve"
+
+[[package]]
+name = "tenacity"
+version = "8.2.2"
+description = "Retry code until it succeeds"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [package.source]
 type = "legacy"
@@ -5227,7 +5243,7 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [extras]
-api = ["fastapi", "uvicorn", "rollbar"]
+api = ["fastapi", "uvicorn", "rollbar", "httpx"]
 gcp-mysql = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pymysql"]
 gcp-postgres = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pg8000"]
 graphviz = ["graphviz"]
@@ -5236,7 +5252,7 @@ tf-onnx = ["tf2onnx"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<=3.11"
-content-hash = "11c02202ee04ca22e95302039786273a9ae63ff0e89530f6d1ad799cc390b4e9"
+content-hash = "4ba39abb8a8cb321a88da50b9b6098b39d0708110967c6388a41d7b6eb325261"
 
 [metadata.files]
 absl-py = [
@@ -5792,8 +5808,8 @@ cycler = [
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
 ]
 databricks-cli = [
-    {file = "databricks-cli-0.17.4.tar.gz", hash = "sha256:bc0c4dd082f033cb6d7978cacaca5261698efe3a4c70f52f98762c38db925ce0"},
-    {file = "databricks_cli-0.17.4-py2-none-any.whl", hash = "sha256:bbd57bc21c88ac6d1f8f0b250db986e500490c4d3cb69664229384632eaeed81"},
+    {file = "databricks-cli-0.17.5.tar.gz", hash = "sha256:4cd1c3b152d943db318371139de60f287659cfe938cbf3c31cdd8d5b1925f7c3"},
+    {file = "databricks_cli-0.17.5-py2-none-any.whl", hash = "sha256:70e0dec96c05046a28dbff70c44e85ab17cbf639393a490b3b189fd9a83eda14"},
 ]
 datamodel-code-generator = [
     {file = "datamodel_code_generator-0.17.1-py3-none-any.whl", hash = "sha256:8e3bf374dff69ce65e07feed3322f5b83432cc7d3974169865ede69c4b98bf92"},
@@ -7789,6 +7805,10 @@ sympy = [
 tabulate = [
     {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
     {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
+]
+tenacity = [
+    {file = "tenacity-8.2.2-py3-none-any.whl", hash = "sha256:2f277afb21b851637e8f52e6a613ff08734c347dc19ade928e519d7d2d8569b0"},
+    {file = "tenacity-8.2.2.tar.gz", hash = "sha256:43af037822bd0029025877f3b2d97cc4d7bb0c2991000a3d59d71517c5c969e0"},
 ]
 tensorboard = [
     {file = "tensorboard-2.10.1-py3-none-any.whl", hash = "sha256:fb9222c1750e2fa35ef170d998a1e229f626eeced3004494a8849c88c15d8c1c"},

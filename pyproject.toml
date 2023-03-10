@@ -34,9 +34,11 @@ python-json-logger = "^2.0.6"
 fastapi = {version="^0.92.0", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 rollbar = {version="^0.16.3", optional = true}
+httpx = {version="^0.23.3", optional = true}
+tenacity = "^8.2.2"
 
 [tool.poetry.extras]
-api = ["fastapi", "uvicorn", "rollbar"]
+api = ["fastapi", "uvicorn", "rollbar", "httpx"]
 graphviz = ["graphviz"]
 tf_onnx = ["tf2onnx"]
 gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
@@ -57,7 +59,6 @@ torchvision = "^0.14.1"
 tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
-httpx = "^0.23.3"
 mlflow = "^2.2.1"
 llvmlite = "^0.39.1"
 numba = "^0.56.0"

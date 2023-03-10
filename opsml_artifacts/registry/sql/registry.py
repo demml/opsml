@@ -359,6 +359,7 @@ class CardRegistry:
         """
         if name is not None:
             name = name.lower()
+            name = name.replace("_", "-")
 
         if team is not None:
             team = team.lower()

@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import create_engine
 from typing import Dict, Any
 import requests
+import httpx
 
 #
 ## from opsml_artifacts.helpers.settings import SnowflakeParams
@@ -112,7 +113,6 @@ def local_storage_client():
 @pytest.fixture(scope="function")
 def mock_local_engine():
     local_client = LocalSQLConnection(tracking_url="sqlite://")
-    local_client.db_file_path = ":memory:"
     engine = local_client.get_engine()
     return engine
 
@@ -126,7 +126,6 @@ def db_registries(mock_local_engine):
     ) as engine_mock:
 
         local_client = LocalSQLConnection(tracking_url="sqlite://")
-        local_client.db_file_path = ":memory:"
         engine = local_client.get_engine()
 
         DataSchema.__table__.create(bind=engine, checkfirst=True)
@@ -476,9 +475,9 @@ def mock_gcs_storage_response():
         def json(self):
             return {"storage_type": "gcs"}
 
-    class MockRequests(requests.Session):
+    class MockHTTPX(httpx.Client):
         def get(self, url, **kwargs):
             return MockResponse()
 
-    with patch("requests.Session", MockRequests) as mock_requests:
+    with patch("httpx.Client", MockHTTPX) as mock_requests:
         yield mock_requests
