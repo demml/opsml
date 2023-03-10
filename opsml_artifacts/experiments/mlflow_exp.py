@@ -1,3 +1,4 @@
+from typing import Optional
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.registry.sql.registry import CardTypes
 from opsml_artifacts.helpers.settings import settings
@@ -15,11 +16,22 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class MlFlowExperiment(MlflowClient):
-    def __init__(self, experiment_name: str, tracking_uri: str):
+    def __init__(
+        self,
+        experiment_name: str,
+        team_name: str,
+        user_email: str,
+        tracking_uri: Optional[str] = None,
+        registry_uri: Optional[str] = None,
+    ):
 
-        super().__init__(tracking_uri=tracking_uri)
+        super().__init__(
+            tracking_uri=tracking_uri,
+            registry_uri=registry_uri,
+        )
         self._set_storage_url()
-
+        self.team_name = team_name
+        self.user_email = user_email
         self.run_id = os.getenv("OPSML_RUN_ID")
         self.experiment_name = experiment_name.lower()
 
@@ -27,7 +39,7 @@ class MlFlowExperiment(MlflowClient):
         self.registries = {
             "datacard": CardRegistry(registry_name="data"),
             "modelcard": CardRegistry(registry_name="model"),
-            "experimentcard": CardRegistry(registry_name="exp"),
+            "experimentcard": CardRegistry(registry_name="experiment"),
         }
 
     def _set_storage_url(self):
