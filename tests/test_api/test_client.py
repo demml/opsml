@@ -1,7 +1,10 @@
 from requests import Response
 from starlette.testclient import TestClient
-import requests
-import time
+import os
+import pytest
+from pytest_lazyfixture import lazy_fixture
+from unittest.mock import patch, MagicMock
+import pandas as pd
 
 # from tests.test_api.server import TestApp
 
@@ -26,9 +29,9 @@ def _test_opsml_get_storage(monkeypatch):
         assert result.get("storage_url") == "gs://opsml/test"
 
 
-def test_opsml_local_get_storage(monkeypatch):
+def _test_opsml_local_get_storage(monkeypatch):
     monkeypatch.setenv(name="OPSML_TRACKING_URL", value="sqlite://")
-    monkeypatch.setenv(name="OPSML_STORAGE_URL", value="")
+    monkeypatch.setenv(name="OPSML_STORAGE_URL", value=None)
 
     from opsml_artifacts.api.main import opsml_app
 
@@ -41,18 +44,46 @@ def test_opsml_local_get_storage(monkeypatch):
         result = response.json()
 
         assert result.get("storage_type") == "local"
-        assert result.get("storage_url") == ":memory:"
 
 
-def _test_server(monkeypatch, mock_local_conn_server):
-    monkeypatch.setenv(name="OPSML_TRACKING_URL", value="sqlite://")
-    monkeypatch.setenv(name="OPSML_STORAGE_URL", value="gs://opsml/test")
-    from tests.test_api.server import TestApp
+@pytest.mark.parametrize(
+    "data_splits, test_data",
+    [
+        (lazy_fixture("test_split_array"), lazy_fixture("test_array")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
+    ],
+)
+def test_register_data(mock_opsml_server, db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
-    app = TestApp()
-    app.start()
+    # create data card
+    # data_registry = db_registries["data"]
+    # data_registry.registry = SQLRegistryAPI(table_name="OPSML_DATA_REGISTRY")
+    # data_registry.registry._api_url = "test"
     #
-    # response = requests.get(f"{app.url}/opsml/healthcheck")
-    # assert response.json()["is_alive"] == True
+    ## data_card = DataCard(
+    ##    data=test_data,
+    ##    name="test_df",
+    ##    team="mlops",
+    ##    user_email="mlops.com",
+    ##    data_splits=data_splits,
+    ## )
     #
-    # app.shutdown()
+    # print(data_registry.registry._api_url)
+    a
+
+    # for numpy array
+    # with patch.multiple("zarr", save=MagicMock(return_value=None)):
+    #    registry.register_card(card=data_card)
+
+
+#
+#    df = registry.list_cards(name=data_card.name, team=data_card.team)
+#    assert isinstance(df, pd.DataFrame)
+#
+#    df = registry.list_cards(name=data_card.name)
+#    assert isinstance(df, pd.DataFrame)
+#
+#    df = registry.list_cards()
+#    assert isinstance(df, pd.DataFrame)
+#

@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.settings import settings, OPSML_PREFIX
+from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.models import ApiRoutes
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -117,12 +118,50 @@ class SQLRegistryBase:
             Card (ArtifactCard): Card to register
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too. This path SHOULD NOT include the base prefix
-            (e.g. "gs://my_bucket") - this prefix is already inferred using either
-            "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL" env variables. In addition, save_path should
-            specify a directory.
+            save_path (str): Blob path to save card artifacts too.
+            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
+            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            env variables. In addition, save_path should specify a directory.
         """
-        raise NotImplementedError
+
+        # check compatibility
+        if not self._is_correct_card_type(card=card):
+            raise ValueError(
+                f"""Card of type {card.__class__.__name__} is not supported by registery
+                {self._table.__tablename__}"""
+            )
+
+        if self._check_uid(uid=str(card.uid), table_to_check=self.table_name):
+            raise ValueError(
+                """This Card has already been registered.
+            If the card has been modified try upating the Card in the registry.
+            If registering a new Card, create a new Card of the correct type.
+            """
+            )
+
+        # need to find way to compare previous cards and automatically
+        # determine if change is major or minor
+        version = self._set_version(
+            name=card.name,
+            team=card.team,
+            version_type=version_type,
+        )
+
+        if save_path is None:
+            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{version}"
+
+        record = card.create_registry_record(
+            save_info=SaveInfo(
+                blob_path=save_path,
+                name=card.name,
+                team=card.team,
+                version=version,
+                storage_client=self.storage_client,
+            ),
+            uid=self._get_uid(),
+        )
+
+        self._add_and_commit(record=record.dict())
 
     def list_cards(
         self,
@@ -218,6 +257,9 @@ class SQLRegistry(SQLRegistryBase):
         with self._session() as sess:
             result = sess.scalars(query).first()
 
+        if result is not None:
+            result = cast(Dict[str, Any], result.__dict__)
+
         return result
 
     def _add_and_commit(self, record: Dict[str, Any]):
@@ -248,64 +290,6 @@ class SQLRegistry(SQLRegistryBase):
             record.get("name"),
             record.get("version"),
         )
-
-    def register_card(
-        self,
-        card: ArtifactCardProto,
-        version_type: str = "minor",
-        save_path: Optional[str] = None,
-    ) -> None:
-        """
-        Adds new record to registry.
-
-        Args:
-            Card (ArtifactCard): Card to register
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too.
-            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
-            env variables. In addition, save_path should specify a directory.
-        """
-
-        # check compatibility
-        if not self._is_correct_card_type(card=card):
-            raise ValueError(
-                f"""Card of type {card.__class__.__name__} is not supported by registery
-                {self._table.__tablename__}"""
-            )
-
-        if self._check_uid(uid=str(card.uid), table_to_check=self.table_name):
-            raise ValueError(
-                """This Card has already been registered.
-            If the card has been modified try upating the Card in the registry.
-            If registering a new Card, create a new Card of the correct type.
-            """
-            )
-
-        # need to find way to compare previous cards and automatically
-        # determine if change is major or minor
-        version = self._set_version(
-            name=card.name,
-            team=card.team,
-            version_type=version_type,
-        )
-
-        if save_path is None:
-            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{version}"
-
-        record = card.create_registry_record(
-            save_info=SaveInfo(
-                blob_path=save_path,
-                name=card.name,
-                team=card.team,
-                version=version,
-                storage_client=self.storage_client,
-            ),
-            uid=self._get_uid(),
-        )
-
-        self._add_and_commit(record=record.dict())
 
     def list_cards(
         self,
@@ -375,27 +359,20 @@ class SQLRegistryAPI(SQLRegistryBase):
         super().__init__(table_name)
 
         self._session = self._get_session()
-        self._api_url = f"{settings.opsml_tacking_url}/{OPSML_PREFIX}"
+        self._api_url = settings.opsml_tacking_url
 
     def _get_session(self):
         """Gets the requests session for connecting to the opsml api"""
         return settings.request_client
 
-    def _set_version(self, name: str, team: str, version_type: str = "minor") -> str:
-        url = f"{self._api_url}/set_version"
+    def _check_uid(self, uid: str, table_to_check: str):
 
-        response = self._session.post_request(
-            url=url,
-            json={
-                "name": name,
-                "team": team,
-                "version_type": version_type,
-                "table": self.table_name,
-            },
+        data = self._session.post_request(
+            url=f"{self._api_url}/{ApiRoutes.CHECK_UID.value}",
+            json={"name": uid, "table": self.table_to_check},
         )
 
-        data = response.json()
-        if bool(getattr(data, "uid_exists")):
+        if bool(data.get("uid_exists")):
             raise ValueError(
                 """This Card has already been registered.
             If the card has been modified try upating the Card in the registry.
@@ -403,7 +380,105 @@ class SQLRegistryAPI(SQLRegistryBase):
             """
             )
 
-        return data["version"]
+    def _set_version(self, name: str, team: str, version_type: str = "minor") -> str:
+        data = self._session.post_request(
+            url=f"{self._api_url}/{ApiRoutes.SET_VERSION.value}",
+            json={
+                "name": name,
+                "team": team,
+                "version_type": version_type,
+                "table": self.table_name,
+            },
+        )
+        return data.get("version")
+
+    def list_cards(
+        self,
+        uid: Optional[str] = None,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> pd.DataFrame:
+
+        """Retrieves records from registry
+
+        Args:
+            name (str): Artifact record name
+            team (str): Team data is assigned to
+            version (int): Optional version number of existing data. If not specified,
+            the most recent version will be used
+            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
+
+
+        Returns:
+            Dictionary of records
+        """
+        data = self._session.post_request(
+            url=f"{self._api_url}/{ApiRoutes.LIST_CARDS.value}",
+            json={
+                "name": name,
+                "team": team,
+                "version": version,
+                "uid": uid,
+                "table": self.table_name,
+            },
+        )
+
+        return pd.DataFrame.from_records(data)
+
+    def _add_and_commit(self, record: Dict[str, Any]):
+        data = self._session.post_request(
+            url=f"{self._api_url}/{ApiRoutes.ADD_RECORD.value}",
+            json={
+                "record": record,
+                "table": self.table_name,
+            },
+        )
+
+        if bool(data.get("registered")):
+            logger.info(
+                "%s: %s, version:%s registered",
+                self._table.__tablename__,
+                record.get("name"),
+                record.get("version"),
+            )
+
+    def _update_record(self, record: Dict[str, Any]):
+        data = self._session.post_request(
+            url=f"{self._api_url}/{ApiRoutes.UPDATE_RECORD.value}",
+            json={
+                "record": record,
+                "table": self.table_name,
+            },
+        )
+
+        if bool(data.get("updated")):
+            logger.info(
+                "%s: %s, version:%s updated",
+                self._table.__tablename__,
+                record.get("name"),
+                record.get("version"),
+            )
+
+    def _query_record(
+        self,
+        uid: Optional[str] = None,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[str] = None,
+    ):
+        data = self._session.post_request(
+            url=f"{self._api_url}/{ApiRoutes.QUERY_RECORD.value}",
+            json={
+                "name": name,
+                "team": team,
+                "version": version,
+                "uid": uid,
+                "table": self.table_name,
+            },
+        )
+
+        return data.get("record")
 
 
 # mypy isnt good with dynamic class creation

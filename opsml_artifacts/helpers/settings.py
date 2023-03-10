@@ -11,15 +11,15 @@ from opsml_artifacts.helpers.models import (
     StorageInfo,
 )
 from opsml_artifacts.helpers.request_helpers import ApiClient
+from opsml_artifacts.helpers.models import ApiRoutes
 from opsml_artifacts.registry.cards.storage_system import (
     StorageClientGetter,
     StorageClientTypes,
 )
 from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
 
-OPSML_PREFIX = "opsml"
-STORAGE_CLIENT_PATH = "storage_client"
 
+BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -70,7 +70,7 @@ class DefaultSettings(BaseSettings):
 
         logger.info("""No tracking url set. Defaulting to Sqlite""")
 
-        tracking_url = "sqlite://"
+        tracking_url = BASE_LOCAL_SQL
         env_vars["opsml_tacking_url"] = tracking_url
         return env_vars, tracking_url
 
@@ -127,7 +127,7 @@ class DefaultSettings(BaseSettings):
         """
 
         storage_info = request_client.get_request(
-            url=f"{tracking_url}/{OPSML_PREFIX}/{STORAGE_CLIENT_PATH}",
+            url=f"{tracking_url}/{ApiRoutes.STORAGE_PATH.value}",
         )
 
         if "gcs" in storage_info.get("storage_type"):

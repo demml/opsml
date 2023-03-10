@@ -56,7 +56,7 @@ class DataCardRegistry(Registry):
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
         loaded_record = LoadedDataRecord(
             **{
-                **sql_data.__dict__,
+                **sql_data,
                 **{"storage_client": self.storage_client},
             }
         )
@@ -85,6 +85,7 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     # specific loading logic
+    # TODO(@steven): find a way to allow passing in mlflow logging artifact
     def load_card(
         self,
         name: Optional[str] = None,
@@ -105,7 +106,7 @@ class ModelCardRegistry(Registry):
         """
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        model_record = LoadedModelRecord(**sql_data.__dict__)
+        model_record = LoadedModelRecord(**sql_data)
         modelcard_definition = model_record.load_model_card_definition(storage_client=self.storage_client)
 
         model_card = ModelCard.parse_obj(
@@ -190,7 +191,7 @@ class ExperimentCardRegistry(Registry):
         """
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        experiment_record = LoadedExperimentRecord(**sql_data.__dict__)
+        experiment_record = LoadedExperimentRecord(**sql_data)
         experiment_record.load_artifacts(storage_client=self.storage_client)
         return ExperimentCard(**experiment_record.dict())
 
@@ -235,7 +236,7 @@ class PipelineCardRegistry(Registry):
         """
 
         sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        pipeline_record = LoadedPipelineRecord(**sql_data.__dict__)
+        pipeline_record = LoadedPipelineRecord(**sql_data)
         return PipelineCard(**pipeline_record.dict())
 
     def update_card(self, card: PipelineCard) -> None:
@@ -296,7 +297,6 @@ class CardRegistry:
         """
 
         registry_name = RegistryTableNames[registry_name.upper()].value
-
         registry = next(
             registry
             for registry in Registry.__subclasses__()
@@ -422,5 +422,4 @@ class CardRegistry:
             Dictionary of column, values pairs
         """
         results = self.registry._query_record(uid=uid)  # pylint: disable=protected-access
-        result_dict = results.__dict__
-        return {col: result_dict[col] for col in columns}
+        return {col: results[col] for col in columns}
