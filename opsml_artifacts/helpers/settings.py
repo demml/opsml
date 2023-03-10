@@ -166,7 +166,7 @@ class DefaultSettings(BaseSettings):
                 storage_info["gcp_project"] = gcp_creds.project
 
                 return GcsStorageClientInfo(**storage_info)
-
+            return StorageClientInfo(**storage_info)
         else:
             logger.info(
                 """No storage specified for local client. Default to local host""",
@@ -176,7 +176,9 @@ class DefaultSettings(BaseSettings):
 
     @cached_property
     def connection_client(self) -> BaseSQLConnection:
-        """Retrieve sql connection client"""
+        """Retrieve sql connection client.
+        Connection client is only used in the Registry class.
+        """
 
         connector_type = "local"
         for db_type in ["postgresql", "mysql"]:
