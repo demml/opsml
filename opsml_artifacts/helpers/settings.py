@@ -1,8 +1,7 @@
 import os
 from functools import cached_property
 from typing import Any, Dict, Optional, Tuple
-
-import requests
+import httpx
 from pydantic import BaseSettings, Field, root_validator
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -11,7 +10,7 @@ from opsml_artifacts.helpers.models import (
     StorageClientInfo,
     StorageInfo,
 )
-from opsml_artifacts.helpers.request_helpers import get_request
+from opsml_artifacts.helpers.request_helpers import ApiClient
 from opsml_artifacts.registry.cards.storage_system import (
     StorageClientGetter,
     StorageClientTypes,
@@ -32,7 +31,7 @@ class DefaultSettings(BaseSettings):
     opsml_tacking_url: str = Field(..., env="OPSML_TRACKING_URL")
     storage_info: StorageInfo
     storage_client: StorageClientTypes
-    request_client: Optional[requests.Session] = Field(None)
+    request_client: Optional[ApiClient] = Field(None)
 
     class Config:
         allow_mutation = True
@@ -86,9 +85,12 @@ class DefaultSettings(BaseSettings):
         password = os.environ.get("OPSML_PASSWORD")
 
         if "http" in tracking_url:
-            request_client = requests.Session()
+            request_client = ApiClient()
             if all(bool(cred) for cred in [username, password]):
-                request_client.auth = (str(username), str(password))
+                request_client.client.auth = httpx.BasicAuth(
+                    username=str(username),
+                    password=str(password),
+                )
             env_vars["request_client"] = request_client
         return env_vars
 
@@ -111,7 +113,7 @@ class DefaultSettings(BaseSettings):
 
     @staticmethod
     def _get_storage_info_from_api(
-        request_client: requests.Session,
+        request_client: ApiClient,
         tracking_url: str,
     ) -> StorageInfo:
         """Gets storage info from external opsml api
@@ -123,8 +125,8 @@ class DefaultSettings(BaseSettings):
             StorageClientInfo
 
         """
-        storage_info = get_request(
-            session=request_client,
+
+        storage_info = request_client.get_request(
             url=f"{tracking_url}/{OPSML_PREFIX}/{STORAGE_CLIENT_PATH}",
         )
 
