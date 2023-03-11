@@ -139,6 +139,10 @@ class LocalStorageClient(StorageClient):
         return storage_backend == StorageSystem.LOCAL
 
 
+class MlflowStorageClient(StorageClient):
+    pass
+
+
 class StorageClientGetter:
     @staticmethod
     def get_storage_client(
