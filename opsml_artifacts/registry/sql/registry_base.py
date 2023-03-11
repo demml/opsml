@@ -369,7 +369,7 @@ class SQLRegistryAPI(SQLRegistryBase):
 
         data = self._session.post_request(
             url=f"{self._api_url}/{ApiRoutes.CHECK_UID.value}",
-            json={"name": uid, "table": self.table_to_check},
+            json={"uid": uid, "table_name": self.table_name},
         )
 
         if bool(data.get("uid_exists")):
@@ -387,7 +387,7 @@ class SQLRegistryAPI(SQLRegistryBase):
                 "name": name,
                 "team": team,
                 "version_type": version_type,
-                "table": self.table_name,
+                "table_name": self.table_name,
             },
         )
         return data.get("version")
@@ -420,7 +420,7 @@ class SQLRegistryAPI(SQLRegistryBase):
                 "team": team,
                 "version": version,
                 "uid": uid,
-                "table": self.table_name,
+                "table_name": self.table_name,
             },
         )
 
@@ -431,7 +431,7 @@ class SQLRegistryAPI(SQLRegistryBase):
             url=f"{self._api_url}/{ApiRoutes.ADD_RECORD.value}",
             json={
                 "record": record,
-                "table": self.table_name,
+                "table_name": self.table_name,
             },
         )
 
@@ -448,7 +448,7 @@ class SQLRegistryAPI(SQLRegistryBase):
             url=f"{self._api_url}/{ApiRoutes.UPDATE_RECORD.value}",
             json={
                 "record": record,
-                "table": self.table_name,
+                "table_name": self.table_name,
             },
         )
 
@@ -474,7 +474,7 @@ class SQLRegistryAPI(SQLRegistryBase):
                 "team": team,
                 "version": version,
                 "uid": uid,
-                "table": self.table_name,
+                "table_name": self.table_name,
             },
         )
 

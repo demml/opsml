@@ -5,6 +5,7 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 import pandas as pd
+from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI
 
 # from tests.test_api.server import TestApp
 
@@ -49,41 +50,37 @@ def _test_opsml_local_get_storage(monkeypatch):
 @pytest.mark.parametrize(
     "data_splits, test_data",
     [
-        (lazy_fixture("test_split_array"), lazy_fixture("test_array")),
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
-        (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
 def test_register_data(mock_opsml_server, db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
     # create data card
-    # data_registry = db_registries["data"]
-    # data_registry.registry = SQLRegistryAPI(table_name="OPSML_DATA_REGISTRY")
-    # data_registry.registry._api_url = "test"
-    #
-    ## data_card = DataCard(
-    ##    data=test_data,
-    ##    name="test_df",
-    ##    team="mlops",
-    ##    user_email="mlops.com",
-    ##    data_splits=data_splits,
-    ## )
-    #
-    # print(data_registry.registry._api_url)
-    a
+    from opsml_artifacts import DataCard, CardRegistry
+    from opsml_artifacts.helpers.request_helpers import ApiClient
+
+    registry: CardRegistry = db_registries["data"]
+    registry.registry = SQLRegistryAPI(table_name="OPSML_DATA_REGISTRY")
+    registry.registry._api_url = mock_opsml_server.url
+    registry.registry._session = ApiClient()
+
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_splits,
+    )
 
     # for numpy array
-    # with patch.multiple("zarr", save=MagicMock(return_value=None)):
-    #    registry.register_card(card=data_card)
+    with patch.multiple("zarr", save=MagicMock(return_value=None)):
+        registry.register_card(card=data_card)
 
+        df = registry.list_cards(name=data_card.name, team=data_card.team)
+        assert isinstance(df, pd.DataFrame)
 
-#
-#    df = registry.list_cards(name=data_card.name, team=data_card.team)
-#    assert isinstance(df, pd.DataFrame)
-#
-#    df = registry.list_cards(name=data_card.name)
-#    assert isinstance(df, pd.DataFrame)
-#
-#    df = registry.list_cards()
-#    assert isinstance(df, pd.DataFrame)
-#
+        df = registry.list_cards(name=data_card.name)
+        assert isinstance(df, pd.DataFrame)
+
+        df = registry.list_cards()
+        assert isinstance(df, pd.DataFrame)
