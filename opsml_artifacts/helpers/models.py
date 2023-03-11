@@ -14,6 +14,11 @@ class GcsStorageClientInfo(StorageClientInfo):
     gcp_project: str
 
 
+class MLFlowStorageClientInfo(StorageClientInfo):
+    username: Optional[str]
+    password: Optional[str]
+
+
 StorageInfo = Union[StorageClientInfo, GcsStorageClientInfo]
 
 PATH_PREFIX = "opsml"

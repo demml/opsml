@@ -86,6 +86,7 @@ class DataCardRegistry(Registry):
 class ModelCardRegistry(Registry):
     # specific loading logic
     # TODO(@steven): find a way to allow passing in mlflow logging artifact
+    # maybe mlflow storage client?
     def load_card(
         self,
         name: Optional[str] = None,
