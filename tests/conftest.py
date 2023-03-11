@@ -63,21 +63,22 @@ class Bucket(BaseModel):
         return [Blob()]
 
 
-@pytest.fixture(scope="function")
-def mock_opsml_server(monkeypatch):
+@pytest.fixture(scope="module")
+def mock_opsml_server():
 
-    monkeypatch.setenv(name="OPSML_TRACKING_URL", value="sqlite://")
-    monkeypatch.setenv(name="OPSML_STORAGE_URL", value=None)
+    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
+    sql_path = f"sqlite:///{tmp_db_path}"
 
     from opsml_artifacts.helpers.settings import settings
 
-    settings.opsml_tacking_url = "sqlite://"
+    settings.opsml_tacking_url = sql_path
     from tests.server import TestApp
 
     app = TestApp()
     app.start()
     yield app
     app.shutdown()
+    os.remove(path=tmp_db_path)
 
 
 @pytest.fixture(scope="function")
