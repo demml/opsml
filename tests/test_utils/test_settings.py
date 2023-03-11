@@ -1,4 +1,6 @@
 from opsml_artifacts.helpers.settings import DefaultSettings
+from opsml_artifacts.helpers.models import GcsStorageClientInfo
+from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
 import os
 
 
@@ -43,5 +45,12 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
 
-    settings.set_storage_url(storage_url="gs://test")
+    gcp_creds = GcpCredsSetter().get_creds()
+    storage_info = GcsStorageClientInfo(
+        storage_type="gcs",
+        storage_url="gs://test",
+        credentials=gcp_creds.creds,
+        gcp_project=gcp_creds.project,
+    )
+    settings.set_storage(storage_info=storage_info)
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
