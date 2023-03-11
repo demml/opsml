@@ -16,6 +16,8 @@ from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, 
 from opsml_artifacts.helpers.models import StorageClientInfo, GcsStorageClientInfo
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
+from opsml_artifacts.helpers.request_helpers import ApiClient
+from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI
 from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
 from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts import ModelCard
@@ -167,6 +169,37 @@ def db_registries(mock_local_engine):
             "pipeline": pipeline_registry,
             "connection_client": local_client,
         }
+
+
+@pytest.fixture(scope="function")
+def api_registries(mock_opsml_server):
+
+    from opsml_artifacts.registry.sql.registry import (
+        DataCardRegistry,
+        ModelCardRegistry,
+        ExperimentCardRegistry,
+        PipelineCardRegistry,
+    )
+
+    registries = {}
+
+    DataCardRegistry = type("DataCardRegistry", (SQLRegistryAPI,), dict(DataCardRegistry.__dict__))
+    ModelCardRegistry = type("ModelCardRegistry", (SQLRegistryAPI,), dict(ModelCardRegistry.__dict__))
+    PipelineCardRegistry = type("PipelineCardRegistry ", (SQLRegistryAPI,), dict(PipelineCardRegistry.__dict__))
+    ExperimentCardRegistry = type("ExperimentCardRegistry", (SQLRegistryAPI,), dict(ExperimentCardRegistry.__dict__))
+
+    for name, card_registry in zip(
+        ["data", "model", "pipeline", "experiment"],
+        [DataCardRegistry, ModelCardRegistry, PipelineCardRegistry, ExperimentCardRegistry],
+    ):
+        registry = card_registry(table_name=f"OPSML_{name.upper()}_REGISTRY")
+        registry._api_url = mock_opsml_server.url
+        registry._session = ApiClient()
+        registries[name] = registry
+
+    data_registry = registries["data"]
+
+    return registries
 
 
 ##### Mocked classes as fixtures
@@ -495,7 +528,10 @@ def mock_gcs_storage_response():
             self.status_code = 200
 
         def json(self):
-            return {"storage_type": "gcs"}
+            return {
+                "storage_type": "gcs",
+                "storage_url": "gs://test",
+            }
 
     class MockHTTPX(httpx.Client):
         def get(self, url, **kwargs):

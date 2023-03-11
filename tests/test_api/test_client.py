@@ -53,16 +53,12 @@ def _test_opsml_local_get_storage(monkeypatch):
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
     ],
 )
-def test_register_data(mock_opsml_server, db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
+def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
     # create data card
-    from opsml_artifacts import DataCard, CardRegistry
-    from opsml_artifacts.helpers.request_helpers import ApiClient
+    from opsml_artifacts import DataCard
 
-    registry: CardRegistry = db_registries["data"]
-    registry.registry = SQLRegistryAPI(table_name="OPSML_DATA_REGISTRY")
-    registry.registry._api_url = mock_opsml_server.url
-    registry.registry._session = ApiClient()
+    registry = api_registries["data"]
 
     data_card = DataCard(
         data=test_data,
@@ -84,3 +80,7 @@ def test_register_data(mock_opsml_server, db_registries, test_data, data_splits,
 
         df = registry.list_cards()
         assert isinstance(df, pd.DataFrame)
+
+
+def _test_experiment_card(api_registries, linear_regression):
+    print(api_registries)
