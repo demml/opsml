@@ -413,6 +413,7 @@ class SQLRegistryAPI(SQLRegistryBase):
         Returns:
             Dictionary of records
         """
+
         data = self._session.post_request(
             url=f"{self._api_url}/{ApiRoutes.LIST_CARDS.value}",
             json={
