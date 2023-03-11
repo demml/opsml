@@ -173,7 +173,10 @@ def db_registries(mock_local_engine):
 
 @pytest.fixture(scope="function")
 def api_registries(mock_opsml_server):
-
+    """Because settings acts as a singleton,
+    we need to explicitly define new card registry types
+    in order to test the SQLRegistryAPI functionality
+    """
     from opsml_artifacts.registry.sql.registry import (
         DataCardRegistry,
         ModelCardRegistry,
