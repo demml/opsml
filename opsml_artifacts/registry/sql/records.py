@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, Extra, root_validator, validator
 
 from opsml_artifacts.drift.models import DriftReport
 from opsml_artifacts.registry.cards.artifact_storage import (
@@ -8,6 +8,7 @@ from opsml_artifacts.registry.cards.artifact_storage import (
 )
 from opsml_artifacts.registry.cards.storage_system import StorageClientProto
 from opsml_artifacts.registry.sql.models import SaveInfo
+from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 
 class DataRegistryRecord(BaseModel):
@@ -74,26 +75,34 @@ class PipelineRegistryRecord(BaseModel):
     experiment_card_uids: Optional[Dict[str, str]]
 
 
-class LoadedDataRecord(BaseModel):
-    data_uri: str
-    drift_uri: Optional[str]
-    data_splits: Optional[List[Dict[str, Any]]]
+class LoadRecord(BaseModel):
     version: str
-    data_type: str
     name: str
     team: str
-    feature_map: Dict[str, str]
-    feature_descriptions: Optional[Dict[str, str]]
+    uid: str
     user_email: str
-    uid: Optional[str]
-    dependent_vars: Optional[List[Union[int, str]]]
-    drift_report: Optional[Dict[str, DriftReport]]
-    additional_info: Optional[Dict[str, Union[float, int, str]]]
-    storage_client: Optional[StorageClientProto]
 
     class Config:
         arbitrary_types_allowed = True
         smart_union = True
+        extra = Extra.allow
+
+    @staticmethod
+    def validate_table(table_name: str) -> bool:
+        raise NotImplementedError
+
+
+class LoadedDataRecord(LoadRecord):
+    data_uri: str
+    drift_uri: Optional[str]
+    data_splits: Optional[List[Dict[str, Any]]]
+    data_type: str
+    feature_map: Dict[str, str]
+    feature_descriptions: Optional[Dict[str, str]]
+    dependent_vars: Optional[List[Union[int, str]]]
+    drift_report: Optional[Dict[str, DriftReport]]
+    additional_info: Optional[Dict[str, Union[float, int, str]]]
+    storage_client: Optional[StorageClientProto]
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
@@ -126,13 +135,12 @@ class LoadedDataRecord(BaseModel):
             )
         return None
 
+    @staticmethod
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.DATA
 
-class LoadedModelRecord(BaseModel):
-    uid: str
-    version: str
-    team: str
-    user_email: str
-    name: str
+
+class LoadedModelRecord(LoadRecord):
     model_card_uri: str
     data_card_uid: str
     trained_model_uri: str
@@ -141,10 +149,23 @@ class LoadedModelRecord(BaseModel):
     model_type: str
     storage_client: Optional[StorageClientProto]
 
-    class Config:
-        arbitrary_types_allowed = True
+    @root_validator(pre=True)
+    def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
 
-    def load_model_card_definition(self, storage_client: StorageClientProto) -> Dict[str, Any]:
+        storage_client = cast(StorageClientProto, values["storage_client"])
+        modelcard_definition = cls.load_model_card_definition(
+            values=values,
+            storage_client=storage_client,
+        )
+
+        return {**values, **modelcard_definition}
+
+    @classmethod
+    def load_model_card_definition(
+        cls,
+        values: Dict[str, Any],
+        storage_client: StorageClientProto,
+    ) -> Dict[str, Any]:
 
         """Loads a model card definition from current attributes
 
@@ -153,10 +174,10 @@ class LoadedModelRecord(BaseModel):
         """
 
         save_info = SaveInfo(
-            blob_path=self.model_card_uri,
-            name=self.name,
-            version=self.version,
-            team=self.team,
+            blob_path=values["model_card_uri"],
+            name=values["name"],
+            version=values["version"],
+            team=values["team"],
             storage_client=storage_client,
         )
 
@@ -165,20 +186,14 @@ class LoadedModelRecord(BaseModel):
             artifact_type="dict",
         )
 
-        model_card_definition["model_card_uri"] = self.model_card_uri
-        model_card_definition["trained_model_uri"] = self.trained_model_uri
-        model_card_definition["sample_data_uri"] = self.sample_data_uri
-        model_card_definition["sample_data_type"] = self.sample_data_type
-
         return model_card_definition
 
+    @staticmethod
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.MODEL
 
-class LoadedExperimentRecord(BaseModel):
-    name: str
-    team: str
-    user_email: str
-    uid: Optional[str]
-    version: Optional[str]
+
+class LoadedExperimentRecord(LoadRecord):
     data_card_uids: Optional[List[str]]
     model_card_uids: Optional[List[str]]
     pipeline_card_uid: Optional[str]
@@ -187,41 +202,85 @@ class LoadedExperimentRecord(BaseModel):
     metrics: Optional[Dict[str, Union[int, float]]]
     storage_client: Optional[StorageClientProto]
 
-    class Config:
-        arbitrary_types_allowed = True
+    @root_validator(pre=True)
+    def load_exp_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
 
-    def load_artifacts(self, storage_client: StorageClientProto) -> None:
+        storage_client = cast(StorageClientProto, values["storage_client"])
+        cls.load_artifacts(values=values, storage_client=storage_client)
+
+        return values
+
+    @classmethod
+    def load_artifacts(
+        cls,
+        values: Dict[str, Any],
+        storage_client: StorageClientProto,
+    ) -> None:
         """Loads experiment artifacts to pydantic model"""
 
         loaded_artifacts: Dict[str, Any] = {}
-        if not bool(self.artifact_uris):
-            setattr(self, "artifacts", loaded_artifacts)
+        artifact_uris = values.get("artifact_uris", loaded_artifacts)
 
-        for name, uri in self.artifact_uris.items():
+        if not bool(artifact_uris):
+            values["artifacts"] = loaded_artifacts
 
+        for name, uri in artifact_uris.items():
             save_info = SaveInfo(
                 blob_path=uri,
-                name=self.name,
-                team=self.team,
-                version=self.version,
+                name=values["name"],
+                team=values["team"],
+                version=values["version"],
                 storage_client=storage_client,
             )
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 save_info=save_info,
                 artifact_type="artifact",
             )
-        setattr(self, "artifacts", loaded_artifacts)
-        setattr(self, "storage_client", storage_client)
+
+    @staticmethod
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.EXPERIMENT
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
-class LoadedPipelineRecord(BaseModel):
-    name: str
-    team: str
-    user_email: str
-    uid: Optional[str]
-    version: Optional[str]
+class LoadedPipelineRecord(LoadRecord):
     pipeline_code_uri: Optional[str]
     data_card_uids: Optional[Dict[str, str]]
     model_card_uids: Optional[Dict[str, str]]
     experiment_card_uids: Optional[Dict[str, str]]
+
+    @staticmethod
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.PIPELINE
+
+
+LoadedRecordType = Union[
+    LoadedPipelineRecord,
+    LoadedDataRecord,
+    LoadedExperimentRecord,
+    LoadedModelRecord,
+]
+
+
+def load_record(
+    table_name: str,
+    record_data: Dict[str, Any],
+    storage_client: StorageClientProto,
+) -> LoadedRecordType:
+
+    record = next(
+        record
+        for record in LoadRecord.__subclasses__()
+        if record.validate_table(
+            table_name=table_name,
+        )
+    )
+
+    loaded_record = record(
+        **{
+            **record_data,
+            **{"storage_client": storage_client},
+        }
+    )
+
+    return cast(LoadedRecordType, loaded_record)
