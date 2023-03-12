@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, List, Optional, Tuple, Union, cast
-import os
 
 from pyarrow.parquet import LocalFileSystem
 
@@ -141,34 +140,8 @@ class LocalStorageClient(StorageClient):
         return storage_backend == StorageSystem.LOCAL
 
 
-class MlflowStorageClient(StorageClient):
-    pass
-
-
-class StorageTypeChecker:
-    def __init__(self):
-        self.is_mflow = self.check_mlflow()
-
-    def check_mlflow(self) -> bool:
-
-        mlflow_vars = [
-            "MLFLOW_TRACKING_URI",
-            "_MLFLOW_SERVER_ARTIFACT_ROOT",
-            "_MLFLOW_SERVER_ARTIFACT_DESTINATION",
-        ]
-
-        if any(bool(os.environ.get(var_name)) for var_name in mlflow_vars):
-            return True
-
-        return False
-
-    def check_gcs(self) -> bool:
-        if "gs://" in os.environ.get("OPSML_STORAGE_URL"):
-            return True
-        return False
-
-    def set_mlflow(self):
-        """Sets MlFlow storage info"""
+# class MlflowStorageClient(StorageClient):
+# pass
 
 
 class StorageClientGetter:

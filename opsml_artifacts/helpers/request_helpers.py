@@ -1,7 +1,8 @@
-import functools
 from typing import Any, Dict, Optional
+
 import httpx
 from tenacity import retry, stop_after_attempt
+
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -18,11 +19,7 @@ class ApiClient:
         if response.status_code == 200:
             return response.json()
 
-        raise ValueError(
-            """Failed to to make server call for post request
-            Url: %s""",
-            url,
-        )
+        raise ValueError(f"""Failed to to make server call for post request Url: {url}""")
 
     @retry(stop=stop_after_attempt(3))
     def get_request(self, url: str) -> Dict[str, Any]:
@@ -31,8 +28,4 @@ class ApiClient:
         if response.status_code == 200:
             return response.json()
 
-        raise ValueError(
-            """Failed to to make server call for get request
-            Url: %s""",
-            url,
-        )
+        raise ValueError(f"""Failed to to make server call for get request Url: {url}""")
