@@ -17,6 +17,7 @@ class ApiClient:
         response = self.client.post(url=url, json=json)
         if response.status_code == 200:
             return response.json()
+
         raise ValueError(
             """Failed to to make server call for post request
             Url: %s""",

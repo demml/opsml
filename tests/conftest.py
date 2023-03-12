@@ -177,32 +177,38 @@ def api_registries(mock_opsml_server):
     we need to explicitly define new card registry types
     in order to test the SQLRegistryAPI functionality
     """
-    from opsml_artifacts.registry.sql.registry import (
-        DataCardRegistry,
-        ModelCardRegistry,
-        ExperimentCardRegistry,
-        PipelineCardRegistry,
-    )
+
+    from tests.mock_api_registries import CardRegistry
 
     registries = {}
-
-    DataCardRegistry = type("DataCardRegistry", (SQLRegistryAPI,), dict(DataCardRegistry.__dict__))
-    ModelCardRegistry = type("ModelCardRegistry", (SQLRegistryAPI,), dict(ModelCardRegistry.__dict__))
-    PipelineCardRegistry = type("PipelineCardRegistry ", (SQLRegistryAPI,), dict(PipelineCardRegistry.__dict__))
-    ExperimentCardRegistry = type("ExperimentCardRegistry", (SQLRegistryAPI,), dict(ExperimentCardRegistry.__dict__))
-
-    for name, card_registry in zip(
-        ["data", "model", "pipeline", "experiment"],
-        [DataCardRegistry, ModelCardRegistry, PipelineCardRegistry, ExperimentCardRegistry],
-    ):
-        registry = card_registry(table_name=f"OPSML_{name.upper()}_REGISTRY")
-        registry._api_url = mock_opsml_server.url
-        registry._session = ApiClient()
+    for name in ["data", "model", "pipeline", "experiment"]:
+        registry = CardRegistry(registry_name=name)
+        registry.registry._api_url = mock_opsml_server.url
+        registry.registry._session = ApiClient()
         registries[name] = registry
 
-    data_registry = registries["data"]
-
     return registries
+
+
+@pytest.fixture(scope="function")
+def api_pipeline_loader(mock_opsml_server):
+
+    from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader, CardNames
+    from tests.mock_api_registries import CardRegistry, PipelineCard
+    from typing import cast
+
+    class ApiPipelineLoader(PipelineLoader):
+        def _load_pipeline_card(self, uid: str) -> PipelineCard:
+            registry = CardRegistry(registry_name=CardNames.PIPELINE.value)
+            registry.registry._api_url = mock_opsml_server.url
+            registry.registry._session = ApiClient()
+            loaded_card = registry.load_card(uid=uid)
+            return cast(PipelineCard, loaded_card)
+
+        def _load_cards(self, cards: Dict[str, str], card_type: str):
+            return None
+
+    return ApiPipelineLoader
 
 
 ##### Mocked classes as fixtures
