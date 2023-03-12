@@ -159,6 +159,7 @@ class ModelCardRegistry(Registry):
         if model_card.data_card_uid is not None:
             self._validate_datacard_uid(uid=model_card.data_card_uid)
 
+        print(super.mro())
         return super().register_card(
             card=card,
             version_type=version_type,

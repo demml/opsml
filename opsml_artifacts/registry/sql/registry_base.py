@@ -369,16 +369,10 @@ class SQLRegistryAPI(SQLRegistryBase):
 
         data = self._session.post_request(
             url=f"{self._api_url}/{ApiRoutes.CHECK_UID.value}",
-            json={"uid": uid, "table_name": self.table_name},
+            json={"uid": uid, "table_name": table_to_check},
         )
 
-        if bool(data.get("uid_exists")):
-            raise ValueError(
-                """This Card has already been registered.
-            If the card has been modified try upating the Card in the registry.
-            If registering a new Card, create a new Card of the correct type.
-            """
-            )
+        return bool(data.get("uid_exists"))
 
     def _set_version(self, name: str, team: str, version_type: str = "minor") -> str:
         data = self._session.post_request(
@@ -424,8 +418,8 @@ class SQLRegistryAPI(SQLRegistryBase):
                 "table_name": self.table_name,
             },
         )
-
-        return pd.DataFrame.from_records(data)
+        dataframe = pd.DataFrame.from_records(data["records"])
+        return dataframe
 
     def _add_and_commit(self, record: Dict[str, Any]):
         data = self._session.post_request(
