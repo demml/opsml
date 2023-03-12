@@ -1,6 +1,7 @@
 import os
-from typing import Any, Optional, Union
 from enum import Enum
+from typing import Any, Optional, Union
+
 from pydantic import BaseModel
 
 

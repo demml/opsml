@@ -14,10 +14,6 @@ from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
-    LoadedDataRecord,
-    LoadedExperimentRecord,
-    LoadedModelRecord,
-    LoadedPipelineRecord,
     PipelineRegistryRecord,
 )
 from opsml_artifacts.registry.sql.registry_base import Registry, SQLRegistryBase
@@ -31,37 +27,6 @@ CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
 
 class DataCardRegistry(Registry):
-    # specific loading logic
-    def load_card(
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ) -> DataCard:
-
-        """Loads a data card from the data registry
-
-        Args:
-            name (str): Data record name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
-
-        Returns:
-            DataCard
-        """
-
-        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        loaded_record = LoadedDataRecord(
-            **{
-                **sql_data,
-                **{"storage_client": self.storage_client},
-            }
-        )
-
-        return DataCard(**loaded_record.dict())
 
     # specific update logic
     def update_card(self, card: DataCard) -> None:
@@ -84,41 +49,6 @@ class DataCardRegistry(Registry):
 
 
 class ModelCardRegistry(Registry):
-    # specific loading logic
-    # TODO(@steven): find a way to allow passing in mlflow logging artifact
-    # maybe mlflow storage client?
-    def load_card(
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ) -> ModelCard:
-        """Loads a data card from the data registry
-
-        Args:
-            name (str): Card name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-
-        Returns:
-            Data card
-        """
-
-        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        model_record = LoadedModelRecord(**sql_data)
-        modelcard_definition = model_record.load_model_card_definition(storage_client=self.storage_client)
-
-        model_card = ModelCard.parse_obj(
-            {
-                **model_record.dict(),
-                **modelcard_definition,
-            }
-        )
-        model_card.storage_client = self.storage_client
-        return model_card
-
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
@@ -159,7 +89,6 @@ class ModelCardRegistry(Registry):
         if model_card.data_card_uid is not None:
             self._validate_datacard_uid(uid=model_card.data_card_uid)
 
-        print(super.mro())
         return super().register_card(
             card=card,
             version_type=version_type,
@@ -172,31 +101,6 @@ class ModelCardRegistry(Registry):
 
 
 class ExperimentCardRegistry(Registry):
-    def load_card(
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[str] = None,
-        uid: Optional[str] = None,
-    ) -> ExperimentCard:
-
-        """Loads a data card from the data registry
-
-        Args:
-            name (str): Card name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-
-        Returns:
-            Data card
-        """
-
-        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        experiment_record = LoadedExperimentRecord(**sql_data)
-        experiment_record.load_artifacts(storage_client=self.storage_client)
-        return ExperimentCard(**experiment_record.dict())
-
     def update_card(self, card: ExperimentCard) -> None:
 
         """Updates an existing pipeline card in the pipeline registry
@@ -217,30 +121,6 @@ class ExperimentCardRegistry(Registry):
 
 
 class PipelineCardRegistry(Registry):
-    def load_card(
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[int] = None,
-        uid: Optional[str] = None,
-    ) -> PipelineCard:
-
-        """Loads a PipelineCard from the pipeline registry
-
-        Args:
-            name (str): Card name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-
-        Returns:
-            PipelineCard
-        """
-
-        sql_data = self._query_record(name=name, team=team, version=version, uid=uid)
-        pipeline_record = LoadedPipelineRecord(**sql_data)
-        return PipelineCard(**pipeline_record.dict())
-
     def update_card(self, card: PipelineCard) -> None:
 
         """Updates an existing pipeline card in the pipeline registry
