@@ -1,23 +1,23 @@
 import os
 from functools import cached_property
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, cast
+
 import httpx
 from pydantic import BaseSettings, Field, root_validator
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.models import (
+    ApiRoutes,
     GcsStorageClientInfo,
     StorageClientInfo,
     StorageInfo,
 )
 from opsml_artifacts.helpers.request_helpers import ApiClient
-from opsml_artifacts.helpers.models import ApiRoutes
 from opsml_artifacts.registry.cards.storage_system import (
     StorageClientGetter,
     StorageClientTypes,
 )
 from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
-
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
 
@@ -65,21 +65,21 @@ class DefaultAttrCreator:
 
         self._set_storage_client()
 
-    def _set_tracking_url(self) -> Tuple[Dict[str, Any], str]:
+    def _set_tracking_url(self) -> str:
         """Sets tracking url to use for database entries
 
         Returns:
             tracking_url string
 
         """
-        tracking_url = self._env_vars.get("opsml_tacking_url")
+        tracking_url = self._env_vars.get("opsml_tacking_url", BASE_LOCAL_SQL)
 
-        if tracking_url is not None:
-            self._get_api_client(tracking_url=tracking_url)
-            return tracking_url
+        if tracking_url is BASE_LOCAL_SQL:
+            logger.info("""No tracking url set. Defaulting to Sqlite""")
 
-        logger.info("""No tracking url set. Defaulting to Sqlite""")
-        self._env_vars["opsml_tacking_url"] = BASE_LOCAL_SQL
+        self._env_vars["opsml_tacking_url"] = tracking_url
+        self._get_api_client(tracking_url=tracking_url)
+
         return tracking_url
 
     def _set_storage_client(self) -> None:
@@ -109,7 +109,7 @@ class DefaultAttrCreator:
                 )
             self._env_vars["request_client"] = request_client
 
-    def _get_storage_info(self) -> StorageInfo:
+    def _get_storage_info(self) -> None:
         """Sets storage info based on tracking url. If tracking url is
         http then external api will be used to get storage info. If no
         external api is detected, local defaults will be used.
@@ -137,7 +137,7 @@ class DefaultAttrCreator:
             StorageClientInfo
 
         """
-        request_client = self._env_vars.get("request_client")
+        request_client = cast(ApiClient, self._env_vars.get("request_client"))
         storage_info = request_client.get_request(
             url=f"{self.tracking_url}/{ApiRoutes.STORAGE_PATH.value}",
         )

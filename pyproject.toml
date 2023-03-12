@@ -99,7 +99,7 @@ target-version = ['py310']
 include = '\.pyi?$'
 
 [tool.pylint.MASTER]
-ignore-paths = [ "opsml_artifacts/.local_tests/*", "opsml_artifacts/api/*"]
+ignore-paths = [ "opsml_artifacts/.local_tests/*", "opsml_artifacts/api/*", "opsml_artifacts/experiments/*"]
 
 [tool.pylint.messages_control]
 max-line-length = 120
@@ -143,7 +143,7 @@ plugins = [
     "sqlalchemy.ext.mypy.plugin",
     "sqlmypy",
 ]
-exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/api/*", "opsml_artifacts/registry/sql/query_helpers.py"]
+exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/api/*", "opsml_artifacts/registry/sql/query_helpers.py", "opsml_artifacts/experiments/*"]
 
 
 [tool.coverage.paths]

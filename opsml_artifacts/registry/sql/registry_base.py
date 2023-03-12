@@ -6,8 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.models import ApiRoutes
+from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
     ExperimentCard,
@@ -17,7 +17,8 @@ from opsml_artifacts.registry.cards.cards import (
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.models import SaveInfo
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator
-from opsml_artifacts.registry.sql.sql_schema import TableSchema
+from opsml_artifacts.registry.sql.records import LoadedRecordType, load_record
+from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -33,6 +34,33 @@ sem_var_map = {
 }
 
 query_creator = QueryCreator()
+
+table_name_card_map = {
+    RegistryTableNames.DATA.value: DataCard,
+    RegistryTableNames.MODEL.value: ModelCard,
+    RegistryTableNames.EXPERIMENT.value: ExperimentCard,
+    RegistryTableNames.PIPELINE.value: PipelineCard,
+}
+
+
+def load_card_from_record(
+    table_name: str,
+    record: LoadedRecordType,
+) -> CardTypes:
+
+    """Loads an artifact card given a tablename and the loaded record
+    from backend database
+
+    Args:
+        table_name (str): Name of table
+        record (loaded record): Loaded record from backend database
+
+    Returns:
+        Artifact Card
+    """
+
+    card = table_name_card_map[table_name]
+    return card(**record.dict())
 
 
 class SQLRegistryBase:
@@ -175,14 +203,31 @@ class SQLRegistryBase:
     def _check_uid(self, uid: str, table_to_check: str):
         raise NotImplementedError
 
-    def load_card(  # type: ignore
+    def load_card(
         self,
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
     ) -> CardTypes:
-        raise NotImplementedError
+
+        record_data = self._query_record(
+            name=name,
+            team=team,
+            version=version,
+            uid=uid,
+        )
+
+        loaded_record = load_record(
+            table_name=self.table_name,
+            record_data=record_data,
+            storage_client=self.storage_client,
+        )
+
+        return load_card_from_record(
+            table_name=self.table_name,
+            record=loaded_record,
+        )
 
 
 class SQLRegistry(SQLRegistryBase):
@@ -259,6 +304,8 @@ class SQLRegistry(SQLRegistryBase):
 
         if result is not None:
             result = cast(Dict[str, Any], result.__dict__)
+            if bool(result.get("_sa_instance_state")):
+                result.pop("_sa_instance_state")
 
         return result
 
@@ -340,17 +387,6 @@ class SQLRegistry(SQLRegistryBase):
         with self._session() as sess:
             result = sess.scalars(query).first()
         return bool(result)
-
-    # Read
-    def load_card(  # type: ignore
-        self,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        version: Optional[str] = None,
-        uid: Optional[str] = None,
-    ) -> CardTypes:
-        """Loads data or model card"""
-        raise NotImplementedError
 
 
 # work in progress
@@ -457,10 +493,10 @@ class SQLRegistryAPI(SQLRegistryBase):
 
     def _query_record(
         self,
-        uid: Optional[str] = None,
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        uid: Optional[str] = None,
     ):
         data = self._session.post_request(
             url=f"{self._api_url}/{ApiRoutes.QUERY_RECORD.value}",

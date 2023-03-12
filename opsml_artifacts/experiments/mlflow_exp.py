@@ -1,15 +1,16 @@
+import os
 from typing import Optional
-from opsml_artifacts import CardRegistry
-from opsml_artifacts.registry.sql.registry import CardTypes
-from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.helpers.logging import ArtifactLogger
 
 from mlflow.tracking import MlflowClient
-import os
+
+from opsml_artifacts import CardRegistry
+from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.registry.sql.registry import CardTypes
 
 # Notes during development
 # assume you are using mlflow url with a proxy client for artifacts
-# TODO: Add ApiRegistry with call paths to update opsml
+#  Add ApiRegistry with call paths to update opsml
 # Needs: Absolute path for mlflow artifacts (base bucket path)
 
 logger = ArtifactLogger.get_logger(__name__)
