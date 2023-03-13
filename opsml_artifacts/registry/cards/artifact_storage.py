@@ -57,12 +57,11 @@ class ArtifactStorage:
 
     def save_artifact(self, artifact: Any) -> StoragePath:
 
-        if self.storage_client.backend != StorageSystem.LOCAL.name:
-            storage_uri = self.save_artifact_to_external(artifact=artifact)
-
-        else:
+        if self.storage_client.backend == StorageSystem.LOCAL.value:
             storage_uri = self.save_artifact_to_local(artifact=artifact)
+            return StoragePath(uri=storage_uri)
 
+        storage_uri = self.save_artifact_to_external(artifact=artifact)
         return StoragePath(uri=storage_uri)
 
     @staticmethod

@@ -1,12 +1,11 @@
 import os
 from typing import Optional
-
+import mlflow
 from mlflow.tracking import MlflowClient
-
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.sql.registry import CardTypes
+from opsml_artifacts.experiments.mlflow_helpers import ModelCardLogger
 
 # Notes during development
 # assume you are using mlflow url with a proxy client for artifacts
@@ -14,6 +13,7 @@ from opsml_artifacts.registry.sql.registry import CardTypes
 # Needs: Absolute path for mlflow artifacts (base bucket path)
 
 logger = ArtifactLogger.get_logger(__name__)
+SKLEARN_FLAVOR = ["sklearn"]
 
 
 class MlFlowExperiment(MlflowClient):
@@ -30,31 +30,46 @@ class MlFlowExperiment(MlflowClient):
             tracking_uri=tracking_uri,
             registry_uri=registry_uri,
         )
-        self._set_storage_url()
         self.team_name = team_name
         self.user_email = user_email
         self.run_id = os.getenv("OPSML_RUN_ID")
         self.experiment_name = experiment_name.lower()
 
+        # set storage
+        self._set_storage()
+
         # set the registries
         self.registries = {
-            "datacard": CardRegistry(registry_name="data"),
-            "modelcard": CardRegistry(registry_name="model"),
+            "datacard": {"registry": CardRegistry(registry_name="data")},
+            "modelcard": {
+                "registry": CardRegistry(registry_name="model"),
+                "logger": ModelCardLogger,
+            },
             "experimentcard": CardRegistry(registry_name="experiment"),
         }
 
-    def _set_storage_url(self):
-        """Set the storage url for OpsML. Mlflow artifact proxy requires
-        writing to local prior to uploading to mlflow server. If using proxy,
-        Opsml needs to be configured to store artifacts locally.
-        """
-        store = self._tracking_client.store.__class__.__name__.lower()
-        if store == "reststore":
-            # httpproxy requires saving files to local
-            # need to set opsml storage client to local
-            settings.set_storage_url(storage_url="local")
+    def __enter__(self):
 
-    def register(self, artifact_card: CardTypes, version_type: str = "minor"):
+        exp_id = self.get_experiment_by_name(self.experiment_name)
+        if exp_id is None:
+            self.create_experiment(name=self.experiment_name)
+
+        run = mlflow.start_run(
+            run_id=self.run_id,
+            experiment_id=self.experiment_id,
+        )
+
+        self.run_id = run.info.run_id
+        self.artifact_uri = run.info.artifact_uri
+        logger.info("starting experiment")
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        mlflow.end_run()
+        logger.info("experiment complete")
+
+    def register_card(self, artifact_card: CardTypes, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
@@ -63,7 +78,17 @@ class MlFlowExperiment(MlflowClient):
             "patch". Defaults to "minor"
         """
 
-        registry: CardRegistry = self.registries[artifact_card.__name__.lower()]
+        trackers = self.registries[artifact_card.__name__.lower()]
+        registry: CardRegistry = trackers.get("registry")
+        logger = trackers.get("logger")
         registry.register_card(artifact_card, version_type=version_type)
+
+        if artifact_card.__name__.lower() == "modelcard":
+            card_logger = logger(
+                card=artifact_card,
+                client=self._tracking_client,
+                run_id=self.run_id,
+            )
+            card_logger.log_model_artifacts()
 
         logger.info("Logging artifact")
