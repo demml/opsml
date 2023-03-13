@@ -16,7 +16,6 @@ from opsml_artifacts.registry.cards.types import SaveInfo, StorageClientProto
 class StorageSystem(str, Enum):
     GCS = "gcs"
     LOCAL = "local"
-    MLFLOW = "mlflow"
 
 
 class StorageClient:
@@ -140,8 +139,43 @@ class LocalStorageClient(StorageClient):
         return storage_backend == StorageSystem.LOCAL
 
 
-# class MlflowStorageClient(StorageClient):
-# pass
+# class MlFlowStorageClient(StorageClient):
+#    def __init__(
+#        self,
+#        storage_info: StorageInfo,
+#    ):
+#
+#        super().__init__(storage_info=storage_info)
+#
+#        from mlflow.tracking import MlflowClient
+#
+#        self.mflow_client = MlflowClient()
+#
+#    def _make_path(self, folder_path: str):
+#        Path(folder_path).mkdir(parents=True, exist_ok=True)
+#
+#    def create_save_path(
+#        self,
+#        save_info: SaveInfo,
+#        file_suffix: Optional[str] = None,
+#        **kwargs,
+#    ) -> Tuple[str, str]:
+#
+#        save_path, filename = super().create_save_path(save_info=save_info, file_suffix=file_suffix)
+#        self._make_path("/".join(save_path.split("/")[:-1]))
+#
+#        return save_path, filename
+#
+#    def list_files(self, storage_uri: str) -> List[str]:
+#        return [storage_uri]
+#
+#    def store(self, storage_uri: str):
+#        return storage_uri
+#
+#    @staticmethod
+#    def validate(storage_backend: str) -> bool:
+#        return storage_backend == StorageSystem.MLFLOW
+#
 
 
 class StorageClientGetter:

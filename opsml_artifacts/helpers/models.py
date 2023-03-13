@@ -15,9 +15,9 @@ class GcsStorageClientInfo(StorageClientInfo):
     gcp_project: str
 
 
-class MLFlowStorageClientInfo(StorageClientInfo):
-    username: Optional[str]
-    password: Optional[str]
+class NoneStorageClientInfo(StorageClientInfo):
+    storage_type = "None"
+    storage_url = "None"
 
 
 StorageInfo = Union[StorageClientInfo, GcsStorageClientInfo]
