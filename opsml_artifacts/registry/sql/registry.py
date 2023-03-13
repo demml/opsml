@@ -84,7 +84,7 @@ class ModelCardRegistry(Registry):
         model_card = cast(ModelCard, card)
 
         if not self._has_data_card_uid(uid=model_card.data_card_uid):
-            raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
+            raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
         if model_card.data_card_uid is not None:
             self._validate_datacard_uid(uid=model_card.data_card_uid)
