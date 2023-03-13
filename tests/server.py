@@ -16,12 +16,12 @@ class TestApp:
 
     def start(self):
         """Bring server up."""
-        app = get_opsml_app()
+        app = get_opsml_app(mlflow_app=True)
         self.proc = Process(
             target=uvicorn.run,
             args=(app,),
             kwargs={"host": "0.0.0.0", "port": 8000, "log_level": "info"},
-            daemon=True,
+            daemon=False,
         )
         self.proc.start()
 
@@ -34,18 +34,24 @@ class TestApp:
             except Exception as error:
                 time.sleep(2)
                 pass
+        return
 
     def shutdown(self):
         """Shutdown the app."""
         self.proc.terminate()
 
 
-@pytest.fixture(scope="function")
-def test_server():
-    test_app = TestApp()
+# @pytest.fixture(scope="function")
+# def test_server():
+#    test_app = TestApp()
+#
+#    test_app.start()
+#
+#    yield test_app
+#
+#    test_app.shutdown()
 
-    test_app.start()
 
-    yield test_app
-
-    test_app.shutdown()
+if __name__ == "__main__":
+    app = TestApp()
+    app.start()
