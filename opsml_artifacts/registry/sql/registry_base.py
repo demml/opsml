@@ -138,6 +138,7 @@ class SQLRegistryBase:
         card: ArtifactCardProto,
         version_type: str = "minor",
         save_path: Optional[str] = None,
+        **kwargs,
     ) -> None:
         """
         Adds new record to registry.
@@ -185,6 +186,7 @@ class SQLRegistryBase:
                 team=card.team,
                 version=version,
                 storage_client=self.storage_client,
+                extra=kwargs,
             ),
             uid=self._get_uid(),
         )

@@ -1,7 +1,29 @@
-# mport time
+from opsml_artifacts import CardRegistry, DataCard, ModelCard
+import time
+from mlflow.tracking import MlflowClient
 
 
-# def test_mlflow_exp(api_registries):
-# data_registry = api_registries["data"]
+def test_mlflow_exp(mlflow_experiment, api_registries, sklearn_pipeline, mock_pyarrow_parquet_write):
 
-# time.sleep(20)
+    with mlflow_experiment as exp:
+        model, data = sklearn_pipeline
+        data_registry: CardRegistry = api_registries["data"]
+        data_card = DataCard(
+            data=data,
+            name="pipeline_data",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        data_registry.register_card(card=data_card)
+
+        model_card1 = ModelCard(
+            trained_model=model,
+            sample_input_data=data[0:1],
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            data_card_uid=data_card.uid,
+        )
+
+        exp.register_card(artifact_card=model_card1)
+        time.sleep(30)

@@ -15,6 +15,7 @@ from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
     PipelineRegistryRecord,
+    ModelRegistryRecord,
 )
 from opsml_artifacts.registry.sql.registry_base import Registry, SQLRegistryBase
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
@@ -49,6 +50,20 @@ class DataCardRegistry(Registry):
 
 
 class ModelCardRegistry(Registry):
+    def update_card(self, card: ModelCard) -> None:
+
+        """Updates an existing model card
+
+        Args:
+            model_card (ModelCard): Existing model card record
+
+        Returns:
+            None
+        """
+
+        record = ModelRegistryRecord(**card.dict())
+        self._update_record(record=record.dict())
+
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
@@ -67,6 +82,7 @@ class ModelCardRegistry(Registry):
         card: ArtifactCardProto,
         version_type: str = "minor",
         save_path: Optional[str] = None,
+        **kwargs,
     ) -> None:
         """
         Adds new record to registry.
@@ -93,6 +109,7 @@ class ModelCardRegistry(Registry):
             card=card,
             version_type=version_type,
             save_path=save_path,
+            **kwargs,
         )
 
     @staticmethod

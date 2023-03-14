@@ -1,3 +1,4 @@
+import os
 from multiprocessing import Process
 from opsml_artifacts.api.main import get_opsml_app
 import uvicorn
@@ -11,12 +12,13 @@ session = requests.Session()
 class TestApp:
     """Test the app class."""
 
-    def __init__(self):
+    def __init__(self, is_mlflow: bool):
         self.url = "http://0.0.0.0:8000"
+        self.is_mlflow = is_mlflow
 
     def start(self):
         """Bring server up."""
-        app = get_opsml_app(mlflow_app=True)
+        app = get_opsml_app(mlflow_app=self.is_mlflow)
         self.proc = Process(
             target=uvicorn.run,
             args=(app,),
@@ -53,5 +55,6 @@ class TestApp:
 
 
 if __name__ == "__main__":
-    app = TestApp()
+
+    app = TestApp(is_mlflow=True)
     app.start()

@@ -1,12 +1,15 @@
 import os
 import pytest
 from sqlalchemy import create_engine
-from typing import Dict, Any
+from typing import Dict, Any, cast
 import requests
 import httpx
 from multiprocessing import Process
 import uvicorn
 import time
+import json
+import yaml
+import joblib
 
 #
 ## from opsml_artifacts.helpers.settings import SnowflakeParams
@@ -20,6 +23,8 @@ from opsml_artifacts.helpers.request_helpers import ApiClient
 from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI
 from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
 from opsml_artifacts.registry.model.types import ModelApiDef
+from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
+from opsml_artifacts.experiments.mlflow_helpers import MlFLowCardRegistries
 from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
@@ -71,12 +76,18 @@ def mock_opsml_server():
     tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
     sql_path = f"sqlite:///{tmp_db_path}"
 
+    os.environ["OPSML_STORAGE_URL"] = f"{os.path.expanduser('~')}/mlruns"
+    os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = f"{os.path.expanduser('~')}/mlruns"
+    os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = f"{os.path.expanduser('~')}/mlruns"
+    os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
+    os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "false"
+
     from opsml_artifacts.helpers.settings import settings
 
     settings.opsml_tacking_url = sql_path
     from tests.server import TestApp
 
-    app = TestApp()
+    app = TestApp(is_mlflow=True)
     app.start()
     yield app
     app.shutdown()
@@ -191,6 +202,28 @@ def api_registries(mock_opsml_server):
 
 
 @pytest.fixture(scope="function")
+def mlflow_experiment(api_registries):
+
+    local_url = api_registries["data"].registry._api_url
+    mlflow_exp = MlFlowExperiment(
+        experiment_name="test_exp",
+        team_name="test",
+        user_email="test",
+        tracking_uri=local_url,
+    )
+
+    card_registries = MlFLowCardRegistries.construct(
+        datacard=api_registries["data"],
+        modelcard=api_registries["model"],
+        experimentcard=api_registries["experiment"],
+    )
+
+    mlflow_exp.registries = card_registries
+
+    return mlflow_exp
+
+
+@pytest.fixture(scope="function")
 def api_pipeline_loader(mock_opsml_server):
 
     from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader, CardNames
@@ -233,6 +266,41 @@ def mock_gcsfs():
 def mock_pathlib():
     with patch.multiple("pathlib.Path", mkdir=MagicMock(return_value=None)) as mocked_pathlib:
         yield mocked_pathlib
+
+
+@pytest.fixture(scope="module")
+def mock_json():
+    with patch.multiple("json", dumps=MagicMock(return_value=None)) as mocked_json:
+        yield mocked_json
+
+
+@pytest.fixture(scope="module")
+def mock_yaml(linear_regression):
+    with patch.multiple(
+        "yaml",
+        safe_load=MagicMock(return_value=linear_regression),
+        safe_dump=MagicMock(return_value=None),
+    ) as mocked_yaml:
+        yield mocked_yaml
+
+
+@pytest.fixture(scope="function")
+def mock_joblib_storage():
+    with patch.multiple(
+        "opsml_artifacts.registry.cards.artifact_storage.JoblibStorage",
+        _save_json=MagicMock(return_value=None),
+        _save_yaml=MagicMock(return_value=None),
+        _save_joblib=MagicMock(return_value=None),
+        _load_joblib=MagicMock(return_value=None),
+        _load_json=MagicMock(return_value=None),
+        _load_yaml=MagicMock(return_value=None),
+    ) as mocked_joblib:
+        yield mocked_joblib
+
+
+@pytest.fixture(scope="module")
+def mock_file_writers(mock_joblib, mock_yaml, mock_json):
+    yield mock_json, mock_joblib, mock_yaml
 
 
 @pytest.fixture(scope="function")

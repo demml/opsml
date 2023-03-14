@@ -35,6 +35,7 @@ DATA_ARTIFACTS = list(ArtifactStorageTypes)
 class StorageClientProto(Protocol):
     backend: str
     client: Any
+    base_path_prefix: str
 
     def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None) -> Tuple[str, str]:
         "Creates a save path"
@@ -55,6 +56,9 @@ class StorageClientProto(Protocol):
 
     def store(self, storage_uri: str) -> Any:
         """store"""
+
+    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
+        "Upload"
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
