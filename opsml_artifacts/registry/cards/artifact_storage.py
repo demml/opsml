@@ -2,8 +2,9 @@
 
 import tempfile
 from typing import Any, Dict, List, Optional, Union
-
+import json
 import joblib
+import yaml
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -57,7 +58,7 @@ class ArtifactStorage:
 
     def save_artifact(self, artifact: Any) -> StoragePath:
 
-        if self.storage_client.backend == StorageSystem.LOCAL.value:
+        if self.storage_client.backend == StorageSystem.LOCAL:
             storage_uri = self.save_artifact_to_local(artifact=artifact)
             return StoragePath(uri=storage_uri)
 
@@ -84,14 +85,11 @@ class ParquetStorage(ArtifactStorage):
             file_suffix="parquet",
         )
 
-    def save_artifact(self, artifact: pa.Table) -> StoragePath:
-        """Saves pyarrow table to gcs.
-
-        Args:
-            data (pa.Table): pyarrow table
-        """
-
-        storage_uri, _ = self.storage_client.create_save_path(save_info=self.save_info, file_suffix=self.file_suffix)
+    def _write_with_storage_client(self, artifact: pa.Table) -> StoragePath:
+        storage_uri, _ = self.storage_client.create_save_path(
+            save_info=self.save_info,
+            file_suffix=self.file_suffix,
+        )
         pq.write_table(
             table=artifact,
             where=storage_uri,
@@ -101,6 +99,37 @@ class ParquetStorage(ArtifactStorage):
         return StoragePath(
             uri=storage_uri,
         )
+
+    def _write_temp_and_upload(self, artifact: pa.Table) -> StoragePath:
+        with self.storage_client.create_temp_save_path(self.save_info, self.file_suffix) as temp_output:
+            storage_uri, local_path = temp_output
+
+            pq.write_table(
+                table=artifact,
+                where=local_path,
+                filesystem=self.storage_client.client,
+            )
+            self.storage_client.upload(
+                ocal_path=local_path,
+                write_path=storage_uri,
+                **self.save_info.extra,
+            )
+
+        return StoragePath(
+            uri=storage_uri,
+        )
+
+    def save_artifact(self, artifact: pa.Table) -> StoragePath:
+        """Saves pyarrow table to gcs.
+
+        Args:
+            data (pa.Table): pyarrow table
+        """
+
+        if self.storage_client.backend in [StorageSystem.LOCAL, StorageSystem.GCS]:
+            return self._write_with_storage_client(artifact=artifact)
+
+        return self._write_temp_and_upload(artifact=artifact)
 
     def _load_arrow_from_files(self, files: List[str]) -> Union[pa.Table, pd.DataFrame, np.ndarray]:
         """Loads pyarrow data to original saved type
@@ -144,6 +173,32 @@ class NumpyStorage(ArtifactStorage):
             file_suffix="zarr",
         )
 
+    def _write_with_storage_client(self, artifact: pa.Table) -> StoragePath:
+        storage_uri, _ = self.storage_client.create_save_path(
+            save_info=self.save_info,
+            file_suffix=self.file_suffix,
+        )
+        store = self.storage_client.store(storage_uri=storage_uri)
+        zarr.save(store, artifact)
+
+        return StoragePath(uri=storage_uri)
+
+    def _write_temp_and_upload(self, artifact: pa.Table) -> StoragePath:
+        with self.storage_client.create_temp_save_path(self.save_info, self.file_suffix) as temp_output:
+            storage_uri, local_path = temp_output
+            store = self.storage_client.store(storage_uri=storage_uri)
+            zarr.save(store, artifact)
+
+            self.storage_client.upload(
+                local_path=local_path,
+                write_path=storage_uri,
+                **self.save_info.extra,
+            )
+
+            return StoragePath(
+                uri=storage_uri,
+            )
+
     def save_artifact(self, artifact: np.ndarray) -> StoragePath:
         """Saves a numpy n-dimensional array as a Zarr array
 
@@ -154,11 +209,9 @@ class NumpyStorage(ArtifactStorage):
             StoragePath
         """
 
-        storage_uri, _ = self.storage_client.create_save_path(save_info=self.save_info, file_suffix=self.file_suffix)
-        store = self.storage_client.store(storage_uri=storage_uri)
-        zarr.save(store, artifact)
-
-        return StoragePath(uri=storage_uri)
+        if self.storage_client.backend in [StorageSystem.LOCAL, StorageSystem.GCS]:
+            return self._write_with_storage_client(artifact=artifact)
+        return self._write_temp_and_upload(artifact=artifact)
 
     def load_artifact(self, storage_uri: str) -> np.ndarray:
         """Loads a numpy ndarray from a zarr directory
@@ -194,28 +247,81 @@ class JoblibStorage(ArtifactStorage):
             file_suffix="joblib",
         )
 
+        self.file_suffix = self._set_file_suffix()
+
+    def _set_file_suffix(self) -> str:
+        if "api-def" in self.save_info.name:
+            return "json"
+
+        if getattr(self.save_info, "filename") is not None:
+            if "modelcard" in self.save_info.filename:
+                return "yaml"
+
+        return "joblib"
+
+    def _save_json(self, artifact: Any, file_path: str):
+        with open(file_path, "a", encoding="utf-8") as file_:
+            return json.dump(artifact, file_)
+
+    def _save_yaml(self, artifact: Any, file_path: str):
+        with open(file_path, "w") as out:
+            yaml.safe_dump(data=artifact, stream=out)
+
+    def _save_joblib(self, artifact: Any, file_path: str):
+        joblib.dump(artifact, file_path)
+
+    def _save_artifact(self, artifact: Any, file_path: str):
+        if self.file_suffix == "json":
+            self._save_json(artifact=artifact, file_path=file_path)
+
+        if self.file_suffix == "yaml":
+            self._save_yaml(artifact=artifact, file_path=file_path)
+
+        self._save_joblib(artifact=artifact, file_path=file_path)
+
     def save_artifact_to_external(self, artifact: Any) -> str:
         with self.storage_client.create_temp_save_path(self.save_info, self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
-            joblib.dump(artifact, local_path)
-            self.storage_client.client.upload(lpath=local_path, rpath=storage_uri)
+            self._save_artifact(artifact=artifact, file_path=local_path)
+            self.storage_client.upload(ocal_path=local_path, write_path=storage_uri)
 
         return storage_uri
 
     def save_artifact_to_local(self, artifact: Any) -> str:
-        storage_uri, _ = self.storage_client.create_save_path(save_info=self.save_info, file_suffix=self.file_suffix)
-        joblib.dump(artifact, filename=storage_uri)
+        storage_uri, _ = self.storage_client.create_save_path(
+            save_info=self.save_info,
+            file_suffix=self.file_suffix,
+        )
+        self._save_artifact(artifact=artifact, file_path=storage_uri)
 
         return storage_uri
 
-    def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
-        joblib_path = self.storage_client.list_files(storage_uri=storage_uri)[0]
-        if self.storage_client.backend != StorageSystem.LOCAL.name:
-            with tempfile.NamedTemporaryFile(suffix=self.file_suffix) as tmpfile:  # noqa
-                self.storage_client.client.download(rpath=joblib_path, lpath=tmpfile.name)
-                return joblib.load(tmpfile)
+    def _load_json(self, file_path: str) -> Any:
+        with open(file_path) as json_file:
+            return json.load(json_file)
 
-        return joblib.load(joblib_path)
+    def _load_yaml(self, file_path: str) -> Any:
+        with open(file_path, "r") as file_:
+            return yaml.safe_load(file_)
+
+    def _load_joblib(self, file_path: str) -> Any:
+        joblib.load(file_path)
+
+    def _load(self, file_path: str) -> Any:
+        if "json" in file_path:
+            self._load_json(file_path=file_path)
+        if "yaml" in file_path:
+            self._load_yaml(file_path=file_path)
+        return self._load_joblib(file_path=file_path)
+
+    def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
+        file_path = self.storage_client.list_files(storage_uri=storage_uri)[0]
+        if self.storage_client.backend != StorageSystem.LOCAL:
+            with tempfile.NamedTemporaryFile(suffix=self.file_suffix) as tmpfile:  # noqa
+                self.storage_client.client.download(rpath=file_path, lpath=tmpfile.name)
+                return self._load(file_path=file_path)
+
+        return self._load(file_path=file_path)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -241,7 +347,8 @@ class TensorflowModelStorage(ArtifactStorage):
         with self.storage_client.create_temp_save_path(self.save_info, self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
             artifact.save(local_path)
-            self.storage_client.client.upload(lpath=local_path, rpath=f"{storage_uri}/", recursive=True)
+            self.storage_client.upload(local_path=local_path, write_path=f"{storage_uri}/", recursive=True)
+
         return storage_uri
 
     def save_artifact_to_local(self, artifact: Any) -> str:
@@ -256,7 +363,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
         model_path = self.storage_client.list_files(storage_uri=storage_uri)[0]
 
-        if self.storage_client.backend != StorageSystem.LOCAL.name:
+        if self.storage_client.backend != StorageSystem.LOCAL:
             with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
                 self.storage_client.client.download(rpath=model_path, lpath=f"{tmpdirname}/", recursive=True)
                 return tf.keras.models.load_model(tmpdirname)
@@ -284,7 +391,7 @@ class PyTorchModelStorage(ArtifactStorage):
         with self.storage_client.create_temp_save_path(self.save_info, self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
             torch.save(artifact, local_path)
-            self.storage_client.client.upload(lpath=local_path, rpath=storage_uri)
+            self.storage_client.upload(local_path=local_path, write_path=storage_uri)
 
         return storage_uri
 

@@ -456,6 +456,15 @@ class ModelCard(ArtifactCard):
             save_info=save_info,
         )
 
+        # save model api def
+        api_def = self.onnx_model(start_onnx_runtime=False).get_api_model().dict()
+        api_def["model_version"] = save_info.version
+        save_info.name = f"{self.name}-api-def"
+        save_record_artifact_to_storage(
+            artifact=api_def,
+            save_info=save_info,
+        )
+
         setattr(self, "model_card_uri", modelcard_storage_path.uri)
         setattr(self, "trained_model_uri", trained_model_storage_path.uri)
         setattr(self, "sample_data_uri", sample_data_storage_path.uri)
