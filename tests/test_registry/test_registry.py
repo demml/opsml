@@ -44,36 +44,37 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, db_registries):
-    with patch.multiple(
-        "joblib",
-        dump=MagicMock(return_value=None),
-        load=MagicMock(return_value=linear_regression),
-    ):
-        registry: CardRegistry = db_registries["experiment"]
-        experiment = ExperimentCard(
-            name="test_df",
-            team="mlops",
-            user_email="mlops.com",
-            data_card_uids=["test_uid"],
-        )
-        experiment.add_metric("test_metric", 10)
-        experiment.add_metrics({"test_metric2": 20})
-        assert experiment.metrics.get("test_metric") == 10
-        assert experiment.metrics.get("test_metric2") == 20
-        # save artifacts
-        model, _ = linear_regression
-        experiment.add_artifact("reg_model", artifact=model)
-        assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
-        registry.register_card(card=experiment)
-        loaded_card = registry.load_card(uid=experiment.uid)
-        assert loaded_card.uid == experiment.uid
+def test_experiment_card(mock_joblib_storage, linear_regression, db_registries):
+
+    registry: CardRegistry = db_registries["experiment"]
+    experiment = ExperimentCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_card_uids=["test_uid"],
+    )
+    experiment.add_metric("test_metric", 10)
+    experiment.add_metrics({"test_metric2": 20})
+    assert experiment.metrics.get("test_metric") == 10
+    assert experiment.metrics.get("test_metric2") == 20
+    # save artifacts
+    model, _ = linear_regression
+    experiment.add_artifact("reg_model", artifact=model)
+    assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+    registry.register_card(card=experiment)
+    loaded_card = registry.load_card(uid=experiment.uid)
+    assert loaded_card.uid == experiment.uid
 
 
 @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
 def test_register_model(
-    loaded_model_record, model_card_mock, db_registries, sklearn_pipeline, mock_pyarrow_parquet_write
+    loaded_model_record,
+    model_card_mock,
+    db_registries,
+    sklearn_pipeline,
+    mock_pyarrow_parquet_write,
+    mock_joblib_storage,
 ):
 
     model_card_mock.return_value = None
@@ -98,35 +99,29 @@ def test_register_model(
         data_card_uid=data_card.uid,
     )
 
-    with patch.multiple(
-        "joblib",
-        dump=MagicMock(return_value=None),
-        load=MagicMock(return_value=model_card1.dict(exclude={"sample_input_data", "trained_model"})),
-    ):
+    model_registry: CardRegistry = db_registries["model"]
+    model_registry.register_card(model_card1)
 
-        model_registry: CardRegistry = db_registries["model"]
-        model_registry.register_card(model_card1)
+    loaded_model_record.return_value = model_card1.dict()
+    loaded_card = model_registry.load_card(uid=model_card1.uid)
+    loaded_card.load_trained_model()
+    loaded_card.trained_model = model
+    loaded_card.sample_input_data = data[0:1]
 
-        loaded_model_record.return_value = model_card1.dict()
-        loaded_card = model_registry.load_card(uid=model_card1.uid)
-        loaded_card.load_trained_model()
-        loaded_card.trained_model = model
-        loaded_card.sample_input_data = data[0:1]
+    assert getattr(loaded_card, "trained_model") is not None
+    assert getattr(loaded_card, "sample_input_data") is not None
 
-        assert getattr(loaded_card, "trained_model") is not None
-        assert getattr(loaded_card, "sample_input_data") is not None
+    model_card_custom = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        data_card_uid=data_card.uid,
+    )
 
-        model_card_custom = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            data_card_uid=data_card.uid,
-        )
-
-        model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
-        assert "steven-test/models" in model_card_custom.trained_model_uri
+    model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
+    assert "steven-test/models" in model_card_custom.trained_model_uri
 
     model_card2 = ModelCard(
         trained_model=model,
@@ -277,7 +272,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write):
+def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write, mock_joblib_storage):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
@@ -305,8 +300,8 @@ def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarr
             user_email=user_email,
             data_card_uid=data_card.uid,
         )
-        with patch.multiple("joblib", dump=MagicMock(return_value=None)):
-            model_registry.register_card(model_card)
+
+        model_registry.register_card(model_card)
 
     ##### ExperimentCard
     exp_card = ExperimentCard(
