@@ -7,7 +7,7 @@ from opsml_artifacts.registry.cards.artifact_storage import (
     load_record_artifact_from_storage,
 )
 from opsml_artifacts.registry.cards.storage_system import StorageClientProto
-from opsml_artifacts.registry.sql.models import SaveInfo
+from opsml_artifacts.registry.sql.models import ArtifactStorageInfo
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 
@@ -121,7 +121,7 @@ class LoadedDataRecord(LoadRecord):
     def load_drift_report(values):
 
         if bool(values.get("drift_uri")):
-            save_info = SaveInfo(
+            artifact_storage_info = ArtifactStorageInfo(
                 blob_path=values["drift_uri"],
                 name=values["name"],
                 team=values["team"],
@@ -130,7 +130,7 @@ class LoadedDataRecord(LoadRecord):
             )
 
             return load_record_artifact_from_storage(
-                save_info=save_info,
+                artifact_storage_info=artifact_storage_info,
                 artifact_type="dict",
             )
         return None
@@ -173,7 +173,7 @@ class LoadedModelRecord(LoadRecord):
             Dictionary to be parsed by ModelCard.parse_obj()
         """
 
-        save_info = SaveInfo(
+        artifact_storage_info = ArtifactStorageInfo(
             blob_path=values["model_card_uri"],
             name=values["name"],
             version=values["version"],
@@ -182,7 +182,7 @@ class LoadedModelRecord(LoadRecord):
         )
 
         model_card_definition = load_record_artifact_from_storage(
-            save_info=save_info,
+            artifact_storage_info=artifact_storage_info,
             artifact_type="dict",
         )
 
@@ -225,7 +225,7 @@ class LoadedExperimentRecord(LoadRecord):
             values["artifacts"] = loaded_artifacts
 
         for name, uri in artifact_uris.items():
-            save_info = SaveInfo(
+            artifact_storage_info = ArtifactStorageInfo(
                 blob_path=uri,
                 name=values["name"],
                 team=values["team"],
@@ -233,7 +233,7 @@ class LoadedExperimentRecord(LoadRecord):
                 storage_client=storage_client,
             )
             loaded_artifacts[name] = load_record_artifact_from_storage(
-                save_info=save_info,
+                artifact_storage_info=artifact_storage_info,
                 artifact_type="artifact",
             )
 

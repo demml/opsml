@@ -1,37 +1,23 @@
 import os
 import pytest
-from sqlalchemy import create_engine
-from typing import Dict, Any, cast
+
 import requests
-import httpx
-from multiprocessing import Process
-import uvicorn
-import time
-import json
-import yaml
-import joblib
 
 #
 ## from opsml_artifacts.helpers.settings import SnowflakeParams
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
-from opsml_artifacts.helpers.models import StorageClientInfo, GcsStorageClientInfo
+from opsml_artifacts.helpers.models import StorageClientSettings, GcsStorageClientSettings
 from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.helpers.request_helpers import ApiClient
 from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI
 from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
 from opsml_artifacts.registry.model.types import ModelApiDef
-from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
-from opsml_artifacts.experiments.mlflow_helpers import MlFLowCardRegistries
 from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
-
-import numpy as np
-import pandas as pd
-import pyarrow as pa
 
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
@@ -41,7 +27,9 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import StackingRegressor
 import lightgbm as lgb
-import joblib
+import numpy as np
+import pandas as pd
+import pyarrow as pa
 from pydantic import BaseModel
 
 session = requests.Session()
@@ -68,30 +56,6 @@ class Bucket(BaseModel):
 
     def list_blobs(self, prefix: str):
         return [Blob()]
-
-
-@pytest.fixture(scope="module")
-def mock_opsml_server():
-
-    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
-    sql_path = f"sqlite:///{tmp_db_path}"
-
-    os.environ["OPSML_STORAGE_URL"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
-    os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "false"
-
-    from opsml_artifacts.helpers.settings import settings
-
-    settings.opsml_tacking_url = sql_path
-    from tests.server import TestApp
-
-    app = TestApp(is_mlflow=True)
-    app.start()
-    yield app
-    app.shutdown()
-    os.remove(path=tmp_db_path)
 
 
 @pytest.fixture(scope="function")
@@ -128,9 +92,9 @@ def mock_gcp_creds(mock_gcp_vars):
 
 @pytest.fixture(scope="function")
 def gcp_storage_client(mock_gcp_vars):
-    gcs_info = GcsStorageClientInfo(
+    gcs_info = GcsStorageClientSettings(
         storage_type="gcs",
-        storage_url="gs://test",
+        storage_uri="gs://test",
         credentials=mock_gcp_vars["gcp_creds"],
         gcp_project=mock_gcp_vars["gcp_project"],
     )
@@ -141,114 +105,8 @@ def gcp_storage_client(mock_gcp_vars):
 @pytest.fixture(scope="function")
 def local_storage_client():
 
-    storage_client = StorageClientGetter.get_storage_client(storage_info=StorageClientInfo())
+    storage_client = StorageClientGetter.get_storage_client(storage_info=StorageClientSettings())
     return storage_client
-
-
-@pytest.fixture(scope="function")
-def mock_local_engine():
-    local_client = LocalSQLConnection(tracking_url="sqlite://")
-    engine = local_client.get_engine()
-    return engine
-
-
-@pytest.fixture(scope="function")
-def db_registries(mock_local_engine):
-
-    with patch.multiple(
-        "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
-        get_engine=MagicMock(return_value=mock_local_engine),
-    ) as engine_mock:
-
-        local_client = LocalSQLConnection(tracking_url="sqlite://")
-        engine = local_client.get_engine()
-
-        DataSchema.__table__.create(bind=engine, checkfirst=True)
-        ModelSchema.__table__.create(bind=engine, checkfirst=True)
-        ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
-        PipelineSchema.__table__.create(bind=engine, checkfirst=True)
-
-        model_registry = CardRegistry(registry_name="model")
-        data_registry = CardRegistry(registry_name="data")
-        experiment_registry = CardRegistry(registry_name="experiment")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
-
-        yield {
-            "data": data_registry,
-            "model": model_registry,
-            "experiment": experiment_registry,
-            "pipeline": pipeline_registry,
-            "connection_client": local_client,
-        }
-
-
-@pytest.fixture(scope="function")
-def api_registries(mock_opsml_server):
-    """Because settings acts as a singleton,
-    we need to explicitly define new card registry types
-    in order to test the SQLRegistryAPI functionality
-    """
-
-    from tests.mock_api_registries import CardRegistry
-
-    registries = {}
-    for name in ["data", "model", "pipeline", "experiment"]:
-        registry = CardRegistry(registry_name=name)
-        registry.registry._api_url = mock_opsml_server.url
-        registry.registry._session = ApiClient()
-        registries[name] = registry
-
-    return registries
-
-
-@pytest.fixture(scope="function")
-def mlflow_experiment(api_registries):
-
-    local_url = api_registries["data"].registry._api_url
-    mlflow_exp = MlFlowExperiment(
-        experiment_name="test_exp",
-        team_name="test",
-        user_email="test",
-        tracking_uri=local_url,
-    )
-
-    card_registries = MlFLowCardRegistries.construct(
-        datacard=api_registries["data"],
-        modelcard=api_registries["model"],
-        experimentcard=api_registries["experiment"],
-    )
-
-    mlflow_exp.registries = card_registries
-
-    return mlflow_exp
-
-
-@pytest.fixture(scope="function")
-def api_pipeline_loader(mock_opsml_server):
-
-    from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader, CardNames
-    from tests.mock_api_registries import CardRegistry, PipelineCard
-    from typing import cast
-
-    class ApiPipelineLoader(PipelineLoader):
-        def _load_pipeline_card(self, uid: str) -> PipelineCard:
-            registry = CardRegistry(registry_name=CardNames.PIPELINE.value)
-            registry.registry._api_url = mock_opsml_server.url
-            registry.registry._session = ApiClient()
-            loaded_card = registry.load_card(uid=uid)
-            return cast(PipelineCard, loaded_card)
-
-        def _load_cards(self, cards: Dict[str, str], card_type: str):
-            return None
-
-    return ApiPipelineLoader
-
-
-##### Mocked classes as fixtures
-@pytest.fixture()
-def test_query():
-    query = "SELECT ORDER_ID FROM PRD_DATALAKEHOUSE.DATA_SCIENCE.ORDER_STATS limit 100"
-    return query
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -268,39 +126,16 @@ def mock_pathlib():
         yield mocked_pathlib
 
 
-@pytest.fixture(scope="module")
-def mock_json():
-    with patch.multiple("json", dumps=MagicMock(return_value=None)) as mocked_json:
-        yield mocked_json
-
-
-@pytest.fixture(scope="module")
-def mock_yaml(linear_regression):
-    with patch.multiple(
-        "yaml",
-        safe_load=MagicMock(return_value=linear_regression),
-        safe_dump=MagicMock(return_value=None),
-    ) as mocked_yaml:
-        yield mocked_yaml
-
-
 @pytest.fixture(scope="function")
 def mock_joblib_storage():
     with patch.multiple(
         "opsml_artifacts.registry.cards.artifact_storage.JoblibStorage",
         _save_json=MagicMock(return_value=None),
-        _save_yaml=MagicMock(return_value=None),
         _save_joblib=MagicMock(return_value=None),
         _load_joblib=MagicMock(return_value=None),
         _load_json=MagicMock(return_value=None),
-        _load_yaml=MagicMock(return_value=None),
     ) as mocked_joblib:
         yield mocked_joblib
-
-
-@pytest.fixture(scope="module")
-def mock_file_writers(mock_joblib, mock_yaml, mock_json):
-    yield mock_json, mock_joblib, mock_yaml
 
 
 @pytest.fixture(scope="function")
@@ -317,74 +152,6 @@ def mock_pyarrow_parquet_dataset(test_df, test_arrow_table):
         mock_dataset.read.to_pandas.return_value = test_df
 
         yield mock_dataset
-
-
-@pytest.fixture(scope="function")
-def mock_gcs(test_df):
-    class StorageClient:
-        def bucket(self, gcs_bucket: str):
-            return Bucket()
-
-        def blob(self, blob_path: str):
-            return Blob()
-
-        def list_blobs(self, prefix: str):
-            return [Blob(), Blob()]
-
-    class MockStorage(GCSStorageClient):
-        def __init__(self):
-            self.client = StorageClient()
-
-    with patch("opsml_artifacts.helpers.gcp_utils.GCSStorageClient", MockStorage) as mock_storage:
-        yield mock_storage
-
-
-#
-@pytest.fixture(scope="function")
-def mock_model_cli_loader(db_registries):
-    model_registry = db_registries["model"]
-
-    class MockModelLoaderCli(ModelLoaderCli):
-        def _save_api_def(self, api_def: ModelApiDef) -> None:
-            pass
-
-        def _set_registry(self) -> Any:
-            return model_registry
-
-    with patch(
-        "opsml_artifacts.scripts.load_model_card.ModelLoaderCli",
-        MockModelLoaderCli,
-    ) as model_cli_loader:
-        yield model_cli_loader
-
-
-@pytest.fixture(scope="function")
-def mock_gcp_scheduler():
-    class ScheduleClient:
-        def common_location_path(self, project: str, location: str):
-            return f"{project}-{location}"
-
-        def list_jobs(self, parent: str):
-            return [Blob(name="test")]
-
-        def delete_job(self, job_name: str):
-            return True
-
-        def create_job(self, parent: str, job: str):
-            return "test_job"
-
-    class MockScheduler(GCPMLScheduler):
-        def __init__(self):
-            self.schedule_client = ScheduleClient()
-            self.oidc_token = "test"
-            self.parent_path = "test"
-
-        def _create_job_class(self, job: dict):
-            return "job"
-
-    with patch("opsml_artifacts.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
-
-        yield mock_scheduler
 
 
 ######### Data for registry tests
@@ -450,39 +217,6 @@ def linear_regression():
     return reg, X
 
 
-@pytest.fixture(scope="function")
-def model_list():
-    models = []
-    for model in [LinearRegression, lgb.LGBMRegressor, XGBRegressor]:
-        X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
-        y = np.dot(X, np.array([1, 2])) + 3
-        reg = model().fit(X, y)
-        models.append(reg)
-    estimators = [("lr", RandomForestRegressor()), ("svr", XGBRegressor())]
-    reg = StackingRegressor(
-        estimators=estimators,
-        final_estimator=RandomForestRegressor(n_estimators=10, random_state=42),
-        cv=2,
-    )
-    reg.fit(X, y)
-    models.append(reg)
-    return models, X
-
-
-@pytest.fixture(scope="function")
-def stacking_regressor():
-    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
-    y = np.dot(X, np.array([1, 2])) + 3
-    estimators = [("lr", RandomForestRegressor()), ("svr", XGBRegressor()), ("reg", lgb.LGBMRegressor())]
-    reg = StackingRegressor(
-        estimators=estimators,
-        final_estimator=RandomForestRegressor(n_estimators=10, random_state=42),
-        cv=2,
-    )
-    reg.fit(X, y)
-    return reg, X
-
-
 @pytest.fixture(scope="module")
 def sklearn_pipeline():
     data = pd.DataFrame(
@@ -508,83 +242,6 @@ def sklearn_pipeline():
 
 
 @pytest.fixture(scope="function")
-def xgb_df_regressor(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
-    reg = XGBRegressor()
-    reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
-
-
-@pytest.fixture(scope="function")
-def random_forest_classifier(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
-    reg = RandomForestClassifier(n_estimators=10)
-    reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
-
-
-@pytest.fixture(scope="function")
-def lgb_classifier(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
-    reg = lgb.LGBMClassifier(n_estimators=3)
-    reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
-
-
-@pytest.fixture(scope="function")
-def lgb_booster_dataframe(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
-    # create dataset for lightgbm
-    lgb_train = lgb.Dataset(X_train, y_train)
-    lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
-    # specify your configurations as a dict
-    params = {
-        "boosting_type": "gbdt",
-        "objective": "regression",
-        "metric": {"l2", "l1"},
-        "num_leaves": 31,
-        "learning_rate": 0.05,
-        "feature_fraction": 0.9,
-        "bagging_fraction": 0.8,
-        "bagging_freq": 5,
-        "verbose": 0,
-    }
-    # train
-    gbm = lgb.train(
-        params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
-    )
-    return gbm, X_train[:100]
-
-
-@pytest.fixture(scope="function")
-def load_transformer_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
-    data = np.load("tests/assets/transformer_data.npy")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_multi_input_keras_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
-    data = joblib.load("tests/assets/multi_input_data.joblib")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_pytorch_resnet():
-    import torch
-
-    loaded_model = torch.load("tests/assets/resnet.pt")
-    data = torch.randn(1, 3, 224, 224).numpy()
-
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
 def test_model_card(sklearn_pipeline):
     # create data card
     model, data = sklearn_pipeline
@@ -596,23 +253,3 @@ def test_model_card(sklearn_pipeline):
         user_email="mlops.com",
     )
     return model_card
-
-
-@pytest.fixture(scope="function")
-def mock_gcs_storage_response():
-    class MockResponse:
-        def __init__(self):
-            self.status_code = 200
-
-        def json(self):
-            return {
-                "storage_type": "gcs",
-                "storage_url": "gs://test",
-            }
-
-    class MockHTTPX(httpx.Client):
-        def get(self, url, **kwargs):
-            return MockResponse()
-
-    with patch("httpx.Client", MockHTTPX) as mock_requests:
-        yield mock_requests

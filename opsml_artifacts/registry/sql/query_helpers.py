@@ -1,5 +1,5 @@
 from typing import Any, Iterable, Optional, Type, Union, cast
-
+from functools import wraps
 from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
@@ -74,3 +74,18 @@ class QueryCreator:
         query = query.filter(table.uid == uid)
 
         return cast(Select, query)
+
+
+def log_card_change(func):
+
+    """Decorator for logging card changes"""
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs) -> None:
+
+        name, version, state = func(self, *args, **kwargs)
+        logger.info("%s: %s, version:%s %s", self._table.__tablename__, name, version, state)
+
+        return None
+
+    return wrapper

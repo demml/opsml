@@ -112,3 +112,10 @@ class FindPath:
                 Found paths: {paths}
             """
         )
+
+
+def all_subclasses(cls):
+    """Gets all subclasses associated with parent class"""
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in all_subclasses(c)],
+    )

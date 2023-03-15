@@ -12,17 +12,17 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class BaseSQLConnection:
-    def __init__(self, tracking_url: str, credentials: Any = None):
+    def __init__(self, tracking_uri: str, credentials: Any = None):
         """Base Connection model that all connections inherit from"""
 
-        self.tracking_url = tracking_url
+        self.tracking_uri = tracking_uri
         self.connection_parts = self._make_url()
         self.credentials = credentials
 
     def _make_url(self) -> Any:
-        if ":memory:" in self.tracking_url:
+        if ":memory:" in self.tracking_uri:
             return None
-        return make_url(self.tracking_url)
+        return make_url(self.tracking_uri)
 
     @cached_property
     def _sqlalchemy_prefix(self):
