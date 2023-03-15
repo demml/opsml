@@ -3,18 +3,18 @@ import time
 from mlflow.tracking import MlflowClient
 
 
-def test_mlflow_exp(mlflow_experiment, api_registries, sklearn_pipeline, mock_pyarrow_parquet_write):
+def test_mlflow_exp(mlflow_experiment, sklearn_pipeline, mock_pyarrow_parquet_write):
 
     with mlflow_experiment as exp:
+
         model, data = sklearn_pipeline
-        data_registry: CardRegistry = api_registries["data"]
         data_card = DataCard(
             data=data,
             name="pipeline_data",
             team="mlops",
             user_email="mlops.com",
         )
-        data_registry.register_card(card=data_card)
+        exp.register_card(card=data_card)
 
         model_card1 = ModelCard(
             trained_model=model,
@@ -25,5 +25,5 @@ def test_mlflow_exp(mlflow_experiment, api_registries, sklearn_pipeline, mock_py
             data_card_uid=data_card.uid,
         )
 
-        exp.register_card(artifact_card=model_card1)
+        exp.register_card(card=model_card1)
         time.sleep(30)
