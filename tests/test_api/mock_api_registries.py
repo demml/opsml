@@ -25,6 +25,8 @@ logger = ArtifactLogger.get_logger(__name__)
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
+
+# Separate module for use the SQLRegistryAPI to force use of SQLRegistryAPI for some tests
 Registry = SQLRegistryAPI
 
 
