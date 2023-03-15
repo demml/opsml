@@ -16,7 +16,7 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
     ModelRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI, SQLRegistryBase
+from opsml_artifacts.registry.sql.registry_base import ClientRegistry, SQLRegistryBase
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -26,8 +26,8 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
 
-# Separate module for use the SQLRegistryAPI to force use of SQLRegistryAPI for some tests
-Registry = SQLRegistryAPI
+# Separate module for use the ClientRegistry to force use of ClientRegistry for some tests
+Registry = ClientRegistry
 
 
 class DataCardRegistry(Registry):

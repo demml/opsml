@@ -6,13 +6,11 @@ from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, List, Optional, Tuple, Union, cast
-import os
 from pyarrow.parquet import LocalFileSystem
 
 from opsml_artifacts.helpers.models import GcsStorageClientSettings, StorageSettings
 from opsml_artifacts.helpers.utils import all_subclasses
-from opsml_artifacts.registry.cards.types import ArtifactStorageInfo, StorageClientProto
-from opsml_artifacts.registry.cards.types import StoragePath
+from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata, StorageClientProto
 
 
 class StorageSystem(str, Enum):
@@ -44,30 +42,34 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
+        self._storage_metadata = Optional[ArtifactStorageMetadata]
+
+    @property
+    def storage_meta(self) -> ArtifactStorageMetadata:
+        return cast(ArtifactStorageMetadata, self._storage_metadata)
+
+    @storage_meta.setter
+    def storage_meta(self, artifact_storage_metadata):
+        self._storage_metadata = artifact_storage_metadata
 
     def create_save_path(
         self,
-        artifact_storage_info: ArtifactStorageInfo,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
 
-        filename = artifact_storage_info.filename or uuid.uuid4().hex
+        filename = self.storage_meta.filename or uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
-        base_path = f"{self.base_path_prefix}/{artifact_storage_info.blob_path}"
+        base_path = f"{self.base_path_prefix}/{self.storage_meta.save_path}"
 
         return base_path + f"/{filename}", filename
 
     def create_tmp_path(
         self,
-        artifact_storage_info: ArtifactStorageInfo,
         tmp_dir: str,
         file_suffix: Optional[str] = None,
     ):
-        base_path, filename = self.create_save_path(
-            artifact_storage_info=artifact_storage_info,
-            file_suffix=file_suffix,
-        )
+        base_path, filename = self.create_save_path(file_suffix=file_suffix)
         local_path = f"{tmp_dir}/{filename}"
 
         return base_path, local_path
@@ -75,13 +77,11 @@ class StorageClient:
     @contextmanager
     def create_temp_save_path(
         self,
-        artifact_storage_info: ArtifactStorageInfo,
         file_suffix: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
-                artifact_storage_info=artifact_storage_info,
                 file_suffix=file_suffix,
                 tmp_dir=tmpdirname,
             )
@@ -151,12 +151,10 @@ class GCSFSStorageClient(StorageClient):
 class LocalStorageClient(StorageClient):
     def create_save_path(
         self,
-        artifact_storage_info: ArtifactStorageInfo,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
 
         save_path, filename = super().create_save_path(
-            artifact_storage_info=artifact_storage_info,
             file_suffix=file_suffix,
         )
         self._make_path("/".join(save_path.split("/")[:-1]))
@@ -225,7 +223,7 @@ class MlFlowStorageClient(LocalStorageClient):
 
     # def create_tmp_path(
     #    self,
-    #    artifact_storage_info: ArtifactStorageInfo,
+    #    artifact_storage_info: ArtifactStorageMetaData,
     #    tmp_dir: str,
     #    file_suffix: Optional[str] = None,
     # ):

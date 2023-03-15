@@ -1,9 +1,12 @@
 import pytest
+import os
+from typing import Any
+from unittest.mock import patch, MagicMock
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from unittest.mock import patch, MagicMock
-import os
+from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
+from opsml_artifacts.registry.model.types import ModelApiDef
 
 
 @pytest.fixture(scope="function")
@@ -51,3 +54,20 @@ def db_registries(mock_local_engine):
             "pipeline": pipeline_registry,
             "connection_client": local_client,
         }
+
+
+@pytest.fixture(scope="function")
+def mock_model_cli_loader(db_registries):
+    model_registry = db_registries["model"]
+    from pathlib import Path
+
+    class MockModelLoaderCli(ModelLoaderCli):
+        def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
+            pass
+
+        def _set_registry(self) -> Any:
+            return model_registry
+
+    with patch("opsml_artifacts.scripts.load_model_card.ModelLoaderCli", MockModelLoaderCli) as mock_cli_loader:
+
+        yield mock_cli_loader

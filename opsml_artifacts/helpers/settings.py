@@ -12,7 +12,7 @@ from opsml_artifacts.helpers.models import (
     StorageSettings,
 )
 from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
-from opsml_artifacts.registry.cards.storage_system import (
+from opsml_artifacts.registry.storage.storage_system import (
     StorageClientGetter,
     StorageClientTypes,
 )

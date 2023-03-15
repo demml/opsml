@@ -7,12 +7,9 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 from opsml_artifacts.drift.data_drift import DriftReport
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.cards.artifact_storage import load_record_artifact_from_storage
-from opsml_artifacts.registry.sql.models import ArtifactStorageInfo
-from opsml_artifacts.registry.cards.types import (
-    RegistryRecordProto,
-    StorageClientProto,
-)
+from opsml_artifacts.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata, StorageClientProto
+from opsml_artifacts.registry.cards.types import RegistryRecordProto
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
 from opsml_artifacts.registry.model.creator import OnnxModelCreator
 from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
@@ -58,10 +55,6 @@ class ArtifactCard(BaseModel):
             lowercase_vars[key] = val
 
         return lowercase_vars
-
-    def _set_additional_attr(self, uid: str, version: str):
-        setattr(self, "uid", uid)
-        setattr(self, "version", version)
 
     def create_registry_record(self) -> RegistryRecordProto:
         """Creates a registry record from self attributes
@@ -210,16 +203,17 @@ class DataCard(ArtifactCard):
         """Loads data"""
 
         if not bool(self.data):
-            artifact_storage_info = ArtifactStorageInfo(
-                blob_path=self.data_uri,
+            storage_meta = ArtifactStorageMetadata(
+                save_path=self.data_uri,
                 name=self.name,
                 team=self.team,
                 version=self.version,
                 storage_client=self.storage_client,
             )
 
+            self.storage_client.storage_meta = storage_meta
             data = load_record_artifact_from_storage(
-                artifact_storage_info=artifact_storage_info,
+                storage_client=self.storage_client,
                 artifact_type=self.data_type,
             )
 
@@ -227,7 +221,7 @@ class DataCard(ArtifactCard):
         else:
             logger.info("Data has already been loaded")
 
-    def create_registry_record(self, uid: str, version: str) -> RegistryRecordProto:
+    def create_registry_record(self) -> RegistryRecordProto:
 
         """Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
@@ -243,7 +237,6 @@ class DataCard(ArtifactCard):
 
         """
         exclude_attr = {"data", "drift_report", "storage_client"}
-        self._set_additional_attr(uid=uid, version=version)
         return cast(RegistryRecordProto, DataRegistryRecord(**self.dict(exclude=exclude_attr)))
 
     def add_info(self, info: Dict[str, Union[float, int, str]]):
@@ -328,16 +321,17 @@ class ModelCard(ArtifactCard):
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
-        artifact_storage_info = ArtifactStorageInfo(
-            blob_path=self.sample_data_uri,
+        storage_meta = ArtifactStorageMetadata(
+            save_path=self.sample_data_uri,
             name=self.name,
             team=self.team,
             version=self.version,
             storage_client=self.storage_client,
         )
 
+        self.storage_client.storage_meta = storage_meta
         sample_data = load_record_artifact_from_storage(
-            artifact_storage_info=artifact_storage_info,
+            storage_client=self.storage_client,
             artifact_type=self.sample_data_type,
         )
 
@@ -348,22 +342,23 @@ class ModelCard(ArtifactCard):
 
         self.load_sample_data()
 
-        artifact_storage_info = ArtifactStorageInfo(
-            blob_path=self.trained_model_uri,
+        storage_meta = ArtifactStorageMetadata(
+            save_path=self.trained_model_uri,
             name=self.name,
             team=self.team,
             version=self.version,
             storage_client=self.storage_client,
         )
 
+        self.storage_client.storage_meta = storage_meta
         trained_model = load_record_artifact_from_storage(
-            artifact_storage_info=artifact_storage_info,
+            storage_client=self.storage_client,
             artifact_type=self.model_type,
         )
 
         setattr(self, "trained_model", trained_model)
 
-    def create_registry_record(self, uid: str, version: str) -> RegistryRecordProto:
+    def create_registry_record(self) -> RegistryRecordProto:
         """Creates a registry record from the current ModelCard
 
         registry_name (str): ModelCard Registry table making request
@@ -379,7 +374,6 @@ class ModelCard(ArtifactCard):
         }
         if not bool(self.onnx_model_def):
             self._create_and_set_onnx_attr()
-        self._set_additional_attr(uid=uid, version=version)
 
         return cast(RegistryRecordProto, ModelRegistryRecord(**self.dict(exclude=exclude_vars)))
 
@@ -534,15 +528,13 @@ class PipelineCard(ArtifactCard):
     def load_pipeline_code(self):
         raise NotImplementedError
 
-    def create_registry_record(self, uid: str, version: str) -> RegistryRecordProto:
+    def create_registry_record(self) -> RegistryRecordProto:
         """Creates a registry record from the current PipelineCard
 
         registry_name (str): PipelineCard Registry table making request
         uid (str): Unique id of PipelineCard
 
         """
-
-        self._set_additional_attr(uid=uid, version=version)
         return cast(RegistryRecordProto, PipelineRegistryRecord(**self.dict()))
 
 
@@ -619,7 +611,7 @@ class ExperimentCard(ArtifactCard):
         self.artifacts = {**new_artifact, **curr_artifacts}
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
-    def create_registry_record(self, uid: str, version: str) -> RegistryRecordProto:
+    def create_registry_record(self) -> RegistryRecordProto:
         """Creates a registry record from the current ExperimentCard
 
         registry_name (str): ExperimentCardRegistry table making request
@@ -633,8 +625,6 @@ class ExperimentCard(ArtifactCard):
                 """One of DataCard, ModelCard, or PipelineCard must be specified
             """
             )
-
-        self._set_additional_attr(uid=uid, version=version)
         return cast(RegistryRecordProto, ExperimentRegistryRecord(**self.dict(exclude=exclude_attr)))
 
 

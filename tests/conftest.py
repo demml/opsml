@@ -9,15 +9,15 @@ from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, Exp
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
 from opsml_artifacts.helpers.models import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.helpers.request_helpers import ApiClient
-from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI
+from opsml_artifacts.registry.sql.registry_base import ClientRegistry
 from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
 from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
@@ -122,20 +122,36 @@ def mock_gcsfs():
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_pathlib():
-    with patch.multiple("pathlib.Path", mkdir=MagicMock(return_value=None)) as mocked_pathlib:
+    with patch.multiple(
+        "pathlib.Path",
+        mkdir=MagicMock(return_value=None),
+    ) as mocked_pathlib:
         yield mocked_pathlib
 
 
 @pytest.fixture(scope="function")
 def mock_joblib_storage():
     with patch.multiple(
-        "opsml_artifacts.registry.cards.artifact_storage.JoblibStorage",
-        _save_json=MagicMock(return_value=None),
-        _save_joblib=MagicMock(return_value=None),
-        _load_joblib=MagicMock(return_value=None),
-        _load_json=MagicMock(return_value=None),
+        "opsml_artifacts.registry.storage.artifact_storage.JoblibStorage",
+        _save_artifact=MagicMock(return_value=None),
+        _load_artifact=MagicMock(return_value=None),
     ) as mocked_joblib:
         yield mocked_joblib
+
+
+@pytest.fixture(scope="function")
+def mock_json_storage():
+    with patch.multiple(
+        "opsml_artifacts.registry.storage.artifact_storage.JSONStorage",
+        _save_artifact=MagicMock(return_value=None),
+        _load_artifact=MagicMock(return_value=None),
+    ) as mocked_json:
+        yield mocked_json
+
+
+@pytest.fixture(scope="function")
+def mock_artifact_storage_clients(mock_json_storage, mock_joblib_storage):
+    yield mock_json_storage, mock_joblib_storage
 
 
 @pytest.fixture(scope="function")

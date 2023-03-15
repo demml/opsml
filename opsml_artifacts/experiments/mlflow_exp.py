@@ -5,7 +5,7 @@ from mlflow.tracking import MlflowClient
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.sql.registry import CardTypes
-from opsml_artifacts.registry.cards.storage_system import MlFlowStorageClient
+from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
 from opsml_artifacts.experiments.mlflow_helpers import CardRegistries, mlflow_storage_client
 
 # Notes during development
