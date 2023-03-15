@@ -21,10 +21,10 @@ def mock_pyarrow_parquet_write():
 def api_registries(mock_opsml_server):
     """Because settings acts as a singleton,
     we need to explicitly define new card registry types
-    in order to test the SQLRegistryAPI functionality
+    in order to test the ClientRegistry functionality
     """
 
-    from tests.mock_api_registries import CardRegistry
+    from tests.test_api.mock_api_registries import CardRegistry
 
     registries = {}
     for name in ["data", "model", "pipeline", "experiment"]:

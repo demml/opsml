@@ -4,7 +4,7 @@ from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.models import StorageClientSettings
-from opsml_artifacts.registry.cards.storage_system import MlFlowStorageClient
+from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
 
 # Notes during development
 # assume you are using mlflow url with a proxy client for artifacts

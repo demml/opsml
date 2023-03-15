@@ -5,7 +5,7 @@ from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 import pandas as pd
 from pydantic import ValidationError
-from opsml_artifacts import DataCard, ModelCard, ExperimentCard, PipelineCard
+from opsml_artifacts import DataCard, ModelCard, ExperimentCard, PipelineCard, CardRegistry
 import uuid
 import random
 from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
@@ -46,7 +46,7 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, db_registries, mock_joblib_storage):
+def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
 
     registry = db_registries["experiment"]
 
@@ -75,16 +75,16 @@ def test_experiment_card(linear_regression, db_registries, mock_joblib_storage):
 def test_register_model(
     loaded_model_record,
     model_card_mock,
-    api_registries,
+    db_registries,
     sklearn_pipeline,
     mock_pyarrow_parquet_write,
-    mock_joblib_storage,
+    mock_artifact_storage_clients,
 ):
 
     model_card_mock.return_value = None
     model, data = sklearn_pipeline
     # create data card
-    data_registry = api_registries["data"]
+    data_registry: CardRegistry = db_registries["data"]
 
     data_card = DataCard(
         data=data,
@@ -103,7 +103,7 @@ def test_register_model(
         data_card_uid=data_card.uid,
     )
 
-    model_registry = api_registries["model"]
+    model_registry = db_registries["model"]
     model_registry.register_card(model_card1)
 
     loaded_model_record.return_value = model_card1.dict()
@@ -163,18 +163,12 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_load_data_card(
-    api_registries,
-    test_data,
-    mock_pyarrow_parquet_write,
-    mock_pyarrow_parquet_dataset,
-    mock_joblib_storage,
-):
+def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
 
-    registry = api_registries["data"]
+    registry = db_registries["data"]
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -222,11 +216,7 @@ def _test_load_data_card(
         )
 
 
-def _test_pipeline_registry(
-    api_registries,
-    mock_pyarrow_parquet_write,
-    mock_joblib_storage,
-):
+def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -240,7 +230,7 @@ def _test_pipeline_registry(
             name=f"{card_type}_{random.randint(0,100)}",
         )
     # register
-    registry = api_registries["pipeline"]
+    registry: CardRegistry = db_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
@@ -253,20 +243,19 @@ def _test_pipeline_registry(
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def _test_full_pipeline_with_loading(
-    api_registries,
-    api_pipeline_loader,
+def test_full_pipeline_with_loading(
+    db_registries,
     linear_regression,
     mock_pyarrow_parquet_write,
-    mock_joblib_storage,
+    mock_artifact_storage_clients,
 ):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
-    data_registry = api_registries["data"]
-    model_registry = api_registries["model"]
-    experiment_registry = api_registries["experiment"]
-    pipeline_registry = api_registries["pipeline"]
+    data_registry: CardRegistry = db_registries["data"]
+    model_registry: CardRegistry = db_registries["model"]
+    experiment_registry: CardRegistry = db_registries["experiment"]
+    pipeline_registry: CardRegistry = db_registries["pipeline"]
     model, data = linear_regression
     #### Create DataCard
     data_card = DataCard(
@@ -286,8 +275,8 @@ def _test_full_pipeline_with_loading(
             user_email=user_email,
             data_card_uid=data_card.uid,
         )
-        with patch.multiple("joblib", dump=MagicMock(return_value=None)):
-            model_registry.register_card(model_card)
+
+        model_registry.register_card(model_card)
 
     ##### ExperimentCard
     exp_card = ExperimentCard(
@@ -310,10 +299,14 @@ def _test_full_pipeline_with_loading(
         experiment_card_uids={"exp1": exp_card.uid},
     )
     pipeline_registry.register_card(card=pipeline_card)
-    loader = api_pipeline_loader(pipeline_card_uid=pipeline_card.uid)
-    with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
-        deck = loader.load_cards()
-        uids = loader.card_uids
-        assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
-        assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
-        loader.visualize()
+    with patch(
+        "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
+        return_value=None,
+    ):
+        loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
+        with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
+            deck = loader.load_cards()
+            uids = loader.card_uids
+            assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
+            assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
+            loader.visualize()

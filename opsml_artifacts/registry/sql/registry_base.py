@@ -10,10 +10,11 @@ from opsml_artifacts.helpers.request_helpers import api_routes
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, ModelCard, PipelineCard, CardTypes
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
-from opsml_artifacts.registry.sql.models import ArtifactStorageInfo
+from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml_artifacts.registry.sql.records import LoadedRecordType, load_record
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, TableSchema
+from opsml_artifacts.registry.cards.types import RegistryRecordProto
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -133,26 +134,57 @@ class SQLRegistryBase:
             """
             )
 
-    def _get_artifact_storage_info(
-        self,
-        card: ArtifactCardProto,
-        version: str,
-        save_path: Optional[str] = None,
-    ):
+    def _set_artifact_storage_metadata(
+        self, card: ArtifactCardProto, save_path: Optional[str] = None
+    ) -> ArtifactStorageMetadata:
         """Creates artifact storage info to associate with artifacts"""
 
         if save_path is None:
-            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{version}"
+            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{card.version}"
 
-        artifact_storage_info = ArtifactStorageInfo(
-            blob_path=save_path,
+        artifact_storage_metadata = ArtifactStorageMetadata(
+            save_path=save_path,
             name=card.name,
             team=card.team,
-            version=version,
-            storage_client=self.storage_client,
+            version=card.version,
         )
 
-        return artifact_storage_info
+        self._update_storage_client_metadata(storage_metadata=artifact_storage_metadata)
+
+    def _update_storage_client_metadata(self, storage_metadata: ArtifactStorageMetadata):
+        """Updates storage metadata"""
+        self.storage_client.storage_meta = storage_metadata
+
+    def _set_card_uid_version(self, card: CardTypes, version_type: str):
+        """Sets a given card's version and uid
+
+        Args:
+            card (ArtifactCard): Card to set
+            version_typer (str): Type of version increment
+        """
+
+        # need to find way to compare previous cards and automatically
+        # determine if change is major or minor
+        version = self._set_version(
+            name=card.name,
+            team=card.team,
+            version_type=version_type,
+        )
+        card.version = version
+
+        if card.uid is None:
+            card.uid = self._get_uid()
+
+    def _create_registry_record(self, card: CardTypes) -> RegistryRecordProto:
+        """Creates a registry record from a given ArtifactCard.
+        Saves artifacts prior to creating record
+
+        Args:
+            card (ArtifactCard): Card to create a registry record from
+        """
+        card = save_card_artifacts(card=card, storage_client=self.storage_client)
+        record = card.create_registry_record()
+        self._add_and_commit(record=record.dict())
 
     def register_card(
         self,
@@ -174,24 +206,9 @@ class SQLRegistryBase:
         """
 
         self._validate(card=card)
-        # need to find way to compare previous cards and automatically
-        # determine if change is major or minor
-        version = self._set_version(
-            name=card.name,
-            team=card.team,
-            version_type=version_type,
-        )
-
-        artifact_storage_info = self._get_artifact_storage_info(
-            card=card,
-            version=version,
-            save_path=save_path,
-        )
-
-        card = save_card_artifacts(card=card, artifact_storage_info=artifact_storage_info)
-        record = card.create_registry_record(uid=self._get_uid(), version=version)
-
-        self._add_and_commit(record=record.dict())
+        self._set_card_uid_version(card=card, version_type=version_type)
+        self._set_artifact_storage_metadata(card=card, save_path=save_path)
+        self._create_registry_record(card=card)
 
     def list_cards(
         self,
@@ -232,7 +249,7 @@ class SQLRegistryBase:
         )
 
 
-class SQLRegistry(SQLRegistryBase):
+class ServerRegistry(SQLRegistryBase):
     def __init__(self, table_name: str):
         super().__init__(table_name)
 
@@ -353,8 +370,7 @@ class SQLRegistry(SQLRegistryBase):
         return bool(result)
 
 
-# work in progress
-class SQLRegistryAPI(SQLRegistryBase):
+class ClientRegistry(SQLRegistryBase):
     def __init__(self, table_name: str):
         super().__init__(table_name)
 
@@ -452,8 +468,8 @@ class SQLRegistryAPI(SQLRegistryBase):
 # mypy isnt good with dynamic class creation
 def get_sql_registry_base() -> Any:
     if settings.request_client is not None:
-        return cast(Any, SQLRegistryAPI)
-    return cast(Any, SQLRegistry)
+        return cast(Any, ClientRegistry)
+    return cast(Any, ServerRegistry)
 
 
 Registry = get_sql_registry_base()
