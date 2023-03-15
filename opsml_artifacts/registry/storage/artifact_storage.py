@@ -4,19 +4,17 @@ import tempfile
 from typing import Any, Dict, List, Optional, Union
 import json
 import joblib
-import yaml
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
-
-from opsml_artifacts.registry.cards.storage_system import StorageSystem
+from opsml_artifacts.registry.storage.types import StorageClientProto
+from opsml_artifacts.registry.storage.storage_system import StorageSystem
 from opsml_artifacts.registry.cards.types import (
     DATA_ARTIFACTS,
     ArtifactStorageTypes,
-    ArtifactStorageInfo,
-    StorageClientProto,
     StoragePath,
 )
 
@@ -27,14 +25,13 @@ class ArtifactStorage:
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
         file_suffix: Optional[str] = None,
     ):
 
         self.file_suffix = None
         self.artifact_type = artifact_type
-        self.storage_client: StorageClientProto = artifact_storage_info.storage_client
-        self.artifact_storage_info = artifact_storage_info
+        self.storage_client = storage_client
 
         if file_suffix is not None:
             self.file_suffix = str(file_suffix)
@@ -63,17 +60,13 @@ class ArtifactStorage:
         raise NotImplementedError
 
     def save_artifact_to_local(self, artifact: Any) -> str:
-        storage_uri, _ = self.storage_client.create_save_path(
-            artifact_storage_info=self.artifact_storage_info,
-            file_suffix=self.file_suffix,
-        )
-
+        storage_uri, _ = self.storage_client.create_save_path(file_suffix=self.file_suffix)
         self._save_artifact(artifact=artifact, file_path=storage_uri)
 
         return storage_uri
 
     def save_artifact_to_external(self, artifact: Any) -> str:
-        with self.storage_client.create_temp_save_path(self.artifact_storage_info, self.file_suffix) as temp_output:
+        with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
             self._save_artifact(artifact=artifact, file_path=local_path)
             self.storage_client.upload(local_path=local_path, write_path=storage_uri)
@@ -101,11 +94,11 @@ class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_storage_info=artifact_storage_info,
+            storage_client=storage_client,
             file_suffix="parquet",
         )
 
@@ -118,7 +111,7 @@ class ParquetStorage(ArtifactStorage):
 
     def save_artifact_to_external(self, artifact: pa.Table) -> StoragePath:
 
-        with self.storage_client.create_temp_save_path(self.artifact_storage_info, self.file_suffix) as temp_output:
+        with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
 
             if self.storage_client.backend == StorageSystem.GCS:
@@ -166,11 +159,11 @@ class NumpyStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_storage_info=artifact_storage_info,
+            storage_client=storage_client,
             file_suffix="zarr",
         )
 
@@ -180,7 +173,7 @@ class NumpyStorage(ArtifactStorage):
 
     def save_artifact_to_external(self, artifact: pa.Table) -> StoragePath:
 
-        with self.storage_client.create_temp_save_path(self.artifact_storage_info, self.file_suffix) as temp_output:
+        with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
 
             if self.storage_client.backend == StorageSystem.GCS:
@@ -223,11 +216,11 @@ class JoblibStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_storage_info=artifact_storage_info,
+            storage_client=storage_client,
             file_suffix="joblib",
         )
 
@@ -251,17 +244,18 @@ class JSONStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_storage_info=artifact_storage_info,
+            storage_client=storage_client,
             file_suffix="json",
         )
 
     def _save_artifact(self, artifact: Any, file_path: str):
-        with open(file_path, "w", encoding="utf-8") as file_:
-            return json.dump(artifact, file_)
+        filepath = Path(file_path)
+        with filepath.open("w", encoding="utf-8") as file_:
+            file_.write(artifact)
 
     def _load_artifact(self, file_path: str) -> Any:
         with open(file_path) as json_file:
@@ -281,11 +275,11 @@ class TensorflowModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_storage_info=artifact_storage_info,
+            storage_client=storage_client,
             file_suffix=None,
         )
 
@@ -294,7 +288,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     def save_artifact_to_external(self, artifact: Any) -> str:
 
-        with self.storage_client.create_temp_save_path(self.artifact_storage_info, self.file_suffix) as temp_output:
+        with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
             self._save_artifact(artifact, local_path)
             self.storage_client.upload(local_path=local_path, write_path=f"{storage_uri}/", recursive=True)
@@ -331,11 +325,11 @@ class PyTorchModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        artifact_storage_info: ArtifactStorageInfo,
+        storage_client: StorageClientProto,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_storage_info=artifact_storage_info,
+            storage_client=storage_client,
             file_suffix="pt",
         )
 
@@ -356,7 +350,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
 def save_record_artifact_to_storage(
     artifact: Any,
-    artifact_storage_info: ArtifactStorageInfo,
+    storage_client: StorageClientProto,
     artifact_type: Optional[str] = None,
 ) -> StoragePath:
 
@@ -373,17 +367,14 @@ def save_record_artifact_to_storage(
         JoblibStorage,
     )
     return storage_type(
-        artifact_storage_info=artifact_storage_info,
+        storage_client=storage_client,
         artifact_type=_artifact_type,
     ).save_artifact(artifact=artifact)
 
 
-def load_record_artifact_from_storage(
-    artifact_type: str,
-    artifact_storage_info: ArtifactStorageInfo,
-):
+def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientProto):
 
-    if not bool(artifact_storage_info.blob_path):
+    if not bool(storage_client.storage_meta.save_path):
         return None
 
     storage_type = next(
@@ -396,5 +387,5 @@ def load_record_artifact_from_storage(
 
     return storage_type(
         artifact_type=artifact_type,
-        artifact_storage_info=artifact_storage_info,
-    ).load_artifact(storage_uri=artifact_storage_info.blob_path)
+        storage_client=storage_client,
+    ).load_artifact(storage_uri=storage_client.storage_meta.save_path)

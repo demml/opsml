@@ -44,7 +44,7 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, db_registries, mock_joblib_storage):
+def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
 
     registry: CardRegistry = db_registries["experiment"]
     experiment = ExperimentCard(
@@ -74,7 +74,7 @@ def test_register_model(
     db_registries,
     sklearn_pipeline,
     mock_pyarrow_parquet_write,
-    mock_joblib_storage,
+    mock_artifact_storage_clients,
 ):
 
     model_card_mock.return_value = None
@@ -273,7 +273,12 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def test_full_pipeline_with_loading(db_registries, linear_regression, mock_pyarrow_parquet_write, mock_joblib_storage):
+def test_full_pipeline_with_loading(
+    db_registries,
+    linear_regression,
+    mock_pyarrow_parquet_write,
+    mock_artifact_storage_clients,
+):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
