@@ -2,7 +2,6 @@ from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
@@ -82,7 +81,6 @@ class ModelCardRegistry(Registry):
         card: ArtifactCardProto,
         version_type: str = "minor",
         save_path: Optional[str] = None,
-        **kwargs,
     ) -> None:
         """
         Adds new record to registry.
@@ -93,7 +91,7 @@ class ModelCardRegistry(Registry):
             "patch". Defaults to "minor"
             save_path (str): Blob path to save card artifacts too.
             This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
             env variables. In addition, save_path should specify a directory.
         """
 
@@ -109,7 +107,6 @@ class ModelCardRegistry(Registry):
             card=card,
             version_type=version_type,
             save_path=save_path,
-            **kwargs,
         )
 
     @staticmethod
@@ -234,7 +231,8 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        return self.registry.list_cards(uid=uid, name=name, team=team, version=version)
+        card_list = self.registry.list_cards(uid=uid, name=name, team=team, version=version)
+        return pd.DataFrame(card_list)
 
     def load_card(
         self,
@@ -280,7 +278,7 @@ class CardRegistry:
             "patch". Defaults to "minor"
             save_path (str): Blob path to save card artifacts too.
             This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
             env variables. In addition, save_path should specify a directory.
         """
 
@@ -320,5 +318,5 @@ class CardRegistry:
         Returns:
             Dictionary of column, values pairs
         """
-        results = self.registry._query_record(uid=uid)  # pylint: disable=protected-access
+        results = self.registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}

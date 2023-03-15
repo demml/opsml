@@ -4,7 +4,7 @@ from typing import Any, Generator, List, Optional, Protocol, Tuple
 
 from pydantic import BaseModel
 
-from opsml_artifacts.registry.sql.models import SaveInfo
+from opsml_artifacts.registry.sql.models import ArtifactStorageInfo
 
 
 class StoragePath(BaseModel):
@@ -37,16 +37,25 @@ class StorageClientProto(Protocol):
     client: Any
     base_path_prefix: str
 
-    def create_save_path(self, save_info: SaveInfo, file_suffix: Optional[str] = None) -> Tuple[str, str]:
+    def create_save_path(
+        self,
+        artifact_storage_info: ArtifactStorageInfo,
+        file_suffix: Optional[str] = None,
+    ) -> Tuple[str, str]:
         "Creates a save path"
 
-    def create_tmp_path(self, save_info: SaveInfo, tmp_dir: str, file_suffix: Optional[str] = None):
+    def create_tmp_path(
+        self,
+        artifact_storage_info: ArtifactStorageInfo,
+        tmp_dir: str,
+        file_suffix: Optional[str] = None,
+    ):
         """Temp path"""
 
     @contextmanager
     def create_temp_save_path(
         self,
-        save_info: SaveInfo,
+        artifact_storage_info: ArtifactStorageInfo,
         file_suffix: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
         """Context manager temp save path"""
@@ -59,6 +68,9 @@ class StorageClientProto(Protocol):
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
         "Upload"
+
+    def post_process(self, storage_uri: str) -> str:
+        "post process"
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -75,5 +87,5 @@ class ArtifactCardProto(Protocol):
     team: str
     uid: str
 
-    def create_registry_record(self, uid: str, save_info: SaveInfo) -> RegistryRecordProto:
+    def create_registry_record(self, uid: str, version: str) -> RegistryRecordProto:
         """Create registry record"""
