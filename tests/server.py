@@ -1,6 +1,6 @@
 import os
 from multiprocessing import Process
-from opsml_artifacts.api.main import get_opsml_app
+from opsml_artifacts.api.main import OpsmlApp
 import uvicorn
 import requests
 import pytest
@@ -18,12 +18,12 @@ class TestApp:
 
     def start(self):
         """Bring server up."""
-        app = get_opsml_app(mlflow_app=self.is_mlflow)
+        app = OpsmlApp(run_mlflow=self.is_mlflow).build_app()
         self.proc = Process(
             target=uvicorn.run,
             args=(app,),
             kwargs={"host": "0.0.0.0", "port": 8000, "log_level": "info"},
-            daemon=False,
+            daemon=True,
         )
         self.proc.start()
 

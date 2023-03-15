@@ -1,13 +1,7 @@
-###### NOTE ######
-# This module is only used for testing purposes in order to test proxy API functinality
-# Since DefaultSettings acts as a Singleton, the default registry is always SQLRegistry
-# Because of this, new classes that explicitly inherit SQLRegistryAPI need to be created for testing
-
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
@@ -20,6 +14,7 @@ from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
     PipelineRegistryRecord,
+    ModelRegistryRecord,
 )
 from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI, SQLRegistryBase
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
@@ -30,8 +25,10 @@ logger = ArtifactLogger.get_logger(__name__)
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
+Registry = SQLRegistryAPI
 
-class DataCardRegistry(SQLRegistryAPI):
+
+class DataCardRegistry(Registry):
 
     # specific update logic
     def update_card(self, card: DataCard) -> None:
@@ -53,7 +50,21 @@ class DataCardRegistry(SQLRegistryAPI):
         return registry_name in RegistryTableNames.DATA
 
 
-class ModelCardRegistry(SQLRegistryAPI):
+class ModelCardRegistry(Registry):
+    def update_card(self, card: ModelCard) -> None:
+
+        """Updates an existing model card
+
+        Args:
+            model_card (ModelCard): Existing model card record
+
+        Returns:
+            None
+        """
+
+        record = ModelRegistryRecord(**card.dict())
+        self._update_record(record=record.dict())
+
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
@@ -82,19 +93,18 @@ class ModelCardRegistry(SQLRegistryAPI):
             "patch". Defaults to "minor"
             save_path (str): Blob path to save card artifacts too.
             This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
             env variables. In addition, save_path should specify a directory.
         """
 
         model_card = cast(ModelCard, card)
 
         if not self._has_data_card_uid(uid=model_card.data_card_uid):
-            raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
+            raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
         if model_card.data_card_uid is not None:
             self._validate_datacard_uid(uid=model_card.data_card_uid)
 
-        print(super.mro())
         return super().register_card(
             card=card,
             version_type=version_type,
@@ -106,7 +116,7 @@ class ModelCardRegistry(SQLRegistryAPI):
         return registry_name in RegistryTableNames.MODEL
 
 
-class ExperimentCardRegistry(SQLRegistryAPI):
+class ExperimentCardRegistry(Registry):
     def update_card(self, card: ExperimentCard) -> None:
 
         """Updates an existing pipeline card in the pipeline registry
@@ -126,7 +136,7 @@ class ExperimentCardRegistry(SQLRegistryAPI):
         return registry_name in RegistryTableNames.EXPERIMENT
 
 
-class PipelineCardRegistry(SQLRegistryAPI):
+class PipelineCardRegistry(Registry):
     def update_card(self, card: PipelineCard) -> None:
 
         """Updates an existing pipeline card in the pipeline registry
@@ -173,7 +183,7 @@ class CardRegistry:
         self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
-    def _set_registry(self, registry_name: str) -> SQLRegistryAPI:
+    def _set_registry(self, registry_name: str) -> Registry:
 
         """Returns a SQL registry to be used to register Cards
 
@@ -187,7 +197,7 @@ class CardRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
-            for registry in SQLRegistryAPI.__subclasses__()
+            for registry in Registry.__subclasses__()
             if registry.validate(
                 registry_name=registry_name,
             )
@@ -223,7 +233,8 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        return self.registry.list_cards(uid=uid, name=name, team=team, version=version)
+        card_list = self.registry.list_cards(uid=uid, name=name, team=team, version=version)
+        return pd.DataFrame(card_list)
 
     def load_card(
         self,
@@ -269,7 +280,7 @@ class CardRegistry:
             "patch". Defaults to "minor"
             save_path (str): Blob path to save card artifacts too.
             This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URL" or "OPSML_STORAGE_URL"
+            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
             env variables. In addition, save_path should specify a directory.
         """
 
@@ -309,5 +320,5 @@ class CardRegistry:
         Returns:
             Dictionary of column, values pairs
         """
-        results = self.registry._query_record(uid=uid)  # pylint: disable=protected-access
+        results = self.registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}

@@ -204,3 +204,4 @@ class ModelApiDef(BaseModel):
 
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
+        allow_extra = True

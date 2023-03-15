@@ -44,7 +44,7 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(mock_joblib_storage, linear_regression, db_registries):
+def test_experiment_card(linear_regression, db_registries, mock_joblib_storage):
 
     registry: CardRegistry = db_registries["experiment"]
     experiment = ExperimentCard(
@@ -105,6 +105,7 @@ def test_register_model(
     loaded_model_record.return_value = model_card1.dict()
     loaded_card = model_registry.load_card(uid=model_card1.uid)
     loaded_card.load_trained_model()
+
     loaded_card.trained_model = model
     loaded_card.sample_input_data = data[0:1]
 
