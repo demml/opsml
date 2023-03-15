@@ -72,7 +72,7 @@ def test_experiment_card(linear_regression, db_registries, mock_joblib_storage):
 
 @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
-def _test_register_model(
+def test_register_model(
     loaded_model_record,
     model_card_mock,
     api_registries,
