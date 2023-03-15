@@ -1,6 +1,22 @@
 from click.testing import CliRunner
-from opsml_artifacts.scripts.load_model_card import load_model_card_to_file
+from opsml_artifacts.scripts.load_model_card import load_model_card_to_file, ModelLoaderCli
 from unittest.mock import patch, MagicMock
+
+
+def test_cli_class(mock_model_cli_loader, test_model_card):
+    with patch.multiple(
+        "opsml_artifacts.registry.sql.registry.CardRegistry",
+        load_card=MagicMock(return_value=test_model_card),
+    ):
+        loader = mock_model_cli_loader(
+            storage_type="local",
+            name="driven_drop_off_predictor",
+            team="SPMS",
+            versions=["2"],
+            uid="blah",
+        )
+
+        loader.save_to_local_file()
 
 
 def test_load_model_card_version(mock_model_cli_loader, test_model_card):

@@ -4,10 +4,10 @@ import pyarrow as pa
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
-from opsml_artifacts.registry.cards.artifact_storage import (
+from opsml_artifacts.registry.storage.artifact_storage import (
     ParquetStorage,
     JoblibStorage,
-    ArtifactStorageInfo,
+    ArtifactStorageMetaData,
     NumpyStorage,
     TensorflowModelStorage,
     PyTorchModelStorage,
@@ -18,8 +18,8 @@ from opsml_artifacts.drift.data_drift import DriftDetector
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
 
-    storage_info = ArtifactStorageInfo(
-        blob_path="blob",
+    storage_info = ArtifactStorageMetaData(
+        save_path="blob",
         version="1.0.0",
         team="mlops",
         name="test",
@@ -39,8 +39,8 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
-    storage_info = ArtifactStorageInfo(
-        blob_path="blob",
+    storage_info = ArtifactStorageMetaData(
+        save_path="blob",
         version="1.0.0",
         team="mlops",
         name="test",
@@ -84,8 +84,8 @@ def test_drift_storage(
 
     drift_report = detector.run_drift_diagnostics(return_dataframe=False)
 
-    storage_info = ArtifactStorageInfo(
-        blob_path="blob",
+    storage_info = ArtifactStorageMetaData(
+        save_path="blob",
         version="1.0.0",
         team="mlops",
         name="test",
@@ -104,8 +104,8 @@ def test_drift_storage(
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
-    storage_info = ArtifactStorageInfo(
-        blob_path="blob",
+    storage_info = ArtifactStorageMetaData(
+        save_path="blob",
         version="1.0.0",
         team="mlops",
         name="test",
@@ -133,8 +133,8 @@ def test_tensorflow_model(storage_client, load_transformer_example):
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_pytorch_model(storage_client, load_pytorch_resnet):
     model, data = load_pytorch_resnet
-    storage_info = ArtifactStorageInfo(
-        blob_path="blob",
+    storage_info = ArtifactStorageMetaData(
+        save_path="blob",
         version="1.0.0",
         team="mlops",
         name="test",

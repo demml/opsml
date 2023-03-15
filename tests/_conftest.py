@@ -17,10 +17,10 @@ from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, Exp
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
 from opsml_artifacts.helpers.models import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.cards.storage_system import StorageClientGetter
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.helpers.request_helpers import ApiClient
-from opsml_artifacts.registry.sql.registry_base import SQLRegistryAPI
+from opsml_artifacts.registry.sql.registry_base import ClientRegistry
 from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
 from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
@@ -150,7 +150,7 @@ def local_storage_client():
 # def api_registries(mock_opsml_server):
 #    """Because settings acts as a singleton,
 #    we need to explicitly define new card registry types
-#    in order to test the SQLRegistryAPI functionality
+#    in order to test the ClientRegistry functionality
 #    """
 #
 #    from tests.mock_api_registries import CardRegistry
@@ -168,7 +168,7 @@ def local_storage_client():
 def api_pipeline_loader(mock_opsml_server):
 
     from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader, CardNames
-    from tests.test_registry.mock_api_registries import CardRegistry, PipelineCard
+    from tests.test_api.mock_api_registries import CardRegistry, PipelineCard
     from typing import cast
 
     class ApiPipelineLoader(PipelineLoader):
