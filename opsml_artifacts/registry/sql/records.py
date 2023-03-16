@@ -6,7 +6,7 @@ from opsml_artifacts.drift.models import DriftReport
 from opsml_artifacts.registry.storage.artifact_storage import (
     load_record_artifact_from_storage,
 )
-from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata, StorageClientProto
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs, StorageClientProto
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 
@@ -121,14 +121,14 @@ class LoadedDataRecord(LoadRecord):
         storage_client = cast(StorageClientProto, values["storage_client"])
 
         if bool(values.get("drift_uri")):
-            storage_meta = ArtifactStorageMetadata(
+            storage_spec = ArtifactStorageSpecs(
                 save_path=values["drift_uri"],
                 name=values["name"],
                 team=values["team"],
                 version=values["version"],
             )
 
-            storage_client.storage_meta = storage_meta
+            storage_client.storage_spec = storage_spec
             return load_record_artifact_from_storage(
                 storage_client=storage_client,
                 artifact_type="dict",
@@ -174,14 +174,14 @@ class LoadedModelRecord(LoadRecord):
             Dictionary to be parsed by ModelCard.parse_obj()
         """
 
-        storage_meta = ArtifactStorageMetadata(
+        storage_spec = ArtifactStorageSpecs(
             save_path=values["model_card_uri"],
             name=values["name"],
             version=values["version"],
             team=values["team"],
         )
 
-        storage_client.storage_meta = storage_meta
+        storage_client.storage_spec = storage_spec
         model_card_definition = load_record_artifact_from_storage(
             storage_client=storage_client,
             artifact_type="dict",
@@ -225,7 +225,7 @@ class LoadedExperimentRecord(LoadRecord):
             values["artifacts"] = loaded_artifacts
 
         for name, uri in artifact_uris.items():
-            storage_meta = ArtifactStorageMetadata(
+            storage_spec = ArtifactStorageSpecs(
                 save_path=uri,
                 name=values["name"],
                 team=values["team"],
@@ -233,7 +233,7 @@ class LoadedExperimentRecord(LoadRecord):
                 storage_client=storage_client,
             )
 
-            storage_client.storage_meta = storage_meta
+            storage_client.storage_spec = storage_spec
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 storage_client=storage_client,
                 artifact_type="artifact",

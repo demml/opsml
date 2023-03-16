@@ -2,7 +2,7 @@ import pytest
 import os
 from unittest.mock import patch
 from starlette.testclient import TestClient
-import httpx
+import shutil
 
 
 @pytest.fixture(scope="module")
@@ -27,6 +27,7 @@ def test_app():
         yield test_client
 
     os.remove(path=tmp_db_path)
+    shutil.rmtree("mlruns")
 
 
 @pytest.fixture(scope="function")

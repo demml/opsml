@@ -4,18 +4,17 @@ from typing import Any, Dict, Optional, cast
 
 import httpx
 from pydantic import BaseSettings, Field, root_validator
-
-from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.models import (
+from opsml_artifacts.registry.storage.types import (
     GcsStorageClientSettings,
     StorageClientSettings,
     StorageSettings,
 )
-from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
 from opsml_artifacts.registry.storage.storage_system import (
     StorageClientGetter,
     StorageClientTypes,
 )
+from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
 from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"

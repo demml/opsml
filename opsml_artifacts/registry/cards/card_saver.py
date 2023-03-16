@@ -5,7 +5,7 @@ from opsml_artifacts.registry.cards.cards import CardTypes
 from opsml_artifacts.registry.cards.types import StoragePath, ArtifactStorageTypes
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.storage.artifact_storage import save_record_artifact_to_storage
-from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata, StorageClientProto
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs, StorageClientProto
 
 
 class CardArtifactSaver:
@@ -14,7 +14,7 @@ class CardArtifactSaver:
 
         Args:
             card (CardType): ArtifactCard with artifacts to save
-            card_storage_info (ArtifactStorageMetaData): Extra info to use with artifact storage
+            card_storage_info (ArtifactStorageSpecs): Extra info to use with artifact storage
         """
 
         self.card = card
@@ -91,17 +91,17 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
 
 class ModelCardArtifactSaver(CardArtifactSaver):
-    def _copy_artifact_storage_info(self) -> ArtifactStorageMetadata:
+    def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
         """Copies artifact storage info"""
 
-        return self.storage_client.storage_meta.copy(deep=True)
+        return self.storage_client.storage_spec.copy(deep=True)
 
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
 
-        storage_meta = self._copy_artifact_storage_info()
-        storage_meta.filename = f"modelcard"
-        self.storage_client.storage_meta = storage_meta
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = f"modelcard"
+        self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(
             artifact=self.card.dict(exclude={"sample_input_data", "trained_model", "storage_client"}),
@@ -113,9 +113,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _save_trained_model(self):
         """Saves trained model associated with ModelCard to filesystem"""
 
-        storage_meta = self._copy_artifact_storage_info()
-        storage_meta.filename = f"trained-model"
-        self.storage_client.storage_meta = storage_meta
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = f"trained-model"
+        self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(
             artifact=self.card.trained_model,
@@ -127,9 +127,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _save_sample_data(self):
         """Saves sample data associated with ModelCard to filesystem"""
 
-        storage_meta = self._copy_artifact_storage_info()
-        storage_meta.filename = "sample-data"
-        self.storage_client.storage_meta = storage_meta
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = "sample-data"
+        self.storage_client.storage_spec = storage_spec
 
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
         storage_path = save_record_artifact_to_storage(
@@ -141,9 +141,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_api_definition(self):
 
-        storage_meta = self._copy_artifact_storage_info()
-        storage_meta.filename = "api-def"
-        self.storage_client.storage_meta = storage_meta
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = "api-def"
+        self.storage_client.storage_spec = storage_spec
 
         api_def = self.card.onnx_model(start_onnx_runtime=False).get_api_model()
         save_record_artifact_to_storage(
@@ -203,7 +203,7 @@ def save_card_artifacts(card: CardTypes, storage_client: StorageClientProto) -> 
 
     Args:
         card (ArtifactCard): ArtifactCard to save
-        artifact_storage_info (ArtifactStorageMetaData): Extra storage info to associate
+        artifact_storage_info (ArtifactStorageSpecs): Extra storage info to associate
         with card.
 
     Returns:
