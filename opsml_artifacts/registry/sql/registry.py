@@ -2,6 +2,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
+
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
@@ -13,8 +14,8 @@ from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
-    PipelineRegistryRecord,
     ModelRegistryRecord,
+    PipelineRegistryRecord,
 )
 from opsml_artifacts.registry.sql.registry_base import Registry, SQLRegistryBase
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames

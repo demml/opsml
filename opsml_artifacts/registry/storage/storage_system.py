@@ -6,12 +6,14 @@ from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, List, Optional, Tuple, Union, cast
+
 from pyarrow.parquet import LocalFileSystem
+
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.storage.types import (
     ArtifactStorageSpecs,
-    StorageClientProto,
     GcsStorageClientSettings,
+    StorageClientProto,
     StorageSettings,
 )
 
@@ -212,7 +214,7 @@ class MlFlowStorageClient(LocalStorageClient):
         )
         return storage_uri
 
-    def upload(self, local_path: str, write_path: Optional[str] = None) -> str:
+    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs):
         """This is an explicit overwrite to keep consistency with ArtifactStorage
         subclasses and how LocalFileSystem and GcsfFileSystem upload objects
 

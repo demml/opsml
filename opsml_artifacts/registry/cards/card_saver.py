@@ -1,15 +1,19 @@
-import json
 from typing import Dict
-from opsml_artifacts.registry.cards.types import CardNames
+
 from opsml_artifacts.registry.cards.cards import CardTypes
-from opsml_artifacts.registry.cards.types import StoragePath, ArtifactStorageTypes
+from opsml_artifacts.registry.cards.types import ArtifactStorageTypes, CardNames, StoragePath, ArtifactCardProto
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
-from opsml_artifacts.registry.storage.artifact_storage import save_record_artifact_to_storage
-from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs, StorageClientProto
+from opsml_artifacts.registry.storage.artifact_storage import (
+    save_record_artifact_to_storage,
+)
+from opsml_artifacts.registry.storage.types import (
+    ArtifactStorageSpecs,
+    StorageClientProto,
+)
 
 
 class CardArtifactSaver:
-    def __init__(self, card: CardTypes, storage_client: StorageClientProto):
+    def __init__(self, card: ArtifactCardProto, storage_client: StorageClientProto):
         """Parent class for saving artifacts belonging to cards
 
         Args:
@@ -22,6 +26,11 @@ class CardArtifactSaver:
 
     def save_artifacts(self) -> CardTypes:
         raise NotImplementedError
+
+    def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
+        """Copies artifact storage info"""
+
+        return self.storage_client.storage_spec.copy(deep=True)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -46,6 +55,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
         Args:
             arrow_table (ArrowTable): Pyarrow table
         """
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = storage_spec.name
+        self.storage_client.storage_spec = storage_spec
+
         storage_path = save_record_artifact_to_storage(
             artifact=arrow_table.table,
             storage_client=self.storage_client,
@@ -70,9 +83,11 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def _save_drift(self):
         """Saves a drift report to file system"""
 
-        self.artifact_storage_info.name = "drift_report"
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = "drift_report"
+        self.storage_client.storage_spec = storage_spec
         storage_path = save_record_artifact_to_storage(
-            artifact=self.drift_report,
+            artifact=self.card.drift_report,
             storage_client=self.storage_client,
         )
         self.card.drift_uri = storage_path.uri
@@ -91,16 +106,11 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
 
 class ModelCardArtifactSaver(CardArtifactSaver):
-    def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
-        """Copies artifact storage info"""
-
-        return self.storage_client.storage_spec.copy(deep=True)
-
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
 
         storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = f"modelcard"
+        storage_spec.filename = "modelcard"
         self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(
@@ -114,7 +124,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves trained model associated with ModelCard to filesystem"""
 
         storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = f"trained-model"
+        storage_spec.filename = "trained-model"
         self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(

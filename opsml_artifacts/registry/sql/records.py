@@ -3,11 +3,14 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, Extra, root_validator, validator
 
 from opsml_artifacts.drift.models import DriftReport
+from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 from opsml_artifacts.registry.storage.artifact_storage import (
     load_record_artifact_from_storage,
 )
-from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs, StorageClientProto
-from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
+from opsml_artifacts.registry.storage.types import (
+    ArtifactStorageSpecs,
+    StorageClientProto,
+)
 
 
 class DataRegistryRecord(BaseModel):
