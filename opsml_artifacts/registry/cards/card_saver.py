@@ -159,7 +159,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves sample data associated with ModelCard to filesystem"""
 
         storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = "sample-data"
+        storage_spec.filename = "sample-model-data"
         self.storage_client.storage_spec = storage_spec
 
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)

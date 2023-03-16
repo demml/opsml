@@ -73,7 +73,7 @@ class MlFlowExperiment:
     def _get_storage_client(self) -> MlFlowStorageClient:
         """Gets the MlFlowStorageClient and sets the current client"""
 
-        mlflow_storage_client.set_mlflow_client(mlflow_client=self._mlflow_client)
+        mlflow_storage_client.set_client(mlflow_client=self._mlflow_client)
         return mlflow_storage_client
 
     @property
@@ -83,7 +83,7 @@ class MlFlowExperiment:
         Returns:
             artifact save path
         """
-        return f"{self.project_id}/{self.run_id}/artifacts"
+        return self._active_run.info._artifact_uri
 
     @property
     def project_id(self):
@@ -150,6 +150,7 @@ class MlFlowExperiment:
 
         # set storage client run id
         self._storage_client.set_run_id(run_id=self.run_id)
+        self._storage_client.set_artifact_path(artifact_path=self.artifact_save_path)
         logger.info("starting experiment")
 
         return self
@@ -174,11 +175,7 @@ class MlFlowExperiment:
 
         card_type = card.__class__.__name__.lower()
         registry: CardRegistry = getattr(self.registries, card_type)
-        registry.register_card(
-            card=card,
-            version_type=version_type,
-            save_path=self.artifact_save_path,
-        )
+        registry.register_card(card=card, version_type=version_type)
 
     def load_card(
         self,

@@ -16,6 +16,9 @@ def test_mlflow(mlflow_experiment, sklearn_pipeline, mock_pathlib):
         )
         exp.register_card(card=data_card)
 
+        print(data_card.data_uri)
+        a
+
         model_card1 = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],

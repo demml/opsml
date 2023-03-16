@@ -25,6 +25,11 @@ class StorageSystem(str, Enum):
     MLFLOW = "mlflow"
 
 
+class ArtifactClass(str, Enum):
+    DATA = "data"
+    OTHER = "other"
+
+
 class DataArtifactNames(str, Enum):
     PARQUET = "parquet"
     ZARR = "zarr"
@@ -33,7 +38,7 @@ class DataArtifactNames(str, Enum):
 class ModelArtifactNames(str, Enum):
     MODELCARD = "modelcard"
     TRAINED_MODEL = "trained-model"
-    SAMPLE_DATA = "sample-data"
+    SAMPLE_DATA = "sample-model-data"
     API_DEF = "api-def"
 
 
@@ -82,6 +87,7 @@ class StorageClient:
         tmp_dir: str,
         file_suffix: Optional[str] = None,
     ):
+
         base_path, filename = self.create_save_path(file_suffix=file_suffix)
         local_path = f"{tmp_dir}/{filename}"
 
@@ -119,8 +125,14 @@ class StorageClient:
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
         return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
-    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs):
+    def upload(
+        self,
+        local_path: Optional[str] = None,
+        write_path: Optional[str] = None,
+        recursive: bool = False,
+    ) -> str:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
+        return write_path
 
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
@@ -209,6 +221,7 @@ class MlFlowStorageClient(LocalStorageClient):
         )
 
         self._run_id: Optional[str] = None
+        self._artifact_path: Optional[str] = None
         self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
 
     @property
@@ -219,23 +232,31 @@ class MlFlowStorageClient(LocalStorageClient):
         """Sets the run id to use with mlflow logging"""
         self._run_id = run_id
 
-    def set_mlflow_client(self, mlflow_client: MlFlowClientProto):
+    def set_client(self, mlflow_client: MlFlowClientProto):
         """Sets the mlflow client to use for logging"""
         self._mlflow_client = mlflow_client
+
+    def set_artifact_path(self, artifact_path: str):
+        """Sets the mlflow client to use for logging"""
+        self._artifact_path = artifact_path
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
 
         tmp_path = "/".join(lpath.split("/")[:-1])  # mlflow wants a dir
         filename = rpath.split("/")[-1]
         mlflow_read_dir = self._get_mlflow_dir(filename=rpath)
+        path = "/home/steven.forrester/github/opsml-artifacts/mlruns/test"
 
+        print(rpath)
+        print(mlflow_read_dir)
         self.mlflow_client.download_artifacts(
             run_id=self._run_id,
             path=mlflow_read_dir,
-            dst_path=tmp_path,
+            dst_path=path,
         )
         import os
 
+        a
         os.rename(f"{tmp_path}/{filename}", lpath)
 
     def post_process(self, storage_uri: str) -> str:
@@ -243,15 +264,19 @@ class MlFlowStorageClient(LocalStorageClient):
         """Uploads local artifact to mflow
 
         Args:
-            local_path (str): Path to local file or folder
-            write_path (str): MlFlow path to write to
+            storage_uri: Path where current artifact has been saved to
         """
         mlflow_write_dir = self._get_mlflow_dir(filename=storage_uri)
+
         self.mlflow_client.log_artifact(
             run_id=self._run_id,
             local_path=storage_uri,
             artifact_path=mlflow_write_dir,
         )
+
+        # need to re-write storage path for saving to ArtifactCard
+        filename = storage_uri.split("/")[-1]
+        storage_uri = f"{self._artifact_path}/{mlflow_write_dir}/{filename}"
         return storage_uri
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs):
@@ -262,10 +287,16 @@ class MlFlowStorageClient(LocalStorageClient):
         return self.post_process(storage_uri=local_path)
 
     def _get_mlflow_dir(self, filename: str) -> str:
+
+        "Sets individual directories for all mlflow artifacts"
         if any(name in filename for name in DataArtifactNames):
-            return MlFlowDirs.DATA_DIR.value
-        if any(name in filename for name in ModelArtifactNames):
-            return MlFlowDirs.MODEL_DIR.value
+            if "sample-model-data" not in filename:
+                return MlFlowDirs.DATA_DIR.value
+
+        for name in ModelArtifactNames:
+            if name in filename:
+                return name.value
+
         return MlFlowDirs.ARTIFACT_DIR.value
 
     # def create_tmp_path(
