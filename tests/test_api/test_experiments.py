@@ -1,9 +1,9 @@
-from opsml_artifacts import CardRegistry, DataCard, ModelCard
-import time
-from mlflow.tracking import MlflowClient
+from opsml_artifacts import DataCard, ModelCard
+from unittest.mock import patch
+from pathlib import Path
 
 
-def test_mlflow_exp(mlflow_experiment, sklearn_pipeline, mock_pyarrow_parquet_write):
+def test_mlflow(mlflow_experiment, sklearn_pipeline, mock_pathlib):
 
     with mlflow_experiment as exp:
 
@@ -26,4 +26,3 @@ def test_mlflow_exp(mlflow_experiment, sklearn_pipeline, mock_pyarrow_parquet_wr
         )
 
         exp.register_card(card=model_card1)
-        time.sleep(30)
