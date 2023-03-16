@@ -7,10 +7,8 @@ from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 from opsml_artifacts.registry.storage.artifact_storage import (
     load_record_artifact_from_storage,
 )
-from opsml_artifacts.registry.storage.types import (
-    ArtifactStorageSpecs,
-    StorageClientProto,
-)
+from opsml_artifacts.registry.storage.storage_system import StorageClientType
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 
 class DataRegistryRecord(BaseModel):
@@ -77,12 +75,16 @@ class PipelineRegistryRecord(BaseModel):
     experiment_card_uids: Optional[Dict[str, str]]
 
 
+RegistryRecord = Union[DataRegistryRecord, ModelRegistryRecord, ExperimentRegistryRecord, PipelineRegistryRecord]
+
+
 class LoadRecord(BaseModel):
     version: str
     name: str
     team: str
     uid: str
     user_email: str
+    storage_client: Optional[StorageClientType]
 
     class Config:
         arbitrary_types_allowed = True
@@ -104,7 +106,6 @@ class LoadedDataRecord(LoadRecord):
     dependent_vars: Optional[List[Union[int, str]]]
     drift_report: Optional[Dict[str, DriftReport]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
-    storage_client: Optional[StorageClientProto]
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
@@ -121,7 +122,7 @@ class LoadedDataRecord(LoadRecord):
 
     @staticmethod
     def load_drift_report(values):
-        storage_client = cast(StorageClientProto, values["storage_client"])
+        storage_client = cast(StorageClientType, values["storage_client"])
 
         if bool(values.get("drift_uri")):
             storage_spec = ArtifactStorageSpecs(
@@ -151,12 +152,11 @@ class LoadedModelRecord(LoadRecord):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
-    storage_client: Optional[StorageClientProto]
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
 
-        storage_client = cast(StorageClientProto, values["storage_client"])
+        storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_model_card_definition(
             values=values,
             storage_client=storage_client,
@@ -168,7 +168,7 @@ class LoadedModelRecord(LoadRecord):
     def load_model_card_definition(
         cls,
         values: Dict[str, Any],
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ) -> Dict[str, Any]:
 
         """Loads a model card definition from current attributes
@@ -204,12 +204,11 @@ class LoadedExperimentRecord(LoadRecord):
     artifact_uris: Dict[str, str]
     artifacts: Optional[Dict[str, Any]]
     metrics: Optional[Dict[str, Union[int, float]]]
-    storage_client: Optional[StorageClientProto]
 
     @root_validator(pre=True)
     def load_exp_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
 
-        storage_client = cast(StorageClientProto, values["storage_client"])
+        storage_client = cast(StorageClientType, values["storage_client"])
         cls.load_artifacts(values=values, storage_client=storage_client)
         return values
 
@@ -217,7 +216,7 @@ class LoadedExperimentRecord(LoadRecord):
     def load_artifacts(
         cls,
         values: Dict[str, Any],
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ) -> None:
         """Loads experiment artifacts to pydantic model"""
 
@@ -270,7 +269,7 @@ LoadedRecordType = Union[
 def load_record(
     table_name: str,
     record_data: Dict[str, Any],
-    storage_client: StorageClientProto,
+    storage_client: StorageClientType,
 ) -> LoadedRecordType:
 
     record = next(

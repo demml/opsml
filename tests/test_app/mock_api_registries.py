@@ -9,7 +9,6 @@ from opsml_artifacts.registry.cards.cards import (
     ModelCard,
     PipelineCard,
 )
-from opsml_artifacts.registry.cards.types import ArtifactCardProto
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ExperimentRegistryRecord,
@@ -23,7 +22,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-CardTypes = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
+CardType = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
 
 # Separate module for use the ClientRegistry to force use of ClientRegistry for some tests
@@ -45,7 +44,7 @@ class DataCardRegistry(Registry):
         """
 
         record = DataRegistryRecord(**card.dict())
-        self._update_record(record=record.dict())
+        self.update_record(record=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
@@ -65,14 +64,14 @@ class ModelCardRegistry(Registry):
         """
 
         record = ModelRegistryRecord(**card.dict())
-        self._update_record(record=record.dict())
+        self.update_record(record=record.dict())
 
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
     def _validate_datacard_uid(self, uid: str) -> None:
         table_to_check = self._get_data_table_name()
-        exists = self._check_uid(uid=uid, table_to_check=table_to_check)
+        exists = self.check_uid(uid=uid, table_to_check=table_to_check)
         if not exists:
             raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
 
@@ -82,7 +81,7 @@ class ModelCardRegistry(Registry):
     # custom registration
     def register_card(
         self,
-        card: ArtifactCardProto,
+        card: CardType,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -131,7 +130,7 @@ class ExperimentCardRegistry(Registry):
         """
 
         record = ExperimentRegistryRecord(**card.dict())
-        self._update_record(record=record.dict())
+        self.update_record(record=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
@@ -151,7 +150,7 @@ class PipelineCardRegistry(Registry):
         """
 
         record = PipelineRegistryRecord(**card.dict())
-        self._update_record(record=record.dict())
+        self.update_record(record=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
@@ -244,7 +243,7 @@ class CardRegistry:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> CardTypes:
+    ) -> CardType:
 
         """Loads a specific card
 
@@ -269,7 +268,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: ArtifactCardProto,
+        card: CardType,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -294,7 +293,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: CardTypes,
+        card: CardType,
     ) -> None:
         """Update and artifact card (DataCard only) based on current registry
 
