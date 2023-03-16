@@ -16,7 +16,7 @@ import joblib
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
-from opsml_artifacts.helpers.models import StorageClientSettings, GcsStorageClientSettings
+from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.helpers.request_helpers import ApiClient

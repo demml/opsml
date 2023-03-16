@@ -38,7 +38,7 @@ class ArtifactStorage:
 
     def _list_files(self, storage_uri: str) -> Union[List[str], str]:
         """list files"""
-        raise NotImplementedError
+        return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
     def _load_artifact(self, file_path: Union[List[str], str]) -> Any:
         raise NotImplementedError
@@ -55,7 +55,7 @@ class ArtifactStorage:
 
         return self._load_artifact(file_path=files)
 
-    def _save_artifact(artifact: Any, file_path: str):
+    def _save_artifact(self, artifact: Any, file_path: str):
         """Saves an artifact"""
         raise NotImplementedError
 
@@ -283,7 +283,7 @@ class TensorflowModelStorage(ArtifactStorage):
             file_suffix=None,
         )
 
-    def _save_artifact(artifact: Any, file_path: str):
+    def _save_artifact(self, artifact: Any, file_path: str):
         artifact.save(file_path)
 
     def save_artifact_to_external(self, artifact: Any) -> str:
@@ -333,10 +333,10 @@ class PyTorchModelStorage(ArtifactStorage):
             file_suffix="pt",
         )
 
-    def _save_artifact(self, artifact: Any, storage_path: str):
+    def _save_artifact(self, artifact: Any, file_path: str):
         import torch
 
-        torch.save(artifact, storage_path)
+        torch.save(artifact, file_path)
 
     def _load_artifact(self, file_path: str):
         import torch
@@ -374,7 +374,7 @@ def save_record_artifact_to_storage(
 
 def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientProto):
 
-    if not bool(storage_client.storage_meta.save_path):
+    if not bool(storage_client.storage_spec.save_path):
         return None
 
     storage_type = next(
@@ -388,4 +388,4 @@ def load_record_artifact_from_storage(artifact_type: str, storage_client: Storag
     return storage_type(
         artifact_type=artifact_type,
         storage_client=storage_client,
-    ).load_artifact(storage_uri=storage_client.storage_meta.save_path)
+    ).load_artifact(storage_uri=storage_client.storage_spec.save_path)

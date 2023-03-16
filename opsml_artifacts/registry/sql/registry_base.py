@@ -10,7 +10,7 @@ from opsml_artifacts.helpers.request_helpers import api_routes
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, ModelCard, PipelineCard, CardTypes
 from opsml_artifacts.registry.cards.types import ArtifactCardProto
-from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml_artifacts.registry.sql.records import LoadedRecordType, load_record
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, TableSchema
@@ -134,26 +134,26 @@ class SQLRegistryBase:
             """
             )
 
-    def _set_artifact_storage_metadata(
+    def _set_artifact_storage_spec(
         self, card: ArtifactCardProto, save_path: Optional[str] = None
-    ) -> ArtifactStorageMetadata:
+    ) -> ArtifactStorageSpecs:
         """Creates artifact storage info to associate with artifacts"""
 
         if save_path is None:
             save_path = f"{self.table_name}/{card.team}/{card.name}/v-{card.version}"
 
-        artifact_storage_metadata = ArtifactStorageMetadata(
+        artifact_storage_spec = ArtifactStorageSpecs(
             save_path=save_path,
             name=card.name,
             team=card.team,
             version=card.version,
         )
 
-        self._update_storage_client_metadata(storage_metadata=artifact_storage_metadata)
+        self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
 
-    def _update_storage_client_metadata(self, storage_metadata: ArtifactStorageMetadata):
+    def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):
         """Updates storage metadata"""
-        self.storage_client.storage_meta = storage_metadata
+        self.storage_client.storage_spec = storage_specdata
 
     def _set_card_uid_version(self, card: CardTypes, version_type: str):
         """Sets a given card's version and uid
@@ -207,7 +207,7 @@ class SQLRegistryBase:
 
         self._validate(card=card)
         self._set_card_uid_version(card=card, version_type=version_type)
-        self._set_artifact_storage_metadata(card=card, save_path=save_path)
+        self._set_artifact_storage_spec(card=card, save_path=save_path)
         self._create_registry_record(card=card)
 
     def list_cards(

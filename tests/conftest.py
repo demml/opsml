@@ -8,7 +8,7 @@ import requests
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
-from opsml_artifacts.helpers.models import StorageClientSettings, GcsStorageClientSettings
+from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.helpers.request_helpers import ApiClient
@@ -92,20 +92,20 @@ def mock_gcp_creds(mock_gcp_vars):
 
 @pytest.fixture(scope="function")
 def gcp_storage_client(mock_gcp_vars):
-    gcs_info = GcsStorageClientSettings(
+    gcs_settings = GcsStorageClientSettings(
         storage_type="gcs",
         storage_uri="gs://test",
         credentials=mock_gcp_vars["gcp_creds"],
         gcp_project=mock_gcp_vars["gcp_project"],
     )
-    storage_client = StorageClientGetter.get_storage_client(storage_info=gcs_info)
+    storage_client = StorageClientGetter.get_storage_client(storage_settings=gcs_settings)
     return storage_client
 
 
 @pytest.fixture(scope="function")
 def local_storage_client():
 
-    storage_client = StorageClientGetter.get_storage_client(storage_info=StorageClientSettings())
+    storage_client = StorageClientGetter.get_storage_client(storage_settings=StorageClientSettings())
     return storage_client
 
 

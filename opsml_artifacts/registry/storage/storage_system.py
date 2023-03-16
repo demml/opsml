@@ -7,10 +7,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, List, Optional, Tuple, Union, cast
 from pyarrow.parquet import LocalFileSystem
-
-from opsml_artifacts.helpers.models import GcsStorageClientSettings, StorageSettings
 from opsml_artifacts.helpers.utils import all_subclasses
-from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata, StorageClientProto
+from opsml_artifacts.registry.storage.types import (
+    ArtifactStorageSpecs,
+    StorageClientProto,
+    GcsStorageClientSettings,
+    StorageSettings,
+)
 
 
 class StorageSystem(str, Enum):
@@ -42,25 +45,25 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
-        self._storage_metadata = Optional[ArtifactStorageMetadata]
+        self._storage_specdata = Optional[ArtifactStorageSpecs]
 
     @property
-    def storage_meta(self) -> ArtifactStorageMetadata:
-        return cast(ArtifactStorageMetadata, self._storage_metadata)
+    def storage_spec(self) -> ArtifactStorageSpecs:
+        return cast(ArtifactStorageSpecs, self._storage_specdata)
 
-    @storage_meta.setter
-    def storage_meta(self, artifact_storage_metadata):
-        self._storage_metadata = artifact_storage_metadata
+    @storage_spec.setter
+    def storage_spec(self, artifact_storage_spec):
+        self._storage_specdata = artifact_storage_spec
 
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
 
-        filename = self.storage_meta.filename or uuid.uuid4().hex
+        filename = self.storage_spec.filename or uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
-        base_path = f"{self.base_path_prefix}/{self.storage_meta.save_path}"
+        base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
 
         return base_path + f"/{filename}", filename
 
@@ -223,7 +226,7 @@ class MlFlowStorageClient(LocalStorageClient):
 
     # def create_tmp_path(
     #    self,
-    #    artifact_storage_info: ArtifactStorageMetaData,
+    #    artifact_storage_info: ArtifactStorageSpecs,
     #    tmp_dir: str,
     #    file_suffix: Optional[str] = None,
     # ):

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.helpers.models import StorageClientSettings
+from opsml_artifacts.registry.storage.types import StorageClientSettings
 from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
 
 # Notes during development
