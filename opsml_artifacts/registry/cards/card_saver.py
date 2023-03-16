@@ -1,19 +1,28 @@
-from typing import Dict
+from functools import cached_property
+from typing import Dict, cast
 
-from opsml_artifacts.registry.cards.cards import CardTypes
-from opsml_artifacts.registry.cards.types import ArtifactStorageTypes, CardNames, StoragePath, ArtifactCardProto
+from opsml_artifacts.registry.cards.cards import (
+    CardType,
+    DataCard,
+    ExperimentCard,
+    ModelCard,
+    PipelineCard,
+)
+from opsml_artifacts.registry.cards.types import (
+    ArtifactStorageTypes,
+    CardNames,
+    StoragePath,
+)
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.storage.artifact_storage import (
     save_record_artifact_to_storage,
 )
-from opsml_artifacts.registry.storage.types import (
-    ArtifactStorageSpecs,
-    StorageClientProto,
-)
+from opsml_artifacts.registry.storage.storage_system import StorageClientType
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 
 class CardArtifactSaver:
-    def __init__(self, card: ArtifactCardProto, storage_client: StorageClientProto):
+    def __init__(self, card: CardType, storage_client: StorageClientType):
         """Parent class for saving artifacts belonging to cards
 
         Args:
@@ -21,10 +30,14 @@ class CardArtifactSaver:
             card_storage_info (ArtifactStorageSpecs): Extra info to use with artifact storage
         """
 
-        self.card = card
+        self._card = card
         self.storage_client = storage_client
 
-    def save_artifacts(self) -> CardTypes:
+    @cached_property
+    def card(self):
+        return self.card
+
+    def save_artifacts(self) -> CardType:
         raise NotImplementedError
 
     def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
@@ -38,6 +51,10 @@ class CardArtifactSaver:
 
 
 class DataCardArtifactSaver(CardArtifactSaver):
+    @cached_property
+    def card(self):
+        return cast(DataCard, self._card)
+
     def _convert_data_to_arrow(self) -> ArrowTable:
         """Converts data to arrow table
 
@@ -58,7 +75,6 @@ class DataCardArtifactSaver(CardArtifactSaver):
         storage_spec = self._copy_artifact_storage_info()
         storage_spec.filename = storage_spec.name
         self.storage_client.storage_spec = storage_spec
-
         storage_path = save_record_artifact_to_storage(
             artifact=arrow_table.table,
             storage_client=self.storage_client,
@@ -94,6 +110,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
+
         self._save_data()
         if bool(self.card.drift_report):
             self._save_drift()
@@ -106,6 +123,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
 
 class ModelCardArtifactSaver(CardArtifactSaver):
+    @cached_property
+    def card(self):
+        return cast(ModelCard, self._card)
+
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
 
@@ -134,7 +155,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
         self.card.trained_model_uri = storage_path.uri
 
-    def _save_sample_data(self):
+    def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
 
         storage_spec = self._copy_artifact_storage_info()
@@ -177,7 +198,11 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
 
 class ExpeirmentCardArtifactSaver(CardArtifactSaver):
-    def save_artifacts(self):
+    @cached_property
+    def card(self):
+        return cast(ExperimentCard, self._card)
+
+    def save_artifacts(self) -> CardType:
         """Saves all artifacts associated with ExperimentCard to filesystem"""
 
         artifact_uris: Dict[str, str] = {}
@@ -199,6 +224,10 @@ class ExpeirmentCardArtifactSaver(CardArtifactSaver):
 
 
 class PipelineCardArtifactSaver(CardArtifactSaver):
+    @cached_property
+    def card(self):
+        return cast(PipelineCard, self._card)
+
     def save_artifacts(self):
         return self.card
 
@@ -207,7 +236,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
         return CardNames.PIPELINE in card_type
 
 
-def save_card_artifacts(card: CardTypes, storage_client: StorageClientProto) -> CardTypes:
+def save_card_artifacts(card: CardType, storage_client: StorageClientType) -> CardType:
 
     """Saves a given ArtifactCard's artifacts to a filesystem
 

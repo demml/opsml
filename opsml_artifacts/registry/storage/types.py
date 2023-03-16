@@ -4,6 +4,8 @@ from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
 
 from pydantic import BaseModel
 
+FilePath = Union[List[str], str]
+
 
 class StorageClientSettings(BaseModel):
     storage_type: str = "local"
@@ -33,7 +35,7 @@ class StorageClientProto(Protocol):
     backend: str
     client: Any
     base_path_prefix: str
-    _storage_specdata = Optional[ArtifactStorageSpecs]
+    _storage_spec: Any
 
     @property
     def storage_spec(self) -> ArtifactStorageSpecs:
@@ -66,7 +68,7 @@ class StorageClientProto(Protocol):
     def list_files(self, storage_uri: str) -> List[str]:
         """List files"""
 
-    def store(self, storage_uri: str) -> Any:
+    def store(self, storage_uri: Union[List[str], str]) -> Any:
         """store"""
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
@@ -78,3 +80,11 @@ class StorageClientProto(Protocol):
     @staticmethod
     def validate(storage_backend: str) -> bool:
         """Validate"""
+
+
+class MlFlowClientProto(Protocol):
+    def log_artifact(self, run_id: str, local_path: str, artifact_path: str):
+        "log artifact"
+
+    def download_artifacts(self, run_id: str, path: str, dst_path: Optional[str] = None) -> str:
+        "download artifact"
