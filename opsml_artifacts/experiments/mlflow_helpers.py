@@ -1,3 +1,4 @@
+from typing import cast
 from pydantic import BaseModel
 
 from opsml_artifacts import CardRegistry
@@ -6,12 +7,10 @@ from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.storage.storage_system import (
     MlFlowStorageClient,
     StorageClientGetter,
+    StorageClientType,
     StorageSystem,
 )
-from opsml_artifacts.registry.storage.types import (
-    StorageClientProto,
-    StorageClientSettings,
-)
+from opsml_artifacts.registry.storage.types import StorageClientSettings
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -25,7 +24,7 @@ class CardRegistries(BaseModel):
         arbitrary_types_allowed = True
         allow_mutation = True
 
-    def set_storage_client(self, storage_client: StorageClientProto):
+    def set_storage_client(self, storage_client: StorageClientType):
         self.datacard.registry.storage_client = storage_client
         self.modelcard.registry.storage_client = storage_client
         self.experimentcard.registry.storage_client = storage_client
@@ -35,16 +34,19 @@ def get_mlflow_storage_client() -> MlFlowStorageClient:
     """Sets MlFlowStorageClient is it is not currently set in settings"""
 
     if not isinstance(settings.storage_client, MlFlowStorageClient):
-        return StorageClientGetter.get_storage_client(
-            storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value),
+        return cast(
+            MlFlowStorageClient,
+            StorageClientGetter.get_storage_client(
+                storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value),
+            ),
         )
-    return settings.storage_client
+    return cast(MlFlowStorageClient, settings.storage_client)
 
 
 mlflow_storage_client = get_mlflow_storage_client()
 
 # class CardLogger:
-#    def __init__(self, card: CardTypes, client: MlflowClient, run_id: str):
+#    def __init__(self, card: CardType, client: MlflowClient, run_id: str):
 #        self.client = client
 #        self.run_id = run_id
 #        self.card = card
@@ -58,7 +60,7 @@ mlflow_storage_client = get_mlflow_storage_client()
 #
 #
 # class ModelCardLogger(CardLogger):
-#    def __init__(self, card: CardTypes, client: MlflowClient, run_id: str):
+#    def __init__(self, card: CardType, client: MlflowClient, run_id: str):
 #
 #        super().__init__(
 #            card=card,
@@ -109,7 +111,7 @@ mlflow_storage_client = get_mlflow_storage_client()
 #
 # def log_card_artifacts(
 #    card_type: str,
-#    artifact_card: CardTypes,
+#    artifact_card: CardType,
 #    run_id: str,
 #    client: MlflowClient,
 # ):

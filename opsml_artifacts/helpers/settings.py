@@ -10,7 +10,7 @@ from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
 from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
 from opsml_artifacts.registry.storage.storage_system import (
     StorageClientGetter,
-    StorageClientTypes,
+    StorageClientType,
 )
 from opsml_artifacts.registry.storage.types import (
     GcsStorageClientSettings,
@@ -208,7 +208,7 @@ class DefaultSettings(BaseSettings):
     app_env: str = Field("development", env="APP_ENV")
     opsml_tracking_uri: str = Field(..., env=OPSML_TRACKING_URI)
     storage_settings: StorageSettings
-    storage_client: StorageClientTypes
+    storage_client: StorageClientType
     request_client: Optional[ApiClient] = Field(None)
 
     class Config:

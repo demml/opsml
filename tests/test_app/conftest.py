@@ -20,7 +20,7 @@ def test_app():
     os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
     os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 
-    from opsml_artifacts.api.main import OpsmlApp
+    from opsml_artifacts.app.main import OpsmlApp
 
     model_api = OpsmlApp(run_mlflow=True)
     app = model_api.build_app()
@@ -47,7 +47,7 @@ def db_registries(test_app, monkeypatch):
 
         settings.opsml_tracking_uri = "http://testserver"
 
-        from tests.test_api.mock_api_registries import CardRegistry
+        from tests.test_app.mock_api_registries import CardRegistry
 
         data_registry = CardRegistry(registry_name="data")
         model_registry = CardRegistry(registry_name="model")

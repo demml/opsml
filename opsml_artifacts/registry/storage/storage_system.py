@@ -5,15 +5,16 @@ import uuid
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generator, List, Optional, Tuple, Union, cast
+from typing import Any, Generator, Optional, Tuple, Union, cast
 
 from pyarrow.parquet import LocalFileSystem
 
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.storage.types import (
     ArtifactStorageSpecs,
+    FilePath,
     GcsStorageClientSettings,
-    StorageClientProto,
+    MlFlowClientProto,
     StorageSettings,
 )
 
@@ -24,9 +25,16 @@ class StorageSystem(str, Enum):
     MLFLOW = "mlflow"
 
 
-class DataTypes(str, Enum):
+class DataArtifactNames(str, Enum):
     PARQUET = "parquet"
     ZARR = "zarr"
+
+
+class ModelArtifactNames(str, Enum):
+    MODELCARD = "modelcard"
+    TRAINED_MODEL = "trained-model"
+    SAMPLE_DATA = "sample-data"
+    API_DEF = "api-def"
 
 
 class MlFlowDirs(str, Enum):
@@ -47,15 +55,15 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
-        self._storage_specdata = Optional[ArtifactStorageSpecs]
+        self._storage_spec = Optional[ArtifactStorageSpecs]
 
     @property
     def storage_spec(self) -> ArtifactStorageSpecs:
-        return cast(ArtifactStorageSpecs, self._storage_specdata)
+        return cast(ArtifactStorageSpecs, self._storage_spec)
 
     @storage_spec.setter
     def storage_spec(self, artifact_storage_spec):
-        self._storage_specdata = artifact_storage_spec
+        self._storage_spec = artifact_storage_spec
 
     def create_save_path(
         self,
@@ -92,11 +100,24 @@ class StorageClient:
             )
             yield storage_uri, local_path
 
-    def list_files(self, storage_uri: str) -> List[str]:
+    @contextmanager
+    def create_named_tempfile(self, file_suffix: Optional[str]):
+
+        if file_suffix is not None:
+            if "." not in file_suffix:
+                file_suffix = f".{file_suffix}"
+
+        with tempfile.NamedTemporaryFile(suffix=file_suffix) as tmpfile:  # noqa
+            yield tmpfile
+
+    def list_files(self, storage_uri: str) -> FilePath:
         raise NotImplementedError
 
     def store(self, storage_uri: str):
         raise NotImplementedError
+
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
+        return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs):
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
@@ -131,7 +152,7 @@ class GCSFSStorageClient(StorageClient):
             backend=StorageSystem.GCS.value,
         )
 
-    def list_files(self, storage_uri: str) -> List[str]:
+    def list_files(self, storage_uri: str) -> FilePath:
         bucket = storage_uri.split("/")[2]
         file_path = "/".join(storage_uri.split("/")[3:])
         files = ["gs://" + path for path in self.client.ls(path=bucket, prefix=file_path)]
@@ -166,7 +187,7 @@ class LocalStorageClient(StorageClient):
 
         return save_path, filename
 
-    def list_files(self, storage_uri: str) -> List[str]:
+    def list_files(self, storage_uri: str) -> FilePath:
         return [storage_uri]
 
     def store(self, storage_uri: str):
@@ -188,15 +209,34 @@ class MlFlowStorageClient(LocalStorageClient):
         )
 
         self._run_id: Optional[str] = None
-        self._mlflow_client: Optional[Any] = None  # setting Any so no mlflow import needed
+        self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
+
+    @property
+    def mlflow_client(self):
+        return cast(MlFlowClientProto, self._mlflow_client)
 
     def set_run_id(self, run_id: str):
         """Sets the run id to use with mlflow logging"""
         self._run_id = run_id
 
-    def set_mlflow_client(self, mlflow_client: str):
+    def set_mlflow_client(self, mlflow_client: MlFlowClientProto):
         """Sets the mlflow client to use for logging"""
         self._mlflow_client = mlflow_client
+
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
+
+        tmp_path = "/".join(lpath.split("/")[:-1])  # mlflow wants a dir
+        filename = rpath.split("/")[-1]
+        mlflow_read_dir = self._get_mlflow_dir(filename=rpath)
+
+        self.mlflow_client.download_artifacts(
+            run_id=self._run_id,
+            path=mlflow_read_dir,
+            dst_path=tmp_path,
+        )
+        import os
+
+        os.rename(f"{tmp_path}/{filename}", lpath)
 
     def post_process(self, storage_uri: str) -> str:
 
@@ -207,7 +247,7 @@ class MlFlowStorageClient(LocalStorageClient):
             write_path (str): MlFlow path to write to
         """
         mlflow_write_dir = self._get_mlflow_dir(filename=storage_uri)
-        self._mlflow_client.log_artifact(
+        self.mlflow_client.log_artifact(
             run_id=self._run_id,
             local_path=storage_uri,
             artifact_path=mlflow_write_dir,
@@ -222,8 +262,10 @@ class MlFlowStorageClient(LocalStorageClient):
         return self.post_process(storage_uri=local_path)
 
     def _get_mlflow_dir(self, filename: str) -> str:
-        if any(data_type in filename for data_type in DataTypes):
+        if any(name in filename for name in DataArtifactNames):
             return MlFlowDirs.DATA_DIR.value
+        if any(name in filename for name in ModelArtifactNames):
+            return MlFlowDirs.MODEL_DIR.value
         return MlFlowDirs.ARTIFACT_DIR.value
 
     # def create_tmp_path(
@@ -248,11 +290,14 @@ class MlFlowStorageClient(LocalStorageClient):
         return storage_backend == StorageSystem.MLFLOW
 
 
+StorageClientType = Union[LocalStorageClient, GCSFSStorageClient, MlFlowStorageClient]
+
+
 class StorageClientGetter:
     @staticmethod
     def get_storage_client(
         storage_settings: StorageSettings,
-    ) -> StorageClientProto:
+    ) -> StorageClientType:
 
         storage_client = next(
             (
@@ -263,7 +308,4 @@ class StorageClientGetter:
             LocalStorageClient,
         )
 
-        return cast(StorageClientProto, storage_client(storage_settings=storage_settings))
-
-
-StorageClientTypes = Union[LocalStorageClient, GCSFSStorageClient, MlFlowStorageClient]
+        return storage_client(storage_settings=storage_settings)

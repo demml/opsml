@@ -10,13 +10,12 @@ from opsml_artifacts.helpers.request_helpers import api_routes
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.card_saver import save_card_artifacts
 from opsml_artifacts.registry.cards.cards import (
-    CardTypes,
+    CardType,
     DataCard,
     ExperimentCard,
     ModelCard,
     PipelineCard,
 )
-from opsml_artifacts.registry.cards.types import ArtifactCardProto, RegistryRecordProto
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml_artifacts.registry.sql.records import LoadedRecordType, load_record
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, TableSchema
@@ -46,7 +45,7 @@ table_name_card_map = {
 def load_card_from_record(
     table_name: str,
     record: LoadedRecordType,
-) -> CardTypes:
+) -> CardType:
 
     """Loads an artifact card given a tablename and the loaded record
     from backend database
@@ -107,10 +106,10 @@ class SQLRegistryBase:
 
         return ".".join(version_splits)
 
-    def _set_version(self, name: str, team: str, version_type: str) -> str:
+    def set_version(self, name: str, team: str, version_type: str) -> str:
         raise NotImplementedError
 
-    def _is_correct_card_type(self, card: ArtifactCardProto):
+    def _is_correct_card_type(self, card: CardType):
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
@@ -118,13 +117,13 @@ class SQLRegistryBase:
         """Sets a unique id to be applied to a card"""
         return uuid.uuid4().hex
 
-    def _add_and_commit(self, record: Dict[str, Any]):
+    def add_and_commit(self, record: Dict[str, Any]):
         raise NotImplementedError
 
-    def _update_record(self, record: Dict[str, Any]):
+    def update_record(self, record: Dict[str, Any]):
         raise NotImplementedError
 
-    def _validate(self, card: ArtifactCardProto):
+    def _validate(self, card: CardType):
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
@@ -132,7 +131,7 @@ class SQLRegistryBase:
                 {self._table.__tablename__}"""
             )
 
-        if self._check_uid(uid=str(card.uid), table_to_check=self.table_name):
+        if self.check_uid(uid=str(card.uid), table_to_check=self.table_name):
             raise ValueError(
                 """This Card has already been registered.
             If the card has been modified try upating the Card in the registry.
@@ -140,9 +139,7 @@ class SQLRegistryBase:
             """
             )
 
-    def _set_artifact_storage_spec(
-        self, card: ArtifactCardProto, save_path: Optional[str] = None
-    ) -> ArtifactStorageSpecs:
+    def _set_artifact_storage_spec(self, card: CardType, save_path: Optional[str] = None) -> None:
         """Creates artifact storage info to associate with artifacts"""
 
         if save_path is None:
@@ -161,7 +158,7 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
-    def _set_card_uid_version(self, card: CardTypes, version_type: str):
+    def _set_card_uid_version(self, card: CardType, version_type: str):
         """Sets a given card's version and uid
 
         Args:
@@ -171,7 +168,7 @@ class SQLRegistryBase:
 
         # need to find way to compare previous cards and automatically
         # determine if change is major or minor
-        version = self._set_version(
+        version = self.set_version(
             name=card.name,
             team=card.team,
             version_type=version_type,
@@ -181,7 +178,7 @@ class SQLRegistryBase:
         if card.uid is None:
             card.uid = self._get_uid()
 
-    def _create_registry_record(self, card: CardTypes) -> RegistryRecordProto:
+    def _create_registry_record(self, card: CardType) -> None:
         """Creates a registry record from a given ArtifactCard.
         Saves artifacts prior to creating record
 
@@ -190,11 +187,11 @@ class SQLRegistryBase:
         """
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
-        self._add_and_commit(record=record.dict())
+        self.add_and_commit(record=record.dict())
 
     def register_card(
         self,
-        card: ArtifactCardProto,
+        card: CardType,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -225,7 +222,7 @@ class SQLRegistryBase:
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
-    def _check_uid(self, uid: str, table_to_check: str):
+    def check_uid(self, uid: str, table_to_check: str):
         raise NotImplementedError
 
     def load_card(
@@ -234,7 +231,7 @@ class SQLRegistryBase:
         team: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-    ) -> CardTypes:
+    ) -> CardType:
 
         record_data = self.list_cards(
             name=name,
@@ -275,7 +272,7 @@ class ServerRegistry(SQLRegistryBase):
     def _create_table_if_not_exists(self):
         self._table.__table__.create(bind=self._engine, checkfirst=True)
 
-    def _set_version(self, name: str, team: str, version_type: str) -> str:
+    def set_version(self, name: str, team: str, version_type: str) -> str:
         """Sets a version following semantic version standards
 
         Args:
@@ -305,17 +302,17 @@ class ServerRegistry(SQLRegistryBase):
         return "1.0.0"
 
     @log_card_change
-    def _add_and_commit(self, record: Dict[str, Any]) -> Tuple[str, str, str]:
+    def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         sql_record = self._table(**record)
 
         with self._session() as sess:
             sess.add(sql_record)
             sess.commit()
 
-        return (record.get("name"), record.get("version"), "registered")
+        return record, "registered"
 
     @log_card_change
-    def _update_record(self, record: Dict[str, Any]) -> Tuple[str, str, str]:
+    def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         record_uid = cast(str, record.get("uid"))
 
         with self._session() as sess:
@@ -323,7 +320,7 @@ class ServerRegistry(SQLRegistryBase):
             query.update(record)
             sess.commit()
 
-        return (record.get("name"), record.get("version"), "updated")
+        return record, "updated"
 
     def list_cards(
         self,
@@ -331,7 +328,7 @@ class ServerRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
 
         """Retrieves records from registry
 
@@ -366,7 +363,7 @@ class ServerRegistry(SQLRegistryBase):
 
         return results_list
 
-    def _check_uid(self, uid: str, table_to_check: str):
+    def check_uid(self, uid: str, table_to_check: str):
         query = query_creator.uid_exists_query(
             uid=uid,
             table_to_check=table_to_check,
@@ -386,7 +383,7 @@ class ClientRegistry(SQLRegistryBase):
         """Gets the requests session for connecting to the opsml api"""
         return settings.request_client
 
-    def _check_uid(self, uid: str, table_to_check: str):
+    def check_uid(self, uid: str, table_to_check: str):
 
         data = self._session.post_request(
             route=api_routes.CHECK_UID,
@@ -395,7 +392,7 @@ class ClientRegistry(SQLRegistryBase):
 
         return bool(data.get("uid_exists"))
 
-    def _set_version(self, name: str, team: str, version_type: str = "minor") -> str:
+    def set_version(self, name: str, team: str, version_type: str = "minor") -> str:
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
@@ -443,7 +440,7 @@ class ClientRegistry(SQLRegistryBase):
         return data["records"]
 
     @log_card_change
-    def _add_and_commit(self, record: Dict[str, Any]) -> Tuple[str, str, str]:
+    def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
             route=api_routes.CREATE,
             json={
@@ -453,11 +450,11 @@ class ClientRegistry(SQLRegistryBase):
         )
 
         if bool(data.get("registered")):
-            return (record.get("name"), record.get("version"), "registered")
+            return record, "registered"
         raise ValueError("Failed to register card")
 
     @log_card_change
-    def _update_record(self, record: Dict[str, Any]) -> Tuple[str, str, str]:
+    def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
             route=api_routes.UPDATE,
             json={
@@ -467,7 +464,7 @@ class ClientRegistry(SQLRegistryBase):
         )
 
         if bool(data.get("updated")):
-            return (record.get("name"), record.get("version"), "update")
+            return record, "update"
         raise ValueError("Failed to update card")
 
 

@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import joblib
 import numpy as np
@@ -17,8 +17,11 @@ from opsml_artifacts.registry.cards.types import (
     ArtifactStorageTypes,
     StoragePath,
 )
-from opsml_artifacts.registry.storage.storage_system import StorageSystem
-from opsml_artifacts.registry.storage.types import StorageClientProto
+from opsml_artifacts.registry.storage.storage_system import (
+    StorageClientType,
+    StorageSystem,
+)
+from opsml_artifacts.registry.storage.types import FilePath
 
 
 class ArtifactStorage:
@@ -27,7 +30,7 @@ class ArtifactStorage:
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
         file_suffix: Optional[str] = None,
     ):
 
@@ -38,22 +41,22 @@ class ArtifactStorage:
         if file_suffix is not None:
             self.file_suffix = str(file_suffix)
 
-    def _list_files(self, storage_uri: str) -> Union[List[str], str]:
+    def _list_files(self, storage_uri: str) -> FilePath:
         """list files"""
         return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
-    def _load_artifact(self, file_path: Union[List[str], str]) -> Any:
+    def _load_artifact(self, file_path: FilePath) -> Any:
         raise NotImplementedError
 
-    def load_artifact(self, storage_uri: str) -> Dict[str, Any]:
+    def load_artifact(self, storage_uri: str) -> Any:
         """Loads an artifact from file system"""
 
         files = self._list_files(storage_uri=storage_uri)
 
         if self.storage_client.backend != StorageSystem.LOCAL:
-            with tempfile.NamedTemporaryFile(suffix=self.file_suffix) as tmpfile:  # noqa
-                self.storage_client.client.download(rpath=files, lpath=tmpfile.name)
-                return self._load_artifact(file_path=files)
+            with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
+                self.storage_client.download(rpath=files, lpath=tmpfile.name)
+                return self._load_artifact(file_path=tmpfile)
 
         return self._load_artifact(file_path=files)
 
@@ -96,7 +99,7 @@ class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ):
         super().__init__(
             artifact_type=artifact_type,
@@ -111,7 +114,7 @@ class ParquetStorage(ArtifactStorage):
             filesystem=self.storage_client.client,
         )
 
-    def save_artifact_to_external(self, artifact: pa.Table) -> StoragePath:
+    def save_artifact_to_external(self, artifact: pa.Table) -> str:
 
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
@@ -124,7 +127,7 @@ class ParquetStorage(ArtifactStorage):
 
         return storage_uri
 
-    def _load_artifact(self, file_path: Union[List[str], str]) -> Union[pa.Table, pd.DataFrame, np.ndarray]:
+    def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame, np.ndarray]:
         """Loads pyarrow data to original saved type
 
         Args:
@@ -140,10 +143,10 @@ class ParquetStorage(ArtifactStorage):
 
         return pa_table
 
-    def _list_files(self, storage_uri) -> str:
+    def _list_files(self, storage_uri) -> FilePath:
         return self.storage_client.list_files(storage_uri=storage_uri)
 
-    def load_artifact(self, storage_uri: str) -> Union[pd.DataFrame, np.ndarray]:
+    def load_artifact(self, storage_uri: str) -> Any:
         files = self._list_files(storage_uri=storage_uri)
         return self._load_artifact(files)
 
@@ -161,7 +164,7 @@ class NumpyStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ):
         super().__init__(
             artifact_type=artifact_type,
@@ -173,7 +176,7 @@ class NumpyStorage(ArtifactStorage):
         store = self.storage_client.store(storage_uri=file_path)
         zarr.save(store, artifact)
 
-    def save_artifact_to_external(self, artifact: pa.Table) -> StoragePath:
+    def save_artifact_to_external(self, artifact: pa.Table) -> str:
 
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, local_path = temp_output
@@ -186,15 +189,16 @@ class NumpyStorage(ArtifactStorage):
 
         return storage_uri
 
-    def _list_files(self, storage_uri) -> Union[List[str], str]:
+    def _list_files(self, storage_uri) -> FilePath:
         return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
-    def _load_artifact(self, file_path: Union[List[str], str]) -> Any:
-        store = self.storage_client.store(storage_uri=file_path)
+    def _load_artifact(self, file_path: FilePath) -> np.ndarray:
+
+        store = self.storage_client.store(storage_uri=str(file_path))
 
         return zarr.load(store)
 
-    def load_artifact(self, storage_uri: str) -> np.ndarray:
+    def load_artifact(self, storage_uri: str) -> Any:
         """Loads a numpy ndarray from a zarr directory
 
         Args:
@@ -218,7 +222,7 @@ class JoblibStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ):
         super().__init__(
             artifact_type=artifact_type,
@@ -229,10 +233,10 @@ class JoblibStorage(ArtifactStorage):
     def _save_artifact(self, artifact: Any, file_path: str):
         joblib.dump(artifact, file_path)
 
-    def _load_artifact(self, file_path: str) -> Any:
+    def _load_artifact(self, file_path: FilePath) -> Any:
         return joblib.load(file_path)
 
-    def _list_files(self, storage_uri: str) -> Union[List[str], str]:
+    def _list_files(self, storage_uri: str) -> FilePath:
         return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
     @staticmethod
@@ -246,7 +250,7 @@ class JSONStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ):
         super().__init__(
             artifact_type=artifact_type,
@@ -259,11 +263,12 @@ class JSONStorage(ArtifactStorage):
         with filepath.open("w", encoding="utf-8") as file_:
             file_.write(artifact)
 
-    def _load_artifact(self, file_path: str) -> Any:
-        with open(file_path, encoding="utf-8") as json_file:
+    def _load_artifact(self, file_path: FilePath) -> Any:
+
+        with open(str(file_path), encoding="utf-8") as json_file:
             return json.load(json_file)
 
-    def _list_files(self, storage_uri: str) -> Union[List[str], str]:
+    def _list_files(self, storage_uri: str) -> FilePath:
         return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
     @staticmethod
@@ -277,7 +282,7 @@ class TensorflowModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ):
         super().__init__(
             artifact_type=artifact_type,
@@ -297,10 +302,10 @@ class TensorflowModelStorage(ArtifactStorage):
 
         return storage_uri
 
-    def _list_files(self, storage_uri: str) -> Union[List[str], str]:
+    def _list_files(self, storage_uri: str) -> FilePath:
         return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
-    def _load_artifact(self, file_path: str):
+    def _load_artifact(self, file_path: FilePath):
         import tensorflow as tf
 
         return tf.keras.models.load_model(file_path)
@@ -310,7 +315,7 @@ class TensorflowModelStorage(ArtifactStorage):
         model_path = self._list_files(storage_uri=storage_uri)
         if self.storage_client.backend != StorageSystem.LOCAL:
             with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-                self.storage_client.client.download(rpath=model_path, lpath=f"{tmpdirname}/", recursive=True)
+                self.storage_client.download(rpath=model_path, lpath=f"{tmpdirname}/", recursive=True)
                 return self._load_artifact(tmpdirname)
         return self._load_artifact(model_path)
 
@@ -325,7 +330,7 @@ class PyTorchModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientProto,
+        storage_client: StorageClientType,
     ):
         super().__init__(
             artifact_type=artifact_type,
@@ -338,10 +343,10 @@ class PyTorchModelStorage(ArtifactStorage):
 
         torch.save(artifact, file_path)
 
-    def _load_artifact(self, file_path: str):
+    def _load_artifact(self, file_path: FilePath):
         import torch
 
-        return torch.load(file_path)
+        return torch.load(str(file_path))
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -350,7 +355,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
 def save_record_artifact_to_storage(
     artifact: Any,
-    storage_client: StorageClientProto,
+    storage_client: StorageClientType,
     artifact_type: Optional[str] = None,
 ) -> StoragePath:
 
@@ -372,7 +377,7 @@ def save_record_artifact_to_storage(
     ).save_artifact(artifact=artifact)
 
 
-def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientProto):
+def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType):
 
     if not bool(storage_client.storage_spec.save_path):
         return None
