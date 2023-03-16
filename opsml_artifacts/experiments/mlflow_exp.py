@@ -10,7 +10,7 @@ from opsml_artifacts.experiments.mlflow_helpers import (
     mlflow_storage_client,
 )
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.sql.registry import CardTypes
+from opsml_artifacts.registry.sql.registry import CardType
 from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
 
 # Notes during development
@@ -101,8 +101,8 @@ class MlFlowExperiment:
     def run_id(self) -> str:
         """Run id for mlflow run"""
 
-        if bool(self._active_run):
-            return self._active_run.info.run_id
+        if self._active_run is not None:
+            return str(self._active_run.info.run_id)
 
         raise ValueError("Active run has not been set")
 
@@ -163,11 +163,11 @@ class MlFlowExperiment:
         self._storage_client.set_run_id(run_id=None)
         logger.info("experiment complete")
 
-    def register_card(self, card: CardTypes, version_type: str = "minor"):
+    def register_card(self, card: CardType, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
-            card (CardTypes): DataCard or ModelCard
+            card (CardType): DataCard or ModelCard
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
         """
@@ -179,3 +179,28 @@ class MlFlowExperiment:
             version_type=version_type,
             save_path=self.artifact_save_path,
         )
+
+    def load_card(
+        self,
+        card_type: str,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        uid: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> CardType:
+
+        """Loads a specific card
+
+        Args:
+            card_type (str): datacard or modelcard
+            name (str): Optional Card name
+            team (str): Optional team associated with card
+            version (int): Optional version number of existing data. If not specified,
+            the most recent version will be used
+            uid (str): Unique identifier for the card. If present, the uid takes precedence.
+
+        Returns
+            ArtifactCard
+        """
+        registry: CardRegistry = getattr(self.registries, f"{card_type.lower()}card")
+        return registry.load_card(name=name, team=team, version=version, uid=uid)

@@ -16,7 +16,7 @@ from opsml_artifacts.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
 
-ArtifactCardTypes = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
+ArtifactCardType = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
@@ -84,7 +84,9 @@ def log_card_change(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:
 
-        name, version, state = func(self, *args, **kwargs)
+        record, state = func(self, *args, **kwargs)
+        name = str(record.get("name"))
+        version = str(record.get("version"))
         logger.info(
             "%s: %s, version:%s %s", self._table.__tablename__, name, version, state  # pylint: disable=protected-access
         )
