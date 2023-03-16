@@ -1,15 +1,11 @@
-from requests import Response
-from starlette.testclient import TestClient
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 import pandas as pd
 from pydantic import ValidationError
-from opsml_artifacts import DataCard, ModelCard, ExperimentCard, PipelineCard, CardRegistry
+from opsml_artifacts import DataCard, ModelCard, ExperimentCard, PipelineCard
 import uuid
 import random
-from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
-import time
 
 
 @pytest.mark.parametrize(
@@ -84,7 +80,7 @@ def test_register_model(
     model_card_mock.return_value = None
     model, data = sklearn_pipeline
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries["data"]
 
     data_card = DataCard(
         data=data,
@@ -230,7 +226,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
             name=f"{card_type}_{random.randint(0,100)}",
         )
     # register
-    registry: CardRegistry = db_registries["pipeline"]
+    registry = db_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
@@ -249,13 +245,15 @@ def test_full_pipeline_with_loading(
     mock_pyarrow_parquet_write,
     mock_artifact_storage_clients,
 ):
+    from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
+
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
-    data_registry: CardRegistry = db_registries["data"]
-    model_registry: CardRegistry = db_registries["model"]
-    experiment_registry: CardRegistry = db_registries["experiment"]
-    pipeline_registry: CardRegistry = db_registries["pipeline"]
+    data_registry = db_registries["data"]
+    model_registry = db_registries["model"]
+    experiment_registry = db_registries["experiment"]
+    pipeline_registry = db_registries["pipeline"]
     model, data = linear_regression
     #### Create DataCard
     data_card = DataCard(

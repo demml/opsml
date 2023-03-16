@@ -1,17 +1,22 @@
 import os
-from typing import Optional, Dict, Union
-from mlflow.entities import RunStatus, Run
+from typing import Optional
+
+from mlflow.entities import Run, RunStatus
 from mlflow.tracking import MlflowClient
+
 from opsml_artifacts import CardRegistry
+from opsml_artifacts.experiments.mlflow_helpers import (
+    CardRegistries,
+    mlflow_storage_client,
+)
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.sql.registry import CardTypes
 from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
-from opsml_artifacts.experiments.mlflow_helpers import CardRegistries, mlflow_storage_client
 
 # Notes during development
 # assume you are using mlflow url with a proxy client for artifacts
-#  Add ApiRegistry with call paths to update opsml
 # Needs: Absolute path for mlflow artifacts (base bucket path)
+# Use the api paths to swap mlflow_root with mlflow_destination when registering card?
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -48,17 +53,26 @@ class MlFlowExperiment:
             tracking_uri=tracking_uri or os.environ.get("OPSML_TRACKING_URI"),
         )
 
-        # set the registries
-        self.registries = CardRegistries(
+        self._storage_client = self._get_storage_client()
+        self.registries = self._get_card_registries()
+
+    def _get_card_registries(self):
+
+        """Gets CardRegistries to associate with MlFlow experiment"""
+        registries = CardRegistries(
             datacard=CardRegistry(registry_name="data"),
             modelcard=CardRegistry(registry_name="model"),
             experimentcard=CardRegistry(registry_name="experiment"),
         )
 
-        self._storage_client = self._get_storage_client()
+        if not isinstance(registries.datacard.registry.storage_client, MlFlowStorageClient):
+            registries.set_storage_client(storage_client=self._storage_client)
+
+        return registries
 
     def _get_storage_client(self) -> MlFlowStorageClient:
-        """Updates mlflow storage client with current mlflow client"""
+        """Gets the MlFlowStorageClient and sets the current client"""
+
         mlflow_storage_client.set_mlflow_client(mlflow_client=self._mlflow_client)
         return mlflow_storage_client
 
@@ -92,20 +106,6 @@ class MlFlowExperiment:
 
         raise ValueError("Active run has not been set")
 
-    @property
-    def _extra_registration_kwargs(self) -> Dict[str, Union[MlflowClient, str]]:
-        """Creates mlflow-specific kwargs to pass to registry when
-        registering an Artifact Card
-
-        Returns:
-            Dictionary of kwargs
-        """
-
-        return {
-            "mlflow_client": self._mlflow_client,
-            "run_id": self.run_id,
-        }
-
     def _set_project(self) -> str:
         """Sets the project to use with mlflow. If a project_id associated
         with a project name does not exist it is created
@@ -114,6 +114,7 @@ class MlFlowExperiment:
             project_id
         """
         project_id = self._mlflow_client.get_experiment_by_name(self.project_name)
+
         if project_id is None:
             project_id = self._mlflow_client.create_experiment(name=self.project_name)
 
@@ -154,6 +155,8 @@ class MlFlowExperiment:
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
+
+        # set run to terminated
         self._mlflow_client.set_terminated(run_id=self.run_id)
 
         # Remove run id
@@ -171,4 +174,8 @@ class MlFlowExperiment:
 
         card_type = card.__class__.__name__.lower()
         registry: CardRegistry = getattr(self.registries, card_type)
-        registry.register_card(card=card, version_type=version_type)
+        registry.register_card(
+            card=card,
+            version_type=version_type,
+            save_path=self.artifact_save_path,
+        )

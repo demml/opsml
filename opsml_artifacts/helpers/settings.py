@@ -4,18 +4,19 @@ from typing import Any, Dict, Optional, cast
 
 import httpx
 from pydantic import BaseSettings, Field, root_validator
+
+from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
+from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
+from opsml_artifacts.registry.storage.storage_system import (
+    StorageClientGetter,
+    StorageClientTypes,
+)
 from opsml_artifacts.registry.storage.types import (
     GcsStorageClientSettings,
     StorageClientSettings,
     StorageSettings,
 )
-from opsml_artifacts.registry.storage.storage_system import (
-    StorageClientGetter,
-    StorageClientTypes,
-)
-from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
-from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
 OPSML_STORAGE_URI = "OPSML_STORAGE_URI"
@@ -30,7 +31,7 @@ class StorageSettingsGetter:
     def __init__(self, storage_uri: Optional[str] = None):
         self.storage_uri = storage_uri
 
-    def _get_gcs_info(self) -> GcsStorageClientSettings:
+    def _get_gcs_settings(self) -> GcsStorageClientSettings:
         storage_settings: Dict[str, Any] = {}
         from opsml_artifacts.helpers.gcp_utils import (  # pylint: disable=import-outside-toplevel
             GcpCredsSetter,
@@ -44,14 +45,14 @@ class StorageSettingsGetter:
 
         return GcsStorageClientSettings(**storage_settings)
 
-    def _get_default_info(self) -> StorageClientSettings:
+    def _get_default_settings(self) -> StorageClientSettings:
         return StorageClientSettings(storage_uri=self.storage_uri)
 
     def get_storage_settings(self) -> StorageSettings:
         if self.storage_uri is not None:
             if "gs://" in self.storage_uri:
-                return self._get_gcs_info()
-            return self._get_default_info()
+                return self._get_gcs_settings()
+            return self._get_default_settings()
         return StorageClientSettings()
 
 

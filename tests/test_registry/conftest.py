@@ -3,10 +3,7 @@ import os
 from typing import Any
 from unittest.mock import patch, MagicMock
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
-from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
-from opsml_artifacts.registry.model.types import ModelApiDef
 
 
 @pytest.fixture(scope="function")
@@ -28,6 +25,8 @@ def db_registries(mock_local_engine):
     os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = f"{os.path.expanduser('~')}/mlruns"
     os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
     os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
+
+    from opsml_artifacts.registry.sql.registry import CardRegistry
 
     with patch.multiple(
         "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
@@ -60,6 +59,8 @@ def db_registries(mock_local_engine):
 def mock_model_cli_loader(db_registries):
     model_registry = db_registries["model"]
     from pathlib import Path
+    from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
+    from opsml_artifacts.registry.model.types import ModelApiDef
 
     class MockModelLoaderCli(ModelLoaderCli):
         def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
@@ -71,32 +72,3 @@ def mock_model_cli_loader(db_registries):
     with patch("opsml_artifacts.scripts.load_model_card.ModelLoaderCli", MockModelLoaderCli) as mock_cli_loader:
 
         yield mock_cli_loader
-
-
-
-@pytest.fixture(scope="function")
-def load_transformer_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
-    data = np.load("tests/assets/transformer_data.npy")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_multi_input_keras_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
-    data = joblib.load("tests/assets/multi_input_data.joblib")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_pytorch_resnet():
-    import torch
-
-    loaded_model = torch.load("tests/assets/resnet.pt")
-    data = torch.randn(1, 3, 224, 224).numpy()
-
-    return loaded_model, data
