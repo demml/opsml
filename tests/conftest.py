@@ -1,31 +1,28 @@
 import os
+
+# setting initial env vars to override default sql db
+tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
+sql_path = f"sqlite:///{tmp_db_path}"
+
+os.environ["OPSML_TRACKING_URI"] = sql_path
+os.environ["OPSML_STORAGE_URI"] = f"{os.path.expanduser('~')}/mlruns"
+
+
 import pytest
-
 import requests
-
-#
-## from opsml_artifacts.helpers.settings import SnowflakeParams
-from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
-from opsml_artifacts.registry.sql.registry import CardRegistry
-from opsml_artifacts.helpers.gcp_utils import GCPMLScheduler, GCSStorageClient, GcpCreds
+from opsml_artifacts.helpers.gcp_utils import GcpCreds
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
+
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
-from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.helpers.request_helpers import ApiClient
-from opsml_artifacts.registry.sql.registry_base import ClientRegistry
-from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
-from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
+
 
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
-from xgboost import XGBRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.ensemble import StackingRegressor
 import lightgbm as lgb
 import numpy as np
 import pandas as pd

@@ -1,22 +1,24 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
-import tempfile
-from typing import Any, Dict, List, Optional, Union
 import json
-import joblib
+import tempfile
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import joblib
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
-from opsml_artifacts.registry.storage.types import StorageClientProto
-from opsml_artifacts.registry.storage.storage_system import StorageSystem
+
 from opsml_artifacts.registry.cards.types import (
     DATA_ARTIFACTS,
     ArtifactStorageTypes,
     StoragePath,
 )
+from opsml_artifacts.registry.storage.storage_system import StorageSystem
+from opsml_artifacts.registry.storage.types import StorageClientProto
 
 
 class ArtifactStorage:
@@ -122,14 +124,14 @@ class ParquetStorage(ArtifactStorage):
 
         return storage_uri
 
-    def _load_artifact(self, files: Union[List[str], str]) -> Union[pa.Table, pd.DataFrame, np.ndarray]:
+    def _load_artifact(self, file_path: Union[List[str], str]) -> Union[pa.Table, pd.DataFrame, np.ndarray]:
         """Loads pyarrow data to original saved type
 
         Args:
             files (List[str]): List of filenames that make up the parquet dataset
         """
         pa_table: pa.Table = pq.ParquetDataset(
-            path_or_paths=files,
+            path_or_paths=file_path,
             filesystem=self.storage_client.client,
         ).read()
 
@@ -258,7 +260,7 @@ class JSONStorage(ArtifactStorage):
             file_.write(artifact)
 
     def _load_artifact(self, file_path: str) -> Any:
-        with open(file_path) as json_file:
+        with open(file_path, encoding="utf-8") as json_file:
             return json.load(json_file)
 
     def _list_files(self, storage_uri: str) -> Union[List[str], str]:
@@ -304,8 +306,6 @@ class TensorflowModelStorage(ArtifactStorage):
         return tf.keras.models.load_model(file_path)
 
     def load_artifact(self, storage_uri: str) -> Any:
-
-        import tensorflow as tf
 
         model_path = self._list_files(storage_uri=storage_uri)
         if self.storage_client.backend != StorageSystem.LOCAL:

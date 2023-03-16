@@ -4,11 +4,11 @@ from typing import Any, Type, cast
 
 import sqlalchemy
 
+from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.sql.connectors.base import (
     BaseSQLConnection,
     CloudSQLConnection,
 )
-from opsml_artifacts.helpers.utils import all_subclasses
 
 
 class SqlType(str, Enum):
