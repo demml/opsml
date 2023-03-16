@@ -22,49 +22,49 @@ def test_find_dir_path():
     assert isinstance(path, str)
 
 
-# def test_find_src_dir():
-#    src_dir, src_path = utils.FindPath.find_source_dir(
-#        settings.path,
-#        "anchor.py",
-#    )
-#    assert src_dir == "assets"
+def test_find_src_dir():
+    src_dir, src_path = utils.FindPath.find_source_dir(
+        os.getcwd(),
+        "anchor.py",
+    )
+    assert src_dir == "assets"
 
 
-# def test_gcs_storage_client_integration(mock_gcs):
-#    file_path = utils.FindPath.find_filepath(
-#        name="example.csv",
-#    )
-#    # upload
-#    path = "test_upload/test.csv"
-#
-#    storage_client = gcp_utils.GCSStorageClient()
-#
-#    storage_client.upload(
-#        gcs_bucket=settings.gcs_bucket,
-#        filename=file_path,
-#        destination_path=path,
-#    )
-#
-#    # download
-#    storage_client.download_object(
-#        gcs_bucket=settings.gcs_bucket,
-#        blob_path=path,
-#        destination_filename="test.csv",
-#    )
-#
-#    blobs = storage_client.list_objects(
-#        gcs_bucket=settings.gcs_bucket,
-#        prefix="test_upload/",
-#    )
-#
-#    for blob in blobs:
-#        assert path in blob.name
-#
-#    # delete
-#    storage_client.delete_object(
-#        gcs_bucket=settings.gcs_bucket,
-#        blob_path=path,
-#    )
+def test_gcs_storage_client_integration(mock_gcs):
+    file_path = utils.FindPath.find_filepath(
+        name="example.csv",
+    )
+    # upload
+    path = "test_upload/test.csv"
+    #
+    storage_client = gcp_utils.GCSStorageClient()
+    #
+    storage_client.upload(
+        gcs_bucket="test_bucket",
+        filename=file_path,
+        destination_path=path,
+    )
+    #
+    # download
+    storage_client.download_object(
+        gcs_bucket="test_bucket",
+        blob_path=path,
+        destination_filename="test.csv",
+    )
+    #
+    blobs = storage_client.list_objects(
+        gcs_bucket="test_bucket",
+        prefix="test_upload/",
+    )
+
+    for blob in blobs:
+        assert path in blob.name
+
+    # delete
+    storage_client.delete_object(
+        gcs_bucket="test_bucket",
+        blob_path=path,
+    )
 
 
 def test_gcp_scheduler_integration(mock_gcp_scheduler):
