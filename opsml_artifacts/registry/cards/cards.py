@@ -8,7 +8,7 @@ from pydantic import BaseModel, root_validator, validator
 from opsml_artifacts.drift.data_drift import DriftReport
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.storage.artifact_storage import load_record_artifact_from_storage
-from opsml_artifacts.registry.storage.types import ArtifactStorageMetadata, StorageClientProto
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs, StorageClientProto
 from opsml_artifacts.registry.cards.types import RegistryRecordProto
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
 from opsml_artifacts.registry.model.creator import OnnxModelCreator
@@ -203,7 +203,7 @@ class DataCard(ArtifactCard):
         """Loads data"""
 
         if not bool(self.data):
-            storage_meta = ArtifactStorageMetadata(
+            storage_spec = ArtifactStorageSpecs(
                 save_path=self.data_uri,
                 name=self.name,
                 team=self.team,
@@ -211,7 +211,7 @@ class DataCard(ArtifactCard):
                 storage_client=self.storage_client,
             )
 
-            self.storage_client.storage_meta = storage_meta
+            self.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
                 storage_client=self.storage_client,
                 artifact_type=self.data_type,
@@ -321,7 +321,7 @@ class ModelCard(ArtifactCard):
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
-        storage_meta = ArtifactStorageMetadata(
+        storage_spec = ArtifactStorageSpecs(
             save_path=self.sample_data_uri,
             name=self.name,
             team=self.team,
@@ -329,7 +329,7 @@ class ModelCard(ArtifactCard):
             storage_client=self.storage_client,
         )
 
-        self.storage_client.storage_meta = storage_meta
+        self.storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
             artifact_type=self.sample_data_type,
@@ -342,7 +342,7 @@ class ModelCard(ArtifactCard):
 
         self.load_sample_data()
 
-        storage_meta = ArtifactStorageMetadata(
+        storage_spec = ArtifactStorageSpecs(
             save_path=self.trained_model_uri,
             name=self.name,
             team=self.team,
@@ -350,7 +350,7 @@ class ModelCard(ArtifactCard):
             storage_client=self.storage_client,
         )
 
-        self.storage_client.storage_meta = storage_meta
+        self.storage_client.storage_spec = storage_spec
         trained_model = load_record_artifact_from_storage(
             storage_client=self.storage_client,
             artifact_type=self.model_type,
