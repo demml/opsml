@@ -162,7 +162,13 @@ class LoadedModelRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        return {**values, **modelcard_definition}
+        modelcard_definition["model_card_uri"] = values.get("model_card_uri")
+        modelcard_definition["trained_model_uri"] = values.get("trained_model_uri")
+        modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
+        modelcard_definition["sample_data_type"] = values.get("sample_data_type")
+        modelcard_definition["storage_client"] = values.get("storage_client")
+
+        return modelcard_definition
 
     @classmethod
     def load_model_card_definition(
