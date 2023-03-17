@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import patch, MagicMock
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
+import shutil
 
 
 @pytest.fixture(scope="function")
@@ -53,6 +54,11 @@ def db_registries(mock_local_engine):
             "pipeline": pipeline_registry,
             "connection_client": local_client,
         }
+
+    try:
+        shutil.rmtree(f"{os.path.expanduser('~')}/mlruns")
+    except Exception as e:
+        pass
 
 
 @pytest.fixture(scope="function")

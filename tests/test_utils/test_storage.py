@@ -34,6 +34,7 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
 
     assert isinstance(metadata.uri, str)
 
+    print(metadata.uri)
     table = pq_writer.load_artifact(storage_uri=metadata.uri)
     assert isinstance(table, pa.Table)
 
@@ -152,10 +153,12 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
         "torch",
         save=MagicMock(return_value=None),
     ):
+
         metadata = model_storage.save_artifact(artifact=model)
 
     with patch.multiple(
         "torch",
         load=MagicMock(return_value=model),
     ):
+
         model = model_storage.load_artifact(storage_uri=metadata.uri)

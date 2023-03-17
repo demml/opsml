@@ -157,7 +157,7 @@ class ArtifactStorage:
         file_path = self._list_files(storage_uri=storage_uri)
         with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
             loadable_filepath = self._download_artifact(file_path=file_path, tmp_file=tmpfile)
-            self._load_artifact(file_path=loadable_filepath)
+            return self._load_artifact(file_path=loadable_filepath)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -482,7 +482,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
         torch.save(artifact, file_path)
 
-        self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath):
         import torch
