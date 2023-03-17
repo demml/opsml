@@ -73,7 +73,7 @@ class MlFlowExperiment:
     def _get_storage_client(self) -> MlFlowStorageClient:
         """Gets the MlFlowStorageClient and sets the current client"""
 
-        mlflow_storage_client.set_client(mlflow_client=self._mlflow_client)
+        mlflow_storage_client.mlflow_client = self._mlflow_client
         return mlflow_storage_client
 
     @property
