@@ -28,3 +28,6 @@ def test_mlflow(mlflow_experiment, sklearn_pipeline):
         exp.register_card(card=model_card)
         loaded_card = exp.load_card(card_type="model", uid=model_card.uid)
         loaded_card.load_trained_model()
+
+        assert loaded_card.data_card_uid == model_card.data_card_uid
+        load_data = loaded_card = exp.load_card(card_type="data", uid=data_card.uid)
