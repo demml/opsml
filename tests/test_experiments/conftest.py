@@ -59,3 +59,35 @@ def db_registries(test_app):
             "experiment": experiment_registry,
             "pipeline": pipeline_registry,
         }
+
+
+@pytest.fixture(scope="function")
+def mlflow_experiment(db_registries):
+
+    from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
+    from opsml_artifacts.experiments.mlflow_helpers import CardRegistries
+
+    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
+    sql_path = f"sqlite:///{tmp_db_path}"
+    mlflow_exp = MlFlowExperiment(
+        project_name="test_exp",
+        team_name="test",
+        user_email="test",
+        tracking_uri=sql_path,
+    )
+    mlflow_storage = mlflow_exp._get_storage_client()
+    api_card_registries = CardRegistries.construct(
+        datacard=db_registries["data"],
+        modelcard=db_registries["model"],
+        experimentcard=db_registries["experiment"],
+    )
+    api_card_registries.set_storage_client(mlflow_storage)
+    mlflow_exp.registries = api_card_registries
+    return mlflow_exp
+
+
+@pytest.fixture(scope="function")
+def mock_pathlib():
+
+    with patch("pathlib.Path", Path) as mocked_pathlib:
+        yield mocked_pathlib
