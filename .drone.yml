@@ -8,8 +8,8 @@ workspace:
 
 trigger:
   event:
-    - pull_request
-
+  - pull_request
+  
 steps:
   - name: py39
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
@@ -72,8 +72,8 @@ trigger:
   event:
     - tag
     - push
-  branch:
-    - main
+  #branch:
+    #- main
 
 steps:
   - name: py39
