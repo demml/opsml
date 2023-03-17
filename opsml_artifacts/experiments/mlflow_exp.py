@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, cast
 
 from mlflow.entities import Run, RunStatus
 from mlflow.tracking import MlflowClient
@@ -9,6 +9,7 @@ from opsml_artifacts.experiments.mlflow_helpers import (
     CardRegistries,
     mlflow_storage_client,
 )
+from opsml_artifacts.experiments.types import ActiveRun
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.sql.registry import CardType
 from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
@@ -83,7 +84,8 @@ class MlFlowExperiment:
         Returns:
             artifact save path
         """
-        return self._active_run.info._artifact_uri
+        self._active_run = cast(ActiveRun, self._active_run)
+        return self._active_run.info._artifact_uri  # pylint: disable=protected-access
 
     @property
     def project_id(self):

@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Union, IO, Tuple
+from typing import IO, Any, Optional, Tuple, Union, cast
 
 import joblib
 import numpy as np
@@ -18,9 +18,9 @@ from opsml_artifacts.registry.cards.types import (
     StoragePath,
 )
 from opsml_artifacts.registry.storage.storage_system import (
+    ArtifactClass,
     StorageClientType,
     StorageSystem,
-    ArtifactClass,
     cleanup_files,
 )
 from opsml_artifacts.registry.storage.types import FilePath
@@ -32,9 +32,9 @@ class ArtifactStorage:
     def __init__(
         self,
         artifact_type: str,
-        artifact_class: str,
         storage_client: StorageClientType,
         file_suffix: Optional[str] = None,
+        artifact_class: Optional[str] = None,
     ):
 
         """Instantiates base ArtifactStorage class
@@ -54,6 +54,9 @@ class ArtifactStorage:
 
         if file_suffix is not None:
             self.file_suffix = str(file_suffix)
+
+        if artifact_class is not None:
+            self.artifact_class = str(artifact_class)
 
     @property
     def is_data(self):
@@ -147,27 +150,27 @@ class ArtifactStorage:
 
             return StoragePath(uri=storage_uri)
 
-    def _download_artifact(self, file_path: FilePath, tmp_file: IO) -> Any:
+    def _download_artifact(self, file_path: FilePath, tmp_path: IO) -> Any:
         """Downloads an artifact from a file_path
 
         Args:
             file_path (FilePath): List of file paths or single file path
-            tmp_file (IO): Temporary file to write to if downloading prior to loading
+            tmp_path (IO): Temporary file to write to if downloading prior to loading
         """
         if self.is_storage_local:
             return file_path
 
-        loadable_filepath = self.storage_client.download(rpath=file_path, lpath=tmp_file.name)
+        loadable_filepath = self.storage_client.download(rpath=file_path, lpath=tmp_path.name)
         if loadable_filepath is not None:
             return loadable_filepath
 
-        return tmp_file
+        return tmp_path
 
     @cleanup_files
     def load_artifact(self, storage_uri: str) -> Tuple[Any, str]:
         file_path = self._list_files(storage_uri=storage_uri)
         with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
-            loadable_filepath = self._download_artifact(file_path=file_path, tmp_file=tmpfile)
+            loadable_filepath = self._download_artifact(file_path=file_path, tmp_path=tmpfile)
             artifact = self._load_artifact(file_path=loadable_filepath)
 
             return artifact, loadable_filepath
@@ -356,7 +359,8 @@ class JSONStorage(ArtifactStorage):
         )
 
     def _write_json(self, artifact: Any, file_path: FilePath):
-        _path = Path(file_path)
+        path_to_create = str(file_path)
+        _path = Path(path_to_create)
         with _path.open("w", encoding="utf-8") as file_:
             file_.write(artifact)
 
@@ -435,26 +439,25 @@ class TensorflowModelStorage(ArtifactStorage):
 
         return tf.keras.models.load_model(file_path)
 
-    def _download_artifact(self, file_path: FilePath, tmp_dir: IO) -> Any:
+    def _download_artifact(self, file_path: FilePath, tmp_path: IO) -> Any:
         """Downloads tensorflow model directory from a file_path
 
         Args:
             file_path (FilePath): List of file paths or single file path
-            tmp_file (IO): Temporary file to write to if downloading prior to loading
+            tmp_path (IO): Temporary file to write to if downloading prior to loading
         """
         if self.is_storage_local:
             return file_path
 
-        self.storage_client.download(rpath=file_path, lpath=f"{tmp_dir}/", recursive=True)
-        return tmp_dir
+        self.storage_client.download(rpath=file_path, lpath=f"{tmp_path}/", recursive=True)
+        return tmp_path
 
     def load_artifact(self, storage_uri: str) -> Any:
 
         file_path = self._list_files(storage_uri=storage_uri)
-        if self.storage_client.backend != StorageSystem.LOCAL:
-            with tempfile.TemporaryDirectory() as tmp_dir:  # noqa
-                loadable_filepath = self._download_artifact(file_path=file_path, tmp_dir=tmp_dir)
-                return self._load_artifact(loadable_filepath)
+        with tempfile.TemporaryDirectory() as tmp_dir:  # noqa
+            loadable_filepath = self._download_artifact(file_path=file_path, tmp_path=cast(IO, tmp_dir))
+            return self._load_artifact(loadable_filepath)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

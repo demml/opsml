@@ -109,7 +109,6 @@ def add_record(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    record = payload.record
     registry.registry.add_and_commit(record=payload.record)
 
     return AddRecordResponse(registered=True)

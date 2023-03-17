@@ -1,3 +1,4 @@
+# pylint: disable=import-outside-toplevel
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 
@@ -15,13 +16,9 @@ class OpsmlApp:
         self.app = FastAPI(title=config.APP_NAME)
 
     def build_mlflow_app(self):
-        from mlflow.server import (
-            app as mlflow_flask,  # pylint: disable=import-outside-toplevel
-        )
+        from mlflow.server import app as mlflow_flask
 
-        from opsml_artifacts.app.core.initialize_mlflow import (  # pylint: disable=import-outside-toplevel
-            initialize_mlflow,
-        )
+        from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
 
         mlflow_config = initialize_mlflow()
         self.app.mount("/", WSGIMiddleware(mlflow_flask))
