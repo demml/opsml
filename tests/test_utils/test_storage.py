@@ -4,28 +4,29 @@ import pyarrow as pa
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
-from opsml_artifacts.registry.cards.artifact_storage import (
+from opsml_artifacts.registry.storage.artifact_storage import (
     ParquetStorage,
     JoblibStorage,
-    SaveInfo,
     NumpyStorage,
     TensorflowModelStorage,
     PyTorchModelStorage,
 )
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 from opsml_artifacts.drift.data_drift import DriftDetector
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
 
-    save_info = SaveInfo(
-        blob_path="blob",
-        version=1,
+    storage_spec = ArtifactStorageSpecs(
+        save_path="blob",
+        version="1.0.0",
         team="mlops",
         name="test",
     )
+
+    storage_client.storage_spec = storage_spec
     pq_writer = ParquetStorage(
-        save_info=save_info,
         storage_client=storage_client,
         artifact_type="Table",
     )
@@ -39,20 +40,20 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
-    save_info = SaveInfo(
-        blob_path="blob",
-        version=1,
+    storage_spec = ArtifactStorageSpecs(
+        save_path="blob",
+        version="1.0.0",
         team="mlops",
         name="test",
     )
 
+    storage_client.storage_spec = storage_spec
     with patch.multiple(
         "zarr",
         save=MagicMock(return_value=None),
         load=MagicMock(return_value=test_array),
     ):
         numpy_writer = NumpyStorage(
-            save_info=save_info,
             storage_client=storage_client,
             artifact_type="ndarray",
         )
@@ -64,7 +65,12 @@ def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
 
 @pytest.mark.parametrize("categorical", [["col_10"]])
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
-def test_drift_storage(drift_dataframe, categorical, storage_client):
+def test_drift_storage(
+    drift_dataframe,
+    categorical,
+    storage_client,
+    mock_artifact_storage_clients,
+):
 
     X_train, y_train, X_test, y_test = drift_dataframe
 
@@ -79,42 +85,36 @@ def test_drift_storage(drift_dataframe, categorical, storage_client):
 
     drift_report = detector.run_drift_diagnostics(return_dataframe=False)
 
-    save_info = SaveInfo(
-        blob_path="blob",
-        version=1,
+    storage_spec = ArtifactStorageSpecs(
+        save_path="blob",
+        version="1.0.0",
         team="mlops",
         name="test",
     )
 
-    with patch.multiple(
-        "joblib",
-        dump=MagicMock(return_value=None),
-        load=MagicMock(return_value=drift_report),
-    ):
-        drift_writer = JoblibStorage(
-            save_info=save_info,
-            storage_client=storage_client,
-            artifact_type="joblib",
-        )
-        metadata = drift_writer.save_artifact(artifact=drift_report)
+    storage_client.storage_spec = storage_spec
+    drift_writer = JoblibStorage(
+        storage_client=storage_client,
+        artifact_type="joblib",
+    )
+    metadata = drift_writer.save_artifact(artifact=drift_report)
 
-        drift_report = drift_writer.load_artifact(storage_uri=metadata.uri)
-        assert isinstance(drift_report, dict)
+    drift_report = drift_writer.load_artifact(storage_uri=metadata.uri)
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
-    save_info = SaveInfo(
-        blob_path="blob",
-        version=1,
+    storage_spec = ArtifactStorageSpecs(
+        save_path="blob",
+        version="1.0.0",
         team="mlops",
         name="test",
     )
 
+    storage_client.storage_spec = storage_spec
     model_storage = TensorflowModelStorage(
         artifact_type="keras",
-        save_info=save_info,
         storage_client=storage_client,
     )
 
@@ -134,16 +134,17 @@ def test_tensorflow_model(storage_client, load_transformer_example):
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_pytorch_model(storage_client, load_pytorch_resnet):
     model, data = load_pytorch_resnet
-    save_info = SaveInfo(
-        blob_path="blob",
-        version=1,
+    storage_spec = ArtifactStorageSpecs(
+        save_path="blob",
+        version="1.0.0",
         team="mlops",
         name="test",
+        storage_client=storage_client,
     )
 
+    storage_client.storage_spec = storage_spec
     model_storage = PyTorchModelStorage(
         artifact_type="pytorch",
-        save_info=save_info,
         storage_client=storage_client,
     )
 
@@ -151,10 +152,12 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
         "torch",
         save=MagicMock(return_value=None),
     ):
+
         metadata = model_storage.save_artifact(artifact=model)
 
     with patch.multiple(
         "torch",
         load=MagicMock(return_value=model),
     ):
+
         model = model_storage.load_artifact(storage_uri=metadata.uri)

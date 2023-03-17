@@ -5,40 +5,45 @@ description = "Package for creating, tracking, storing and versioning machine le
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<=3.11"
+python = ">=3.9,<=3.11"
+altair = "^4.2.0"
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
-google-cloud-secret-manager ={version="^2.12.2", optional = true}
-google-auth = {version="1.35.0", optional = true}
-google-cloud-storage = {version="^2.2.1", optional = true}
-google-cloud-scheduler = {version="^2.9.0", optional = true}
+cryptography = "<39.0.0"
+fastapi = {version="^0.92.0", optional = true}
 gcsfs = {version="^2022.11.0", optional = true}
-sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
-tf2onnx = {version="^1.13.0", optional = true}
+google-auth = {version="1.35.0", optional = true}
+google-cloud-scheduler = {version="^2.9.0", optional = true}
+google-cloud-storage = {version="^2.2.1", optional = true}
 graphviz = {version="^0.20.1", optional = true}
-pg8000 = {version="^1.29.4", optional = true}
-pymysql = {version="^1.0.2", optional = true}
+gunicorn = {version="^20.1.0", optional = true}
+httpx = {version="^0.23.3", optional = true}
 numpy = ">=1.21.6,<=1.24.1"
+onnx = "^1.12.0"
+onnxmltools = "^1.11.1"
+onnxruntime = ">=1.13.0, <=1.13.1"
 pandas = ">=1.4.0,<=1.5.3"
+pg8000 = {version="^1.29.4", optional = true}
+prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
 pyarrow = "8.0.0"
 pydantic = ">=1.10.0, <=1.10.4"
-altair = "^4.2.0"
-scikit-learn = ">=1.0"
 pydantic-yaml = "^0.9.0"
-skl2onnx = "^1.13"
-onnx = "^1.12.0"
-onnxruntime = ">=1.13.0, <=1.13.1"
-onnxmltools = "^1.11.1"
-zarr = ">2.12.0"
-cryptography = "<39.0.0"
-datamodel-code-generator = "^0.17.1"
+pymysql = {version="^1.0.2", optional = true}
 python-json-logger = "^2.0.6"
-pyshipt-sql = "^1.2.7"
+rollbar = {version="^0.16.3", optional = true}
+scikit-learn = ">=1.0"
+skl2onnx = "^1.13"
+sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
+tenacity = "^8.2.2"
+tf2onnx = {version="^1.13.0", optional = true}
+uvicorn = {version="^0.20.0", optional = true}
+zarr = ">2.12.0"
 
 [tool.poetry.extras]
+proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator"]
 graphviz = ["graphviz"]
 tf_onnx = ["tf2onnx"]
-gcp_mysql = ["cloud-sql-python-connector", "google-cloud-secret-manager","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
-gcp_postgres = ["cloud-sql-python-connector", "google-cloud-secret-manager","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pg8000" ]
+gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
+gcp_postgres = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pg8000" ]
 
 [tool.poetry.group.dev]
 optional = true
@@ -55,6 +60,9 @@ torchvision = "^0.14.1"
 tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
+mlflow = "^2.2.1"
+llvmlite = "^0.39.1"
+numba = "^0.56.0"
 
 [tool.poetry.group.dev-lints]
 optional = true
@@ -68,17 +76,15 @@ black = "22.3.0"
 flake8 = "^4.0.1"
 pylint = "^2.14.5"
 isort = "^5.10.1"
-sqlalchemy2-stubs = "0.0.2a31"
+sqlalchemy2-stubs = "0.0.2a32"
 mypy = "1.0.0"
 types-protobuf = "^4.21.0.3"
 python-dotenv = "^0.21.1"
 
-
-[tool.poetry.group.jupyter]
-optional = true
-
-[tool.poetry.group.jupyter.dependencies]
-jupyterlab = "^3.6.1"
+[tool.poetry.scripts]
+load_model_card_to_file = "opsml_artifacts.scripts.load_model_card:load_model_card_to_file"
+opsml-uvicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
+opsml-gunicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
 
 [tool.isort]
 profile = "black"
@@ -133,7 +139,7 @@ plugins = [
     "sqlalchemy.ext.mypy.plugin",
     "sqlmypy",
 ]
-exclude = "opsml_artifacts/.local_tests/*"
+exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/registry/sql/query_helpers.py"]
 
 
 [tool.coverage.paths]
@@ -178,13 +184,15 @@ exclude = [
     "node_modules",
     "venv",
 ]
-per-file-ignores = {}
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 # Assume Python 3.9.
 target-version = "py39"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F841","F401"]
 
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.

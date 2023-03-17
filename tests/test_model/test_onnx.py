@@ -68,34 +68,3 @@ def test_model_predict(model_and_data):
 
     out_sig = predictor.output_sig(**pred_dict)
     pred_orig = predictor.predict_with_model(model, record)
-
-
-#
-
-
-def _test_tensorflow(db_registries, load_transformer_example):
-    model, data = load_transformer_example
-
-    registry = db_registries["data"]
-    data_card = DataCard(
-        data=data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
-    )
-
-    registry.register_card(card=data_card)
-
-    model_registry = db_registries["model"]
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="test_model",
-        team="mlops",
-        user_email="test_email",
-        data_card_uid=data_card.uid,
-    )
-
-    model_registry.register_card(card=model_card)
-
-    model_card.load_trained_model()
