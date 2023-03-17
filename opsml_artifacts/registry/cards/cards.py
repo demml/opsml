@@ -375,6 +375,7 @@ class ModelCard(ArtifactCard):
             "onnx_model_def",
             "storage_client",
         }
+
         if not bool(self.onnx_model_def):
             self._create_and_set_onnx_attr()
 
