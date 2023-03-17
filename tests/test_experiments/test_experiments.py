@@ -15,9 +15,7 @@ def test_create(mlflow_experiment: MlFlowExperiment) -> None:
 
 
 def test_save_load(mlflow_experiment: MlFlowExperiment, sklearn_pipeline: tuple[Pipeline, pd.DataFrame]) -> None:
-
     with mlflow_experiment as exp:
-
         model, data = sklearn_pipeline
         data_card = DataCard(
             data=data,
