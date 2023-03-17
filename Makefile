@@ -49,16 +49,6 @@ setup.sysdep.poetry:
 		|| (echo "Poetry not found. \n  Installation instructions: https://python-poetry.org/docs/" \
 		    && exit 1)
 
-test:
-	docker-compose up test
-test.clean:
-	docker-compose down
-	-docker images -a | grep ${PROJECT} | awk '{print $3}' | xargs docker rmi
-	-docker image prune -f
-test.shell:
-	docker-compose run test /bin/bash
-test.shell.debug:
-	docker-compose run --entrypoint /bin/bash test
 test.unit:
 	poetry run pytest \
 		--cov \
@@ -81,4 +71,3 @@ prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
 publish:
 	poetry config repositories.shipt-deploy https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-local
 	poetry publish --repository shipt-deploy --build
-	
