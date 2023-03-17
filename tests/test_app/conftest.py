@@ -30,10 +30,10 @@ def test_app():
 
     os.remove(path=tmp_db_path)
 
-    # try:
-    #    shutil.rmtree("mlruns")
-    # except Exception as error:
-    #    pass
+    try:
+        shutil.rmtree("mlruns")
+    except Exception as error:
+        pass
 
 
 @pytest.fixture(scope="function")
