@@ -13,14 +13,15 @@ class LogFormatter(JsonFormatter):
     """Custom formatter"""
 
     def add_fields(self, log_record, record, message_dict):
-        super().add_fields(log_record, record, message_dict)
-        if not log_record.get("timestamp"):
-            log_record["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        log_record["app_env"] = APP_ENV
+        # Ensure level is first
         if log_record.get("level"):
             log_record["level"] = log_record["level"].upper()
         else:
             log_record["level"] = record.levelname
+        super().add_fields(log_record, record, message_dict)
+        if not log_record.get("timestamp"):
+            log_record["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        log_record["app_env"] = APP_ENV
 
 
 # credit to pyshipt-logging for implementation logic
