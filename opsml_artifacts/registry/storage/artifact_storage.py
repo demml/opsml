@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, IO
 
 import joblib
 import numpy as np
@@ -27,38 +27,63 @@ class ArtifactStorage:
     def __init__(
         self,
         artifact_type: str,
+        artifact_class: str,
         storage_client: StorageClientType,
         file_suffix: Optional[str] = None,
     ):
 
+        """Instantiates base ArtifactStorage class
+
+        Args:
+            artifact_type (str): Type of artifact. Examples include pyarrow Table, JSON, Pytorch
+            artifact_class (str): Class that the artifact belongs to. This is either DATA or OTHER
+            storage_client (StorageClientType): Backend storage client to use when saving and loading an artifact
+            file_suffix (str): Optional suffix to use when saving and loading an artifact
+
+        """
+
         self.file_suffix = None
         self.artifact_type = artifact_type
         self.storage_client = storage_client
+        self.artifact_class = artifact_class
 
         if file_suffix is not None:
             self.file_suffix = str(file_suffix)
 
-    def _get_correct_storage_uri(self, storage_uri: str, tmp_uri: str, artifact_class: str) -> str:
-        """Sets the correct storage uri based on the backend client"""
+    @property
+    def is_data(self):
+        return self.artifact_class == ArtifactClass.DATA
 
-        if ArtifactClass(artifact_class) == ArtifactClass.DATA:
-            if self.storage_client.backend in [StorageSystem.GCS, StorageSystem.LOCAL]:
-                return storage_uri
+    @property
+    def is_storage_a_proxy(self):
+        return self.storage_client.backend not in [StorageSystem.GCS, StorageSystem.LOCAL]
 
-            # this is mainly for writing data to proxies
-            return tmp_uri
+    @property
+    def is_storage_local(self):
+        return StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL
 
-        else:
-            if StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL:
-                return storage_uri
+    @property
+    def storage_filesystem(self):
+        return self.storage_client.client
 
-            return tmp_uri
+    def _get_correct_storage_uri(self, storage_uri: str, tmp_uri: str) -> str:
+        """Sets the correct storage uri based on the backend storage client"""
+
+        # data artifacts need special handling since they use files systems directly
+        if self.is_data:
+            if self.is_storage_a_proxy:
+                return tmp_uri  # need to write to temp first
+            return storage_uri
+
+        # for all other artifacts
+        if self.is_storage_local:
+            return storage_uri
+        return tmp_uri
 
     def _upload_artifact(
         self,
         file_path: str,
         storage_uri: str,
-        artifact_class: str,
         recursive: bool = False,
     ) -> str:
         """Carries out post processing for proxy clients
@@ -66,38 +91,38 @@ class ArtifactStorage:
         Args:
             file_path (str): File path used for writing
             storage_uri(str): Storage Uri. Can be the same as file_path
-            artifact_class (str): Artifact class. Can be "data" or "other"
+            recursive (bool): Whether to recursively upload all files and folder in a given path
         """
 
-        if ArtifactClass(artifact_class) == ArtifactClass.DATA:
-            if self.storage_client.backend in [StorageSystem.GCS, StorageSystem.LOCAL]:
-                return file_path
+        if self.is_data:
+            if self.is_storage_a_proxy:
 
-            # assume storage_uri is actually the tmp path
-            return self.storage_client.upload(local_path=file_path)
+                # intermediate step to upload data to proxy
+                return self.storage_client.upload(
+                    local_path=file_path,
+                    write_path=storage_uri,
+                )
 
-        else:
-            if StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL:
-                return storage_uri
+            return file_path
 
-            return self.storage_client.upload(
-                local_path=file_path,
-                write_path=storage_uri,
-                recursive=recursive,
-            )
+        if self.is_storage_local:
+            return storage_uri
+
+        return self.storage_client.upload(
+            local_path=file_path,
+            write_path=storage_uri,
+            recursive=recursive,
+        )
 
     def _list_files(self, storage_uri: str) -> FilePath:
         """list files"""
-        return self.storage_client.list_files(storage_uri=storage_uri)[0]
+        files = self.storage_client.list_files(storage_uri=storage_uri)
+        if self.is_data:
+            return files
+        return files[0]
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         raise NotImplementedError
-
-    def load_artifact(self, storage_uri: str) -> Any:
-        """Loads an artifact from file system"""
-
-        files = self._list_files(storage_uri=storage_uri)
-        return self._load_artifact(file_path=files)
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str):
         """Saves an artifact"""
@@ -106,6 +131,7 @@ class ArtifactStorage:
     def save_artifact(self, artifact: Any) -> StoragePath:
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, tmp_uri = temp_output
+
             storage_uri = self._save_artifact(
                 artifact=artifact,
                 storage_uri=storage_uri,
@@ -114,10 +140,73 @@ class ArtifactStorage:
 
             return StoragePath(uri=storage_uri)
 
+    def _download_artifact(self, file_path: FilePath, tmp_file: IO) -> Any:
+        """Downloads an artifact from a file_path
+
+        Args:
+            file_path (FilePath): List of file paths or single file path
+            tmp_file (IO): Temporary file to write to if downloading prior to loading
+        """
+        if self.is_storage_local:
+            return file_path
+
+        self.storage_client.download(rpath=file_path, lpath=tmp_file.name)
+        return tmp_file
+
+    def load_artifact(self, storage_uri: str):
+        file_path = self._list_files(storage_uri=storage_uri)
+        with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
+            loadable_filepath = self._download_artifact(file_path=file_path, tmp_file=tmpfile)
+            self._load_artifact(file_path=loadable_filepath)
+
     @staticmethod
     def validate(artifact_type: str) -> bool:
         """validate table type"""
         raise NotImplementedError
+
+
+class JoblibStorage(ArtifactStorage):
+    """Class that saves and loads a joblib object"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            file_suffix="joblib",
+            artifact_class=ArtifactClass.OTHER.value,
+        )
+
+    def _write_joblib(self, artifact: Any, file_path: FilePath):
+        joblib.dump(artifact, file_path)
+
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+
+        """Writes the artifact as a joblib file to a storage_uri
+
+        Args:
+            artifact (Any): Artifact to write to joblib
+            storage_uri (str): Path to write to
+            tmp_uri (str): Temporary uri to write to. This will be used
+            for some storage client.
+
+        Returns:
+            Storage path
+        """
+
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+        self._write_joblib(artifact=artifact, file_path=file_path)
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+
+    def _load_artifact(self, file_path: FilePath) -> Any:
+        return joblib.load(file_path)
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type not in DATA_ARTIFACTS
 
 
 class ParquetStorage(ArtifactStorage):
@@ -132,6 +221,7 @@ class ParquetStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="parquet",
+            artifact_class=ArtifactClass.DATA.value,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -147,24 +237,17 @@ class ParquetStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(
-            storage_uri=storage_uri,
-            tmp_uri=tmp_uri,
-            artifact_class=ArtifactClass.DATA.value,
-        )
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
 
         pq.write_table(
             table=artifact,
             where=file_path,
-            filesystem=self.storage_client.client,
+            filesystem=self.storage_filesystem,
         )
 
-        return self._upload_artifact(
-            storage_uri=storage_uri,
-            artifact_class=ArtifactClass.DATA.value,
-        )
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
-    def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame, np.ndarray]:
+    def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame]:
         """Loads pyarrow data to original saved type
 
         Args:
@@ -172,20 +255,13 @@ class ParquetStorage(ArtifactStorage):
         """
         pa_table: pa.Table = pq.ParquetDataset(
             path_or_paths=file_path,
-            filesystem=self.storage_client.client,
+            filesystem=self.storage_filesystem,
         ).read()
 
         if self.artifact_type == ArtifactStorageTypes.DATAFRAME:
             return pa_table.to_pandas()
 
         return pa_table
-
-    def _list_files(self, storage_uri) -> FilePath:
-        return self.storage_client.list_files(storage_uri=storage_uri)
-
-    def load_artifact(self, storage_uri: str) -> Any:
-        files = self._list_files(storage_uri=storage_uri)
-        return self._load_artifact(files)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -207,6 +283,7 @@ class NumpyStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="zarr",
+            artifact_class=ArtifactClass.DATA.value,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -222,25 +299,14 @@ class NumpyStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(
-            storage_uri=storage_uri,
-            tmp_uri=tmp_uri,
-            artifact_class=ArtifactClass.DATA.value,
-        )
-
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
         store = self.storage_client.store(storage_uri=storage_uri)
         zarr.save(store, artifact)
 
-        return self._upload_artifact(
-            file_path=file_path,
-            storage_uri=storage_uri,
-            artifact_class=ArtifactClass.DATA.value,
-        )
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
-
         store = self.storage_client.store(storage_uri=str(file_path))
-
         return zarr.load(store)
 
     def load_artifact(self, storage_uri: str) -> Any:
@@ -261,58 +327,6 @@ class NumpyStorage(ArtifactStorage):
         return artifact_type == ArtifactStorageTypes.NDARRAY
 
 
-class JoblibStorage(ArtifactStorage):
-    """Class that saves and loads a joblib object"""
-
-    def __init__(
-        self,
-        artifact_type: str,
-        storage_client: StorageClientType,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            storage_client=storage_client,
-            file_suffix="joblib",
-        )
-
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-
-        """Writes the artifact as a joblib file to a storage_uri
-
-        Args:
-            artifact (Any): Artifact to write to joblib
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
-
-        Returns:
-            Storage path
-        """
-
-        file_path = self._get_correct_storage_uri(
-            storage_uri=storage_uri,
-            tmp_uri=tmp_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
-        joblib.dump(artifact, file_path)
-
-        return self._upload_artifact(
-            file_path=file_path,
-            storage_uri=storage_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
-
-    def _load_artifact(self, file_path: FilePath) -> Any:
-        return joblib.load(file_path)
-
-    def _list_files(self, storage_uri: str) -> FilePath:
-        return self.storage_client.list_files(storage_uri=storage_uri)[0]
-
-    @staticmethod
-    def validate(artifact_type: str) -> bool:
-        return artifact_type not in DATA_ARTIFACTS
-
-
 class JSONStorage(ArtifactStorage):
     """Class that saves and loads a joblib object"""
 
@@ -325,7 +339,13 @@ class JSONStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="json",
+            artifact_class=ArtifactClass.OTHER.value,
         )
+
+    def _write_json(self, artifact: Any, file_path: FilePath):
+        _path = Path(file_path)
+        with _path.open("w", encoding="utf-8") as file_:
+            file_.write(artifact)
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
 
@@ -341,21 +361,9 @@ class JSONStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(
-            storage_uri=storage_uri,
-            tmp_uri=tmp_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
-
-        _path = Path(file_path)
-        with _path.open("w", encoding="utf-8") as file_:
-            file_.write(artifact)
-
-        return self._upload_artifact(
-            file_path=file_path,
-            storage_uri=storage_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+        self._write_json(artifact=artifact, file_path=file_path)
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
 
@@ -382,6 +390,7 @@ class TensorflowModelStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix=None,
+            artifact_class=ArtifactClass.OTHER.value,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -398,37 +407,41 @@ class TensorflowModelStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(
-            storage_uri=storage_uri,
-            tmp_uri=tmp_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
 
         artifact.save(storage_uri)
 
-        self._upload_artifact(
+        return self._upload_artifact(
             file_path=file_path,
             storage_uri=f"{storage_uri}/",
-            artifact_class=ArtifactClass.OTHER.value,
             recursive=True,
         )
-
-    def _list_files(self, storage_uri: str) -> FilePath:
-        return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
     def _load_artifact(self, file_path: FilePath):
         import tensorflow as tf
 
         return tf.keras.models.load_model(file_path)
 
+    def _download_artifact(self, file_path: FilePath, tmp_dir: IO) -> Any:
+        """Downloads tensorflow model directory from a file_path
+
+        Args:
+            file_path (FilePath): List of file paths or single file path
+            tmp_file (IO): Temporary file to write to if downloading prior to loading
+        """
+        if self.is_storage_local:
+            return file_path
+
+        self.storage_client.download(rpath=file_path, lpath=f"{tmp_dir}/", recursive=True)
+        return tmp_dir
+
     def load_artifact(self, storage_uri: str) -> Any:
 
-        model_path = self._list_files(storage_uri=storage_uri)
+        file_path = self._list_files(storage_uri=storage_uri)
         if self.storage_client.backend != StorageSystem.LOCAL:
-            with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-                self.storage_client.download(rpath=model_path, lpath=f"{tmpdirname}/", recursive=True)
-                return self._load_artifact(tmpdirname)
-        return self._load_artifact(model_path)
+            with tempfile.TemporaryDirectory() as tmp_dir:  # noqa
+                loadable_filepath = self._download_artifact(file_path=file_path, tmp_dir=tmp_dir)
+                return self._load_artifact(loadable_filepath)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -447,6 +460,7 @@ class PyTorchModelStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="pt",
+            artifact_class=ArtifactClass.OTHER.value,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -464,19 +478,11 @@ class PyTorchModelStorage(ArtifactStorage):
         """
         import torch
 
-        file_path = self._get_correct_storage_uri(
-            storage_uri=storage_uri,
-            tmp_uri=tmp_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
 
         torch.save(artifact, file_path)
 
-        self._upload_artifact(
-            file_path=file_path,
-            storage_uri=storage_uri,
-            artifact_class=ArtifactClass.OTHER.value,
-        )
+        self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath):
         import torch
@@ -506,6 +512,7 @@ def save_record_artifact_to_storage(
         ),
         JoblibStorage,
     )
+
     return storage_type(
         storage_client=storage_client,
         artifact_type=_artifact_type,

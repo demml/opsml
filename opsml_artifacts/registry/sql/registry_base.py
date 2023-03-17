@@ -152,6 +152,7 @@ class SQLRegistryBase:
             version=card.version,
         )
 
+        card.storage_client = self.storage_client
         self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
 
     def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):
