@@ -1,8 +1,7 @@
 kind: pipeline
 name: test-and-build
 type: docker
-node:
-  env: platform
+
 workspace:
   base: /usr/src/py39
   path: ${DRONE_REPO_NAME}
