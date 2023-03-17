@@ -12,6 +12,7 @@ trigger:
   - push
   - pull_request
 
+steps:
   - name: py39
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
@@ -35,7 +36,7 @@ trigger:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
       - py39
-      
+
   - name: quality-checks
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:

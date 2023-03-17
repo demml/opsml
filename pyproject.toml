@@ -39,7 +39,7 @@ uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
 
 [tool.poetry.extras]
-proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn"]
+proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator"]
 graphviz = ["graphviz"]
 tf_onnx = ["tf2onnx"]
 gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
