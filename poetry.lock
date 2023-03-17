@@ -6097,10 +6097,10 @@ reference = "shipt-resolve"
 gcp-mysql = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pymysql"]
 gcp-postgres = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pg8000"]
 graphviz = ["graphviz"]
-proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn"]
+proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator"]
 tf-onnx = ["tf2onnx"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "f41b52e202c843f73c5f88db803483153a919c9730b6ef1872cdace65fe219ab"
+content-hash = "dd134cd48a8c5a6a8e95a7a8a8159837d4156b0459594993548937d223d9d9d3"
