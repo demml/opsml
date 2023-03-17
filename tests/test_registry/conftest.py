@@ -72,3 +72,21 @@ def mock_model_cli_loader(db_registries):
     with patch("opsml_artifacts.scripts.load_model_card.ModelLoaderCli", MockModelLoaderCli) as mock_cli_loader:
 
         yield mock_cli_loader
+
+
+@pytest.fixture(scope="function")
+def mock_pathlib():
+    from pathlib import Path
+
+    with patch("pathlib.Path", Path) as mocked_pathlib:
+        yield mocked_pathlib
+
+
+@pytest.fixture(scope="function")
+def load_transformer_example():
+    import tensorflow as tf
+    import numpy as np
+
+    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
+    data = np.load("tests/assets/transformer_data.npy")
+    return loaded_model, data
