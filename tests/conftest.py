@@ -194,7 +194,7 @@ def test_app():
     from opsml_artifacts.app.main import OpsmlApp
 
     model_api = OpsmlApp(run_mlflow=True)
-    app = model_api.build_app()
+    app = model_api.get_app()
     with TestClient(app) as test_client:
 
         yield test_client
