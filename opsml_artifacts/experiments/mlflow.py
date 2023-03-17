@@ -1,18 +1,25 @@
-import os
 from typing import Optional, cast
+
+from dataclasses import dataclass
+import os
 
 from mlflow.entities import Run, RunStatus
 from mlflow.tracking import MlflowClient
+from pydantic import BaseModel
+
 
 from opsml_artifacts import CardRegistry
-from opsml_artifacts.experiments.mlflow_helpers import (
-    CardRegistries,
-    mlflow_storage_client,
-)
-from opsml_artifacts.experiments.types import ActiveRun
+from opsml_artifacts.registry.cards.cards import Card
+from opsml_artifacts.experiments.types import ActiveRun, Experiment, ExperimentInfo
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.sql.registry import CardType
-from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
+from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.registry.storage.storage_system import (
+    MlFlowStorageClient,
+    StorageClientGetter,
+    StorageClientType,
+    StorageSystem,
+)
+from opsml_artifacts.registry.storage.types import StorageClientSettings
 
 # Notes during development
 # assume you are using mlflow url with a proxy client for artifacts
@@ -22,36 +29,62 @@ from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
 logger = ArtifactLogger.get_logger(__name__)
 
 
-class MlFlowExperiment:
-    def __init__(
-        self,
-        project_name: str,
-        team_name: str,
-        user_email: str,
-        tracking_uri: Optional[str] = None,
-    ):
+class CardRegistries(BaseModel):
+    datacard: CardRegistry
+    modelcard: CardRegistry
+    experimentcard: CardRegistry
 
+    class Config:
+        arbitrary_types_allowed = True
+        allow_mutation = True
+
+    def set_storage_client(self, storage_client: StorageClientType):
+        self.datacard.registry.storage_client = storage_client
+        self.modelcard.registry.storage_client = storage_client
+        self.experimentcard.registry.storage_client = storage_client
+
+
+def get_mlflow_storage_client() -> MlFlowStorageClient:
+    """Sets MlFlowStorageClient is it is not currently set in settings"""
+
+    if not isinstance(settings.storage_client, MlFlowStorageClient):
+        return cast(
+            MlFlowStorageClient,
+            StorageClientGetter.get_storage_client(
+                storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value),
+            ),
+        )
+    return cast(MlFlowStorageClient, settings.storage_client)
+
+
+mlflow_storage_client = get_mlflow_storage_client()
+
+
+@dataclass
+class MlFlowExperimentInfo(ExperimentInfo):
+    tracking_uri: str | None = None
+
+
+class MlFlowExperiment(Experiment):
+    def __init__(self, info: MlFlowExperimentInfo):
         """Instantiates an MlFlow experiment that can log artifacts
         and cards to the Opsml Registry
 
         Args:
-            project_name (str): Name of current project
-            team_name (str): Team name
-            user_email (str): Email of user performing experiment
-            tracking_uri (str): Optional uri of opsml registry
+            info: experiment information
         """
 
         # user supplied
-        self.team_name = team_name
-        self.user_email = user_email
-        self.project_name = project_name.lower()
+        self.team_name = info.team
+        self.user_email = info.user_email
+        self.project_name = info.name.lower()
 
         # tracking attr
         self._active_run: Optional[Run] = None
         self._project_id: Optional[str] = None
 
         self._mlflow_client = MlflowClient(
-            tracking_uri=tracking_uri or os.environ.get("OPSML_TRACKING_URI"),
+            tracking_uri=info.tracking_uri or os.environ.get("OPSML_TRACKING_URI"),
         )
 
         self._storage_client = self._get_storage_client()
@@ -174,11 +207,11 @@ class MlFlowExperiment:
         self._storage_client.run_id = None
         logger.info("experiment complete")
 
-    def register_card(self, card: CardType, version_type: str = "minor"):
+    def register_card(self, card: Card, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
-            card (CardType): DataCard or ModelCard
+            card (Card): DataCard or ModelCard
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
         """
@@ -194,7 +227,7 @@ class MlFlowExperiment:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> CardType:
+    ) -> Card:
 
         """Loads a specific card
 
