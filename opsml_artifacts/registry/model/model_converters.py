@@ -8,7 +8,7 @@ import numpy as np
 import onnx
 import onnxruntime as rt
 import pandas as pd
-from google.protobuf.pyext._message import RepeatedCompositeContainer  # type:ignore
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -97,16 +97,7 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    # def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
-    #    row = shape_dims[0].dim_value
-    #    col = shape_dims[1].dim_value
-    #
-    #    if row == 0:
-    #        row = None
-    #
-    #    return row, col
-
-    def _parse_onnx_sigature(self, signature: RepeatedCompositeContainer):
+    def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
 
         for sig in signature:

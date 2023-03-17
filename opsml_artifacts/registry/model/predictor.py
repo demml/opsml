@@ -190,7 +190,7 @@ class OnnxModelPredictor:
         onnx_version: str,
         data_dict: DataDict,
         data_schema: Optional[Dict[str, Feature]],
-        model_version: int,
+        model_version: str,
         sample_api_data: Dict[str, Any],
         start_sess: bool = True,
     ):

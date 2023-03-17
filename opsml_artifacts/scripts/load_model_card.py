@@ -19,33 +19,33 @@ class ModelLoaderCli:
     """Class for loading ModelCard Onnx definition"""
 
     storage_type: str
-    versions: List[Optional[int]]
+    versions: List[Optional[str]]
     name: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
 
     def __post_init__(self):
-        self.registry = self._set_registry(storage_type=self.storage_type)
-
-    def _set_registry(self, storage_type: str) -> CardRegistry:
-        return CardRegistry(registry_name="model", connection_type=storage_type)
+        self.registry = CardRegistry(registry_name="model")
 
     def _set_path(self, api_def: ModelApiDef) -> Path:
         path = Path(f"{BASE_SAVE_PATH}/{self.name}/{api_def.model_version}/")
         path.mkdir(parents=True, exist_ok=True)
         return path / MODEL_FILE
 
-    def _save_api_def(self, api_def: ModelApiDef):
-        if self.name is None:
-            self.name = api_def.model_name
-
-        filepath = self._set_path(api_def=api_def)
+    def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
 
         with filepath.open("w", encoding="utf-8") as file_:
             file_.write(api_def.json())
         logger.info("Saved api model def to %s", filepath)
 
-    def load_and_save_model(self, version: Optional[int] = None):
+    def _save_api_def(self, api_def: ModelApiDef):
+        if self.name is None:
+            self.name = api_def.model_name
+
+        filepath = self._set_path(api_def=api_def)
+        self._write_api_json(api_def=api_def, filepath=filepath)
+
+    def load_and_save_model(self, version: Optional[str] = None):
         model_card = self.registry.load_card(
             name=self.name,
             team=self.team,
@@ -54,6 +54,7 @@ class ModelLoaderCli:
         )
 
         api_def = self._get_model_api_def(model_card=model_card)
+
         self._save_api_def(api_def=api_def)
 
     def save_model_api_def_from_versions(self) -> None:
