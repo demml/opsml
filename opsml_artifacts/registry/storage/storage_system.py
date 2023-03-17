@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Generator, Optional, Tuple, Union, cast
 import shutil
 from pyarrow.parquet import LocalFileSystem
+from pathlib import Path
 
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.storage.types import (
@@ -58,13 +59,18 @@ def cleanup_files(func):
     def wrapper(self, *args, **kwargs) -> Any:
 
         artifact, loadable_filepath = func(self, *args, **kwargs)
-        file_dir = "/".join(loadable_filepath.split("/")[:-1])
 
-        if "temp" in file_dir:  # make this better later
-            try:
-                shutil.rmtree(file_dir)
-            except Exception as error:
-                pass  # soft failure
+        if isinstance(loadable_filepath, list):
+            loadable_filepath = loadable_filepath[0]
+
+        if isinstance(loadable_filepath, str):
+
+            if "temp" in loadable_filepath:  # make this better later
+                try:
+                    file_dir = "/".join(loadable_filepath.split("/")[:-1])
+                    shutil.rmtree(file_dir)
+                except Exception as error:
+                    pass  # soft failure
 
         return artifact
 
@@ -273,7 +279,11 @@ class MlFlowStorageClient(LocalStorageClient):
     def download(self, rpath: str, lpath: str, recursive: bool = False) -> Optional[str]:
         import mlflow
 
-        temp_path = f"{os.getcwd()}/temp"
+        temp_path = Path("temp")
+        temp_path.mkdir(parents=True, exist_ok=True)
+        # temp_path = str(temp_path.resolve())
+
+        print(temp_path.exists())
         file_path = mlflow.artifacts.download_artifacts(
             artifact_uri=rpath,
             dst_path=temp_path,
