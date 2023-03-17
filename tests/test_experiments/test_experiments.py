@@ -1,9 +1,20 @@
+import pandas as pd
+from sklearn.pipeline import Pipeline
+
 from opsml_artifacts import DataCard, ModelCard
-from unittest.mock import patch
-from pathlib import Path
+
+from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
+from opsml_artifacts.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
-def test_mlflow(mlflow_experiment, sklearn_pipeline):
+def test_create(mlflow_experiment: MlFlowExperiment) -> None:
+    logger.info("Hello, world")
+    pass
+
+
+def test_save_load(mlflow_experiment: MlFlowExperiment, sklearn_pipeline: tuple[Pipeline, pd.DataFrame]) -> None:
 
     with mlflow_experiment as exp:
 
