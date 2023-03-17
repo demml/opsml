@@ -1,16 +1,15 @@
 # pylint: disable=import-outside-toplevel
 
+import shutil
 import tempfile
 import uuid
-import os
 from contextlib import contextmanager
-from functools import wraps
 from enum import Enum
+from functools import wraps
 from pathlib import Path
 from typing import Any, Generator, Optional, Tuple, Union, cast
-import shutil
+
 from pyarrow.parquet import LocalFileSystem
-from pathlib import Path
 
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.storage.types import (
@@ -69,7 +68,7 @@ def cleanup_files(func):
                 try:
                     file_dir = "/".join(loadable_filepath.split("/")[:-1])
                     shutil.rmtree(file_dir)
-                except Exception as error:
+                except Exception:  # pylint: disable=broad-exception-caught
                     pass  # soft failure
 
         return artifact
@@ -150,13 +149,13 @@ class StorageClient:
     def store(self, storage_uri: str):
         raise NotImplementedError
 
-    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
         return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
     def upload(
         self,
-        local_path: Optional[str] = None,
-        write_path: Optional[str] = None,
+        local_path: str,
+        write_path: str,
         recursive: bool = False,
     ) -> str:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
@@ -254,18 +253,18 @@ class MlFlowStorageClient(LocalStorageClient):
 
     @property
     def run_id(self) -> str:
-        return self._run_id
+        return str(self._run_id)
 
     @run_id.setter
-    def run_id(self, run_id: str) -> str:
+    def run_id(self, run_id: str):
         self._run_id = run_id
 
     @property
-    def artifact_path(self) -> str:
-        return self._artifact_path
+    def artifact_path(self):
+        return str(self._artifact_path)
 
     @artifact_path.setter
-    def artifact_path(self, artifact_path: str) -> str:
+    def artifact_path(self, artifact_path: str):
         self._artifact_path = artifact_path
 
     @property
@@ -276,17 +275,16 @@ class MlFlowStorageClient(LocalStorageClient):
     def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
 
-    def download(self, rpath: str, lpath: str, recursive: bool = False) -> Optional[str]:
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
         import mlflow
 
         temp_path = Path("temp")
         temp_path.mkdir(parents=True, exist_ok=True)
-        # temp_path = str(temp_path.resolve())
+        abs_temp_path = str(temp_path.resolve())
 
-        print(temp_path.exists())
         file_path = mlflow.artifacts.download_artifacts(
             artifact_uri=rpath,
-            dst_path=temp_path,
+            dst_path=abs_temp_path,
             tracking_uri=self.mlflow_client.tracking_uri,
         )
         return file_path

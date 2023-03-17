@@ -14,12 +14,12 @@ from opsml_artifacts.registry.cards.types import (
     StoragePath,
 )
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
+from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.registry.storage.artifact_storage import (
     save_record_artifact_to_storage,
 )
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
-from opsml_artifacts.registry.model.types import ModelApiDef
 
 
 class CardArtifactSaver:
