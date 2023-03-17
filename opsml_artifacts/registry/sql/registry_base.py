@@ -10,7 +10,7 @@ from opsml_artifacts.helpers.request_helpers import api_routes
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.card_saver import save_card_artifacts
 from opsml_artifacts.registry.cards.cards import (
-    CardType,
+    Card,
     DataCard,
     ExperimentCard,
     ModelCard,
@@ -45,7 +45,7 @@ table_name_card_map = {
 def load_card_from_record(
     table_name: str,
     record: LoadedRecordType,
-) -> CardType:
+) -> Card:
 
     """Loads an artifact card given a tablename and the loaded record
     from backend database
@@ -109,7 +109,7 @@ class SQLRegistryBase:
     def set_version(self, name: str, team: str, version_type: str) -> str:
         raise NotImplementedError
 
-    def _is_correct_card_type(self, card: CardType):
+    def _is_correct_card_type(self, card: Card):
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
@@ -123,7 +123,7 @@ class SQLRegistryBase:
     def update_record(self, record: Dict[str, Any]):
         raise NotImplementedError
 
-    def _validate(self, card: CardType):
+    def _validate(self, card: Card):
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
@@ -139,7 +139,7 @@ class SQLRegistryBase:
             """
             )
 
-    def _set_artifact_storage_spec(self, card: CardType, save_path: Optional[str] = None) -> None:
+    def _set_artifact_storage_spec(self, card: Card, save_path: Optional[str] = None) -> None:
         """Creates artifact storage info to associate with artifacts"""
 
         if save_path is None:
@@ -159,7 +159,7 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
-    def _set_card_uid_version(self, card: CardType, version_type: str):
+    def _set_card_uid_version(self, card: Card, version_type: str):
         """Sets a given card's version and uid
 
         Args:
@@ -179,7 +179,7 @@ class SQLRegistryBase:
         if card.uid is None:
             card.uid = self._get_uid()
 
-    def _create_registry_record(self, card: CardType) -> None:
+    def _create_registry_record(self, card: Card) -> None:
         """Creates a registry record from a given ArtifactCard.
         Saves artifacts prior to creating record
 
@@ -192,7 +192,7 @@ class SQLRegistryBase:
 
     def register_card(
         self,
-        card: CardType,
+        card: Card,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -232,7 +232,7 @@ class SQLRegistryBase:
         team: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-    ) -> CardType:
+    ) -> Card:
 
         record_data = self.list_cards(
             name=name,

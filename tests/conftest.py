@@ -45,8 +45,8 @@ from xgboost import XGBRegressor
 import lightgbm as lgb
 
 # opsml
-from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
-from opsml_artifacts.experiments.mlflow_helpers import CardRegistries
+from opsml_artifacts.experiments import get_experiment
+from opsml_artifacts.experiments.mlflow import CardRegistries, MlFlowExperiment, MlFlowExperimentInfo
 
 # testing
 from tests.mock_api_registries import CardRegistry
@@ -245,11 +245,13 @@ def api_registries(test_app: TestClient) -> dict[str, CardRegistry]:
 
 @pytest.fixture
 def mlflow_experiment(api_registries: dict[str, CardRegistry]) -> MlFlowExperiment:
-    mlflow_exp = MlFlowExperiment(
-        project_name="test_exp",
-        team_name="test",
-        user_email="test",
-        tracking_uri=SQL_PATH,
+    mlflow_exp: MlFlowExperiment = get_experiment(
+        MlFlowExperimentInfo(
+            name="test_exp",
+            team="test",
+            user_email="test",
+            tracking_uri=SQL_PATH,
+        )
     )
     mlflow_storage = mlflow_exp._get_storage_client()
     api_card_registries = CardRegistries.construct(

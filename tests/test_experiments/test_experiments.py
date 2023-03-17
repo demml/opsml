@@ -3,7 +3,7 @@ from sklearn.pipeline import Pipeline
 
 from opsml_artifacts import DataCard, ModelCard
 
-from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
+from opsml_artifacts.experiments.mlflow import MlFlowExperiment
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
