@@ -8,7 +8,7 @@ workspace:
 
 trigger:
   event:
-  - pull_request
+    - pull_request
   
 steps:
   - name: py39
@@ -71,8 +71,8 @@ trigger:
   event:
     - tag
     - push
-  #branch:
-    #- main
+  branch:
+    - main
 steps:
   - name: py39
     when:
