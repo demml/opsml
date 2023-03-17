@@ -140,7 +140,6 @@ class MlFlowExperiment:
                 status=RunStatus.RUNNING,
             )
             return self._mlflow_client.get_run(existing_run_id)
-
         return self._mlflow_client.create_run(experiment_id=self.project_id)
 
     def __enter__(self):
@@ -149,8 +148,8 @@ class MlFlowExperiment:
         self._active_run = self._set_run()
 
         # set storage client run id
-        self._storage_client.set_run_id(run_id=self.run_id)
-        self._storage_client.set_artifact_path(artifact_path=self.artifact_save_path)
+        self._storage_client.run_id = self.run_id
+        self._storage_client.artifact_path = self.artifact_save_path
         logger.info("starting experiment")
 
         return self
@@ -161,7 +160,7 @@ class MlFlowExperiment:
         self._mlflow_client.set_terminated(run_id=self.run_id)
 
         # Remove run id
-        self._storage_client.set_run_id(run_id=None)
+        self._storage_client.run_id = None
         logger.info("experiment complete")
 
     def register_card(self, card: CardType, version_type: str = "minor"):
