@@ -17,7 +17,9 @@ from opsml_artifacts.app.routes.models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml_artifacts.app.routes.route_helpers import switch_out_proxy_location
+from opsml_artifacts.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
 

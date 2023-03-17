@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 
-def test_mlflow(mlflow_experiment, sklearn_pipeline, mock_pathlib):
+def test_mlflow(mlflow_experiment, sklearn_pipeline):
 
     with mlflow_experiment as exp:
 
