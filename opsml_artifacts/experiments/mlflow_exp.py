@@ -108,6 +108,14 @@ class MlFlowExperiment:
 
         raise ValueError("Active run has not been set")
 
+    def _get_existing_project_id(self) -> Optional[str]:
+        project = self._mlflow_client.get_experiment_by_name(self.project_name)
+
+        if project is None:
+            return None
+
+        return project.experiment_id
+
     def _set_project(self) -> str:
         """Sets the project to use with mlflow. If a project_id associated
         with a project name does not exist it is created
@@ -115,7 +123,8 @@ class MlFlowExperiment:
         Returns:
             project_id
         """
-        project_id = self._mlflow_client.get_experiment_by_name(self.project_name)
+
+        project_id = self._get_existing_project_id()
 
         if project_id is None:
             project_id = self._mlflow_client.create_experiment(name=self.project_name)

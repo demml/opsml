@@ -103,6 +103,7 @@ tests/_test_scratch_estimator.py
 .ruff_cache/
 notebooks/
 .local_tests/
+.local_integration/
 
 examples/.DS_Store
 opsml_artifacts/api/

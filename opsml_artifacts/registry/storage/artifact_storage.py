@@ -316,9 +316,8 @@ class NumpyStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        store = self.storage_client.store(storage_uri=storage_uri)
+        store = self.storage_client.store(storage_uri=file_path)
         zarr.save(store, artifact)
-
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
