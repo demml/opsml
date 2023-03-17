@@ -9,7 +9,6 @@ workspace:
 
 trigger:
   event:
-  - push
   - pull_request
 
 steps:
