@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Union, IO
+from typing import Any, Optional, Union, IO, Tuple
 
 import joblib
 import numpy as np
@@ -17,7 +17,12 @@ from opsml_artifacts.registry.cards.types import (
     ArtifactStorageTypes,
     StoragePath,
 )
-from opsml_artifacts.registry.storage.storage_system import StorageClientType, StorageSystem, ArtifactClass
+from opsml_artifacts.registry.storage.storage_system import (
+    StorageClientType,
+    StorageSystem,
+    ArtifactClass,
+    cleanup_files,
+)
 from opsml_artifacts.registry.storage.types import FilePath
 
 
@@ -118,7 +123,9 @@ class ArtifactStorage:
         """list files"""
         files = self.storage_client.list_files(storage_uri=storage_uri)
         if self.is_data:
-            return files
+            if not self.is_storage_a_proxy:
+                return files
+            return files[0]
         return files[0]
 
     def _load_artifact(self, file_path: FilePath) -> Any:
@@ -150,14 +157,20 @@ class ArtifactStorage:
         if self.is_storage_local:
             return file_path
 
-        self.storage_client.download(rpath=file_path, lpath=tmp_file.name)
+        loadable_filepath = self.storage_client.download(rpath=file_path, lpath=tmp_file.name)
+        if loadable_filepath is not None:
+            return loadable_filepath
+
         return tmp_file
 
-    def load_artifact(self, storage_uri: str):
+    @cleanup_files
+    def load_artifact(self, storage_uri: str) -> Tuple[Any, str]:
         file_path = self._list_files(storage_uri=storage_uri)
         with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
             loadable_filepath = self._download_artifact(file_path=file_path, tmp_file=tmpfile)
-            return self._load_artifact(file_path=loadable_filepath)
+            artifact = self._load_artifact(file_path=loadable_filepath)
+
+            return artifact, loadable_filepath
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

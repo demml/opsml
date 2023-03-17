@@ -4,10 +4,11 @@ import tempfile
 import uuid
 import os
 from contextlib import contextmanager
+from functools import wraps
 from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, Optional, Tuple, Union, cast
-
+import shutil
 from pyarrow.parquet import LocalFileSystem
 
 from opsml_artifacts.helpers.utils import all_subclasses
@@ -47,6 +48,27 @@ class MlFlowDirs(str, Enum):
     MODEL_DIR = "model"
     ONNX_MODEL_DIR = "model"
     ARTIFACT_DIR = "misc"
+
+
+def cleanup_files(func):
+
+    """Decorator for deleting files if needed"""
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs) -> Any:
+
+        artifact, loadable_filepath = func(self, *args, **kwargs)
+        file_dir = "/".join(loadable_filepath.split("/")[:-1])
+
+        if "temp" in file_dir:  # make this better later
+            try:
+                shutil.rmtree(file_dir)
+            except Exception as error:
+                pass  # soft failure
+
+        return artifact
+
+    return wrapper
 
 
 class StorageClient:
@@ -122,7 +144,7 @@ class StorageClient:
     def store(self, storage_uri: str):
         raise NotImplementedError
 
-    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
     def upload(
@@ -248,15 +270,7 @@ class MlFlowStorageClient(LocalStorageClient):
     def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
 
-    def set_client(self, mlflow_client: MlFlowClientProto):
-        """Sets the mlflow client to use for logging"""
-        self._mlflow_client = mlflow_client
-
-    def set_artifact_path(self, artifact_path: str):
-        """Sets the mlflow client to use for logging"""
-        self._artifact_path = artifact_path
-
-    def download(self, rpath: str, lpath: str, recursive: bool = False) -> str:
+    def download(self, rpath: str, lpath: str, recursive: bool = False) -> Optional[str]:
         import mlflow
 
         temp_path = f"{os.getcwd()}/temp"
@@ -304,23 +318,6 @@ class MlFlowStorageClient(LocalStorageClient):
             return MlFlowDirs.MODEL_DIR.value
 
         return MlFlowDirs.ARTIFACT_DIR.value
-
-    # def create_tmp_path(
-    #    self,
-    #    artifact_storage_info: ArtifactStorageSpecs,
-    #    tmp_dir: str,
-    #    file_suffix: Optional[str] = None,
-    # ):
-    #    _, filename = self.create_save_path(
-    #        artifact_storage_info=artifact_storage_info,
-    #        file_suffix=file_suffix,
-    #    )
-    #
-    #    # hacky at the moment
-    #    mlflow_path = self._get_mlflow_dir(filename=filename)
-    #    local_path = f"{tmp_dir}/{filename}"
-    #
-    #    return mlflow_path, local_path
 
     @staticmethod
     def validate(storage_backend: str) -> bool:

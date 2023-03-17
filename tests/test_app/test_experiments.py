@@ -27,3 +27,4 @@ def test_mlflow(mlflow_experiment, sklearn_pipeline, mock_pathlib):
 
         exp.register_card(card=model_card)
         loaded_card = exp.load_card(card_type="model", uid=model_card.uid)
+        loaded_card.load_trained_model()
