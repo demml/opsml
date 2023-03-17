@@ -4,7 +4,7 @@ type: docker
 node:
   env: platform
 workspace:
-  base: /usr/src/py38
+  base: /usr/src/py39
   path: ${DRONE_REPO_NAME}
 
 trigger:
@@ -12,9 +12,8 @@ trigger:
   - push
   - pull_request
 
-steps:
-  - name: py38
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.8.16_poetry_1.2.2
+  - name: py39
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - poetry install --all-extras --with dev
       - make test.unit
@@ -24,8 +23,8 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
 
-  - name: py39
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
+  - name: py310
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.10.10_poetry_1.3.2
     commands:
       - poetry install --all-extras --with dev
       - make test.unit
@@ -34,11 +33,9 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - py38
     
   - name: quality-checks
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - make setup.project
       - make lints.ci
@@ -47,6 +44,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py39
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -61,7 +60,7 @@ steps:
         from_secret: SONAR_TOKEN
     depends_on:
       - py39
-      - py38
+      - py310
       - quality-checks
 
 ---
@@ -83,7 +82,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - poetry install --all-extras --with dev
       - make test.unit
@@ -97,7 +96,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - make setup.project
       - make lints.ci
@@ -129,7 +128,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -141,13 +140,13 @@ steps:
     depends_on:
       - py39
       - quality-checks
-      #- code-analysis
+      - code-analysis
 
   - name: artifactory-poetry-publish
     when:
       event:
         - tag
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.2.2
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
