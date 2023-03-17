@@ -19,6 +19,7 @@ from opsml_artifacts.registry.storage.artifact_storage import (
 )
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
+from opsml_artifacts.registry.model.types import ModelApiDef
 
 
 class CardArtifactSaver:
@@ -127,6 +128,24 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ModelCard, self._card)
 
+    def _get_onnx_model_def(self) -> ModelApiDef:
+        """Create Onnx Model from trained model"""
+        onnx_predictor = self.card.onnx_model(start_onnx_runtime=False)
+        return onnx_predictor.get_api_model()
+
+    def _save_api_definition(self):
+
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = "api-def"
+        self.storage_client.storage_spec = storage_spec
+
+        api_def = self._get_onnx_model_def()
+        save_record_artifact_to_storage(
+            artifact=api_def.json(),
+            artifact_type=ArtifactStorageTypes.JSON.value,
+            storage_client=self.storage_client,
+        )
+
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
 
@@ -148,8 +167,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         storage_spec.filename = "trained-model"
         self.storage_client.storage_spec = storage_spec
 
-        print(self.card.model_type)
-        a
         storage_path = save_record_artifact_to_storage(
             artifact=self.card.trained_model,
             artifact_type=self.card.model_type,
@@ -172,25 +189,12 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.card.sample_data_uri = storage_path.uri
         self.card.sample_data_type = arrow_table.table_type
 
-    def _save_api_definition(self):
-
-        storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = "api-def"
-        self.storage_client.storage_spec = storage_spec
-
-        api_def = self.card.onnx_model(start_onnx_runtime=False).get_api_model()
-        save_record_artifact_to_storage(
-            artifact=api_def.json(),
-            artifact_type=ArtifactStorageTypes.JSON.value,
-            storage_client=self.storage_client,
-        )
-
     def save_artifacts(self):
         """Save model artifacts associated with ModelCard"""
+        self._save_api_definition()
         self._save_modelcard()
         self._save_trained_model()
         self._save_sample_data()
-        self._save_api_definition()
 
         return self.card
 
