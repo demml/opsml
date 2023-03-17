@@ -1,6 +1,11 @@
 # pylint: skip-file
 # mypy: ignore-errors
 
+from opsml_artifacts.registry.cards.cards import Card, CardType, VersionType
+from opsml_artifacts.experiments.mlflow import MlFlowExperiment, MlFlowExperimentInfo
+from opsml_artifacts.experiments.types import Experiment, ExperimentInfo
+
+
 importlib = __import__("importlib")
 
 _optional_exp_dep_mappings = {"mlflow": "MlFlowExperiment"}
@@ -16,4 +21,11 @@ for dep in _optional_exp_dep_mappings.keys():
 # import non-missing
 for dep in _optional_exp_dep_mappings.keys():
     if dep == "mlflow":
-        from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
+        from opsml_artifacts.experiments.mlflow import MlFlowExperiment
+
+
+def get_experiment(info: ExperimentInfo) -> Experiment:
+    if isinstance(info, MlFlowExperimentInfo):
+        return MlFlowExperiment(info)
+    else:
+        raise ValueError("Unknown experiment type")
