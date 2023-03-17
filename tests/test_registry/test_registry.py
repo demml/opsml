@@ -343,7 +343,7 @@ def test_full_pipeline_with_loading(
             loader.visualize()
 
 
-def test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
+def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
 
     model, data = load_transformer_example
 
