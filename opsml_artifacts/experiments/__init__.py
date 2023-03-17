@@ -1,7 +1,6 @@
 # pylint: skip-file
 # mypy: ignore-errors
 
-from opsml_artifacts.registry.cards.cards import Card, CardType, VersionType
 from opsml_artifacts.experiments.mlflow import MlFlowExperiment, MlFlowExperimentInfo
 from opsml_artifacts.experiments.types import Experiment, ExperimentInfo
 
@@ -14,7 +13,7 @@ _missing_deps = []
 for dep in _optional_exp_dep_mappings.keys():
     try:
         importlib.import_module(dep)
-    except ImportError as _import_error:
+    except ImportError:
         _missing_dep = _optional_exp_dep_mappings.pop(dep)
         _missing_deps.append(_missing_dep)
 
