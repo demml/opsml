@@ -66,15 +66,13 @@ steps:
 name: publish-release
 kind: pipeline
 type: docker
-node:
-  env: production
+
 trigger:
   event:
     - tag
     - push
   #branch:
     #- main
-
 steps:
 
   - name: py39
