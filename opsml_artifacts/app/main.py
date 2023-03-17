@@ -15,7 +15,9 @@ class OpsmlApp:
         self.app = FastAPI(title=config.APP_NAME)
 
     def build_mlflow_app(self):
-        from mlflow.server import app as mlflow_flask  # pylint: disable=import-outside-toplevel
+        from mlflow.server import (
+            app as mlflow_flask,  # pylint: disable=import-outside-toplevel
+        )
 
         from opsml_artifacts.app.core.initialize_mlflow import (  # pylint: disable=import-outside-toplevel
             initialize_mlflow,

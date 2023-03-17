@@ -1,4 +1,5 @@
 from typing import cast
+
 from pydantic import BaseModel
 
 from opsml_artifacts import CardRegistry
