@@ -130,7 +130,7 @@ def mock_pathlib():
 def mock_joblib_storage():
     with patch.multiple(
         "opsml_artifacts.registry.storage.artifact_storage.JoblibStorage",
-        _save_artifact=MagicMock(return_value=None),
+        _write_joblib=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_joblib:
         yield mocked_joblib
@@ -140,7 +140,7 @@ def mock_joblib_storage():
 def mock_json_storage():
     with patch.multiple(
         "opsml_artifacts.registry.storage.artifact_storage.JSONStorage",
-        _save_artifact=MagicMock(return_value=None),
+        _write_json=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_json:
         yield mocked_json
