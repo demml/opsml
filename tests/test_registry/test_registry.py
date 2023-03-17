@@ -18,7 +18,12 @@ from unittest.mock import patch, MagicMock
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
+def test_register_data(
+    db_registries,
+    test_data,
+    data_splits,
+    mock_pyarrow_parquet_write,
+):
 
     # create data card
     registry = db_registries["data"]
