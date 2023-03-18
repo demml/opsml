@@ -22,9 +22,11 @@ class OpsmlApp:
         self,
         run_mlflow: bool = False,
         port: int = 8080,
+        login: bool = False,
     ):
         self.port = port
         self.run_mlflow = run_mlflow
+        self.login = login
         self.app = FastAPI(title=config.APP_NAME)
 
     def add_startup(self):
