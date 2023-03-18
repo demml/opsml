@@ -37,9 +37,10 @@ tenacity = "^8.2.2"
 tf2onnx = {version="^1.13.0", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
+wsgi-basic-auth = {version="^1.1.0", optional = true}
 
 [tool.poetry.extras]
-proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator"]
+proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
 graphviz = ["graphviz"]
 tf_onnx = ["tf2onnx"]
 gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
