@@ -1,16 +1,15 @@
 kind: pipeline
 name: test-and-build
 type: docker
-node:
-  env: platform
+
 workspace:
   base: /usr/src/py39
   path: ${DRONE_REPO_NAME}
 
 trigger:
   event:
-  - pull_request
-
+    - pull_request
+  
 steps:
   - name: py39
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
@@ -67,15 +66,13 @@ steps:
 name: publish-release
 kind: pipeline
 type: docker
-node:
-  env: production
+
 trigger:
   event:
     - tag
     - push
   branch:
     - main
-
 steps:
 
   - name: py39
