@@ -42,7 +42,14 @@ class OpsmlApp:
         from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
 
         initialize_mlflow()
-        self.app.mount("/", WSGIMiddleware(mlflow_flask))
+
+        if self.login:
+            from wsgi_basic_auth import BasicAuth
+
+            self.app.mount("/", WSGIMiddleware(BasicAuth(mlflow_flask)))
+
+        else:
+            self.app.mount("/", WSGIMiddleware(mlflow_flask))
 
     def add_middleware(self):
         """Add rollbar middleware"""
@@ -74,10 +81,11 @@ class OpsmlApp:
 @click.command()
 @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
 @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
-def opsml_uvicorn_server(port: int, mlflow: bool) -> None:
+@click.option("--login", default=False, help="Whether to use basic username and password")
+def opsml_uvicorn_server(port: int, mlflow: bool, login: bool) -> None:
 
     logger.info("Starting ML Server")
-    model_api = OpsmlApp(run_mlflow=mlflow, port=port)
+    model_api = OpsmlApp(run_mlflow=mlflow, port=port, login=login)
     model_api.build_app()
     model_api.run()
 
