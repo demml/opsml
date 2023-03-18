@@ -14,7 +14,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -116,7 +116,7 @@ files = [
 
 [package.dependencies]
 aiosignal = ">=1.1.2"
-async_timeout = ">=4.0.0a3,<5.0"
+async-timeout = ">=4.0.0a3,<5.0"
 attrs = ">=17.3.0"
 charset-normalizer = ">=2.0,<4.0"
 frozenlist = ">=1.1.1"
@@ -128,7 +128,7 @@ speedups = ["Brotli", "aiodns", "cchardet"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -148,7 +148,7 @@ frozenlist = ">=1.1.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -173,7 +173,7 @@ tz = ["python-dateutil"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -201,7 +201,7 @@ dev = ["black", "docutils", "flake8", "ipython", "m2r", "mistune (<2.0.0)", "pyt
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -223,7 +223,7 @@ tornado = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -244,7 +244,7 @@ altair-data-server = ">=0.4.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -270,7 +270,7 @@ trio = ["trio (>=0.16,<0.22)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -286,7 +286,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -303,7 +303,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -328,7 +328,7 @@ wrapt = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -349,7 +349,7 @@ wheel = ">=0.23.0,<1.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -366,7 +366,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -390,7 +390,7 @@ tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -442,7 +442,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -459,7 +459,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -476,7 +476,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -558,7 +558,7 @@ pycparser = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -648,7 +648,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -668,7 +668,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -697,7 +697,7 @@ pytds = ["python-tds (==1.12.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -714,7 +714,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -731,7 +731,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -754,7 +754,7 @@ cron = ["capturer (>=2.4)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -834,7 +834,7 @@ test-no-images = ["pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -905,7 +905,7 @@ toml = ["tomli"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -957,7 +957,7 @@ test = ["hypothesis (>=1.11.4,!=3.79.2)", "iso8601", "pretend", "pytest (>=6.2.0
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -974,7 +974,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -999,7 +999,7 @@ tabulate = ">=0.7.7"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1016,7 +1016,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1039,7 +1039,7 @@ dev = ["PyTest", "PyTest (<5)", "PyTest-Cov", "PyTest-Cov (<2.6)", "bump2version
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1059,7 +1059,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1086,7 +1086,7 @@ ssh = ["paramiko (>=2.4.3)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1103,7 +1103,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1123,7 +1123,7 @@ test = ["pytest (>=6)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1150,7 +1150,7 @@ test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==22.10.0)", "coverage[toml] (>=
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1167,7 +1167,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1189,7 +1189,7 @@ pyflakes = ">=2.4.0,<2.5.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1217,7 +1217,7 @@ dotenv = ["python-dotenv"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1234,7 +1234,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1265,7 +1265,7 @@ woff = ["brotli (>=1.0.1)", "brotlicffi (>=0.8.0)", "zopfli (>=0.1.4)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1354,7 +1354,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1394,7 +1394,7 @@ tqdm = ["tqdm"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1411,7 +1411,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1441,7 +1441,7 @@ gcsfuse = ["fusepy"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1461,7 +1461,7 @@ smmap = ">=3.0.1,<6"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1481,7 +1481,7 @@ gitdb = ">=4.0.1,<5"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1511,7 +1511,7 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0dev)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1540,7 +1540,7 @@ reauth = ["pyu2f (>=0.1.5)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1564,7 +1564,7 @@ tool = ["click (>=6.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1588,7 +1588,7 @@ grpc = ["grpcio (>=1.38.0,<2.0dev)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1613,7 +1613,7 @@ protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.0 || >4.21.0,<4
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1640,7 +1640,7 @@ protobuf = ["protobuf (<5.0.0dev)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1726,7 +1726,7 @@ testing = ["pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1747,7 +1747,7 @@ six = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1771,7 +1771,7 @@ requests = ["requests (>=2.18.0,<3.0.0dev)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1794,7 +1794,7 @@ grpc = ["grpcio (>=1.44.0,<2.0.0dev)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1816,7 +1816,7 @@ test = ["coverage", "mock (>=4)", "pytest (>=7)", "pytest-cov", "pytest-mock (>=
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1895,7 +1895,7 @@ test = ["objgraph", "psutil"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1958,7 +1958,7 @@ protobuf = ["grpcio-tools (>=1.51.3)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -1980,7 +1980,7 @@ protobuf = ">=3.12.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2006,7 +2006,7 @@ tornado = ["tornado (>=0.2)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2023,7 +2023,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2036,21 +2036,26 @@ python-versions = ">=3.7"
 files = [
     {file = "h5py-3.8.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:533d7dad466ddb7e3b30af274b630eb7c1a6e4ddf01d1c373a0334dc2152110a"},
     {file = "h5py-3.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c873ba9fd4fa875ad62ce0e4891725e257a8fe7f5abdbc17e51a5d54819be55c"},
+    {file = "h5py-3.8.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:98a240cd4c1bfd568aaa52ec42d263131a2582dab82d74d3d42a0d954cac12be"},
     {file = "h5py-3.8.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c3389b63222b1c7a158bb7fe69d11ca00066740ec5574596d47a2fe5317f563a"},
     {file = "h5py-3.8.0-cp310-cp310-win_amd64.whl", hash = "sha256:7f3350fc0a8407d668b13247861c2acd23f7f5fe7d060a3ad9b0820f5fcbcae0"},
     {file = "h5py-3.8.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:db03e3f2c716205fbdabb34d0848459840585225eb97b4f08998c743821ca323"},
     {file = "h5py-3.8.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:36761693efbe53df179627a775476dcbc37727d6e920958277a7efbc18f1fb73"},
+    {file = "h5py-3.8.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a506fc223def428f4329e7e1f9fe1c8c593eab226e7c0942c8d75308ad49950"},
     {file = "h5py-3.8.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:33b15aae79e9147aebe1d0e54099cbcde8d65e3e227cd5b59e49b1272aa0e09d"},
     {file = "h5py-3.8.0-cp311-cp311-win_amd64.whl", hash = "sha256:9f6f6ffadd6bfa9b2c5b334805eb4b19ca0a5620433659d8f7fb86692c40a359"},
     {file = "h5py-3.8.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:8f55d9c6c84d7d09c79fb85979e97b81ec6071cc776a97eb6b96f8f6ec767323"},
+    {file = "h5py-3.8.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b685453e538b2b5934c58a644ac3f3b3d0cec1a01b6fb26d57388e9f9b674ad0"},
     {file = "h5py-3.8.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:377865821fe80ad984d003723d6f8890bd54ceeb5981b43c0313b9df95411b30"},
     {file = "h5py-3.8.0-cp37-cp37m-win_amd64.whl", hash = "sha256:0fef76e10b9216657fa37e7edff6d8be0709b25bd5066474c229b56cf0098df9"},
     {file = "h5py-3.8.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:26ffc344ec9984d2cd3ca0265007299a8bac8d85c1ad48f4639d8d3aed2af171"},
     {file = "h5py-3.8.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:bacaa1c16810dd2b3e4417f8e730971b7c4d53d234de61fe4a918db78e80e1e4"},
+    {file = "h5py-3.8.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bae730580ae928de409d63cbe4fdca4c82c3ad2bed30511d19d34e995d63c77e"},
     {file = "h5py-3.8.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f47f757d1b76f0ecb8aa0508ec8d1b390df67a8b67ee2515dc1b046f3a1596ea"},
     {file = "h5py-3.8.0-cp38-cp38-win_amd64.whl", hash = "sha256:f891b17e3a3e974e93f9e34e7cca9f530806543571ce078998676a555837d91d"},
     {file = "h5py-3.8.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:290e00fa2de74a10688d1bac98d5a9cdd43f14f58e562c580b5b3dfbd358ecae"},
     {file = "h5py-3.8.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:03890b1c123d024fb0239a3279737d5432498c1901c354f8b10d8221d1d16235"},
+    {file = "h5py-3.8.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b7865de06779b14d98068da387333ad9bf2756b5b579cc887fac169bc08f87c3"},
     {file = "h5py-3.8.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:49bc857635f935fa30e92e61ac1e87496df8f260a6945a3235e43a9890426866"},
     {file = "h5py-3.8.0-cp39-cp39-win_amd64.whl", hash = "sha256:5fd2252d1fc364ba0e93dd0b7089f4906b66805cb4e6aca7fa8874ac08649647"},
     {file = "h5py-3.8.0.tar.gz", hash = "sha256:6fead82f0c4000cf38d53f9c030780d81bfa0220218aee13b90b7701c937d95f"},
@@ -2061,7 +2066,7 @@ numpy = ">=1.14.5"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2088,7 +2093,7 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2117,7 +2122,7 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2137,7 +2142,7 @@ pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_ve
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2154,7 +2159,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2179,7 +2184,7 @@ testing = ["flake8 (<5)", "flufl.flake8", "importlib-resources (>=1.3)", "packag
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2203,7 +2208,7 @@ testing = ["flake8 (<5)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-chec
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2220,7 +2225,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2243,7 +2248,7 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2260,7 +2265,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2283,7 +2288,7 @@ i18n = ["Babel (>=2.7)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2300,7 +2305,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2325,7 +2330,7 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2341,7 +2346,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2367,7 +2372,7 @@ tests = ["Pillow", "keras", "pandas", "pytest", "pytest-cov", "pytest-xdist", "t
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2450,7 +2455,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2501,7 +2506,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2524,7 +2529,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2553,7 +2558,7 @@ dask = ["dask[array] (>=2.0.0)", "dask[dataframe] (>=2.0.0)", "dask[distributed]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2596,7 +2601,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2621,7 +2626,7 @@ testing = ["pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2644,7 +2649,7 @@ testing = ["coverage", "pyyaml"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2709,7 +2714,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2774,11 +2779,10 @@ packaging = ">=20.0"
 pillow = ">=6.2.0"
 pyparsing = ">=2.3.1"
 python-dateutil = ">=2.7"
-setuptools_scm = ">=7"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2795,7 +2799,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2850,7 +2854,7 @@ sqlserver = ["mlflow-dbstore"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2873,7 +2877,7 @@ tests = ["pytest (>=4.6)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -2962,7 +2966,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3014,7 +3018,7 @@ reports = ["lxml"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3031,7 +3035,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3079,7 +3083,7 @@ setuptools = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3117,7 +3121,7 @@ zfpy = ["zfpy (>=1.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3160,7 +3164,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3181,7 +3185,7 @@ wheel = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3199,7 +3203,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3220,7 +3224,7 @@ wheel = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3240,7 +3244,7 @@ nvidia-cublas-cu11 = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3262,7 +3266,7 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3306,7 +3310,7 @@ lint = ["clang-format (==13.0.0)", "flake8", "mypy (==0.782)", "types-protobuf (
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3329,7 +3333,7 @@ protobuf = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3350,7 +3354,7 @@ skl2onnx = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3404,7 +3408,7 @@ sympy = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3428,7 +3432,7 @@ tests = ["pytest", "pytest-cov", "pytest-pep8"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3445,7 +3449,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3499,7 +3503,7 @@ test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3516,7 +3520,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3537,7 +3541,7 @@ scramp = ">=1.4.3"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3633,7 +3637,7 @@ tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "pa
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3654,7 +3658,7 @@ test = ["appdirs (==1.4.4)", "covdefaults (>=2.2.2)", "pytest (>=7.2.1)", "pytes
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3675,7 +3679,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3695,7 +3699,7 @@ psutil = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3715,7 +3719,7 @@ twisted = ["twisted"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3736,7 +3740,7 @@ prometheus-client = ">=0.8.0,<1.0.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3759,7 +3763,7 @@ testing = ["google-api-core[grpc] (>=1.31.5)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3799,7 +3803,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3831,7 +3835,7 @@ test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3879,7 +3883,7 @@ numpy = ">=1.16.6"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3896,7 +3900,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3916,7 +3920,7 @@ pyasn1 = ">=0.4.6,<0.5.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3933,7 +3937,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -3950,7 +3954,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4008,7 +4012,7 @@ email = ["email-validator (>=1.0.3)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4037,7 +4041,7 @@ ruamel = ["ruamel.yaml (>=0.15,<0.18)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4054,7 +4058,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4077,7 +4081,7 @@ tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4112,7 +4116,7 @@ testutils = ["gitpython (>3)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4133,7 +4137,7 @@ rsa = ["cryptography"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4153,7 +4157,7 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4170,7 +4174,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4212,7 +4216,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4241,7 +4245,7 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4265,7 +4269,7 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtuale
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4285,7 +4289,7 @@ pytest = ">=3.2.5"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4305,7 +4309,7 @@ six = ">=1.5"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4325,7 +4329,7 @@ cli = ["click (>=5.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4342,7 +4346,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4359,7 +4363,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4388,7 +4392,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4443,7 +4447,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4463,7 +4467,7 @@ six = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4490,7 +4494,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4514,7 +4518,7 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4537,7 +4541,7 @@ idna2008 = ["idna"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4558,7 +4562,7 @@ six = ">=1.9.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4578,7 +4582,7 @@ pyasn1 = ">=0.1.3"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4609,7 +4613,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4650,14 +4654,14 @@ scipy = ">=1.3.2"
 threadpoolctl = ">=2.0.0"
 
 [package.extras]
-benchmark = ["matplotlib (>=3.1.3)", "memory_profiler (>=0.57.0)", "pandas (>=1.0.5)"]
-docs = ["Pillow (>=7.1.2)", "matplotlib (>=3.1.3)", "memory_profiler (>=0.57.0)", "numpydoc (>=1.2.0)", "pandas (>=1.0.5)", "plotly (>=5.10.0)", "pooch (>=1.6.0)", "scikit-image (>=0.16.2)", "seaborn (>=0.9.0)", "sphinx (>=4.0.1)", "sphinx-gallery (>=0.7.0)", "sphinx-prompt (>=1.3.0)", "sphinxext-opengraph (>=0.4.2)"]
+benchmark = ["matplotlib (>=3.1.3)", "memory-profiler (>=0.57.0)", "pandas (>=1.0.5)"]
+docs = ["Pillow (>=7.1.2)", "matplotlib (>=3.1.3)", "memory-profiler (>=0.57.0)", "numpydoc (>=1.2.0)", "pandas (>=1.0.5)", "plotly (>=5.10.0)", "pooch (>=1.6.0)", "scikit-image (>=0.16.2)", "seaborn (>=0.9.0)", "sphinx (>=4.0.1)", "sphinx-gallery (>=0.7.0)", "sphinx-prompt (>=1.3.0)", "sphinxext-opengraph (>=0.4.2)"]
 examples = ["matplotlib (>=3.1.3)", "pandas (>=1.0.5)", "plotly (>=5.10.0)", "pooch (>=1.6.0)", "scikit-image (>=0.16.2)", "seaborn (>=0.9.0)"]
 tests = ["black (>=22.3.0)", "flake8 (>=3.8.2)", "matplotlib (>=3.1.3)", "mypy (>=0.961)", "numpydoc (>=1.2.0)", "pandas (>=1.0.5)", "pooch (>=1.6.0)", "pyamg (>=4.0.0)", "pytest (>=5.3.1)", "pytest-cov (>=2.9.0)", "scikit-image (>=0.16.2)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4701,7 +4705,7 @@ test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeo
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4721,7 +4725,7 @@ asn1crypto = ">=1.5.1"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4738,7 +4742,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4760,34 +4764,7 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = "shipt-resolve"
-
-[[package]]
-name = "setuptools-scm"
-version = "7.1.0"
-description = "the blessed package to manage your versions by scm tags"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "setuptools_scm-7.1.0-py3-none-any.whl", hash = "sha256:73988b6d848709e2af142aa48c986ea29592bbcfca5375678064708205253d8e"},
-    {file = "setuptools_scm-7.1.0.tar.gz", hash = "sha256:6c508345a771aad7d56ebff0e70628bf2b0ec7573762be9960214730de278f27"},
-]
-
-[package.dependencies]
-packaging = ">=20.0"
-setuptools = "*"
-tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
-typing-extensions = "*"
-
-[package.extras]
-test = ["pytest (>=6.2)", "virtualenv (>20)"]
-toml = ["setuptools (>=42)"]
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4846,7 +4823,7 @@ test = ["catboost", "lightgbm", "opencv-python", "pyod", "pyspark", "pytest", "p
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4863,7 +4840,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4885,7 +4862,7 @@ scikit-learn = ">=0.19,<1.3"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4902,7 +4879,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4919,7 +4896,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4936,7 +4913,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -4997,7 +4974,7 @@ sqlalchemy2-stubs = {version = "*", optional = true, markers = "extra == \"mypy\
 
 [package.extras]
 aiomysql = ["aiomysql", "greenlet (!=0.4.17)"]
-aiosqlite = ["aiosqlite", "greenlet (!=0.4.17)", "typing_extensions (!=3.10.0.1)"]
+aiosqlite = ["aiosqlite", "greenlet (!=0.4.17)", "typing-extensions (!=3.10.0.1)"]
 asyncio = ["greenlet (!=0.4.17)"]
 asyncmy = ["asyncmy (>=0.2.3,!=0.2.4)", "greenlet (!=0.4.17)"]
 mariadb-connector = ["mariadb (>=1.0.1,!=1.1.2)"]
@@ -5007,18 +4984,18 @@ mssql-pyodbc = ["pyodbc"]
 mypy = ["mypy (>=0.910)", "sqlalchemy2-stubs"]
 mysql = ["mysqlclient (>=1.4.0)", "mysqlclient (>=1.4.0,<2)"]
 mysql-connector = ["mysql-connector-python"]
-oracle = ["cx_oracle (>=7)", "cx_oracle (>=7,<8)"]
+oracle = ["cx-oracle (>=7)", "cx-oracle (>=7,<8)"]
 postgresql = ["psycopg2 (>=2.7)"]
 postgresql-asyncpg = ["asyncpg", "greenlet (!=0.4.17)"]
 postgresql-pg8000 = ["pg8000 (>=1.16.6,!=1.29.0)"]
 postgresql-psycopg2binary = ["psycopg2-binary"]
 postgresql-psycopg2cffi = ["psycopg2cffi"]
 pymysql = ["pymysql", "pymysql (<1)"]
-sqlcipher = ["sqlcipher3_binary"]
+sqlcipher = ["sqlcipher3-binary"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5039,7 +5016,7 @@ typing-extensions = ">=3.7.4"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5059,7 +5036,7 @@ typing-extensions = ">=3.7.4"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5076,7 +5053,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5100,7 +5077,7 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5120,7 +5097,7 @@ mpmath = ">=0.19"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5140,7 +5117,7 @@ widechars = ["wcwidth"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5160,7 +5137,7 @@ doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5191,7 +5168,7 @@ wheel = ">=0.26"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5209,7 +5186,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5225,7 +5202,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5280,7 +5257,7 @@ wrapt = ">=1.11.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5296,7 +5273,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5337,7 +5314,7 @@ tensorflow-rocm = ["tensorflow-rocm (>=2.11.0,<2.12.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5357,7 +5334,7 @@ tests = ["pytest", "pytest-cov"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5380,7 +5357,7 @@ six = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5397,7 +5374,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5414,7 +5391,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5431,7 +5408,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5448,7 +5425,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5494,7 +5471,7 @@ opt-einsum = ["opt-einsum (>=3.3)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5538,7 +5515,7 @@ scipy = ["scipy"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5564,7 +5541,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5590,7 +5567,7 @@ telegram = ["requests"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5607,7 +5584,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5624,7 +5601,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5641,7 +5618,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5661,7 +5638,7 @@ types-urllib3 = "<1.27"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5678,7 +5655,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5695,7 +5672,7 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5717,7 +5694,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5741,7 +5718,7 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5762,7 +5739,28 @@ testing = ["coverage (>=5.0)", "pytest", "pytest-cover"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = "shipt-resolve"
+
+[[package]]
+name = "webob"
+version = "1.8.7"
+description = "WSGI request and response object"
+category = "main"
+optional = true
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*"
+files = [
+    {file = "WebOb-1.8.7-py2.py3-none-any.whl", hash = "sha256:73aae30359291c14fa3b956f8b5ca31960e420c28c1bec002547fb04928cf89b"},
+    {file = "WebOb-1.8.7.tar.gz", hash = "sha256:b64ef5141be559cfade448f044fa45c2260351edcb6a8ef6b7e00c7dcef0c323"},
+]
+
+[package.extras]
+docs = ["Sphinx (>=1.7.5)", "pylons-sphinx-themes"]
+testing = ["coverage", "pytest (>=3.1.0)", "pytest-cov", "pytest-xdist"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5784,7 +5782,7 @@ test = ["websockets"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5807,7 +5805,7 @@ watchdog = ["watchdog"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5827,7 +5825,7 @@ test = ["pytest (>=6.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5917,7 +5915,31 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = "shipt-resolve"
+
+[[package]]
+name = "wsgi-basic-auth"
+version = "1.1.0"
+description = "Simple wsgi middleware to provide basic http auth"
+category = "main"
+optional = true
+python-versions = "*"
+files = [
+    {file = "wsgi-basic-auth-1.1.0.tar.gz", hash = "sha256:4afe7bafc2c8dae4d4232adca06d3cd49c833565378a3133a53d788cda5c37b3"},
+    {file = "wsgi_basic_auth-1.1.0-py2.py3-none-any.whl", hash = "sha256:956e61eaca26c5834bbce0097be5d4aaf19a86df3bc873988764ebf0f8422b66"},
+]
+
+[package.dependencies]
+webob = ">=1.0.0"
+
+[package.extras]
+docs = ["sphinx (>=1.4.0)"]
+test = ["WebTest (==2.0.23)", "flake8 (==3.0.3)", "flake8-blind-except (==0.1.1)", "flake8-debugger (==1.4.0)", "isort (==4.2.5)", "pytest (>=2.8.3)", "pytest-cov (>=2.2.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -5950,7 +5972,7 @@ scikit-learn = ["scikit-learn"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -6043,7 +6065,7 @@ multidict = ">=4.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -6069,7 +6091,7 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
@@ -6081,7 +6103,6 @@ optional = false
 python-versions = ">=3.7"
 files = [
     {file = "zipp-3.15.0-py3-none-any.whl", hash = "sha256:48904fc76a60e542af151aded95726c1a5c34ed43ab4134b597665c86d7ad556"},
-    {file = "zipp-3.15.0.tar.gz", hash = "sha256:112929ad649da941c23de50f356a2b5570c954b65150642bccdd66bf194d224b"},
 ]
 
 [package.extras]
@@ -6090,17 +6111,17 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 
 [package.source]
 type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [extras]
 gcp-mysql = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pymysql"]
 gcp-postgres = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pg8000"]
 graphviz = ["graphviz"]
-proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator"]
+proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
 tf-onnx = ["tf2onnx"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "dd134cd48a8c5a6a8e95a7a8a8159837d4156b0459594993548937d223d9d9d3"
+content-hash = "b26aa99c456eb2226225e9ba2ab88e1126e2a7d23acb1237b6225213170ef997"
