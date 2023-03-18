@@ -16,12 +16,7 @@ def initialize_mlflow() -> None:
     Raises:
         ValueError: One or more env vars is missing.
     """
-    import os
-
     config = MlFlowConfig()
-
-    print(config)
-    print(os.environ.get("_MLFLOW_SERVER_FILE_STORE"))
     if config.MLFLOW_SERVER_FILE_STORE is None or len(config.MLFLOW_SERVER_FILE_STORE) == 0:
         raise ValueError("_MLFLOW_SERVER_FILE_STORE env var is invalid")
     if config.MLFLOW_SERVER_ARTIFACT_DESTINATION is None or len(config.MLFLOW_SERVER_ARTIFACT_DESTINATION) == 0:
