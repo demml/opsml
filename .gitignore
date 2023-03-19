@@ -107,3 +107,5 @@ notebooks/
 
 examples/.DS_Store
 opsml_artifacts/api/
+test_scripts*
+
