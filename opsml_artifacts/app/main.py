@@ -1,7 +1,9 @@
 # pylint: disable=import-outside-toplevel
+from typing import Any, List, Optional
+
 import click
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -27,7 +29,19 @@ class OpsmlApp:
         self.port = port
         self.run_mlflow = run_mlflow
         self.login = login
-        self.app = FastAPI(title=config.APP_NAME)
+        self.app = FastAPI(
+            title=config.APP_NAME,
+            dependencies=self.get_login(),
+        )
+
+    def get_login(self) -> Optional[List[Any]]:
+        """Sets the login dependency for an app if specified"""
+
+        if self.login:
+            from opsml_artifacts.app.core.login import get_current_username
+
+            return [Depends(get_current_username)]
+        return None
 
     def add_startup(self):
         self.app.add_event_handler("startup", start_app_handler(app=self.app))
@@ -48,6 +62,7 @@ class OpsmlApp:
         if self.login:
             from wsgi_basic_auth import BasicAuth
 
+            logger.info("Setting login credentials")
             self.app.mount("/", WSGIMiddleware(BasicAuth(mlflow_flask)))
 
         else:
@@ -83,7 +98,7 @@ class OpsmlApp:
 @click.command()
 @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
 @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
-@click.option("--login", default=False, help="Whether to use basic username and password")
+@click.option("--login", default=False, is_flag=True, help="Whether to use basic username and password")
 def opsml_uvicorn_server(port: int, mlflow: bool, login: bool) -> None:
 
     logger.info("Starting ML Server")
