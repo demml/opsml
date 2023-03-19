@@ -200,6 +200,7 @@ def test_app():
         yield test_client
 
     os.remove(path=tmp_db_path)
+
     try:
         shutil.rmtree("mlruns")
     except Exception as error:
@@ -230,6 +231,11 @@ def api_registries(test_app):
             "experiment": experiment_registry,
             "pipeline": pipeline_registry,
         }
+
+    try:
+        shutil.rmtree(f"{os.path.expanduser('~')}/mlruns")
+    except Exception as error:
+        pass
 
 
 @pytest.fixture(scope="function")
