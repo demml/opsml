@@ -104,6 +104,7 @@ tests/_test_scratch_estimator.py
 notebooks/
 .local_tests/
 .local_integration/
+.test_local.py
 
 examples/.DS_Store
 opsml_artifacts/api/
