@@ -207,5 +207,6 @@ build-backend = "poetry.core.masonry.api"
 # Access Shipt's private Artifactory remote PyPi repository. It serves as a caching proxy.
 # Generate Identity Token in Artifactory and use it as password and then have these ENV's set:
 name = "shipt-resolve"
-url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+#url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 default = true
