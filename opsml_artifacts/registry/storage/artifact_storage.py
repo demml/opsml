@@ -141,7 +141,6 @@ class ArtifactStorage:
     def save_artifact(self, artifact: Any) -> StoragePath:
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, tmp_uri = temp_output
-
             storage_uri = self._save_artifact(
                 artifact=artifact,
                 storage_uri=storage_uri,
@@ -254,7 +253,6 @@ class ParquetStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-
         pq.write_table(
             table=artifact,
             where=file_path,
