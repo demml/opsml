@@ -1,6 +1,7 @@
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 import pandas as pd
 from pydantic import ValidationError
 from opsml_artifacts import DataCard, ModelCard, ExperimentCard, PipelineCard
@@ -318,48 +319,19 @@ def _test_full_pipeline_with_loading(
             loader.visualize()
 
 
-# @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
-@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
+@patch("opsml_artifacts.registry.sql.registry.CardRegistry.load_card")
 def test_download_model(
-    mock_model_card,
+    mock_load_card,
     test_app,
-    api_registries,
-    sklearn_pipeline,
     test_model_card,
-    mock_pyarrow_parquet_write,
-    mock_artifact_storage_clients,
 ):
 
-    model, data = sklearn_pipeline
-    # create data card
-    data_registry = api_registries["data"]
-
-    data_card = DataCard(
-        data=data,
-        name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    data_registry.register_card(card=data_card)
-
-    model_card1 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        data_card_uid=data_card.uid,
-    )
-
-    model_registry = api_registries["model"]
-    model_registry.register_card(model_card1)
-
-    mock_model_card.return_value = model_card1.dict()
+    mock_load_card.return_value = test_model_card
 
     response = test_app.post(
         url="opsml/download",
         json={
-            "uid": model_card1.uid,
+            "uid": "test-uid",
         },
     )
 
