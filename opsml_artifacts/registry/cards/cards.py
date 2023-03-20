@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
@@ -49,6 +50,15 @@ class VersionType(str, Enum):
     MAJOR = "major"
     MINOR = "minor"
     PATCH = "patch"
+
+
+@dataclass
+class CardInfo:
+    name: Optional[str]
+    team: Optional[str]
+    user_email: Optional[str] = None
+    uid: Optional[str] = None
+    version: Optional[str] = None
 
 
 class ArtifactCard(BaseModel):
