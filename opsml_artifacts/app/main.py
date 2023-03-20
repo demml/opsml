@@ -54,6 +54,7 @@ class OpsmlApp:
 
     def build_mlflow_app(self):
         from mlflow.server import app as mlflow_flask
+
         from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
 
         mlflow_config = initialize_mlflow()
