@@ -78,6 +78,7 @@ def _test_experiment_card(linear_regression, api_registries, mock_artifact_stora
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
 def _test_register_model(
     loaded_model_record,
+    model_card_mock,
     api_registries,
     sklearn_pipeline,
     mock_pyarrow_parquet_write,
@@ -318,11 +319,13 @@ def _test_full_pipeline_with_loading(
 
 
 # @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
-# @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
+@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
 def test_download_model(
+    mock_model_card,
     test_app,
     api_registries,
     sklearn_pipeline,
+    test_model_card,
     mock_pyarrow_parquet_write,
     mock_artifact_storage_clients,
 ):
@@ -351,7 +354,7 @@ def test_download_model(
     model_registry = api_registries["model"]
     model_registry.register_card(model_card1)
 
-    print(model_registry.list_cards())
+    mock_model_card.return_value = model_card1.dict()
 
     response = test_app.post(
         url="opsml/download",
