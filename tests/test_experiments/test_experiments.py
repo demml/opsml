@@ -13,6 +13,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 def test_metrics(mlflow_experiment: MlFlowExperiment) -> None:
+    # verify metrics require an ActiveRun
     with pytest.raises(ValueError) as ve:
         mlflow_experiment.log_metric(key="m1", value=1.0)
     assert ve.match("^ActiveRun")
@@ -28,6 +29,7 @@ def test_metrics(mlflow_experiment: MlFlowExperiment) -> None:
 
 
 def test_params(mlflow_experiment: MlFlowExperiment) -> None:
+    # verify params require an ActiveRun
     with pytest.raises(ValueError) as ve:
         mlflow_experiment.log_metric(key="m1", value=1.1)
     assert ve.match("^ActiveRun")
