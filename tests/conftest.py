@@ -18,7 +18,6 @@ os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 
 
 import pytest
-import requests
 import shutil
 import httpx
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
@@ -653,7 +652,6 @@ def linear_regression():
 
 @pytest.fixture(scope="function")
 def test_model_card(sklearn_pipeline):
-    # create data card
     model, data = sklearn_pipeline
     model_card = ModelCard(
         trained_model=model,
