@@ -1,18 +1,8 @@
-from typing import Iterator
+from typing import Any, Iterator
 
 import os
 import pathlib
-import tempfile
 
-# setting initial env vars to override default sql db
-DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
-SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
-STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
-
-os.environ["OPSML_TRACKING_URI"] = SQL_PATH
-os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
-
-from typing import Any
 import pytest
 import requests
 import shutil
@@ -51,7 +41,14 @@ from opsml_artifacts.experiments.mlflow import CardRegistries, MlFlowExperiment,
 # testing
 from tests.mock_api_registries import CardRegistry
 
-session = requests.Session()
+# setting initial env vars to override default sql db
+# these must be set prior to importing opsml_artifacts sicne they establish their
+DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
+SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
+STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
+
+os.environ["OPSML_TRACKING_URI"] = SQL_PATH
+os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
 
 
 def cleanup() -> None:
