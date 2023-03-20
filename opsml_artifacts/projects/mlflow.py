@@ -70,7 +70,7 @@ mlflow_storage_client = get_mlflow_storage_client()
 class MlFlowProject(Project):
     def __init__(self, info: MlFlowProjectInfo):
         """Instantiates an mlflow project which log cards, metrics and params to
-            the opsml registry and mlflow.
+            the opsml registry and mlflow via a "run" object.
 
             If info.run_id is set, that run_id will be loaded as read only. In read
             only mode, you can retrieve cards, metrics, and params, however you
@@ -87,8 +87,12 @@ class MlFlowProject(Project):
                         run_id="123ab123kaj8u8naskdfh813",
                     )
                 )
+                # the project is in "read only" mode. all read operations will work
+                for k, v in project.params:
+                    logger.info("%s = %s", k, v)
+
                 with mlflow_exp as project:
-                    # Now that the project context is entered, it's active.
+                    # Now that the project context is entered, it's in read/write mode
                     # You can write cards, params, and metrics to the project.
                     project.log_param(key="my_param", value="12.34")
         )
