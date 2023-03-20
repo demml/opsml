@@ -218,8 +218,7 @@ def test_app() -> Iterator[TestClient]:
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
-    # TODO(@damon): Uncomment when done debugging
-    # cleanup()
+    cleanup()
 
 
 @pytest.fixture(scope="module")
