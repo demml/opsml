@@ -2,7 +2,7 @@ from functools import cached_property
 from typing import Dict, cast
 
 from opsml_artifacts.registry.cards.cards import (
-    CardType,
+    Card,
     DataCard,
     ExperimentCard,
     ModelCard,
@@ -23,11 +23,11 @@ from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 
 class CardArtifactSaver:
-    def __init__(self, card: CardType, storage_client: StorageClientType):
+    def __init__(self, card: Card, storage_client: StorageClientType):
         """Parent class for saving artifacts belonging to cards
 
         Args:
-            card (CardType): ArtifactCard with artifacts to save
+            card (Card): ArtifactCard with artifacts to save
             card_storage_info (ArtifactStorageSpecs): Extra info to use with artifact storage
         """
 
@@ -38,7 +38,7 @@ class CardArtifactSaver:
     def card(self):
         return self.card
 
-    def save_artifacts(self) -> CardType:
+    def save_artifacts(self) -> Card:
         raise NotImplementedError
 
     def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
@@ -208,7 +208,7 @@ class ExpeirmentCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ExperimentCard, self._card)
 
-    def save_artifacts(self) -> CardType:
+    def save_artifacts(self) -> Card:
         """Saves all artifacts associated with ExperimentCard to filesystem"""
 
         artifact_uris: Dict[str, str] = {}
@@ -242,7 +242,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
         return CardNames.PIPELINE in card_type
 
 
-def save_card_artifacts(card: CardType, storage_client: StorageClientType) -> CardType:
+def save_card_artifacts(card: Card, storage_client: StorageClientType) -> Card:
 
     """Saves a given ArtifactCard's artifacts to a filesystem
 
