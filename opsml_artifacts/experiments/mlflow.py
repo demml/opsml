@@ -7,7 +7,12 @@ from mlflow.tracking import MlflowClient
 from pydantic import BaseModel
 
 from opsml_artifacts import CardRegistry
-from opsml_artifacts.experiments.types import ActiveRun, CardInfo, Experiment, ExperimentInfo
+from opsml_artifacts.experiments.types import (
+    ActiveRun,
+    CardInfo,
+    Experiment,
+    ExperimentInfo,
+)
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.cards import Card
