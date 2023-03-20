@@ -54,10 +54,9 @@ class OpsmlApp:
 
     def build_mlflow_app(self):
         from mlflow.server import app as mlflow_flask
-
         from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
 
-        initialize_mlflow()
+        mlflow_config = initialize_mlflow()
 
         if self.login:
             from wsgi_basic_auth import BasicAuth
@@ -67,6 +66,10 @@ class OpsmlApp:
 
         else:
             self.app.mount("/", WSGIMiddleware(mlflow_flask))
+
+        if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+            config.is_proxy = True
+            config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
 
     def add_middleware(self):
         """Add rollbar middleware"""

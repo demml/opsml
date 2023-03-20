@@ -32,6 +32,7 @@ def get_storage_settings() -> StorageSettingsResponse:
 
         # TODO (steven) - Think of a different way to do this in the future
         # do we need to return anything if using proxy for both registration and storage
+
         if not config.is_proxy:
 
             if "gs://" in config.STORAGE_URI:
@@ -43,6 +44,7 @@ def get_storage_settings() -> StorageSettingsResponse:
     return StorageSettingsResponse(
         storage_type="local",
         storage_uri=config.STORAGE_URI,
+        proxy=config.is_proxy,
     )
 
 
