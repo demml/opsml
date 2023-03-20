@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Optional, Protocol
 
 from opsml_artifacts.registry.cards.cards import Card, CardType, VersionType
 
@@ -16,9 +16,9 @@ class ActiveRun(Protocol):
 class CardInfo:
     name: str
     team: str
-    user_email: str | None = None
-    uid: str | None = None
-    version: str | None = None
+    user_email: Optional[str] = None
+    uid: Optional[str] = None
+    version: Optional[str] = None
 
 
 @dataclass
