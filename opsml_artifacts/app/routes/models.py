@@ -84,7 +84,7 @@ class QueryRecordResponse(BaseModel):
 
 
 class DownloadModelRequest(BaseModel):
-    versions: Optional[List[str]] = None
     name: Optional[str] = None
+    version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None

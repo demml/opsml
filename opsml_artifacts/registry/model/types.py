@@ -205,3 +205,10 @@ class ModelApiDef(BaseModel):
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
         allow_extra = True
+
+
+class ModelDownloadInfo(BaseModel):
+    name: Optional[str] = None
+    version: Optional[str] = None
+    team: Optional[str] = None
+    uid: Optional[str] = None

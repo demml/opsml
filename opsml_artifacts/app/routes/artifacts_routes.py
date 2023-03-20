@@ -1,11 +1,8 @@
 from typing import Union
-import tempfile
-import zipfile
-from io import BytesIO
-import os
-from fastapi.responses import StreamingResponse
-from fastapi import APIRouter, Body, Request
-from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
+import uuid
+from fastapi.responses import FileResponse
+from fastapi import APIRouter, Body, Request, BackgroundTasks
+from opsml_artifacts.scripts.load_model_card import ModelLoader
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
@@ -22,6 +19,7 @@ from opsml_artifacts.app.routes.models import (
     VersionResponse,
     DownloadModelRequest,
 )
+from opsml_artifacts.app.routes.utils import delete_dir
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -141,34 +139,26 @@ def update_record(
     return UpdateRecordResponse(updated=True)
 
 
-@router.post("/download", response_model=DownloadModelRequest, name="download")
+@router.post("/download", name="download")
 def download_model(
     request: Request,
+    background_tasks: BackgroundTasks,
     payload: DownloadModelRequest = Body(...),
-) -> UpdateRecordResponse:
+) -> FileResponse:
 
     """Downloads a model card"""
 
-    zip_subdir = "model_defs"
-
     registry: CardRegistry = getattr(request.app.state.registries, "model")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        loader = ModelLoaderCli(
-            base_path=tmp_dir,
-            registry=registry,
-            **payload.dict(),
-        )
-        loader.save_to_local_file()
+    loader = ModelLoader(
+        base_path=uuid.uuid4().hex,
+        registry=registry,
+        model_info=payload,
+    )
+    loader.save_to_local_file()
 
-        zip_io = BytesIO()
-        with zipfile.ZipFile(zip_io, mode="w", compression=zipfile.ZIP_DEFLATED) as temp_zip:
-            for path in loader.file_paths:
-                path_to_write = path.split(tmp_dir)[1]
-                zip_path = os.path.join(zip_subdir, path_to_write)
-                temp_zip.write(path, zip_path)
-
-    return StreamingResponse(
-        iter([zip_io.getvalue()]),
-        media_type="application/x-zip-compressed",
-        headers={"Content-Disposition": f"attachment; filename=models.zip"},
+    background_tasks.add_task(delete_dir, dir_path=loader.base_path)
+    return FileResponse(
+        path=loader.file_path,
+        content_disposition_type="attachment",
+        filename="model_defs/model_def.json",
     )
