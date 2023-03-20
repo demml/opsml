@@ -7,7 +7,7 @@ from mlflow.tracking import MlflowClient
 from pydantic import BaseModel
 
 from opsml_artifacts import CardRegistry
-from opsml_artifacts.experiments.types import ActiveRun, Experiment, ExperimentInfo
+from opsml_artifacts.experiments.types import ActiveRun, CardInfo, Experiment, ExperimentInfo
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.registry.cards.cards import Card
@@ -110,21 +110,13 @@ class MlFlowExperiment(Experiment):
 
     @property
     def artifact_save_path(self) -> str:
-        """Save path to use when registering Artifact Cards
-
-        Returns:
-            artifact save path
-        """
+        """Returns the path where artifacts are saved."""
         self._active_run = cast(ActiveRun, self._active_run)
         return self._active_run.info._artifact_uri  # pylint: disable=protected-access
 
     @property
     def project_id(self):
-        """Project id associated with project name in mlflow
-
-        Returns:
-            project id string
-        """
+        """Returns the mlflow Project id"""
         if bool(self._project_id):
             return self._project_id
 
@@ -218,27 +210,17 @@ class MlFlowExperiment(Experiment):
         registry: CardRegistry = getattr(self.registries, card_type)
         registry.register_card(card=card, version_type=version_type)
 
-    def load_card(
-        self,
-        card_type: str,
-        name: Optional[str] = None,
-        team: Optional[str] = None,
-        uid: Optional[str] = None,
-        version: Optional[str] = None,
-    ) -> Card:
-
-        """Loads a specific card
+    def load_card(self, card_type: str, info: CardInfo) -> Card:
+        """Returns an artifact card.
 
         Args:
-            card_type (str): datacard or modelcard
-            name (str): Optional Card name
-            team (str): Optional team associated with card
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for the card. If present, the uid takes precedence.
-
-        Returns
-            ArtifactCard
+            card_type:
+                datacard or modelcard
+            info:
+                Card information to retrieve. `uid` takes precedence if it
+                exists. If the optional `version` is specified, that version
+                will be loaded. If it doesn't exist, the most recent ersion will
+                be loaded.
         """
         registry: CardRegistry = getattr(self.registries, f"{card_type.lower()}card")
-        return registry.load_card(name=name, team=team, version=version, uid=uid)
+        return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
