@@ -14,7 +14,10 @@ def test_create(mlflow_experiment: MlFlowExperiment) -> None:
     pass
 
 
-def test_save_load(mlflow_experiment: MlFlowExperiment, sklearn_pipeline: tuple[Pipeline, pd.DataFrame]) -> None:
+def test_save_load(
+    mlflow_experiment: MlFlowExperiment,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+) -> None:
     with mlflow_experiment as exp:
         model, data = sklearn_pipeline
         data_card = DataCard(
@@ -34,12 +37,22 @@ def test_save_load(mlflow_experiment: MlFlowExperiment, sklearn_pipeline: tuple[
             data_card_uid=data_card.uid,
         )
 
+        # Load model card
         exp.register_card(card=model_card)
-        loaded_card = exp.load_card(
+        loaded_card: ModelCard = exp.load_card(
             card_type="model",
             info=types.CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
         )
         loaded_card.load_trained_model()
 
-        # assert loaded_card.data_card_uid == model_card.data_card_uid
-        # load_data = loaded_card = exp.load_card(card_type="data", uid=data_card.uid)
+        assert loaded_card.uid is not None
+        assert loaded_card.trained_model is not None
+
+        print(f"uid = {loaded_card.uid}")
+
+        # Load data card by uid
+        loaded_data_card: DataCard = exp.load_card(
+            card_type="data", info=types.CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+        )
+        assert loaded_data_card.uid is not None
+        assert loaded_data_card.uid == data_card.uid
