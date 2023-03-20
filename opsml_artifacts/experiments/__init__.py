@@ -3,7 +3,6 @@
 
 from opsml_artifacts.experiments import types
 
-
 importlib = __import__("importlib")
 
 _optional_deps = ["mlflow"]
