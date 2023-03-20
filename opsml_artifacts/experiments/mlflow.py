@@ -32,6 +32,11 @@ from opsml_artifacts.registry.storage.types import StorageClientSettings
 logger = ArtifactLogger.get_logger(__name__)
 
 
+@dataclass
+class MlFlowExperimentInfo(ExperimentInfo):
+    tracking_uri: Optional[str] = None
+
+
 class CardRegistries(BaseModel):
     datacard: CardRegistry
     modelcard: CardRegistry
@@ -61,11 +66,6 @@ def get_mlflow_storage_client() -> MlFlowStorageClient:
 
 
 mlflow_storage_client = get_mlflow_storage_client()
-
-
-@dataclass
-class MlFlowExperimentInfo(ExperimentInfo):
-    tracking_uri: str | None = None
 
 
 class MlFlowExperiment(Experiment):
