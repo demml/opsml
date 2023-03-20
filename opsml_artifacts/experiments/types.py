@@ -1,7 +1,6 @@
-from typing import Protocol
-
 from dataclasses import dataclass
 from enum import Enum
+from typing import Protocol
 
 from opsml_artifacts.registry.cards.cards import Card, CardType, VersionType
 
