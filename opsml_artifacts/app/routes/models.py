@@ -7,9 +7,18 @@ class HealthCheckResult(BaseModel):
     is_alive: bool
 
 
+class DebugResponse(BaseModel):
+    url: str
+    storage: str
+    app_env: str
+    proxy_root: Optional[str]
+    is_proxy: Optional[bool]
+
+
 class StorageSettingsResponse(BaseModel):
     storage_type: str
     storage_uri: str
+    proxy: bool = False
 
 
 class VersionRequest(BaseModel):

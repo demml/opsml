@@ -8,6 +8,14 @@ import uuid
 import random
 
 
+def test_client(test_app):
+
+    response = test_app.get("/opsml/settings")
+    response = test_app.get("/opsml/debug")
+    print(response.json())
+    a
+
+
 @pytest.mark.parametrize(
     "data_splits, test_data",
     [
