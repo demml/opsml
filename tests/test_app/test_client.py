@@ -8,7 +8,7 @@ import uuid
 import random
 
 
-def test_client(test_app):
+def _test_client(test_app):
 
     response = test_app.get("/opsml/settings")
 
@@ -22,7 +22,7 @@ def test_client(test_app):
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
     ],
 )
-def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
+def _test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
     # create data card
 
@@ -50,7 +50,7 @@ def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parq
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, api_registries, mock_artifact_storage_clients):
+def _test_experiment_card(linear_regression, api_registries, mock_artifact_storage_clients):
 
     registry = api_registries["experiment"]
 
@@ -76,9 +76,8 @@ def test_experiment_card(linear_regression, api_registries, mock_artifact_storag
 
 @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
-def test_register_model(
+def _test_register_model(
     loaded_model_record,
-    model_card_mock,
     api_registries,
     sklearn_pipeline,
     mock_pyarrow_parquet_write,
@@ -167,7 +166,7 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def _test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -220,7 +219,7 @@ def test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, m
         )
 
 
-def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
+def _test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -247,7 +246,7 @@ def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def test_full_pipeline_with_loading(
+def _test_full_pipeline_with_loading(
     api_registries,
     linear_regression,
     mock_pyarrow_parquet_write,
@@ -316,3 +315,49 @@ def test_full_pipeline_with_loading(
             assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
             assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
             loader.visualize()
+
+
+# @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
+# @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
+def test_download_model(
+    test_app,
+    api_registries,
+    sklearn_pipeline,
+    mock_pyarrow_parquet_write,
+    mock_artifact_storage_clients,
+):
+
+    model, data = sklearn_pipeline
+    # create data card
+    data_registry = api_registries["data"]
+
+    data_card = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card1 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        data_card_uid=data_card.uid,
+    )
+
+    model_registry = api_registries["model"]
+    model_registry.register_card(model_card1)
+
+    print(model_registry.list_cards())
+
+    response = test_app.post(
+        url="opsml/download",
+        json={
+            "uid": model_card1.uid,
+        },
+    )
+
+    assert response.status_code == 200

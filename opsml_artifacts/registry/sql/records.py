@@ -156,6 +156,8 @@ class LoadedModelRecord(LoadRecord):
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
 
+        print(values)
+        a
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_model_card_definition(
             values=values,

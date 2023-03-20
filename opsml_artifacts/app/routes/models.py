@@ -81,3 +81,10 @@ class QueryRecordRequest(BaseModel):
 
 class QueryRecordResponse(BaseModel):
     record: Dict[str, Any]
+
+
+class DownloadModelRequest(BaseModel):
+    versions: Optional[List[str]] = None
+    name: Optional[str] = None
+    team: Optional[str] = None
+    uid: Optional[str] = None
