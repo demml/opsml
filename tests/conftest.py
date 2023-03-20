@@ -20,13 +20,6 @@ os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 import pytest
 import shutil
 import httpx
-from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
-from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
-from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
-
-from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
 from starlette.testclient import TestClient
@@ -50,6 +43,12 @@ import lightgbm as lgb
 # opsml
 from opsml_artifacts.experiments import get_experiment
 from opsml_artifacts.experiments.mlflow import CardRegistries, MlFlowExperiment, MlFlowExperimentInfo
+from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
+from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
+from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
+from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
+from opsml_artifacts import ModelCard
 
 # testing
 from tests.mock_api_registries import CardRegistry
@@ -509,7 +508,9 @@ def drift_dataframe():
     return X_train, y_train, X_test, y_test
 
 
-#################################### MODELS ###################################
+###############################################################################
+# Moodels
+################################################################################
 
 
 @pytest.fixture(scope="function")

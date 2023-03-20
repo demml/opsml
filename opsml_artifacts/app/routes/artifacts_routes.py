@@ -1,13 +1,15 @@
-from typing import Union
 import uuid
+from typing import Union
+
+from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.responses import FileResponse
-from fastapi import APIRouter, Body, Request, BackgroundTasks
-from opsml_artifacts.scripts.load_model_card import ModelLoader
+
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
     AddRecordRequest,
     AddRecordResponse,
+    DownloadModelRequest,
     ListRequest,
     ListResponse,
     StorageSettingsResponse,
@@ -17,10 +19,11 @@ from opsml_artifacts.app.routes.models import (
     UpdateRecordResponse,
     VersionRequest,
     VersionResponse,
-    DownloadModelRequest,
 )
 from opsml_artifacts.app.routes.utils import delete_dir
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.model.types import ModelDownloadInfo
+from opsml_artifacts.scripts.load_model_card import ModelLoader
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -152,7 +155,7 @@ def download_model(
     loader = ModelLoader(
         base_path=uuid.uuid4().hex,
         registry=registry,
-        model_info=payload,
+        model_info=ModelDownloadInfo.construct(**payload.dict()),
     )
     loader.save_to_local_file()
 

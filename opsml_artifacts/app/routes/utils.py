@@ -6,5 +6,5 @@ def delete_dir(dir_path: str):
 
     try:
         shutil.rmtree(dir_path)
-    except Exception as error:
-        raise ValueError(f"Failed to delete {file_path}. {error}")
+    except Exception as error:  # pylint: disable=broad-except
+        raise ValueError(f"Failed to delete {dir_path}. {error}") from error

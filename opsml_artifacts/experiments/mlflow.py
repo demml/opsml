@@ -16,7 +16,7 @@ from opsml_artifacts.experiments.types import (
 )
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.registry.cards.cards import Card
+from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.storage.storage_system import (
     MlFlowStorageClient,
     StorageClientGetter,
@@ -205,7 +205,7 @@ class MlFlowExperiment(Experiment):
         if self._active_run is None:
             raise ValueError("ActiveRun has not been set")
 
-    def register_card(self, card: Card, version_type: str = "minor"):
+    def register_card(self, card: ArtifactCard, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
@@ -218,7 +218,7 @@ class MlFlowExperiment(Experiment):
         registry: CardRegistry = getattr(self.registries, card_type)
         registry.register_card(card=card, version_type=version_type)
 
-    def load_card(self, card_type: str, info: CardInfo) -> Card:
+    def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """Returns an artifact card.
 
         Args:

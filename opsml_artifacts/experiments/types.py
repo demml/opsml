@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
-from opsml_artifacts.registry.cards.cards import Card, CardType, VersionType
+from opsml_artifacts.registry.cards.cards import ArtifactCard, CardType, VersionType
 
 
 class Info(Protocol):
@@ -41,8 +41,8 @@ class Experiment(Protocol):
     def run_id(self) -> str:
         ...
 
-    def register_card(self, card: Card, version_type: VersionType) -> None:
+    def register_card(self, card: ArtifactCard, version_type: VersionType) -> None:
         ...
 
-    def load_card(self, card_type: CardType, info: CardInfo) -> Card:
+    def load_card(self, card_type: CardType, info: CardInfo) -> ArtifactCard:
         ...
