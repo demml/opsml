@@ -6,17 +6,10 @@ from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.cards.cards import (
-    DataCard,
-    ExperimentCard,
-    ModelCard,
-    PipelineCard,
-)
 from opsml_artifacts.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
 
-ArtifactCardType = Union[ModelCard, DataCard, ExperimentCard, PipelineCard]
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 

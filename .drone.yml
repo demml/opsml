@@ -9,7 +9,7 @@ workspace:
 trigger:
   event:
     - pull_request
-  
+
 steps:
   - name: py39
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
@@ -32,8 +32,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - py39
 
   - name: quality-checks
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
@@ -74,7 +72,6 @@ trigger:
   #branch:
     #- main
 steps:
-
   - name: py39
     when:
       event:
