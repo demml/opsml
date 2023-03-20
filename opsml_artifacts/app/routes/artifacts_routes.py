@@ -30,7 +30,7 @@ def get_storage_settings() -> StorageSettingsResponse:
 
     if bool(config.STORAGE_URI):
 
-        # todo (steven) - Think of a different way to do this in the future
+        # TODO (steven) - Think of a different way to do this in the future
         # do we need to return anything if using proxy for both registration and storage
         if not config.is_proxy:
 

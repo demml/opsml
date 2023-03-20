@@ -109,6 +109,7 @@ disable = [
     "missing-module-docstring",
     "too-many-nested-blocks",
     "unused-argument",
+    "fixme",
 ]
 extension-pkg-whitelist = [
     "pydantic"
@@ -121,7 +122,7 @@ format = "pylint"
 statistics = "True"
 max-line-length = 120
 # ignore non-PEP8 lints
-ignore = ["E203", "W503"]
+ignore = ["E203", "W503", "W0511"]
 
 [tool.pytest.ini_options]
 log_cli = true
