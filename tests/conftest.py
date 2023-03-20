@@ -1,15 +1,23 @@
+from typing import Any, Iterator
+
 import os
+import pathlib
 
 # setting initial env vars to override default sql db
-tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
-sql_path = f"sqlite:///{tmp_db_path}"
+# these must be set prior to importing opsml_artifacts sicne they establish their
+DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
+SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
+STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 
-os.environ["OPSML_TRACKING_URI"] = sql_path
-os.environ["OPSML_STORAGE_URI"] = f"{os.path.expanduser('~')}/mlruns"
+os.environ["OPSML_TRACKING_URI"] = SQL_PATH
+os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_FILE_STORE"] = SQL_PATH
+os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 
-from typing import Any
+
 import pytest
-import requests
 import shutil
 import httpx
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
@@ -39,7 +47,20 @@ from sklearn.ensemble import StackingRegressor
 from xgboost import XGBRegressor
 import lightgbm as lgb
 
-session = requests.Session()
+# opsml
+from opsml_artifacts.experiments import get_experiment
+from opsml_artifacts.experiments.mlflow import CardRegistries, MlFlowExperiment, MlFlowExperimentInfo
+
+# testing
+from tests.mock_api_registries import CardRegistry
+
+
+def cleanup() -> None:
+    """Removes temp files"""
+    if os.path.exists(DB_FILE_PATH):
+        os.remove(DB_FILE_PATH)
+    shutil.rmtree(STORAGE_PATH, ignore_errors=True)
+
 
 ################ Test Classes
 class Blob(BaseModel):
@@ -177,54 +198,34 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
         yield mock_dataset
 
 
-############ db registries
-@pytest.fixture(scope="module")
-def test_app():
+################################################################################
+# Mocks
+################################################################################
 
-    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
-    sql_path = f"sqlite:///{tmp_db_path}"
 
-    os.environ["OPSML_TRACKING_URI"] = sql_path
-    os.environ["OPSML_STORAGE_URI"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
-    os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
-
+def mock_app() -> TestClient:
     from opsml_artifacts.app.main import OpsmlApp
 
-    model_api = OpsmlApp(run_mlflow=True)
-    app = model_api.get_app()
-    with TestClient(app) as test_client:
-
-        yield test_client
-
-    os.remove(path=tmp_db_path)
-    try:
-        shutil.rmtree("mlruns")
-    except Exception as error:
-        pass
+    opsml_app = OpsmlApp(run_mlflow=True)
+    return TestClient(opsml_app.get_app())
 
 
-@pytest.fixture(scope="module")
-def api_registries(test_app):
+def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
     def callable_api():
-        return test_app
+        return test_client
 
-    with patch("httpx.Client", callable_api) as mock_registry_api:
+    with patch("httpx.Client", callable_api):
 
         from opsml_artifacts.helpers.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
-
-        from tests.mock_api_registries import CardRegistry
 
         data_registry = CardRegistry(registry_name="data")
         model_registry = CardRegistry(registry_name="model")
         experiment_registry = CardRegistry(registry_name="experiment")
         pipeline_registry = CardRegistry(registry_name="pipeline")
 
-        yield {
+        return {
             "data": data_registry,
             "model": model_registry,
             "experiment": experiment_registry,
@@ -232,19 +233,58 @@ def api_registries(test_app):
         }
 
 
-@pytest.fixture(scope="function")
-def mlflow_experiment(api_registries):
+def mock_mlflow_experiment(info: MlFlowExperimentInfo) -> MlFlowExperiment:
+    """Returns an MlFlowExperiment with a mocked storage system"""
 
-    from opsml_artifacts.experiments.mlflow_exp import MlFlowExperiment
-    from opsml_artifacts.experiments.mlflow_helpers import CardRegistries
+    mocked_registries = mock_registries(mock_app())
+    info.tracking_uri = SQL_PATH
+    mlflow_exp: MlFlowExperiment = get_experiment(info=info)
+    mlflow_storage = mlflow_exp._get_storage_client()
+    api_card_registries = CardRegistries.construct(
+        datacard=mocked_registries["data"],
+        modelcard=mocked_registries["model"],
+        experimentcard=mocked_registries["experiment"],
+    )
+    api_card_registries.set_storage_client(mlflow_storage)
+    mlflow_exp.registries = api_card_registries
+    return mlflow_exp
 
-    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
-    sql_path = f"sqlite:///{tmp_db_path}"
-    mlflow_exp = MlFlowExperiment(
-        project_name="test_exp",
-        team_name="test",
-        user_email="test",
-        tracking_uri=sql_path,
+
+@pytest.fixture(scope="module")
+def test_app() -> Iterator[TestClient]:
+    cleanup()
+    from opsml_artifacts.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp(run_mlflow=True)
+    with TestClient(opsml_app.get_app()) as tc:
+        yield tc
+    # TODO(@damon): Uncomment when done debugging
+    # cleanup()
+
+
+@pytest.fixture(scope="module")
+def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
+    yield mock_registries(test_app)
+
+
+@pytest.fixture
+def mlflow_experiment(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowExperiment]:
+    # yield mock_mlflow_experiment(
+    #     MlFlowExperimentInfo(
+    #         name="test_exp",
+    #         team="test",
+    #         user_email="test",
+    #         tracking_uri=SQL_PATH,
+    #     )
+    # )
+
+    mlflow_exp: MlFlowExperiment = get_experiment(
+        MlFlowExperimentInfo(
+            name="test_exp",
+            team="test",
+            user_email="test",
+            tracking_uri=SQL_PATH,
+        )
     )
     mlflow_storage = mlflow_exp._get_storage_client()
     api_card_registries = CardRegistries.construct(
@@ -255,7 +295,7 @@ def mlflow_experiment(api_registries):
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp.registries = api_card_registries
 
-    return mlflow_exp
+    yield mlflow_exp
 
 
 ######## local clients
@@ -269,6 +309,7 @@ def mock_local_engine():
 @pytest.fixture(scope="function")
 def db_registries(mock_local_engine):
 
+    # TODO(@damom): DRY this
     tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
     sql_path = f"sqlite:///{tmp_db_path}"
 
@@ -528,8 +569,8 @@ def stacking_regressor():
     return reg, X
 
 
-@pytest.fixture(scope="module")
-def sklearn_pipeline():
+@pytest.fixture(scope="session")
+def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
     data = pd.DataFrame(
         [
             dict(CAT1="a", CAT2="c", num1=0.5, num2=0.6, num3=0, y=0),
@@ -611,7 +652,6 @@ def linear_regression():
 
 @pytest.fixture(scope="function")
 def test_model_card(sklearn_pipeline):
-    # create data card
     model, data = sklearn_pipeline
     model_card = ModelCard(
         trained_model=model,
