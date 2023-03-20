@@ -211,7 +211,7 @@ class MlFlowProject(Project):
         if self._active_run is None:
             raise ValueError("ActiveRun has not been set")
 
-    def register_card(self, card: cards.Card, version_type: str = "minor"):
+    def register_card(self, card: cards.ArtifactCard, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
@@ -224,7 +224,7 @@ class MlFlowProject(Project):
         registry: CardRegistry = getattr(self.registries, card_type)
         registry.register_card(card=card, version_type=version_type)
 
-    def load_card(self, card_type: str, info: cards.CardInfo) -> cards.Card:
+    def load_card(self, card_type: str, info: cards.CardInfo) -> cards.ArtifactCard:
         """Returns an artifact card.
 
         Args:
