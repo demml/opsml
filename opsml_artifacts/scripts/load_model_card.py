@@ -1,6 +1,5 @@
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import click
 
@@ -14,7 +13,6 @@ BASE_SAVE_PATH = "app"
 MODEL_FILE = "model_def.json"
 
 
-@dataclass
 class ModelLoader:
     """Class for loading ModelCard Onnx definition"""
 
@@ -66,7 +64,7 @@ class ModelLoader:
             uid=self.model_info.uid,
         )
 
-        api_def = self._get_model_api_def(model_card=model_card)
+        api_def = self._get_model_api_def(model_card=cast(ModelCard, model_card))
         self._save_api_def(api_def=api_def)
 
     def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
