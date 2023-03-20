@@ -4,7 +4,7 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
-    Card,
+    ArtifactCard,
     DataCard,
     ExperimentCard,
     ModelCard,
@@ -81,7 +81,7 @@ class ModelCardRegistry(Registry):
     # custom registration
     def register_card(
         self,
-        card: Card,
+        card: ArtifactCard,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -243,7 +243,7 @@ class CardRegistry:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> Card:
+    ) -> ArtifactCard:
 
         """Loads a specific card
 
@@ -268,7 +268,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: Card,
+        card: ArtifactCard,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -293,7 +293,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: Card,
+        card: ArtifactCard,
     ) -> None:
         """Update and artifact card (DataCard only) based on current registry
 

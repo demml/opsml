@@ -24,8 +24,8 @@ class Project(Protocol):
     def run_id(self) -> Optional[str]:
         ...
 
-    def register_card(self, card: cards.Card, version_type: cards.VersionType) -> None:
+    def register_card(self, card: cards.ArtifactCard, version_type: cards.VersionType) -> None:
         ...
 
-    def load_card(self, card_type: cards.CardType, info: cards.CardInfo) -> cards.Card:
+    def load_card(self, card_type: cards.CardType, info: cards.CardInfo) -> cards.ArtifactCard:
         ...

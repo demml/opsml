@@ -35,9 +35,6 @@ from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 
-# TODO(@damon): Do we need this? Can't we just use ArtifactCard?
-Card = Union["ExperimentCard", "ModelCard", "DataCard", "PipelineCard"]
-
 
 class CardType(str, Enum):
     DATA = "data"
