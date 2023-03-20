@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from opsml_artifacts.app.core.config import config
-from opsml_artifacts.app.routes.models import HealthCheckResult
+from opsml_artifacts.app.routes.models import HealthCheckResult, DebugResponse
 
 router = APIRouter()
 
@@ -11,16 +11,16 @@ def get_healthcheck() -> HealthCheckResult:
     return HealthCheckResult(is_alive=True)
 
 
-@router.get("/debug")
-async def debug() -> dict[str, str]:
+@router.get("/debug", response_model=DebugResponse, name="debug")
+async def debug() -> DebugResponse:
 
-    return {
-        "url": config.TRACKING_URI,
-        "storage": config.STORAGE_URI,
-        "app_env": config.APP_ENV,
-        "proxy_root": config.proxy_root,
-        "is_proxy": config.is_proxy,
-    }
+    return DebugResponse(
+        url=config.TRACKING_URI,
+        storage=config.STORAGE_URI,
+        app_env=config.APP_ENV,
+        proxy_root=config.proxy_root,
+        is_proxy=config.is_proxy,
+    )
 
 
 @router.get(

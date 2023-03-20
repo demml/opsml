@@ -115,6 +115,7 @@ extension-pkg-whitelist = [
     "pydantic"
 ]
 
+
 [tool.flake8]
 # This section is just a doc placeholder..see setup.cfg
 max-complexity = 10
