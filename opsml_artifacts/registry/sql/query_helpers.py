@@ -6,7 +6,6 @@ from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-
 from opsml_artifacts.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
