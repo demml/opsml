@@ -1,3 +1,7 @@
+# opsml-artifacts
+mlruns/
+opsml_artifacts/api/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -107,6 +111,4 @@ notebooks/
 .test_local.py
 
 examples/.DS_Store
-opsml_artifacts/api/
-test_scripts*
-
+**/*.orig

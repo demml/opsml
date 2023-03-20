@@ -1,3 +1,4 @@
+from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -32,6 +33,22 @@ from opsml_artifacts.registry.storage.storage_system import StorageClientType
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
+
+# TODO(@damon): Do we need this? Can't we just use ArtifactCard?
+Card = Union["ExperimentCard", "ModelCard", "DataCard", "PipelineCard"]
+
+
+class CardType(str, Enum):
+    DATA = "data"
+    MODEL = "model"
+    EXPERIMENT = "experiment"
+    PIPELINE = "pipeline"
+
+
+class VersionType(str, Enum):
+    MAJOR = "major"
+    MINOR = "minor"
+    PATCH = "patch"
 
 
 class ArtifactCard(BaseModel):
@@ -629,6 +646,3 @@ class ExperimentCard(ArtifactCard):
             """
             )
         return ExperimentRegistryRecord(**self.dict(exclude=exclude_attr))
-
-
-CardType = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
