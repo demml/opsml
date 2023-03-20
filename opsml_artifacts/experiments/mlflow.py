@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional, cast
 
 from mlflow.entities import Run, RunStatus
+from mlflow.entities.run_data import RunData
 from mlflow.tracking import MlflowClient
 from pydantic import BaseModel
 
@@ -34,6 +35,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 @dataclass
 class MlFlowExperimentInfo(ExperimentInfo):
+    run_id: Optional[str] = None
     tracking_uri: Optional[str] = None
 
 
@@ -69,12 +71,13 @@ mlflow_storage_client = get_mlflow_storage_client()
 
 
 class MlFlowExperiment(Experiment):
-    def __init__(self, info: MlFlowExperimentInfo):
+    def __init__(self, info: MlFlowExperimentInfo, run_id: Optional[str] = None):
         """Instantiates an MlFlow experiment that can log artifacts
         and cards to the Opsml Registry
 
         Args:
             info: experiment information
+            run_id: a previous run_id to load
         """
 
         # user supplied
@@ -83,6 +86,7 @@ class MlFlowExperiment(Experiment):
         self.project_name = info.name.lower()
 
         # tracking attr
+        self._run_id = info.run_id
         self._active_run: Optional[Run] = None
         self._project_id: Optional[str] = None
 
@@ -161,24 +165,19 @@ class MlFlowExperiment(Experiment):
 
     def _set_run(self) -> Run:
 
-        """Sets the run id for the project. If an existing run_id is passed,
+        """Sets the run id for the project. If an existing run_id is set,
         The tracking client activates the run. If no existing run_id is passed,
         A new run is created.
 
-        Args:
-            project_id (str): Project id
-
         Returns:
-            MlFlow Run
+            An existing or new mlflow Run
         """
-
-        existing_run_id = os.environ.get("OPSML_RUN_ID")
-        if bool(existing_run_id):
+        if self._run_id is not None:
             self._mlflow_client.update_run(
-                run_id=existing_run_id,
-                status=RunStatus.RUNNING,
+                run_id=self._run_id,
+                status=RunStatus.to_string(RunStatus.RUNNING),
             )
-            return self._mlflow_client.get_run(existing_run_id)
+            return self._mlflow_client.get_run(self._run_id)
         return self._mlflow_client.create_run(experiment_id=self.project_id)
 
     def __enter__(self):
@@ -201,6 +200,10 @@ class MlFlowExperiment(Experiment):
         # Remove run id
         self._storage_client.run_id = None
         logger.info("experiment complete")
+
+    def _verify_active(self) -> None:
+        if self._active_run is None:
+            raise ValueError("ActiveRun has not been set")
 
     def register_card(self, card: Card, version_type: str = "minor"):
         """Register a given artifact card
@@ -229,3 +232,21 @@ class MlFlowExperiment(Experiment):
         """
         registry: CardRegistry = getattr(self.registries, f"{card_type.lower()}card")
         return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
+
+    def log_metric(self, key: str, value: float, timestamp: Optional[int] = None, step: Optional[int] = None) -> None:
+        self._verify_active()
+        self._mlflow_client.log_metric(run_id=self.run_id, key=key, value=value, timestamp=timestamp, step=step)
+
+    @property
+    def metrics(self) -> dict[str, float]:
+        run_data: RunData = self._mlflow_client.get_run(self.run_id).data
+        return run_data.metrics
+
+    def log_param(self, key: str, value: str) -> None:
+        self._verify_active()
+        self._mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
+
+    @property
+    def params(self) -> dict[str, str]:
+        run_data: RunData = self._mlflow_client.get_run(self.run_id).data
+        return run_data.params

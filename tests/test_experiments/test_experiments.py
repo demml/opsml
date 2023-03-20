@@ -1,17 +1,45 @@
 import pandas as pd
+import pytest
 from sklearn import pipeline
 
 from opsml_artifacts import DataCard, ModelCard
 from opsml_artifacts.experiments import types
-from opsml_artifacts.experiments.mlflow import MlFlowExperiment
+from opsml_artifacts.experiments.mlflow import MlFlowExperiment, MlFlowExperimentInfo
 from opsml_artifacts.helpers.logging import ArtifactLogger
+
+from tests import conftest
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def test_create(mlflow_experiment: MlFlowExperiment) -> None:
-    logger.info("Hello, world")
-    pass
+def test_metrics(mlflow_experiment: MlFlowExperiment) -> None:
+    with pytest.raises(ValueError) as ve:
+        mlflow_experiment.log_metric(key="m1", value=1.0)
+    assert ve.match("^ActiveRun")
+
+    info = MlFlowExperimentInfo(name="test", team="test", user_email="user@test.com")
+    with conftest.mock_mlflow_experiment(info) as exp:
+        exp.log_metric(key="m1", value=1.1)
+        info.run_id = exp.run_id
+
+    with conftest.mock_mlflow_experiment(info) as exp:
+        assert len(exp.metrics) == 1
+        assert exp.metrics["m1"] == 1.1
+
+
+def test_params(mlflow_experiment: MlFlowExperiment) -> None:
+    with pytest.raises(ValueError) as ve:
+        mlflow_experiment.log_metric(key="m1", value=1.1)
+    assert ve.match("^ActiveRun")
+
+    info = MlFlowExperimentInfo(name="test", team="test", user_email="user@test.com")
+    with conftest.mock_mlflow_experiment(info) as exp:
+        exp.log_param(key="m1", value="apple")
+        info.run_id = exp.run_id
+
+    with conftest.mock_mlflow_experiment(info) as exp:
+        assert len(exp.params) == 1
+        assert exp.params["m1"] == "apple"
 
 
 def test_save_load(
