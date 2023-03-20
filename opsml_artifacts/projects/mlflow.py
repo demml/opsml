@@ -4,19 +4,16 @@ from typing import Optional, cast
 
 from mlflow.entities import Run, RunStatus
 from mlflow.entities.run_data import RunData
+from mlflow.entities.run_info import RunInfo
+from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
 from pydantic import BaseModel
 
 from opsml_artifacts import CardRegistry
-from opsml_artifacts.experiments.types import (
-    ActiveRun,
-    CardInfo,
-    Experiment,
-    ExperimentInfo,
-)
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.registry.cards.cards import Card
+from opsml_artifacts.projects.types import Project, ProjectInfo
+from opsml_artifacts.registry.cards import cards
 from opsml_artifacts.registry.storage.storage_system import (
     MlFlowStorageClient,
     StorageClientGetter,
@@ -34,7 +31,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 @dataclass
-class MlFlowExperimentInfo(ExperimentInfo):
+class MlFlowProjectInfo(ProjectInfo):
     run_id: Optional[str] = None
     tracking_uri: Optional[str] = None
 
@@ -70,25 +67,33 @@ def get_mlflow_storage_client() -> MlFlowStorageClient:
 mlflow_storage_client = get_mlflow_storage_client()
 
 
-class MlFlowExperiment(Experiment):
-    def __init__(self, info: MlFlowExperimentInfo, run_id: Optional[str] = None):
-        """Instantiates an MlFlow experiment that can log artifacts
-        and cards to the Opsml Registry
+class MlFlowProject(Project):
+    def __init__(self, info: MlFlowProjectInfo):
+        """Instantiates an MlFlow project which log cards, metrics and params to
+        the opsml registry.
+
+        If info.run_id is set, that run_id will be loaded as read only. You can
+        retrieve cards, metrics, and params, however you cannot write new data
+        to the run. If you want to write new data to the run, you have to make
+        it active via the context manager.
+
+        Example:
+
+            proj = MlFlowPro
 
         Args:
-            info: experiment information
-            run_id: a previous run_id to load
+            info: experiment information. if a run_id is given, that run is set
+            as the project's current run.
         """
 
         # user supplied
+        self.name = info.name.lower()
         self.team_name = info.team
         self.user_email = info.user_email
-        self.project_name = info.name.lower()
 
         # tracking attr
-        self._run_id = info.run_id
+        self._run_id: Optional[str] = info.run_id
         self._active_run: Optional[Run] = None
-        self._project_id: Optional[str] = None
 
         self._mlflow_client = MlflowClient(
             tracking_uri=info.tracking_uri or os.environ.get("OPSML_TRACKING_URI"),
@@ -96,6 +101,11 @@ class MlFlowExperiment(Experiment):
 
         self._storage_client = self._get_storage_client()
         self.registries = self._get_card_registries()
+
+        self._project_id = self._get_project_id(self.name)
+        if info.run_id is not None:
+            self._verify_run_id(info.run_id)
+            self._run_id = info.run_id
 
     def _get_card_registries(self):
 
@@ -120,92 +130,76 @@ class MlFlowExperiment(Experiment):
     @property
     def artifact_save_path(self) -> str:
         """Returns the path where artifacts are saved."""
-        self._active_run = cast(ActiveRun, self._active_run)
-        return self._active_run.info._artifact_uri  # pylint: disable=protected-access
+        self._verify_active()
+        info: RunInfo = cast(Run, self._active_run).info
+        return info.artifact_uri
+
+    @property
+    def run_id(self) -> Optional[str]:
+        """Run id for mlflow run"""
+        return self._run_id
 
     @property
     def project_id(self):
         """Returns the mlflow Project id"""
-        if bool(self._project_id):
-            return self._project_id
+        return self._project_id
 
-        raise ValueError("No project id has been found")
-
-    @property
-    def run_id(self) -> str:
-        """Run id for mlflow run"""
-
-        if self._active_run is not None:
-            return str(self._active_run.info.run_id)
-
-        raise ValueError("Active run has not been set")
-
-    def _get_existing_project_id(self) -> Optional[str]:
-        project = self._mlflow_client.get_experiment_by_name(self.project_name)
-
-        if project is None:
-            return None
-
-        return project.experiment_id
-
-    def _set_project(self) -> str:
-        """Sets the project to use with mlflow. If a project_id associated
-        with a project name does not exist it is created
+    def _get_project_id(self, name: str) -> str:
+        """Finds the project_id from mlflow for the given name. If an existing
+        project does not exist, a new one is created.
 
         Returns:
             project_id
         """
+        project = self._mlflow_client.get_experiment_by_name(name=name)
+        if project is None:
+            return self._mlflow_client.create_experiment(name=name)
+        return project.experiment_id
 
-        project_id = self._get_existing_project_id()
-
-        if project_id is None:
-            project_id = self._mlflow_client.create_experiment(name=self.project_name)
-
-        return project_id
-
-    def _set_run(self) -> Run:
-
-        """Sets the run id for the project. If an existing run_id is set,
-        The tracking client activates the run. If no existing run_id is passed,
-        A new run is created.
-
-        Returns:
-            An existing or new mlflow Run
-        """
-        if self._run_id is not None:
-            self._mlflow_client.update_run(
-                run_id=self._run_id,
-                status=RunStatus.to_string(RunStatus.RUNNING),
-            )
-            return self._mlflow_client.get_run(self._run_id)
-        return self._mlflow_client.create_run(experiment_id=self.project_id)
+    def _verify_run_id(self, run_id: str) -> None:
+        """Verifies the run exists for the given project."""
+        try:
+            self._mlflow_client.get_run(run_id)
+        except MlflowException as exc:
+            raise ValueError("Invalid run_id") from exc
 
     def __enter__(self):
+        if self._active_run is not None:
+            raise ValueError("Could not start run. Another run is current active")
 
-        self._project_id = self._set_project()
-        self._active_run = self._set_run()
+        if self.run_id is not None:
+            self._mlflow_client.update_run(
+                run_id=self.run_id,
+                status=RunStatus.to_string(RunStatus.RUNNING),
+            )
+            self._active_run = self._mlflow_client.get_run(self._run_id)
+        else:
+            self._active_run = self._mlflow_client.create_run(experiment_id=self.project_id)
 
+        info = self._active_run.info
+        self._run_id = info.run_id
         # set storage client run id
-        self._storage_client.run_id = self.run_id
+        self._storage_client.run_id = self._run_id
         self._storage_client.artifact_path = self.artifact_save_path
-        logger.info("starting experiment")
+        logger.info("starting run: %s", self._run_id)
 
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-
         # set run to terminated
         self._mlflow_client.set_terminated(run_id=self.run_id)
 
         # Remove run id
+        logger.info("ending run: %s", self._run_id)
         self._storage_client.run_id = None
-        logger.info("experiment complete")
+        self._run_id = None
+        self._active_run = None
 
     def _verify_active(self) -> None:
         if self._active_run is None:
             raise ValueError("ActiveRun has not been set")
 
-    def register_card(self, card: Card, version_type: str = "minor"):
+    def register_card(self, card: cards.Card, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
@@ -213,12 +207,12 @@ class MlFlowExperiment(Experiment):
             version_type (str): Version type for increment. Options are "major", "minor" and
             "patch". Defaults to "minor"
         """
-
+        self._verify_active()
         card_type = card.__class__.__name__.lower()
         registry: CardRegistry = getattr(self.registries, card_type)
         registry.register_card(card=card, version_type=version_type)
 
-    def load_card(self, card_type: str, info: CardInfo) -> Card:
+    def load_card(self, card_type: str, info: cards.CardInfo) -> cards.Card:
         """Returns an artifact card.
 
         Args:
