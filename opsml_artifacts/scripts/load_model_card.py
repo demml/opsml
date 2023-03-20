@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, cast
 
@@ -18,14 +18,23 @@ MODEL_FILE = "model_def.json"
 class ModelLoaderCli:
     """Class for loading ModelCard Onnx definition"""
 
-    storage_type: str
-    versions: List[Optional[str]]
-    name: Optional[str] = None
-    team: Optional[str] = None
-    uid: Optional[str] = None
+    def __init__(
+        self,
+        versions: List[Optional[str]],
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        uid: Optional[str] = None,
+        base_path: str = BASE_SAVE_PATH,
+        registry: CardRegistry = CardRegistry(registry_name="model"),
+    ):
 
-    def __post_init__(self):
-        self.registry = CardRegistry(registry_name="model")
+        self.versions = versions
+        self.name = name
+        self.team = team
+        self.uid = uid
+        self.base_path = base_path
+        self.file_paths: List[str] = []
+        self.registry = registry
 
     def _set_path(self, api_def: ModelApiDef) -> Path:
         path = Path(f"{BASE_SAVE_PATH}/{self.name}/{api_def.model_version}/")
@@ -44,6 +53,7 @@ class ModelLoaderCli:
 
         filepath = self._set_path(api_def=api_def)
         self._write_api_json(api_def=api_def, filepath=filepath)
+        self.file_paths.append[filepath]
 
     def load_and_save_model(self, version: Optional[str] = None):
         model_card = self.registry.load_card(
@@ -84,7 +94,6 @@ class ModelLoaderCli:
 @click.option("--team", help="Name of team that model belongs to", required=False, type=str)
 @click.option("--version", help="Version of model to load", required=False, multiple=True, type=int)
 @click.option("--uid", help="Unique id of modelcard", required=False, type=str)
-@click.option("--storage_type", help="Storage client for loading model", default="local", required=False, type=str)
 def load_model_card_to_file(name: str, team: str, version: int, uid: str, storage_type: str):
     if uid is None:
         if not all(bool(arg) for arg in [name, team]):
@@ -96,7 +105,6 @@ def load_model_card_to_file(name: str, team: str, version: int, uid: str, storag
     model_versions = cast(tuple, version)  # version is a multiple of ints that click converts to a tuple
     versions = list(model_versions)
     loader = ModelLoaderCli(
-        storage_type=storage_type,
         name=name,
         team=team,
         versions=versions,
