@@ -69,21 +69,33 @@ mlflow_storage_client = get_mlflow_storage_client()
 
 class MlFlowProject(Project):
     def __init__(self, info: MlFlowProjectInfo):
-        """Instantiates an MlFlow project which log cards, metrics and params to
-        the opsml registry.
+        """Instantiates an mlflow project which log cards, metrics and params to
+            the opsml registry and mlflow.
 
-        If info.run_id is set, that run_id will be loaded as read only. You can
-        retrieve cards, metrics, and params, however you cannot write new data
-        to the run. If you want to write new data to the run, you have to make
-        it active via the context manager.
+            If info.run_id is set, that run_id will be loaded as read only. In read
+            only mode, you can retrieve cards, metrics, and params, however you
+            cannot write new data. If you want to write new data to the run, you
+            have to make it active via a context manager.
 
-        Example:
+            Example:
 
-            proj = MlFlowPro
+                project: MlFlowProject = get_project(
+                    MlFlowProjectInfo(
+                        name="test-project",
+                        team="devops-ml",
+                        # If run_id is onitted, a new run is created.
+                        run_id="123ab123kaj8u8naskdfh813",
+                    )
+                )
+                with mlflow_exp as project:
+                    # Now that the project context is entered, it's active.
+                    # You can write cards, params, and metrics to the project.
+                    project.log_param(key="my_param", value="12.34")
+        )
 
-        Args:
-            info: experiment information. if a run_id is given, that run is set
-            as the project's current run.
+            Args:
+                info: experiment information. if a run_id is given, that run is set
+                as the project's current run.
         """
 
         # user supplied
