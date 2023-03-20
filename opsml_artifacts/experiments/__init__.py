@@ -1,30 +1,33 @@
 # pylint: skip-file
 # mypy: ignore-errors
 
-from opsml_artifacts.experiments.mlflow import MlFlowExperiment, MlFlowExperimentInfo
-from opsml_artifacts.experiments.types import Experiment, ExperimentInfo
+from opsml_artifacts.experiments import types
 
 
 importlib = __import__("importlib")
 
-_optional_exp_dep_mappings = {"mlflow": "MlFlowExperiment"}
-_missing_deps = []
+_optional_deps = ["mlflow"]
 
-for dep in _optional_exp_dep_mappings.keys():
+for dep in _optional_deps:
     try:
         importlib.import_module(dep)
+        if dep == "mlflow":
+            from opsml_artifacts.experiments import mlflow
     except ImportError:
-        _missing_dep = _optional_exp_dep_mappings.pop(dep)
-        _missing_deps.append(_missing_dep)
-
-# import non-missing
-for dep in _optional_exp_dep_mappings.keys():
-    if dep == "mlflow":
-        from opsml_artifacts.experiments.mlflow import MlFlowExperiment
+        pass
 
 
-def get_experiment(info: ExperimentInfo) -> Experiment:
-    if isinstance(info, MlFlowExperimentInfo):
-        return MlFlowExperiment(info)
+def get_experiment(info: mlflow.ExperimentInfo) -> types.Experiment:
+    """Retrieves or creates an experiment.
+
+    Args:
+        info: Experiment information. `name` and `team` are required.
+
+    Returns:
+        A new or existing experiment.
+
+    """
+    if isinstance(info, mlflow.MlFlowExperimentInfo):
+        return mlflow.MlFlowExperiment(info)
     else:
         raise ValueError("Unknown experiment type")
