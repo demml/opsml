@@ -11,9 +11,9 @@ import random
 def test_client(test_app):
 
     response = test_app.get("/opsml/settings")
-    response = test_app.get("/opsml/debug")
-    print(response.json())
-    a
+
+    assert response.status_code == 200
+    assert response.json()["proxy"] == True
 
 
 @pytest.mark.parametrize(
