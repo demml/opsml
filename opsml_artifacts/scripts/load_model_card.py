@@ -64,7 +64,6 @@ class ModelLoaderCli:
         )
 
         api_def = self._get_model_api_def(model_card=model_card)
-
         self._save_api_def(api_def=api_def)
 
     def save_model_api_def_from_versions(self) -> None:
