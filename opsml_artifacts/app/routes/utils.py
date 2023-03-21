@@ -60,6 +60,14 @@ class ModelDownloader:
         self.config = config
         self.base_path = BASE_SAVE_PATH
 
+    @property
+    def file_path(self) -> str:
+        return str(self._file_path)
+
+    @file_path.setter
+    def file_path(self, file_path: str):
+        self._file_path = file_path
+
     def get_record(self) -> Dict[str, Any]:
         record = self.registry.registry.list_cards(
             uid=self.model_info.uid,
@@ -73,7 +81,7 @@ class ModelDownloader:
             config=self.config,
         )
 
-    def load_card(self, record: Dict[str, Any]) -> ArtifactCard:
+    def load_card(self) -> ArtifactCard:
         raw_record = self.get_record()
 
         loaded_record = load_record(
@@ -88,7 +96,7 @@ class ModelDownloader:
         )
 
     def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
-        onnx_model = model_card.onnx_model()
+        onnx_model = model_card.onnx_model(start_onnx_runtime=False)
         api_model = onnx_model.get_api_model()
 
         return api_model

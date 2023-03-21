@@ -110,7 +110,8 @@ def run_app(run_mlflow: bool, login: bool):
     return app
 
 
-# TODO (steven) - figure out cli stuff later. Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )
+# TODO (steven) - figure out cli stuff later.
+# Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )
 # @click.command()
 # @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
 # @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")

@@ -95,7 +95,11 @@ def load_model_card_to_file(name: str, team: str, version: str, uid: str):
         version=version,
         uid=uid,
     )
-    loader = ModelLoader(model_info=model_info)
+    model_registry = CardRegistry(registry_name="model")
+    loader = ModelLoader(
+        model_info=model_info,
+        registry=model_registry,
+    )
     loader.save_to_local_file()
 
 
