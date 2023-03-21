@@ -76,7 +76,7 @@ class OpsmlApp:
         if self.run_mlflow:
             self.build_mlflow_app()
 
-        self.add_middleware()
+        # self.add_middleware()
 
     def run(self):
         """Run FastApi App"""
@@ -114,28 +114,37 @@ class OpsmlApp:
 #
 
 
-@click.command()
-@click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
-@click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
-@click.option("--host", default="0.0.0.0", help="HTTP port. Defaults to 8000")
-@click.option("--workers", default=1, help="Number of workers")
-def opsml_gunicorn_server(mlflow: bool, port: int, workers: int, host: str) -> None:
+from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
 
-    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+mlflow_config = initialize_mlflow()
+if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+    config.is_proxy = True
+    config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+app = OpsmlApp(run_mlflow=True).get_app()
 
-    mlflow_config = initialize_mlflow()
-    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
-        config.is_proxy = True
-        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
-
-    app = OpsmlApp(run_mlflow=mlflow).get_app()
-
-    options = {
-        "bind": f"{host}:{port}",
-        "workers": workers,
-        "worker_class": "uvicorn.workers.UvicornWorker",
-        "config": "gunicorn.conf.py",
-    }
-
-    logger.info("Starting ML Server")
-    GunicornApplication(app, options).run()
+# @click.command()
+# @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
+# @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
+# @click.option("--host", default="0.0.0.0", help="HTTP port. Defaults to 8000")
+# @click.option("--workers", default=1, help="Number of workers")
+# def opsml_gunicorn_server(mlflow: bool, port: int, workers: int, host: str) -> None:
+#
+#    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+#
+#    mlflow_config = initialize_mlflow()
+#    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+#        config.is_proxy = True
+#        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+#
+#    app = OpsmlApp(run_mlflow=mlflow).get_app()
+#
+#    options = {
+#        "bind": f"{host}:{port}",
+#        "workers": workers,
+#        "worker_class": "uvicorn.workers.UvicornWorker",
+#        "config": "gunicorn.conf.py",
+#    }
+#
+#    logger.info("Starting ML Server")
+#    GunicornApplication(app, options).run()
+#
