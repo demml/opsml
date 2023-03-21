@@ -85,7 +85,7 @@ python-dotenv = "^0.21.1"
 [tool.poetry.scripts]
 load_model_card_to_file = "opsml_artifacts.scripts.load_model_card:load_model_card_to_file"
 opsml-uvicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
-opsml-gunicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
+opsml-gunicorn-server = 'opsml_artifacts.app.main:opsml_gunicorn_server'
 
 [tool.isort]
 profile = "black"
