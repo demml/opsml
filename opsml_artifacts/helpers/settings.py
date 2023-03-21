@@ -142,9 +142,13 @@ class DefaultAttrCreator:
         """
         request_client = cast(ApiClient, self._env_vars.get("request_client"))
         storage_settings = request_client.get_request(route=api_routes.SETTINGS)
+        storage_uri = storage_settings.get("storage_uri")
+
+        if storage_settings["proxy"]:
+            storage_uri = "local"
 
         return StorageSettingsGetter(
-            storage_uri=storage_settings.get("storage_uri"),
+            storage_uri=storage_uri,
         ).get_storage_settings()
 
     def _get_storage_settings_from_local(self) -> StorageSettings:
