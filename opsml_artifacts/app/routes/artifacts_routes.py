@@ -152,6 +152,7 @@ def download_model(
     """Downloads a model card"""
 
     registry: CardRegistry = getattr(request.app.state.registries, "model")
+
     loader = ModelLoader(
         base_path=uuid.uuid4().hex,
         registry=registry,
