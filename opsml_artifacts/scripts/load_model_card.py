@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional, cast, Any, Dict
 
 import click
 
@@ -19,8 +19,8 @@ class ModelLoader:
     def __init__(
         self,
         model_info: ModelDownloadInfo,
+        registry: CardRegistry,
         base_path: str = BASE_SAVE_PATH,
-        registry: CardRegistry = CardRegistry(registry_name="model"),
     ):
 
         self.model_info = model_info
@@ -55,6 +55,16 @@ class ModelLoader:
         self._write_api_json(api_def=api_def, filepath=filepath)
         path = filepath.absolute().as_posix()
         self.file_path = path
+
+    def _replace_prefix(self, record:Dict[str, Any]):
+
+    def _get_record(self):
+        record = self.registry.registry.list_cards(
+            name=self.model_info.name,
+            team=self.model_info.team,
+            version=self.model_info.version,
+            uid=self.model_info.uid,
+        )
 
     def load_and_save_model(self, version: Optional[str] = None):
         model_card = self.registry.load_card(
