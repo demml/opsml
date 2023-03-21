@@ -5,7 +5,6 @@ import click
 import uvicorn
 from fastapi import Depends, FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
 
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.core.event_handlers import start_app_handler, stop_app_handler
@@ -16,7 +15,7 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
-instrumentator = Instrumentator()
+# instrumentator = Instrumentator()
 
 
 class OpsmlApp:
@@ -49,8 +48,8 @@ class OpsmlApp:
     def add_shutdown(self):
         self.app.add_event_handler("shutdown", stop_app_handler(app=self.app))
 
-    def add_instrument(self):
-        instrumentator.instrument(self.app).expose(self.app)
+    # def add_instrument(self):
+    # instrumentator.instrument(self.app).expose(self.app)
 
     def build_mlflow_app(self):
         from mlflow.server import app as mlflow_flask
@@ -77,7 +76,6 @@ class OpsmlApp:
         if self.run_mlflow:
             self.build_mlflow_app()
 
-        self.add_instrument()
         self.add_middleware()
 
     def run(self):
@@ -91,28 +89,29 @@ class OpsmlApp:
         return self.app
 
 
-@click.command()
-@click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
-@click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
-@click.option("--login", default=False, is_flag=True, help="Whether to use basic username and password")
-def opsml_uvicorn_server(port: int, mlflow: bool, login: bool) -> None:
-
-    logger.info("Starting ML Server")
-
-    if mlflow:
-        logger.info("Starting mlflow")
-
-        from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
-
-        mlflow_config = initialize_mlflow()
-
-        if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
-            config.is_proxy = True
-            config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
-
-    model_api = OpsmlApp(run_mlflow=mlflow, port=port, login=login)
-    model_api.build_app()
-    model_api.run()
+# @click.command()
+# @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
+# @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
+# @click.option("--login", default=False, is_flag=True, help="Whether to use basic username and password")
+# def opsml_uvicorn_server(port: int, mlflow: bool, login: bool) -> None:
+#
+#    logger.info("Starting ML Server")
+#
+#    if mlflow:
+#        logger.info("Starting mlflow")
+#
+#        from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+#
+#        mlflow_config = initialize_mlflow()
+#
+#        if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+#            config.is_proxy = True
+#            config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+#
+#    model_api = OpsmlApp(run_mlflow=mlflow, port=port, login=login)
+#    model_api.build_app()
+#    model_api.run()
+#
 
 
 @click.command()
@@ -121,6 +120,13 @@ def opsml_uvicorn_server(port: int, mlflow: bool, login: bool) -> None:
 @click.option("--host", default="0.0.0.0", help="HTTP port. Defaults to 8000")
 @click.option("--workers", default=1, help="Number of workers")
 def opsml_gunicorn_server(mlflow: bool, port: int, workers: int, host: str) -> None:
+
+    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+
+    mlflow_config = initialize_mlflow()
+    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+        config.is_proxy = True
+        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
 
     app = OpsmlApp(run_mlflow=mlflow).get_app()
 
