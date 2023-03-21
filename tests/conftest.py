@@ -373,6 +373,7 @@ def mock_gcs_storage_response():
             return {
                 "storage_type": "gcs",
                 "storage_uri": "gs://test",
+                "proxy": False,
             }
 
     class MockHTTPX(httpx.Client):
