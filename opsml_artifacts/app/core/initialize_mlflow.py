@@ -1,7 +1,7 @@
 # pylint: disable-all
 import sys
 
-import mlflow
+from mlflow.server.handlers import initialize_backend_stores
 from mlflow.utils.server_cli_utils import resolve_default_artifact_root
 
 from opsml_artifacts.app.core.config import MlFlowConfig
@@ -39,7 +39,7 @@ def initialize_mlflow() -> MlFlowConfig:
 
     default_artifact_root = resolve_default_artifact_root(True, default_artifact_root, backend_store_uri)
     try:
-        mlflow.server.handlers.initialize_backend_stores(backend_store_uri, registry_store_uri, default_artifact_root)
+        initialize_backend_stores(backend_store_uri, registry_store_uri, default_artifact_root)
         return config
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error initializing backend store")
