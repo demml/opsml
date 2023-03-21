@@ -319,20 +319,18 @@ def test_full_pipeline_with_loading(
             loader.visualize()
 
 
-@patch("opsml_artifacts.registry.sql.registry.CardRegistry.load_card")
+@patch("opsml_artifacts.app.routes.utils.ModelDownloader.load_card")
+@patch("opsml_artifacts.registry.cards.cards.ModelCard._get_sample_data_for_api")
 def test_download_model(
+    sample_data,
     mock_load_card,
     test_app,
     test_model_card,
 ):
 
     mock_load_card.return_value = test_model_card
+    sample_data.return_value = {"Inputs": [1, 2]}
 
-    response = test_app.post(
-        url="opsml/download",
-        json={
-            "uid": "test-uid",
-        },
-    )
+    response = test_app.get(url="opsml/download", params={"uid": "test-uid"})
 
     assert response.status_code == 200

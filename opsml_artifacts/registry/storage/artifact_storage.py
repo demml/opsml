@@ -77,7 +77,7 @@ class ArtifactStorage:
     def _get_correct_storage_uri(self, storage_uri: str, tmp_uri: str) -> str:
         """Sets the correct storage uri based on the backend storage client"""
 
-        # data artifacts need special handling since they use files systems directly
+        # data artifacts need special handling since they use file systems directly
         if self.is_data:
             if self.is_storage_a_proxy:
                 return tmp_uri  # need to write to temp first
@@ -160,6 +160,16 @@ class ArtifactStorage:
             return file_path
 
         loadable_filepath = self.storage_client.download(rpath=file_path, lpath=tmp_path.name)
+        if isinstance(loadable_filepath, list):
+            if len(loadable_filepath) == 1:
+                if bool(loadable_filepath[0]):
+                    return loadable_filepath
+            else:
+                if len(loadable_filepath) > 1:
+                    return loadable_filepath
+
+            return tmp_path
+
         if loadable_filepath is not None:
             return loadable_filepath
 
@@ -171,7 +181,6 @@ class ArtifactStorage:
         with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
             loadable_filepath = self._download_artifact(file_path=file_path, tmp_path=tmpfile)
             artifact = self._load_artifact(file_path=loadable_filepath)
-
             return artifact, loadable_filepath
 
     @staticmethod
@@ -319,7 +328,11 @@ class NumpyStorage(ArtifactStorage):
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
-        store = self.storage_client.store(storage_uri=str(file_path))
+
+        if isinstance(file_path, list):
+            file_path = file_path[0]
+
+        store = self.storage_client.store(storage_uri=file_path)
         return zarr.load(store)
 
     def load_artifact(self, storage_uri: str) -> Any:
