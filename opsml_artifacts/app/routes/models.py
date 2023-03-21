@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
@@ -83,7 +84,8 @@ class QueryRecordResponse(BaseModel):
     record: Dict[str, Any]
 
 
-class DownloadModelRequest(BaseModel):
+@dataclass
+class DownloadModelRequest:
     name: Optional[str] = None
     version: Optional[str] = None
     team: Optional[str] = None

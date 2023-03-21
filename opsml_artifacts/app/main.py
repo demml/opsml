@@ -4,8 +4,8 @@ from typing import Any, List, Optional
 import uvicorn
 from fastapi import Depends, FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
-
 from prometheus_fastapi_instrumentator import Instrumentator
+
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.core.event_handlers import start_app_handler, stop_app_handler
 from opsml_artifacts.app.core.middleware import rollbar_middleware
@@ -110,7 +110,7 @@ def run_app(run_mlflow: bool, login: bool):
     return app
 
 
-# TODO (steven) - figure out cli stuff later. Gunicorn currently block mlflow from running when run as a cli
+# TODO (steven) - figure out cli stuff later. Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )
 # @click.command()
 # @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
 # @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
