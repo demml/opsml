@@ -15,6 +15,7 @@ class StorageClientSettings(BaseModel):
 class GcsStorageClientSettings(StorageClientSettings):
     credentials: Optional[Any]
     gcp_project: str
+    gcsfs_credentials: Optional[Any]
 
 
 StorageSettings = Union[StorageClientSettings, GcsStorageClientSettings]

@@ -1,15 +1,24 @@
 import shutil
-from typing import Any, Dict
-from opsml_artifacts.app.routes.models import DownloadModelRequest
-from opsml_artifacts import CardRegistry
-from opsml_artifacts.registry.cards.cards import ArtifactCard
-from opsml_artifacts.registry.sql.registry_base import load_card_from_record
+from pathlib import Path
+from typing import Any, Dict, cast
+
+from opsml_artifacts import CardRegistry, ModelCard
 from opsml_artifacts.app.core.config import OpsmlConfig
+from opsml_artifacts.app.routes.models import DownloadModelRequest
+from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.cards.cards import ArtifactCard
+from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.registry.sql.records import load_record
+from opsml_artifacts.registry.sql.registry_base import load_card_from_record
+
+logger = ArtifactLogger.get_logger(__name__)
+
+BASE_SAVE_PATH = "app"
+MODEL_FILE = "model_def.json"
 
 
 def get_real_path(current_path: str, config: OpsmlConfig) -> str:
-    new_path = current_path.replace(config.proxy_root, config.STORAGE_URI)
+    new_path = current_path.replace(config.proxy_root, f"{config.STORAGE_URI}/")
     return new_path
 
 
@@ -49,8 +58,9 @@ class ModelDownloader:
         self.registry = registry
         self.model_info = model_info
         self.config = config
+        self.base_path = BASE_SAVE_PATH
 
-    def get_record(self):
+    def get_record(self) -> Dict[str, Any]:
         record = self.registry.registry.list_cards(
             uid=self.model_info.uid,
             name=self.model_info.name,
@@ -64,9 +74,11 @@ class ModelDownloader:
         )
 
     def load_card(self, record: Dict[str, Any]) -> ArtifactCard:
+        raw_record = self.get_record()
+
         loaded_record = load_record(
             table_name=self.registry.table_name,
-            record_data=record,
+            record_data=raw_record,
             storage_client=self.registry.registry.storage_client,
         )
 
@@ -74,3 +86,37 @@ class ModelDownloader:
             table_name=self.registry.table_name,
             record=loaded_record,
         )
+
+    def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
+        onnx_model = model_card.onnx_model()
+        api_model = onnx_model.get_api_model()
+
+        return api_model
+
+    def load_model_def(self) -> ModelApiDef:
+        model_card = self.load_card()
+        return self._get_model_api_def(model_card=cast(ModelCard, model_card))
+
+    def _set_path(self, api_def: ModelApiDef) -> Path:
+        path = Path(f"{self.base_path}/onnx_model/{self.model_info.name}/v{api_def.model_version}/")
+        path.mkdir(parents=True, exist_ok=True)
+        return path / MODEL_FILE
+
+    def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
+
+        with filepath.open("w", encoding="utf-8") as file_:
+            file_.write(api_def.json())
+        logger.info("Saved api model def to %s", filepath)
+
+    def _save_api_def(self, api_def: ModelApiDef):
+        if self.model_info.name is None:
+            self.model_info.name = api_def.model_name
+
+        filepath = self._set_path(api_def=api_def)
+        self._write_api_json(api_def=api_def, filepath=filepath)
+        path = filepath.absolute().as_posix()
+        self.file_path = path
+
+    def download_model(self) -> None:
+        api_def = self.load_model_def()
+        self._save_api_def(api_def=api_def)

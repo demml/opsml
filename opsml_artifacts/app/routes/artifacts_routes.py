@@ -1,5 +1,5 @@
 import uuid
-from typing import Union
+from typing import Optional, Union
 
 from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.responses import FileResponse
@@ -20,10 +20,8 @@ from opsml_artifacts.app.routes.models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml_artifacts.app.routes.utils import delete_dir
+from opsml_artifacts.app.routes.utils import MODEL_FILE, ModelDownloader, delete_dir
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.model.types import ModelDownloadInfo
-from opsml_artifacts.scripts.load_model_card import ModelLoader
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -37,7 +35,7 @@ def get_storage_settings() -> StorageSettingsResponse:
     if bool(config.STORAGE_URI):
 
         # TODO (steven) - Think of a different way to do this in the future
-        # do we need to return anything if using proxy for both registration and storage
+        # do we need to return anything if using proxy for both registration and storage?
 
         if not config.is_proxy:
 
@@ -142,29 +140,47 @@ def update_record(
     return UpdateRecordResponse(updated=True)
 
 
-@router.post("/download", name="download")
+@router.get("/download", name="download")
 def download_model(
     request: Request,
     background_tasks: BackgroundTasks,
-    payload: DownloadModelRequest = Body(...),
+    name: Optional[str] = None,
+    version: Optional[str] = None,
+    team: Optional[str] = None,
+    uid: Optional[str] = None,
 ) -> FileResponse:
 
-    """Downloads a model card"""
+    """Downloads a Model API definition
+
+    Args: (Query Params)
+        name (str): Optional name of model
+        version (str): Optional semVar version of model
+        team (str): Optional team name
+        uid (str): Optional uid of ModelCard
+
+    Returns:
+        FileResponse object containing model definition json
+    """
 
     registry: CardRegistry = getattr(request.app.state.registries, "model")
 
-    loader = ModelLoader(
-        base_path=uuid.uuid4().hex,
-        registry=registry,
-        model_info=ModelDownloadInfo.construct(**payload.dict()),
+    model_info = DownloadModelRequest(
+        name=name,
+        version=version,
+        team=team,
+        uid=uid,
     )
-    loader.save_to_local_file()
+    loader = ModelDownloader(
+        registry=registry,
+        model_info=model_info,
+        config=config,
+    )
+    loader.download_model()
+    background_tasks.add_task(delete_dir, dir_path=loader.base_path)
 
-
-#
-# background_tasks.add_task(delete_dir, dir_path=loader.base_path)
-# return FileResponse(
-#    path=loader.file_path,
-#    content_disposition_type="attachment",
-#    filename="model_defs/model_def.json",
-# )
+    return FileResponse(
+        path=loader.file_path,
+        media_type="application/octet-stream",
+        content_disposition_type="attachment",
+        filename=MODEL_FILE,
+    )
