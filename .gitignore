@@ -113,3 +113,4 @@ notebooks/
 examples/.DS_Store
 **/*.orig
 test_scripts*
+tmp.db
