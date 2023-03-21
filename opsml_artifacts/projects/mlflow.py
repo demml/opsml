@@ -38,31 +38,9 @@ class MlFlowProjectInfo(ProjectInfo):
     are "experiments". Each project is named after the team and project name
     with the conention "team:name".
 
-     The following project shows up as an "experiment" in mlflow with the name:
+    The following project shows up as an "experiment" in mlflow with the name:
 
-     "devops-ml:iris".
-
-    Example:
-
-        info = MlFlowProjectInfo(
-            name="iris",
-            team="devops-ml",
-        )
-
-        # opens the project in read/write mode. since no run was specified
-        # a new run will be created.
-        with get_project(info) as proj:
-            # log models, metrics, and params
-            proj.log_metric(key="log_loss", value=1.0)
-
-            # keep the run_id to open the project later
-            info.run_id = proj.run_id
-
-        # open an existing run in "read-only" mode
-        proj = get_project(info) # note: includes run_id
-
-        assert proj.metrics["log_loss"] == 1.0
-
+    "devops-ml:iris".
 
     Args:
         name:
