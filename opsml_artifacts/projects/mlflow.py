@@ -32,6 +32,53 @@ logger = ArtifactLogger.get_logger(__name__)
 
 @dataclass
 class MlFlowProjectInfo(ProjectInfo):
+    """An mlflow project identifier.
+
+    Identifies a project with an mlflow backend. By default, projects in mlflow
+    are "experiments". Each project is named after the team and project name
+    with the conention "team:name".
+
+     The following project shows up as an "experiment" in mlflow with the name:
+
+     "devops-ml:iris".
+
+    Example:
+
+        info = MlFlowProjectInfo(
+            name="iris",
+            team="devops-ml",
+        )
+
+        # opens the project in read/write mode. since no run was specified
+        # a new run will be created.
+        with get_project(info) as proj:
+            # log models, metrics, and params
+            proj.log_metric(key="log_loss", value=1.0)
+
+            # keep the run_id to open the project later
+            info.run_id = proj.run_id
+
+        # open an existing run in "read-only" mode
+        proj = get_project(info) # note: includes run_id
+
+        assert proj.metrics["log_loss"] == 1.0
+
+
+    Args:
+        name:
+            The project name. Must be unique per team.
+        team:
+            The team owning the project.
+        user_email:
+            Optional user email to associate with the project
+        run_id:
+            The run to open the project at. By default, the run will be opened
+            in "read only" mode by the project. To open the run for read /
+            write, open it within a context manager.
+
+
+    """
+
     run_id: Optional[str] = None
     tracking_uri: Optional[str] = None
 
