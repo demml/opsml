@@ -112,5 +112,4 @@ notebooks/
 
 examples/.DS_Store
 **/*.orig
-test_scripts/test_connection.py
-test_scripts/__init__.py
+test_scripts*
