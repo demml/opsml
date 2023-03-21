@@ -474,9 +474,6 @@ class ModelCard(ArtifactCard):
 
         """
 
-        if not bool(self.trained_model):
-            self.load_trained_model()
-
         if not bool(self.onnx_model_def):
             self._create_and_set_onnx_attr()
 
