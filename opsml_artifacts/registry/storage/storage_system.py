@@ -184,8 +184,9 @@ class GCSFSStorageClient(StorageClient):
         storage_settings = cast(GcsStorageClientSettings, storage_settings)
         client = gcsfs.GCSFileSystem(
             project=storage_settings.gcp_project,
-            token=storage_settings.credentials,
+            token=storage_settings.gcsfs_credentials,
         )
+
         super().__init__(
             storage_settings=storage_settings,
             client=client,
@@ -196,7 +197,6 @@ class GCSFSStorageClient(StorageClient):
         bucket = storage_uri.split("/")[2]
         file_path = "/".join(storage_uri.split("/")[3:])
         files = ["gs://" + path for path in self.client.ls(path=bucket, prefix=file_path)]
-
         return files
 
     def store(self, storage_uri: str) -> Any:
