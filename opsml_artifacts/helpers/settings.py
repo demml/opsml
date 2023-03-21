@@ -144,7 +144,7 @@ class DefaultAttrCreator:
         storage_settings = request_client.get_request(route=api_routes.SETTINGS)
         storage_uri = storage_settings.get("storage_uri")
 
-        if storage_settings["proxy"]:
+        if bool(storage_settings.get("proxy")):
             storage_uri = "local"
 
         return StorageSettingsGetter(
