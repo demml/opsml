@@ -258,7 +258,13 @@ def mock_mlflow_experiment(info: MlFlowExperimentInfo) -> MlFlowExperiment:
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
     cleanup()
-    from opsml_artifacts.app.main import OpsmlApp
+    from opsml_artifacts.app.main import OpsmlApp, config
+    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+
+    mlflow_config = initialize_mlflow()
+    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+        config.is_proxy = True
+        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
