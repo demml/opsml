@@ -1,13 +1,20 @@
-from dataclasses import dataclass
 from typing import Optional, Protocol
 
+from pydantic import BaseModel, Field
 from opsml_artifacts.registry.cards import cards
 
 
-@dataclass
-class ProjectInfo:
-    name: str
-    team: str
+class ProjectInfo(BaseModel):
+    name: str = Field(
+        ...,
+        description="The project name",
+        min_length=1,
+    )
+    team: str = Field(
+        ...,
+        description="The owning team",
+        min_length=1,
+    )
     user_email: Optional[str] = None
 
 
