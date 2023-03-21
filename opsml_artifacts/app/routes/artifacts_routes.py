@@ -159,9 +159,11 @@ def download_model(
     )
     loader.save_to_local_file()
 
-    background_tasks.add_task(delete_dir, dir_path=loader.base_path)
-    return FileResponse(
-        path=loader.file_path,
-        content_disposition_type="attachment",
-        filename="model_defs/model_def.json",
-    )
+
+#
+# background_tasks.add_task(delete_dir, dir_path=loader.base_path)
+# return FileResponse(
+#    path=loader.file_path,
+#    content_disposition_type="attachment",
+#    filename="model_defs/model_def.json",
+# )
