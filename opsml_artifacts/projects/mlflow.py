@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass
 from typing import Optional, cast
 
 from mlflow.entities import Run, RunStatus
@@ -7,7 +6,7 @@ from mlflow.entities.run_data import RunData
 from mlflow.entities.run_info import RunInfo
 from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -30,7 +29,6 @@ from opsml_artifacts.registry.storage.types import StorageClientSettings
 logger = ArtifactLogger.get_logger(__name__)
 
 
-@dataclass
 class MlFlowProjectInfo(ProjectInfo):
     """An mlflow project identifier.
 
@@ -57,8 +55,17 @@ class MlFlowProjectInfo(ProjectInfo):
 
     """
 
-    run_id: Optional[str] = None
-    tracking_uri: Optional[str] = None
+    run_id: Optional[str] = Field(
+        None,
+        description="An existing mlflow run_id to use. If None, a new run is created when the project is activated",
+    )
+    tracking_uri: Optional[str] = Field(
+        None,
+        description="The mlflow tracking URI. Defaults to OPSML_TRACKING_URI",
+    )
+
+    def mlflow_experiment_name(self) -> str:
+        return f"{self.team}:{self.name}"
 
 
 class CardRegistries(BaseModel):
@@ -131,9 +138,10 @@ class MlFlowProject(Project):
         self.name = info.name.lower()
         self.team_name = info.team
         self.user_email = info.user_email
+        self._experiment_name = info.mlflow_experiment_name()
 
         # tracking attr
-        self._run_id: Optional[str] = info.run_id
+        self._run_id: Optional[str] = None
         self._active_run: Optional[Run] = None
 
         self._mlflow_client = MlflowClient(
@@ -143,7 +151,7 @@ class MlFlowProject(Project):
         self._storage_client = self._get_storage_client()
         self.registries = self._get_card_registries()
 
-        self._project_id = self._get_project_id(self.name)
+        self._project_id = self._get_project_id(self._experiment_name)
         if info.run_id is not None:
             self._verify_run_id(info.run_id)
             self._run_id = info.run_id
@@ -190,7 +198,7 @@ class MlFlowProject(Project):
         project does not exist, a new one is created.
 
         Returns:
-            project_id
+            the underlying mlflow experiment_id (which is our project_id)
         """
         project = self._mlflow_client.get_experiment_by_name(name=name)
         if project is None:
@@ -217,7 +225,7 @@ class MlFlowProject(Project):
         else:
             self._active_run = self._mlflow_client.create_run(experiment_id=self.project_id)
 
-        info = self._active_run.info
+        info = cast(RunInfo, self._active_run.info)
         self._run_id = info.run_id
         # set storage client run id
         self._storage_client.run_id = self._run_id
@@ -233,7 +241,6 @@ class MlFlowProject(Project):
         # Remove run id
         logger.info("ending run: %s", self._run_id)
         self._storage_client.run_id = None
-        self._run_id = None
         self._active_run = None
 
     def _verify_active(self) -> None:
