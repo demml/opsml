@@ -1,9 +1,9 @@
 from enum import Enum
+from dataclasses import dataclass
 
-from pydantic import BaseModel
 
-
-class StoragePath(BaseModel):
+@dataclass
+class StoragePath:
     uri: str
 
 
