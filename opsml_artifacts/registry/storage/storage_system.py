@@ -184,7 +184,7 @@ class GCSFSStorageClient(StorageClient):
         storage_settings = cast(GcsStorageClientSettings, storage_settings)
         client = gcsfs.GCSFileSystem(
             project=storage_settings.gcp_project,
-            token=storage_settings.gcsfs_credentials,
+            token=storage_settings.credentials,
         )
 
         super().__init__(
