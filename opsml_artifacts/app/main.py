@@ -1,13 +1,13 @@
 # pylint: disable=import-outside-toplevel
-import click
+from typing import Any, List, Optional
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.core.event_handlers import start_app_handler, stop_app_handler
-from opsml_artifacts.app.core.gunicorn import GunicornApplication
 from opsml_artifacts.app.core.middleware import rollbar_middleware
 from opsml_artifacts.app.routes.router import api_router
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -22,10 +22,36 @@ class OpsmlApp:
         self,
         run_mlflow: bool = False,
         port: int = 8080,
+        login: bool = False,
     ):
         self.port = port
         self.run_mlflow = run_mlflow
-        self.app = FastAPI(title=config.APP_NAME)
+        self.login = login
+        self.app = FastAPI(
+            title=config.APP_NAME,
+            dependencies=self.get_login(),
+        )
+
+        if self.run_mlflow:
+            self._initialize_mlflow()
+
+    def get_login(self) -> Optional[List[Any]]:
+        """Sets the login dependency for an app if specified"""
+
+        if self.login:
+            from opsml_artifacts.app.core.login import get_current_username
+
+            return [Depends(get_current_username)]
+        return None
+
+    def _initialize_mlflow(self):
+        from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+
+        mlflow_config = initialize_mlflow()
+
+        if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+            config.is_proxy = True
+            config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
 
     def add_startup(self):
         self.app.add_event_handler("startup", start_app_handler(app=self.app))
@@ -39,10 +65,14 @@ class OpsmlApp:
     def build_mlflow_app(self):
         from mlflow.server import app as mlflow_flask
 
-        from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+        if self.login:
+            from wsgi_basic_auth import BasicAuth
 
-        initialize_mlflow()
-        self.app.mount("/", WSGIMiddleware(mlflow_flask))
+            logger.info("Setting login credentials")
+            self.app.mount("/", WSGIMiddleware(BasicAuth(mlflow_flask)))
+
+        else:
+            self.app.mount("/", WSGIMiddleware(mlflow_flask))
 
     def add_middleware(self):
         """Add rollbar middleware"""
@@ -57,8 +87,8 @@ class OpsmlApp:
         if self.run_mlflow:
             self.build_mlflow_app()
 
-        self.add_instrument()
         self.add_middleware()
+        self.add_instrument()
 
     def run(self):
         """Run FastApi App"""
@@ -71,32 +101,66 @@ class OpsmlApp:
         return self.app
 
 
-@click.command()
-@click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
-@click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
-def opsml_uvicorn_server(port: int, mlflow: bool) -> None:
+def run_app(run_mlflow: bool, login: bool):
+    app = OpsmlApp(
+        run_mlflow=run_mlflow,
+        login=login,
+    ).get_app()
 
-    logger.info("Starting ML Server")
-    model_api = OpsmlApp(run_mlflow=mlflow, port=port)
-    model_api.build_app()
-    model_api.run()
+    return app
 
 
-@click.command()
-@click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
-@click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
-@click.option("--host", default="0.0.0.0", help="HTTP port. Defaults to 8000")
-@click.option("--workers", default=1, help="Number of workers")
-def opsml_gunicorn_server(mlflow: bool, port: int, workers: int, host: str) -> None:
+# TODO (steven) - figure out cli stuff later.
+# Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )
+# @click.command()
+# @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
+# @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
+# @click.option("--login", default=False, is_flag=True, help="Whether to use basic username and password")
+# def opsml_uvicorn_server(port: int, mlflow: bool, login: bool) -> None:
+#
+#    logger.info("Starting ML Server")
+#
+#    if mlflow:
+#        logger.info("Starting mlflow")
+#
+#        from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+#
+#        mlflow_config = initialize_mlflow()
+#
+#        if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+#            config.is_proxy = True
+#            config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+#
+#    model_api = OpsmlApp(run_mlflow=mlflow, port=port, login=login)
+#    model_api.build_app()
+#    model_api.run()
+#
 
-    app = OpsmlApp(run_mlflow=mlflow).get_app()
 
-    options = {
-        "bind": f"{host}:{port}",
-        "workers": workers,
-        "worker_class": "uvicorn.workers.UvicornWorker",
-        "config": "gunicorn.conf.py",
-    }
-
-    logger.info("Starting ML Server")
-    GunicornApplication(app, options).run()
+# @click.command()
+# @click.option("--mlflow", default=True, help="Whether to run with mlflow or not")
+# @click.option("--port", default=8000, help="HTTP port. Defaults to 8000")
+# @click.option("--host", default="0.0.0.0", help="HTTP port. Defaults to 8000")
+# @click.option("--workers", default=1, help="Number of workers")
+# def opsml_gunicorn_server(mlflow: bool, port: int, workers: int, host: str) -> None:
+#
+#    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+#
+#    mlflow_config = initialize_mlflow()
+#    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+#        config.is_proxy = True
+#        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+#    app = OpsmlApp(run_mlflow=True).get_app()
+#
+#    options = {
+#        "bind": f"{host}:{port}",
+#        "workers": 4,
+#        "worker_class": "uvicorn.workers.UvicornWorker",
+#        "config": "gunicorn.conf.py",
+#        "access-logfile": "-",
+#        "error-logfile": "-",
+#        "daemon": "true",
+#    }
+#
+#    logger.info("Starting ML Server")
+#    GunicornApplication(app, options).run()

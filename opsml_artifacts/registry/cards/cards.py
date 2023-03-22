@@ -59,7 +59,7 @@ class CardInfo:
 
 
 class ArtifactCard(BaseModel):
-    """Base pydantic class for artifacts"""
+    """Base pydantic class for artifact cards"""
 
     name: str
     team: str

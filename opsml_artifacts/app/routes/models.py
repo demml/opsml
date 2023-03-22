@@ -7,9 +7,18 @@ class HealthCheckResult(BaseModel):
     is_alive: bool
 
 
+class DebugResponse(BaseModel):
+    url: str
+    storage: str
+    app_env: str
+    proxy_root: Optional[str]
+    is_proxy: Optional[bool]
+
+
 class StorageSettingsResponse(BaseModel):
     storage_type: str
     storage_uri: str
+    proxy: bool = False
 
 
 class VersionRequest(BaseModel):
@@ -72,3 +81,10 @@ class QueryRecordRequest(BaseModel):
 
 class QueryRecordResponse(BaseModel):
     record: Dict[str, Any]
+
+
+class DownloadModelRequest(BaseModel):
+    name: Optional[str] = None
+    version: Optional[str] = None
+    team: Optional[str] = None
+    uid: Optional[str] = None
