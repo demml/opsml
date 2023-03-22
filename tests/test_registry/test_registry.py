@@ -18,7 +18,12 @@ from unittest.mock import patch, MagicMock
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
+def test_register_data(
+    db_registries,
+    test_data,
+    data_splits,
+    mock_pyarrow_parquet_write,
+):
 
     # create data card
     registry = db_registries["data"]
@@ -341,3 +346,31 @@ def test_full_pipeline_with_loading(
             assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
             assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
             loader.visualize()
+
+
+def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
+
+    model, data = load_transformer_example
+
+    registry = db_registries["data"]
+    data_card = DataCard(
+        data=data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    registry.register_card(card=data_card)
+
+    model_registry = db_registries["model"]
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        data_card_uid=data_card.uid,
+    )
+
+    model_registry.register_card(card=model_card)
+    model_card.load_trained_model()

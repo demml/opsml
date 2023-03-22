@@ -2,7 +2,7 @@ from functools import cached_property
 from typing import Dict, cast
 
 from opsml_artifacts.registry.cards.cards import (
-    CardType,
+    ArtifactCard,
     DataCard,
     ExperimentCard,
     ModelCard,
@@ -14,6 +14,7 @@ from opsml_artifacts.registry.cards.types import (
     StoragePath,
 )
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
+from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.registry.storage.artifact_storage import (
     save_record_artifact_to_storage,
 )
@@ -22,11 +23,11 @@ from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 
 class CardArtifactSaver:
-    def __init__(self, card: CardType, storage_client: StorageClientType):
+    def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
         """Parent class for saving artifacts belonging to cards
 
         Args:
-            card (CardType): ArtifactCard with artifacts to save
+            card (Card): ArtifactCard with artifacts to save
             card_storage_info (ArtifactStorageSpecs): Extra info to use with artifact storage
         """
 
@@ -37,7 +38,7 @@ class CardArtifactSaver:
     def card(self):
         return self.card
 
-    def save_artifacts(self) -> CardType:
+    def save_artifacts(self) -> ArtifactCard:
         raise NotImplementedError
 
     def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
@@ -127,6 +128,24 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ModelCard, self._card)
 
+    def _get_onnx_model_def(self) -> ModelApiDef:
+        """Create Onnx Model from trained model"""
+        onnx_predictor = self.card.onnx_model(start_onnx_runtime=False)
+        return onnx_predictor.get_api_model()
+
+    def _save_api_definition(self):
+
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = "api-def"
+        self.storage_client.storage_spec = storage_spec
+
+        api_def = self._get_onnx_model_def()
+        save_record_artifact_to_storage(
+            artifact=api_def.json(),
+            artifact_type=ArtifactStorageTypes.JSON.value,
+            storage_client=self.storage_client,
+        )
+
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
 
@@ -159,7 +178,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves sample data associated with ModelCard to filesystem"""
 
         storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = "sample-data"
+        storage_spec.filename = "sample-model-data"
         self.storage_client.storage_spec = storage_spec
 
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
@@ -170,25 +189,12 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.card.sample_data_uri = storage_path.uri
         self.card.sample_data_type = arrow_table.table_type
 
-    def _save_api_definition(self):
-
-        storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = "api-def"
-        self.storage_client.storage_spec = storage_spec
-
-        api_def = self.card.onnx_model(start_onnx_runtime=False).get_api_model()
-        save_record_artifact_to_storage(
-            artifact=api_def.json(),
-            artifact_type=ArtifactStorageTypes.JSON.value,
-            storage_client=self.storage_client,
-        )
-
     def save_artifacts(self):
         """Save model artifacts associated with ModelCard"""
+        self._save_api_definition()
         self._save_modelcard()
         self._save_trained_model()
         self._save_sample_data()
-        self._save_api_definition()
 
         return self.card
 
@@ -202,7 +208,7 @@ class ExpeirmentCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ExperimentCard, self._card)
 
-    def save_artifacts(self) -> CardType:
+    def save_artifacts(self) -> ArtifactCard:
         """Saves all artifacts associated with ExperimentCard to filesystem"""
 
         artifact_uris: Dict[str, str] = {}
@@ -236,7 +242,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
         return CardNames.PIPELINE in card_type
 
 
-def save_card_artifacts(card: CardType, storage_client: StorageClientType) -> CardType:
+def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
 
     """Saves a given ArtifactCard's artifacts to a filesystem
 

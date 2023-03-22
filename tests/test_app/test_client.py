@@ -14,11 +14,11 @@ import random
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
     ],
 )
-def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parquet_write):
+def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
     # create data card
 
-    registry = db_registries["data"]
+    registry = api_registries["data"]
 
     data_card = DataCard(
         data=test_data,
@@ -42,9 +42,9 @@ def test_register_data(db_registries, test_data, data_splits, mock_pyarrow_parqu
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
+def test_experiment_card(linear_regression, api_registries, mock_artifact_storage_clients):
 
-    registry = db_registries["experiment"]
+    registry = api_registries["experiment"]
 
     experiment = ExperimentCard(
         name="test_df",
@@ -71,7 +71,7 @@ def test_experiment_card(linear_regression, db_registries, mock_artifact_storage
 def test_register_model(
     loaded_model_record,
     model_card_mock,
-    db_registries,
+    api_registries,
     sklearn_pipeline,
     mock_pyarrow_parquet_write,
     mock_artifact_storage_clients,
@@ -80,7 +80,7 @@ def test_register_model(
     model_card_mock.return_value = None
     model, data = sklearn_pipeline
     # create data card
-    data_registry = db_registries["data"]
+    data_registry = api_registries["data"]
 
     data_card = DataCard(
         data=data,
@@ -99,7 +99,7 @@ def test_register_model(
         data_card_uid=data_card.uid,
     )
 
-    model_registry = db_registries["model"]
+    model_registry = api_registries["model"]
     model_registry.register_card(model_card1)
 
     loaded_model_record.return_value = model_card1.dict()
@@ -159,12 +159,12 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
 
-    registry = db_registries["data"]
+    registry = api_registries["data"]
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -212,7 +212,7 @@ def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mo
         )
 
 
-def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
+def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -226,7 +226,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
             name=f"{card_type}_{random.randint(0,100)}",
         )
     # register
-    registry = db_registries["pipeline"]
+    registry = api_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
@@ -240,7 +240,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
 
 
 def test_full_pipeline_with_loading(
-    db_registries,
+    api_registries,
     linear_regression,
     mock_pyarrow_parquet_write,
     mock_artifact_storage_clients,
@@ -250,10 +250,10 @@ def test_full_pipeline_with_loading(
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
-    data_registry = db_registries["data"]
-    model_registry = db_registries["model"]
-    experiment_registry = db_registries["experiment"]
-    pipeline_registry = db_registries["pipeline"]
+    data_registry = api_registries["data"]
+    model_registry = api_registries["model"]
+    experiment_registry = api_registries["experiment"]
+    pipeline_registry = api_registries["pipeline"]
     model, data = linear_regression
     #### Create DataCard
     data_card = DataCard(

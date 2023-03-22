@@ -18,6 +18,8 @@ async def debug() -> dict[str, str]:
         "url": config.TRACKING_URI,
         "storage": config.STORAGE_URI,
         "app_env": config.APP_ENV,
+        "proxy_root": config.proxy_root,
+        "is_proxy": config.is_proxy,
     }
 
 
