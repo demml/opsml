@@ -128,3 +128,9 @@ class ModelDownloader:
     def download_model(self) -> None:
         api_def = self.load_model_def()
         self._save_api_def(api_def=api_def)
+
+
+def iterfile(file_path: str, chunk_size: int):
+    with open(file_path, "rb") as f:
+        while chunk := f.read(chunk_size):
+            yield chunk
