@@ -12,7 +12,7 @@ from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.projects.types import Project, ProjectInfo
-from opsml_artifacts.registry.cards import CardInfo, ArtifactCard
+from opsml_artifacts.registry.cards import ArtifactCard, CardInfo
 from opsml_artifacts.registry.storage.storage_system import (
     MlFlowStorageClient,
     StorageClientGetter,
