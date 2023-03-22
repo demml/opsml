@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.responses import FileResponse, StreamingResponse
@@ -19,7 +19,12 @@ from opsml_artifacts.app.routes.models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml_artifacts.app.routes.utils import MODEL_FILE, ModelDownloader, delete_dir, iterfile
+from opsml_artifacts.app.routes.utils import (
+    MODEL_FILE,
+    ModelDownloader,
+    delete_dir,
+    iterfile,
+)
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
