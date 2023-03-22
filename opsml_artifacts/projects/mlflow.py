@@ -1,3 +1,4 @@
+# pylint: disable=invalid-envvar-value
 import os
 from typing import Optional, cast
 
@@ -143,7 +144,7 @@ class MlFlowProject(Project):
         self._active_run: Optional[Run] = None
 
         self._mlflow_client = self._get_mlflow_client(
-            tracking_uri=info.tracking_uri or os.getenv(OpsmlUri.TRACKING_URI),  # pylint: disable=invalid-envvar-value
+            tracking_uri=info.tracking_uri or os.getenv(OpsmlUri.TRACKING_URI),
         )
 
         self._storage_client = self._get_storage_client()
@@ -173,8 +174,8 @@ class MlFlowProject(Project):
         # set username and password while running project
         if all(bool(os.getenv(cred)) for cred in OpsmlAuth):
 
-            os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv(OpsmlAuth.USERNAME)
-            os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv(OpsmlAuth.PASSWORD)
+            os.environ["MLFLOW_TRACKING_USERNAME"] = str(os.getenv(OpsmlAuth.USERNAME))
+            os.environ["MLFLOW_TRACKING_PASSWORD"] = str(os.getenv(OpsmlAuth.PASSWORD))
 
         return mlflow_client
 
