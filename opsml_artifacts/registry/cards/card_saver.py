@@ -2,7 +2,7 @@ from functools import cached_property
 from typing import Dict, cast
 
 from opsml_artifacts.registry.cards.cards import (
-    Card,
+    ArtifactCard,
     DataCard,
     ExperimentCard,
     ModelCard,
@@ -23,7 +23,7 @@ from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 
 class CardArtifactSaver:
-    def __init__(self, card: Card, storage_client: StorageClientType):
+    def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
         """Parent class for saving artifacts belonging to cards
 
         Args:
@@ -38,7 +38,7 @@ class CardArtifactSaver:
     def card(self):
         return self.card
 
-    def save_artifacts(self) -> Card:
+    def save_artifacts(self) -> ArtifactCard:
         raise NotImplementedError
 
     def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
@@ -208,7 +208,7 @@ class ExpeirmentCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ExperimentCard, self._card)
 
-    def save_artifacts(self) -> Card:
+    def save_artifacts(self) -> ArtifactCard:
         """Saves all artifacts associated with ExperimentCard to filesystem"""
 
         artifact_uris: Dict[str, str] = {}
@@ -242,7 +242,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
         return CardNames.PIPELINE in card_type
 
 
-def save_card_artifacts(card: Card, storage_client: StorageClientType) -> Card:
+def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
 
     """Saves a given ArtifactCard's artifacts to a filesystem
 

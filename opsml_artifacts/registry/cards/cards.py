@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
@@ -34,9 +35,6 @@ from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 
-# TODO(@damon): Do we need this? Can't we just use ArtifactCard?
-Card = Union["ExperimentCard", "ModelCard", "DataCard", "PipelineCard"]
-
 
 class CardType(str, Enum):
     DATA = "data"
@@ -49,6 +47,15 @@ class VersionType(str, Enum):
     MAJOR = "major"
     MINOR = "minor"
     PATCH = "patch"
+
+
+@dataclass
+class CardInfo:
+    name: Optional[str]
+    team: Optional[str]
+    user_email: Optional[str] = None
+    uid: Optional[str] = None
+    version: Optional[str] = None
 
 
 class ArtifactCard(BaseModel):

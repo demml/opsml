@@ -48,8 +48,8 @@ from xgboost import XGBRegressor
 import lightgbm as lgb
 
 # opsml
-from opsml_artifacts.experiments import get_experiment
-from opsml_artifacts.experiments.mlflow import CardRegistries, MlFlowExperiment, MlFlowExperimentInfo
+from opsml_artifacts.projects import get_project
+from opsml_artifacts.projects.mlflow import CardRegistries, MlFlowProject, MlFlowProjectInfo
 
 # testing
 from tests.mock_api_registries import CardRegistry
@@ -210,9 +210,21 @@ def mock_app() -> TestClient:
     return TestClient(opsml_app.get_app())
 
 
-def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
+@pytest.fixture(scope="module")
+def test_app() -> Iterator[TestClient]:
+    cleanup()
+    from opsml_artifacts.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp(run_mlflow=True)
+    with TestClient(opsml_app.get_app()) as tc:
+        yield tc
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
     def callable_api():
-        return test_client
+        return test_app
 
     with patch("httpx.Client", callable_api):
 
@@ -225,7 +237,7 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         experiment_registry = CardRegistry(registry_name="experiment")
         pipeline_registry = CardRegistry(registry_name="pipeline")
 
-        return {
+        yield {
             "data": data_registry,
             "model": model_registry,
             "experiment": experiment_registry,
@@ -233,53 +245,23 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         }
 
 
-def mock_mlflow_experiment(info: MlFlowExperimentInfo) -> MlFlowExperiment:
-    """Returns an MlFlowExperiment with a mocked storage system"""
-
-    mocked_registries = mock_registries(mock_app())
-    info.tracking_uri = SQL_PATH
-    mlflow_exp: MlFlowExperiment = get_experiment(info=info)
+def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
+    mlflow_exp: MlFlowProject = get_project(info)
     mlflow_storage = mlflow_exp._get_storage_client()
     api_card_registries = CardRegistries.construct(
-        datacard=mocked_registries["data"],
-        modelcard=mocked_registries["model"],
-        experimentcard=mocked_registries["experiment"],
+        datacard=CardRegistry(registry_name="data"),
+        modelcard=CardRegistry(registry_name="model"),
+        experimentcard=CardRegistry(registry_name="experiment"),
     )
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp.registries = api_card_registries
     return mlflow_exp
 
 
-@pytest.fixture(scope="module")
-def test_app() -> Iterator[TestClient]:
-    cleanup()
-    from opsml_artifacts.app.main import OpsmlApp
-
-    opsml_app = OpsmlApp(run_mlflow=True)
-    with TestClient(opsml_app.get_app()) as tc:
-        yield tc
-    # TODO(@damon): Uncomment when done debugging
-    # cleanup()
-
-
-@pytest.fixture(scope="module")
-def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
-    yield mock_registries(test_app)
-
-
 @pytest.fixture
-def mlflow_experiment(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowExperiment]:
-    # yield mock_mlflow_experiment(
-    #     MlFlowExperimentInfo(
-    #         name="test_exp",
-    #         team="test",
-    #         user_email="test",
-    #         tracking_uri=SQL_PATH,
-    #     )
-    # )
-
-    mlflow_exp: MlFlowExperiment = get_experiment(
-        MlFlowExperimentInfo(
+def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowProject]:
+    mlflow_exp: MlFlowProject = get_project(
+        MlFlowProjectInfo(
             name="test_exp",
             team="test",
             user_email="test",
