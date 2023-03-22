@@ -1,6 +1,7 @@
 from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field
+
 from opsml_artifacts.registry.cards import cards
 
 
