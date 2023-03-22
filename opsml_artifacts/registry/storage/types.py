@@ -7,14 +7,12 @@ from pydantic import BaseModel
 FilePath = Union[List[str], str]
 
 
-@dataclass
-class StorageClientSettings:
+class StorageClientSettings(BaseModel):
     storage_type: str = "local"
     storage_uri: str = os.path.expanduser("~")
 
 
-@dataclass
-class GcsStorageClientSettings:
+class GcsStorageClientSettings(StorageClientSettings):
     credentials: Optional[Any]
     gcp_project: str
 
