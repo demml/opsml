@@ -103,7 +103,7 @@ def test_drift_storage(
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
-def test_tensorflow_model(storage_client, load_transformer_example):
+def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib):
     model, data = load_transformer_example
     storage_spec = ArtifactStorageSpecs(
         save_path="blob",
@@ -132,7 +132,7 @@ def test_tensorflow_model(storage_client, load_transformer_example):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
-def test_pytorch_model(storage_client, load_pytorch_resnet):
+def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
     model, data = load_pytorch_resnet
     storage_spec = ArtifactStorageSpecs(
         save_path="blob",

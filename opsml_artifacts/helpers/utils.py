@@ -15,10 +15,7 @@ class FindPath:
     """Helper class for finding paths to artifacts"""
 
     @staticmethod
-    def find_filepath(
-        name: str,
-        path: Optional[str] = None,
-    ) -> Path:
+    def find_filepath(name: str, path: Optional[str] = None) -> Path:
         """Finds the file path of a given file.
 
         Args:

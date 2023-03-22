@@ -1,11 +1,20 @@
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 import pandas as pd
 from pydantic import ValidationError
 from opsml_artifacts import DataCard, ModelCard, ExperimentCard, PipelineCard
 import uuid
 import random
+
+
+def test_client(test_app):
+
+    response = test_app.get("/opsml/settings")
+
+    assert response.status_code == 200
+    assert response.json()["proxy"] == True
 
 
 @pytest.mark.parametrize(
@@ -308,3 +317,28 @@ def test_full_pipeline_with_loading(
             assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
             assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
             loader.visualize()
+
+
+@patch("opsml_artifacts.app.routes.utils.ModelDownloader.load_card")
+@patch("opsml_artifacts.registry.cards.cards.ModelCard._get_sample_data_for_api")
+def test_download_model(
+    sample_data,
+    mock_load_card,
+    test_app,
+    test_model_card,
+):
+
+    mock_load_card.return_value = test_model_card
+    sample_data.return_value = {"Inputs": [1, 2]}
+
+    response = test_app.post(url="opsml/download", json={"uid": "test-uid"})
+
+    assert response.status_code == 200
+
+
+def test_download_model_failure(test_app):
+
+    response = test_app.post(url="opsml/download", json={"name": "pip"})
+
+    # should fail
+    assert response.status_code == 500

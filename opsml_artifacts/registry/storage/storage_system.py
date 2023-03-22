@@ -127,6 +127,7 @@ class StorageClient:
     ) -> Generator[Tuple[Any, Any], None, None]:
 
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
                 tmp_dir=tmpdirname,
@@ -185,6 +186,7 @@ class GCSFSStorageClient(StorageClient):
             project=storage_settings.gcp_project,
             token=storage_settings.credentials,
         )
+
         super().__init__(
             storage_settings=storage_settings,
             client=client,
@@ -195,7 +197,6 @@ class GCSFSStorageClient(StorageClient):
         bucket = storage_uri.split("/")[2]
         file_path = "/".join(storage_uri.split("/")[3:])
         files = ["gs://" + path for path in self.client.ls(path=bucket, prefix=file_path)]
-
         return files
 
     def store(self, storage_uri: str) -> Any:
@@ -222,6 +223,7 @@ class LocalStorageClient(StorageClient):
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
         )
+
         self._make_path("/".join(save_path.split("/")[:-1]))
 
         return save_path, filename
@@ -237,7 +239,7 @@ class LocalStorageClient(StorageClient):
         return storage_backend == StorageSystem.LOCAL
 
 
-class MlFlowStorageClient(LocalStorageClient):
+class MlFlowStorageClient(StorageClient):
     def __init__(
         self,
         storage_settings: StorageSettings,
@@ -274,6 +276,17 @@ class MlFlowStorageClient(LocalStorageClient):
     @mlflow_client.setter
     def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
+
+    def create_save_path(
+        self,
+        file_suffix: Optional[str] = None,
+    ) -> Tuple[str, str]:
+
+        save_path, filename = super().create_save_path(
+            file_suffix=file_suffix,
+        )
+
+        return save_path, filename
 
     def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
         import mlflow
@@ -326,6 +339,12 @@ class MlFlowStorageClient(LocalStorageClient):
             return MlFlowDirs.MODEL_DIR.value
 
         return MlFlowDirs.ARTIFACT_DIR.value
+
+    def list_files(self, storage_uri: str) -> FilePath:
+        return [storage_uri]
+
+    def store(self, storage_uri: str):
+        return storage_uri
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
