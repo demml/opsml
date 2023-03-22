@@ -148,6 +148,6 @@ class ModelDownloader:
 
 
 def iterfile(file_path: str, chunk_size: int):
-    with open(file_path, "rb") as f:
-        while chunk := f.read(chunk_size):
+    with open(file_path, "rb") as file_:
+        while chunk := file_.read(chunk_size):
             yield chunk

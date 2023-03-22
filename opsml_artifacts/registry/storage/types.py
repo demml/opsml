@@ -1,7 +1,7 @@
 import os
 from contextlib import contextmanager
 from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
-from dataclasses import dataclass
+
 from pydantic import BaseModel
 
 FilePath = Union[List[str], str]
@@ -19,7 +19,7 @@ class GcsStorageClientSettings(StorageClientSettings):
 
 StorageSettings = Union[StorageClientSettings, GcsStorageClientSettings]
 
-# make dataclass
+
 class ArtifactStorageSpecs(BaseModel):
     save_path: str
     name: str
