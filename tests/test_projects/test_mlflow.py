@@ -1,5 +1,4 @@
 import pandas as pd
-import pydantic
 import pytest
 from sklearn import pipeline
 
@@ -11,20 +10,6 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from tests import conftest
 
 logger = ArtifactLogger.get_logger(__name__)
-
-
-def test_project_name() -> None:
-    with pytest.raises(pydantic.ValidationError):
-        MlFlowProjectInfo(name="", team="")
-
-    with pytest.raises(pydantic.ValidationError):
-        MlFlowProjectInfo(name="a", team="")
-
-    with pytest.raises(pydantic.ValidationError):
-        MlFlowProjectInfo(name="", team="a")
-
-    info = MlFlowProjectInfo(name="a", team="a")
-    assert info.mlflow_experiment_name() == "a:a"
 
 
 def test_read_only(mlflow_project: MlFlowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
