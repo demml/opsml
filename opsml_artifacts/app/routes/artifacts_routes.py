@@ -90,6 +90,7 @@ def set_version(
         team=payload.team,
         version_type=payload.version_type,
     )
+
     return VersionResponse(version=version)
 
 
