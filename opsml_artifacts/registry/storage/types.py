@@ -1,25 +1,27 @@
 import os
 from contextlib import contextmanager
 from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
-
+from dataclasses import dataclass
 from pydantic import BaseModel
 
 FilePath = Union[List[str], str]
 
 
-class StorageClientSettings(BaseModel):
+@dataclass
+class StorageClientSettings:
     storage_type: str = "local"
     storage_uri: str = os.path.expanduser("~")
 
 
-class GcsStorageClientSettings(StorageClientSettings):
+@dataclass
+class GcsStorageClientSettings:
     credentials: Optional[Any]
     gcp_project: str
 
 
 StorageSettings = Union[StorageClientSettings, GcsStorageClientSettings]
 
-
+# make dataclass
 class ArtifactStorageSpecs(BaseModel):
     save_path: str
     name: str
