@@ -59,6 +59,7 @@ class ModelDownloader:
         self.model_info = model_info
         self.config = config
         self.base_path = BASE_SAVE_PATH
+        self.clean_info()
 
     @property
     def file_path(self) -> str:
@@ -67,6 +68,19 @@ class ModelDownloader:
     @file_path.setter
     def file_path(self, file_path: str):
         self._file_path = file_path
+
+    def clean_info(self):
+        name = self.model_info.name
+        team = self.model_info.team
+
+        if name is not None:
+            name = name.lower()
+            name = name.replace("_", "-")
+            self.model_info.name = name
+
+        if team is not None:
+            team = team.lower()
+            self.model_info.team = team
 
     def get_record(self) -> Dict[str, Any]:
         record = self.registry.registry.list_cards(
@@ -80,7 +94,7 @@ class ModelDownloader:
             raise ValueError("No model record found. Please check api parameters")
 
         return switch_out_proxy_location(
-            record=record,
+            record=record[0],  # only 1 record should be returned
             config=self.config,
         )
 
