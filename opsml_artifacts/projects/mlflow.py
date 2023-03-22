@@ -167,7 +167,7 @@ class MlFlowProject(Project):
         mlflow_client = MlflowClient(tracking_uri=tracking_uri)
 
         # set global tracking uri: When logging artifacts, mlflow with call the env var
-        os.environ["MLFLOW_TRACKING_URI"] = tracking_uri
+        os.environ["MLFLOW_TRACKING_URI"] = str(tracking_uri)
 
         # set username and password while running project
         if all(bool(os.getenv(cred)) for cred in OpsmlAuth):
