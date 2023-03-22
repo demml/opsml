@@ -41,8 +41,7 @@ from xgboost import XGBRegressor
 import lightgbm as lgb
 
 # opsml
-from opsml_artifacts.experiments import get_experiment
-from opsml_artifacts.experiments.mlflow import CardRegistries, MlFlowExperiment, MlFlowExperimentInfo
+from opsml_artifacts import ModelCard
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
@@ -226,6 +225,29 @@ def test_app() -> Iterator[TestClient]:
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
     cleanup()
+
+
+def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
+    def callable_api():
+        return test_client
+
+    with patch("httpx.Client", callable_api):
+
+        from opsml_artifacts.helpers.settings import settings
+
+        settings.opsml_tracking_uri = "http://testserver"
+
+        data_registry = CardRegistry(registry_name="data")
+        model_registry = CardRegistry(registry_name="model")
+        experiment_registry = CardRegistry(registry_name="experiment")
+        pipeline_registry = CardRegistry(registry_name="pipeline")
+
+        return {
+            "data": data_registry,
+            "model": model_registry,
+            "experiment": experiment_registry,
+            "pipeline": pipeline_registry,
+        }
 
 
 @pytest.fixture(scope="module")
