@@ -1,6 +1,8 @@
 import os
 from enum import Enum
 
+BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
+
 
 class Registries(str, Enum):
     MODEL = "model"
@@ -13,15 +15,15 @@ class MlFlowConfig:
     # Mlflow
     MLFLOW_SERVER_ARTIFACT_DESTINATION = os.getenv("_MLFLOW_SERVER_ARTIFACT_DESTINATION", "./mlruns")
     MLFLOW_SERVER_ARTIFACT_ROOT = os.getenv("_MLFLOW_SERVER_ARTIFACT_ROOT", "mlflow-artifacts:/")
-    MLFLOW_SERVER_FILE_STORE = os.getenv("_MLFLOW_SERVER_FILE_STORE", "sqlite://")
+    MLFLOW_SERVER_FILE_STORE = os.getenv("_MLFLOW_SERVER_FILE_STORE", BASE_LOCAL_SQL)
     MLFLOW_SERVER_SERVE_ARTIFACTS = bool(os.getenv("_MLFLOW_SERVER_SERVE_ARTIFACTS", "true"))
 
 
 class OpsmlConfig:
     APP_NAME = "OPSML-API"
     APP_ENV = os.environ.get("APP_ENV", "development")
-    STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", "local")
-    TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", "sqlite://")
+    STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", "./mlruns")
+    TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", BASE_LOCAL_SQL)
 
     def __init__(self):
         self._proxy_root = os.environ.get("PROXY_ROOT")

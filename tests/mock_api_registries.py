@@ -4,6 +4,7 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
+    ArtifactCard,
     DataCard,
     ExperimentCard,
     ModelCard,
@@ -22,7 +23,6 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-CardType = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]
 
 
 # Separate module for use the ClientRegistry to force use of ClientRegistry for some tests
@@ -81,7 +81,7 @@ class ModelCardRegistry(Registry):
     # custom registration
     def register_card(
         self,
-        card: CardType,
+        card: ArtifactCard,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -243,7 +243,7 @@ class CardRegistry:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> CardType:
+    ) -> ArtifactCard:
 
         """Loads a specific card
 
@@ -268,7 +268,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: CardType,
+        card: ArtifactCard,
         version_type: str = "minor",
         save_path: Optional[str] = None,
     ) -> None:
@@ -293,7 +293,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: CardType,
+        card: ArtifactCard,
     ) -> None:
         """Update and artifact card (DataCard only) based on current registry
 
