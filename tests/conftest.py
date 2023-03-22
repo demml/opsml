@@ -1,35 +1,66 @@
+from typing import Any, Iterator
+
 import os
+import pathlib
 
 # setting initial env vars to override default sql db
-tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
-sql_path = f"sqlite:///{tmp_db_path}"
+# these must be set prior to importing opsml_artifacts sicne they establish their
+DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
+SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
+STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 
-os.environ["OPSML_TRACKING_URI"] = sql_path
-os.environ["OPSML_STORAGE_URI"] = f"{os.path.expanduser('~')}/mlruns"
+os.environ["OPSML_TRACKING_URI"] = SQL_PATH
+os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_FILE_STORE"] = SQL_PATH
+os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 
 
 import pytest
-import requests
-from opsml_artifacts.helpers.gcp_utils import GcpCreds
+import shutil
+import httpx
+from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-
+from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
+from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
+
 from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
+from starlette.testclient import TestClient
 
+import pyarrow as pa
+from pydantic import BaseModel
+
+import numpy as np
+import joblib
+import pandas as pd
 
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import StackingRegressor
+from xgboost import XGBRegressor
 import lightgbm as lgb
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-from pydantic import BaseModel
 
-session = requests.Session()
+# opsml
+from opsml_artifacts.projects import get_project
+from opsml_artifacts.projects.mlflow import CardRegistries, MlFlowProject, MlFlowProjectInfo
+
+# testing
+from tests.mock_api_registries import CardRegistry
+
+
+def cleanup() -> None:
+    """Removes temp files"""
+    if os.path.exists(DB_FILE_PATH):
+        os.remove(DB_FILE_PATH)
+    shutil.rmtree(STORAGE_PATH, ignore_errors=True)
+
 
 ################ Test Classes
 class Blob(BaseModel):
@@ -117,7 +148,7 @@ def mock_gcsfs():
         yield mocked_gcsfs
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function")
 def mock_pathlib():
     with patch.multiple(
         "pathlib.Path",
@@ -127,20 +158,20 @@ def mock_pathlib():
 
 
 @pytest.fixture(scope="function")
-def mock_joblib_storage():
+def mock_joblib_storage(mock_pathlib):
     with patch.multiple(
         "opsml_artifacts.registry.storage.artifact_storage.JoblibStorage",
-        _save_artifact=MagicMock(return_value=None),
+        _write_joblib=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_joblib:
         yield mocked_joblib
 
 
 @pytest.fixture(scope="function")
-def mock_json_storage():
+def mock_json_storage(mock_pathlib):
     with patch.multiple(
         "opsml_artifacts.registry.storage.artifact_storage.JSONStorage",
-        _save_artifact=MagicMock(return_value=None),
+        _write_json=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_json:
         yield mocked_json
@@ -152,19 +183,273 @@ def mock_artifact_storage_clients(mock_json_storage, mock_joblib_storage):
 
 
 @pytest.fixture(scope="function")
-def mock_pyarrow_parquet_write():
+def mock_pyarrow_parquet_write(mock_pathlib):
     with patch.multiple("pyarrow.parquet", write_table=MagicMock(return_value=True)) as mock_:
         yield mock_
 
 
 @pytest.fixture(scope="function")
-def mock_pyarrow_parquet_dataset(test_df, test_arrow_table):
+def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
     with patch("pyarrow.parquet.ParquetDataset") as mock_:
         mock_dataset = mock_.return_value
         mock_dataset.read.return_value = test_arrow_table
         mock_dataset.read.to_pandas.return_value = test_df
 
         yield mock_dataset
+
+
+################################################################################
+# Mocks
+################################################################################
+
+
+def mock_app() -> TestClient:
+    from opsml_artifacts.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp(run_mlflow=True)
+    return TestClient(opsml_app.get_app())
+
+
+@pytest.fixture(scope="module")
+def test_app() -> Iterator[TestClient]:
+    cleanup()
+    from opsml_artifacts.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp(run_mlflow=True)
+    with TestClient(opsml_app.get_app()) as tc:
+        yield tc
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
+    def callable_api():
+        return test_app
+
+    with patch("httpx.Client", callable_api):
+
+        from opsml_artifacts.helpers.settings import settings
+
+        settings.opsml_tracking_uri = "http://testserver"
+
+        data_registry = CardRegistry(registry_name="data")
+        model_registry = CardRegistry(registry_name="model")
+        experiment_registry = CardRegistry(registry_name="experiment")
+        pipeline_registry = CardRegistry(registry_name="pipeline")
+
+        yield {
+            "data": data_registry,
+            "model": model_registry,
+            "experiment": experiment_registry,
+            "pipeline": pipeline_registry,
+        }
+
+
+def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
+    mlflow_exp: MlFlowProject = get_project(info)
+    mlflow_storage = mlflow_exp._get_storage_client()
+    api_card_registries = CardRegistries.construct(
+        datacard=CardRegistry(registry_name="data"),
+        modelcard=CardRegistry(registry_name="model"),
+        experimentcard=CardRegistry(registry_name="experiment"),
+    )
+    api_card_registries.set_storage_client(mlflow_storage)
+    mlflow_exp.registries = api_card_registries
+    return mlflow_exp
+
+
+@pytest.fixture
+def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowProject]:
+    mlflow_exp: MlFlowProject = get_project(
+        MlFlowProjectInfo(
+            name="test_exp",
+            team="test",
+            user_email="test",
+            tracking_uri=SQL_PATH,
+        )
+    )
+    mlflow_storage = mlflow_exp._get_storage_client()
+    api_card_registries = CardRegistries.construct(
+        datacard=api_registries["data"],
+        modelcard=api_registries["model"],
+        experimentcard=api_registries["experiment"],
+    )
+    api_card_registries.set_storage_client(mlflow_storage)
+    mlflow_exp.registries = api_card_registries
+
+    yield mlflow_exp
+
+
+######## local clients
+@pytest.fixture(scope="function")
+def mock_local_engine():
+    local_client = LocalSQLConnection(tracking_uri="sqlite://")
+    engine = local_client.get_engine()
+    return engine
+
+
+@pytest.fixture(scope="function")
+def db_registries(mock_local_engine):
+
+    # TODO(@damom): DRY this
+    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
+    sql_path = f"sqlite:///{tmp_db_path}"
+
+    os.environ["OPSML_TRACKING_URI"] = sql_path
+    os.environ["OPSML_STORAGE_URI"] = f"{os.path.expanduser('~')}/mlruns"
+    os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = f"{os.path.expanduser('~')}/mlruns"
+    os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = f"{os.path.expanduser('~')}/mlruns"
+    os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
+    os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
+
+    from opsml_artifacts.registry.sql.registry import CardRegistry
+
+    with patch.multiple(
+        "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
+        get_engine=MagicMock(return_value=mock_local_engine),
+    ) as engine_mock:
+
+        local_client = LocalSQLConnection(tracking_uri="sqlite://")
+        engine = local_client.get_engine()
+
+        DataSchema.__table__.create(bind=engine, checkfirst=True)
+        ModelSchema.__table__.create(bind=engine, checkfirst=True)
+        ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
+        PipelineSchema.__table__.create(bind=engine, checkfirst=True)
+
+        model_registry = CardRegistry(registry_name="model")
+        data_registry = CardRegistry(registry_name="data")
+        experiment_registry = CardRegistry(registry_name="experiment")
+        pipeline_registry = CardRegistry(registry_name="pipeline")
+
+        yield {
+            "data": data_registry,
+            "model": model_registry,
+            "experiment": experiment_registry,
+            "pipeline": pipeline_registry,
+            "connection_client": local_client,
+        }
+
+    try:
+        shutil.rmtree(f"{os.path.expanduser('~')}/mlruns")
+    except Exception as e:
+        pass
+
+
+@pytest.fixture(scope="function")
+def mock_model_cli_loader(db_registries):
+    model_registry = db_registries["model"]
+    from pathlib import Path
+    from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
+    from opsml_artifacts.registry.model.types import ModelApiDef
+
+    class MockModelLoaderCli(ModelLoaderCli):
+        def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
+            pass
+
+        def _set_registry(self) -> Any:
+            return model_registry
+
+    with patch("opsml_artifacts.scripts.load_model_card.ModelLoaderCli", MockModelLoaderCli) as mock_cli_loader:
+
+        yield mock_cli_loader
+
+
+@pytest.fixture(scope="function")
+def mock_gcs_storage_response():
+    class MockResponse:
+        def __init__(self):
+            self.status_code = 200
+
+        def json(self):
+            return {
+                "storage_type": "gcs",
+                "storage_uri": "gs://test",
+            }
+
+    class MockHTTPX(httpx.Client):
+        def get(self, url, **kwargs):
+            return MockResponse()
+
+    with patch("httpx.Client", MockHTTPX) as mock_requests:
+        yield mock_requests
+
+
+@pytest.fixture(scope="function")
+def load_transformer_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
+    data = np.load("tests/assets/transformer_data.npy")
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_multi_input_keras_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
+    data = joblib.load("tests/assets/multi_input_data.joblib")
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_pytorch_resnet():
+    import torch
+
+    loaded_model = torch.load("tests/assets/resnet.pt")
+    data = torch.randn(1, 3, 224, 224).numpy()
+
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def mock_gcp_scheduler():
+    class ScheduleClient:
+        def common_location_path(self, project: str, location: str):
+            return f"{project}-{location}"
+
+        def list_jobs(self, parent: str):
+            return [Blob(name="test")]
+
+        def delete_job(self, job_name: str):
+            return True
+
+        def create_job(self, parent: str, job: str):
+            return "test_job"
+
+    class MockScheduler(GCPMLScheduler):
+        def __init__(self):
+            self.schedule_client = ScheduleClient()
+            self.oidc_token = "test"
+            self.parent_path = "test"
+
+        def _create_job_class(self, job: dict):
+            return "job"
+
+    with patch("opsml_artifacts.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
+
+        yield mock_scheduler
+
+
+@pytest.fixture(scope="function")
+def mock_gcs(test_df):
+    class StorageClient:
+        def bucket(self, gcs_bucket: str):
+            return Bucket()
+
+        def blob(self, blob_path: str):
+            return Blob()
+
+        def list_blobs(self, prefix: str):
+            return [Blob(), Blob()]
+
+    class MockStorage(GCSStorageClient):
+        def __init__(self):
+            self.client = StorageClient()
+
+    with patch("opsml_artifacts.helpers.gcp_utils.GCSStorageClient", MockStorage) as mock_storage:
+        yield mock_storage
 
 
 ######### Data for registry tests
@@ -222,16 +507,52 @@ def drift_dataframe():
 
 
 #################################### MODELS ###################################
-@pytest.fixture(scope="module")
-def linear_regression():
+
+
+@pytest.fixture(scope="function")
+def load_transformer_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
+    data = np.load("tests/assets/transformer_data.npy")
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_multi_input_keras_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
+    data = joblib.load("tests/assets/multi_input_data.joblib")
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_pytorch_resnet():
+    import torch
+
+    loaded_model = torch.load("tests/assets/resnet.pt")
+    data = torch.randn(1, 3, 224, 224).numpy()
+
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def stacking_regressor():
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
     y = np.dot(X, np.array([1, 2])) + 3
-    reg = LinearRegression().fit(X, y)
+    estimators = [("lr", RandomForestRegressor()), ("svr", XGBRegressor()), ("reg", lgb.LGBMRegressor())]
+    reg = StackingRegressor(
+        estimators=estimators,
+        final_estimator=RandomForestRegressor(n_estimators=10, random_state=42),
+        cv=2,
+    )
+    reg.fit(X, y)
     return reg, X
 
 
-@pytest.fixture(scope="module")
-def sklearn_pipeline():
+@pytest.fixture(scope="session")
+def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
     data = pd.DataFrame(
         [
             dict(CAT1="a", CAT2="c", num1=0.5, num2=0.6, num3=0, y=0),
@@ -255,8 +576,64 @@ def sklearn_pipeline():
 
 
 @pytest.fixture(scope="function")
+def xgb_df_regressor(drift_dataframe):
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = XGBRegressor()
+    reg.fit(X_train.to_numpy(), y_train)
+    return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def random_forest_classifier(drift_dataframe):
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = RandomForestClassifier(n_estimators=10)
+    reg.fit(X_train.to_numpy(), y_train)
+    return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def lgb_classifier(drift_dataframe):
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = lgb.LGBMClassifier(n_estimators=3)
+    reg.fit(X_train.to_numpy(), y_train)
+    return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def lgb_booster_dataframe(drift_dataframe):
+    X_train, y_train, X_test, y_test = drift_dataframe
+    # create dataset for lightgbm
+    lgb_train = lgb.Dataset(X_train, y_train)
+    lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
+    # specify your configurations as a dict
+    params = {
+        "boosting_type": "gbdt",
+        "objective": "regression",
+        "metric": {"l2", "l1"},
+        "num_leaves": 31,
+        "learning_rate": 0.05,
+        "feature_fraction": 0.9,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 5,
+        "verbose": 0,
+    }
+    # train
+    gbm = lgb.train(
+        params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
+    )
+    return gbm, X_train[:100]
+
+
+@pytest.fixture(scope="module")
+def linear_regression():
+    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    y = np.dot(X, np.array([1, 2])) + 3
+    reg = LinearRegression().fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="function")
 def test_model_card(sklearn_pipeline):
-    # create data card
     model, data = sklearn_pipeline
     model_card = ModelCard(
         trained_model=model,

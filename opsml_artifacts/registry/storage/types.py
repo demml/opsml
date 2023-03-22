@@ -85,6 +85,3 @@ class StorageClientProto(Protocol):
 class MlFlowClientProto(Protocol):
     def log_artifact(self, run_id: str, local_path: str, artifact_path: str):
         "log artifact"
-
-    def download_artifacts(self, run_id: str, path: str, dst_path: Optional[str] = None) -> str:
-        "download artifact"
