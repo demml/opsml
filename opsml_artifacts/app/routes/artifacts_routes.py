@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from fastapi import APIRouter, BackgroundTasks, Body, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
@@ -19,12 +19,13 @@ from opsml_artifacts.app.routes.models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml_artifacts.app.routes.utils import MODEL_FILE, ModelDownloader, delete_dir
+from opsml_artifacts.app.routes.utils import MODEL_FILE, ModelDownloader, delete_dir, iterfile
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
+CHUNK_SIZE = 1024 * 1024
 
 
 @router.get("/settings", response_model=StorageSettingsResponse, name="settings")
@@ -177,9 +178,18 @@ def download_model(
     loader.download_model()
     background_tasks.add_task(delete_dir, dir_path=loader.base_path)
 
-    return FileResponse(
-        path=loader.file_path,
+    headers = {"Content-Disposition": f'attachment; filename="{MODEL_FILE}"'}
+    return StreamingResponse(
+        iterfile(
+            file_path=loader.file_path,
+            chunk_size=CHUNK_SIZE,
+        ),
         media_type="application/octet-stream",
-        content_disposition_type="attachment",
-        filename=MODEL_FILE,
+        headers=headers,
     )
+    # return FileResponse(
+    #    path=loader.file_path,
+    #    media_type="application/octet-stream",
+    #    content_disposition_type="attachment",
+    #    filename=MODEL_FILE,
+    # )
