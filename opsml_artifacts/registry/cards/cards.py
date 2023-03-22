@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -32,6 +34,28 @@ from opsml_artifacts.registry.storage.storage_system import StorageClientType
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
+
+
+class CardType(str, Enum):
+    DATA = "data"
+    MODEL = "model"
+    EXPERIMENT = "experiment"
+    PIPELINE = "pipeline"
+
+
+class VersionType(str, Enum):
+    MAJOR = "major"
+    MINOR = "minor"
+    PATCH = "patch"
+
+
+@dataclass
+class CardInfo:
+    name: Optional[str]
+    team: Optional[str]
+    user_email: Optional[str] = None
+    uid: Optional[str] = None
+    version: Optional[str] = None
 
 
 class ArtifactCard(BaseModel):
@@ -375,6 +399,7 @@ class ModelCard(ArtifactCard):
             "onnx_model_def",
             "storage_client",
         }
+
         if not bool(self.onnx_model_def):
             self._create_and_set_onnx_attr()
 
@@ -628,6 +653,3 @@ class ExperimentCard(ArtifactCard):
             """
             )
         return ExperimentRegistryRecord(**self.dict(exclude=exclude_attr))
-
-
-CardType = Union[ExperimentCard, ModelCard, DataCard, PipelineCard]

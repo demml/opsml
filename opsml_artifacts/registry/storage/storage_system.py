@@ -1,9 +1,11 @@
 # pylint: disable=import-outside-toplevel
 
+import shutil
 import tempfile
 import uuid
 from contextlib import contextmanager
 from enum import Enum
+from functools import wraps
 from pathlib import Path
 from typing import Any, Generator, Optional, Tuple, Union, cast
 
@@ -25,6 +27,11 @@ class StorageSystem(str, Enum):
     MLFLOW = "mlflow"
 
 
+class ArtifactClass(str, Enum):
+    DATA = "data"
+    OTHER = "other"
+
+
 class DataArtifactNames(str, Enum):
     PARQUET = "parquet"
     ZARR = "zarr"
@@ -33,7 +40,6 @@ class DataArtifactNames(str, Enum):
 class ModelArtifactNames(str, Enum):
     MODELCARD = "modelcard"
     TRAINED_MODEL = "trained-model"
-    SAMPLE_DATA = "sample-data"
     API_DEF = "api-def"
 
 
@@ -42,6 +48,32 @@ class MlFlowDirs(str, Enum):
     MODEL_DIR = "model"
     ONNX_MODEL_DIR = "model"
     ARTIFACT_DIR = "misc"
+
+
+def cleanup_files(func):
+
+    """Decorator for deleting files if needed"""
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs) -> Any:
+
+        artifact, loadable_filepath = func(self, *args, **kwargs)
+
+        if isinstance(loadable_filepath, list):
+            loadable_filepath = loadable_filepath[0]
+
+        if isinstance(loadable_filepath, str):
+
+            if "temp" in loadable_filepath:  # make this better later
+                try:
+                    file_dir = "/".join(loadable_filepath.split("/")[:-1])
+                    shutil.rmtree(file_dir)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass  # soft failure
+
+        return artifact
+
+    return wrapper
 
 
 class StorageClient:
@@ -82,6 +114,7 @@ class StorageClient:
         tmp_dir: str,
         file_suffix: Optional[str] = None,
     ):
+
         base_path, filename = self.create_save_path(file_suffix=file_suffix)
         local_path = f"{tmp_dir}/{filename}"
 
@@ -116,11 +149,17 @@ class StorageClient:
     def store(self, storage_uri: str):
         raise NotImplementedError
 
-    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
         return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
-    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs):
+    def upload(
+        self,
+        local_path: str,
+        write_path: str,
+        recursive: bool = False,
+    ) -> str:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
+        return write_path
 
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
@@ -209,81 +248,84 @@ class MlFlowStorageClient(LocalStorageClient):
         )
 
         self._run_id: Optional[str] = None
+        self._artifact_path: Optional[str] = None
         self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
+
+    @property
+    def run_id(self) -> str:
+        return str(self._run_id)
+
+    @run_id.setter
+    def run_id(self, run_id: str):
+        self._run_id = run_id
+
+    @property
+    def artifact_path(self):
+        return str(self._artifact_path)
+
+    @artifact_path.setter
+    def artifact_path(self, artifact_path: str):
+        self._artifact_path = artifact_path
 
     @property
     def mlflow_client(self):
         return cast(MlFlowClientProto, self._mlflow_client)
 
-    def set_run_id(self, run_id: str):
-        """Sets the run id to use with mlflow logging"""
-        self._run_id = run_id
-
-    def set_mlflow_client(self, mlflow_client: MlFlowClientProto):
-        """Sets the mlflow client to use for logging"""
+    @mlflow_client.setter
+    def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
 
-    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs):
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
+        import mlflow
 
-        tmp_path = "/".join(lpath.split("/")[:-1])  # mlflow wants a dir
-        filename = rpath.split("/")[-1]
-        mlflow_read_dir = self._get_mlflow_dir(filename=rpath)
+        temp_path = Path("temp")
+        temp_path.mkdir(parents=True, exist_ok=True)
+        abs_temp_path = str(temp_path.resolve())
 
-        self.mlflow_client.download_artifacts(
-            run_id=self._run_id,
-            path=mlflow_read_dir,
-            dst_path=tmp_path,
+        file_path = mlflow.artifacts.download_artifacts(
+            artifact_uri=rpath,
+            dst_path=abs_temp_path,
+            tracking_uri=self.mlflow_client.tracking_uri,
         )
-        import os
+        return file_path
 
-        os.rename(f"{tmp_path}/{filename}", lpath)
-
-    def post_process(self, storage_uri: str) -> str:
+    def upload(
+        self,
+        local_path: str,
+        write_path: str,
+        recursive: bool = False,
+    ) -> str:
 
         """Uploads local artifact to mflow
 
         Args:
-            local_path (str): Path to local file or folder
-            write_path (str): MlFlow path to write to
+            storage_uri: Path where current artifact has been saved to
         """
-        mlflow_write_dir = self._get_mlflow_dir(filename=storage_uri)
+
+        mlflow_write_dir = self._get_mlflow_dir(filename=write_path)
+
         self.mlflow_client.log_artifact(
-            run_id=self._run_id,
-            local_path=storage_uri,
+            run_id=self.run_id,
+            local_path=local_path,
             artifact_path=mlflow_write_dir,
         )
+
+        # need to re-write storage path for saving to ArtifactCard
+        filename = write_path.split("/")[-1]
+        storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
+
         return storage_uri
 
-    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs):
-        """This is an explicit overwrite to keep consistency with ArtifactStorage
-        subclasses and how LocalFileSystem and GcsfFileSystem upload objects
-
-        """
-        return self.post_process(storage_uri=local_path)
-
     def _get_mlflow_dir(self, filename: str) -> str:
+
+        "Sets individual directories for all mlflow artifacts"
         if any(name in filename for name in DataArtifactNames):
             return MlFlowDirs.DATA_DIR.value
+
         if any(name in filename for name in ModelArtifactNames):
             return MlFlowDirs.MODEL_DIR.value
-        return MlFlowDirs.ARTIFACT_DIR.value
 
-    # def create_tmp_path(
-    #    self,
-    #    artifact_storage_info: ArtifactStorageSpecs,
-    #    tmp_dir: str,
-    #    file_suffix: Optional[str] = None,
-    # ):
-    #    _, filename = self.create_save_path(
-    #        artifact_storage_info=artifact_storage_info,
-    #        file_suffix=file_suffix,
-    #    )
-    #
-    #    # hacky at the moment
-    #    mlflow_path = self._get_mlflow_dir(filename=filename)
-    #    local_path = f"{tmp_dir}/{filename}"
-    #
-    #    return mlflow_path, local_path
+        return MlFlowDirs.ARTIFACT_DIR.value
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
