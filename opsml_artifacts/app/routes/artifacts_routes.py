@@ -25,7 +25,7 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
-CHUNK_SIZE = 1024 * 1024
+CHUNK_SIZE = 31457280  # 30 chunks
 
 
 @router.get("/settings", response_model=StorageSettingsResponse, name="settings")
@@ -140,14 +140,11 @@ def update_record(
     return UpdateRecordResponse(updated=True)
 
 
-@router.get("/download", name="download")
+@router.post("/download", name="download")
 def download_model(
     request: Request,
     background_tasks: BackgroundTasks,
-    name: Optional[str] = None,
-    version: Optional[str] = None,
-    team: Optional[str] = None,
-    uid: Optional[str] = None,
+    payload: DownloadModelRequest,
 ) -> FileResponse:
 
     """Downloads a Model API definition
@@ -164,15 +161,9 @@ def download_model(
 
     registry: CardRegistry = getattr(request.app.state.registries, "model")
 
-    model_info = DownloadModelRequest(
-        name=name,
-        version=version,
-        team=team,
-        uid=uid,
-    )
     loader = ModelDownloader(
         registry=registry,
-        model_info=model_info,
+        model_info=payload,
         config=config,
     )
     loader.download_model()

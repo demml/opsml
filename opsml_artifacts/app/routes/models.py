@@ -84,8 +84,7 @@ class QueryRecordResponse(BaseModel):
     record: Dict[str, Any]
 
 
-@dataclass
-class DownloadModelRequest:
+class DownloadModelRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
     team: Optional[str] = None
