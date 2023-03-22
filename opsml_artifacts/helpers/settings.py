@@ -7,6 +7,7 @@ from pydantic import BaseSettings, Field, root_validator
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.request_helpers import ApiClient, api_routes
+from opsml_artifacts.helpers.types import OpsmlAuth, OpsmlUri
 from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnector
 from opsml_artifacts.registry.storage.storage_system import (
     StorageClientGetter,
@@ -19,10 +20,7 @@ from opsml_artifacts.registry.storage.types import (
 )
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
-OPSML_STORAGE_URI = "OPSML_STORAGE_URI"
-OPSML_TRACKING_URI = "OPSML_TRACKING_URI"
-OPSML_USERNAME = "OPSML_USERNAME"
-OPSML_PASSWORD = "OPSML_PASSWORD"
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -77,12 +75,13 @@ class DefaultAttrCreator:
             tracking_uri string
 
         """
-        tracking_uri = self._env_vars.get(OPSML_TRACKING_URI.lower(), BASE_LOCAL_SQL)
+
+        tracking_uri = self._env_vars.get(OpsmlUri.TRACKING_URI.lower(), BASE_LOCAL_SQL)
 
         if tracking_uri is BASE_LOCAL_SQL:
             logger.info("""No tracking url set. Defaulting to Sqlite""")
 
-        self._env_vars[OPSML_TRACKING_URI.lower()] = tracking_uri
+        self._env_vars[OpsmlUri.TRACKING_URI.lower()] = tracking_uri
         self._get_api_client(tracking_uri=tracking_uri)
 
         return tracking_uri
@@ -102,8 +101,8 @@ class DefaultAttrCreator:
             tracking_uri (str): URL for tracking
         """
 
-        username = os.environ.get(OPSML_USERNAME)
-        password = os.environ.get(OPSML_PASSWORD)
+        username = os.environ.get(OpsmlAuth.USERNAME)
+        password = os.environ.get(OpsmlAuth.PASSWORD)
 
         if "http" in tracking_uri:
             request_client = ApiClient(base_url=tracking_uri)
@@ -160,7 +159,7 @@ class DefaultAttrCreator:
             StorageClientSettings
 
         """
-        storage_uri = os.environ.get(OPSML_STORAGE_URI)
+        storage_uri = os.environ.get(OpsmlUri.STORAGE_URI)
         return StorageSettingsGetter(
             storage_uri=storage_uri,
         ).get_storage_settings()
@@ -212,7 +211,7 @@ class DefaultSettings(BaseSettings):
     """Default variables to load"""
 
     app_env: str = Field("development", env="APP_ENV")
-    opsml_tracking_uri: str = Field(..., env=OPSML_TRACKING_URI)
+    opsml_tracking_uri: str = Field(..., env=OpsmlUri.TRACKING_URI)
     storage_settings: StorageSettings
     storage_client: StorageClientType
     request_client: Optional[ApiClient] = Field(None)
