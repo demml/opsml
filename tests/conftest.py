@@ -20,13 +20,6 @@ os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 import pytest
 import shutil
 import httpx
-from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
-from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
-from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
-
-from opsml_artifacts import ModelCard
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
 from starlette.testclient import TestClient
@@ -48,8 +41,15 @@ from xgboost import XGBRegressor
 import lightgbm as lgb
 
 # opsml
+from opsml_artifacts import ModelCard
+from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
+from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
+from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
+from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
 from opsml_artifacts.projects.mlflow import CardRegistries, MlFlowProject, MlFlowProjectInfo
+
 
 # testing
 from tests.mock_api_registries import CardRegistry
@@ -57,9 +57,15 @@ from tests.mock_api_registries import CardRegistry
 
 def cleanup() -> None:
     """Removes temp files"""
+
     if os.path.exists(DB_FILE_PATH):
         os.remove(DB_FILE_PATH)
+
+    # remove api mlrun path
     shutil.rmtree(STORAGE_PATH, ignore_errors=True)
+
+    # remove test experiment mlrun path
+    shutil.rmtree("mlruns", ignore_errors=True)
 
 
 ################ Test Classes
@@ -221,6 +227,29 @@ def test_app() -> Iterator[TestClient]:
     cleanup()
 
 
+def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
+    def callable_api():
+        return test_client
+
+    with patch("httpx.Client", callable_api):
+
+        from opsml_artifacts.helpers.settings import settings
+
+        settings.opsml_tracking_uri = "http://testserver"
+
+        data_registry = CardRegistry(registry_name="data")
+        model_registry = CardRegistry(registry_name="model")
+        experiment_registry = CardRegistry(registry_name="experiment")
+        pipeline_registry = CardRegistry(registry_name="pipeline")
+
+        return {
+            "data": data_registry,
+            "model": model_registry,
+            "experiment": experiment_registry,
+            "pipeline": pipeline_registry,
+        }
+
+
 @pytest.fixture(scope="module")
 def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
     def callable_api():
@@ -258,6 +287,28 @@ def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
     return mlflow_exp
 
 
+@pytest.fixture(scope="module")
+def test_app() -> Iterator[TestClient]:
+    cleanup()
+    from opsml_artifacts.app.main import OpsmlApp, config
+    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+
+    mlflow_config = initialize_mlflow()
+    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+        config.is_proxy = True
+        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+
+    opsml_app = OpsmlApp(run_mlflow=True)
+    with TestClient(opsml_app.get_app()) as tc:
+        yield tc
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
+    yield mock_registries(test_app)
+
+
 @pytest.fixture
 def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowProject]:
     mlflow_exp: MlFlowProject = get_project(
@@ -291,17 +342,7 @@ def mock_local_engine():
 @pytest.fixture(scope="function")
 def db_registries(mock_local_engine):
 
-    # TODO(@damom): DRY this
-    tmp_db_path = f"{os.path.expanduser('~')}/tmp.db"
-    sql_path = f"sqlite:///{tmp_db_path}"
-
-    os.environ["OPSML_TRACKING_URI"] = sql_path
-    os.environ["OPSML_STORAGE_URI"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = f"{os.path.expanduser('~')}/mlruns"
-    os.environ["_MLFLOW_SERVER_FILE_STORE"] = sql_path
-    os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
-
+    # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml_artifacts.registry.sql.registry import CardRegistry
 
     with patch.multiple(
@@ -330,27 +371,25 @@ def db_registries(mock_local_engine):
             "connection_client": local_client,
         }
 
-    try:
-        shutil.rmtree(f"{os.path.expanduser('~')}/mlruns")
-    except Exception as e:
-        pass
+    cleanup()
 
 
 @pytest.fixture(scope="function")
 def mock_model_cli_loader(db_registries):
+
     model_registry = db_registries["model"]
     from pathlib import Path
-    from opsml_artifacts.scripts.load_model_card import ModelLoaderCli
+    from opsml_artifacts.scripts.load_model_card import ModelLoader
     from opsml_artifacts.registry.model.types import ModelApiDef
 
-    class MockModelLoaderCli(ModelLoaderCli):
+    class MockModelLoader(ModelLoader):
         def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
             pass
 
         def _set_registry(self) -> Any:
             return model_registry
 
-    with patch("opsml_artifacts.scripts.load_model_card.ModelLoaderCli", MockModelLoaderCli) as mock_cli_loader:
+    with patch("opsml_artifacts.scripts.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
 
         yield mock_cli_loader
 
@@ -365,6 +404,7 @@ def mock_gcs_storage_response():
             return {
                 "storage_type": "gcs",
                 "storage_uri": "gs://test",
+                "proxy": False,
             }
 
     class MockHTTPX(httpx.Client):
@@ -506,7 +546,9 @@ def drift_dataframe():
     return X_train, y_train, X_test, y_test
 
 
-#################################### MODELS ###################################
+###############################################################################
+# Moodels
+################################################################################
 
 
 @pytest.fixture(scope="function")

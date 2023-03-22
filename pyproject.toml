@@ -8,7 +8,6 @@ authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 python = ">=3.9,<=3.11"
 altair = "^4.2.0"
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
-cryptography = "<39.0.0"
 fastapi = {version="^0.92.0", optional = true}
 gcsfs = {version="^2022.11.0", optional = true}
 google-auth = {version="1.35.0", optional = true}
@@ -37,9 +36,11 @@ tenacity = "^8.2.2"
 tf2onnx = {version="^1.13.0", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
+wsgi-basic-auth = {version="^1.1.0", optional = true}
+cryptography = "^39.0.1"
 
 [tool.poetry.extras]
-proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator"]
+proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
 graphviz = ["graphviz"]
 tf_onnx = ["tf2onnx"]
 gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
@@ -84,7 +85,7 @@ python-dotenv = "^0.21.1"
 [tool.poetry.scripts]
 load_model_card_to_file = "opsml_artifacts.scripts.load_model_card:load_model_card_to_file"
 opsml-uvicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
-opsml-gunicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
+opsml-gunicorn-server = 'opsml_artifacts.app.main:opsml_gunicorn_server'
 
 [tool.isort]
 profile = "black"
@@ -108,10 +109,12 @@ disable = [
     "missing-module-docstring",
     "too-many-nested-blocks",
     "unused-argument",
+    "fixme",
 ]
 extension-pkg-whitelist = [
     "pydantic"
 ]
+
 
 [tool.flake8]
 # This section is just a doc placeholder..see setup.cfg
@@ -120,7 +123,7 @@ format = "pylint"
 statistics = "True"
 max-line-length = 120
 # ignore non-PEP8 lints
-ignore = ["E203", "W503"]
+ignore = ["E203", "W503", "W0511"]
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -206,5 +209,6 @@ build-backend = "poetry.core.masonry.api"
 # Access Shipt's private Artifactory remote PyPi repository. It serves as a caching proxy.
 # Generate Identity Token in Artifactory and use it as password and then have these ENV's set:
 name = "shipt-resolve"
-url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+#url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
 default = true

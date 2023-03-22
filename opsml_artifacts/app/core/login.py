@@ -7,8 +7,8 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 security = HTTPBasic()
 
 
-username = os.environ["MLFLOW_TRACKING_USERNAME"].encode("utf-8")
-password = os.environ["MLFLOW_TRACKING_PASSWORD"].encode("utf-8")
+username = os.environ["OPSML_USERNAME"].encode("utf-8")
+password = os.environ["OPSML_PASSWORD"].encode("utf-8")
 
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):

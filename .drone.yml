@@ -32,6 +32,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py39 # running in parallel slows testing down
 
   - name: quality-checks
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
