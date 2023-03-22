@@ -64,9 +64,6 @@ class MlFlowProjectInfo(ProjectInfo):
         description="The mlflow tracking URI. Defaults to OPSML_TRACKING_URI",
     )
 
-    def mlflow_experiment_name(self) -> str:
-        return f"{self.team}:{self.name}"
-
 
 class CardRegistries(BaseModel):
     datacard: CardRegistry
@@ -138,7 +135,7 @@ class MlFlowProject(Project):
         self.name = info.name.lower()
         self.team_name = info.team
         self.user_email = info.user_email
-        self._experiment_name = info.mlflow_experiment_name()
+        self._project_id = info.project_id
 
         # tracking attr
         self._run_id: Optional[str] = None
@@ -151,7 +148,7 @@ class MlFlowProject(Project):
         self._storage_client = self._get_storage_client()
         self.registries = self._get_card_registries()
 
-        self._project_id = self._get_project_id(self._experiment_name)
+        self._experiment_id = self._get_experiment_id(self.project_id)
         if info.run_id is not None:
             self._verify_run_id(info.run_id)
             self._run_id = info.run_id
@@ -184,25 +181,24 @@ class MlFlowProject(Project):
         return info.artifact_uri
 
     @property
+    def project_id(self) -> str:
+        return self._project_id
+
+    @property
     def run_id(self) -> Optional[str]:
         """Run id for mlflow run"""
         return self._run_id
 
-    @property
-    def project_id(self):
-        """Returns the mlflow Project id"""
-        return self._project_id
-
-    def _get_project_id(self, name: str) -> str:
-        """Finds the project_id from mlflow for the given name. If an existing
-        project does not exist, a new one is created.
+    def _get_experiment_id(self, project_id: str) -> str:
+        """Finds the experiment_id from mlflow for the given project. If an
+        existing experiment does not exist, a new one is created.
 
         Returns:
-            the underlying mlflow experiment_id (which is our project_id)
+            the underlying mlflow experiment_id
         """
-        project = self._mlflow_client.get_experiment_by_name(name=name)
+        project = self._mlflow_client.get_experiment_by_name(name=project_id)
         if project is None:
-            return self._mlflow_client.create_experiment(name=name)
+            return self._mlflow_client.create_experiment(name=project_id)
         return project.experiment_id
 
     def _verify_run_id(self, run_id: str) -> None:
@@ -223,7 +219,7 @@ class MlFlowProject(Project):
             )
             self._active_run = self._mlflow_client.get_run(self._run_id)
         else:
-            self._active_run = self._mlflow_client.create_run(experiment_id=self.project_id)
+            self._active_run = self._mlflow_client.create_run(experiment_id=self._experiment_id)
 
         info = cast(RunInfo, self._active_run.info)
         self._run_id = info.run_id
