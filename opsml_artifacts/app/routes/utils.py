@@ -74,7 +74,10 @@ class ModelDownloader:
             name=self.model_info.name,
             team=self.model_info.team,
             version=self.model_info.version,
-        )[0]
+        )
+
+        if len(record) < 1:
+            raise ValueError("No model record found. Please check api parameters")
 
         return switch_out_proxy_location(
             record=record,
