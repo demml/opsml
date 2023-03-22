@@ -39,9 +39,6 @@ class StorageSettingsGetter:
 
         gcp_creds = GcpCredsSetter().get_creds()
         storage_settings["credentials"] = gcp_creds.creds
-        storage_settings["gcsfs_credentials"] = gcp_creds.creds.with_scopes(
-            ["https://www.googleapis.com/auth/devstorage.read_only"]
-        )
         storage_settings["storage_type"] = "gcs"
         storage_settings["storage_uri"] = self.storage_uri
         storage_settings["gcp_project"] = gcp_creds.project
