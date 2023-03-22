@@ -1,12 +1,14 @@
 from typing import Union
 
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Request
+from fastapi.responses import StreamingResponse
 
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
     AddRecordRequest,
     AddRecordResponse,
+    DownloadModelRequest,
     ListRequest,
     ListResponse,
     StorageSettingsResponse,
@@ -17,11 +19,18 @@ from opsml_artifacts.app.routes.models import (
     VersionRequest,
     VersionResponse,
 )
+from opsml_artifacts.app.routes.utils import (
+    MODEL_FILE,
+    ModelDownloader,
+    delete_dir,
+    iterfile,
+)
 from opsml_artifacts.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
+CHUNK_SIZE = 31457280  # 30 chunks
 
 
 @router.get("/settings", response_model=StorageSettingsResponse, name="settings")
@@ -29,15 +38,22 @@ def get_storage_settings() -> StorageSettingsResponse:
     """Returns backend storage path and type"""
 
     if bool(config.STORAGE_URI):
-        if "gs://" in config.STORAGE_URI:
-            return StorageSettingsResponse(
-                storage_type="gcs",
-                storage_uri=config.STORAGE_URI,
-            )
+
+        # TODO (steven) - Think of a different way to do this in the future
+        # do we need to return anything if using proxy for both registration and storage?
+
+        if not config.is_proxy:
+
+            if "gs://" in config.STORAGE_URI:
+                return StorageSettingsResponse(
+                    storage_type="gcs",
+                    storage_uri=config.STORAGE_URI,
+                )
 
     return StorageSettingsResponse(
         storage_type="local",
         storage_uri=config.STORAGE_URI,
+        proxy=config.is_proxy,
     )
 
 
@@ -74,6 +90,7 @@ def set_version(
         team=payload.team,
         version_type=payload.version_type,
     )
+
     return VersionResponse(version=version)
 
 
@@ -127,3 +144,43 @@ def update_record(
     registry.registry.update_record(record=payload.record)
 
     return UpdateRecordResponse(updated=True)
+
+
+@router.post("/download", name="download")
+def download_model(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    payload: DownloadModelRequest,
+) -> StreamingResponse:
+
+    """Downloads a Model API definition
+
+    Args: (Query Params)
+        name (str): Optional name of model
+        version (str): Optional semVar version of model
+        team (str): Optional team name
+        uid (str): Optional uid of ModelCard
+
+    Returns:
+        FileResponse object containing model definition json
+    """
+
+    registry: CardRegistry = getattr(request.app.state.registries, "model")
+
+    loader = ModelDownloader(
+        registry=registry,
+        model_info=payload,
+        config=config,
+    )
+    loader.download_model()
+    background_tasks.add_task(delete_dir, dir_path=loader.base_path)
+
+    headers = {"Content-Disposition": f'attachment; filename="{MODEL_FILE}"'}
+    return StreamingResponse(
+        iterfile(
+            file_path=loader.file_path,
+            chunk_size=CHUNK_SIZE,
+        ),
+        media_type="application/octet-stream",
+        headers=headers,
+    )

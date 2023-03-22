@@ -1,3 +1,4 @@
+# pylint: disable=invalid-envvar-value
 import os
 from typing import Optional, cast
 
@@ -11,8 +12,9 @@ from pydantic import BaseModel, Field
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.types import OpsmlAuth, OpsmlUri
 from opsml_artifacts.projects.types import Project, ProjectInfo
-from opsml_artifacts.registry.cards import cards
+from opsml_artifacts.registry.cards import ArtifactCard, CardInfo
 from opsml_artifacts.registry.storage.storage_system import (
     MlFlowStorageClient,
     StorageClientGetter,
@@ -141,17 +143,41 @@ class MlFlowProject(Project):
         self._run_id: Optional[str] = None
         self._active_run: Optional[Run] = None
 
-        self._mlflow_client = MlflowClient(
-            tracking_uri=info.tracking_uri or os.environ.get("OPSML_TRACKING_URI"),
+        self._mlflow_client = self._get_mlflow_client(
+            tracking_uri=info.tracking_uri or os.getenv(OpsmlUri.TRACKING_URI),
         )
 
         self._storage_client = self._get_storage_client()
         self.registries = self._get_card_registries()
 
         self._experiment_id = self._get_experiment_id(self.project_id)
+
         if info.run_id is not None:
             self._verify_run_id(info.run_id)
             self._run_id = info.run_id
+
+    def _get_mlflow_client(self, tracking_uri: Optional[str]) -> MlflowClient:
+        """Gets and sets MlFlow-related authentication
+
+        Args:
+            tracking_uri (str): MlFLow tracking uri
+
+        Returns:
+            MlFlow tracking client
+        """
+
+        mlflow_client = MlflowClient(tracking_uri=tracking_uri)
+
+        # set global tracking uri: When logging artifacts, mlflow with call the env var
+        os.environ["MLFLOW_TRACKING_URI"] = str(tracking_uri)
+
+        # set username and password while running project
+        if all(bool(os.getenv(cred)) for cred in OpsmlAuth):
+
+            os.environ["MLFLOW_TRACKING_USERNAME"] = str(os.getenv(OpsmlAuth.USERNAME))
+            os.environ["MLFLOW_TRACKING_PASSWORD"] = str(os.getenv(OpsmlAuth.PASSWORD))
+
+        return mlflow_client
 
     def _get_card_registries(self):
 
@@ -243,7 +269,7 @@ class MlFlowProject(Project):
         if self._active_run is None:
             raise ValueError("ActiveRun has not been set")
 
-    def register_card(self, card: cards.ArtifactCard, version_type: str = "minor"):
+    def register_card(self, card: ArtifactCard, version_type: str = "minor"):
         """Register a given artifact card
 
         Args:
@@ -256,7 +282,7 @@ class MlFlowProject(Project):
         registry: CardRegistry = getattr(self.registries, card_type)
         registry.register_card(card=card, version_type=version_type)
 
-    def load_card(self, card_type: str, info: cards.CardInfo) -> cards.ArtifactCard:
+    def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """Returns an artifact card.
 
         Args:

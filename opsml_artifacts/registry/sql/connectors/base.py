@@ -42,12 +42,14 @@ class CloudSQLConnection(BaseSQLConnection):
 
     """
 
+    @property
     def _ip_type(self) -> str:
         """Sets IP type for CloudSql"""
         from google.cloud.sql.connector import IPTypes
 
         return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
+    @property
     def _connection_name(self) -> str:
         """Gets connection name from connection parts"""
 
@@ -62,7 +64,6 @@ class CloudSQLConnection(BaseSQLConnection):
 
         raise NotImplementedError
 
-    @cached_property
     def _conn(self):
 
         """Creates the mysql or postgres CloudSQL client"""
