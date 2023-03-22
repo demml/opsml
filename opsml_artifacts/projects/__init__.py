@@ -17,10 +17,13 @@ for dep in _optional_deps:
 
 
 def get_project(info: mlflow.ProjectInfo) -> types.Project:
-    """Retrieves or creates an experiment.
+    """Retrieves or creates a project.
 
-    Args:
-        info: Experiment information. `name` and `team` are required.
+    If the project doesn't exist in the underlying system, a new project will be
+    created.
+
+     Args:
+        info: Experiment to retrieve. `name` and `team` are required.
 
     Returns:
         A new or existing experiment.
