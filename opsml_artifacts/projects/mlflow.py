@@ -150,6 +150,7 @@ class MlFlowProject(Project):
         self.registries = self._get_card_registries()
 
         self._experiment_id = self._get_experiment_id(self.project_id)
+
         if info.run_id is not None:
             self._verify_run_id(info.run_id)
             self._run_id = info.run_id
@@ -171,8 +172,9 @@ class MlFlowProject(Project):
 
         # set username and password while running project
         if all(bool(os.getenv(cred)) for cred in OpsmlAuth):
-            os.environ["MLFLOW_TRACKING_USERNAME"] = OpsmlAuth.USERNAME
-            os.environ["MLFLOW_TRACKING_PASSWORD"] = OpsmlAuth.PASSWORD
+
+            os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv(OpsmlAuth.USERNAME)
+            os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv(OpsmlAuth.PASSWORD)
 
         return mlflow_client
 

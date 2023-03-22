@@ -71,8 +71,8 @@ trigger:
   event:
     - tag
     - push
-  #branch:
-    #- main
+  branch:
+    - main
 steps:
   - name: py39
     when:
