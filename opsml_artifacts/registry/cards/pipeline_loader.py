@@ -1,7 +1,7 @@
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-from opsml_artifacts.registry.cards.cards import Card, PipelineCard
+from opsml_artifacts.registry.cards.cards import ArtifactCard, PipelineCard
 from opsml_artifacts.registry.cards.types import NON_PIPELINE_CARDS, CardNames
 from opsml_artifacts.registry.sql.registry import CardRegistry
 
@@ -181,7 +181,7 @@ class PipelineLoader:
             pipeline_card_uid (str) Uid of a PipelineCard
         """
         self.pipline_card = self._load_pipeline_card(uid=pipeline_card_uid)
-        self._card_deck: Dict[str, Card] = {}
+        self._card_deck: Dict[str, ArtifactCard] = {}
 
     def _load_pipeline_card(self, uid: str) -> PipelineCard:
         registry = CardRegistry(registry_name=CardNames.PIPELINE.value)
