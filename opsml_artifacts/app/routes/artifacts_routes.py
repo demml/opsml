@@ -1,7 +1,7 @@
 from typing import Union
 
 from fastapi import APIRouter, BackgroundTasks, Body, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
@@ -150,7 +150,7 @@ def download_model(
     request: Request,
     background_tasks: BackgroundTasks,
     payload: DownloadModelRequest,
-) -> FileResponse:
+) -> StreamingResponse:
 
     """Downloads a Model API definition
 
@@ -183,9 +183,3 @@ def download_model(
         media_type="application/octet-stream",
         headers=headers,
     )
-    # return FileResponse(
-    #    path=loader.file_path,
-    #    media_type="application/octet-stream",
-    #    content_disposition_type="attachment",
-    #    filename=MODEL_FILE,
-    # )
