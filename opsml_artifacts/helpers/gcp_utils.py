@@ -17,7 +17,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class GcpCreds(BaseModel):
-    creds: Credentials
+    creds: Optional[Credentials]
     project: Optional[str]
 
     class Config:
@@ -385,7 +385,7 @@ class GcpCredsSetter:
             project=project_name,
         )
 
-    def get_base64_creds(self) -> Tuple[Credentials, Optional[str]]:
+    def get_base64_creds(self) -> Tuple[Optional[Credentials], Optional[str]]:
         if not self.has_service_base64_creds:
             return self.get_gcp_sdk_creds()
 
@@ -400,13 +400,17 @@ class GcpCredsSetter:
         """Has environment creds"""
         return bool(self.service_base64_creds)
 
-    def get_gcp_sdk_creds(self) -> Tuple[Credentials, Optional[str]]:
+    def get_gcp_sdk_creds(self) -> Tuple[Optional[Credentials], Optional[str]]:
         """Pulls google cloud sdk creds from local env
 
         Returns
             Tuple containing user credentials and project name
         """
         user_creds, _ = google.auth.default()
+
+        if user_creds is None:
+            logger.info("No gcp credentials found. Using defaults")
+
         project_name = user_creds.quota_project_id
 
         return user_creds, project_name
