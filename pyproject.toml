@@ -64,6 +64,7 @@ xgboost = "^1.7.1"
 mlflow = "^2.2.1"
 llvmlite = "^0.39.1"
 numba = "^0.56.0"
+libclang = "15.0.6.1"
 
 [tool.poetry.group.dev-lints]
 optional = true
