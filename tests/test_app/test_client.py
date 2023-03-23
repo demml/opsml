@@ -26,7 +26,6 @@ def test_client(test_app):
 def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
     # create data card
-
     registry = api_registries["data"]
 
     data_card = DataCard(
