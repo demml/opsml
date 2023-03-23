@@ -218,6 +218,7 @@ class DefaultSettings(BaseSettings):
         allow_mutation = True
         arbitrary_types_allowed = True
         keep_untouched = (cached_property,)
+        validate_assignment = True
 
     @root_validator(pre=True)
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:  # pylint: disable=no-self-argument

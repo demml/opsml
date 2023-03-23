@@ -250,30 +250,6 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         }
 
 
-@pytest.fixture(scope="module")
-def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
-    def callable_api():
-        return test_app
-
-    with patch("httpx.Client", callable_api):
-
-        from opsml_artifacts.helpers.settings import settings
-
-        settings.opsml_tracking_uri = "http://testserver"
-
-        data_registry = CardRegistry(registry_name="data")
-        model_registry = CardRegistry(registry_name="model")
-        experiment_registry = CardRegistry(registry_name="experiment")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
-
-        yield {
-            "data": data_registry,
-            "model": model_registry,
-            "experiment": experiment_registry,
-            "pipeline": pipeline_registry,
-        }
-
-
 def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
     mlflow_exp: MlFlowProject = get_project(info)
     mlflow_storage = mlflow_exp._get_storage_client()

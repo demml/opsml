@@ -195,9 +195,12 @@ type: docker
 trigger:
   event:
     - push
+  branch:
+    exclude:
+      - main
 steps:
   - name: py39-unit-quality
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - make setup.project
       - make test.unit
@@ -212,7 +215,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
