@@ -24,9 +24,8 @@ onnxruntime = ">=1.13.0, <=1.13.1"
 pandas = ">=1.4.0,<=1.5.3"
 pg8000 = {version="^1.29.4", optional = true}
 prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
-pyarrow = "8.0.0"
+pyarrow = "^8.0.0"
 pydantic = ">=1.10.0, <=1.10.4"
-pydantic-yaml = "^0.9.0"
 pymysql = {version="^1.0.2", optional = true}
 python-json-logger = "^2.0.6"
 rollbar = {version="^0.16.3", optional = true}
