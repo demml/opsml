@@ -1,14 +1,6 @@
 import os
-from enum import Enum
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
-
-
-class Registries(str, Enum):
-    MODEL = "model"
-    DATA = "data"
-    EXPERIMENT = "experiment"
-    PIPELINE = "pipeline"
 
 
 class MlFlowConfig:
