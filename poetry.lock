@@ -4312,26 +4312,6 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
-name = "python-dotenv"
-version = "0.21.1"
-description = "Read key-value pairs from a .env file and set them as environment variables"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "python-dotenv-0.21.1.tar.gz", hash = "sha256:1c93de8f636cde3ce377292818d0e440b6e45a82f215c3744979151fa8151c49"},
-    {file = "python_dotenv-0.21.1-py3-none-any.whl", hash = "sha256:41e12e0318bebc859fcc4d97d4db8d20ad21721a6aa5047dd59f090391cb549a"},
-]
-
-[package.extras]
-cli = ["click (>=5.0)"]
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-reference = "shipt-resolve"
-
-[[package]]
 name = "python-json-logger"
 version = "2.0.7"
 description = "A python library adding a json log formatter"
@@ -6082,10 +6062,10 @@ reference = "shipt-resolve"
 gcp-mysql = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pymysql"]
 gcp-postgres = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pg8000"]
 graphviz = ["graphviz"]
-proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
+proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
 tf-onnx = ["tf2onnx"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "ca666622113041c520bd72b307b4a843300e110b05832abf02b287c5ef8d3e74"
+content-hash = "b9693c7464fe15b9a239eb3407a7c82e1aa6dfc6dc30c1d2fe3cc88b5da6ea15"

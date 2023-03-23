@@ -11,11 +11,12 @@ trigger:
     - pull_request
 
 steps:
-  - name: py39
+  - name: py39-unit-quality
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
     commands:
-      - poetry install --all-extras --with dev
+      - make setup.project
       - make test.unit
+      - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -33,18 +34,7 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
-      - py39 # running in parallel slows testing down
-
-  - name: quality-checks
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
-    commands:
-      - make setup.project
-      - make lints.ci
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      - py39-unit-quality # running in parallel slows testing down
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -58,9 +48,52 @@ steps:
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
     depends_on:
-      - py39
+      - py39-unit-quality
       - py310
-      - quality-checks
+trigger:
+  event:
+    - pull_request
+
+steps:
+  - name: py39-unit-quality
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    commands:
+      - make setup.project
+      - make test.unit
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+
+  - name: py310
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.10.10_poetry_1.3.2_artifacts
+    commands:
+      - poetry install --all-extras --with dev
+      - make test.unit
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py39-unit-quality # running in parallel slows testing down
+
+  - name: code-analysis
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+    depends_on:
+      - py39-unit-quality
+      - py310
 
 ---
 name: publish-release
@@ -153,3 +186,42 @@ steps:
       # increment patch version for releases based on drone tag
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
+
+---
+name: publish-rc
+kind: pipeline
+type: docker
+
+trigger:
+  event:
+    - push
+steps:
+  - name: py39-unit-quality
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    commands:
+      - make setup.project
+      - make test.unit
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+
+  - name: publish-release-candidate
+    when:
+      event:
+        - push
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      - make prep.pre.patch
+      - make publish
+    depends_on:
+      - py39
+      - quality-checks
+      - code-analysis
