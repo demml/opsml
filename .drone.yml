@@ -222,6 +222,4 @@ steps:
       - make prep.pre.patch
       - make publish
     depends_on:
-      - py39
-      - quality-checks
-      - code-analysis
+      - py39-unit-quality
