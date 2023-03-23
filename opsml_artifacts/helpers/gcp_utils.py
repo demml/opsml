@@ -17,8 +17,8 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class GcpCreds(BaseModel):
-    creds: Optional[Credentials]
-    project: Optional[str]
+    creds: Optional[Credentials] = None
+    project: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
