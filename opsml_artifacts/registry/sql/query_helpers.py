@@ -41,6 +41,19 @@ class QueryCreator:
         version: Optional[str] = None,
     ) -> Select:
 
+        """Creates a sql query based on table, uid, name, team and version
+
+        Args:
+            table (Schema): Registry table to query
+            uid (str): Optional unique id of Card
+            name (str): Optional name of Card
+            team (str): Optional team name
+            version (str): Optional version of Card
+
+        Returns
+            Sqlalchemy Select statement
+        """
+
         query = self._get_base_select_query(table=table)
         if bool(uid):
             return query.filter(table.uid == uid)
@@ -51,7 +64,7 @@ class QueryCreator:
 
                 if field == "version":
                     version = get_version_to_search(version=version)
-                    filters.append(getattr(table, field).in_([version]))
+                    filters.append(getattr(table, field).like(f"{version}%"))
 
                 else:
                     filters.append(getattr(table, field) == value)
@@ -59,7 +72,7 @@ class QueryCreator:
         if bool(filters):
             query = query.filter(*filters)
 
-        query = query.order_by(table.timestamp.desc())  # type: ignore
+        query = query.order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
 
         return query
 
