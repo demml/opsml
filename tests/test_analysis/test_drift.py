@@ -16,7 +16,7 @@ from opsml_artifacts.drift.data_drift import (
     DriftVisualizer,
 )
 from opsml_artifacts.drift.visualize import NumericChart, CategoricalChart, AucChart
-from opsml_artifacts.drift.models import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
+from opsml_artifacts.drift.types import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
 
 
 @pytest.mark.parametrize("categorical", [[], ["col_10"]])
