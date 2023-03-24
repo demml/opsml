@@ -188,41 +188,42 @@ steps:
       - make publish
 
 ---
-name: publish-rc
-kind: pipeline
-type: docker
-
-trigger:
-  event:
-    - push
-  branch:
-    exclude:
-      - main
-steps:
-  - name: py39-unit-quality
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
-    commands:
-      - make setup.project
-      - make test.unit
-      - make lints.ci
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-
-  - name: publish-release-candidate
-    when:
-      event:
-        - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    commands:
-      - make prep.pre.patch
-      - make publish
-    depends_on:
-      - py39-unit-quality
+#name: publish-rc
+#kind: pipeline
+#type: docker
+#
+#trigger:
+#  event:
+#    - push
+#  branch:
+#    exclude:
+#      - main
+#steps:
+#  - name: py39-unit-quality
+#    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+#    commands:
+#      - make setup.project
+#      - make test.unit
+#      - make lints.ci
+#    environment:
+#      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+#        from_secret: ARTIFACTORY_PYPI_USERNAME
+#      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+#        from_secret: ARTIFACTORY_PYPI_PASSWORD
+#
+#  - name: publish-release-candidate
+#    when:
+#      event:
+#        - push
+#    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+#    environment:
+#      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+#        from_secret: ARTIFACTORY_PYPI_USERNAME
+#      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+#        from_secret: ARTIFACTORY_PYPI_PASSWORD
+#    commands:
+#      - make prep.pre.patch
+#      - make publish
+#    depends_on:
+#      - py39-unit-quality
+#
