@@ -13,7 +13,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 def test_read_only(mlflow_project: MlFlowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
-    """Verify that we can read artifacts / metrics / cards without making a run
+    """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
     info = MlFlowProjectInfo(name="test", team="test", user_email="user@test.com")

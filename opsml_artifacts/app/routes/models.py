@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from opsml_artifacts.registry.sql.registry_base import VersionType
+
 
 class HealthCheckResult(BaseModel):
     is_alive: bool
@@ -24,7 +26,7 @@ class StorageSettingsResponse(BaseModel):
 class VersionRequest(BaseModel):
     name: str
     team: str
-    version_type: str
+    version_type: VersionType
     table_name: str
 
 
