@@ -1,11 +1,10 @@
 import datetime
 import os
-import time
 import uuid
 from enum import Enum
 from typing import Type, Union, cast
 
-from sqlalchemy import BigInteger, Column, String, Integer
+from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
