@@ -3,7 +3,7 @@ from typing import Optional
 
 import altair as alt
 
-from opsml_artifacts.drift.models import ChartType
+from opsml_artifacts.drift.types import ChartType
 
 warnings.simplefilter(action="ignore", category=FutureWarning)  # type: ignore
 import pandas as pd  # noqa: E402 #pylint: disable=[wrong-import-position,wrong-import-order]

@@ -8,7 +8,7 @@ from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import scale
 
 from opsml_artifacts.drift.drift_utils import shipt_theme
-from opsml_artifacts.drift.models import (
+from opsml_artifacts.drift.types import (
     ChartType,
     DriftData,
     DriftReport,
