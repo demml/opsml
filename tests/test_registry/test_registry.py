@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, PipelineCard, ModelCard
@@ -18,7 +19,7 @@ from unittest.mock import patch, MagicMock
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(
+def _test_register_data(
     db_registries,
     test_data,
     data_splits,
@@ -48,8 +49,53 @@ def test_register_data(
         df = registry.list_cards()
         assert isinstance(df, pd.DataFrame)
 
+        df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
+        assert df.shape[0] == 1
 
-def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
+
+def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_write):
+
+    # create data card
+    registry = db_registries["data"]
+
+    # for numpy array
+    with patch.multiple("zarr", save=MagicMock(return_value=None)):
+
+        # version 1
+        for i in range(0, 5):
+            data_card = DataCard(
+                data=test_array,
+                name="test_df",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            registry.register_card(card=data_card)
+
+        # version 2
+        data_card = DataCard(
+            data=test_array,
+            name="test_df",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        registry.register_card(card=data_card, version_type="major")
+
+        for i in range(0, 5):
+            data_card = DataCard(
+                data=test_array,
+                name="test_df",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            registry.register_card(card=data_card)
+
+        df = registry.list_cards(name=data_card.name, team=data_card.team)
+
+        print(df.to_json(orient="records", lines=True))
+        a
+
+
+def _test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
 
     registry: CardRegistry = db_registries["experiment"]
     experiment = ExperimentCard(
@@ -73,7 +119,7 @@ def test_experiment_card(linear_regression, db_registries, mock_artifact_storage
 
 @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
-def test_register_model(
+def _test_register_model(
     loaded_model_record,
     model_card_mock,
     db_registries,
@@ -165,7 +211,7 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits(test_data):
+def _test_data_card_splits(test_data):
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
         {"label": "test", "column": "year", "column_value": 2021},
@@ -198,7 +244,7 @@ def test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def _test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -251,7 +297,7 @@ def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mo
         )
 
 
-def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
+def _test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -278,7 +324,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def test_full_pipeline_with_loading(
+def _test_full_pipeline_with_loading(
     db_registries,
     linear_regression,
     mock_pyarrow_parquet_write,

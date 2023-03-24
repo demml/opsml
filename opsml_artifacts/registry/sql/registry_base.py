@@ -174,6 +174,7 @@ class SQLRegistryBase:
             team=card.team,
             version_type=version_type,
         )
+
         card.version = version
 
         if card.uid is None:

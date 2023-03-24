@@ -5,7 +5,7 @@ import uuid
 from enum import Enum
 from typing import Type, Union, cast
 
-from sqlalchemy import BigInteger, Column, String
+from sqlalchemy import BigInteger, Column, String, Integer
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
@@ -27,9 +27,10 @@ class RegistryTableNames(str, Enum):
 
 @declarative_mixin
 class BaseMixin:
-    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
+    num_id = Column("num_id", Integer, primary_key=True, autoincrement=True)
+    uid = Column("uid", String(512), primary_key=False, default=lambda: uuid.uuid4().hex)
     date = Column("date", String(512), default=datetime.date.today().strftime(YEAR_MONTH_DATE))
-    timestamp = Column("timestamp", BigInteger, default=int(round(time.time() * 1000)))
+    timestamp = Column("timestamp", BigInteger)
     app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(512))
     team = Column("team", String(512))
