@@ -11,8 +11,8 @@ trigger:
     - pull_request
 
 steps:
-  - name: py39-unit-quality
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+  - name: py39
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - make setup.project
       - make test.unit
@@ -24,7 +24,7 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
 
   - name: py310
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.10.10_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.10.10_poetry_1.3.2
     commands:
       - poetry install --all-extras --with dev
       - make test.unit
@@ -34,7 +34,18 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
-      - py39-unit-quality # running in parallel slows testing down
+      - py39 # running in parallel slows testing down
+
+  - name: quality-checks
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    commands:
+      - make setup.project
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -111,7 +122,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - poetry install --all-extras --with dev
       - make test.unit
@@ -125,7 +136,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - make setup.project
       - make lints.ci
@@ -157,7 +168,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -175,7 +186,7 @@ steps:
     when:
       event:
         - tag
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2_artifacts
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME

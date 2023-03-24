@@ -1,7 +1,9 @@
 import uuid
+from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
+import semver
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
@@ -26,11 +28,12 @@ logger = ArtifactLogger.get_logger(__name__)
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
-semver_map = {
-    "major": 0,
-    "minor": 1,
-    "patch": 2,
-}
+
+class VersionType(str, Enum):
+    MAJOR = "major"
+    MINOR = "minor"
+    PATCH = "patch"
+
 
 query_creator = QueryCreator()
 
@@ -77,36 +80,29 @@ class SQLRegistryBase:
     def _get_session(self):
         raise NotImplementedError
 
-    def _increment_version(self, version: str, version_type: str) -> str:
+    def _increment_version(self, version: str, version_type: VersionType) -> str:
         """Increments a version based on version type
 
         Args:
-            version (str): Current version
-            version_type (str): Type of version increment. Accepted
+            version: Current version
+            version_type: Type of version increment.
+
+        Raises:
+            ValueError: unknown version_type
 
         Returns:
             New version string
         """
+        ver: semver.VersionInfo = semver.VersionInfo.parse(version)
+        if version_type == VersionType.MAJOR:
+            return str(ver.bump_major())
+        if version_type == VersionType.MINOR:
+            return str(ver.bump_minor())
+        if version_type == VersionType.PATCH:
+            return str(ver.bump_patch())
+        raise ValueError(f"Unknown version_type: {version_type}")
 
-        version_splits = version.split(".")
-
-        try:
-            version_idx = semver_map[version_type.lower()]
-        except KeyError as error:
-            raise KeyError(
-                f"""f{version_type} is not a recognized semver type.
-            Valid types are "major", "minor", and "patch". {error}
-            """
-            ) from error
-
-        version_splits[version_idx] = str(int(version_splits[version_idx]) + 1)
-        for idx in range(len(semver_map.keys())):
-            if idx > version_idx:
-                version_splits[idx] = str(0)
-
-        return ".".join(version_splits)
-
-    def set_version(self, name: str, team: str, version_type: str) -> str:
+    def set_version(self, name: str, team: str, version_type: VersionType) -> str:
         raise NotImplementedError
 
     def _is_correct_card_type(self, card: ArtifactCard):
@@ -159,12 +155,12 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
-    def _set_card_uid_version(self, card: ArtifactCard, version_type: str):
+    def _set_card_uid_version(self, card: ArtifactCard, version_type: VersionType):
         """Sets a given card's version and uid
 
         Args:
-            card (ArtifactCard): Card to set
-            version_typer (str): Type of version increment
+            card:: Card to set
+            version_type: Type of version increment
         """
 
         # need to find way to compare previous cards and automatically
@@ -194,7 +190,7 @@ class SQLRegistryBase:
     def register_card(
         self,
         card: ArtifactCard,
-        version_type: str = "minor",
+        version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
         """
@@ -274,13 +270,13 @@ class ServerRegistry(SQLRegistryBase):
     def _create_table_if_not_exists(self):
         self._table.__table__.create(bind=self._engine, checkfirst=True)
 
-    def set_version(self, name: str, team: str, version_type: str) -> str:
+    def set_version(self, name: str, team: str, version_type: VersionType) -> str:
         """Sets a version following semantic version standards
 
         Args:
-            name (str): Card name
-            team (str): Team card belongs to
-            version_type (str): Type of version increment. Accepted
+            name: Card name
+            team: Team card belongs to
+            version_type: Type of version increment.
             values are "major", "minor" and "patch
 
         Returns:
@@ -394,13 +390,13 @@ class ClientRegistry(SQLRegistryBase):
 
         return bool(data.get("uid_exists"))
 
-    def set_version(self, name: str, team: str, version_type: str = "minor") -> str:
+    def set_version(self, name: str, team: str, version_type: VersionType = VersionType.MINOR) -> str:
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
                 "name": name,
                 "team": team,
-                "version_type": version_type,
+                "version_type": version_type.value,
                 "table_name": self.table_name,
             },
         )
@@ -417,12 +413,14 @@ class ClientRegistry(SQLRegistryBase):
         """Retrieves records from registry
 
         Args:
-            name (str): Artifact record name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
-
+            name:
+                Artifact record name
+            team:
+                Team data is assigned to
+            version:
+                Optional version number of existing data. If not specified, the most recent version will be used.
+            uid:
+                Unique identifier for DataCard. If present, the uid takes precedence.
 
         Returns:
             Dictionary of records
