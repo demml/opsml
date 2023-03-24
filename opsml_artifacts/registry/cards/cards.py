@@ -431,7 +431,9 @@ class ModelCard(ArtifactCard):
         """Creates Onnx model from trained model and sample input data
         and sets Card attributes
         """
-        from opsml_artifacts.registry.model.creator import OnnxModelCreator
+        from opsml_artifacts.registry.model.creator import (
+            OnnxModelCreator,  # pylint: disable=import-outside-toplevel
+        )
 
         model_creator = OnnxModelCreator(
             model=self.trained_model,
