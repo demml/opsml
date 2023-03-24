@@ -16,7 +16,7 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
     ModelRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import ClientRegistry, SQLRegistryBase
+from opsml_artifacts.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -82,20 +82,24 @@ class ModelCardRegistry(Registry):
     def register_card(
         self,
         card: ArtifactCard,
-        version_type: str = "minor",
+        version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
         """
         Adds new record to registry.
 
         Args:
-            Card (ArtifactCard): Card to register
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too.
-            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
-            env variables. In addition, save_path should specify a directory.
+            card:
+                card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and
+                "patch". Defaults to "minor"
+            save_path:
+                Blob path to save card artifacts too. This path SHOULD NOT
+                include the base prefix (e.g. "gs://my_bucket" - this prefix is
+                already inferred using either "OPSML_TRACKING_URI" or
+                "OPSML_STORAGE_URI" env variables. In addition, save_path should
+                specify a directory.
         """
 
         model_card = cast(ModelCard, card)
@@ -269,20 +273,23 @@ class CardRegistry:
     def register_card(
         self,
         card: ArtifactCard,
-        version_type: str = "minor",
+        version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
         """
         Adds new record to registry.
 
         Args:
-            Card (ArtifactCard): Card to register
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too.
-            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
-            env variables. In addition, save_path should specify a directory.
+            card:
+                Card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
+            save_path:
+                Blob path to save card artifacts too. This path SHOULD NOT
+                include the base prefix (e.g. "gs://my_bucket") - this prefix is
+                already inferred using either "OPSML_TRACKING_URI" or
+                "OPSML_STORAGE_URI" env variables. In addition, save_path should
+                specify a directory.
         """
 
         self.registry.register_card(
