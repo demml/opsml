@@ -17,7 +17,11 @@ from opsml_artifacts.registry.sql.records import (
     ModelRegistryRecord,
     PipelineRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import Registry, SQLRegistryBase
+from opsml_artifacts.registry.sql.registry_base import (
+    Registry,
+    SQLRegistryBase,
+    VersionType,
+)
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -27,17 +31,11 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
 class DataCardRegistry(Registry):
-
-    # specific update logic
     def update_card(self, card: DataCard) -> None:
-
-        """Updates an existing data card in the data registry
+        """Updates an existing data card in the data registry.
 
         Args:
-            data_card (DataCard): Existing data card record
-
-        Returns:
-            None
+            data_card: Existing data card record
         """
 
         record = DataRegistryRecord(**card.dict())
@@ -50,14 +48,10 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     def update_card(self, card: ModelCard) -> None:
-
-        """Updates an existing model card
+        """Updates an existing model card.
 
         Args:
-            model_card (ModelCard): Existing model card record
-
-        Returns:
-            None
+            model_card: Existing model card record
         """
 
         record = ModelRegistryRecord(**card.dict())
@@ -70,29 +64,31 @@ class ModelCardRegistry(Registry):
         table_to_check = self._get_data_table_name()
         exists = self.check_uid(uid=uid, table_to_check=table_to_check)
         if not exists:
-            raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
+            raise ValueError("ModelCard must be assoicated with a valid DataCard uid")
 
     def _has_data_card_uid(self, uid: Optional[str]) -> bool:
         return bool(uid)
 
-    # custom registration
     def register_card(
         self,
         card: ModelCard,
-        version_type: str = "minor",
+        version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
         """
         Adds new record to registry.
 
         Args:
-            Card (ArtifactCard): Card to register
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too.
-            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
-            env variables. In addition, save_path should specify a directory.
+            card:
+                Card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and
+                "patch". Defaults to "minor"
+            save_path:
+                Blob path to save card artifacts to. SHOULD NOT include the base
+                prefix (e.g. "gs://my_bucket") - this prefix is already inferred
+                using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI" env
+                variables. In addition, save_path should specify a directory.
         """
 
         model_card = cast(ModelCard, card)
@@ -116,14 +112,10 @@ class ModelCardRegistry(Registry):
 
 class ExperimentCardRegistry(Registry):
     def update_card(self, card: ExperimentCard) -> None:
-
-        """Updates an existing pipeline card in the pipeline registry
+        """Updates an existing experiment card in the registry.
 
         Args:
-            card (PipelineCard): Existing pipeline card
-
-        Returns:
-            None
+            card: Existing experiment card
         """
 
         record = ExperimentRegistryRecord(**card.dict())
@@ -136,14 +128,10 @@ class ExperimentCardRegistry(Registry):
 
 class PipelineCardRegistry(Registry):
     def update_card(self, card: PipelineCard) -> None:
-
-        """Updates an existing pipeline card in the pipeline registry
+        """Updates an existing pipeline card in the pipeline registry.
 
         Args:
-            card (PipelineCard): Existing pipeline card
-
-        Returns:
-            None
+            card: Existing pipeline card
         """
 
         record = PipelineRegistryRecord(**card.dict())
@@ -157,36 +145,33 @@ class PipelineCardRegistry(Registry):
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
-
         """Interface for connecting to any of the ArtifactCard registries
 
         Args:
-            registry_name (str): Name of the registry to connect to. Options are
-            "pipeline", "model", "data" and "experiment".
+            registry_name:
+                Name of the registry to connect to. Options are "pipeline",
+                "model", "data" and "experiment".
 
         Returns:
             Instantiated connection to specific Card registry
 
         Example:
+            # With connection type cloud_sql = CloudSQLConnection(...)
+            data_registry = CardRegistry(registry_name="data",
+            connection_client=cloud_sql)
 
-            # With connection type
-            cloud_sql = CloudSQLConnection(...)
-            data_registry = CardRegistry(registry_name="data", connection_client=cloud_sql)
-
-            # With connection client
-            data_registry = CardRegistry(registry_name="data", connection_type="gcp")
-
+            # With connection client data_registry =
+            CardRegistry(registry_name="data", connection_type="gcp")
         """
 
         self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
-
         """Returns a SQL registry to be used to register Cards
 
         Args:
-            registry_name (str): Name of the registry (pipeline, model, data, experiment)
+            registry_name: Name of the registry (pipeline, model, data, experiment)
 
         Returns:
             SQL Registry
@@ -210,16 +195,18 @@ class CardRegistry:
         team: Optional[str] = None,
         version: Optional[str] = None,
     ) -> pd.DataFrame:
-
         """Retrieves records from registry
 
         Args:
-            name (str): Card name
-            team (str): Team associated with card
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for Card. If present, the uid takes precedence.
-
+            name:
+                Card name
+            team:
+                Team associated with card
+            version:
+                Optional version number of existing data. If not specified, the
+                most recent version will be used
+            uid:
+                Unique identifier for Card. If present, the uid takes precedence.
 
         Returns:
             pandas dataframe of records
@@ -241,15 +228,19 @@ class CardRegistry:
         uid: Optional[str] = None,
         version: Optional[str] = None,
     ) -> ArtifactCard:
-
         """Loads a specific card
 
         Args:
-            name (str): Optional Card name
-            team (str): Optional team associated with card
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
+            name:
+                Optional Card name
+            team:
+                Optional team associated with card
+            uid:
+                Unique identifier for card. If present, the uid takes
+                precedence.
+            version:
+                Optional version number of existing data. If not specified, the
+                most recent version will be used
 
         Returns
             ArtifactCard
@@ -266,20 +257,23 @@ class CardRegistry:
     def register_card(
         self,
         card: ArtifactCard,
-        version_type: str = "minor",
+        version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
-        """
-        Adds new record to registry.
+        """Adds new record to registry.
 
         Args:
-            Card (ArtifactCard): Card to register
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too.
-            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
-            env variables. In addition, save_path should specify a directory.
+            card:
+                card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and
+                "patch". Defaults to "minor".
+            save_path:
+                Blob path to save card artifacts too. This path SHOULD NOT
+                include the base prefix (e.g. "gs://my_bucket") - this prefix is
+                already inferred using either "OPSML_TRACKING_URI" or
+                "OPSML_STORAGE_URI" env variables. In addition, save_path should
+                specify a directory.
         """
 
         self.registry.register_card(
