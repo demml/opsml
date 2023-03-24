@@ -187,7 +187,7 @@ steps:
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
 
----
+#---
 #name: publish-rc
 #kind: pipeline
 #type: docker
