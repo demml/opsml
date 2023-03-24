@@ -9,7 +9,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Generator, Optional, Tuple, Union, cast
 
-from pyarrow.parquet import LocalFileSystem
+from pyarrow.fs import LocalFileSystem
 
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.storage.types import (

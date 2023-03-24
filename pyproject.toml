@@ -8,6 +8,7 @@ authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 python = ">=3.9,<=3.11"
 altair = "^4.2.0"
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
+cryptography = "^39.0.1"
 fastapi = {version="^0.92.0", optional = true}
 gcsfs = {version="^2022.11.0", optional = true}
 google-auth = {version="1.35.0", optional = true}
@@ -25,11 +26,11 @@ pg8000 = {version="^1.29.4", optional = true}
 prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
 pyarrow = "8.0.0"
 pydantic = ">=1.10.0, <=1.10.4"
-pydantic-yaml = "^0.9.0"
 pymysql = {version="^1.0.2", optional = true}
 python-json-logger = "^2.0.6"
 rollbar = {version="^0.16.3", optional = true}
 scikit-learn = ">=1.0"
+semver = "^2.13.0"
 skl2onnx = "^1.13"
 sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
@@ -37,7 +38,7 @@ tf2onnx = {version="^1.13.0", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
 wsgi-basic-auth = {version="^1.1.0", optional = true}
-cryptography = "^39.0.1"
+
 
 [tool.poetry.extras]
 proxy = ["fastapi", "uvicorn", "rollbar", "httpx", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]

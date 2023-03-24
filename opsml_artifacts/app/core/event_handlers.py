@@ -4,9 +4,10 @@ from typing import Any, Awaitable, Callable, Union
 import rollbar
 from fastapi import FastAPI, Response
 
-from opsml_artifacts import CardRegistry
-from opsml_artifacts.app.core.config import Registries, config
+from opsml_artifacts.app.core.config import config
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.cards.cards import CardType
+from opsml_artifacts.registry.sql.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -15,10 +16,10 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 class CardRegistries:
     def __init__(self):
-        self.data = CardRegistry(registry_name=Registries.DATA.value)
-        self.model = CardRegistry(registry_name=Registries.MODEL.value)
-        self.experiment = CardRegistry(registry_name=Registries.EXPERIMENT.value)
-        self.pipeline = CardRegistry(registry_name=Registries.PIPELINE.value)
+        self.data = CardRegistry(registry_name=CardType.DATA.value)
+        self.model = CardRegistry(registry_name=CardType.MODEL.value)
+        self.experiment = CardRegistry(registry_name=CardType.EXPERIMENT.value)
+        self.pipeline = CardRegistry(registry_name=CardType.PIPELINE.value)
 
 
 def _init_rollbar():
