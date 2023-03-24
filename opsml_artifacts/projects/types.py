@@ -2,6 +2,7 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, validator
 
+from opsml_artifacts import VersionType
 from opsml_artifacts.registry.cards import cards
 
 
@@ -60,7 +61,7 @@ class Project(Protocol):
     def run_id(self) -> Optional[str]:
         ...
 
-    def register_card(self, card: cards.ArtifactCard, version_type: cards.VersionType) -> None:
+    def register_card(self, card: cards.ArtifactCard, version_type: VersionType) -> None:
         ...
 
     def load_card(self, card_type: cards.CardType, info: cards.CardInfo) -> cards.ArtifactCard:

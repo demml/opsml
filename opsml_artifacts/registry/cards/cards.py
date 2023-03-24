@@ -42,12 +42,6 @@ class CardType(str, Enum):
     PIPELINE = "pipeline"
 
 
-class VersionType(str, Enum):
-    MAJOR = "major"
-    MINOR = "minor"
-    PATCH = "patch"
-
-
 @dataclass
 class CardInfo:
     name: Optional[str]
