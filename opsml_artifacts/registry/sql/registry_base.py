@@ -26,7 +26,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
-sem_var_map = {
+semver_map = {
     "major": 0,
     "minor": 1,
     "patch": 2,
@@ -91,16 +91,16 @@ class SQLRegistryBase:
         version_splits = version.split(".")
 
         try:
-            version_idx = sem_var_map[version_type.lower()]
+            version_idx = semver_map[version_type.lower()]
         except KeyError as error:
             raise KeyError(
-                f"""f{version_type} is not a recognized sem_var type.
+                f"""f{version_type} is not a recognized semver type.
             Valid types are "major", "minor", and "patch". {error}
             """
             ) from error
 
         version_splits[version_idx] = str(int(version_splits[version_idx]) + 1)
-        for idx in range(len(sem_var_map.keys())):
+        for idx in range(len(semver_map.keys())):
             if idx > version_idx:
                 version_splits[idx] = str(0)
 
@@ -337,7 +337,7 @@ class ServerRegistry(SQLRegistryBase):
             name (str): Artifact record name
             team (str): Team data is assigned to
             version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
+            the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
             uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
 
 

@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
 
+from opsml_artifacts.registry.sql.semver import get_version_to_search
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
@@ -47,13 +48,18 @@ class QueryCreator:
         filters = []
         for field, value in zip(["name", "team", "version"], [name, team, version]):
             if value is not None:
-                filters.append(getattr(table, field) == value)
+
+                if field == "version":
+                    version = get_version_to_search(version=version)
+                    filters.append(getattr(table, field).in_(version))
+
+                else:
+                    filters.append(getattr(table, field) == value)
 
         if bool(filters):
             query = query.filter(*filters)
 
-        if version is None:
-            query = query.order_by(table.timestamp.desc())  # type: ignore
+        query = query.order_by(table.timestamp.desc())  # type: ignore
 
         return query
 
