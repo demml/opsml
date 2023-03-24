@@ -19,7 +19,7 @@ from unittest.mock import patch, MagicMock
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def _test_register_data(
+def test_register_data(
     db_registries,
     test_data,
     data_splits,
@@ -89,13 +89,39 @@ def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_wr
             )
             registry.register_card(card=data_card)
 
-        df = registry.list_cards(name=data_card.name, team=data_card.team)
+        # should return 6 versions
+        df = registry.list_cards(
+            name=data_card.name,
+            team=data_card.team,
+            version="2.*.*",
+        )
+        assert df.shape[0] == 6
 
-        print(df.to_json(orient="records", lines=True))
-        a
+        df = registry.list_cards(
+            name=data_card.name,
+            team=data_card.team,
+            version="^2.3.0",
+        )
+        assert df.shape[0] == 6
+
+        df = registry.list_cards(
+            name=data_card.name,
+            team=data_card.team,
+            version="~2.3.0",
+        )
+        assert df.shape[0] == 1
+
+        # should return
+        card = registry.load_card(
+            name=data_card.name,
+            team=data_card.team,
+            version="^2.3.0",
+        )
+
+        assert card.version == "2.5.0"
 
 
-def _test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
+def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
 
     registry: CardRegistry = db_registries["experiment"]
     experiment = ExperimentCard(
@@ -119,7 +145,7 @@ def _test_experiment_card(linear_regression, db_registries, mock_artifact_storag
 
 @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
-def _test_register_model(
+def test_register_model(
     loaded_model_record,
     model_card_mock,
     db_registries,
@@ -211,7 +237,7 @@ def _test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_data_card_splits(test_data):
+def test_data_card_splits(test_data):
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
         {"label": "test", "column": "year", "column_value": 2021},
@@ -244,7 +270,7 @@ def _test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -297,7 +323,7 @@ def _test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, m
         )
 
 
-def _test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
+def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -324,7 +350,7 @@ def _test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     assert values["data_card_uids"].get("update") == "updated_uid"
 
 
-def _test_full_pipeline_with_loading(
+def test_full_pipeline_with_loading(
     db_registries,
     linear_regression,
     mock_pyarrow_parquet_write,
