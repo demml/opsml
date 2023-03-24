@@ -97,7 +97,10 @@ def get_mlflow_storage_client() -> MlFlowStorageClient:
 
 mlflow_storage_client = get_mlflow_storage_client()
 
-
+# break this into class
+# MlFlowProject -> this should handle high-level things related to project (metrics, cards, params, etc)
+# RunManager -> This handles the active Run and StorageClient
+# Goal: -> Make interface simpler
 class MlFlowProject(Project):
     def __init__(self, info: MlFlowProjectInfo):
         """Instantiates an mlflow project which log cards, metrics and params to
@@ -234,24 +237,34 @@ class MlFlowProject(Project):
         except MlflowException as exc:
             raise ValueError("Invalid run_id") from exc
 
-    def __enter__(self):
-        if self._active_run is not None:
-            raise ValueError("Could not start run. Another run is current active")
+    def _resolve_run(self) -> Run:
+        """Resolves and sets the active run for mlflow"""
 
         if self.run_id is not None:
             self._mlflow_client.update_run(
                 run_id=self.run_id,
                 status=RunStatus.to_string(RunStatus.RUNNING),
             )
-            self._active_run = self._mlflow_client.get_run(self._run_id)
+            return self._mlflow_client.get_run(self._run_id)
         else:
-            self._active_run = self._mlflow_client.create_run(experiment_id=self._experiment_id)
+            return self._mlflow_client.create_run(experiment_id=self._experiment_id)
+
+    def _update_storage_client_run(self):
+        self._storage_client.run_id = self._run_id
+        self._storage_client.artifact_path = self.artifact_save_path
+
+    def __enter__(self):
+        if self._active_run is not None:
+            raise ValueError("Could not start run. Another run is currently active")
+
+        self._active_run = self._resolve_run()
 
         info = cast(RunInfo, self._active_run.info)
         self._run_id = info.run_id
-        # set storage client run id
-        self._storage_client.run_id = self._run_id
-        self._storage_client.artifact_path = self.artifact_save_path
+
+        # st storage client run id
+        self._update_storage_client_run()
+
         logger.info("starting run: %s", self._run_id)
 
         return self
