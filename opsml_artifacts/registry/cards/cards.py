@@ -8,10 +8,9 @@ import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
-from opsml_artifacts.drift.data_drift import DriftReport
+from opsml_artifacts.drift.types import DriftReport
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
-from opsml_artifacts.registry.model.creator import OnnxModelCreator
 from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.types import (
     DataDict,
@@ -438,6 +437,8 @@ class ModelCard(ArtifactCard):
         """Creates Onnx model from trained model and sample input data
         and sets Card attributes
         """
+        from opsml_artifacts.registry.model.creator import OnnxModelCreator
+
         model_creator = OnnxModelCreator(
             model=self.trained_model,
             input_data=self.sample_input_data,
