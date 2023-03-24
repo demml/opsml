@@ -97,7 +97,7 @@ def get_mlflow_storage_client() -> MlFlowStorageClient:
 
 mlflow_storage_client = get_mlflow_storage_client()
 
-# break this into class
+# break this into multiple classes
 # MlFlowProject -> this should handle high-level things related to project (metrics, cards, params, etc)
 # RunManager -> This handles the active Run and StorageClient
 # Goal: -> Make interface simpler
