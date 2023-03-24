@@ -100,7 +100,7 @@ def list_cards(
     payload: ListRequest = Body(...),
 ) -> ListResponse:
 
-    """Sets the version for an artifact card. It also checks if a uid already exists"""
+    """Lists a Card"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
@@ -122,7 +122,7 @@ def add_record(
     payload: AddRecordRequest = Body(...),
 ) -> AddRecordResponse:
 
-    """Sets the version for an artifact card. It also checks if a uid already exists"""
+    """Adds Card record to a registry"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
@@ -155,7 +155,7 @@ def download_model(
 
     """Downloads a Model API definition
 
-    Args: (Query Params)
+    Args:
         name (str): Optional name of model
         version (str): Optional semVar version of model
         team (str): Optional team name

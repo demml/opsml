@@ -64,7 +64,7 @@ class NoParser(SemVerParser):
 
     @staticmethod
     def validate(version: str) -> bool:
-        return version not in [symbol for symbol in SemVerSymbols]
+        return version not in list(SemVerSymbols)
 
 
 def get_version_to_search(version: str) -> str:
@@ -78,7 +78,7 @@ def get_version_to_search(version: str) -> str:
     """
 
     # gut check
-    if sum([symbol in version for symbol in SemVerSymbols]) > 1:
+    if sum(symbol in version for symbol in SemVerSymbols) > 1:
         raise ValueError("Only one SemVer character is allowed in the version string")
 
     parser = next(
