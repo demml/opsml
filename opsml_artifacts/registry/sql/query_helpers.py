@@ -29,7 +29,7 @@ class QueryCreator:
                 table.name == name,
                 table.team == team,
             )
-            .order_by(table.timestamp.desc())  # type: ignore
+            .order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
         )
 
     def record_from_table_query(
@@ -51,7 +51,7 @@ class QueryCreator:
 
                 if field == "version":
                     version = get_version_to_search(version=version)
-                    filters.append(getattr(table, field).in_(version))
+                    filters.append(getattr(table, field).in_([version]))
 
                 else:
                     filters.append(getattr(table, field) == value)
