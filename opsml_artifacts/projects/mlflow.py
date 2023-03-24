@@ -9,7 +9,7 @@ from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
 from pydantic import BaseModel, Field
 
-from opsml_artifacts import CardRegistry
+from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth, OpsmlUri
@@ -269,13 +269,15 @@ class MlFlowProject(Project):
         if self._active_run is None:
             raise ValueError("ActiveRun has not been set")
 
-    def register_card(self, card: ArtifactCard, version_type: str = "minor"):
-        """Register a given artifact card
+    def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR):
+        """Register a given artifact card.
 
         Args:
-            card (Card): DataCard or ModelCard
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
+            card:
+                The card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and
+                "patch". Defaults to "minor".
         """
         self._verify_active()
         card_type = card.__class__.__name__.lower()

@@ -4,10 +4,10 @@ from typing import Any, Awaitable, Callable, Union
 import rollbar
 from fastapi import FastAPI, Response
 
-from opsml_artifacts.registry.cards.cards import CardType
-from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.cards.cards import CardType
+from opsml_artifacts.registry.sql.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger(__name__)
 
