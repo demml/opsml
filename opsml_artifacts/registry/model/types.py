@@ -7,6 +7,11 @@ import pandas as pd
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
 
+class DataDtypes(str, Enum):
+    INT = "int"
+    FLOAT = "float"
+
+
 class OnnxModelType(str, Enum):
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
@@ -179,7 +184,7 @@ class ApiSigTypes(Enum):
 
 class TorchOnnxArgs(BaseModel):
     """
-    tinput_names (List[str]): Optional list containing input names for model inputs.
+    input_names (List[str]): Optional list containing input names for model inputs.
     This is a PyTorch-specific attribute
     output_names (List[str]): Optional list containing output names for model outputs.
     This is a PyTorch-specific attribute
