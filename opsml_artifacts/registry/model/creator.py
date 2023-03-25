@@ -1,15 +1,12 @@
 from typing import Any, Dict, Union, cast
 
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
 
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
-from opsml_artifacts.registry.model.types import (
-    InputDataType,
-    OnnxModelReturn,
-    TorchOnnxArgs,
-)
+from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn, TorchOnnxArgs, DataDtypes
 
 
 class OnnxModelCreator:
@@ -33,6 +30,11 @@ class OnnxModelCreator:
         self.data_type = self.get_input_data_type(input_data=input_data)
         self.additional_model_args = additional_onnx_args
 
+    def _check_dtype(self, data: NDArray) -> NDArray:
+        if DataDtypes.INT in str(data.dtype):
+            return data.astype(np.int32)
+        return data.astype(np.float32)
+
     def _get_one_sample(
         self,
         input_data: Union[
@@ -40,7 +42,7 @@ class OnnxModelCreator:
             np.ndarray,
             Dict[str, np.ndarray],
         ],
-    ) -> Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]:
+    ) -> Union[pd.DataFrame, NDArray, Dict[str, np.ndarray]]:
 
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
@@ -49,11 +51,16 @@ class OnnxModelCreator:
             InputDataType.PANDAS_DATAFRAME.value,
             InputDataType.NUMPY_ARRAY.value,
         ]:
-            return cast(Union[pd.DataFrame, np.ndarray], input_data)[0:1]
+            if data_type == InputDataType.NUMPY_ARRAY.value:
+                input_data = self._check_dtype(input_data)
+
+            return input_data[0:1]
 
         sample_dict = cast(Dict[str, np.ndarray], {})
         for key in cast(Dict[str, np.ndarray], input_data).keys():
-            sample_dict[key] = input_data[key][0:1]
+            _data = self._check_dtype(input_data[key][0:1])
+            sample_dict[key] = self._check_dtype(_data)
+
         return sample_dict
 
     def get_input_data_type(

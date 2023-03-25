@@ -65,6 +65,7 @@ llvmlite = "^0.39.1"
 numba = "^0.56.0"
 libclang = "<=15.0.6.1"
 functiontrace = "^0.3.7"
+transformers = "^4.27.3"
 
 [tool.poetry.group.dev-lints]
 optional = true
