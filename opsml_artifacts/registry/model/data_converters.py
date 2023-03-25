@@ -18,6 +18,7 @@ from opsml_artifacts.registry.model.types import (
     ModelDefinition,
     OnnxModelType,
     TorchOnnxArgs,
+    DataDtypes,
 )
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -268,16 +269,30 @@ class PyTorchOnnxDictConverter(DataConverter):
 
     def get_onnx_data_types(self) -> List[Any]:
         spec = []
-        for input_ in self.input_name:
-            input_schema = (input_, FloatTensorType([None, self.sample_data[input_].shape[1:]]))
+
+        for input_ in self.input_names:
+            data = self.sample_data[input_]
+
+            if DataDtypes.INT in str(data.dtype):
+                input_schema = (input_, Int32TensorType([None, data.shape[1:]]))
+
+            else:
+                input_schema = (input_, FloatTensorType([None, data.shape[1:]]))
+
             spec.append(input_schema)
 
         return spec
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
+        """Convert Pytorch dictionary sample to onnx format"""
+
         onnx_data = {}
         for key, val in self.sample_data.items():
-            onnx_data[key] = val.astype(np.float32)
+            if DataDtypes.INT in str(val.dtype):
+                onnx_data[key] = val.astype(np.int32)
+            else:
+                onnx_data[key] = val.astype(np.float32)
+
         return onnx_data
 
     @staticmethod

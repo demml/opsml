@@ -31,6 +31,7 @@ import numpy as np
 import joblib
 import pandas as pd
 
+# ml model packages and classes
 from sklearn.linear_model import LinearRegression
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -39,6 +40,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import StackingRegressor
 from xgboost import XGBRegressor
 import lightgbm as lgb
+
 
 # opsml
 from opsml_artifacts import ModelCard
@@ -420,6 +422,21 @@ def load_pytorch_resnet():
 
 
 @pytest.fixture(scope="function")
+def load_pytorch_language():
+
+    import torch
+    from tests.assets.pytorch_transformer import SiameseTransformer, _get_tokens
+
+    import __main__
+
+    data = _get_tokens("Hello. this is a test query. Please convert me to onnx")
+    setattr(__main__, "SiameseTransformer", SiameseTransformer)
+    loaded_model = torch.load("tests/assets/language_model.pt", torch.device("cpu"))
+
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
 def mock_gcp_scheduler():
     class ScheduleClient:
         def common_location_path(self, project: str, location: str):
@@ -525,34 +542,6 @@ def drift_dataframe():
 ###############################################################################
 # Moodels
 ################################################################################
-
-
-@pytest.fixture(scope="function")
-def load_transformer_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
-    data = np.load("tests/assets/transformer_data.npy")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_multi_input_keras_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
-    data = joblib.load("tests/assets/multi_input_data.joblib")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_pytorch_resnet():
-    import torch
-
-    loaded_model = torch.load("tests/assets/resnet.pt")
-    data = torch.randn(1, 3, 224, 224).numpy()
-
-    return loaded_model, data
 
 
 @pytest.fixture(scope="function")
