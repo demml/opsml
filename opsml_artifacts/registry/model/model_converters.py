@@ -36,7 +36,7 @@ class ModelConverter:
         model: Any,
         input_data: Any,
         model_type: str,
-        additional_model_args: TorchOnnxArgs,
+        additional_model_args: Optional[TorchOnnxArgs],
     ):
         self.model = model
         self.input_data = input_data
@@ -308,7 +308,7 @@ class PyTorchOnnxModel(ModelConverter):
         import torch
 
         if isinstance(self.input_data, dict):
-            return tuple(self.input_data)  # pylint: disable=no-member
+            return tuple(torch.from_numpy(data) for data in self.input_data.values())  # pylint: disable=no-member
         return torch.from_numpy(self.input_data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
@@ -323,6 +323,7 @@ class PyTorchOnnxModel(ModelConverter):
                 args=arg_data,
                 f=filename,
                 verbose=False,
+                do_constant_folding=self.additional_model_args.constant_folding,
                 input_names=self.additional_model_args.input_names,
                 output_names=self.additional_model_args.output_names,
                 dynamic_axes=self.additional_model_args.dynamic_axes,
@@ -340,6 +341,11 @@ class PyTorchOnnxModel(ModelConverter):
         self.validate_model(onnx_model=onnx_model)
 
         return onnx_model, data_schema
+    
+    def _set_torch_onnx_args(self):
+        # for multi-input (dict style data), we need to set the correct input and outputs
+        if isinstance(self.input_data, dict):
+            
 
     @staticmethod
     def validate(model_type: str) -> bool:

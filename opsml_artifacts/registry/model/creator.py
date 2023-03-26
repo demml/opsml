@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union, cast
+from typing import Any, Dict, Union, cast, Optional, List
 
 import numpy as np
 from numpy.typing import NDArray
@@ -9,12 +9,30 @@ from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
 from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn, TorchOnnxArgs, DataDtypes
 
 
+class PytorchArgBuilder:
+    def __init__(self, input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]):
+        self.input_data = input_data
+
+    def _get_input_names(self) -> List[str]:
+        if isinstance(self.input_data, dict):
+            return [input_name for input_name in self.input_data.keys()]
+        
+        return ["input"]
+    
+    def _get_output_names(self) -> List[str]:
+        return ["output"]
+    
+    def get_args(self):
+        input_names = self._get_input_names()
+        output_names = self._get_output_names()
+
+s
 class OnnxModelCreator:
     def __init__(
         self,
         model: Any,
         input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
-        additional_onnx_args: TorchOnnxArgs,
+        additional_onnx_args: Optional[TorchOnnxArgs] = None,
     ):
 
         """Instantiates OnnxModelCreator that is used for converting models to Onnx
@@ -30,7 +48,17 @@ class OnnxModelCreator:
         self.data_type = self.get_input_data_type(input_data=input_data)
         self.additional_model_args = additional_onnx_args
 
+    def _get_additional_model_args(self, additional_onnx_args:Optional[TorchOnnxArgs]= None):
+        if self.model_type != OnnxModelType.PYTORCH:
+            return additional_onnx_args
+        
+        if additional_onnx_args is None:
+            if isinstance(self.input_data, )
+
+
+
     def _check_dtype(self, data: NDArray) -> NDArray:
+        """Checks for INT dype. Converts all dtypes to float or int32 for onnx conversion"""
         if DataDtypes.INT in str(data.dtype):
             return data.astype(np.int32)
         return data.astype(np.float32)
@@ -57,6 +85,7 @@ class OnnxModelCreator:
             return input_data[0:1]
 
         sample_dict = cast(Dict[str, np.ndarray], {})
+
         for key in cast(Dict[str, np.ndarray], input_data).keys():
             _data = self._check_dtype(input_data[key][0:1])
             sample_dict[key] = self._check_dtype(_data)
