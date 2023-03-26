@@ -307,7 +307,7 @@ class ModelCard(ArtifactCard):
     sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
     model_type: Optional[str]
-    additional_onnx_args: TorchOnnxArgs = TorchOnnxArgs()
+    additional_onnx_args: Optional[TorchOnnxArgs]
     data_schema: Optional[Dict[str, Feature]]
 
     class Config:
