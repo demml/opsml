@@ -189,11 +189,13 @@ class TorchOnnxArgs(BaseModel):
     output_names (List[str]): Optional list containing output names for model outputs.
     This is a PyTorch-specific attribute
     dynamic_axes (Dictionary): Optional PyTorch attribute that defines dynamic axes
+    constant_folding (bool): Whether to use constant folding optimiation. Default is True
     """
 
     input_names: List[str] = ["inputs"]
     output_names: List[str] = ["outputs"]
     dynamic_axes: Dict[str, Dict[int, str]] = {"inputs": {0: "bs"}}
+    constant_folding: bool = True
 
 
 class ModelApiDef(BaseModel):
