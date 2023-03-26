@@ -308,7 +308,7 @@ class PyTorchOnnxModel(ModelConverter):
         import torch
 
         if isinstance(self.input_data, dict):
-            return tuple(torch.from_numpy(data) for data in self.input_data.values())  # pylint: disable=no-member
+            return tuple(self.input_data)  # pylint: disable=no-member
         return torch.from_numpy(self.input_data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
@@ -328,8 +328,8 @@ class PyTorchOnnxModel(ModelConverter):
                 dynamic_axes=self.additional_model_args.dynamic_axes,
                 export_params=True,
             )
+            onnx.checker.check_model(filename)
             model = onnx.load(filename)
-            onnx.checker.check_model(model)
         return model
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
