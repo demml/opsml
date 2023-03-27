@@ -14,12 +14,12 @@ import timeit
         # lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
         # lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
         # lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
-        # lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
+        lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         # lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-        # lazy_fixture("load_transformer_example"),
-        # lazy_fixture("load_multi_input_keras_example"),
-        # lazy_fixture("load_pytorch_resnet"),
-        lazy_fixture("load_pytorch_language"),
+        # lazy_fixture("load_transformer_example"),  # keras transformer example
+        # lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
+        # lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
+        # lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
     ],
 )
 def test_model_predict(model_and_data):

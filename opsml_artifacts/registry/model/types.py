@@ -1,15 +1,26 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from skl2onnx.common.data_types import (
+    FloatTensorType,
+    Int32TensorType,
+    Int64TensorType,
+    StringTensorType,
+    DoubleTensorType,
+    TensorType,
+)
 
 
 class DataDtypes(str, Enum):
-    INT = "int"
-    FLOAT = "float"
+    STRING = "string"
+    INT32 = "int32"
+    INT64 = "int64"
+    FLOAT32 = "float32"
+    FLOAT64 = "float64"
 
 
 class OnnxModelType(str, Enum):
@@ -134,7 +145,7 @@ class DictBase(Base):
             if isinstance(feat_val, float):
                 feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
             elif isinstance(feat_val, int):
-                feats[feat] = np.array(feat_val, np.int64).reshape(1, -1)
+                feats[feat] = np.array(feat_val, np.int32).reshape(1, -1)
             else:
                 feats[feat] = np.array(feat_val).reshape(1, -1)
         return feats
@@ -162,7 +173,7 @@ class DeepLearningDictBase(Base):
             if isinstance(feat_val[0], float):
                 feats[feat] = np.expand_dims(np.array(feat_val, np.float32), axis=0)
             elif isinstance(feat_val[0], int):
-                feats[feat] = np.expand_dims(np.array(feat_val, np.int64), axis=0)
+                feats[feat] = np.expand_dims(np.array(feat_val, np.int32), axis=0)
             else:
                 feats[feat] = np.expand_dims(np.array(feat_val), axis=0)
         return feats
@@ -225,3 +236,93 @@ class ModelDownloadInfo(BaseModel):
     version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
+
+
+class BaseTensorType:
+    def __init__(self, dtype: str, input_shape: List[int]):
+        self.input_shape = input_shape
+        self.dtype = dtype
+
+    def get_tensor_type(self) -> TensorType:
+        raise NotImplementedError
+
+    @staticmethod
+    def validate(dtype: str) -> bool:
+        raise NotImplementedError
+
+
+class Float32Tensor(BaseTensorType):
+    def get_tensor_type(self) -> FloatTensorType:
+        return FloatTensorType([None, *self.input_shape])
+
+    @staticmethod
+    def validate(dtype: str) -> bool:
+        return dtype == DataDtypes.FLOAT32
+
+
+class Float64Tensor(BaseTensorType):
+    def get_tensor_type(self) -> DoubleTensorType:
+        return DoubleTensorType([None, *self.input_shape])
+
+    @staticmethod
+    def validate(dtype: str) -> bool:
+        return dtype == DataDtypes.FLOAT64
+
+
+class Int32Tensor(BaseTensorType):
+    def get_tensor_type(self) -> Int32TensorType:
+        return Int32TensorType([None, *self.input_shape])
+
+    @staticmethod
+    def validate(dtype: str) -> bool:
+        return dtype == DataDtypes.INT32
+
+
+class Int64Tensor(BaseTensorType):
+    def get_tensor_type(self) -> Int64TensorType:
+        return Int64TensorType([None, *self.input_shape])
+
+    @staticmethod
+    def validate(dtype: str) -> bool:
+        return dtype == DataDtypes.INT64
+
+
+class StringTensor(BaseTensorType):
+    def get_tensor_type(self) -> StringTensorType:
+        return StringTensorType([None, *self.input_shape])
+
+    @staticmethod
+    def validate(dtype: str) -> bool:
+        return dtype == DataDtypes.STRING
+
+
+def get_onnx_tensor_spec(
+    dtype: str,
+    input_shape: List[int],
+) -> TensorType:
+
+    """Takes a dtype and input shape and returns Onnx Tensor type proto to be
+    used with Onnx model
+
+    Args:
+        dtype (str): Dtype of data
+        input_shape (list(int)): Input shape of data
+
+    Returns:
+        Onnx TensorType
+    """
+    tensor_type = next(
+        (
+            tensor_type
+            for tensor_type in BaseTensorType.__subclasses__()
+            if tensor_type.validate(
+                dtype=dtype,
+            )
+        ),
+        StringTensor,
+    )
+
+    return tensor_type(
+        dtype=dtype,
+        input_shape=input_shape,
+    ).get_tensor_type()

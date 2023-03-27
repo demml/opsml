@@ -30,12 +30,6 @@ class OnnxModelCreator:
         self.data_type = self.get_input_data_type(input_data=input_data)
         self.additional_model_args = additional_onnx_args
 
-    def _check_dtype(self, data: NDArray) -> NDArray:
-        """Checks for INT dype. Converts all numeric dtypes to float32 or int32 for onnx conversion"""
-        if DataDtypes.INT in str(data.dtype):
-            return data.astype(np.int32)
-        return data.astype(np.float32)
-
     def _get_one_sample(
         self,
         input_data: Union[
@@ -53,7 +47,7 @@ class OnnxModelCreator:
             InputDataType.NUMPY_ARRAY.value,
         ]:
             if data_type == InputDataType.NUMPY_ARRAY.value:
-                input_data = self._check_dtype(input_data)
+                return input_data
 
             return input_data[0:1]
 
@@ -61,7 +55,7 @@ class OnnxModelCreator:
 
         for key in cast(Dict[str, np.ndarray], input_data).keys():
             _data = self._check_dtype(input_data[key][0:1])
-            sample_dict[key] = self._check_dtype(_data)
+            sample_dict[key] = _data
 
         return sample_dict
 
@@ -130,6 +124,7 @@ class OnnxModelCreator:
         Returns
             OnnxModelReturn
         """
+
         onnx_model_return = OnnxModelConverter(
             model=self.model,
             input_data=self.input_data,
