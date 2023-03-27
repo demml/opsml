@@ -259,9 +259,6 @@ class OnnxModelPredictor:
             input_feed=pred_data.to_onnx(),
         )
 
-        # continue work here
-        a
-
         return predictions
 
     def predict_with_model(self, model: Any, data: Dict[str, Any]) -> Any:
@@ -269,7 +266,7 @@ class OnnxModelPredictor:
         pydantic model.
 
         Args:
-            model (Any sklearn flavor model): Model to send predictions to
+            model : Model to send predictions to
             data (dictionary of data): Dictionary containing data for prediction
 
         Returns
@@ -278,23 +275,28 @@ class OnnxModelPredictor:
 
         pred_data = self.input_sig(**data)
 
-        if self.model_type == "sklearn_pipeline":
-            new_data = pred_data.to_dataframe()
+        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+            data_for_pred = pred_data.to_dataframe()
 
-        elif self.model_type == "keras":
-            new_data = pred_data.to_onnx()
+        elif self.model_type == OnnxModelType.TF_KERAS:
+            data_for_pred = pred_data.to_onnx()
 
-        elif self.model_type == "pytorch":
+        elif self.model_type == OnnxModelType.PYTORCH:
             import torch
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
-            new_data = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
-            return model(*new_data)
+
+            if self.data_dict.data_type == InputDataType.DICT:
+                data_for_pred = {name: torch.from_numpy(value) for name, value in feed_data.items()}
+                return model(**data_for_pred)
+
+            data_for_pred = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
+            return model(*data_for_pred)
 
         else:
-            new_data = list(pred_data.to_onnx().values())[0]
+            data_for_pred = list(pred_data.to_onnx().values())[0]
 
-        prediction = model.predict(new_data)
+        prediction = model.predict(data_for_pred)
 
         return prediction
 
