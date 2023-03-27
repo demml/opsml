@@ -3,8 +3,8 @@
 """Code for generating Onnx Models"""
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
 import numpy as np
+from numpy.typing import NDArray
 import onnx
 import onnxruntime as rt
 import pandas as pd
@@ -268,28 +268,109 @@ class TensorflowKerasOnnxModel(ModelConverter):
         return model_type in OnnxModelType.TF_KERAS
 
 
+class PytorchArgBuilder:
+    def __init__(
+        self,
+        input_data: Union[
+            pd.DataFrame,
+            np.ndarray,
+            Dict[str, np.ndarray],
+        ],
+    ):
+        self.input_data = input_data
+
+    def _get_input_names(self) -> List[str]:
+        if isinstance(self.input_data, dict):
+            return [input_name for input_name in self.input_data.keys()]
+
+        return ["input"]
+
+    def _get_dynamic_axes(self, input_names: List[str], output_names: List[str]):
+        dynamic_axes = {}
+        for name in [*input_names, *output_names]:
+            dynamic_axes[name] = {}
+
+    def _get_output_names(self) -> List[str]:
+        return ["output"]
+
+    def get_args(self) -> TorchOnnxArgs:
+        input_names = self._get_input_names()
+        output_names = self._get_output_names()
+
+        return TorchOnnxArgs(
+            input_names=input_names,
+            output_names=output_names,
+        )
+
+
 class PyTorchOnnxModel(ModelConverter):
+    def __init__(
+        self,
+        model: Any,
+        input_data: Any,
+        model_type: str,
+        additional_model_args: Optional[TorchOnnxArgs] = None,
+    ):
+
+        additional_args = self._get_additional_model_args(
+            additional_onnx_args=additional_model_args,
+            input_data=input_data,
+        )
+
+        super().__init__(
+            model=model,
+            input_data=input_data,
+            model_type=model_type,
+            additional_model_args=additional_args,
+        )
+
+    def _get_additional_model_args(
+        self,
+        input_data: Any,
+        additional_onnx_args: Optional[TorchOnnxArgs] = None,
+    ):
+        """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
+
+        if additional_onnx_args is None:
+            return PytorchArgBuilder(input_data=input_data).get_args()
+        return additional_onnx_args
+
     def _predictions_close(
         self,
         onnx_preds: List[Any],
-        model_preds: Any,
+        model_preds: NDArray,
     ) -> bool:
-        if not isinstance(model_preds, list):
-            model_preds = cast(Union[float, int], model_preds)
-            valid_list = [np.sum(abs(onnx_preds[0] - model_preds.detach().numpy())) <= 0.001]
+
+        valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
 
         return all(valid_list)
 
-    def _model_predict(self):
+    def _post_process_prediction(self, predictions: Any) -> NDArray:
+        """Parse pytorch predictions"""
+
+        if hasattr(predictions, "logits"):
+            return predictions.logits.detach().numpy()
+        return predictions.detach().numpy()
+
+    def _model_predict(self) -> NDArray:
+        """Generate prediction for pytorch model using sample data"""
+
         torch_data = self._get_torch_data()
 
         if isinstance(torch_data, tuple):
-            return self.model(*torch_data)
-        return self.model(torch_data)
+            pred = self.model(*torch_data)
+
+        elif isinstance(torch_data, dict):
+            pred = self.model(**torch_data)
+
+        else:
+            pred = self.model(torch_data)
+
+        return self._post_process_prediction(predictions=pred)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
 
-        """Validates an onnx model on training data"""
+        """Validates an onnx model on sample data"""
         inputs = self.data_converter.convert_data()
         model_preds = self._model_predict()
 
@@ -299,7 +380,10 @@ class PyTorchOnnxModel(ModelConverter):
         sess = rt.InferenceSession(model_string)
         onnx_preds = sess.run(None, inputs)
 
-        if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
+        if not self._predictions_close(
+            onnx_preds=onnx_preds,
+            model_preds=model_preds,
+        ):
             raise ValueError("Model prediction validation failed")
 
         logger.info("Onnx model validated")
@@ -307,11 +391,17 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_torch_data(self) -> Any:
         import torch
 
+        if isinstance(self.input_data, tuple):
+            return tuple(torch.from_numpy(data) for data in self.input_data)
+
         if isinstance(self.input_data, dict):
-            return tuple(torch.from_numpy(data) for data in self.input_data.values())  # pylint: disable=no-member
+            return {name: torch.from_numpy(data) for name, data in self.input_data.items()}  # pylint: disable=no-member
+
         return torch.from_numpy(self.input_data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
+        """Converts Pytorch model into Onnx model through torch.onnx.export method"""
+
         import torch
 
         arg_data = self._get_torch_data()
@@ -322,12 +412,7 @@ class PyTorchOnnxModel(ModelConverter):
                 model=self.model,
                 args=arg_data,
                 f=filename,
-                verbose=False,
-                do_constant_folding=self.additional_model_args.constant_folding,
-                input_names=self.additional_model_args.input_names,
-                output_names=self.additional_model_args.output_names,
-                dynamic_axes=self.additional_model_args.dynamic_axes,
-                export_params=True,
+                **self.additional_model_args.to_dict(),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
@@ -341,11 +426,6 @@ class PyTorchOnnxModel(ModelConverter):
         self.validate_model(onnx_model=onnx_model)
 
         return onnx_model, data_schema
-    
-    def _set_torch_onnx_args(self):
-        # for multi-input (dict style data), we need to set the correct input and outputs
-        if isinstance(self.input_data, dict):
-            
 
     @staticmethod
     def validate(model_type: str) -> bool:

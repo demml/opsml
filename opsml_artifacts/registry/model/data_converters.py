@@ -315,6 +315,7 @@ class OnnxDataConverter:
         self.converter = self._get_converter()
 
     def _get_converter(self):
+
         data_type = type(self.input_data)
         converter = next(
             (
