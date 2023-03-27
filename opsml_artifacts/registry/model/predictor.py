@@ -224,6 +224,9 @@ class OnnxModelPredictor:
         )
         self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
 
+        print(self.data_dict)
+        a
+
     def get_api_model(self) -> ModelApiDef:
 
         return ModelApiDef(
