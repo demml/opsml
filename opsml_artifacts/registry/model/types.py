@@ -1,7 +1,7 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
 from typing import Any, Dict, List, Optional
-
+from dataclasses import dataclass, asdict
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
@@ -182,7 +182,8 @@ class ApiSigTypes(Enum):
     STR = str
 
 
-class TorchOnnxArgs(BaseModel):
+@dataclass
+class TorchOnnxArgs:
     """
     input_names (List[str]): Optional list containing input names for model inputs.
     This is a PyTorch-specific attribute
@@ -192,10 +193,15 @@ class TorchOnnxArgs(BaseModel):
     constant_folding (bool): Whether to use constant folding optimiation. Default is True
     """
 
-    input_names: List[str] = ["inputs"]
-    output_names: List[str] = ["outputs"]
-    dynamic_axes: Dict[str, Dict[int, str]] = {"inputs": {0: "bs"}}
-    constant_folding: bool = True
+    input_names: List[str]
+    output_names: List[str]
+    dynamic_axes: Optional[Dict[str, Dict[int, str]]] = None
+    do_constant_folding: bool = True
+    export_params: bool = True
+    verbose: bool = False
+
+    def to_dict(self):
+        return asdict(self)
 
 
 class ModelApiDef(BaseModel):

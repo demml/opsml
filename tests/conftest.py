@@ -425,15 +425,20 @@ def load_pytorch_resnet():
 def load_pytorch_language():
 
     import torch
-    from tests.assets.pytorch_transformer import SiameseTransformer, _get_tokens
+    from transformers import AutoTokenizer
 
-    import __main__
+    model_name = "sshleifer/tiny-distilbert-base-cased"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    data = tokenizer(
+        "this is a test",
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",
+    )
+    sample_data = {name: values.numpy() for name, values in data.items()}
+    loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
 
-    data = _get_tokens("Hello. this is a test query. Please convert me to onnx")
-    setattr(__main__, "SiameseTransformer", SiameseTransformer)
-    loaded_model = torch.load("tests/assets/language_model.pt", torch.device("cpu"))
-
-    return loaded_model, data
+    return loaded_model, sample_data
 
 
 @pytest.fixture(scope="function")
