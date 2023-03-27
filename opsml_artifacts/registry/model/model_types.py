@@ -14,7 +14,7 @@ class ModelType:
 class SklearnPipeline(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.SKLEARN_PIPELINE
+        return OnnxModelType.SKLEARN_PIPELINE.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -24,7 +24,7 @@ class SklearnPipeline(ModelType):
 class SklearnEstimator(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.SKLEARN_ESTIMATOR
+        return OnnxModelType.SKLEARN_ESTIMATOR.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -44,7 +44,7 @@ class SklearnEstimator(ModelType):
 class SklearnStackingEstimator(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.STACKING_ESTIMATOR
+        return OnnxModelType.STACKING_ESTIMATOR.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -54,7 +54,7 @@ class SklearnStackingEstimator(ModelType):
 class LightGBMRegressor(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.LGBM_REGRESSOR
+        return OnnxModelType.LGBM_REGRESSOR.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -64,7 +64,7 @@ class LightGBMRegressor(ModelType):
 class LightGBMClassifier(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.LGBM_CLASSIFIER
+        return OnnxModelType.LGBM_CLASSIFIER.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -74,7 +74,7 @@ class LightGBMClassifier(ModelType):
 class XGBRegressor(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.XGB_REGRESSOR
+        return OnnxModelType.XGB_REGRESSOR.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -84,7 +84,7 @@ class XGBRegressor(ModelType):
 class LightGBMBooster(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.LGBM_BOOSTER
+        return OnnxModelType.LGBM_BOOSTER.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -94,7 +94,7 @@ class LightGBMBooster(ModelType):
 class TensorflowKeras(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.TF_KERAS
+        return OnnxModelType.TF_KERAS.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
@@ -104,7 +104,7 @@ class TensorflowKeras(ModelType):
 class PyTorch(ModelType):
     @staticmethod
     def get_type() -> str:
-        return OnnxModelType.PYTORCH
+        return OnnxModelType.PYTORCH.value
 
     @staticmethod
     def validate(model_class_name: str) -> bool:
