@@ -141,18 +141,19 @@ class SklearnSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type not in ["keras", "pytorch"]
+        return model_type not in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
 
 
 class DeepLearningSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
+
         if self.data_type == InputDataType.DICT.name:
             return DeepLearningDictBase
         return DeepLearningNumpyBase
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type in ["keras", "pytorch"]
+        return model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
 
 
 class ApiSigCreatorGetter:
@@ -257,6 +258,9 @@ class OnnxModelPredictor:
             output_names=self._output_names,
             input_feed=pred_data.to_onnx(),
         )
+
+        # continue work here
+        a
 
         return predictions
 

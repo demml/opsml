@@ -292,8 +292,8 @@ class ModelCard(ArtifactCard):
         model_uri (str): GCS uri where model is stored
         model_type (str): Type of model
         data_schema (Dictionary): Optional dictionary of the data schema used in model training
-        additional_onnx_args (TorchOnnxArgs): Optional pydantic model containing optional
-        Torch args for model conversion.
+        additional_onnx_args (TorchOnnxArgs): Optional pydantic model containing
+        Torch args for model conversion to onnx.
         Can be expanded at a later date to handle other model type args.
     """
 

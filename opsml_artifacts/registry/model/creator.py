@@ -9,24 +9,6 @@ from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
 from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn, TorchOnnxArgs, DataDtypes
 
 
-class PytorchArgBuilder:
-    def __init__(self, input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]):
-        self.input_data = input_data
-
-    def _get_input_names(self) -> List[str]:
-        if isinstance(self.input_data, dict):
-            return [input_name for input_name in self.input_data.keys()]
-        
-        return ["input"]
-    
-    def _get_output_names(self) -> List[str]:
-        return ["output"]
-    
-    def get_args(self):
-        input_names = self._get_input_names()
-        output_names = self._get_output_names()
-
-s
 class OnnxModelCreator:
     def __init__(
         self,
@@ -48,17 +30,8 @@ class OnnxModelCreator:
         self.data_type = self.get_input_data_type(input_data=input_data)
         self.additional_model_args = additional_onnx_args
 
-    def _get_additional_model_args(self, additional_onnx_args:Optional[TorchOnnxArgs]= None):
-        if self.model_type != OnnxModelType.PYTORCH:
-            return additional_onnx_args
-        
-        if additional_onnx_args is None:
-            if isinstance(self.input_data, )
-
-
-
     def _check_dtype(self, data: NDArray) -> NDArray:
-        """Checks for INT dype. Converts all dtypes to float or int32 for onnx conversion"""
+        """Checks for INT dype. Converts all numeric dtypes to float32 or int32 for onnx conversion"""
         if DataDtypes.INT in str(data.dtype):
             return data.astype(np.int32)
         return data.astype(np.float32)
@@ -114,7 +87,12 @@ class OnnxModelCreator:
         """
 
         # Onnx supports dataframe schemas for pipelines
-        if self.model_type in [OnnxModelType.SKLEARN_PIPELINE, OnnxModelType.TF_KERAS]:
+        # re-work this
+        if self.model_type in [
+            OnnxModelType.SKLEARN_PIPELINE,
+            OnnxModelType.TF_KERAS,
+            OnnxModelType.PYTORCH,
+        ]:
             return InputDataType(type(input_data)).name
 
         return InputDataType.NUMPY_ARRAY.name
@@ -123,14 +101,19 @@ class OnnxModelCreator:
         """Gets class name from model"""
 
         if "keras.engine" in str(self.model):
-            return "keras"
+            return OnnxModelType.TF_KERAS.value
 
         if "torch" in str(self.model.__class__.__bases__):
-            return "pytorch"
+            return OnnxModelType.PYTORCH.value
+
+        # for transformer models from huggingface
+        if "transformers.models" in str(self.model.__class__.__bases__):
+            return OnnxModelType.PYTORCH.value
 
         return self.model.__class__.__name__
 
     def get_onnx_model_type(self) -> str:
+
         model_type = next(
             (
                 model_type
