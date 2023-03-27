@@ -90,6 +90,16 @@ class ApiSigCreator:
 
         return self._infer_pydantic_fields(features=features)
 
+    def _get_feature_type_map(self, features: Dict[str, Feature]):
+        """Generates feature map of name and type for input data.
+        This is used to convert data to the correct type for onnx.
+        """
+
+        feature_map = {}
+        for name, feature in features.items():
+            feature_map[name] = feature.feature_type
+        return feature_map
+
     def _get_pydantic_base(self):
         raise NotImplementedError
 
@@ -118,6 +128,13 @@ class ApiSigCreator:
     def get_input_output_sig(self) -> Tuple[Type[Base], Type[Base]]:
         input_sig = self._get_input_sig()
         output_sig = self._get_output_sig()
+
+        input_sig.feature_map = self._get_feature_type_map(
+            features=self.data_dict.input_features,
+        )
+        output_sig.feature_map = self._get_feature_type_map(
+            features=self.data_dict.output_features,
+        )
 
         return input_sig, output_sig
 
@@ -223,9 +240,6 @@ class OnnxModelPredictor:
             data_dict=data_dict,
         )
         self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
-
-        print(self.data_dict)
-        a
 
     def get_api_model(self) -> ModelApiDef:
 
