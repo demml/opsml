@@ -124,15 +124,33 @@ class Base(BaseModel):
     def to_dataframe(self):
         raise NotImplementedError
 
+    def to_numpy(self, type_: str, values: Any):
+
+        print(type_, values)
+
+        if type_ == OnnxDataProto.DOUBLE.name:
+            return np.array(values, np.float64)
+
+        elif type_ == OnnxDataProto.FLOAT.name:
+            return np.array(values, np.float32)
+
+        elif type_ == OnnxDataProto.INT32.name:
+            return np.array(values, np.int32)
+
+        elif type_ == OnnxDataProto.INT64.name:
+            return np.array(values, np.int64)
+
+        else:
+            return np.array(values, str)
+
 
 class NumpyBase(Base):
     def to_onnx(self):
-        return {
-            "inputs": np.array(
-                list(self.dict().values()),
-                np.float32,
-            ).reshape(1, -1)
-        }
+
+        values = list(self.dict().values())
+        for _, type_ in self.feature_map.items():  # there can only be one
+            array = self.to_numpy(type_=type_, values=values)
+            return {"inputs": array.reshape(1, -1)}
 
     def to_dataframe(self):
         raise NotImplementedError
@@ -141,13 +159,10 @@ class NumpyBase(Base):
 class DictBase(Base):
     def to_onnx(self):
         feats = {}
+
         for feat, feat_val in self:
-            if isinstance(feat_val, float):
-                feats[feat] = np.array(feat_val, np.float32).reshape(1, -1)
-            elif isinstance(feat_val, int):
-                feats[feat] = np.array(feat_val, np.int32).reshape(1, -1)
-            else:
-                feats[feat] = np.array(feat_val).reshape(1, -1)
+            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            feats[feat] = array.reshape(1, -1)
         return feats
 
     def to_dataframe(self):
@@ -156,7 +171,11 @@ class DictBase(Base):
 
 class DeepLearningNumpyBase(Base):
     def to_onnx(self):
-        return {feat: np.expand_dims(np.array(feat_val, np.float32), axis=0) for feat, feat_val in self}
+        feats = {}
+        for feat, feat_val in self:
+            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            feats[feat] = np.expand_dims(array, axis=0)
+        return feats
 
     def to_dataframe(self):
         raise NotImplementedError
@@ -170,12 +189,9 @@ class DeepLearningDictBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
-            if isinstance(feat_val[0], float):
-                feats[feat] = np.expand_dims(np.array(feat_val, np.float32), axis=0)
-            elif isinstance(feat_val[0], int):
-                feats[feat] = np.expand_dims(np.array(feat_val, np.int32), axis=0)
-            else:
-                feats[feat] = np.expand_dims(np.array(feat_val), axis=0)
+            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            feats[feat] = np.expand_dims(array, axis=0)
+
         return feats
 
     def to_dataframe(self):
