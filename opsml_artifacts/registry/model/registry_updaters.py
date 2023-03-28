@@ -123,3 +123,5 @@ class OnnxRegistryUpdater:
 
         if converter is not None:
             converter(model_estimator=model_estimator_name).update_registry_converter()
+            return True
+        return False

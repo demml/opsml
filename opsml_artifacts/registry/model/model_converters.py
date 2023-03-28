@@ -24,6 +24,7 @@ from opsml_artifacts.registry.model.types import (
     OnnxModelReturn,
     OnnxModelType,
     TorchOnnxArgs,
+    ModelInfo,
 )
 
 ONNX_VERSION = onnx.__version__
@@ -31,26 +32,13 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class ModelConverter:
-    def __init__(
-        self,
-        model: Any,
-        input_data: Any,
-        model_type: str,
-        additional_model_args: Optional[TorchOnnxArgs],
-    ):
-        self.model = model
-        self.input_data = input_data
-        self.model_type = model_type
-        self.additional_model_args = additional_model_args
-        self.data_converter = OnnxDataConverter(
-            input_data=input_data,
-            model_type=model_type,
-            model=model,
-            additional_model_args=additional_model_args,
-        )
+    def __init__(self, model_info: ModelInfo):
 
-    def update_onnx_registries(self):
-        OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_type)
+        self.model_info = model_info
+        self.data_converter = OnnxDataConverter(model_info=model_info)
+
+    def update_onnx_registries(self) -> bool:
+        return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
         """Converts a model to onnx format
@@ -65,9 +53,11 @@ class ModelConverter:
         onnx_preds: List[Any],
         model_preds: Union[List[Any], Union[float, int]],
     ) -> bool:
+
         if not isinstance(model_preds, list):
             model_preds = cast(Union[float, int], model_preds)
             valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+
         else:
             valid_list = []
             for onnx_pred, model_pred in zip(onnx_preds, model_preds):
@@ -80,7 +70,7 @@ class ModelConverter:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
 
-        model_preds = self.model.predict(self.input_data)
+        model_preds = self.model_info.model.predict(self.model_info.input_data)
 
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
@@ -176,43 +166,66 @@ class SklearnOnnxModel(ModelConverter):
         return row, col
 
     def _is_stacking_estimator(self):
-        return self.model_type == OnnxModelType.STACKING_ESTIMATOR
+        return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
 
     def _is_pipeline(self):
-        return self.model_type == OnnxModelType.SKLEARN_PIPELINE
+        return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
 
     def _update_onnx_registries_pipelines(self):
-        for model_step in self.model.steps:
+        updated = False
+        for model_step in self.model_info.model.steps:
             estimator_name = model_step[1].__class__.__name__.lower()
             if estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,
                 )
+                updated = True
+        return updated
 
     def _update_onnx_registries_stacking(self):
-        for estimator in [*self.model.estimators_, self.model.final_estimator]:
+        updated = False
+        for estimator in [
+            *self.model_info.model.estimators_,
+            self.model_info.model.final_estimator,
+        ]:
             estimator_name = estimator.__class__.__name__.lower()
             if estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,
                 )
+                updated = True
+        return updated
 
-    def update_sklearn_onnx_registries(self):
+    def update_sklearn_onnx_registries(self) -> bool:
         if self._is_pipeline():
             return self._update_onnx_registries_pipelines()
         if self._is_stacking_estimator():
             return self._update_onnx_registries_stacking()
         return self.update_onnx_registries()
 
+    def _convert_data_for_onnx(self):
+        if self._is_stacking_estimator():
+            logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
+            self.data_converter.converter.convert_all_to_float32()
+
+        else:
+            logger.warning("Converting all float64 data to float32 for Sklearn Pipeline")
+            self.data_converter.converter.convert_float64_to_float32()  # lgb and xgb onnx do not support float64 (in intermediate nodes)
+
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
 
         """Converts sklearn model to ONNX ModelProto"""
         from skl2onnx import convert_sklearn
 
-        self.update_sklearn_onnx_registries()
+        updated = self.update_sklearn_onnx_registries()
+
+        if updated:
+            self._convert_data_for_onnx()
+
         initial_types, data_schema = self.get_data_types()
+
         onnx_model = convert_sklearn(
-            model=self.model,
+            model=self.model_info.model,
             initial_types=initial_types,
         )
 
@@ -233,7 +246,7 @@ class LighGBMBoosterOnnxModel(ModelConverter):
 
         initial_types, data_schema = self.get_data_types()
         onnx_model = convert_lightgbm(
-            model=self.model,
+            model=self.model_info.model,
             initial_types=initial_types,
         )
 
@@ -258,7 +271,11 @@ class TensorflowKerasOnnxModel(ModelConverter):
         import tf2onnx
 
         initial_types, data_schema = self.get_data_types()
-        onnx_model, _ = tf2onnx.convert.from_keras(self.model, initial_types, opset=13)
+        onnx_model, _ = tf2onnx.convert.from_keras(
+            self.model_info.model,
+            initial_types,
+            opset=13,
+        )
         self.validate_model(onnx_model=onnx_model)
 
         return onnx_model, data_schema
@@ -271,24 +288,15 @@ class TensorflowKerasOnnxModel(ModelConverter):
 class PytorchArgBuilder:
     def __init__(
         self,
-        input_data: Union[
-            pd.DataFrame,
-            np.ndarray,
-            Dict[str, np.ndarray],
-        ],
+        input_data: Union[NDArray, Dict[str, NDArray]],
     ):
         self.input_data = input_data
 
     def _get_input_names(self) -> List[str]:
-        if isinstance(self.input_data, dict):
-            return [input_name for input_name in self.input_data.keys()]
+        if isinstance(self.model_info.input_data, dict):
+            return [input_name for input_name in self.model_info.input_data.keys()]
 
         return ["input"]
-
-    def _get_dynamic_axes(self, input_names: List[str], output_names: List[str]):
-        dynamic_axes = {}
-        for name in [*input_names, *output_names]:
-            dynamic_axes[name] = {}
 
     def _get_output_names(self) -> List[str]:
         return ["output"]
@@ -304,25 +312,15 @@ class PytorchArgBuilder:
 
 
 class PyTorchOnnxModel(ModelConverter):
-    def __init__(
-        self,
-        model: Any,
-        input_data: Any,
-        model_type: str,
-        additional_model_args: Optional[TorchOnnxArgs] = None,
-    ):
+    def __init__(self, model_info: ModelInfo):
 
         additional_args = self._get_additional_model_args(
-            additional_onnx_args=additional_model_args,
-            input_data=input_data,
+            additional_onnx_args=model_info.additional_model_args,
+            input_data=model_info.input_data,
         )
+        model_info.additional_model_args = additional_args
 
-        super().__init__(
-            model=model,
-            input_data=input_data,
-            model_type=model_type,
-            additional_model_args=additional_args,
-        )
+        super().__init__(model_info=model_info)
 
     def _get_additional_model_args(
         self,
@@ -358,13 +356,13 @@ class PyTorchOnnxModel(ModelConverter):
         torch_data = self._get_torch_data()
 
         if isinstance(torch_data, tuple):
-            pred = self.model(*torch_data)
+            pred = self.model_info.model(*torch_data)
 
         elif isinstance(torch_data, dict):
-            pred = self.model(**torch_data)
+            pred = self.model_info.model(**torch_data)
 
         else:
-            pred = self.model(torch_data)
+            pred = self.model_info.model(torch_data)
 
         return self._post_process_prediction(predictions=pred)
 
@@ -391,13 +389,15 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_torch_data(self) -> Any:
         import torch
 
-        if isinstance(self.input_data, tuple):
-            return tuple(torch.from_numpy(data) for data in self.input_data)
+        if isinstance(self.model_info.input_data, tuple):
+            return tuple(torch.from_numpy(data) for data in self.model_info.input_data)
 
-        if isinstance(self.input_data, dict):
-            return {name: torch.from_numpy(data) for name, data in self.input_data.items()}  # pylint: disable=no-member
+        if isinstance(self.model_info.input_data, dict):
+            return {
+                name: torch.from_numpy(data) for name, data in self.model_info.input_data.items()
+            }  # pylint: disable=no-member
 
-        return torch.from_numpy(self.input_data)  # pylint: disable=no-member
+        return torch.from_numpy(self.model_info.input_data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
@@ -407,12 +407,12 @@ class PyTorchOnnxModel(ModelConverter):
         arg_data = self._get_torch_data()
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
-            self.model.eval()  # force model into evaluation mode
+            self.model_info.model.eval()  # force model into evaluation mode
             torch.onnx.export(
-                model=self.model,
+                model=self.model_info.model,
                 args=arg_data,
                 f=filename,
-                **self.additional_model_args.to_dict(),
+                **self.model_info.additional_model_args.to_dict(),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
@@ -433,28 +433,15 @@ class PyTorchOnnxModel(ModelConverter):
 
 
 class OnnxModelConverter:
-    def __init__(
-        self,
-        model: Any,
-        input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
-        model_type: str,
-        additional_model_args: TorchOnnxArgs,
-    ):
-        self.model = model
-        self.data = input_data
-        self.model_type = model_type
-        self.additional_model_args = additional_model_args
-
+    def __init__(self, model_info: ModelInfo):
         """Instantiates a helper class to convert machine learning models and their input data
         to onnx format for interoperability.
 
         Args:
-            model (BaseEstimator, Pipeline, Tensorflow, Keras): A machine learning model or pipeline to convert.
-            Currently accepted types are any Sklearn model flavor, lightgbm and xgboost
-            (sklearn flavors, e.g., LGBRegressor), as well as Sklearn pipelines, Tensorflow/Keras and PyTorch.
-            input_data (pd.DataFrame, np.ndarray): Sample model input data.
+            model_info (ModelInfo): ModelInfo class containing model-specific information for Onnx conversion
 
-    """
+        """
+        self.model_info = model_info
 
     def convert_model(self) -> OnnxModelReturn:
 
@@ -462,15 +449,8 @@ class OnnxModelConverter:
             (
                 converter
                 for converter in ModelConverter.__subclasses__()
-                if converter.validate(
-                    model_type=self.model_type,
-                )
+                if converter.validate(model_type=self.model_info.model_type)
             )
         )
 
-        return converter(
-            model=self.model,
-            input_data=self.data,
-            model_type=self.model_type,
-            additional_model_args=self.additional_model_args,
-        ).convert()
+        return converter(model_info=self.model_info).convert()

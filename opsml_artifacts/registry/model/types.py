@@ -1,7 +1,8 @@
 """Base code for Onnx model conversion"""
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass, asdict
+from numpy.typing import NDArray
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
@@ -13,6 +14,9 @@ from skl2onnx.common.data_types import (
     DoubleTensorType,
     TensorType,
 )
+
+
+ModelData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
 
 class DataDtypes(str, Enum):
@@ -125,8 +129,6 @@ class Base(BaseModel):
         raise NotImplementedError
 
     def to_numpy(self, type_: str, values: Any):
-
-        print(type_, values)
 
         if type_ == OnnxDataProto.DOUBLE.name:
             return np.array(values, np.float64)
@@ -314,7 +316,7 @@ class StringTensor(BaseTensorType):
 
 def get_onnx_tensor_spec(
     dtype: str,
-    input_shape: List[int],
+    input_shape: Union[Tuple[int], List[int]],
 ) -> TensorType:
 
     """Takes a dtype and input shape and returns Onnx Tensor type proto to be
@@ -342,3 +344,12 @@ def get_onnx_tensor_spec(
         dtype=dtype,
         input_shape=input_shape,
     ).get_tensor_type()
+
+
+@dataclass
+class ModelInfo:
+    model: Any
+    input_data: ModelData
+    model_type: str
+    data_type: str
+    additional_model_args: Optional[TorchOnnxArgs] = None
