@@ -1,19 +1,17 @@
-from typing import Any, Dict, Union, cast, Optional, List
-
+from typing import Any, Dict, cast, Optional
+from dataclasses import dataclass
 import numpy as np
-from numpy.typing import NDArray
-import pandas as pd
 
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
-from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn, TorchOnnxArgs, DataDtypes
+from opsml_artifacts.registry.model.types import InputDataType, OnnxModelReturn, TorchOnnxArgs, ModelData, ModelInfo
 
 
 class OnnxModelCreator:
     def __init__(
         self,
         model: Any,
-        input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
+        input_data: ModelData,
         additional_onnx_args: Optional[TorchOnnxArgs] = None,
     ):
 
@@ -30,43 +28,29 @@ class OnnxModelCreator:
         self.data_type = self.get_input_data_type(input_data=input_data)
         self.additional_model_args = additional_onnx_args
 
-    def _get_one_sample(
-        self,
-        input_data: Union[
-            pd.DataFrame,
-            np.ndarray,
-            Dict[str, np.ndarray],
-        ],
-    ) -> Union[pd.DataFrame, NDArray, Dict[str, np.ndarray]]:
+    def _get_one_sample(self, input_data: ModelData) -> ModelData:
 
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
         data_type = type(input_data)
+
         if data_type in [
             InputDataType.PANDAS_DATAFRAME.value,
             InputDataType.NUMPY_ARRAY.value,
         ]:
             if data_type == InputDataType.NUMPY_ARRAY.value:
-                return input_data
+                return input_data[0:1]
 
             return input_data[0:1]
 
         sample_dict = cast(Dict[str, np.ndarray], {})
 
         for key in cast(Dict[str, np.ndarray], input_data).keys():
-            _data = self._check_dtype(input_data[key][0:1])
-            sample_dict[key] = _data
+            sample_dict[key] = input_data[key][0:1]
 
         return sample_dict
 
-    def get_input_data_type(
-        self,
-        input_data: Union[
-            pd.DataFrame,
-            np.ndarray,
-            Dict[str, np.ndarray],
-        ],
-    ) -> str:
+    def get_input_data_type(self, input_data: ModelData) -> str:
 
         """Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
@@ -125,12 +109,15 @@ class OnnxModelCreator:
             OnnxModelReturn
         """
 
-        onnx_model_return = OnnxModelConverter(
+        model_info = ModelInfo(
             model=self.model,
             input_data=self.input_data,
             model_type=self.model_type,
+            data_type=type(self.input_data),
             additional_model_args=self.additional_model_args,
-        ).convert_model()
+        )
+        # create ModelInfo class?
+        onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
 
         onnx_model_return.model_type = self.model_type
         onnx_model_return.data_type = self.data_type
