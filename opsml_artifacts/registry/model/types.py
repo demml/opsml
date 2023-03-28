@@ -1,20 +1,24 @@
 """Base code for Onnx model conversion"""
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Tuple
-from dataclasses import dataclass, asdict
-from numpy.typing import NDArray
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
+
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 from skl2onnx.common.data_types import (
+    DoubleTensorType,
     FloatTensorType,
     Int32TensorType,
     Int64TensorType,
     StringTensorType,
-    DoubleTensorType,
     TensorType,
 )
 
+from opsml_artifacts.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 ModelData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
@@ -133,17 +137,16 @@ class Base(BaseModel):
         if type_ == OnnxDataProto.DOUBLE.name:
             return np.array(values, np.float64)
 
-        elif type_ == OnnxDataProto.FLOAT.name:
+        if type_ == OnnxDataProto.FLOAT.name:
             return np.array(values, np.float32)
 
-        elif type_ == OnnxDataProto.INT32.name:
+        if type_ == OnnxDataProto.INT32.name:
             return np.array(values, np.int32)
 
-        elif type_ == OnnxDataProto.INT64.name:
+        if type_ == OnnxDataProto.INT64.name:
             return np.array(values, np.int64)
 
-        else:
-            return np.array(values, str)
+        return np.array(values, str)
 
 
 class NumpyBase(Base):
@@ -257,7 +260,7 @@ class ModelDownloadInfo(BaseModel):
 
 
 class BaseTensorType:
-    def __init__(self, dtype: str, input_shape: List[int]):
+    def __init__(self, dtype: str, input_shape: Union[Tuple[int], List[int]]):
         self.input_shape = input_shape
         self.dtype = dtype
 
@@ -351,5 +354,43 @@ class ModelInfo:
     model: Any
     input_data: ModelData
     model_type: str
-    data_type: str
+    data_type: type
     additional_model_args: Optional[TorchOnnxArgs] = None
+
+    def __post_init__(self):
+        self.data_dtypes = self.get_dtypes()
+
+        if self.has_category:
+            logger.warning("Category type detected, converting to string")
+            self.convert_dataframe_column(column_type="category", convert_column_type=str)
+
+    @property
+    def all_features_float32(self) -> bool:
+        return all(type_ == DataDtypes.FLOAT32 for type_ in self.data_dtypes)
+
+    @property
+    def has_float64(self) -> bool:
+        return any(type_ == DataDtypes.FLOAT64 for type_ in self.data_dtypes)
+
+    @property
+    def has_category(self) -> bool:
+        return any(type_ == "category" for type_ in self.data_dtypes)
+
+    def get_dtypes(self):
+        if isinstance(self.input_data, np.ndarray):
+            return [str(self.input_data.dtype).lower()]
+
+        if isinstance(self.input_data, pd.DataFrame):
+            return [str(type_).lower() for type_ in self.input_data.dtypes.to_list()]
+
+        if isinstance(self.input_data, dict):
+            return [str(value.dtype).lower() for _, value in self.input_data.items()]
+        return []
+
+    def convert_dataframe_column(self, column_type: str, convert_column_type: str):
+        """Helper for converting pandas dataframe column to a new type"""
+
+        self.input_data = cast(pd.DataFrame, self.input_data)
+        for feature_name, feature_type in zip(self.input_data.columns, self.input_data.dtypes):
+            if str(feature_type) == column_type:
+                self.input_data[feature_name] = self.input_data[feature_name].astype(convert_column_type)

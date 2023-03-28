@@ -431,8 +431,8 @@ class ModelCard(ArtifactCard):
         """Creates Onnx model from trained model and sample input data
         and sets Card attributes
         """
-        from opsml_artifacts.registry.model.creator import (
-            OnnxModelCreator,  # pylint: disable=import-outside-toplevel
+        from opsml_artifacts.registry.model.creator import (  # pylint: disable=import-outside-toplevel
+            OnnxModelCreator,
         )
 
         model_creator = OnnxModelCreator(
@@ -462,7 +462,8 @@ class ModelCard(ArtifactCard):
             return {input_name: sample_data[0, :].tolist()}
 
         if isinstance(sample_data, pd.DataFrame):
-            return sample_data[0:1].T.to_dict()[0]
+            record = list(sample_data[0:1].T.to_dict().values())[0]
+            return record
 
         record = {}
         for feat, val in sample_data.items():

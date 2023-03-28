@@ -97,6 +97,7 @@ def get_mlflow_storage_client() -> MlFlowStorageClient:
 
 mlflow_storage_client = get_mlflow_storage_client()
 
+
 # break this into multiple classes
 # MlFlowProject -> this should handle high-level things related to project (metrics, cards, params, etc)
 # RunManager -> This handles the active Run and StorageClient
@@ -246,8 +247,8 @@ class MlFlowProject(Project):
                 status=RunStatus.to_string(RunStatus.RUNNING),
             )
             return self._mlflow_client.get_run(self._run_id)
-        else:
-            return self._mlflow_client.create_run(experiment_id=self._experiment_id)
+
+        return self._mlflow_client.create_run(experiment_id=self._experiment_id)
 
     def _update_storage_client_run(self):
         self._storage_client.run_id = self._run_id

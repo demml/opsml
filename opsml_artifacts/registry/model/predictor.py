@@ -129,10 +129,10 @@ class ApiSigCreator:
         input_sig = self._get_input_sig()
         output_sig = self._get_output_sig()
 
-        input_sig.feature_map = self._get_feature_type_map(
+        input_sig.feature_map = self._get_feature_type_map(  # type: ignore
             features=self.data_dict.input_features,
         )
-        output_sig.feature_map = self._get_feature_type_map(
+        output_sig.feature_map = self._get_feature_type_map(  # type: ignore
             features=self.data_dict.output_features,
         )
 
@@ -304,10 +304,13 @@ class OnnxModelPredictor:
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
 
             if self.data_dict.data_type == InputDataType.DICT:
-                data_for_pred = {name: torch.from_numpy(value) for name, value in feed_data.items()}
+                data_for_pred = {
+                    name: torch.from_numpy(value) for name, value in feed_data.items()  # pylint: disable=no-member
+                }
                 return model(**data_for_pred)
 
             data_for_pred = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
+
             return model(*data_for_pred)
 
         else:
