@@ -351,6 +351,17 @@ def get_onnx_tensor_spec(
 
 @dataclass
 class ModelInfo:
+    """Helper class to be used with OnnxModelConverter.
+    Contains metadata needed for convertsion of trained model to onnx format.
+
+    Args:
+        model (any): Trained model (sklean, tf, keras, pytorch)
+        input_data (ModelData): Sample data use to train model
+        model_type (str): Model type
+        data_type (type): Data type
+        additional_model_args (TorchOnnxArgs): Optional args to include with Torch model
+    """
+
     model: Any
     input_data: ModelData
     model_type: str
