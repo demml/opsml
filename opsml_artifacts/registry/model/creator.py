@@ -3,11 +3,11 @@ from typing import Any, Dict, Optional, cast
 import numpy as np
 
 from opsml_artifacts.registry.model.model_converters import OnnxModelConverter
+from opsml_artifacts.registry.model.model_info import ModelInfo, get_model_data
 from opsml_artifacts.registry.model.model_types import ModelType, OnnxModelType
 from opsml_artifacts.registry.model.types import (
+    InputData,
     InputDataType,
-    ModelData,
-    ModelInfo,
     OnnxModelReturn,
     TorchOnnxArgs,
 )
@@ -17,7 +17,7 @@ class OnnxModelCreator:
     def __init__(
         self,
         model: Any,
-        input_data: ModelData,
+        input_data: InputData,
         additional_onnx_args: Optional[TorchOnnxArgs] = None,
     ):
 
@@ -25,7 +25,7 @@ class OnnxModelCreator:
 
         Args:
             Model (BaseEstimator, Pipeline, StackingRegressor, Booster): Model to convert
-            input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
+            input_data (pd.DataFrame, np.ndarray, dict of np.ndarray): Sample of data used to train model
         """
         self.model = model
         self.input_data = self._get_one_sample(input_data)
@@ -35,7 +35,7 @@ class OnnxModelCreator:
         self.additional_model_args = additional_onnx_args
         self.input_data_type = type(self.input_data)
 
-    def _get_one_sample(self, input_data: ModelData) -> ModelData:
+    def _get_one_sample(self, input_data: InputData) -> InputData:  # fix the any types later
 
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
@@ -48,7 +48,7 @@ class OnnxModelCreator:
 
         return sample_dict
 
-    def get_input_data_type(self, input_data: ModelData) -> str:
+    def get_input_data_type(self, input_data: Any) -> str:
 
         """Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
@@ -107,16 +107,19 @@ class OnnxModelCreator:
             OnnxModelReturn
         """
 
+        model_data = get_model_data(
+            data_type=self.input_data_type,
+            input_data=self.input_data,
+        )
         model_info = ModelInfo(
             model=self.model,
-            input_data=self.input_data,
+            model_data=model_data,
             model_type=self.model_type,
             data_type=self.input_data_type,
             additional_model_args=self.additional_model_args,
         )
-        # create ModelInfo class?
-        onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
 
+        onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
         onnx_model_return.model_type = self.model_type
         onnx_model_return.data_type = self.onnx_data_type
 
