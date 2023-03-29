@@ -13,6 +13,7 @@ from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
+from opsml_artifacts.registry.model.model_info import ModelInfo
 from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml_artifacts.registry.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -20,7 +21,6 @@ from opsml_artifacts.registry.model.types import (
     UPDATE_REGISTRY_MODELS,
     Feature,
     ModelDefinition,
-    ModelInfo,
     OnnxDataProto,
     OnnxModelReturn,
     OnnxModelType,
@@ -70,7 +70,7 @@ class ModelConverter:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
 
-        model_preds = self.model_info.model.predict(self.model_info.input_data)
+        model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
@@ -216,7 +216,7 @@ class SklearnOnnxModel(ModelConverter):
             model converter (lightgbm, xgboost)
         """
 
-        if self.model_info.all_features_float32:
+        if self.model_info.model_data.all_features_float32:
             return None
 
         if self._is_stacking_estimator:
@@ -337,7 +337,7 @@ class PyTorchOnnxModel(ModelConverter):
 
         self.additional_args = self._get_additional_model_args(
             additional_onnx_args=model_info.additional_model_args,
-            input_data=model_info.input_data,
+            input_data=model_info.model_data.data,
         )
         model_info.additional_model_args = self.additional_args
 
@@ -400,16 +400,18 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_torch_data(self) -> Any:
         import torch
 
-        if isinstance(self.model_info.input_data, tuple):
-            return tuple(torch.from_numpy(data) for data in self.model_info.input_data)  # pylint: disable=no-member
+        if isinstance(self.model_info.model_data.data, tuple):
+            return tuple(
+                torch.from_numpy(data) for data in self.model_info.model_data.data  # pylint: disable=no-member
+            )
 
-        if isinstance(self.model_info.input_data, dict):
+        if isinstance(self.model_info.model_data.data, dict):
             return {
                 name: torch.from_numpy(data)  # pylint: disable=no-member
-                for name, data in self.model_info.input_data.items()
+                for name, data in self.model_info.model_data.data.items()
             }
 
-        return torch.from_numpy(self.model_info.input_data)  # pylint: disable=no-member
+        return torch.from_numpy(self.model_info.model_data.data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""

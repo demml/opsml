@@ -1,9 +1,8 @@
-from opsml_artifacts.registry.cards.cards import ModelCard, DataCard
+from opsml_artifacts.registry.cards.cards import ModelCard
 import numpy as np
 import pytest
 import pandas as pd
 from pytest_lazyfixture import lazy_fixture
-import timeit
 
 
 @pytest.mark.parametrize(
