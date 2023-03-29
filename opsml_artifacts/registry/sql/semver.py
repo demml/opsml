@@ -1,4 +1,5 @@
 from enum import Enum
+import re
 
 
 class SemVerSymbols(str, Enum):
@@ -24,7 +25,8 @@ class StarParser(SemVerParser):
 
     @staticmethod
     def parse_version(version: str) -> str:
-        return version.split(SemVerSymbols.STAR)[0]
+        version_ = version.split(SemVerSymbols.STAR)[0]
+        return re.sub(".$", "", version_)
 
     @staticmethod
     def validate(version: str) -> bool:
