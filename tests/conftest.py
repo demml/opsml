@@ -252,7 +252,7 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
 
 def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
     mlflow_exp: MlFlowProject = get_project(info)
-    mlflow_storage = mlflow_exp._get_storage_client()
+    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
     api_card_registries = CardRegistries.construct(
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
@@ -295,7 +295,7 @@ def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowPr
             tracking_uri=SQL_PATH,
         )
     )
-    mlflow_storage = mlflow_exp._get_storage_client()
+    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
     api_card_registries = CardRegistries.construct(
         datacard=api_registries["data"],
         modelcard=api_registries["model"],
