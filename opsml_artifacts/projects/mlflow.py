@@ -292,7 +292,7 @@ class MlFlowProject(Project):
         )
         self.registries = get_card_registries(storage_client=self._run_mgr._storage_client)
 
-        # work on this next PR
+        # work on this next PR - leaving so i remember
         # self._run_card = Optional[ExperimentCard] = None
         # if self._run_mgr.run_id is not None:
         # self.load_card(card_type="experiment", info)
@@ -362,8 +362,6 @@ class MlFlowProject(Project):
             key=key,
             value=value,
         )
-
-    # def _update_experiment_card(self):
 
     def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR):
         """
