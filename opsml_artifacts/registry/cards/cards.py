@@ -44,8 +44,8 @@ class CardType(str, Enum):
 
 @dataclass
 class CardInfo:
-    name: Optional[str]
-    team: Optional[str]
+    name: Optional[str] = None
+    team: Optional[str] = None
     user_email: Optional[str] = None
     uid: Optional[str] = None
     version: Optional[str] = None

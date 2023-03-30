@@ -48,7 +48,8 @@ from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, Exp
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
-from opsml_artifacts.projects.mlflow import CardRegistries, MlFlowProject, MlFlowProjectInfo
+from opsml_artifacts.projects.mlflow import MlFlowProject, MlFlowProjectInfo
+from opsml_artifacts.projects.types import CardRegistries
 
 
 # testing
@@ -527,7 +528,7 @@ def drift_dataframe():
 ################################################################################
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def load_transformer_example():
     import tensorflow as tf
 
@@ -545,7 +546,7 @@ def load_multi_input_keras_example():
     return loaded_model, data
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def load_pytorch_resnet():
     import torch
 
@@ -639,6 +640,7 @@ def lgb_booster_dataframe(drift_dataframe):
     gbm = lgb.train(
         params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
     )
+
     return gbm, X_train[:100]
 
 
