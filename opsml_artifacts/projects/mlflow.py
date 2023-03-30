@@ -187,6 +187,7 @@ class RunManager:
         # update storage registry
         self._update_storage_client_run()
 
+        # needed for the fluent api (used with model logging)
         os.environ["MLFLOW_RUN_ID"] = str(self.run_id)
 
     def _set_active_run(self, run_name: Optional[str] = None) -> None:
