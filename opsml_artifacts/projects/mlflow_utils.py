@@ -1,3 +1,4 @@
+# pylint: disable=invalid-envvar-value
 import os
 from typing import Optional, cast
 
