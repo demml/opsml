@@ -16,7 +16,7 @@ from tests import conftest
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def _test_read_only(mlflow_project: MlFlowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
+def test_read_only(mlflow_project: MlFlowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
@@ -76,7 +76,7 @@ def _test_read_only(mlflow_project: MlFlowProject, sklearn_pipeline: tuple[pipel
         proj.log_metric(key="metric1", value=0.0)
 
 
-def _test_metrics(mlflow_project: MlFlowProject) -> None:
+def test_metrics(mlflow_project: MlFlowProject) -> None:
     # verify metrics require an ActiveRun
 
     with pytest.raises(ValueError) as ve:
@@ -100,7 +100,7 @@ def _test_metrics(mlflow_project: MlFlowProject) -> None:
     assert proj.metrics["m1"] == 1.1
 
 
-def _test_params(mlflow_project: MlFlowProject) -> None:
+def test_params(mlflow_project: MlFlowProject) -> None:
     # verify params require an ActiveRun
     with pytest.raises(ValueError) as ve:
         mlflow_project.log_param(key="m1", value=1.1)
@@ -117,7 +117,7 @@ def _test_params(mlflow_project: MlFlowProject) -> None:
     assert proj.params["m1"] == "apple"
 
 
-def _test_log_artifact() -> None:
+def test_log_artifact() -> None:
     filename = "test.png"
     info = MlFlowProjectInfo(name="test", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
@@ -137,7 +137,7 @@ def _test_log_artifact() -> None:
     assert tags["test_tag"] == "1.0.0"
 
 
-def _test_register_load(
+def test_register_load(
     mlflow_project: MlFlowProject,
     sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
@@ -189,7 +189,7 @@ def _test_register_load(
     loaded_card.load_trained_model()
 
 
-def _test_lgb_model(
+def test_lgb_model(
     mlflow_project: MlFlowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
@@ -224,7 +224,7 @@ def _test_lgb_model(
     loaded_card.load_trained_model()
 
 
-def _test_pytorch_model(
+def test_pytorch_model(
     mlflow_project: MlFlowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
