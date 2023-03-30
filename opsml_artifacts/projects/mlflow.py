@@ -1,7 +1,7 @@
 # pylint: disable=invalid-envvar-value
 import os
 from contextlib import contextmanager
-from typing import Optional, cast, TypeVar, Iterator
+from typing import Iterator, Optional, TypeVar, cast
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities import Run, RunStatus
