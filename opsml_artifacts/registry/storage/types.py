@@ -5,8 +5,6 @@ from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
 
 from pydantic import BaseModel
 
-from opsml_artifacts.registry.model.types import OnnxModelType
-
 FilePath = Union[List[str], str]
 
 
@@ -76,10 +74,10 @@ class StorageClientProto(Protocol):
         """store"""
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
-        "Upload"
+        """Upload"""
 
     def post_process(self, storage_uri: str) -> str:
-        "post process"
+        """post process"""
 
     @staticmethod
     def validate(storage_backend: str) -> bool:

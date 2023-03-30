@@ -1,7 +1,7 @@
 # pylint: disable=invalid-envvar-value
 import os
 from contextlib import contextmanager
-from typing import Optional, cast
+from typing import Optional, cast, TypeVar, Iterator
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities import Run, RunStatus
@@ -12,7 +12,7 @@ from mlflow.tracking import MlflowClient
 from mlflow.tracking.fluent import end_run as fluent_end_run
 from pydantic import Field
 
-from opsml_artifacts import CardRegistry, ExperimentCard, VersionType
+from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.projects.mlflow_utils import (
@@ -31,6 +31,7 @@ logger = ArtifactLogger.get_logger(__name__)
 # MlFlowProjectInfo -> Detail about project
 # RunManager -> Manages active run and storage client (storage is tied to active run)
 # MlFlowProject -> Requires MlFlowProjectInfo and uses a RunManager
+_Self = TypeVar("_Self", bound="MlFlowProject")
 
 
 class MlFlowProjectInfo(ProjectInfo):
@@ -134,7 +135,7 @@ class RunManager:
     @property
     def artifact_save_path(self) -> str:
         """Returns the path where artifacts are saved."""
-        self._verify_active()
+        self.verify_active()
 
         info: RunInfo = cast(Run, self.active_run).info
         return info.artifact_uri
@@ -179,14 +180,14 @@ class RunManager:
         self._set_run_attr()
 
     def _set_run_attr(self) -> None:
-        info = cast(RunInfo, self.active_run.info)
-        self.run_id = info.run_id
-        self.run_name = info.run_name
+        run = cast(Run, self.active_run)
+        self.run_id = run.info.run_id
+        self.run_name = run.info.run_name
 
         # update storage registry
         self._update_storage_client_run()
 
-        os.environ["MLFLOW_RUN_ID"] = self.run_id
+        os.environ["MLFLOW_RUN_ID"] = str(self.run_id)
 
     def _set_active_run(self, run_name: Optional[str] = None) -> None:
         """
@@ -205,7 +206,7 @@ class RunManager:
         self._storage_client.run_id = self.run_id
         self._storage_client.artifact_path = self.artifact_save_path
 
-    def _verify_active(self) -> None:
+    def verify_active(self) -> None:
         if self.active_run is None:
             raise ValueError("ActiveRun has not been set")
 
@@ -298,14 +299,16 @@ class MlFlowProject(Project):
     @property
     def run_id(self) -> str:
         """Current run id associated with project"""
-        return self._run_mgr.run_id
+        if self._run_mgr.run_id is not None:
+            return self._run_mgr.run_id
+        raise ValueError("Run id not set for current project")
 
     @property
     def project_id(self) -> str:
         return self._project_id
 
     def _verify_active(self):
-        return self._run_mgr._verify_active()
+        return self._run_mgr.verify_active()
 
     def _get_project_id(self, project_id: str) -> str:
         """
@@ -327,7 +330,7 @@ class MlFlowProject(Project):
         return project.experiment_id
 
     @contextmanager
-    def run(self, run_name: Optional[str] = None) -> None:
+    def run(self: _Self, run_name: Optional[str] = None) -> Iterator[_Self]:
         """
         Starts mlflow run for project
 
@@ -378,7 +381,10 @@ class MlFlowProject(Project):
         registry.register_card(card=card, version_type=version_type)
 
         tag_key = f"{card_type}-{card.name}"
-        self.add_tag(key=tag_key, value=card.version)
+        self.add_tag(
+            key=tag_key,
+            value=str(card.version),
+        )
 
     def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """

@@ -212,7 +212,7 @@ class JoblibStorage(ArtifactStorage):
     def _write_joblib(self, artifact: Any, file_path: FilePath):
         joblib.dump(artifact, file_path)
 
-    def _write_artifact(self, artifact: Any, file_path: FilePath, storage_uri: str):
+    def _write_artifact(self, artifact: Any, file_path: str, storage_uri: str):
 
         # hack for mlflow
         if isinstance(self.storage_client, MlFlowStorageClient) and "trained-model" in storage_uri:
