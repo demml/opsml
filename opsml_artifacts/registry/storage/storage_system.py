@@ -67,7 +67,6 @@ def cleanup_files(func):
 
         artifact, loadable_filepath = func(self, *args, **kwargs)
 
-        print(loadable_filepath)
         if isinstance(loadable_filepath, list):
             loadable_filepath = loadable_filepath[0]
 
@@ -374,11 +373,11 @@ class MlFlowStorageClient(StorageClient):
         self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
 
     @property
-    def run_id(self) -> str:
-        return str(self._run_id)
+    def run_id(self) -> Optional[str]:
+        return self._run_id
 
     @run_id.setter
-    def run_id(self, run_id: str):
+    def run_id(self, run_id: Optional[str]):
         self._run_id = run_id
 
     @property
@@ -435,12 +434,13 @@ class MlFlowStorageClient(StorageClient):
 
     def _log_model(self, mlflow_info: MlflowInfo) -> str:
 
+        model_type = str(mlflow_info.model_type)
         model_logger = next(
             (
                 model_logger
                 for model_logger in MlflowModelSaver.__subclasses__()
                 if model_logger.validate(
-                    model_type=mlflow_info.model_type,
+                    model_type=model_type,
                 )
             ),
             None,
@@ -453,8 +453,8 @@ class MlFlowStorageClient(StorageClient):
 
         logger = model_logger(
             model=mlflow_info.model,
-            model_type=mlflow_info.model_type,
-            sample_data=self.storage_spec.sample_data,
+            model_type=model_type,
+            sample_data=self.storage_spec.sample_data,  # type: ignore
             artifact_path=mlflow_info.artifact_path,
         )
 
