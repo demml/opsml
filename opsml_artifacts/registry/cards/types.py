@@ -14,6 +14,7 @@ class ArtifactStorageTypes(str, Enum):
     TF_MODEL = "keras"
     PYTORCH = "pytorch"
     JSON = "json"
+    BOOSTER = "booster"
 
 
 class CardNames(str, Enum):

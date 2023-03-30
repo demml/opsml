@@ -165,6 +165,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         storage_spec = self._copy_artifact_storage_info()
         storage_spec.filename = "trained-model"
+        storage_spec.sample_data = self.card.sample_input_data
         self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(

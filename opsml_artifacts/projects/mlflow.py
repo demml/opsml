@@ -1,25 +1,27 @@
 # pylint: disable=invalid-envvar-value
 import os
-from typing import Optional, cast
 from contextlib import contextmanager
+from typing import Optional, cast
+
 from mlflow.artifacts import download_artifacts
 from mlflow.entities import Run, RunStatus
 from mlflow.entities.run_data import RunData
 from mlflow.entities.run_info import RunInfo
 from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
+from mlflow.tracking.fluent import end_run as fluent_end_run
 from pydantic import Field
 
-from opsml_artifacts import CardRegistry, VersionType, ExperimentCard
+from opsml_artifacts import CardRegistry, ExperimentCard, VersionType
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.types import OpsmlUri
-from opsml_artifacts.projects.types import Project, ProjectInfo
 from opsml_artifacts.projects.mlflow_utils import (
-    mlflow_storage_client,
-    get_mlflow_client,
     get_card_registries,
+    get_mlflow_client,
+    mlflow_storage_client,
     set_env_vars,
 )
+from opsml_artifacts.projects.types import Project, ProjectInfo
 from opsml_artifacts.registry.cards import ArtifactCard, CardInfo
 from opsml_artifacts.registry.storage.storage_system import MlFlowStorageClient
 
@@ -27,7 +29,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 # MlFlowProjectInfo -> Detail about project
-# RunManager -> Manages active run
+# RunManager -> Manages active run and storage client (storage is tied to active run)
 # MlFlowProject -> Requires MlFlowProjectInfo and uses a RunManager
 
 
@@ -74,13 +76,18 @@ class RunManager:
         project_id: str,
         run_id: Optional[str] = None,
     ):
-
         """
-        Manages a run for a given project. Also holds storage client
-        needed to store artifacts associated for a run.
+        Manages a run for a given project. Also holds storage client needed to
+        store artifacts associated for a run.
 
         Args:
-            run_id (str): Optional project run id
+            mlflow_client:
+                MlflowClient instance
+            project_id:
+                Project identifier
+            run_id:
+                Optional project run id
+
         """
 
         self._mlflow_client = mlflow_client
@@ -105,6 +112,16 @@ class RunManager:
         self._run_id = run_id
 
     @property
+    def active_run(self) -> Optional[Run]:
+        """Active run for current mlflow run"""
+        return self._active_run
+
+    @active_run.setter
+    def active_run(self, active_run: Run) -> None:
+        """Sets active run"""
+        self._active_run = active_run
+
+    @property
     def run_name(self) -> Optional[str]:
         """Get current run name"""
         return self._run_name
@@ -119,7 +136,7 @@ class RunManager:
         """Returns the path where artifacts are saved."""
         self._verify_active()
 
-        info: RunInfo = cast(Run, self._active_run).info
+        info: RunInfo = cast(Run, self.active_run).info
         return info.artifact_uri
 
     def _get_storage_client(self) -> MlFlowStorageClient:
@@ -135,56 +152,95 @@ class RunManager:
         except MlflowException as exc:
             raise ValueError("Invalid run_id") from exc
 
-    def _set_active_run(self, run_name: Optional[str] = None) -> None:
+    def _restore_run(self) -> None:
+        """Restores a previous run to a running state"""
+        self._mlflow_client.update_run(
+            run_id=self.run_id,
+            status=RunStatus.to_string(RunStatus.RUNNING),
+        )
+        self.active_run = self._mlflow_client.get_run(self.run_id)
+
+        self._set_run_attr()
+
+    def _create_run(self, run_name: Optional[str] = None) -> None:
         """
-        Resolves and sets the active run for mlflow
+        Create an mlflow run
 
         Args:
-            run_name (str): Optional run name
+            run_name:
+                Optional run name
+
         """
+        self.active_run = self._mlflow_client.create_run(
+            experiment_id=self._project_id,
+            run_name=run_name,
+        )
 
-        if self.run_id is not None:
-            self._mlflow_client.update_run(run_id=self.run_id, status=RunStatus.to_string(RunStatus.RUNNING))
-            self._active_run = self._mlflow_client.get_run(self.run_id)
-        else:
-            self._active_run = self._mlflow_client.create_run(
-                experiment_id=self._project_id,
-                run_name=run_name,
-            )
+        self._set_run_attr()
 
-        info = cast(RunInfo, self._active_run.info)
+    def _set_run_attr(self) -> None:
+        info = cast(RunInfo, self.active_run.info)
         self.run_id = info.run_id
         self.run_name = info.run_name
 
         # update storage registry
         self._update_storage_client_run()
 
+        os.environ["MLFLOW_RUN_ID"] = self.run_id
+
+    def _set_active_run(self, run_name: Optional[str] = None) -> None:
+        """
+        Resolves and sets the active run for mlflow
+
+        Args:
+            run_name:
+                Optional run name
+        """
+
+        if self.run_id is not None:
+            return self._restore_run()
+        return self._create_run(run_name=run_name)
+
     def _update_storage_client_run(self):
         self._storage_client.run_id = self.run_id
         self._storage_client.artifact_path = self.artifact_save_path
 
     def _verify_active(self) -> None:
-        if self._active_run is None:
+        if self.active_run is None:
             raise ValueError("ActiveRun has not been set")
 
     def start_run(self, run_name: Optional[str] = None):
-        """Starts an Mlflow run for a given project"""
+        """
+        Starts an Mlflow run for a given project
 
-        if self._active_run is not None:
+        Args:
+            run_name:
+                Optional run name
+        """
+
+        if self.active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
         self._set_active_run(run_name=run_name)
         logger.info("starting run: %s", self.run_id)
 
-    def end_run(self):
-        """Ends an Mlflow run"""
+    def _end_run(self) -> None:
 
         self._mlflow_client.set_terminated(run_id=self.run_id)
 
+        # set to None
+        self._storage_client.run_id = None
+        self.active_run = None
+
+        # needed for when logging models (models are logged via fluent api)
+        fluent_end_run()
+
+    def end_run(self):
+        """Ends an Mlflow run"""
+
         # Remove run id
         logger.info("ending run: %s", self.run_id)
-        self._storage_client.run_id = None
-        self._active_run = None
+        self._end_run()
 
 
 class MlFlowProject(Project):
@@ -218,8 +274,9 @@ class MlFlowProject(Project):
                 project.log_param(key="my_param", value="12.34")
 
         Args:
-            info: experiment information. if a run_id is given, that run is set
-            as the project's current run.
+            info:
+                Experiment information. if a run_id is given, that run is set
+                as the project's current run.
         """
 
         tracking_uri = info.tracking_uri or os.getenv(OpsmlUri.TRACKING_URI)
@@ -233,9 +290,10 @@ class MlFlowProject(Project):
         )
         self.registries = get_card_registries(storage_client=self._run_mgr._storage_client)
 
-        self._run_card = Optional[ExperimentCard] = None
-        if self._run_mgr.run_id is not None:
-            self.load_card(card_type="experiment", info)
+        # work on this next PR
+        # self._run_card = Optional[ExperimentCard] = None
+        # if self._run_mgr.run_id is not None:
+        # self.load_card(card_type="experiment", info)
 
     @property
     def run_id(self) -> str:
@@ -250,11 +308,16 @@ class MlFlowProject(Project):
         return self._run_mgr._verify_active()
 
     def _get_project_id(self, project_id: str) -> str:
-        """Finds the project_id from mlflow for the given project. If an
+        """
+        Finds the project_id from mlflow for the given project. If an
         existing proejct does not exist, a new one is created.
 
+        Args:
+            project_id:
+                Project identifier
+
         Returns:
-            the underlying mlflow project_id
+            The underlying mlflow project_id
         """
         # REMINDER: We treat mlflow "experiments" as projects
 
@@ -269,7 +332,8 @@ class MlFlowProject(Project):
         Starts mlflow run for project
 
         Args:
-            run_name (str): Optional run name
+            run_name:
+                Optional run name
         """
 
         self._run_mgr.start_run(run_name=run_name)
@@ -283,8 +347,10 @@ class MlFlowProject(Project):
         Adds a tag to the current project run
 
         Args:
-            key (str): Name of the tag
-            value (str): Value to associate with tag
+            key:
+                Name of the tag
+            value:
+                Value to associate with tag
         """
 
         self._mlflow_client.set_tag(
@@ -296,7 +362,8 @@ class MlFlowProject(Project):
     # def _update_experiment_card(self):
 
     def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR):
-        """Register a given artifact card.
+        """
+        Register a given artifact card.
 
         Args:
             card:
@@ -314,7 +381,8 @@ class MlFlowProject(Project):
         self.add_tag(key=tag_key, value=card.version)
 
     def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
-        """Returns an artifact card.
+        """
+        Loads an ArtifactCard.
 
         Args:
             card_type:
@@ -324,18 +392,26 @@ class MlFlowProject(Project):
                 exists. If the optional `version` is specified, that version
                 will be loaded. If it doesn't exist, the most recent ersion will
                 be loaded.
+
+        Returns
+            `ArtifactCard`
         """
         registry: CardRegistry = getattr(self.registries, f"{card_type.lower()}card")
-        return registry.load_card(name=info.name.lower(), team=info.team, version=info.version, uid=info.uid)
+        return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
 
-    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None):
-        """Logs an artifact for the current run. All artifacts are loaded
+    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+        """
+        Logs an artifact for the current run. All artifacts are loaded
         to a parent directory named "misc".
 
         Args:
-            local_path (str): Local path to object
-            artifact_path (str): Artifact directory path in Mlflow to log to. This path will be appended
-            to parent directory "misc"
+            local_path:
+                Local path to object
+            artifact_path:
+                Artifact directory path in Mlflow to log to. This path will be appended
+                to parent directory "misc"
+        Returns:
+            None
         """
         self._verify_active()
 
@@ -358,8 +434,13 @@ class MlFlowProject(Project):
         Download an artifact or artifacts associated with a run_id
 
         Args:
-            artifact_path (str): Optional path that contains artifact(s) to download
-            local_path (str): Local path (directory) to download artifacts to
+            artifact_path:
+                Optional path that contains artifact(s) to download
+            local_path:
+                Local path (directory) to download artifacts to
+
+        Returns:
+            Artifact path
         """
 
         # ensure mlflow fluent sees env vars
@@ -371,14 +452,25 @@ class MlFlowProject(Project):
             tracking_uri=self._mlflow_client.tracking_uri,
         )
 
-    def log_metric(self, key: str, value: float, timestamp: Optional[int] = None, step: Optional[int] = None) -> None:
-        """Log a metric for a given run
+    def log_metric(
+        self,
+        key: str,
+        value: float,
+        timestamp: Optional[int] = None,
+        step: Optional[int] = None,
+    ) -> None:
+        """
+        Log a metric for a given run
 
         Args:
-            key (str): Metric name
-            value (float): Metric value
-            timestamp (int): Optional time indicating metric creation time
-            step (int): Optional step in training when metric was created
+            key:
+                Metric name
+            value:
+                Metric value
+            timestamp:
+                Optional time indicating metric creation time
+            step:
+                Optional step in training when metric was created
 
         """
         self._verify_active()

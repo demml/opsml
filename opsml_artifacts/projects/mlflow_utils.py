@@ -1,17 +1,19 @@
-from typing import cast, Optional
 import os
+from typing import Optional, cast
+
 from mlflow.tracking import MlflowClient
+
 from opsml_artifacts import CardRegistry
-from opsml_artifacts.projects.types import CardRegistries
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth
-from opsml_artifacts.registry.storage.types import StorageClientSettings
+from opsml_artifacts.projects.types import CardRegistries
 from opsml_artifacts.registry.storage.storage_system import (
     MlFlowStorageClient,
     StorageClientGetter,
-    StorageSystem,
     StorageClientType,
+    StorageSystem,
 )
+from opsml_artifacts.registry.storage.types import StorageClientSettings
 
 
 def get_mlflow_storage_client() -> MlFlowStorageClient:
@@ -45,7 +47,7 @@ def set_env_vars(tracking_uri: str):
 mlflow_storage_client = get_mlflow_storage_client()
 
 
-def get_mlflow_client(self, tracking_uri: Optional[str]) -> MlflowClient:
+def get_mlflow_client(tracking_uri: Optional[str]) -> MlflowClient:
     """Gets and sets MlFlow-related authentication
 
     Args:
@@ -61,7 +63,7 @@ def get_mlflow_client(self, tracking_uri: Optional[str]) -> MlflowClient:
     return mlflow_client
 
 
-def get_card_registries(self, storage_client: StorageClientType):
+def get_card_registries(storage_client: StorageClientType):
 
     """Gets CardRegistries to associate with MlFlow experiment"""
     registries = CardRegistries(

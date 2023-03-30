@@ -2,7 +2,7 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, validator
 
-from opsml_artifacts import VersionType, CardRegistry
+from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.registry.cards import cards
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 

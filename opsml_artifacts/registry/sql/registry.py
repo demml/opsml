@@ -260,7 +260,8 @@ class CardRegistry:
         version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
-        """Adds new record to registry.
+        """
+        Adds new record to registry.
 
         Args:
             card:
