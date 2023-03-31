@@ -12,8 +12,8 @@ for dep in _optional_deps:
         importlib.import_module(dep)
         if dep == "mlflow":
             from opsml_artifacts.projects import mlflow
-    except ImportError:
-        pass
+    except ImportError as e:
+        raise e
 
 
 def get_project(info: mlflow.ProjectInfo) -> types.Project:
@@ -29,7 +29,7 @@ def get_project(info: mlflow.ProjectInfo) -> types.Project:
         A new or existing experiment.
 
     """
-    if isinstance(info, mlflow.MlFlowProjectInfo):
-        return mlflow.MlFlowProject(info)
+    if isinstance(info, mlflow.MlflowProjectInfo):
+        return mlflow.MlflowProject(info)
     else:
         raise ValueError("Unknown experiment type")
