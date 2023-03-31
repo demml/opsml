@@ -20,7 +20,7 @@ from opsml_artifacts.registry.cards.types import (
 )
 from opsml_artifacts.registry.storage.storage_system import (
     ArtifactClass,
-    MlFlowStorageClient,
+    MlflowStorageClient,
     StorageClientType,
     StorageSystem,
     cleanup_files,
@@ -215,7 +215,7 @@ class JoblibStorage(ArtifactStorage):
     def _write_artifact(self, artifact: Any, file_path: str, storage_uri: str):
 
         # hack for mlflow
-        if isinstance(self.storage_client, MlFlowStorageClient) and "trained-model" in storage_uri:
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
             return self._upload_artifact(
                 file_path=file_path,
                 storage_uri=storage_uri,
@@ -452,7 +452,7 @@ class TensorflowModelStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        if isinstance(self.storage_client, MlFlowStorageClient) and "trained-model" in storage_uri:
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
             return self._upload_artifact(
                 file_path=file_path,
                 storage_uri=storage_uri,
@@ -534,7 +534,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
 
-        if isinstance(self.storage_client, MlFlowStorageClient) and "trained-model" in storage_uri:
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
             return self._upload_artifact(
                 file_path=file_path,
                 storage_uri=storage_uri,
@@ -559,7 +559,7 @@ class LightGBMBooster(JoblibStorage):
     """Helper class only to be used with MLFLow"""
 
     def _load_artifact(self, file_path: FilePath) -> Any:
-        if isinstance(self.storage_client, MlFlowStorageClient):
+        if isinstance(self.storage_client, MlflowStorageClient):
             import lightgbm as lgb
 
             return lgb.Booster(model_file=file_path)
