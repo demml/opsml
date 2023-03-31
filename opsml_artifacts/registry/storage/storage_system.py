@@ -358,7 +358,7 @@ class MlFlowTensorflow(MlflowModelSaver):
         return model_type == OnnxModelType.TF_KERAS
 
 
-class MlFlowStorageClient(StorageClient):
+class MlflowStorageClient(StorageClient):
     def __init__(
         self,
         storage_settings: StorageSettings,
@@ -518,7 +518,7 @@ class MlFlowStorageClient(StorageClient):
         return storage_backend == StorageSystem.MLFLOW
 
 
-StorageClientType = Union[LocalStorageClient, GCSFSStorageClient, MlFlowStorageClient]
+StorageClientType = Union[LocalStorageClient, GCSFSStorageClient, MlflowStorageClient]
 
 
 class StorageClientGetter:
