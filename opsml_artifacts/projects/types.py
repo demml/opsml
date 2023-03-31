@@ -1,5 +1,5 @@
 from typing import Optional, Protocol
-
+from dataclasses import dataclass
 from pydantic import BaseModel, Field, validator
 
 from opsml_artifacts import CardRegistry, VersionType
