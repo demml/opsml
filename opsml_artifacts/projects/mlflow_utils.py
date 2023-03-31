@@ -9,7 +9,7 @@ from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth
 from opsml_artifacts.projects.types import CardRegistries
 from opsml_artifacts.registry.storage.storage_system import (
-    MlFlowStorageClient,
+    MlflowStorageClient,
     StorageClientGetter,
     StorageClientType,
     StorageSystem,
@@ -17,17 +17,17 @@ from opsml_artifacts.registry.storage.storage_system import (
 from opsml_artifacts.registry.storage.types import StorageClientSettings
 
 
-def get_mlflow_storage_client() -> MlFlowStorageClient:
-    """Sets MlFlowStorageClient is it is not currently set in settings"""
+def get_mlflow_storage_client() -> MlflowStorageClient:
+    """Sets MlflowStorageClient is it is not currently set in settings"""
 
-    if not isinstance(settings.storage_client, MlFlowStorageClient):
+    if not isinstance(settings.storage_client, MlflowStorageClient):
         return cast(
-            MlFlowStorageClient,
+            MlflowStorageClient,
             StorageClientGetter.get_storage_client(
                 storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value),
             ),
         )
-    return cast(MlFlowStorageClient, settings.storage_client)
+    return cast(MlflowStorageClient, settings.storage_client)
 
 
 def set_env_vars(tracking_uri: str):
@@ -74,7 +74,28 @@ def get_card_registries(storage_client: StorageClientType):
     )
 
     # double check
-    if not isinstance(registries.datacard.registry.storage_client, MlFlowStorageClient):
+    if not isinstance(registries.datacard.registry.storage_client, MlflowStorageClient):
         registries.set_storage_client(storage_client=storage_client)
 
     return registries
+
+
+def get_project_id(self, project_id: str, mlflow_client: MlflowClient) -> str:
+    """
+    Finds the project_id from mlflow for the given project. If an
+    existing proejct does not exist, a new one is created.
+
+    Args:
+        project_id:
+            Project identifier
+        mlflow_client:
+            MlflowClient instance
+
+    Returns:
+        The underlying mlflow project_id
+    """
+    # REMINDER: We treat mlflow "experiments" as projects
+    project = mlflow_client.get_experiment_by_name(name=project_id)
+    if project is None:
+        return mlflow_client.create_experiment(name=project_id)
+    return project.experiment_id
