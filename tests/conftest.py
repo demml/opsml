@@ -48,7 +48,7 @@ from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, Exp
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
-from opsml_artifacts.projects.mlflow import MlFlowProject, MlFlowProjectInfo
+from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo
 from opsml_artifacts.projects.types import CardRegistries
 
 
@@ -251,8 +251,8 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         }
 
 
-def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
-    mlflow_exp: MlFlowProject = get_project(info)
+def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
+    mlflow_exp: MlflowProject = get_project(info)
     mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
     api_card_registries = CardRegistries.construct(
         datacard=CardRegistry(registry_name="data"),
@@ -260,7 +260,7 @@ def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
         experimentcard=CardRegistry(registry_name="experiment"),
     )
     api_card_registries.set_storage_client(mlflow_storage)
-    mlflow_exp.registries = api_card_registries
+    mlflow_exp._run_mgr.registries = api_card_registries
     return mlflow_exp
 
 
@@ -287,9 +287,9 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
 
 
 @pytest.fixture
-def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowProject]:
-    mlflow_exp: MlFlowProject = get_project(
-        MlFlowProjectInfo(
+def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowProject]:
+    mlflow_exp: MlflowProject = get_project(
+        MlflowProjectInfo(
             name="test_exp",
             team="test",
             user_email="test",

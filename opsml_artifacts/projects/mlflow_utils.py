@@ -80,7 +80,7 @@ def get_card_registries(storage_client: StorageClientType):
     return registries
 
 
-def get_project_id(self, project_id: str, mlflow_client: MlflowClient) -> str:
+def get_project_id(project_id: str, mlflow_client: MlflowClient) -> str:
     """
     Finds the project_id from mlflow for the given project. If an
     existing proejct does not exist, a new one is created.

@@ -1,13 +1,13 @@
 # pylint: disable=invalid-envvar-value
 import os
 from contextlib import contextmanager
-from typing import Iterator, Optional, TypeVar, cast
 from dataclasses import dataclass
+from typing import Iterator, Optional, cast
+
 from mlflow.artifacts import download_artifacts
-from mlflow.entities import RunStatus
 from mlflow.entities import Run as MlflowRun
+from mlflow.entities import RunStatus
 from mlflow.entities.run_data import RunData
-from mlflow.entities.run_info import RunInfo as MlFlowRunInfo
 from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
 from mlflow.tracking.fluent import end_run as fluent_end_run
@@ -17,23 +17,23 @@ from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.projects.mlflow_utils import (
+    CardRegistries,
     get_card_registries,
     get_mlflow_client,
+    get_project_id,
     mlflow_storage_client,
     set_env_vars,
-    get_project_id,
-    CardRegistries,
 )
-from opsml_artifacts.projects.types import Project, ProjectInfo, RunInfo
+from opsml_artifacts.projects.types import Project, ProjectInfo
 from opsml_artifacts.registry.cards import ArtifactCard, CardInfo
 from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-# MlFlowProjectInfo -> Detail about project
+# MlFlowProject -> Interface -> retrieve run info
 # RunManager -> Manages active run and storage client (storage is tied to active run)
-# MlFlowProject -> Requires MlFlowProjectInfo and uses a RunManager
+# ActiveRun-> sets artifacts for an active run
 
 
 @dataclass
@@ -43,6 +43,31 @@ class RunInfo:
     mlflow_client: MlflowClient
     registries: CardRegistries
     run_name: Optional[str] = None
+
+
+class CardHandler:
+    """DRY helper class for ActiveRun and MlflowProject"""
+
+    @staticmethod
+    def register_card(
+        registries: CardRegistries,
+        card_type: str,
+        card: ArtifactCard,
+        version_type: VersionType = VersionType.MINOR,
+    ) -> None:
+        """Registers and ArtifactCard"""
+        registry: CardRegistry = getattr(registries, card_type)
+        registry.register_card(card=card, version_type=version_type)
+
+    @staticmethod
+    def load_card(
+        registries: CardRegistries,
+        card_type: str,
+        info: CardInfo,
+    ) -> ArtifactCard:
+        """Loads an ArtifactCard"""
+        registry: CardRegistry = getattr(registries, card_type)
+        return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
 
 
 class MlflowProjectInfo(ProjectInfo):
@@ -84,7 +109,7 @@ class MlflowProjectInfo(ProjectInfo):
 class ActiveRun:
     def __init__(self, run_info: RunInfo):
         """
-        Run object that handles CRUD for a given run of an MlFlowProject
+        Run object that handles logging artifacts, metrics, cards, and tags for a given run of an MlflowProject
 
         Args:
             run_info:
@@ -99,7 +124,7 @@ class ActiveRun:
         return self._info.run_id
 
     @property
-    def run_name(self) -> str:
+    def run_name(self) -> Optional[str]:
         """Run id for current mlflow run"""
         return self._info.run_name
 
@@ -113,7 +138,7 @@ class ActiveRun:
 
     def add_tag(self, key: str, value: str):
         """
-        Adds a tag to the current project run
+        Adds a tag to the current run
 
         Args:
             key:
@@ -141,13 +166,41 @@ class ActiveRun:
         """
         self._verify_active()
         card_type = card.__class__.__name__.lower()
-        registry: CardRegistry = getattr(self._info.registries, card_type)
-        registry.register_card(card=card, version_type=version_type)
+
+        CardHandler.register_card(
+            registries=self._info.registries,
+            card_type=card_type,
+            card=card,
+            version_type=version_type,
+        )
 
         tag_key = f"{card_type}-{card.name}"
         self.add_tag(
             key=tag_key,
             value=str(card.version),
+        )
+
+    def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
+        """
+        Loads an ArtifactCard.
+
+        Args:
+            card_type:
+                datacard or modelcard
+            info:
+                Card information to retrieve. `uid` takes precedence if it
+                exists. If the optional `version` is specified, that version
+                will be loaded. If it doesn't exist, the most recent ersion will
+                be loaded.
+
+        Returns
+            `ArtifactCard`
+        """
+        card_type = f"{card_type.lower()}card"
+        return CardHandler.load_card(
+            registries=self._info.registries,
+            card_type=card_type,
+            info=info,
         )
 
     def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
@@ -219,6 +272,22 @@ class ActiveRun:
 
         self._verify_active()
         self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
+
+    @property
+    def run_data(self) -> RunData:
+        return self._info.mlflow_client.get_run(self.run_id).data
+
+    @property
+    def metrics(self) -> dict[str, float]:
+        return self.run_data.metrics
+
+    @property
+    def params(self) -> dict[str, str]:
+        return self.run_data.params
+
+    @property
+    def tags(self) -> dict[str, str]:
+        return self.run_data.tags
 
 
 class RunManager:
@@ -405,7 +474,10 @@ class RunManager:
 
         # set to None
         self.storage_client.run_id = None
-        self.active_run._active = False  # prevent use of detached run outside of context manager
+        if self.active_run is not None:
+            self.active_run._active = (  # pylint: disable=protected-access
+                False  # prevent use of detached run outside of context manager
+            )
         self.active_run = None  # detach active run
 
         # needed for when logging models (models are logged via fluent api)
@@ -459,7 +531,6 @@ class MlflowProject(Project):
 
         # dont want to expose mlflow client in project interface
         mlflow_client = get_mlflow_client(tracking_uri=tracking_uri)
-
         self._project_id = get_project_id(
             project_id=info.project_id,
             mlflow_client=mlflow_client,
@@ -485,16 +556,21 @@ class MlflowProject(Project):
             return self._run_mgr.run_id
         raise ValueError("Run id not set for current project")
 
+    @run_id.setter
+    def run_id(self, run_id: str):
+        """Set the run_id to use with the active project"""
+        self._run_mgr.run_id = run_id
+
     @property
     def project_id(self) -> str:
         return self._project_id
 
     @property
     def run_data(self) -> RunData:
-        return self._mlflow_client.get_run(self.run_id).data
+        return self._run_mgr.mlflow_client.get_run(self.run_id).data
 
     @contextmanager
-    def run(self, run_name: Optional[str] = None) -> ActiveRun:
+    def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
         """
         Starts mlflow run for project
 
@@ -505,7 +581,7 @@ class MlflowProject(Project):
 
         self._run_mgr.start_run(run_name=run_name)
 
-        yield self._run_mgr.active_run
+        yield cast(ActiveRun, self._run_mgr.active_run)
 
         self._run_mgr.end_run()
 
@@ -525,8 +601,12 @@ class MlflowProject(Project):
         Returns
             `ArtifactCard`
         """
-        registry: CardRegistry = getattr(self._run_mgr.registries, f"{card_type.lower()}card")
-        return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
+        card_type = f"{card_type.lower()}card"
+        return CardHandler.load_card(
+            registries=self._run_mgr.registries,
+            card_type=card_type,
+            info=info,
+        )
 
     def download_artifacts(
         self,
@@ -553,6 +633,12 @@ class MlflowProject(Project):
             artifact_path=artifact_path,
             dst_path=local_path,
             tracking_uri=self._run_mgr.mlflow_client.tracking_uri,
+        )
+
+    def list_artifacts(self) -> dict[str, float]:
+        """List artifacts for the current run"""
+        return self._run_mgr.mlflow_client.list_artifacts(
+            run_id=self.run_id,
         )
 
     @property
