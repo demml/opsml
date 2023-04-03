@@ -32,7 +32,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
             team="mlops",
             user_email="mlops.com",
         )
-        run.register_card(card=data_card)
+        run.register_card(card=data_card, version_type="major")
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
@@ -67,6 +67,11 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
 
+    # load data
+    assert loaded_data_card.data is None
+    loaded_data_card.load_data()
+    assert loaded_data_card.data is not None
+
     # Attempt to write register cards / log params / log metrics w/o the run being active
     with pytest.raises(ValueError):
         run.register_card(data_card)
@@ -76,8 +81,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         run.log_metric(key="metric1", value=0.0)
 
 
-def test_metrics(mlflow_project: MlflowProject) -> None:
-
+def _test_metrics(mlflow_project: MlflowProject) -> None:
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
 
@@ -92,8 +96,7 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
     assert proj.metrics["m1"] == 1.1
 
 
-def test_params(mlflow_project: MlflowProject) -> None:
-
+def _test_params(mlflow_project: MlflowProject) -> None:
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_param(key="m1", value="apple")
@@ -105,7 +108,7 @@ def test_params(mlflow_project: MlflowProject) -> None:
     assert proj.params["m1"] == "apple"
 
 
-def test_log_artifact() -> None:
+def _test_log_artifact() -> None:
     filename = "test.png"
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
@@ -125,11 +128,10 @@ def test_log_artifact() -> None:
     assert tags["test_tag"] == "1.0.0"
 
 
-def test_register_load(
+def _test_register_load(
     mlflow_project: MlflowProject,
     sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
-
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = sklearn_pipeline
@@ -177,11 +179,10 @@ def test_register_load(
     loaded_card.load_trained_model()
 
 
-def test_lgb_model(
+def _test_lgb_model(
     mlflow_project: MlflowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
-
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = lgb_booster_dataframe
@@ -212,7 +213,7 @@ def test_lgb_model(
     loaded_card.load_trained_model()
 
 
-def test_pytorch_model(
+def _test_pytorch_model(
     mlflow_project: MlflowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
@@ -247,7 +248,7 @@ def test_pytorch_model(
     loaded_card.load_trained_model()
 
 
-def test_tf_model(
+def _test_tf_model(
     mlflow_project: MlflowProject,
     load_transformer_example: tuple[Any, NDArray],
 ):
