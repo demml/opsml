@@ -7,7 +7,7 @@ from sklearn import pipeline
 import lightgbm as lgb
 import matplotlib.pyplot as plt
 from opsml_artifacts import DataCard, ModelCard
-from opsml_artifacts.registry.cards import cards
+from opsml_artifacts.registry.cards.types import CardInfo
 from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo, ActiveRun
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from tests import conftest
@@ -54,7 +54,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     # Load model card
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
-        info=cards.CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
+        info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
     )
     loaded_card.load_trained_model()
     assert loaded_card.uid is not None
@@ -62,7 +62,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
     # Load data card by uid
     loaded_data_card: DataCard = proj.load_card(
-        card_type="data", info=cards.CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+        card_type="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
     )
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
@@ -154,7 +154,7 @@ def test_register_load(
         ## Load model card
         loaded_model_card: ModelCard = run.load_card(
             card_type="model",
-            info=cards.CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
+            info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
         )
         loaded_model_card.load_trained_model()
         assert loaded_model_card.uid is not None
@@ -162,7 +162,7 @@ def test_register_load(
 
         # Load data card by uid
         loaded_data_card: DataCard = run.load_card(
-            card_type="data", info=cards.CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+            card_type="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
         )
         assert loaded_data_card.uid is not None
         assert loaded_data_card.uid == data_card.uid
@@ -172,7 +172,7 @@ def test_register_load(
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
-        info=cards.CardInfo(uid=model_uid),
+        info=CardInfo(uid=model_uid),
     )
     loaded_card.load_trained_model()
 
@@ -207,7 +207,7 @@ def test_lgb_model(
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
-        info=cards.CardInfo(uid=model_card.uid),
+        info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()
 
@@ -242,7 +242,7 @@ def test_pytorch_model(
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
-        info=cards.CardInfo(uid=model_card.uid),
+        info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()
 
@@ -277,6 +277,6 @@ def test_tf_model(
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
-        info=cards.CardInfo(uid=model_card.uid),
+        info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()

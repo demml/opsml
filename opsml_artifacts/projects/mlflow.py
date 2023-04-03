@@ -22,10 +22,10 @@ from opsml_artifacts.projects.mlflow_utils import (
     get_mlflow_client,
     get_project_id,
     mlflow_storage_client,
-    set_env_vars,
 )
 from opsml_artifacts.projects.types import Project, ProjectInfo
-from opsml_artifacts.registry.cards import ArtifactCard, CardInfo
+from opsml_artifacts.registry.cards import ArtifactCard
+from opsml_artifacts.registry.cards.types import CardInfo, CardName
 from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -196,7 +196,7 @@ class ActiveRun:
         Returns
             `ArtifactCard`
         """
-        card_type = f"{card_type.lower()}card"
+        card_type = CardName(card_type.lower()).name.lower()
         return CardHandler.load_card(
             registries=self._info.registries,
             card_type=card_type,
@@ -499,8 +499,8 @@ class MlflowProject(Project):
 
         If info.run_id is set, that run_id will be loaded as read only. In read
         only mode, you can retrieve cards, metrics, and params, however you
-        cannot write new data. If you want to write new data to the run, you
-        have to make it active via a context manager.
+        cannot write new data. If you wish to record data/create a new run, you will
+        need to enter the run context.
 
         Example:
 
@@ -516,14 +516,15 @@ class MlflowProject(Project):
             for k, v in project.params:
                 logger.info("%s = %s", k, v)
 
-            with mlflow_exp as project:
-                # Now that the project context is entered, it's in read/write mode
+            # creating a project run
+            with project.run() as run:
+                # Now that the run context is entered, it's in read/write mode
                 # You can write cards, params, and metrics to the project.
-                project.log_param(key="my_param", value="12.34")
+                run.log_param(key="my_param", value="12.34")
 
         Args:
             info:
-                Experiment information. if a run_id is given, that run is set
+                Run information. if a run_id is given, that run is set
                 as the project's current run.
         """
 
@@ -625,9 +626,6 @@ class MlflowProject(Project):
         Returns:
             Artifact path
         """
-
-        # ensure mlflow fluent sees env vars
-        set_env_vars(tracking_uri=self._run_mgr.mlflow_client.tracking_uri)
         return download_artifacts(
             run_id=self.run_id,
             artifact_path=artifact_path,
