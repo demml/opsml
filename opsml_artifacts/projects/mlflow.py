@@ -602,7 +602,7 @@ class MlflowProject(Project):
         Returns
             `ArtifactCard`
         """
-        card_type = f"{card_type.lower()}card"
+        card_type = CardName(card_type.lower()).name.lower()
         return CardHandler.load_card(
             registries=self._run_mgr.registries,
             card_type=card_type,
