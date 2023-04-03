@@ -7,12 +7,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import numpy as np
 import onnx
 import onnxruntime as rt
-import pandas as pd
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+from numpy.typing import NDArray
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.model.data_converters import OnnxDataConverter
+from opsml_artifacts.registry.model.model_info import ModelInfo
 from opsml_artifacts.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml_artifacts.registry.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -31,26 +32,13 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class ModelConverter:
-    def __init__(
-        self,
-        model: Any,
-        input_data: Any,
-        model_type: str,
-        additional_model_args: TorchOnnxArgs,
-    ):
-        self.model = model
-        self.input_data = input_data
-        self.model_type = model_type
-        self.additional_model_args = additional_model_args
-        self.data_converter = OnnxDataConverter(
-            input_data=input_data,
-            model_type=model_type,
-            model=model,
-            additional_model_args=additional_model_args,
-        )
+    def __init__(self, model_info: ModelInfo):
 
-    def update_onnx_registries(self):
-        OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_type)
+        self.model_info = model_info
+        self.data_converter = OnnxDataConverter(model_info=model_info)
+
+    def update_onnx_registries(self) -> bool:
+        return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
         """Converts a model to onnx format
@@ -62,12 +50,14 @@ class ModelConverter:
 
     def _predictions_close(
         self,
-        onnx_preds: List[Any],
-        model_preds: Union[List[Any], Union[float, int]],
+        onnx_preds: List[Union[float, int]],
+        model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
     ) -> bool:
+
         if not isinstance(model_preds, list):
             model_preds = cast(Union[float, int], model_preds)
             valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+
         else:
             valid_list = []
             for onnx_pred, model_pred in zip(onnx_preds, model_preds):
@@ -80,7 +70,7 @@ class ModelConverter:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
 
-        model_preds = self.model.predict(self.input_data)
+        model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
@@ -175,44 +165,88 @@ class SklearnOnnxModel(ModelConverter):
 
         return row, col
 
-    def _is_stacking_estimator(self):
-        return self.model_type == OnnxModelType.STACKING_ESTIMATOR
+    @property
+    def _is_stacking_estimator(self) -> bool:
+        return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
 
-    def _is_pipeline(self):
-        return self.model_type == OnnxModelType.SKLEARN_PIPELINE
+    @property
+    def _is_pipeline(self) -> bool:
+        return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
 
     def _update_onnx_registries_pipelines(self):
-        for model_step in self.model.steps:
+        updated = False
+        for model_step in self.model_info.model.steps:
             estimator_name = model_step[1].__class__.__name__.lower()
             if estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,
                 )
+                updated = True
+        return updated
 
     def _update_onnx_registries_stacking(self):
-        for estimator in [*self.model.estimators_, self.model.final_estimator]:
+        updated = False
+        for estimator in [
+            *self.model_info.model.estimators_,
+            self.model_info.model.final_estimator,
+        ]:
             estimator_name = estimator.__class__.__name__.lower()
             if estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,
                 )
+                updated = True
+        return updated
 
-    def update_sklearn_onnx_registries(self):
-        if self._is_pipeline():
+    def update_sklearn_onnx_registries(self) -> bool:
+        if self._is_pipeline:
             return self._update_onnx_registries_pipelines()
-        if self._is_stacking_estimator():
+        if self._is_stacking_estimator:
             return self._update_onnx_registries_stacking()
         return self.update_onnx_registries()
+
+    def _convert_data_for_onnx(self) -> None:
+
+        """Converts float64 or all data to float32 depending on Sklearn estimator type
+        Because Stacking and Pipeline estimators have intermediate output nodes, Onnx will
+        typically inject Float32 for these outputs (it infers these at creation).
+
+        Args:
+            updated_registries (boolean): Boolean indicating if the registries were updated with a 3rd-party
+            model converter (lightgbm, xgboost)
+        """
+
+        if self.model_info.model_data.all_features_float32:
+            return None
+
+        if self._is_stacking_estimator:
+            logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
+            return self.data_converter.converter.convert_to_float(convert_all=True)
+
+        logger.warning("Converting all float64 data to float32")
+        return self.data_converter.converter.convert_to_float(convert_all=False)
+
+    def prepare_registries_and_data(self):
+        """Updates sklearn onnx registries and convert data to float if needed"""
+
+        updated = self.update_sklearn_onnx_registries()
+
+        if updated or self._is_pipeline or self._is_stacking_estimator:
+            return self._convert_data_for_onnx()
+
+        return None
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
 
         """Converts sklearn model to ONNX ModelProto"""
         from skl2onnx import convert_sklearn
 
-        self.update_sklearn_onnx_registries()
+        # update registries with 3rd party converter and convert to float if needed
+        self.prepare_registries_and_data()
         initial_types, data_schema = self.get_data_types()
+
         onnx_model = convert_sklearn(
-            model=self.model,
+            model=self.model_info.model,
             initial_types=initial_types,
         )
 
@@ -233,7 +267,7 @@ class LighGBMBoosterOnnxModel(ModelConverter):
 
         initial_types, data_schema = self.get_data_types()
         onnx_model = convert_lightgbm(
-            model=self.model,
+            model=self.model_info.model,
             initial_types=initial_types,
         )
 
@@ -258,7 +292,11 @@ class TensorflowKerasOnnxModel(ModelConverter):
         import tf2onnx
 
         initial_types, data_schema = self.get_data_types()
-        onnx_model, _ = tf2onnx.convert.from_keras(self.model, initial_types, opset=13)
+        onnx_model, _ = tf2onnx.convert.from_keras(
+            self.model_info.model,
+            initial_types,
+            opset=13,
+        )
         self.validate_model(onnx_model=onnx_model)
 
         return onnx_model, data_schema
@@ -268,28 +306,80 @@ class TensorflowKerasOnnxModel(ModelConverter):
         return model_type in OnnxModelType.TF_KERAS
 
 
-class PyTorchOnnxModel(ModelConverter):
-    def _predictions_close(
+class PytorchArgBuilder:
+    def __init__(
         self,
-        onnx_preds: List[Any],
-        model_preds: Any,
-    ) -> bool:
-        if not isinstance(model_preds, list):
-            model_preds = cast(Union[float, int], model_preds)
-            valid_list = [np.sum(abs(onnx_preds[0] - model_preds.detach().numpy())) <= 0.001]
+        input_data: Union[NDArray, Dict[str, NDArray]],
+    ):
+        self.input_data = input_data
 
-        return all(valid_list)
+    def _get_input_names(self) -> List[str]:
+        if isinstance(self.input_data, dict):
+            return list(self.input_data.keys())
 
-    def _model_predict(self):
+        return ["input"]
+
+    def _get_output_names(self) -> List[str]:
+        return ["output"]
+
+    def get_args(self) -> TorchOnnxArgs:
+        input_names = self._get_input_names()
+        output_names = self._get_output_names()
+
+        return TorchOnnxArgs(
+            input_names=input_names,
+            output_names=output_names,
+        )
+
+
+class PyTorchOnnxModel(ModelConverter):
+    def __init__(self, model_info: ModelInfo):
+
+        self.additional_args = self._get_additional_model_args(
+            additional_onnx_args=model_info.additional_model_args,
+            input_data=model_info.model_data.data,
+        )
+        model_info.additional_model_args = self.additional_args
+
+        super().__init__(model_info=model_info)
+
+    def _get_additional_model_args(
+        self,
+        input_data: Any,
+        additional_onnx_args: Optional[TorchOnnxArgs] = None,
+    ) -> TorchOnnxArgs:
+        """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
+
+        if additional_onnx_args is None:
+            return PytorchArgBuilder(input_data=input_data).get_args()
+        return additional_onnx_args
+
+    def _post_process_prediction(self, predictions: Any) -> NDArray:
+        """Parse pytorch predictions"""
+
+        if hasattr(predictions, "logits"):
+            return predictions.logits.detach().numpy()
+        return predictions.detach().numpy()
+
+    def _model_predict(self) -> NDArray:
+        """Generate prediction for pytorch model using sample data"""
+
         torch_data = self._get_torch_data()
 
         if isinstance(torch_data, tuple):
-            return self.model(*torch_data)
-        return self.model(torch_data)
+            pred = self.model_info.model(*torch_data)
+
+        elif isinstance(torch_data, dict):
+            pred = self.model_info.model(**torch_data)
+
+        else:
+            pred = self.model_info.model(torch_data)
+
+        return self._post_process_prediction(predictions=pred)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
 
-        """Validates an onnx model on training data"""
+        """Validates an onnx model on sample data"""
         inputs = self.data_converter.convert_data()
         model_preds = self._model_predict()
 
@@ -299,7 +389,10 @@ class PyTorchOnnxModel(ModelConverter):
         sess = rt.InferenceSession(model_string)
         onnx_preds = sess.run(None, inputs)
 
-        if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
+        if not self._predictions_close(
+            onnx_preds=onnx_preds,
+            model_preds=model_preds,
+        ):
             raise ValueError("Model prediction validation failed")
 
         logger.info("Onnx model validated")
@@ -307,29 +400,36 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_torch_data(self) -> Any:
         import torch
 
-        if isinstance(self.input_data, dict):
-            return (torch.from_numpy(data) for data in self.input_data.values())  # pylint: disable=no-member
-        return torch.from_numpy(self.input_data)  # pylint: disable=no-member
+        if isinstance(self.model_info.model_data.data, tuple):
+            return tuple(
+                torch.from_numpy(data) for data in self.model_info.model_data.data  # pylint: disable=no-member
+            )
+
+        if isinstance(self.model_info.model_data.data, dict):
+            return {
+                name: torch.from_numpy(data)  # pylint: disable=no-member
+                for name, data in self.model_info.model_data.data.items()
+            }
+
+        return torch.from_numpy(self.model_info.model_data.data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
+        """Converts Pytorch model into Onnx model through torch.onnx.export method"""
+
         import torch
 
         arg_data = self._get_torch_data()
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
-            self.model.eval()  # force model into evaluation mode
+            self.model_info.model.eval()  # force model into evaluation mode
             torch.onnx.export(
-                model=self.model,
+                model=self.model_info.model,
                 args=arg_data,
                 f=filename,
-                verbose=False,
-                input_names=self.additional_model_args.input_names,
-                output_names=self.additional_model_args.output_names,
-                dynamic_axes=self.additional_model_args.dynamic_axes,
-                export_params=True,
+                **self.additional_args.to_dict(),
             )
+            onnx.checker.check_model(filename)
             model = onnx.load(filename)
-            onnx.checker.check_model(model)
         return model
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
@@ -347,28 +447,15 @@ class PyTorchOnnxModel(ModelConverter):
 
 
 class OnnxModelConverter:
-    def __init__(
-        self,
-        model: Any,
-        input_data: Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]],
-        model_type: str,
-        additional_model_args: TorchOnnxArgs,
-    ):
-        self.model = model
-        self.data = input_data
-        self.model_type = model_type
-        self.additional_model_args = additional_model_args
-
+    def __init__(self, model_info: ModelInfo):
         """Instantiates a helper class to convert machine learning models and their input data
         to onnx format for interoperability.
 
         Args:
-            model (BaseEstimator, Pipeline, Tensorflow, Keras): A machine learning model or pipeline to convert.
-            Currently accepted types are any Sklearn model flavor, lightgbm and xgboost
-            (sklearn flavors, e.g., LGBRegressor), as well as Sklearn pipelines, Tensorflow/Keras and PyTorch.
-            input_data (pd.DataFrame, np.ndarray): Sample model input data.
+            model_info (ModelInfo): ModelInfo class containing model-specific information for Onnx conversion
 
-    """
+        """
+        self.model_info = model_info
 
     def convert_model(self) -> OnnxModelReturn:
 
@@ -376,15 +463,8 @@ class OnnxModelConverter:
             (
                 converter
                 for converter in ModelConverter.__subclasses__()
-                if converter.validate(
-                    model_type=self.model_type,
-                )
+                if converter.validate(model_type=self.model_info.model_type)
             )
         )
 
-        return converter(
-            model=self.model,
-            input_data=self.data,
-            model_type=self.model_type,
-            additional_model_args=self.additional_model_args,
-        ).convert()
+        return converter(model_info=self.model_info).convert()
