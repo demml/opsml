@@ -2,8 +2,10 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, validator
 
-from opsml_artifacts import VersionType
-from opsml_artifacts.registry.cards import cards
+from opsml_artifacts import CardRegistry, VersionType
+from opsml_artifacts.registry.cards.cards import ArtifactCard
+from opsml_artifacts.registry.cards.types import CardInfo, CardType
+from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 
 class ProjectInfo(BaseModel):
@@ -61,8 +63,23 @@ class Project(Protocol):
     def run_id(self) -> Optional[str]:
         ...
 
-    def register_card(self, card: cards.ArtifactCard, version_type: VersionType) -> None:
+    def register_card(self, card: ArtifactCard, version_type: VersionType) -> None:
         ...
 
-    def load_card(self, card_type: cards.CardType, info: cards.CardInfo) -> cards.ArtifactCard:
+    def load_card(self, card_type: CardType, info: CardInfo) -> ArtifactCard:
         ...
+
+
+class CardRegistries(BaseModel):
+    datacard: CardRegistry
+    modelcard: CardRegistry
+    experimentcard: CardRegistry
+
+    class Config:
+        arbitrary_types_allowed = True
+        allow_mutation = True
+
+    def set_storage_client(self, storage_client: StorageClientType):
+        self.datacard.registry.storage_client = storage_client
+        self.modelcard.registry.storage_client = storage_client
+        self.experimentcard.registry.storage_client = storage_client

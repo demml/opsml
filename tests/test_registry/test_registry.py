@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, PipelineCard, ModelCard
@@ -47,6 +48,77 @@ def test_register_data(
 
         df = registry.list_cards()
         assert isinstance(df, pd.DataFrame)
+
+        df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
+        assert df.shape[0] == 1
+
+
+def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_write):
+
+    # create data card
+    registry = db_registries["data"]
+
+    # for numpy array
+    with patch.multiple("zarr", save=MagicMock(return_value=None)):
+
+        # version 1
+        for i in range(0, 5):
+            data_card = DataCard(
+                data=test_array,
+                name="test_df",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            registry.register_card(card=data_card)
+
+        # version 2
+        data_card = DataCard(
+            data=test_array,
+            name="test_df",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        registry.register_card(card=data_card, version_type="major")
+
+        for i in range(0, 5):
+            data_card = DataCard(
+                data=test_array,
+                name="test_df",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            registry.register_card(card=data_card)
+
+        # should return 6 versions
+        df = registry.list_cards(
+            name=data_card.name,
+            team=data_card.team,
+            version="2.*.*",
+        )
+        assert df.shape[0] == 6
+
+        df = registry.list_cards(
+            name=data_card.name,
+            team=data_card.team,
+            version="^2.3.0",
+        )
+        assert df.shape[0] == 6
+
+        df = registry.list_cards(
+            name=data_card.name,
+            team=data_card.team,
+            version="~2.3.0",
+        )
+        assert df.shape[0] == 1
+
+        # should return
+        card = registry.load_card(
+            name=data_card.name,
+            team=data_card.team,
+            version="^2.3.0",
+        )
+
+        assert card.version == "2.5.0"
 
 
 def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):

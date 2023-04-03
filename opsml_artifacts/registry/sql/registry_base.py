@@ -170,6 +170,7 @@ class SQLRegistryBase:
             team=card.team,
             version_type=version_type,
         )
+
         card.version = version
 
         if card.uid is None:
@@ -333,7 +334,7 @@ class ServerRegistry(SQLRegistryBase):
             name (str): Artifact record name
             team (str): Team data is assigned to
             version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
+            the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
             uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
 
 

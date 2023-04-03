@@ -4,10 +4,10 @@ import os
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import google.auth
+from google.auth.credentials import Credentials
 from google.cloud import scheduler_v1, storage  # type: ignore
 from google.cloud.scheduler_v1.types import Job
 from google.oauth2 import service_account
-from google.oauth2.service_account import Credentials
 from google.protobuf import duration_pb2
 from pydantic import BaseModel
 
@@ -17,8 +17,8 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class GcpCreds(BaseModel):
-    creds: Optional[Credentials]
-    project: Optional[str]
+    creds: Optional[Credentials] = None
+    project: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True

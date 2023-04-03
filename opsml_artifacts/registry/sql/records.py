@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator, validator
 
-from opsml_artifacts.drift.models import DriftReport
+from opsml_artifacts.drift.types import DriftReport
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 from opsml_artifacts.registry.storage.artifact_storage import (
     load_record_artifact_from_storage,
@@ -26,7 +26,7 @@ class DataRegistryRecord(BaseModel):
     uid: Optional[str]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
     dependent_vars: Optional[List[Union[int, str]]]
-    timestamp: int = int(round(time.time() * 1000))
+    timestamp: int = int(round(time.time() * 1_000_000))
 
     class Config:
         smart_union = True
@@ -50,7 +50,7 @@ class ModelRegistryRecord(BaseModel):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
-    timestamp: int = int(round(time.time() * 1000))
+    timestamp: int = int(round(time.time() * 1_000_000))
 
 
 class ExperimentRegistryRecord(BaseModel):
@@ -64,7 +64,7 @@ class ExperimentRegistryRecord(BaseModel):
     pipeline_card_uid: Optional[str]
     artifact_uris: Optional[Dict[str, str]]
     metrics: Optional[Dict[str, Union[float, int]]]
-    timestamp: int = int(round(time.time() * 1000))
+    timestamp: int = int(round(time.time() * 1_000_000))
 
 
 class PipelineRegistryRecord(BaseModel):
@@ -77,7 +77,7 @@ class PipelineRegistryRecord(BaseModel):
     data_card_uids: Optional[Dict[str, str]]
     model_card_uids: Optional[Dict[str, str]]
     experiment_card_uids: Optional[Dict[str, str]]
-    timestamp: int = int(round(time.time() * 1000))
+    timestamp: int = int(round(time.time() * 1_000_000))
 
 
 RegistryRecord = Union[DataRegistryRecord, ModelRegistryRecord, ExperimentRegistryRecord, PipelineRegistryRecord]

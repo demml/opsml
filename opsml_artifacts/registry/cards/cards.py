@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -8,10 +6,9 @@ import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
-from opsml_artifacts.drift.data_drift import DriftReport
+from opsml_artifacts.drift.types import DriftReport
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.data.splitter import DataHolder, DataSplitter
-from opsml_artifacts.registry.model.creator import OnnxModelCreator
 from opsml_artifacts.registry.model.predictor import OnnxModelPredictor
 from opsml_artifacts.registry.model.types import (
     DataDict,
@@ -34,22 +31,6 @@ from opsml_artifacts.registry.storage.storage_system import StorageClientType
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
-
-
-class CardType(str, Enum):
-    DATA = "data"
-    MODEL = "model"
-    EXPERIMENT = "experiment"
-    PIPELINE = "pipeline"
-
-
-@dataclass
-class CardInfo:
-    name: Optional[str]
-    team: Optional[str]
-    user_email: Optional[str] = None
-    uid: Optional[str] = None
-    version: Optional[str] = None
 
 
 class ArtifactCard(BaseModel):
@@ -432,6 +413,10 @@ class ModelCard(ArtifactCard):
         """Creates Onnx model from trained model and sample input data
         and sets Card attributes
         """
+        from opsml_artifacts.registry.model.creator import (  # pylint: disable=import-outside-toplevel
+            OnnxModelCreator,
+        )
+
         model_creator = OnnxModelCreator(
             model=self.trained_model,
             input_data=self.sample_input_data,

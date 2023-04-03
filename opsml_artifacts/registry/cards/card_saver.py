@@ -10,7 +10,7 @@ from opsml_artifacts.registry.cards.cards import (
 )
 from opsml_artifacts.registry.cards.types import (
     ArtifactStorageTypes,
-    CardNames,
+    CardType,
     StoragePath,
 )
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
@@ -120,7 +120,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardNames.DATA in card_type
+        return CardType.DATA in card_type
 
 
 class ModelCardArtifactSaver(CardArtifactSaver):
@@ -165,6 +165,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         storage_spec = self._copy_artifact_storage_info()
         storage_spec.filename = "trained-model"
+        storage_spec.sample_data = self.card.sample_input_data
         self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(
@@ -200,7 +201,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardNames.MODEL in card_type
+        return CardType.MODEL in card_type
 
 
 class ExpeirmentCardArtifactSaver(CardArtifactSaver):
@@ -226,7 +227,7 @@ class ExpeirmentCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardNames.EXPERIMENT in card_type
+        return CardType.EXPERIMENT in card_type
 
 
 class PipelineCardArtifactSaver(CardArtifactSaver):
@@ -239,7 +240,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardNames.PIPELINE in card_type
+        return CardType.PIPELINE in card_type
 
 
 def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
