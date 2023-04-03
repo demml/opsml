@@ -6,6 +6,7 @@ from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.sql.semver import get_version_to_search
 from opsml_artifacts.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -28,7 +29,7 @@ class QueryCreator:
                 table.name == name,
                 table.team == team,
             )
-            .order_by(table.timestamp.desc())  # type: ignore
+            .order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
         )
 
     def record_from_table_query(
@@ -40,6 +41,19 @@ class QueryCreator:
         version: Optional[str] = None,
     ) -> Select:
 
+        """Creates a sql query based on table, uid, name, team and version
+
+        Args:
+            table (Schema): Registry table to query
+            uid (str): Optional unique id of Card
+            name (str): Optional name of Card
+            team (str): Optional team name
+            version (str): Optional version of Card
+
+        Returns
+            Sqlalchemy Select statement
+        """
+
         query = self._get_base_select_query(table=table)
         if bool(uid):
             return query.filter(table.uid == uid)
@@ -47,13 +61,18 @@ class QueryCreator:
         filters = []
         for field, value in zip(["name", "team", "version"], [name, team, version]):
             if value is not None:
-                filters.append(getattr(table, field) == value)
+
+                if field == "version":
+                    version = get_version_to_search(version=version)
+                    filters.append(getattr(table, field).like(f"{version}%"))
+
+                else:
+                    filters.append(getattr(table, field) == value)
 
         if bool(filters):
             query = query.filter(*filters)
 
-        if version is None:
-            query = query.order_by(table.timestamp.desc())  # type: ignore
+        query = query.order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
 
         return query
 

@@ -172,7 +172,7 @@ class DefaultConnector:
     def __init__(
         self,
         tracking_uri: str,
-        credentials: Optional[Any],
+        credentials: Optional[Any] = None,
     ):
         self.tracking_uri = tracking_uri
         self.credentials = credentials
