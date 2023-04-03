@@ -7,16 +7,24 @@ from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Any, Generator, Optional, Tuple, Union, cast
+from typing import Any, Dict, Generator, Optional, Tuple, Union, cast
 
+import pandas as pd
+from numpy.typing import NDArray
 from pyarrow.fs import LocalFileSystem
 
 from opsml_artifacts.helpers.utils import all_subclasses
+from opsml_artifacts.registry.model.types import (
+    LIGHTGBM_SUPPORTED_MODEL_TYPES,
+    SKLEARN_SUPPORTED_MODEL_TYPES,
+    OnnxModelType,
+)
 from opsml_artifacts.registry.storage.types import (
     ArtifactStorageSpecs,
     FilePath,
     GcsStorageClientSettings,
     MlFlowClientProto,
+    MlflowInfo,
     StorageSettings,
 )
 
@@ -63,14 +71,9 @@ def cleanup_files(func):
             loadable_filepath = loadable_filepath[0]
 
         if isinstance(loadable_filepath, str):
-
             if "temp" in loadable_filepath:  # make this better later
-                try:
-                    file_dir = "/".join(loadable_filepath.split("/")[:-1])
-                    shutil.rmtree(file_dir)
-                except Exception:  # pylint: disable=broad-exception-caught
-                    pass  # soft failure
-
+                file_dir = "/".join(loadable_filepath.split("/")[:-1])
+                shutil.rmtree(file_dir, ignore_errors=True)
         return artifact
 
     return wrapper
@@ -158,6 +161,7 @@ class StorageClient:
         local_path: str,
         write_path: str,
         recursive: bool = False,
+        **kwargs,
     ) -> str:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
@@ -239,7 +243,122 @@ class LocalStorageClient(StorageClient):
         return storage_backend == StorageSystem.LOCAL
 
 
-class MlFlowStorageClient(StorageClient):
+class MlflowModelSaver:
+    def __init__(
+        self,
+        model: Any,
+        model_type: str,
+        sample_data: Optional[Union[pd.DataFrame, NDArray, Dict[str, NDArray]]],
+        artifact_path: str,
+    ):
+        self.model = model
+        self.model_type = model_type
+        self.sample_data = sample_data
+        self.artifact_path = artifact_path
+
+    def _get_model_signature(self):
+
+        from mlflow.models.signature import infer_signature
+
+        signature = infer_signature(model_input=self.sample_data)
+
+        return signature
+
+    def log_model(self) -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        raise NotImplementedError
+
+
+class MlFlowSklearn(MlflowModelSaver):
+    def log_model(self) -> str:
+        import mlflow
+
+        signature = self._get_model_signature()
+
+        model_info = mlflow.sklearn.log_model(
+            sk_model=self.model,
+            artifact_path=self.artifact_path,
+            signature=signature,
+            input_example=self.sample_data,
+        )
+
+        filename = model_info.flavors["python_function"]["model_path"]
+
+        return filename
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type in SKLEARN_SUPPORTED_MODEL_TYPES
+
+
+class MlFlowLightGBM(MlflowModelSaver):
+    def log_model(self) -> str:
+        import mlflow
+
+        signature = self._get_model_signature()
+
+        model_info = mlflow.lightgbm.log_model(
+            lgb_model=self.model,
+            artifact_path=self.artifact_path,
+            signature=signature,
+            input_example=self.sample_data,
+        )
+
+        filename = model_info.flavors["lightgbm"]["data"]
+
+        return filename
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type in LIGHTGBM_SUPPORTED_MODEL_TYPES
+
+
+class MlFlowPytorch(MlflowModelSaver):
+    def log_model(self) -> str:
+        import mlflow
+
+        signature = self._get_model_signature()
+
+        model_info = mlflow.pytorch.log_model(
+            pytorch_model=self.model,
+            artifact_path=self.artifact_path,
+            signature=signature,
+            input_example=self.sample_data,
+        )
+
+        dir_name = model_info.flavors["pytorch"]["model_data"]
+        return f"{dir_name}/model.pth"
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type == OnnxModelType.PYTORCH
+
+
+class MlFlowTensorflow(MlflowModelSaver):
+    def log_model(self) -> str:
+        import mlflow
+
+        signature = self._get_model_signature()
+
+        model_info = mlflow.tensorflow.log_model(
+            model=self.model,
+            artifact_path=self.artifact_path,
+            signature=signature,
+            input_example=self.sample_data,
+        )
+
+        dir_name = model_info.flavors["tensorflow"]["data"]
+        return f"{dir_name}/model"
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type == OnnxModelType.TF_KERAS
+
+
+class MlflowStorageClient(StorageClient):
     def __init__(
         self,
         storage_settings: StorageSettings,
@@ -254,11 +373,11 @@ class MlFlowStorageClient(StorageClient):
         self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
 
     @property
-    def run_id(self) -> str:
-        return str(self._run_id)
+    def run_id(self) -> Optional[str]:
+        return self._run_id
 
     @run_id.setter
-    def run_id(self, run_id: str):
+    def run_id(self, run_id: Optional[str]):
         self._run_id = run_id
 
     @property
@@ -300,13 +419,58 @@ class MlFlowStorageClient(StorageClient):
             dst_path=abs_temp_path,
             tracking_uri=self.mlflow_client.tracking_uri,
         )
+
         return file_path
+
+    def _log_artifact(self, mlflow_info: MlflowInfo) -> str:
+
+        self.mlflow_client.log_artifact(
+            run_id=self.run_id,
+            local_path=mlflow_info.local_path,
+            artifact_path=mlflow_info.artifact_path,
+        )
+
+        return mlflow_info.filename
+
+    def _log_model(self, mlflow_info: MlflowInfo) -> str:
+
+        model_type = str(mlflow_info.model_type)
+        model_logger = next(
+            (
+                model_logger
+                for model_logger in MlflowModelSaver.__subclasses__()
+                if model_logger.validate(
+                    model_type=model_type,
+                )
+            ),
+            None,
+        )
+
+        if model_logger is None:
+            raise ValueError(
+                f"Failed to find appropriate mlflow model type saver for {mlflow_info.model_type}",
+            )
+
+        logger = model_logger(
+            model=mlflow_info.model,
+            model_type=model_type,
+            sample_data=self.storage_spec.sample_data,  # type: ignore
+            artifact_path=mlflow_info.artifact_path,
+        )
+
+        return logger.log_model()
+
+    def log_artifact(self, mlflow_info: MlflowInfo) -> str:
+        if mlflow_info.model is not None:
+            return self._log_model(mlflow_info=mlflow_info)
+        return self._log_artifact(mlflow_info=mlflow_info)
 
     def upload(
         self,
         local_path: str,
         write_path: str,
         recursive: bool = False,
+        **kwargs,
     ) -> str:
 
         """Uploads local artifact to mflow
@@ -317,14 +481,17 @@ class MlFlowStorageClient(StorageClient):
 
         mlflow_write_dir = self._get_mlflow_dir(filename=write_path)
 
-        self.mlflow_client.log_artifact(
-            run_id=self.run_id,
+        mlflow_info = MlflowInfo(
             local_path=local_path,
             artifact_path=mlflow_write_dir,
+            model=kwargs.get("model"),
+            model_type=kwargs.get("model_type"),
+            filename=write_path.split("/")[-1],
         )
 
+        filename = self.log_artifact(mlflow_info=mlflow_info)
+
         # need to re-write storage path for saving to ArtifactCard
-        filename = write_path.split("/")[-1]
         storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
 
         return storage_uri
@@ -351,7 +518,7 @@ class MlFlowStorageClient(StorageClient):
         return storage_backend == StorageSystem.MLFLOW
 
 
-StorageClientType = Union[LocalStorageClient, GCSFSStorageClient, MlFlowStorageClient]
+StorageClientType = Union[LocalStorageClient, GCSFSStorageClient, MlflowStorageClient]
 
 
 class StorageClientGetter:
