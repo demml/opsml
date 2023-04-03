@@ -153,3 +153,4 @@ steps:
       # increment patch version for releases based on drone tag
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
+      
