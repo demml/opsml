@@ -12,7 +12,7 @@ STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 os.environ["OPSML_TRACKING_URI"] = SQL_PATH
 os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
 os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = STORAGE_PATH
-os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = STORAGE_PATH
+os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = "mlflow-artifacts:/"
 os.environ["_MLFLOW_SERVER_FILE_STORE"] = SQL_PATH
 os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 
@@ -270,21 +270,22 @@ def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
     return mlflow_exp
 
 
-@pytest.fixture(scope="module")
-def test_app() -> Iterator[TestClient]:
-    cleanup()
-    from opsml_artifacts.app.main import OpsmlApp, config
-    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
-
-    mlflow_config = initialize_mlflow()
-    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
-        config.is_proxy = True
-        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
-
-    opsml_app = OpsmlApp(run_mlflow=True)
-    with TestClient(opsml_app.get_app()) as tc:
-        yield tc
-    cleanup()
+# @pytest.fixture(scope="module")
+# def test_app() -> Iterator[TestClient]:
+#
+#    cleanup()
+#    from opsml_artifacts.app.main import OpsmlApp, config
+#    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
+#
+#    mlflow_config = initialize_mlflow()
+#    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
+#        config.is_proxy = True
+#        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
+#
+#    opsml_app = OpsmlApp(run_mlflow=True)
+#    with TestClient(opsml_app.get_app()) as tc:
+#        yield tc
+#    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -309,7 +310,7 @@ def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowPr
         experimentcard=api_registries["experiment"],
     )
     api_card_registries.set_storage_client(mlflow_storage)
-    mlflow_exp.registries = api_card_registries
+    mlflow_exp._run_mgr.registries = api_card_registries
 
     yield mlflow_exp
 
