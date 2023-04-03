@@ -12,6 +12,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
 
+from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.cards.types import (
     DATA_ARTIFACTS,
     ArtifactStorageTypes,
@@ -19,6 +20,7 @@ from opsml_artifacts.registry.cards.types import (
 )
 from opsml_artifacts.registry.storage.storage_system import (
     ArtifactClass,
+    MlflowStorageClient,
     StorageClientType,
     StorageSystem,
     cleanup_files,
@@ -93,6 +95,7 @@ class ArtifactStorage:
         file_path: str,
         storage_uri: str,
         recursive: bool = False,
+        **kwargs,
     ) -> str:
         """Carries out post processing for proxy clients
 
@@ -109,6 +112,7 @@ class ArtifactStorage:
                 return self.storage_client.upload(
                     local_path=file_path,
                     write_path=storage_uri,
+                    **kwargs,
                 )
 
             return file_path
@@ -120,6 +124,7 @@ class ArtifactStorage:
             local_path=file_path,
             write_path=storage_uri,
             recursive=recursive,
+            **kwargs,
         )
 
     def _list_files(self, storage_uri: str) -> FilePath:
@@ -207,6 +212,19 @@ class JoblibStorage(ArtifactStorage):
     def _write_joblib(self, artifact: Any, file_path: FilePath):
         joblib.dump(artifact, file_path)
 
+    def _write_artifact(self, artifact: Any, file_path: str, storage_uri: str):
+
+        # hack for mlflow
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
+            return self._upload_artifact(
+                file_path=file_path,
+                storage_uri=storage_uri,
+                **{"model": artifact, "model_type": self.artifact_type},
+            )
+
+        self._write_joblib(artifact=artifact, file_path=file_path)
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
 
         """Writes the artifact as a joblib file to a storage_uri
@@ -222,8 +240,7 @@ class JoblibStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        self._write_joblib(artifact=artifact, file_path=file_path)
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+        return self._write_artifact(artifact=artifact, file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         return joblib.load(file_path)
@@ -435,6 +452,12 @@ class TensorflowModelStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
+            return self._upload_artifact(
+                file_path=file_path,
+                storage_uri=storage_uri,
+                **{"model": artifact, "model_type": self.artifact_type},
+            )
 
         artifact.save(storage_uri)
 
@@ -459,15 +482,20 @@ class TensorflowModelStorage(ArtifactStorage):
         if self.is_storage_local:
             return file_path
 
-        self.storage_client.download(rpath=file_path, lpath=f"{tmp_path}/", recursive=True)
+        download_path = self.storage_client.download(rpath=file_path, lpath=f"{tmp_path}/", recursive=True)
+
+        if download_path is not None:
+            return download_path
+
         return tmp_path
 
+    @cleanup_files
     def load_artifact(self, storage_uri: str) -> Any:
 
         file_path = self._list_files(storage_uri=storage_uri)
         with tempfile.TemporaryDirectory() as tmp_dir:  # noqa
             loadable_filepath = self._download_artifact(file_path=file_path, tmp_path=cast(IO, tmp_dir))
-            return self._load_artifact(loadable_filepath)
+            return self._load_artifact(loadable_filepath), loadable_filepath
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -506,6 +534,13 @@ class PyTorchModelStorage(ArtifactStorage):
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
 
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
+            return self._upload_artifact(
+                file_path=file_path,
+                storage_uri=storage_uri,
+                **{"model": artifact, "model_type": self.artifact_type},
+            )
+
         torch.save(artifact, file_path)
 
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
@@ -518,6 +553,22 @@ class PyTorchModelStorage(ArtifactStorage):
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type == ArtifactStorageTypes.PYTORCH
+
+
+class LightGBMBooster(JoblibStorage):
+    """Helper class only to be used with MLFLow"""
+
+    def _load_artifact(self, file_path: FilePath) -> Any:
+        if isinstance(self.storage_client, MlflowStorageClient):
+            import lightgbm as lgb
+
+            return lgb.Booster(model_file=file_path)
+
+        return joblib.load(file_path)
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageTypes.BOOSTER
 
 
 def save_record_artifact_to_storage(
@@ -552,7 +603,7 @@ def load_record_artifact_from_storage(artifact_type: str, storage_client: Storag
 
     storage_type = next(
         storage_type
-        for storage_type in ArtifactStorage.__subclasses__()
+        for storage_type in all_subclasses(ArtifactStorage)
         if storage_type.validate(
             artifact_type=artifact_type,
         )
