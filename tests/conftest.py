@@ -54,7 +54,8 @@ from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, Exp
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
-from opsml_artifacts.projects.mlflow import CardRegistries, MlFlowProject, MlFlowProjectInfo
+from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo
+from opsml_artifacts.projects.types import CardRegistries
 
 
 # testing
@@ -256,16 +257,16 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         }
 
 
-def mock_mlflow_project(info: MlFlowProjectInfo) -> MlFlowProject:
-    mlflow_exp: MlFlowProject = get_project(info)
-    mlflow_storage = mlflow_exp._get_storage_client()
+def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
+    mlflow_exp: MlflowProject = get_project(info)
+    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
     api_card_registries = CardRegistries.construct(
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
         experimentcard=CardRegistry(registry_name="experiment"),
     )
     api_card_registries.set_storage_client(mlflow_storage)
-    mlflow_exp.registries = api_card_registries
+    mlflow_exp._run_mgr.registries = api_card_registries
     return mlflow_exp
 
 
@@ -292,16 +293,16 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
 
 
 @pytest.fixture
-def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlFlowProject]:
-    mlflow_exp: MlFlowProject = get_project(
-        MlFlowProjectInfo(
+def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowProject]:
+    mlflow_exp: MlflowProject = get_project(
+        MlflowProjectInfo(
             name="test_exp",
             team="test",
             user_email="test",
             tracking_uri=SQL_PATH,
         )
     )
-    mlflow_storage = mlflow_exp._get_storage_client()
+    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
     api_card_registries = CardRegistries.construct(
         datacard=api_registries["data"],
         modelcard=api_registries["model"],
@@ -553,6 +554,34 @@ def drift_dataframe():
 ################################################################################
 
 
+@pytest.fixture(scope="session")
+def load_transformer_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
+    data = np.load("tests/assets/transformer_data.npy")
+    return loaded_model, data
+
+
+@pytest.fixture(scope="function")
+def load_multi_input_keras_example():
+    import tensorflow as tf
+
+    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
+    data = joblib.load("tests/assets/multi_input_data.joblib")
+    return loaded_model, data
+
+
+@pytest.fixture(scope="session")
+def load_pytorch_resnet():
+    import torch
+
+    loaded_model = torch.load("tests/assets/resnet.pt")
+    data = torch.randn(1, 3, 224, 224).numpy()
+
+    return loaded_model, data
+
+
 @pytest.fixture(scope="function")
 def stacking_regressor():
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
@@ -671,6 +700,7 @@ def lgb_booster_dataframe(drift_dataframe):
     gbm = lgb.train(
         params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
     )
+
     return gbm, X_train[:100]
 
 
