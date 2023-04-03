@@ -107,7 +107,7 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
 
 class OnnxRegistryUpdater:
     @staticmethod
-    def update_onnx_registry(model_estimator_name: str) -> None:
+    def update_onnx_registry(model_estimator_name: str) -> bool:
         """Loops through model estimator types and updates
         the Onnx model registry if needed.
         """
@@ -123,3 +123,5 @@ class OnnxRegistryUpdater:
 
         if converter is not None:
             converter(model_estimator=model_estimator_name).update_registry_converter()
+            return True
+        return False

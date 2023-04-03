@@ -90,6 +90,16 @@ class ApiSigCreator:
 
         return self._infer_pydantic_fields(features=features)
 
+    def _get_feature_type_map(self, features: Dict[str, Feature]):
+        """Generates feature map of name and type for input data.
+        This is used to convert data to the correct type for onnx.
+        """
+
+        feature_map = {}
+        for name, feature in features.items():
+            feature_map[name] = feature.feature_type
+        return feature_map
+
     def _get_pydantic_base(self):
         raise NotImplementedError
 
@@ -119,6 +129,13 @@ class ApiSigCreator:
         input_sig = self._get_input_sig()
         output_sig = self._get_output_sig()
 
+        input_sig.feature_map = self._get_feature_type_map(  # type: ignore
+            features=self.data_dict.input_features,
+        )
+        output_sig.feature_map = self._get_feature_type_map(  # type: ignore
+            features=self.data_dict.output_features,
+        )
+
         return input_sig, output_sig
 
     @staticmethod
@@ -141,18 +158,19 @@ class SklearnSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type not in ["keras", "pytorch"]
+        return model_type not in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
 
 
 class DeepLearningSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
+
         if self.data_type == InputDataType.DICT.name:
             return DeepLearningDictBase
         return DeepLearningNumpyBase
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type in ["keras", "pytorch"]
+        return model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
 
 
 class ApiSigCreatorGetter:
@@ -265,7 +283,7 @@ class OnnxModelPredictor:
         pydantic model.
 
         Args:
-            model (Any sklearn flavor model): Model to send predictions to
+            model : Model to send predictions to
             data (dictionary of data): Dictionary containing data for prediction
 
         Returns
@@ -274,23 +292,31 @@ class OnnxModelPredictor:
 
         pred_data = self.input_sig(**data)
 
-        if self.model_type == "sklearn_pipeline":
-            new_data = pred_data.to_dataframe()
+        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+            data_for_pred = pred_data.to_dataframe()
 
-        elif self.model_type == "keras":
-            new_data = pred_data.to_onnx()
+        elif self.model_type == OnnxModelType.TF_KERAS:
+            data_for_pred = pred_data.to_onnx()
 
-        elif self.model_type == "pytorch":
+        elif self.model_type == OnnxModelType.PYTORCH:
             import torch
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
-            new_data = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
-            return model(*new_data)
+
+            if self.data_dict.data_type == InputDataType.DICT:
+                data_for_pred = {
+                    name: torch.from_numpy(value) for name, value in feed_data.items()  # pylint: disable=no-member
+                }
+                return model(**data_for_pred)
+
+            data_for_pred = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
+
+            return model(*data_for_pred)
 
         else:
-            new_data = list(pred_data.to_onnx().values())[0]
+            data_for_pred = list(pred_data.to_onnx().values())[0]
 
-        prediction = model.predict(new_data)
+        prediction = model.predict(data_for_pred)
 
         return prediction
 

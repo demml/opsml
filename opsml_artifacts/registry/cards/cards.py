@@ -274,8 +274,8 @@ class ModelCard(ArtifactCard):
         model_uri (str): GCS uri where model is stored
         model_type (str): Type of model
         data_schema (Dictionary): Optional dictionary of the data schema used in model training
-        additional_onnx_args (TorchOnnxArgs): Optional pydantic model containing optional
-        Torch args for model conversion.
+        additional_onnx_args (TorchOnnxArgs): Optional pydantic model containing
+        Torch args for model conversion to onnx.
         Can be expanded at a later date to handle other model type args.
     """
 
@@ -289,7 +289,7 @@ class ModelCard(ArtifactCard):
     sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
     model_type: Optional[str]
-    additional_onnx_args: TorchOnnxArgs = TorchOnnxArgs()
+    additional_onnx_args: Optional[TorchOnnxArgs]
     data_schema: Optional[Dict[str, Feature]]
 
     class Config:
@@ -444,7 +444,8 @@ class ModelCard(ArtifactCard):
             return {input_name: sample_data[0, :].tolist()}
 
         if isinstance(sample_data, pd.DataFrame):
-            return sample_data[0:1].T.to_dict()[0]
+            record = list(sample_data[0:1].T.to_dict().values())[0]
+            return record
 
         record = {}
         for feat, val in sample_data.items():
