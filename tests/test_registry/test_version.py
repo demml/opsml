@@ -31,12 +31,12 @@ def test_version_star():
     version = "1.*.*"
 
     parsed_version = get_version_to_search(version=version)
-    assert parsed_version == "1."
+    assert parsed_version == "1"
 
     version = "1.2.*"
 
     parsed_version = get_version_to_search(version=version)
-    assert parsed_version == "1.2."
+    assert parsed_version == "1.2"
 
 
 def test_version_fail():

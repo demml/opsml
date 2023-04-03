@@ -1,5 +1,6 @@
 import os
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
 
 from pydantic import BaseModel
@@ -29,6 +30,7 @@ class ArtifactStorageSpecs(BaseModel):
 
     class Config:
         allow_mutation = True
+        extra = "allow"
 
 
 class StorageClientProto(Protocol):
@@ -72,10 +74,10 @@ class StorageClientProto(Protocol):
         """store"""
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
-        "Upload"
+        """Upload"""
 
     def post_process(self, storage_uri: str) -> str:
-        "post process"
+        """post process"""
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -85,3 +87,12 @@ class StorageClientProto(Protocol):
 class MlFlowClientProto(Protocol):
     def log_artifact(self, run_id: str, local_path: str, artifact_path: str):
         "log artifact"
+
+
+@dataclass
+class MlflowInfo:
+    local_path: str
+    artifact_path: str
+    filename: str
+    model: Optional[Any] = None
+    model_type: Optional[str] = None
