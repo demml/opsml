@@ -290,7 +290,7 @@ class ActiveRun:
         return self.run_data.tags
 
 
-class RunManager:
+class _RunManager:
     def __init__(
         self,
         mlflow_client: MlflowClient,
@@ -537,7 +537,7 @@ class MlflowProject(Project):
         )
 
         # Set the run manager
-        self._run_mgr = RunManager(
+        self._run_mgr = _RunManager(
             run_id=info.run_id,
             project_id=self._project_id,
             mlflow_client=mlflow_client,
