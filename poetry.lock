@@ -6348,4 +6348,4 @@ proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instru
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "53b97e726f7a507e23a3d34398ca230b27d01137a61208f6f97091ef8f535ea9"
+content-hash = "8a4cd530fa1b773b074d13d3cbbf158a57f8eb8a2640b538778bdbb7cc89be8e"
