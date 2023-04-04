@@ -3,10 +3,6 @@ from typing import Any, Dict, Optional
 import httpx
 from tenacity import retry, stop_after_attempt
 
-from opsml_artifacts.helpers.logging import ArtifactLogger
-
-logger = ArtifactLogger.get_logger(__name__)
-
 
 PATH_PREFIX = "opsml"
 
