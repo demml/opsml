@@ -20,7 +20,7 @@ class LogFormatter(JsonFormatter):
             log_record["level"] = record.levelname
         super().add_fields(log_record, record, message_dict)
         if not log_record.get("timestamp"):
-            log_record["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            log_record["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
         log_record["app_env"] = APP_ENV
 
 

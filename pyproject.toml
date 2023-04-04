@@ -17,6 +17,7 @@ google-cloud-storage = {version="^2.2.1", optional = true}
 graphviz = {version="^0.20.1", optional = true}
 gunicorn = {version="^20.1.0", optional = true}
 httpx ="^0.23.3"
+mlflow = {version="^2.2.1", optional=true}
 numpy = ">=1.21.6,<=1.24.1"
 onnx = "^1.12.0"
 onnxmltools = "^1.11.1"
@@ -40,7 +41,8 @@ zarr = ">2.12.0"
 wsgi-basic-auth = {version="^1.1.0", optional = true}
 
 [tool.poetry.extras]
-proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
+proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow"]
+mlflow = ["mlflow"]
 graphviz = ["graphviz"]
 gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
 gcp_postgres = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pg8000" ]
@@ -60,7 +62,6 @@ torchvision = "^0.14.1"
 tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
-mlflow = "^2.2.1"
 llvmlite = "^0.39.1"
 numba = "^0.56.0"
 libclang = "<=15.0.6.1"
