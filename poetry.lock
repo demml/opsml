@@ -155,8 +155,8 @@ reference = "shipt-resolve"
 name = "alembic"
 version = "1.10.2"
 description = "A database migration tool for SQLAlchemy."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "alembic-1.10.2-py3-none-any.whl", hash = "sha256:8b48368f6533c064b39c024e1daba15ae7f947eac84185c28c06bbe1301a5497"},
@@ -704,8 +704,8 @@ reference = "shipt-resolve"
 name = "cloudpickle"
 version = "2.2.1"
 description = "Extended pickling support for Python objects"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "cloudpickle-2.2.1-py3-none-any.whl", hash = "sha256:61f594d1f4c295fa5cd9014ceb3a1fc4a70b0de1164b94fbc2d854ccba056f9f"},
@@ -761,8 +761,8 @@ reference = "shipt-resolve"
 name = "contourpy"
 version = "1.0.7"
 description = "Python library for calculating contours of 2D quadrilateral grids"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "contourpy-1.0.7-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:95c3acddf921944f241b6773b767f1cbce71d03307270e2d769fd584d5d1092d"},
@@ -963,8 +963,8 @@ reference = "shipt-resolve"
 name = "cycler"
 version = "0.11.0"
 description = "Composable style cycles"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
@@ -980,8 +980,8 @@ reference = "shipt-resolve"
 name = "databricks-cli"
 version = "0.17.6"
 description = "A command line interface for Databricks"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = "*"
 files = [
     {file = "databricks-cli-0.17.6.tar.gz", hash = "sha256:7fea8b4e47ac38bd4eaad8a76e38a6916419df930ad1c615a6b43feb427672c4"},
@@ -1042,8 +1042,8 @@ reference = "shipt-resolve"
 name = "docker"
 version = "6.0.1"
 description = "A Python library for the Docker Engine API."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "docker-6.0.1-py3-none-any.whl", hash = "sha256:dbcb3bd2fa80dca0788ed908218bf43972772009b881ed1e20dfc29a65e49782"},
@@ -1193,8 +1193,8 @@ reference = "shipt-resolve"
 name = "flask"
 version = "2.2.3"
 description = "A simple framework for building complex web applications."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "Flask-2.2.3-py3-none-any.whl", hash = "sha256:c0bec9477df1cb867e5a67c9e1ab758de9cb4a3e52dd70681f59fa40a62b3f2d"},
@@ -1238,8 +1238,8 @@ reference = "shipt-resolve"
 name = "fonttools"
 version = "4.39.3"
 description = "Tools to manipulate font files"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "fonttools-4.39.3-py3-none-any.whl", hash = "sha256:64c0c05c337f826183637570ac5ab49ee220eec66cf50248e8df527edfa95aeb"},
@@ -1466,8 +1466,8 @@ reference = "shipt-resolve"
 name = "gitdb"
 version = "4.0.10"
 description = "Git Object Database"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "gitdb-4.0.10-py3-none-any.whl", hash = "sha256:c286cf298426064079ed96a9e4a9d39e7f3e9bf15ba60701e95f5492f28415c7"},
@@ -1486,8 +1486,8 @@ reference = "shipt-resolve"
 name = "gitpython"
 version = "3.1.31"
 description = "GitPython is a Python library used to interact with Git repositories"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "GitPython-3.1.31-py3-none-any.whl", hash = "sha256:f04893614f6aa713a60cbbe1e6a97403ef633103cdd0ef5eb6efe0deb98dbe8d"},
@@ -2006,7 +2006,7 @@ name = "gunicorn"
 version = "20.1.0"
 description = "WSGI HTTP Server for UNIX"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.5"
 files = [
     {file = "gunicorn-20.1.0-py3-none-any.whl", hash = "sha256:9dcc4547dbb1cb284accfb15ab5667a0e5d1881cc443e0677b4882a4067a807e"},
@@ -2220,7 +2220,7 @@ reference = "shipt-resolve"
 name = "importlib-metadata"
 version = "6.1.0"
 description = "Read metadata from Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2245,8 +2245,8 @@ reference = "shipt-resolve"
 name = "importlib-resources"
 version = "5.12.0"
 description = "Read resources from Python packages"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "importlib_resources-5.12.0-py3-none-any.whl", hash = "sha256:7b1deeebbf351c7578e09bf2f63fa2ce8b5ffec296e0d349139d43cca061a81a"},
@@ -2309,8 +2309,8 @@ reference = "shipt-resolve"
 name = "itsdangerous"
 version = "2.1.2"
 description = "Safely pass data to untrusted environments and back."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
@@ -2443,8 +2443,8 @@ reference = "shipt-resolve"
 name = "kiwisolver"
 version = "1.4.4"
 description = "A fast implementation of the Cassowary constraint solver"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "kiwisolver-1.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2f5e60fabb7343a836360c4f0919b8cd0d6dbf08ad2ca6b9cf90bf0c76a3c4f6"},
@@ -2630,7 +2630,7 @@ reference = "shipt-resolve"
 name = "llvmlite"
 version = "0.39.1"
 description = "lightweight wrapper around basic LLVM functionality"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2673,8 +2673,8 @@ reference = "shipt-resolve"
 name = "mako"
 version = "1.2.4"
 description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "Mako-1.2.4-py3-none-any.whl", hash = "sha256:c97c79c018b9165ac9922ae4f32da095ffd3c4e6872b45eded42926deea46818"},
@@ -2698,7 +2698,7 @@ reference = "shipt-resolve"
 name = "markdown"
 version = "3.4.3"
 description = "Python implementation of John Gruber's Markdown."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2786,8 +2786,8 @@ reference = "shipt-resolve"
 name = "matplotlib"
 version = "3.7.1"
 description = "Python plotting package"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "matplotlib-3.7.1-cp310-cp310-macosx_10_12_universal2.whl", hash = "sha256:95cbc13c1fc6844ab8812a525bbc237fa1470863ff3dace7352e910519e194b1"},
@@ -2913,8 +2913,8 @@ reference = "shipt-resolve"
 name = "mlflow"
 version = "2.2.2"
 description = "MLflow: A Platform for ML Development and Productionization"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "mlflow-2.2.2-py3-none-any.whl", hash = "sha256:b501278bc68db40febd3d578dd514d34a745f515d2042c04d046db2821fb613e"},
@@ -3149,7 +3149,7 @@ reference = "shipt-resolve"
 name = "numba"
 version = "0.56.4"
 description = "compiling Python code using LLVM"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3665,7 +3665,7 @@ reference = "shipt-resolve"
 name = "pillow"
 version = "9.5.0"
 description = "Python Imaging Library (Fork)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4134,8 +4134,8 @@ reference = "shipt-resolve"
 name = "pyjwt"
 version = "2.6.0"
 description = "JSON Web Token implementation in Python"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "PyJWT-2.6.0-py3-none-any.whl", hash = "sha256:d83c3d892a77bbb74d3e1a2cfa90afaadb60945205d1095d9221f04466f64c14"},
@@ -4213,8 +4213,8 @@ reference = "shipt-resolve"
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.6.8"
 files = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
@@ -4419,8 +4419,8 @@ reference = "shipt-resolve"
 name = "pywin32"
 version = "306"
 description = "Python for Window Extensions"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = "*"
 files = [
     {file = "pywin32-306-cp310-cp310-win32.whl", hash = "sha256:06d3420a5155ba65f0b72f2699b5bacf3109f36acbe8923765c22938a69dfc8d"},
@@ -4448,7 +4448,7 @@ reference = "shipt-resolve"
 name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -4503,8 +4503,8 @@ reference = "shipt-resolve"
 name = "querystring-parser"
 version = "1.2.4"
 description = "QueryString parser for Python/Django that correctly handles nested dictionaries"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = "*"
 files = [
     {file = "querystring_parser-1.2.4-py2.py3-none-any.whl", hash = "sha256:d2fa90765eaf0de96c8b087872991a10238e89ba015ae59fedfed6bd61c242a0"},
@@ -4895,8 +4895,8 @@ reference = "shipt-resolve"
 name = "shap"
 version = "0.41.0"
 description = "A unified approach to explain the output of any machine learning model."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = "*"
 files = [
     {file = "shap-0.41.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:9e867dd8be6c0644c8d954dcc9efc51c0f0eec432de2d4cb253a7878489bb9f1"},
@@ -4993,8 +4993,8 @@ reference = "shipt-resolve"
 name = "slicer"
 version = "0.0.7"
 description = "A small package for big slicing."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "slicer-0.0.7-py3-none-any.whl", hash = "sha256:0b94faa5251c0f23782c03f7b7eedda91d80144059645f452c4bc80fab875976"},
@@ -5010,8 +5010,8 @@ reference = "shipt-resolve"
 name = "smmap"
 version = "5.0.0"
 description = "A pure Python implementation of a sliding window memory map manager"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "smmap-5.0.0-py3-none-any.whl", hash = "sha256:2aba19d6a040e78d8b09de5c57e96207b09ed71d8e55ce0959eeee6c8e190d94"},
@@ -5167,8 +5167,8 @@ reference = "shipt-resolve"
 name = "sqlparse"
 version = "0.4.3"
 description = "A non-validating SQL parser."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.5"
 files = [
     {file = "sqlparse-0.4.3-py3-none-any.whl", hash = "sha256:0323c0ec29cd52bceabc1b4d9d579e311f3e4961b98d174201d5622a23b85e34"},
@@ -5228,7 +5228,7 @@ reference = "shipt-resolve"
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -5727,7 +5727,7 @@ reference = "shipt-resolve"
 name = "tqdm"
 version = "4.65.0"
 description = "Fast, Extensible Progress Meter"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -5960,8 +5960,8 @@ reference = "shipt-resolve"
 name = "waitress"
 version = "2.1.2"
 description = "Waitress WSGI server"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7.0"
 files = [
     {file = "waitress-2.1.2-py3-none-any.whl", hash = "sha256:7500c9625927c8ec60f54377d590f67b30c8e70ef4b8894214ac6e4cad233d2a"},
@@ -6002,8 +6002,8 @@ reference = "shipt-resolve"
 name = "websocket-client"
 version = "1.5.1"
 description = "WebSocket client for Python with low level API options"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "websocket-client-1.5.1.tar.gz", hash = "sha256:3f09e6d8230892547132177f575a4e3e73cfdf06526e20cc02aa1c3b47184d40"},
@@ -6024,7 +6024,7 @@ reference = "shipt-resolve"
 name = "werkzeug"
 version = "2.2.3"
 description = "The comprehensive WSGI web application library."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -6322,7 +6322,7 @@ reference = "shipt-resolve"
 name = "zipp"
 version = "3.15.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -6343,9 +6343,10 @@ reference = "shipt-resolve"
 gcp-mysql = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pymysql"]
 gcp-postgres = ["cloud-sql-python-connector", "google-auth", "google-cloud-storage", "google-cloud-scheduler", "gcsfs", "pg8000"]
 graphviz = ["graphviz"]
-proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
+mlflow = ["mlflow"]
+proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "8a4cd530fa1b773b074d13d3cbbf158a57f8eb8a2640b538778bdbb7cc89be8e"
+content-hash = "a485fb95ad026d089e1016e78de86f90aaca862164936e1cc64ad38d99ad1ed7"
