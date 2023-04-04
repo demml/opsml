@@ -150,7 +150,7 @@ class StorageClient:
     def list_files(self, storage_uri: str) -> FilePath:
         raise NotImplementedError
 
-    def store(self, storage_uri: str):
+    def store(self, storage_uri: str, **kwargs):
         raise NotImplementedError
 
     def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
@@ -203,7 +203,7 @@ class GCSFSStorageClient(StorageClient):
         files = ["gs://" + path for path in self.client.ls(path=bucket, prefix=file_path)]
         return files
 
-    def store(self, storage_uri: str) -> Any:
+    def store(self, storage_uri: str, **kwargs) -> Any:
         """Create store for use with Zarr arrays"""
         import gcsfs  # pylint: disable=import-outside-toplevel
 
@@ -235,7 +235,7 @@ class LocalStorageClient(StorageClient):
     def list_files(self, storage_uri: str) -> FilePath:
         return [storage_uri]
 
-    def store(self, storage_uri: str):
+    def store(self, storage_uri: str, **kwargs):
         return storage_uri
 
     @staticmethod
@@ -510,7 +510,10 @@ class MlflowStorageClient(StorageClient):
     def list_files(self, storage_uri: str) -> FilePath:
         return [storage_uri]
 
-    def store(self, storage_uri: str):
+    def store(self, storage_uri: str, **kwargs):
+        """Wrapper method needed for working with data artifacts and mlflow"""
+        if kwargs.get("store_type") == "download":
+            return self.download(rpath=storage_uri, lpath="temp")
         return storage_uri
 
     @staticmethod
