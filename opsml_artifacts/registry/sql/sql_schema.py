@@ -26,8 +26,7 @@ class RegistryTableNames(str, Enum):
 
 @declarative_mixin
 class BaseMixin:
-    num_id = Column("num_id", Integer, primary_key=True, autoincrement=True)
-    uid = Column("uid", String(512), primary_key=False, default=lambda: uuid.uuid4().hex)
+    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
     date = Column("date", String(512), default=datetime.date.today().strftime(YEAR_MONTH_DATE))
     timestamp = Column("timestamp", BigInteger)
     app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
