@@ -349,7 +349,10 @@ class NumpyStorage(ArtifactStorage):
         if isinstance(file_path, list):
             file_path = file_path[0]
 
-        store = self.storage_client.store(storage_uri=file_path)
+        store = self.storage_client.store(
+            storage_uri=file_path,
+            **{"store_type": "download"},
+        )
         return zarr.load(store)
 
     def load_artifact(self, storage_uri: str) -> Any:
