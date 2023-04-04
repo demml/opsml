@@ -4,11 +4,7 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
-from opsml_artifacts.helpers.logging import ArtifactLogger
-
 from . import exceptions
-
-logger = ArtifactLogger.get_logger(__name__)
 
 
 class FindPath:

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.model.model_info import (
     FloatTypeConverter,
     ModelData,
@@ -21,8 +20,6 @@ from opsml_artifacts.registry.model.types import (
     TorchOnnxArgs,
     get_onnx_tensor_spec,
 )
-
-logger = ArtifactLogger.get_logger(__name__)
 
 ModelConvertOutput = Tuple[ModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
 

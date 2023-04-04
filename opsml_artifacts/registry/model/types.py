@@ -16,10 +16,6 @@ from skl2onnx.common.data_types import (
     TensorType,
 )
 
-from opsml_artifacts.helpers.logging import ArtifactLogger
-
-logger = ArtifactLogger.get_logger(__name__)
-
 InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
 
