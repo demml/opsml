@@ -211,6 +211,7 @@ class ApiSigTypes(Enum):
     FLOAT = float
     FLOAT32 = float
     FLOAT64 = float
+    DOUBLE = float
     STR = str
 
 
