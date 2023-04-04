@@ -391,12 +391,13 @@ class ClientRegistry(SQLRegistryBase):
         return bool(data.get("uid_exists"))
 
     def set_version(self, name: str, team: str, version_type: VersionType = VersionType.MINOR) -> str:
+
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
                 "name": name,
                 "team": team,
-                "version_type": version_type.value,
+                "version_type": version_type,
                 "table_name": self.table_name,
             },
         )
@@ -425,7 +426,6 @@ class ClientRegistry(SQLRegistryBase):
         Returns:
             Dictionary of records
         """
-
         data = self._session.post_request(
             route=api_routes.LIST,
             json={

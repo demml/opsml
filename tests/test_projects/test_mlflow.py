@@ -32,7 +32,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
             team="mlops",
             user_email="mlops.com",
         )
-        run.register_card(card=data_card)
+        run.register_card(card=data_card, version_type="major")
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
@@ -67,6 +67,11 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
 
+    # load data
+    assert loaded_data_card.data is None
+    loaded_data_card.load_data()
+    assert loaded_data_card.data is not None
+
     # Attempt to write register cards / log params / log metrics w/o the run being active
     with pytest.raises(ValueError):
         run.register_card(data_card)
@@ -77,7 +82,6 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
 
 def test_metrics(mlflow_project: MlflowProject) -> None:
-
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
 
@@ -93,7 +97,6 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
 
 
 def test_params(mlflow_project: MlflowProject) -> None:
-
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_param(key="m1", value="apple")
@@ -127,15 +130,14 @@ def test_log_artifact() -> None:
 
 def test_register_load(
     mlflow_project: MlflowProject,
-    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+    linear_regression: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
-
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
-        model, data = sklearn_pipeline
+        model, data = linear_regression
         data_card = DataCard(
             data=data,
-            name="pipeline_data",
+            name="linear_data",
             team="mlops",
             user_email="mlops.com",
         )
@@ -144,7 +146,7 @@ def test_register_load(
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
-            name="pipeline_model",
+            name="linear_model",
             team="mlops",
             user_email="mlops.com",
             data_card_uid=data_card.uid,
@@ -154,7 +156,7 @@ def test_register_load(
         ## Load model card
         loaded_model_card: ModelCard = run.load_card(
             card_type="model",
-            info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
+            info=CardInfo(name="linear_model", team="mlops", user_email="mlops.com"),
         )
         loaded_model_card.load_trained_model()
         assert loaded_model_card.uid is not None
@@ -162,7 +164,7 @@ def test_register_load(
 
         # Load data card by uid
         loaded_data_card: DataCard = run.load_card(
-            card_type="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+            card_type="data", info=CardInfo(name="linear_data", team="mlops", uid=data_card.uid)
         )
         assert loaded_data_card.uid is not None
         assert loaded_data_card.uid == data_card.uid
@@ -181,7 +183,6 @@ def test_lgb_model(
     mlflow_project: MlflowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
-
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = lgb_booster_dataframe
