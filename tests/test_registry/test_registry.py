@@ -2,7 +2,7 @@ import pandas as pd
 import time
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml_artifacts.registry.cards.cards import DataCard, ExperimentCard, PipelineCard, ModelCard
+from opsml_artifacts.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
 from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
 from opsml_artifacts.registry.sql.registry import CardRegistry
 import uuid
@@ -123,12 +123,12 @@ def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_wr
 
 def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
 
-    registry: CardRegistry = db_registries["experiment"]
-    experiment = ExperimentCard(
+    registry: CardRegistry = db_registries["run"]
+    experiment = RunCard(
         name="test_df",
         team="mlops",
         user_email="mlops.com",
-        data_card_uids=["test_uid"],
+        datacard_uids=["test_uid"],
     )
     experiment.add_metric("test_metric", 10)
     experiment.add_metrics({"test_metric2": 20})
@@ -173,7 +173,7 @@ def test_register_model(
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
-        data_card_uid=data_card.uid,
+        datacard_uid=data_card.uid,
     )
 
     model_registry: CardRegistry = db_registries["model"]
@@ -195,7 +195,7 @@ def test_register_model(
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
-        data_card_uid=data_card.uid,
+        datacard_uid=data_card.uid,
     )
 
     model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
@@ -207,7 +207,7 @@ def test_register_model(
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
-        data_card_uid=None,
+        datacard_uid=None,
     )
 
     with pytest.raises(ValueError):
@@ -219,7 +219,7 @@ def test_register_model(
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
-        data_card_uid="test_uid",
+        datacard_uid="test_uid",
     )
 
     with pytest.raises(ValueError):
@@ -232,7 +232,7 @@ def test_register_model(
             name="pipeline_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid="test_uid",
+            datacard_uid="test_uid",
         )
 
 
@@ -331,7 +331,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "data", "model", "experiment"]:
-        pipeline_card.add_card_uid(
+        pipeline_card.addcard_uid(
             uid=uuid.uuid4().hex,
             card_type=card_type,
             name=f"{card_type}_{random.randint(0,100)}",
@@ -340,14 +340,14 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     registry: CardRegistry = db_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
-    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
+    loaded_card.addcard_uid(uid="updated_uid", card_type="data", name="update")
     registry.update_card(card=loaded_card)
     df = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
-        columns=["data_card_uids"],
+        columns=["datacard_uids"],
     )
-    assert values["data_card_uids"].get("update") == "updated_uid"
+    assert values["datacard_uids"].get("update") == "updated_uid"
 
 
 def test_full_pipeline_with_loading(
@@ -381,18 +381,18 @@ def test_full_pipeline_with_loading(
             name="test_model",
             team=team,
             user_email=user_email,
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
 
         model_registry.register_card(model_card)
 
-    ##### ExperimentCard
-    exp_card = ExperimentCard(
+    ##### RunCard
+    exp_card = RunCard(
         name="test_experiment",
         team=team,
         user_email=user_email,
-        data_card_uids=[data_card.uid],
-        model_card_uids=[model_card.uid],
+        datacard_uids=[data_card.uid],
+        modelcard_uids=[model_card.uid],
     )
     exp_card.add_metric("test_metric", 10)
     experiment_registry.register_card(card=exp_card)
@@ -402,16 +402,16 @@ def test_full_pipeline_with_loading(
         team=team,
         user_email=user_email,
         pipeline_code_uri=pipeline_code_uri,
-        data_card_uids={"data1": data_card.uid},
-        model_card_uids={"model1": model_card.uid},
-        experiment_card_uids={"exp1": exp_card.uid},
+        datacard_uids={"data1": data_card.uid},
+        modelcard_uids={"model1": model_card.uid},
+        runcard_uids={"exp1": exp_card.uid},
     )
     pipeline_registry.register_card(card=pipeline_card)
     with patch(
         "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
         return_value=None,
     ):
-        loader = PipelineLoader(pipeline_card_uid=pipeline_card.uid)
+        loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
         with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
             deck = loader.load_cards()
             uids = loader.card_uids
@@ -441,7 +441,7 @@ def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
         name="test_model",
         team="mlops",
         user_email="test_email",
-        data_card_uid=data_card.uid,
+        datacard_uid=data_card.uid,
     )
 
     model_registry.register_card(card=model_card)

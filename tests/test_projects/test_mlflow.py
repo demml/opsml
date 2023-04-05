@@ -39,7 +39,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
             name="pipeline_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
@@ -149,7 +149,7 @@ def test_register_load(
             name="linear_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
 
@@ -200,7 +200,7 @@ def test_lgb_model(
             name="lgb_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
@@ -235,7 +235,7 @@ def test_pytorch_model(
             name="resnet_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
@@ -270,7 +270,7 @@ def test_tf_model(
             name="transformer_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id

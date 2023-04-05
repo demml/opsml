@@ -70,7 +70,7 @@ def get_card_registries(storage_client: StorageClientType):
     registries = CardRegistries(
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
-        experimentcard=CardRegistry(registry_name="experiment"),
+        RunCard=CardRegistry(registry_name="run"),
     )
 
     # double check

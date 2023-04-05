@@ -23,7 +23,7 @@ from opsml_artifacts.projects.mlflow_utils import (
     get_project_id,
     mlflow_storage_client,
 )
-from opsml_artifacts.projects.types import Project, ProjectInfo
+from opsml_artifacts.projects.types import Project, ProjectInfo, Tags
 from opsml_artifacts.registry.cards import ArtifactCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardName
 from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient
@@ -407,9 +407,9 @@ class _RunManager:
 
         """
         tags = {
-            "name": self._project_info.name,
-            "team": self._project_info.team,
-            "user_email": self._project_info.user_email,
+            Tags.NAME: self._project_info.name,
+            Tags.TEAM: self._project_info.team,
+            Tags.EMAIL: self._project_info.user_email,
         }
         mlflow_active_run = self.mlflow_client.create_run(
             experiment_id=self._project_id,
@@ -546,7 +546,7 @@ class MlflowProject(Project):
         )
 
         # work on this next PR - leaving so i remember
-        # self._run_card = Optional[ExperimentCard] = None
+        # self._run_card = Optional[RunCard] = None
         # if self._run_mgr.run_id is not None:
         # self.load_card(card_type="experiment", info)
 

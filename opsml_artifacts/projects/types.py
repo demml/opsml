@@ -1,11 +1,17 @@
 from typing import Optional, Protocol
-
+from enum import Enum
 from pydantic import BaseModel, Field, validator
 
 from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
+
+
+class Tags(str, Enum):
+    NAME = "name"
+    TEAM = "team"
+    EMAIL = "user_email"
 
 
 class ProjectInfo(BaseModel):
@@ -73,7 +79,7 @@ class Project(Protocol):
 class CardRegistries(BaseModel):
     datacard: CardRegistry
     modelcard: CardRegistry
-    experimentcard: CardRegistry
+    runcard: CardRegistry
 
     class Config:
         arbitrary_types_allowed = True
@@ -82,4 +88,4 @@ class CardRegistries(BaseModel):
     def set_storage_client(self, storage_client: StorageClientType):
         self.datacard.registry.storage_client = storage_client
         self.modelcard.registry.storage_client = storage_client
-        self.experimentcard.registry.storage_client = storage_client
+        self.runcard.registry.storage_client = storage_client

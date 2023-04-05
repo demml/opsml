@@ -45,7 +45,7 @@ class ModelRegistryRecord(BaseModel):
     user_email: str
     name: str
     model_card_uri: str
-    data_card_uid: str
+    datacard_uid: str
     trained_model_uri: str
     sample_data_uri: str
     sample_data_type: str
@@ -53,15 +53,15 @@ class ModelRegistryRecord(BaseModel):
     timestamp: int = int(round(time.time() * 1_000_000))
 
 
-class ExperimentRegistryRecord(BaseModel):
+class RunRegistryRecord(BaseModel):
     name: str
     team: str
     user_email: str
     uid: Optional[str]
     version: Optional[str]
-    data_card_uids: Optional[List[str]]
-    model_card_uids: Optional[List[str]]
-    pipeline_card_uid: Optional[str]
+    datacard_uids: Optional[List[str]]
+    modelcard_uids: Optional[List[str]]
+    pipelinecard_uid: Optional[str]
     artifact_uris: Optional[Dict[str, str]]
     metrics: Optional[Dict[str, Union[float, int]]]
     timestamp: int = int(round(time.time() * 1_000_000))
@@ -74,13 +74,13 @@ class PipelineRegistryRecord(BaseModel):
     uid: Optional[str]
     version: Optional[str]
     pipeline_code_uri: Optional[str]
-    data_card_uids: Optional[Dict[str, str]]
-    model_card_uids: Optional[Dict[str, str]]
-    experiment_card_uids: Optional[Dict[str, str]]
+    datacard_uids: Optional[Dict[str, str]]
+    modelcard_uids: Optional[Dict[str, str]]
+    runcard_uids: Optional[Dict[str, str]]
     timestamp: int = int(round(time.time() * 1_000_000))
 
 
-RegistryRecord = Union[DataRegistryRecord, ModelRegistryRecord, ExperimentRegistryRecord, PipelineRegistryRecord]
+RegistryRecord = Union[DataRegistryRecord, ModelRegistryRecord, RunRegistryRecord, PipelineRegistryRecord]
 
 
 class LoadRecord(BaseModel):
@@ -152,7 +152,7 @@ class LoadedDataRecord(LoadRecord):
 
 class LoadedModelRecord(LoadRecord):
     model_card_uri: str
-    data_card_uid: str
+    datacard_uid: str
     trained_model_uri: str
     sample_data_uri: str
     sample_data_type: str
@@ -208,10 +208,10 @@ class LoadedModelRecord(LoadRecord):
         return table_name == RegistryTableNames.MODEL
 
 
-class LoadedExperimentRecord(LoadRecord):
-    data_card_uids: Optional[List[str]]
-    model_card_uids: Optional[List[str]]
-    pipeline_card_uid: Optional[str]
+class LoadedRunRecord(LoadRecord):
+    datacard_uids: Optional[List[str]]
+    modelcard_uids: Optional[List[str]]
+    pipelinecard_uid: Optional[str]
     artifact_uris: Dict[str, str]
     artifacts: Optional[Dict[str, Any]]
     metrics: Optional[Dict[str, Union[int, float]]]
@@ -229,7 +229,7 @@ class LoadedExperimentRecord(LoadRecord):
         values: Dict[str, Any],
         storage_client: StorageClientType,
     ) -> None:
-        """Loads experiment artifacts to pydantic model"""
+        """Loads run artifacts to pydantic model"""
 
         loaded_artifacts: Dict[str, Any] = {}
         artifact_uris = values.get("artifact_uris", loaded_artifacts)
@@ -254,15 +254,15 @@ class LoadedExperimentRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.EXPERIMENT
+        return table_name == RegistryTableNames.RUN
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
 class LoadedPipelineRecord(LoadRecord):
     pipeline_code_uri: Optional[str]
-    data_card_uids: Optional[Dict[str, str]]
-    model_card_uids: Optional[Dict[str, str]]
-    experiment_card_uids: Optional[Dict[str, str]]
+    datacard_uids: Optional[Dict[str, str]]
+    modelcard_uids: Optional[Dict[str, str]]
+    runcard_uids: Optional[Dict[str, str]]
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
@@ -272,7 +272,7 @@ class LoadedPipelineRecord(LoadRecord):
 LoadedRecordType = Union[
     LoadedPipelineRecord,
     LoadedDataRecord,
-    LoadedExperimentRecord,
+    LoadedRunRecord,
     LoadedModelRecord,
 ]
 

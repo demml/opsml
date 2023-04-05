@@ -30,15 +30,27 @@ class ArtifactStorageTypes(str, Enum):
 class CardType(str, Enum):
     DATA = "data"
     MODEL = "model"
-    EXPERIMENT = "experiment"
+    RUN = "run"
     PIPELINE = "pipeline"
 
 
 class CardName(str, Enum):
     DATACARD = "data"
-    EXPERIMENTCARD = "experiment"
+    RUNCARD = "run"
     MODELCARD = "model"
     PIPELINECARD = "pipeline"
+
+
+class PipelineCardArgs(str, Enum):
+    DATA_UIDs = "datacard_uids"
+    MODEL_UIDs = "modelcard_uids"
+    RUN_UIDS = "runcard_uids"
+
+
+class RunCardArgs(str, Enum):
+    DATA_UID = "datacard_uid"
+    MODEL_UIDs = "modelcard_uids"
+    PIPELINE_UID = "pipelinecard_uid"
 
 
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value != "pipeline"]

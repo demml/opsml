@@ -20,7 +20,7 @@ YEAR_MONTH_DATE = "%Y-%m-%d"
 class RegistryTableNames(str, Enum):
     DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
-    EXPERIMENT = os.getenv("ML_EXPERIMENT_REGISTRY_NAME", "OPSML_EXPERIMENT_REGISTRY")
+    RUN = os.getenv("ML_RUN_REGISTRY_NAME", "OPSML_RUN_REGISTRY")
     PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
 
 
@@ -65,8 +65,8 @@ class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
 
 @declarative_mixin
 class ModelMixin:
-    model_card_uri = Column("model_card_uri", String(2048))
-    data_card_uid = Column("data_card_uid", String(2048))
+    modelcard_uri = Column("modelcard_uri", String(2048))
+    datacard_uid = Column("datacard_uid", String(2048))
     trained_model_uri = Column("trained_model_uri", String(2048))
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
@@ -81,16 +81,16 @@ class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
 
 
 @declarative_mixin
-class ExperimentMixin:
-    data_card_uids = Column("data_card_uids", JSON)
-    model_card_uids = Column("model_card_uids", JSON)
-    pipeline_card_uid = Column("pipeline_card_uid", String(512))
+class RunMixin:
+    datacard_uids = Column("datacard_uids", JSON)
+    modelcard_uids = Column("modelcard_uids", JSON)
+    pipelinecard_uid = Column("pipelinecard_uid", String(512))
     artifact_uris = Column("artifact_uris", JSON)
     metrics = Column("metrics", JSON)
 
 
-class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
-    __tablename__ = RegistryTableNames.EXPERIMENT.value
+class RunSchema(Base, BaseMixin, RunMixin):  # type: ignore
+    __tablename__ = RegistryTableNames.RUN.value
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
@@ -99,9 +99,9 @@ class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
 @declarative_mixin
 class PipelineMixin:
     pipeline_code_uri = Column("pipeline_code_uri", String(512))
-    data_card_uids = Column("data_card_uids", JSON)
-    model_card_uids = Column("model_card_uids", JSON)
-    experiment_card_uids = Column("experiment_card_uids", JSON)
+    datacard_uids = Column("datacard_uids", JSON)
+    modelcard_uids = Column("modelcard_uids", JSON)
+    runcard_uids = Column("runcard_uids", JSON)
 
 
 class PipelineSchema(Base, BaseMixin, PipelineMixin):  # type: ignore
@@ -114,7 +114,7 @@ class PipelineSchema(Base, BaseMixin, PipelineMixin):  # type: ignore
 REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
     DataSchema,
     ModelSchema,
-    ExperimentSchema,
+    RunSchema,
     PipelineSchema,
 ]
 

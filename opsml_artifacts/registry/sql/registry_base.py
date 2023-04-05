@@ -14,7 +14,7 @@ from opsml_artifacts.registry.cards.card_saver import save_card_artifacts
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
-    ExperimentCard,
+    RunCard,
     ModelCard,
     PipelineCard,
 )
@@ -40,7 +40,7 @@ query_creator = QueryCreator()
 table_name_card_map = {
     RegistryTableNames.DATA.value: DataCard,
     RegistryTableNames.MODEL.value: ModelCard,
-    RegistryTableNames.EXPERIMENT.value: ExperimentCard,
+    RegistryTableNames.RUN.value: RunCard,
     RegistryTableNames.PIPELINE.value: PipelineCard,
 }
 
