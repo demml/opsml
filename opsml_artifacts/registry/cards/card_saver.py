@@ -4,7 +4,7 @@ from typing import Dict, cast
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
-    ExperimentCard,
+    RunCard,
     ModelCard,
     PipelineCard,
 )
@@ -207,10 +207,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 class ExpeirmentCardArtifactSaver(CardArtifactSaver):
     @cached_property
     def card(self):
-        return cast(ExperimentCard, self._card)
+        return cast(RunCard, self._card)
 
     def save_artifacts(self) -> ArtifactCard:
-        """Saves all artifacts associated with ExperimentCard to filesystem"""
+        """Saves all artifacts associated with RunCard to filesystem"""
 
         artifact_uris: Dict[str, str] = {}
 
