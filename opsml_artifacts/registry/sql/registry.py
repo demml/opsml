@@ -7,13 +7,13 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
-    ExperimentCard,
+    RunCard,
     ModelCard,
     PipelineCard,
 )
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
-    ExperimentRegistryRecord,
+    RunRegistryRecord,
     ModelRegistryRecord,
     PipelineRegistryRecord,
 )
@@ -66,7 +66,7 @@ class ModelCardRegistry(Registry):
         if not exists:
             raise ValueError("ModelCard must be assoicated with a valid DataCard uid")
 
-    def _has_data_card_uid(self, uid: Optional[str]) -> bool:
+    def _has_datacard_uid(self, uid: Optional[str]) -> bool:
         return bool(uid)
 
     def register_card(
@@ -93,11 +93,11 @@ class ModelCardRegistry(Registry):
 
         model_card = cast(ModelCard, card)
 
-        if not self._has_data_card_uid(uid=model_card.data_card_uid):
+        if not self._has_datacard_uid(uid=model_card.datacard_uid):
             raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
-        if model_card.data_card_uid is not None:
-            self._validate_datacard_uid(uid=model_card.data_card_uid)
+        if model_card.datacard_uid is not None:
+            self._validate_datacard_uid(uid=model_card.datacard_uid)
 
         return super().register_card(
             card=card,
@@ -110,20 +110,20 @@ class ModelCardRegistry(Registry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class ExperimentCardRegistry(Registry):
-    def update_card(self, card: ExperimentCard) -> None:
+class RunCardRegistry(Registry):
+    def update_card(self, card: RunCard) -> None:
         """Updates an existing experiment card in the registry.
 
         Args:
             card: Existing experiment card
         """
 
-        record = ExperimentRegistryRecord(**card.dict())
+        record = RunRegistryRecord(**card.dict())
         self.update_record(record=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.EXPERIMENT
+        return registry_name in RegistryTableNames.RUN
 
 
 class PipelineCardRegistry(Registry):
