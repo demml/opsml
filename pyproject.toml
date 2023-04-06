@@ -51,22 +51,22 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 scikit-learn = ">=1.0"
-pytest = "^7.1.2"
+pytest = "7.1.2"
 pytest-lazy-fixture = "^0.6.3"
 altair-viewer = "^0.4.0"
-pytest-cov = "^3.0.0"
+pytest-cov = "3.0.0"
 coverage = {extras = ["toml"], version = "^6.5.0"}
-tensorflow = "^2.11.1"
-torch = "^1.13.1"
-torchvision = "^0.14.1"
-tabulate = "^0.9.0"
-lightgbm = "^3.3.3"
-xgboost = "^1.7.1"
-llvmlite = "^0.39.1"
-numba = "^0.56.0"
+tensorflow = "2.11.1"
+torch = "1.13.1"
+torchvision = "0.14.1"
+tabulate = "0.9.0"
+lightgbm = "3.3.3"
+xgboost = "1.7.1"
+llvmlite = "0.39.1"
+numba = "0.56.0"
 libclang = "<=15.0.6.1"
 functiontrace = "^0.3.7"
-transformers = "^4.27.3"
+transformers = "4.27.3"
 
 [tool.poetry.group.dev-lints]
 optional = true
@@ -206,11 +206,3 @@ max-complexity = 10
 [build-system]
 requires = ["poetry-core>=1.2.2"]
 build-backend = "poetry.core.masonry.api"
-
-[[tool.poetry.source]]
-# Access Shipt's private Artifactory remote PyPi repository. It serves as a caching proxy.
-# Generate Identity Token in Artifactory and use it as password and then have these ENV's set:
-name = "shipt-resolve"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-#url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
-default = true
