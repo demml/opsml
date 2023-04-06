@@ -38,6 +38,8 @@ tf2onnx ="^1.13.0"
 uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
 wsgi-basic-auth = {version="^1.1.0", optional = true}
+kfp = {version="^1.8.19", optional = true}
+google-cloud-pipeline-components = {version="^1.0.41", optional = true}
 
 [tool.poetry.extras]
 proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow"]
@@ -55,7 +57,7 @@ pytest = "7.1.2"
 pytest-lazy-fixture = "^0.6.3"
 altair-viewer = "^0.4.0"
 pytest-cov = "3.0.0"
-coverage = {extras = ["toml"], version = "^6.5.0"}
+coverage = {extras = ["toml"], version = "6.5.0"}
 tensorflow = "2.11.1"
 torch = "1.13.1"
 torchvision = "0.14.1"
