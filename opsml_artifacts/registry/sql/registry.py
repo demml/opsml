@@ -112,10 +112,12 @@ class ModelCardRegistry(Registry):
 
 class RunCardRegistry(Registry):
     def update_card(self, card: RunCard) -> None:
-        """Updates an existing experiment card in the registry.
+        """
+        Updates an existing experiment card in the registry.
 
         Args:
-            card: Existing experiment card
+            card:
+                Existing experiment card
         """
 
         record = RunRegistryRecord(**card.dict())
@@ -128,10 +130,12 @@ class RunCardRegistry(Registry):
 
 class PipelineCardRegistry(Registry):
     def update_card(self, card: PipelineCard) -> None:
-        """Updates an existing pipeline card in the pipeline registry.
+        """
+        Updates an existing pipeline card in the pipeline registry.
 
         Args:
-            card: Existing pipeline card
+            card:
+                Existing pipeline card
         """
 
         record = PipelineRegistryRecord(**card.dict())
@@ -287,13 +291,12 @@ class CardRegistry:
         self,
         card: ArtifactCard,
     ) -> None:
-        """Update and artifact card (DataCard only) based on current registry
+        """
+        Update and artifact card (DataCard only) based on current registry
 
         Args:
-            card (DataCard or ModelCard): Card to register
-
-        Returns:
-            None
+            card:
+                Card to register
         """
 
         if not hasattr(self.registry, "update_card"):
@@ -304,11 +307,14 @@ class CardRegistry:
         return self.registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
-        """Query column values from a specific Card
+        """
+        Query column values from a specific Card
 
         Args:
-            uid (str): Uid of Card
-            columns (List[str]): List of columns to query
+            uid:
+                Uid of Card
+            columns:
+                List of columns to query
 
         Returns:
             Dictionary of column, values pairs
