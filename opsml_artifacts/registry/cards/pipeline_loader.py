@@ -2,7 +2,12 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from opsml_artifacts.registry.cards.cards import ArtifactCard, PipelineCard
-from opsml_artifacts.registry.cards.types import NON_PIPELINE_CARDS, CardType, PipelineCardArgs, RunCardArgs
+from opsml_artifacts.registry.cards.types import (
+    NON_PIPELINE_CARDS,
+    CardType,
+    PipelineCardArgs,
+    RunCardArgs,
+)
 from opsml_artifacts.registry.sql.registry import CardRegistry
 
 DATA_ATTRS = ["name", "team", "version", "data_type", "dependent_vars"]
