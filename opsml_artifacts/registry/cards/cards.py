@@ -621,43 +621,73 @@ class RunCard(ArtifactCard):
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
     pipelinecard_uid: Optional[str]
-    metrics: Optional[Dict[str, Union[float, int]]]
-    artifacts: Optional[Dict[str, Any]]
-    artifact_uris: Optional[Dict[str, str]]
+    metrics: Dict[str, Union[float, int]]
+    params: Dict[str, Union[float, int, str]]
+    artifacts: Dict[str, Any]
+    artifact_uris: Dict[str, str]
 
-    @validator("metrics", "artifacts", pre=True, always=True)
-    def set_metrics(cls, value):  # pylint: disable=no-self-argument
+    @validator("metrics", "artifacts", "params", "artifact_uris", pre=True, always=True)
+    def set_default(cls, value):  # pylint: disable=no-self-argument
         return value or {}
 
-    def add_metric(self, name: str, value: Union[int, float]):
-        """Adds metric to the existing RunCard metric dictionary
+    def log_params(self, params: Dict[str, Union[float, int, str]]):
+        """
+        Logs params to current RunCard
 
-        name (str): Name of metric
-        value (float or int): Value of metric
+        Args:
+            params:
+                Dictionary of parameters
+        """
+        self.params = {**params, **self.params}
+
+    def log_param(self, name: str, value: Union[int, float, str]):
+        """
+        Logs params to current RunCard
+
+        Args:
+            params:
+                Dictionary of parameters
+        """
+        self.params = {**{name: value}, **self.params}
+
+    def log_metric(self, name: str, value: Union[int, float]) -> None:
+        """
+        Logs metric to the existing RunCard metric dictionary
+
+        Args:
+            name:
+                Name of metric
+            value:
+                Value of metric
         """
 
-        curr_metrics = cast(Dict[str, Union[int, float]], self.metrics)
-        self.metrics = {**{name: value}, **curr_metrics}
+        self.metrics = {**{name: value}, **self.metrics}
 
-    def add_metrics(self, metrics: Dict[str, Union[float, int]]):
-        """Adds metrics to the existing RunCard metric dictionary
+    def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
 
-        metrics (dictionary): Dictionary containing name (str) and value (float or int) pairs
-        to add to the current metric set
+        """
+        Log metrics to the existing RunCard metric dictionary
+
+        Args:
+            metrics:
+                Dictionary containing name (str) and value (float or int) pairs
+                to add to the current metric set
         """
 
-        curr_metrics = cast(Dict[str, Union[int, float]], self.metrics)
-        self.metrics = {**metrics, **curr_metrics}
+        self.metrics = {**metrics, **self.metrics}
 
-    def add_artifact(self, name: str, artifact: Any):
-        """Append any artifact associated with your experiment to
-        the RunCard. The aritfact will be saved in gcs and the uri
+    def log_artifact(self, name: str, artifact: Any) -> None:
+        """
+        Append any artifact associated with your run to
+        the RunCard. The aritfact will be saved and the uri
         will be appended to the RunCard. Artifact must be pickleable
         (saved with joblib)
 
         Args:
-            name (str): What to name the arifact
-            artifact(Any): Artifact to add
+            name:
+                What to name the arifact
+            artifact:
+                Artifact to add
         """
 
         curr_artifacts = cast(Dict[str, Any], self.artifacts)
@@ -666,14 +696,9 @@ class RunCard(ArtifactCard):
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
     def create_registry_record(self) -> RegistryRecord:
-        """Creates a registry record from the current RunCard
+        """Creates a registry record from the current RunCard"""
 
-        registry_name (str): RunCardRegistry table making request
-        uid (str): Unique id of RunCard
-
-        """
-
-        exclude_attr = {"rtifacts", "storage_client"}
+        exclude_attr = {"artifacts", "storage_client"}
         if not any([self.datacard_uids, self.pipelinecard_uid, bool(self.modelcard_uids)]):
             raise ValueError(
                 """One of DataCard, ModelCard, or PipelineCard must be specified
