@@ -68,7 +68,7 @@ class CardRegistries(BaseModel):
 
 @dataclass
 class RunInfo:
-    run_id: str
+    run_id: Optional[str] = None
     project_info: ProjectInfo
     storage_client: StorageClientType
     registries: CardRegistries

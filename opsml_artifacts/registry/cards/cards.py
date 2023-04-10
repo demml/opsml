@@ -624,6 +624,7 @@ class RunCard(ArtifactCard):
     artifacts: Dict[str, Any]
     artifact_uris: Dict[str, str]
     tags: Dict[str, str]
+    project_id: Optional[str]
 
     @validator("metrics", "artifacts", "params", "artifact_uris", "tags", pre=True, always=True)
     def set_default(cls, value):  # pylint: disable=no-self-argument
@@ -661,28 +662,47 @@ class RunCard(ArtifactCard):
         """
         self.params = {**params, **self.params}
 
-    def log_param(self, name: str, value: Union[int, float, str]):
+    def log_param(self, key: str, value: Union[int, float, str]):
         """
         Logs params to current RunCard
 
         Args:
-            params:
-                Dictionary of parameters
+            key:
+                Param name
+            value:
+                Param value
         """
-        self.params = {**{name: value}, **self.params}
+        self.params = {**{key: value}, **self.params}
 
-    def log_metric(self, name: str, value: Union[int, float]) -> None:
+    def log_metric(
+        self,
+        key: str,
+        value: Union[int, float],
+        timestamp: Optional[int] = None,
+        step: Optional[int] = None,
+    ) -> None:
         """
         Logs metric to the existing RunCard metric dictionary
 
         Args:
-            name:
-                Name of metric
+            key:
+                Metric name
             value:
-                Value of metric
+                Metric value
+            timestamp:
+                Optional timestamp
+            ste:
+                Optional step associated with name and value
         """
 
-        self.metrics = {**{name: value}, **self.metrics}
+        self.metrics = {
+            **{
+                key: value,
+                "timestamp": timestamp,
+                "step": step,
+            },
+            **self.metrics,
+        }
 
     def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
 
@@ -691,7 +711,7 @@ class RunCard(ArtifactCard):
 
         Args:
             metrics:
-                Dictionary containing name (str) and value (float or int) pairs
+                Dictionary containing key (str) and value (float or int) pairs
                 to add to the current metric set
         """
 
@@ -706,9 +726,9 @@ class RunCard(ArtifactCard):
 
         Args:
             name:
-                What to name the arifact
+                Artifact name
             artifact:
-                Artifact to add
+                Artifact
         """
 
         curr_artifacts = cast(Dict[str, Any], self.artifacts)

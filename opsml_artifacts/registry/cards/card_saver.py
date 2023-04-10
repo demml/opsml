@@ -212,16 +212,16 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def save_artifacts(self) -> ArtifactCard:
         """Saves all artifacts associated with RunCard to filesystem"""
 
-        artifact_uris: Dict[str, str] = {}
-
-        if self.card.artifacts is not None:
-            for name, artifact in self.card.artifacts.items():
-                storage_path = save_record_artifact_to_storage(
-                    artifact=artifact,
-                    storage_client=self.storage_client,
-                )
-                artifact_uris[name] = storage_path.uri
-        self.card.artifact_uris = artifact_uris
+        # artifact_uris: Dict[str, str] = {}
+        #
+        # if self.card.artifacts is not None:
+        #    for name, artifact in self.card.artifacts.items():
+        #        storage_path = save_record_artifact_to_storage(
+        #            artifact=artifact,
+        #            storage_client=self.storage_client,
+        #        )
+        #        artifact_uris[name] = storage_path.uri
+        # self.card.artifact_uris = artifact_uris
 
         return self.card
 

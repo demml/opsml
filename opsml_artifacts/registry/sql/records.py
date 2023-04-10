@@ -62,8 +62,11 @@ class RunRegistryRecord(BaseModel):
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
     pipelinecard_uid: Optional[str]
+    project_id: Optional[str]
     artifact_uris: Optional[Dict[str, str]]
     metrics: Optional[Dict[str, Union[float, int]]]
+    params: Dict[str, Union[float, int, str]]
+    tags: Dict[str, str]
     timestamp: int = int(round(time.time() * 1_000_000))
 
 
@@ -215,6 +218,9 @@ class LoadedRunRecord(LoadRecord):
     artifact_uris: Dict[str, str]
     artifacts: Optional[Dict[str, Any]]
     metrics: Optional[Dict[str, Union[int, float]]]
+    project_id: Optional[str]
+    params: Dict[str, Union[float, int, str]]
+    tags: Dict[str, str]
 
     @root_validator(pre=True)
     def load_exp_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
