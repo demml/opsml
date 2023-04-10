@@ -85,8 +85,11 @@ class RunMixin:
     datacard_uids = Column("datacard_uids", JSON)
     modelcard_uids = Column("modelcard_uids", JSON)
     pipelinecard_uid = Column("pipelinecard_uid", String(512))
+    project_id = Column("project_id", String(512))
     artifact_uris = Column("artifact_uris", JSON)
     metrics = Column("metrics", JSON)
+    params = Column("params", JSON)
+    tags = Column("tags", JSON)
 
 
 class RunSchema(Base, BaseMixin, RunMixin):  # type: ignore
