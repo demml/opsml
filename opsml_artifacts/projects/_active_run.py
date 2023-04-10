@@ -8,7 +8,7 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.types import CardRegistries, RunInfo
 
 from opsml_artifacts.registry.cards import ArtifactCard, RunCard
-from opsml_artifacts.registry.cards.types import CardInfo, CardName
+from opsml_artifacts.registry.cards.types import CardInfo, CardType
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -49,7 +49,7 @@ class ActiveRun:
         """
         self._info = run_info
         self._active = True  # should be active upon instantiation
-        self.card = RunCard(
+        self.run_card = RunCard(
             name=run_info.project_info.name,
             team=run_info.project_info.team,
             user_email=run_info.project_info.user_email,
@@ -83,8 +83,7 @@ class ActiveRun:
             value:
                 Value to associate with tag
         """
-
-        raise NotImplementedError
+        self.self.run_card.add_tag(key=key, value=value)
 
     def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR):
         """
@@ -98,8 +97,7 @@ class ActiveRun:
                 "patch". Defaults to "minor".
         """
         self._verify_active()
-        card_type = card.__class__.__name__.lower()
-
+        card_type = CardType(card_type.lower()).name.lower()
         CardHandler.register_card(
             registries=self._info.registries,
             card_type=card_type,
@@ -108,10 +106,10 @@ class ActiveRun:
         )
 
         tag_key = f"{card_type}-{card.name}"
-        self.add_tag(
-            key=tag_key,
-            value=str(card.version),
-        )
+        self.add_tag(key=tag_key, value=str(card.version))
+
+        # add uid to RunCard
+        self.run_card.add_card_uid(card_type=card_type, uid=card.uid)
 
     def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """
@@ -129,7 +127,7 @@ class ActiveRun:
         Returns
             `ArtifactCard`
         """
-        card_type = CardName(card_type.lower()).name.lower()
+        card_type = CardType(card_type.lower()).name.lower()
         return CardHandler.load_card(
             registries=self._info.registries,
             card_type=card_type,

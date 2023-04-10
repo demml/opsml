@@ -16,10 +16,10 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 class CardRegistries:
     def __init__(self):
-        self.data = CardRegistry(registry_name=CardType.DATA.value)
-        self.model = CardRegistry(registry_name=CardType.MODEL.value)
-        self.experiment = CardRegistry(registry_name=CardType.EXPERIMENT.value)
-        self.pipeline = CardRegistry(registry_name=CardType.PIPELINE.value)
+        self.data = CardRegistry(registry_name=CardType.DATACARD.value)
+        self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
+        self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
+        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
 
 
 def _init_rollbar():
