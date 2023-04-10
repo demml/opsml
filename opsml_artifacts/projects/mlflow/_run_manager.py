@@ -70,6 +70,7 @@ class _MlflowRunManager(_RunManager):
             run_name=self.run_name,
             mlflow_client=self.mlflow_client,
             registries=self.registries,
+            project_info=self._project_info,
         )
 
         self.active_run = MlflowActiveRun(run_info=run_info)

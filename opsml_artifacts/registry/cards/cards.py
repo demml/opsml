@@ -619,16 +619,12 @@ class RunCard(ArtifactCard):
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
     pipelinecard_uid: Optional[str]
-    metrics: Dict[str, Union[float, int]]
-    params: Dict[str, Union[float, int, str]]
-    artifacts: Dict[str, Any]
-    artifact_uris: Dict[str, str]
-    tags: Dict[str, str]
+    metrics: Dict[str, Union[float, int]] = {}
+    params: Dict[str, Union[float, int, str]] = {}
+    artifacts: Dict[str, Any] = {}
+    artifact_uris: Dict[str, str] = {}
+    tags: Dict[str, str] = {}
     project_id: Optional[str]
-
-    @validator("metrics", "artifacts", "params", "artifact_uris", "tags", pre=True, always=True)
-    def set_default(cls, value):  # pylint: disable=no-self-argument
-        return value or {}
 
     def add_tag(self, key: str, value: str):
         """
