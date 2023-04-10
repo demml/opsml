@@ -4,7 +4,7 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, validator
 
-from opsml_artifacts import CardRegistry, VersionType
+from opsml_artifacts import CardRegistry, VersionType, RunCard
 from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
@@ -105,8 +105,8 @@ class CardRegistries(BaseModel):
 
 @dataclass
 class RunInfo:
-    project_info: ProjectInfo
     storage_client: StorageClientType
     registries: CardRegistries
+    runcard: RunCard
     run_name: Optional[str] = None
     run_id: Optional[str] = None
