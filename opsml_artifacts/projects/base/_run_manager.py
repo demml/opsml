@@ -1,12 +1,17 @@
 # pylint: disable=invalid-envvar-value
 from typing import Optional
-from opsml_artifacts.helpers.settings import settings
+
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.projects.types import CardRegistries, RunInfo, ProjectInfo, Tags
-from opsml_artifacts.projects._active_run import ActiveRun
+from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.projects.base._active_run import ActiveRun
+from opsml_artifacts.projects.base.types import (
+    CardRegistries,
+    ProjectInfo,
+    RunInfo,
+    Tags,
+)
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
-
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -20,7 +25,7 @@ def get_card_registries(storage_client: StorageClientType):
         RunCard=CardRegistry(registry_name="run"),
     )
 
-    # double check
+    # ensures proper storage client is set
     registries.set_storage_client(storage_client=storage_client)
 
     return registries
@@ -60,6 +65,14 @@ class _RunManager:
         if run_id is not None:
             self._verify_run_id(run_id)
             self._run_id = run_id
+
+    @property
+    def base_tags(self):
+        return {
+            Tags.NAME: self._project_info.name,
+            Tags.TEAM: self._project_info.team,
+            Tags.EMAIL: self._project_info.user_email,
+        }
 
     @property
     def run_id(self) -> Optional[str]:
@@ -125,21 +138,15 @@ class _RunManager:
 
         self._create_active_opsml_run()
 
-    def _create_run(self) -> None:
+    def _create_run(self, run_name: Optional[str] = None) -> None:
         """
         Creates a RunCard
 
         """
-        tags = {
-            Tags.NAME: self._project_info.name,
-            Tags.TEAM: self._project_info.team,
-            Tags.EMAIL: self._project_info.user_email,
-        }
-
         self._create_active_opsml_run()
-        self._active_run.add_tags(tags=tags)
+        self._active_run.add_tags(tags=self.base_tags)
 
-    def _set_active_run(self) -> None:
+    def _set_active_run(self, run_name: Optional[str] = None) -> None:
         """
         Resolves and sets the active run for mlflow
 
@@ -168,13 +175,14 @@ class _RunManager:
         if self.active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
-        self._set_active_run()
+        self._set_active_run(run_name=run_name)
         logger.info("starting run: %s", self.run_id)
 
     def _end_run(self) -> None:
 
         # set to None
-        self.storage_client.run_id = None
+        self.active_run.create_or_update_runcard()
+
         if self.active_run is not None:
             self.active_run._active = (  # pylint: disable=protected-access
                 False  # prevent use of detached run outside of context manager

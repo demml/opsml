@@ -1,5 +1,6 @@
 # pylint: disable=invalid-envvar-value
 import os
+from dataclasses import dataclass
 from typing import Optional, cast
 
 from mlflow.tracking import MlflowClient
@@ -7,7 +8,7 @@ from mlflow.tracking import MlflowClient
 from opsml_artifacts import CardRegistry
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth
-from opsml_artifacts.projects.types import CardRegistries
+from opsml_artifacts.projects.base.types import CardRegistries, RunInfo
 from opsml_artifacts.registry.storage.storage_system import (
     MlflowStorageClient,
     StorageClientGetter,
@@ -15,6 +16,12 @@ from opsml_artifacts.registry.storage.storage_system import (
     StorageSystem,
 )
 from opsml_artifacts.registry.storage.types import StorageClientSettings
+
+
+@dataclass
+class MlflowRunInfo(RunInfo):
+    storage_client: MlflowStorageClient
+    mlflow_client: MlflowClient
 
 
 def get_mlflow_storage_client() -> MlflowStorageClient:
@@ -62,22 +69,6 @@ def get_mlflow_client(tracking_uri: Optional[str]) -> MlflowClient:
     mlflow_client = MlflowClient(tracking_uri=tracking_uri)
 
     return mlflow_client
-
-
-def get_card_registries(storage_client: StorageClientType):
-
-    """Gets CardRegistries to associate with MlFlow experiment"""
-    registries = CardRegistries(
-        datacard=CardRegistry(registry_name="data"),
-        modelcard=CardRegistry(registry_name="model"),
-        RunCard=CardRegistry(registry_name="run"),
-    )
-
-    # double check
-    if not isinstance(registries.datacard.registry.storage_client, MlflowStorageClient):
-        registries.set_storage_client(storage_client=storage_client)
-
-    return registries
 
 
 def get_project_id(project_id: str, mlflow_client: MlflowClient) -> str:
