@@ -120,7 +120,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardType.DATA in card_type
+        return CardType.DATACARD.value in card_type
 
 
 class ModelCardArtifactSaver(CardArtifactSaver):
@@ -201,7 +201,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardType.MODEL in card_type
+        return CardType.MODELCARD.value in card_type
 
 
 class RunCardArtifactSaver(CardArtifactSaver):
@@ -227,7 +227,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardType.EXPERIMENT in card_type
+        return CardType.RUNCARD.value in card_type
 
 
 class PipelineCardArtifactSaver(CardArtifactSaver):
@@ -240,7 +240,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardType.PIPELINE in card_type
+        return CardType.PIPELINECARD.value in card_type
 
 
 def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
