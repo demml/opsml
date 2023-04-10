@@ -1,5 +1,5 @@
 # pylint: disable=invalid-envvar-value
-from typing import Optional, Any, Iterator, cast
+from typing import Optional, Any, Iterator, cast, Dict
 from dataclasses import dataclass
 from contextlib import contextmanager
 
@@ -7,8 +7,10 @@ from opsml_artifacts import VersionType, CardRegistry
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.types import CardRegistries, RunInfo
 
+from opsml_artifacts.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml_artifacts.registry.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -37,6 +39,16 @@ class CardHandler:
         registry: CardRegistry = getattr(registries, card_type)
         return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
 
+    @staticmethod
+    def update_card(
+        registries: CardRegistries,
+        card_type: str,
+        card: ArtifactCard,
+    ) -> ArtifactCard:
+        """Updates an ArtifactCard"""
+        registry: CardRegistry = getattr(registries, card_type)
+        return registry.update_card(card=card)
+
 
 class ActiveRun:
     def __init__(self, run_info: RunInfo):
@@ -49,11 +61,16 @@ class ActiveRun:
         """
         self._info = run_info
         self._active = True  # should be active upon instantiation
-        self.run_card = RunCard(
-            name=run_info.project_info.name,
-            team=run_info.project_info.team,
-            user_email=run_info.project_info.user_email,
-        )
+
+        if self._info.run_id is not None:
+            self.runcard = self._info.registries.runcard.load_card(uid=self._info.run_id)
+
+        else:
+            self.runcard = RunCard(
+                name=run_info.project_info.name,
+                team=run_info.project_info.team,
+                user_email=run_info.project_info.user_email,
+            )
 
     @property
     def run_id(self) -> str:
@@ -83,7 +100,19 @@ class ActiveRun:
             value:
                 Value to associate with tag
         """
-        self.self.run_card.add_tag(key=key, value=value)
+        self.runcard.add_tag(key=key, value=value)
+
+    def add_tags(self, tags: Dict[str, str]) -> None:
+        """
+        Adds a tag to the current run
+
+        Args:
+            tags:
+                Dictionary of key, value tags
+
+        """
+        for key, value in tags.items():
+            self.add_tag(key=key, value=value)
 
     def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR):
         """
@@ -97,7 +126,7 @@ class ActiveRun:
                 "patch". Defaults to "minor".
         """
         self._verify_active()
-        card_type = CardType(card_type.lower()).name.lower()
+        card_type = card.__class__.__name__.lower()
         CardHandler.register_card(
             registries=self._info.registries,
             card_type=card_type,
@@ -109,7 +138,7 @@ class ActiveRun:
         self.add_tag(key=tag_key, value=str(card.version))
 
         # add uid to RunCard
-        self.run_card.add_card_uid(card_type=card_type, uid=card.uid)
+        self.runcard.add_card_uid(card_type=card_type, uid=card.uid)
 
     def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """
@@ -134,21 +163,28 @@ class ActiveRun:
             info=info,
         )
 
-    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+    def log_artifact(self, name: str, artifact: Any) -> None:
         """
-        Logs an artifact for the current run. All artifacts are loaded
-        to a parent directory named "misc".
+        Append any artifact associated with your run to
+        the RunCard. The aritfact will be saved and the uri
+        will be appended to the RunCard. Artifact must be pickleable
+        (saved with joblib)
 
         Args:
-            local_path:
-                Local path to object
-            artifact_path:
-                Artifact directory path in Mlflow to log to. This path will be appended
-                to parent directory "misc"
-        Returns:
-            None
+            name:
+                Artifact name
+            artifact:
+                Artifact
         """
-        raise NotImplementedError
+
+        storage_path = save_record_artifact_to_storage(
+            artifact=artifact,
+            storage_client=self._info.registries.runcard.registry.storage_client,
+            artifact_type="joblib",
+        )
+        artifact_uri = {name: storage_path.uri}
+
+        self.runcard.artifact_uris = {**artifact_uri, **self.runcard.artifact_uris}
 
     def log_metric(
         self,
@@ -172,8 +208,7 @@ class ActiveRun:
 
         """
         self._verify_active()
-        self._info.mlflow_client.log_metric(
-            run_id=self.run_id,
+        self.runcard.log_metric(
             key=key,
             value=value,
             timestamp=timestamp,
@@ -192,8 +227,17 @@ class ActiveRun:
         """
 
         self._verify_active()
-        # self._info.registries.runcard.
-        self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
+        self.runcard.log_param(key=key, value=value)
+        # self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
+
+    def create_or_update_card(self):
+        if self.runcard.uid is not None:
+            self._verify_active()
+            CardHandler.update_card(
+                registries=self._info.registries,
+                card_type=CardType.RUNCARD.value,
+                ca
+            )
 
     @property
     def run_data(self) -> Any:
