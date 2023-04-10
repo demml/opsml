@@ -5,14 +5,13 @@ from typing import Optional, cast
 
 from mlflow.tracking import MlflowClient
 
-from opsml_artifacts import CardRegistry
+from opsml_artifacts import RunCard
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth
-from opsml_artifacts.projects.base.types import CardRegistries, RunInfo, MlflowProjectInfo
+from opsml_artifacts.projects.base.types import CardRegistries
 from opsml_artifacts.registry.storage.storage_system import (
     MlflowStorageClient,
     StorageClientGetter,
-    StorageClientType,
     StorageSystem,
 )
 from opsml_artifacts.registry.storage.types import StorageClientSettings
@@ -22,8 +21,8 @@ from opsml_artifacts.registry.storage.types import StorageClientSettings
 class MlflowRunInfo:
     storage_client: MlflowStorageClient
     mlflow_client: MlflowClient
-    project_info: MlflowProjectInfo
     registries: CardRegistries
+    runcard: RunCard
     run_name: Optional[str] = None
     run_id: Optional[str] = None
 

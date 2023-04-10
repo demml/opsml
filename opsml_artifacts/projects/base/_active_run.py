@@ -60,14 +60,7 @@ class ActiveRun:
         self._info = run_info
         self._active = True  # should be active upon instantiation
 
-        if self._info.run_id is not None:
-            self.runcard = self._info.registries.runcard.load_card(uid=self._info.run_id)
-        else:
-            self.runcard = RunCard(
-                name=run_info.project_info.name,
-                team=run_info.project_info.team,
-                user_email=run_info.project_info.user_email,
-            )
+        self.runcard = run_info.runcard
 
     @property
     def run_id(self) -> str:
