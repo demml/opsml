@@ -1,7 +1,7 @@
 # pylint: disable=invalid-envvar-value
 from typing import Optional
 
-from opsml_artifacts import CardRegistry
+from opsml_artifacts import CardRegistry, RunCard
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.projects.base._active_run import ActiveRun
@@ -62,7 +62,6 @@ class _RunManager:
         self.storage_client = self._get_storage_client()
         self.registries = get_card_registries(storage_client=self.storage_client)
 
-        print(run_id)
         if run_id is not None:
             self._verify_run_id(run_id)
             self._run_id = run_id
@@ -108,6 +107,20 @@ class _RunManager:
     def _get_storage_client(self) -> StorageClientType:
         return settings.storage_client
 
+    def _card_exists(self, run_id: str) -> None:
+        """Verifies the run exists for the given project."""
+
+        card = self.registries.runcard.registry.list_cards(uid=run_id)
+
+        if len(card) > 0:
+            if not bool(card[0]):
+                return False
+            return True
+
+        if not bool(card):
+            return False
+        return True
+
     def _verify_run_id(self, run_id: str) -> None:
         """Verifies the run exists for the given project."""
 
@@ -126,13 +139,26 @@ class _RunManager:
         # Create opsml active run
         run_info = RunInfo(
             run_id=self.run_id,
-            project_info=self._project_info,
             storage_client=self.storage_client,
             run_name=self.run_name,
             registries=self.registries,
+            runcard=self._load_runcard(),
         )
 
         self.active_run = ActiveRun(run_info=run_info)
+
+    def _load_runcard(self) -> RunCard:
+        """Loads a RunCard or creates a new RunCard"""
+
+        if self.run_id is not None:
+            if self._card_exists(run_id=self.run_id):
+                return self.registries.runcard.load_card(uid=self.run_id)
+
+        return RunCard(
+            name=self._project_info.name,
+            team=self._project_info.team,
+            user_email=self._project_info.user_email,
+        )
 
     def _restore_run(self) -> None:
         """Restores a previous RunCard"""
@@ -172,7 +198,6 @@ class _RunManager:
             run_name:
                 Optional run name
         """
-
         if self.active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
