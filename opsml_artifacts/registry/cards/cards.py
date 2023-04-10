@@ -625,10 +625,33 @@ class RunCard(ArtifactCard):
     params: Dict[str, Union[float, int, str]]
     artifacts: Dict[str, Any]
     artifact_uris: Dict[str, str]
+    tags: Dict[str, str]
 
-    @validator("metrics", "artifacts", "params", "artifact_uris", pre=True, always=True)
+    @validator("metrics", "artifacts", "params", "artifact_uris", "tags", pre=True, always=True)
     def set_default(cls, value):  # pylint: disable=no-self-argument
         return value or {}
+
+    def add_tag(self, key: str, value: str):
+        """
+        Logs params to current RunCard
+
+        Args:
+            key:
+                Key for tag
+            value:
+                value for tag
+        """
+        self.tags = {**{key: value}, **self.tags}
+
+    def add_tags(self, tags: Dict[str, str]):
+        """
+        Logs params to current RunCard
+
+        Args:
+            tags:
+                Dictionary of tags
+        """
+        self.tags = {**tags, **self.tags}
 
     def log_params(self, params: Dict[str, Union[float, int, str]]):
         """
