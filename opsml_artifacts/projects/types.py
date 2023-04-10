@@ -1,5 +1,6 @@
 from typing import Optional, Protocol
 from enum import Enum
+from dataclasses import dataclass
 from pydantic import BaseModel, Field, validator
 
 from opsml_artifacts import CardRegistry, VersionType
@@ -50,32 +51,6 @@ class ProjectInfo(BaseModel):
         return value.strip().lower()
 
 
-class Project(Protocol):
-    """A project is a top level container for storing artifacts.
-
-    Each project contains one or more runs. A run is typically an instance of a
-    model training run. Artifacts (cards) are associated with a run.
-    """
-
-    @property
-    def artifact_save_path(self) -> str:
-        ...
-
-    @property
-    def project_id(self) -> str:
-        ...
-
-    @property
-    def run_id(self) -> Optional[str]:
-        ...
-
-    def register_card(self, card: ArtifactCard, version_type: VersionType) -> None:
-        ...
-
-    def load_card(self, card_type: CardType, info: CardInfo) -> ArtifactCard:
-        ...
-
-
 class CardRegistries(BaseModel):
     datacard: CardRegistry
     modelcard: CardRegistry
@@ -89,3 +64,12 @@ class CardRegistries(BaseModel):
         self.datacard.registry.storage_client = storage_client
         self.modelcard.registry.storage_client = storage_client
         self.runcard.registry.storage_client = storage_client
+
+
+@dataclass
+class RunInfo:
+    run_id: str
+    project_info: ProjectInfo
+    storage_client: StorageClientType
+    registries: CardRegistries
+    run_name: Optional[str] = None

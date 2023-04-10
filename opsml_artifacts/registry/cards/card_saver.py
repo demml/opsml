@@ -204,7 +204,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         return CardType.MODEL in card_type
 
 
-class ExpeirmentCardArtifactSaver(CardArtifactSaver):
+class RunCardArtifactSaver(CardArtifactSaver):
     @cached_property
     def card(self):
         return cast(RunCard, self._card)
