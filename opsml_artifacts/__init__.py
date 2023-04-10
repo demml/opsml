@@ -1,8 +1,8 @@
 from opsml_artifacts.registry.cards.cards import (
     DataCard,
-    RunCard,
     ModelCard,
     PipelineCard,
+    RunCard,
 )
 from opsml_artifacts.registry.sql.registry import CardRegistry
 from opsml_artifacts.registry.sql.registry_base import VersionType

@@ -4,9 +4,9 @@ from typing import Dict, cast
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
-    RunCard,
     ModelCard,
     PipelineCard,
+    RunCard,
 )
 from opsml_artifacts.registry.cards.types import (
     ArtifactStorageTypes,

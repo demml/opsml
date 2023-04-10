@@ -1,7 +1,7 @@
 # pylint: disable=invalid-envvar-value
 
 from opsml_artifacts import CardRegistry
-from opsml_artifacts.projects.types import CardRegistries
+from opsml_artifacts.projects.base.types import CardRegistries
 from opsml_artifacts.registry.storage.storage_system import (
     StorageClientType,
 )
