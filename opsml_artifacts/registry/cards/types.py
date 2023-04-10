@@ -27,14 +27,14 @@ class ArtifactStorageTypes(str, Enum):
     BOOSTER = "booster"
 
 
+# class CardType(str, Enum):
+# DATA = "data"
+# MODEL = "model"
+# RUN = "run"
+# PIPELINE = "pipeline"
+
+
 class CardType(str, Enum):
-    DATA = "data"
-    MODEL = "model"
-    RUN = "run"
-    PIPELINE = "pipeline"
-
-
-class CardName(str, Enum):
     DATACARD = "data"
     RUNCARD = "run"
     MODELCARD = "model"

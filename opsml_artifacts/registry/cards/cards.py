@@ -566,7 +566,7 @@ class PipelineCard(ArtifactCard):
                 Card type. Accepted values are "data", "model", "run"
         """
         card_type = card_type.lower()
-        if card_type.lower() not in [CardType.DATA, CardType.RUN, CardType.MODEL]:
+        if card_type.lower() not in [CardType.DATACARD.value, CardType.RUNCARD.value, CardType.MODELCARD.value]:
             raise ValueError("""Only 'model', 'run' and 'data' are allowed values for card_type""")
 
         current_ids = getattr(self, f"{card_type}card_uids")
@@ -726,3 +726,19 @@ class RunCard(ArtifactCard):
             """
             )
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
+
+    def add_card_uid(self, card_type: CardType, uid: str) -> None:
+        """
+        Adds a card uid to the appropriact card uid list for tracking
+
+        Args:
+            card_type:
+                ArtifactCard class name
+            uid:
+                Uid of registered ArtifactCard
+        """
+        if card_type.upper() == CardType.DATACARD:
+            self.datacard_uids = [uid, *self.datacard_uids]
+        elif card_type.upper() == CardType.MODELCARD:
+            self.modelcard_uids = [uid, *self.modelcard_uids]
+        return None
