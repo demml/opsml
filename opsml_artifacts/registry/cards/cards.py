@@ -62,13 +62,7 @@ class ArtifactCard(BaseModel):
         return lowercase_vars
 
     def create_registry_record(self) -> RegistryRecord:
-        """Creates a registry record from self attributes
-
-        Args:
-            save_path (str): Path to save card artifacts
-            uid (str): Unique id associated with artifact
-            version (str): Version for artifact
-        """
+        """Creates a registry record from self attributes"""
         raise NotImplementedError
 
 
@@ -196,7 +190,8 @@ class DataCard(ArtifactCard):
 
     def split_data(self) -> Optional[DataHolder]:
 
-        """Loops through data splits and splits data either by indexing or
+        """
+        Loops through data splits and splits data either by indexing or
         column values
 
         Returns
@@ -385,10 +380,14 @@ class ModelCard(ArtifactCard):
         setattr(self, "trained_model", trained_model)
 
     def create_registry_record(self) -> RegistryRecord:
-        """Creates a registry record from the current ModelCard
+        """
+        Creates a registry record from the current ModelCard
 
-        registry_name (str): ModelCard Registry table making request
-        uid (str): Unique id of ModelCard
+        Args:
+            registry_name:
+                ModelCard Registry table making request
+            uid:
+                Unique id of ModelCard
 
         """
 
@@ -434,7 +433,8 @@ class ModelCard(ArtifactCard):
         setattr(self, "model_type", onnx_model.model_type)
 
     def _create_and_set_onnx_attr(self) -> None:
-        """Creates Onnx model from trained model and sample input data
+        """
+        Creates Onnx model from trained model and sample input data
         and sets Card attributes
         """
         from opsml_artifacts.registry.model.creator import (  # pylint: disable=import-outside-toplevel
@@ -451,8 +451,10 @@ class ModelCard(ArtifactCard):
 
     def _get_sample_data_for_api(self) -> Dict[str, Any]:
 
-        """Converts sample data to dictionary that can be used
-        to validate an onnx model"""
+        """
+        Converts sample data to dictionary that can be used
+        to validate an onnx model
+        """
 
         if self.sample_input_data is None:
             self.load_sample_data()
@@ -481,10 +483,11 @@ class ModelCard(ArtifactCard):
         start_onnx_runtime: bool = True,
     ) -> OnnxModelPredictor:
 
-        """Loads a model from serialized string
+        """
+        Loads a model from serialized string
 
         Returns
-            Onnx ModelProto
+            `OnnxModelPredictor`
 
         """
 
@@ -574,12 +577,7 @@ class PipelineCard(ArtifactCard):
         raise NotImplementedError
 
     def create_registry_record(self) -> RegistryRecord:
-        """Creates a registry record from the current PipelineCard
-
-        registry_name (str): PipelineCard Registry table making request
-        uid (str): Unique id of PipelineCard
-
-        """
+        """Creates a registry record from the current PipelineCard"""
         return PipelineRegistryRecord(**self.dict())
 
 
