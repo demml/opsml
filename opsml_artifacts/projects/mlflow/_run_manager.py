@@ -70,7 +70,7 @@ class _MlflowRunManager(_RunManager):
             run_name=self.run_name,
             mlflow_client=self.mlflow_client,
             registries=self.registries,
-            project_info=self._project_info,
+            runcard=super()._load_runcard(),
         )
 
         self.active_run = MlflowActiveRun(run_info=run_info)
@@ -96,13 +96,15 @@ class _MlflowRunManager(_RunManager):
             run_name:
                 Optional run name
         """
-        super()._create_run(run_name)
         mlflow_active_run = self.mlflow_client.create_run(
             experiment_id=self._project_id,
             run_name=run_name,
             tags=self.base_tags,
         )
+
         self._set_run_attr(mlflow_active_run=mlflow_active_run)
+        self._create_active_opsml_run()
+        self._active_run.add_tags(tags=self.base_tags)
 
     def _set_run_attr(self, mlflow_active_run: MlflowRun) -> None:
 
