@@ -184,7 +184,7 @@ class PipelineLoader:
         self._card_deck: Dict[str, ArtifactCard] = {}
 
     def _load_pipeline_card(self, uid: str) -> PipelineCard:
-        registry = CardRegistry(registry_name=CardType.PIPELINE.value)
+        registry = CardRegistry(registry_name=CardType.PIPELINECARD.value)
         loaded_card = registry.load_card(uid=uid)
         return cast(PipelineCard, loaded_card)
 
