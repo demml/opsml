@@ -22,7 +22,7 @@ def get_card_registries(storage_client: StorageClientType):
     registries = CardRegistries(
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
-        RunCard=CardRegistry(registry_name="run"),
+        runcard=CardRegistry(registry_name="run"),
     )
 
     # ensures proper storage client is set
@@ -62,6 +62,7 @@ class _RunManager:
         self.storage_client = self._get_storage_client()
         self.registries = get_card_registries(storage_client=self.storage_client)
 
+        print(run_id)
         if run_id is not None:
             self._verify_run_id(run_id)
             self._run_id = run_id
@@ -157,7 +158,7 @@ class _RunManager:
 
         if self.run_id is not None:
             return self._restore_run()
-        return self._create_run()
+        return self._create_run(run_name=run_name)
 
     def verify_active(self) -> None:
         if self.active_run is None:
