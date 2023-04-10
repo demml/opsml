@@ -1,16 +1,14 @@
 # pylint: disable=invalid-envvar-value
-from typing import Optional, Any, Iterator, cast, Dict
-from dataclasses import dataclass
-from contextlib import contextmanager
+from typing import Any, Dict, Optional
 
-from opsml_artifacts import VersionType, CardRegistry
+from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.projects.types import CardRegistries, RunInfo
-
-from opsml_artifacts.registry.storage.artifact_storage import save_record_artifact_to_storage
+from opsml_artifacts.projects.base.types import CardRegistries, RunInfo
 from opsml_artifacts.registry.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
-
+from opsml_artifacts.registry.storage.artifact_storage import (
+    save_record_artifact_to_storage,
+)
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -64,7 +62,6 @@ class ActiveRun:
 
         if self._info.run_id is not None:
             self.runcard = self._info.registries.runcard.load_card(uid=self._info.run_id)
-
         else:
             self.runcard = RunCard(
                 name=run_info.project_info.name,
@@ -166,8 +163,7 @@ class ActiveRun:
     def log_artifact(self, name: str, artifact: Any) -> None:
         """
         Append any artifact associated with your run to
-        the RunCard. The aritfact will be saved and the uri
-        will be appended to the RunCard. Artifact must be pickleable
+        an ActiveRun. Artifact must be pickleable
         (saved with joblib)
 
         Args:
@@ -230,13 +226,21 @@ class ActiveRun:
         self.runcard.log_param(key=key, value=value)
         # self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
-    def create_or_update_card(self):
+    def create_or_update_runcard(self):
+        """Creates or updates an active RunCard"""
+
+        self._verify_active()
         if self.runcard.uid is not None:
-            self._verify_active()
             CardHandler.update_card(
                 registries=self._info.registries,
                 card_type=CardType.RUNCARD.value,
-                ca
+                card=self.runcard,
+            )
+        else:
+            CardHandler.register_card(
+                registries=self._info.registries,
+                card_type=CardType.RUNCARD.value,
+                card=self.runcard,
             )
 
     @property

@@ -14,9 +14,9 @@ from opsml_artifacts.registry.cards.card_saver import save_card_artifacts
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
-    RunCard,
     ModelCard,
     PipelineCard,
+    RunCard,
 )
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml_artifacts.registry.sql.records import LoadedRecordType, load_record

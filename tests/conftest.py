@@ -54,8 +54,8 @@ from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, Exp
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
-from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo
-from opsml_artifacts.projects.types import CardRegistries
+from opsml_artifacts.projects.mlflow import MlflowProject
+from opsml_artifacts.projects.base.types import CardRegistries, MlflowProjectInfo
 
 
 # testing
@@ -263,29 +263,12 @@ def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
     api_card_registries = CardRegistries.construct(
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
-        runcard=CardRegistry(registry_name="run"),
+        runcard=CardRegistry(registry_name="experiment"),
     )
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
     return mlflow_exp
 
-
-# @pytest.fixture(scope="module")
-# def test_app() -> Iterator[TestClient]:
-#
-#    cleanup()
-#    from opsml_artifacts.app.main import OpsmlApp, config
-#    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
-#
-#    mlflow_config = initialize_mlflow()
-#    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
-#        config.is_proxy = True
-#        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
-#
-#    opsml_app = OpsmlApp(run_mlflow=True)
-#    with TestClient(opsml_app.get_app()) as tc:
-#        yield tc
-#    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -307,12 +290,13 @@ def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowPr
     api_card_registries = CardRegistries.construct(
         datacard=api_registries["data"],
         modelcard=api_registries["model"],
-        runcard=api_registries["run"],
+        experimentcard=api_registries["experiment"],
     )
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
 
     yield mlflow_exp
+
 
 
 ######## local clients
