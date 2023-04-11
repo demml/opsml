@@ -2,7 +2,7 @@
 # mypy: ignore-errors
 
 from opsml_artifacts.projects.base.project import OpsmlProject
-from opsml_artifacts.projects.base.types import ProjectInfo, MlflowProjectInfo
+from opsml_artifacts.projects.base.types import MlflowProjectInfo, ProjectInfo
 
 importlib = __import__("importlib")
 

@@ -3,7 +3,6 @@ from typing import Union
 from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.responses import StreamingResponse
 
-from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
     AddRecordRequest,
@@ -26,6 +25,7 @@ from opsml_artifacts.app.routes.utils import (
     iterfile,
 )
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger(__name__)
 

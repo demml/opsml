@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Optional, cast
 
 from opsml_artifacts.projects.base._active_run import ActiveRun

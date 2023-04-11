@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 import pandas as pd
 from pydantic import ValidationError
-from opsml_artifacts import DataCard, ModelCard, RunCard, PipelineCard
+from opsml_artifacts.registry import DataCard, ModelCard, RunCard, PipelineCard
 import uuid
 import random
 
@@ -50,7 +50,7 @@ def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parq
         assert isinstance(df, pd.DataFrame)
 
 
-def test_experiment_card(linear_regression, api_registries, mock_artifact_storage_clients):
+def test_run_card(linear_regression, api_registries, mock_artifact_storage_clients):
 
     registry = api_registries["run"]
 
@@ -60,13 +60,13 @@ def test_experiment_card(linear_regression, api_registries, mock_artifact_storag
         user_email="mlops.com",
         datacard_uids=["test_uid"],
     )
-    experiment.add_metric("test_metric", 10)
-    experiment.add_metrics({"test_metric2": 20})
+    experiment.log_metric("test_metric", 10)
+    experiment.log_metrics({"test_metric2": 20})
     assert experiment.metrics.get("test_metric") == 10
     assert experiment.metrics.get("test_metric2") == 20
     # save artifacts
     model, _ = linear_regression
-    experiment.add_artifact("reg_model", artifact=model)
+    experiment.log_artifact("reg_model", artifact=model)
     assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
     registry.register_card(card=experiment)
 
@@ -227,8 +227,8 @@ def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
         user_email="mlops.com",
         pipeline_code_uri="test_pipe_uri",
     )
-    for card_type in ["data", "data", "model", "experiment"]:
-        pipeline_card.addcard_uid(
+    for card_type in ["data", "run", "model"]:
+        pipeline_card.add_card_uid(
             uid=uuid.uuid4().hex,
             card_type=card_type,
             name=f"{card_type}_{random.randint(0,100)}",
@@ -237,7 +237,7 @@ def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
     registry = api_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
-    loaded_card.addcard_uid(uid="updated_uid", card_type="data", name="update")
+    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
     registry.update_card(card=loaded_card)
     df = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
@@ -260,7 +260,7 @@ def test_full_pipeline_with_loading(
     pipeline_code_uri = "test_pipe_uri"
     data_registry = api_registries["data"]
     model_registry = api_registries["model"]
-    experiment_registry = api_registries["experiment"]
+    experiment_registry = api_registries["run"]
     pipeline_registry = api_registries["pipeline"]
     model, data = linear_regression
     #### Create DataCard
@@ -292,7 +292,7 @@ def test_full_pipeline_with_loading(
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
     )
-    exp_card.add_metric("test_metric", 10)
+    exp_card.log_metric("test_metric", 10)
     experiment_registry.register_card(card=exp_card)
     #### PipelineCard
     pipeline_card = PipelineCard(
@@ -302,7 +302,7 @@ def test_full_pipeline_with_loading(
         pipeline_code_uri=pipeline_code_uri,
         datacard_uids={"data1": data_card.uid},
         modelcard_uids={"model1": model_card.uid},
-        experimentcard_uids={"exp1": exp_card.uid},
+        runcard_uids={"exp1": exp_card.uid},
     )
     pipeline_registry.register_card(card=pipeline_card)
     with patch(

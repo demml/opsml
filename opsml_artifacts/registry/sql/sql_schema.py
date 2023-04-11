@@ -22,6 +22,7 @@ class RegistryTableNames(str, Enum):
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
     RUN = os.getenv("ML_RUN_REGISTRY_NAME", "OPSML_RUN_REGISTRY")
     PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
+    PROJECT = os.getenv("ML_PROJECT_REGISTRY_NAME", "OPSML_PROJECT_REGISTRY")
 
 
 @declarative_mixin
@@ -114,11 +115,24 @@ class PipelineSchema(Base, BaseMixin, PipelineMixin):  # type: ignore
         return f"<SqlMetric({self.__tablename__}"
 
 
+class ProjectSchema(Base):
+    __tablename__ = RegistryTableNames.PROJECT.value
+
+    uid = Column("uid", String(512), default=lambda: uuid.uuid4().hex)
+    name = Column("name", String(512))
+    team = Column("team", String(512))
+    project_id = Column("project_id", String(512), primary_key=True)
+    description = Column("description", String(512))
+    version = Column("version", String(512))
+    timestamp = Column("timestamp", BigInteger)
+
+
 REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
     DataSchema,
     ModelSchema,
     RunSchema,
     PipelineSchema,
+    ProjectSchema,
 ]
 
 

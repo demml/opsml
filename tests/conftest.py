@@ -47,7 +47,7 @@ import lightgbm as lgb
 
 
 # opsml
-from opsml_artifacts import ModelCard
+from opsml_artifacts.registry import ModelCard
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, RunSchema, PipelineSchema
@@ -248,12 +248,14 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         model_registry = CardRegistry(registry_name="model")
         run_registry = CardRegistry(registry_name="run")
         pipeline_registry = CardRegistry(registry_name="pipeline")
+        project_registry = CardRegistry(registry_name="project")
 
         return {
             "data": data_registry,
             "model": model_registry,
             "run": run_registry,
             "pipeline": pipeline_registry,
+            "project": project_registry,
         }
 
 
@@ -264,6 +266,7 @@ def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
         runcard=CardRegistry(registry_name="run"),
+        project=CardRegistry(registry_name="project"),
     )
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
@@ -290,6 +293,7 @@ def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowPr
         datacard=api_registries["data"],
         modelcard=api_registries["model"],
         runcard=api_registries["run"],
+        project=api_registries["project"],
     )
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries

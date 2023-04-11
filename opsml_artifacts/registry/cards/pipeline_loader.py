@@ -12,8 +12,8 @@ from opsml_artifacts.registry.sql.registry import CardRegistry
 
 DATA_ATTRS = ["name", "team", "version", "data_type", "dependent_vars"]
 MODEL_ATTRS = ["name", "team", "version", "datacard_uid", "model_type"]
-EXP_ATTRS = [PipelineCardArgs.DATA_UIDs, PipelineCardArgs.MODEL_UIDs, "metrics"]
-POP_ATTRS = [PipelineCardArgs.DATA_UIDs, PipelineCardArgs.MODEL_UIDs, "datacard_uid"]
+EXP_ATTRS = [PipelineCardArgs.DATA_UIDS, PipelineCardArgs.MODEL_UIDS, "metrics"]
+POP_ATTRS = [PipelineCardArgs.DATA_UIDS, PipelineCardArgs.MODEL_UIDS, "datacard_uid"]
 
 
 class Visualizer:
@@ -159,7 +159,7 @@ class DependencyParser:
             artifact_names = []
             card_attr = self._get_artifact_attr(card_uid=card_uid, registry_type=card_type, attributes=EXP_ATTRS)
             for key_name, type_ in zip(
-                [PipelineCardArgs.DATA_UIDs, PipelineCardArgs.MODEL_UIDs],
+                [PipelineCardArgs.DATA_UIDS, PipelineCardArgs.MODEL_UIDS],
                 ["data", "model"],
             ):
                 if bool(card_attr.get(key_name)):
@@ -221,7 +221,7 @@ class PipelineLoader:
     @cached_property
     def _registries(self):
         registries = {}
-        for name in ["data", "model", "experiment"]:
+        for name in ["data", "model", "run"]:
             registries[name] = CardRegistry(name)
         return registries
 

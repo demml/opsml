@@ -1,12 +1,15 @@
 # pylint: disable=invalid-envvar-value
-import os
 from contextlib import contextmanager
-from typing import Iterator, Optional, cast, List
+from typing import Iterator, List, Optional, cast
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.base._active_run import ActiveRun, CardHandler
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo
+from opsml_artifacts.projects.base.utils import (
+    verify_project_id,
+    verify_runcard_project_match,
+)
 from opsml_artifacts.registry.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 
@@ -50,13 +53,9 @@ class OpsmlProject:
                 as the project's current run.
         """
 
-        # Set the run manager
-        self._project_id = info.project_id
-        self._run_mgr = _RunManager(
-            run_id=info.run_id,
-            project_id=self._project_id,
-            project_info=info,
-        )
+        # Set the run manager and project_id (creates ProjectCard if project doesn't exist)
+        self._run_mgr = _RunManager(run_id=info.run_id, project_info=info)
+        self._project_id = self._verify_project_id(info=info)
 
     @property
     def run_id(self) -> str:
@@ -73,6 +72,29 @@ class OpsmlProject:
     @property
     def project_id(self) -> str:
         return self._project_id
+
+    def _verify_project_id(self, info: ProjectInfo):
+        """
+        Checks if the name and team exist as a project in the Project registry. A ProjectCard is created if it
+        doesn't exist. If a run_id is provided, a check is performed to match the project_id to the run_id.
+
+        Args:
+            info:
+                Project info
+
+        """
+
+        if info.run_id is not None:
+            return verify_runcard_project_match(
+                project_id=info.project_id,
+                run_id=info.run_id,
+                runcard_registry=self._run_mgr.registries.runcard,
+            )
+
+        return verify_project_id(
+            project_registry=self._run_mgr.registries.project,
+            info=info,
+        )
 
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:

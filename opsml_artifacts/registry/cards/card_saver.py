@@ -1,11 +1,12 @@
 from functools import cached_property
-from typing import Dict, cast
+from typing import cast
 
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
     ModelCard,
     PipelineCard,
+    ProjectCard,
     RunCard,
 )
 from opsml_artifacts.registry.cards.types import (
@@ -74,7 +75,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             arrow_table (ArrowTable): Pyarrow table
         """
         storage_spec = self._copy_artifact_storage_info()
-        storage_spec.filename = storage_spec.name
+        storage_spec.filename = self.card.name
         self.storage_client.storage_spec = storage_spec
         storage_path = save_record_artifact_to_storage(
             artifact=arrow_table.table,
@@ -241,6 +242,19 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.PIPELINECARD.value in card_type
+
+
+class ProjectCardArtifactSaver(CardArtifactSaver):
+    @cached_property
+    def card(self):
+        return cast(ProjectCard, self._card)
+
+    def save_artifacts(self):
+        return self.card
+
+    @staticmethod
+    def validate(card_type: str) -> bool:
+        return CardType.PROJECTCARD.value in card_type
 
 
 def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:

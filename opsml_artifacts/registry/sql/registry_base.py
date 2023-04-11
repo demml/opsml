@@ -70,7 +70,8 @@ class SQLRegistryBase:
         """Base class for SQL Registries to inherit from
 
         Args:
-            table_name (str): CardRegistry table name
+            table_name:
+                CardRegistry table name
         """
         self.table_name = table_name
         self.supported_card = f"{table_name.split('_')[1]}Card"

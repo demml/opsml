@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Protocol
+from typing import Optional
 
 from pydantic import BaseModel, Field, validator
 
-from opsml_artifacts import CardRegistry, VersionType, RunCard
-from opsml_artifacts.registry.cards.cards import ArtifactCard
-from opsml_artifacts.registry.cards.types import CardInfo, CardType
+from opsml_artifacts.registry import CardRegistry, RunCard
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 
@@ -47,6 +45,11 @@ class ProjectInfo(BaseModel):
         """The unique project identifier."""
         return f"{self.team}:{self.name}"
 
+    @property
+    def project_name(self) -> str:
+        """The project name."""
+        return self.name
+
     @validator("name", "team", pre=True)
     def identifier_validator(cls, value: Optional[str]) -> Optional[str]:  # pylint: disable=no-self-argument
         """Lowers and strips an identifier.
@@ -55,7 +58,7 @@ class ProjectInfo(BaseModel):
         project identifiers."""
         if value is None:
             return None
-        return value.strip().lower()
+        return value.strip().lower().replace("_", "-")
 
 
 class MlflowProjectInfo(ProjectInfo):
@@ -94,6 +97,7 @@ class CardRegistries(BaseModel):
     datacard: CardRegistry
     modelcard: CardRegistry
     runcard: CardRegistry
+    project: CardRegistry
 
     class Config:
         arbitrary_types_allowed = True
