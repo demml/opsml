@@ -8,7 +8,7 @@ from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.projects.base._active_run import ActiveRun, CardHandler
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo
-from opsml_artifacts.registry.cards import ArtifactCard
+from opsml_artifacts.registry.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -50,8 +50,6 @@ class OpsmlProject:
                 Run information. if a run_id is given, that run is set
                 as the project's current run.
         """
-
-        tracking_uri = info.tracking_uri or os.getenv(OpsmlUri.TRACKING_URI)
 
         # Set the run manager
         self._project_id = info.project_id
@@ -115,3 +113,19 @@ class OpsmlProject:
             card_type=card_type,
             info=info,
         )
+
+    @property
+    def run_data(self):
+        return cast(RunCard, self._run_mgr.registries.runcard.load_card(uid=self.run_id))
+
+    @property
+    def metrics(self) -> dict[str, float]:
+        return self.run_data.metrics
+
+    @property
+    def params(self) -> dict[str, str]:
+        return self.run_data.params
+
+    @property
+    def tags(self) -> dict[str, str]:
+        return self.run_data.tags
