@@ -9,7 +9,7 @@ from mlflow.tracking.fluent import end_run as fluent_end_run
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.base._run_manager import _RunManager
-from opsml_artifacts.projects.base.types import MlflowProjectInfo
+from opsml_artifacts.projects.base.types import MlflowProjectInfo, Tags
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow.mlflow_utils import (
     MlflowRunInfo,
@@ -136,11 +136,12 @@ class _MlflowRunManager(_RunManager):
 
     def _end_run(self) -> None:
 
+        super()._end_run()
+        self.mlflow_client.set_tag(run_id=self.run_id, key=Tags.VERSION, value=self.version)
         self.mlflow_client.set_terminated(run_id=self.run_id)
 
         # set to None
         self.storage_client.run_id = None
-        super()._end_run()
 
         # needed for when logging models (models are logged via fluent api)
         fluent_end_run()
