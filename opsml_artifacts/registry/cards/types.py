@@ -39,19 +39,20 @@ class CardType(str, Enum):
     RUNCARD = "run"
     MODELCARD = "model"
     PIPELINECARD = "pipeline"
+    PROJECTCARD = "project"
 
 
 class PipelineCardArgs(str, Enum):
-    DATA_UIDs = "datacard_uids"
-    MODEL_UIDs = "modelcard_uids"
+    DATA_UIDS = "datacard_uids"
+    MODEL_UIDS = "modelcard_uids"
     RUN_UIDS = "runcard_uids"
 
 
 class RunCardArgs(str, Enum):
     DATA_UID = "datacard_uid"
-    MODEL_UIDs = "modelcard_uids"
+    MODEL_UIDS = "modelcard_uids"
     PIPELINE_UID = "pipelinecard_uid"
 
 
-NON_PIPELINE_CARDS = [card.value for card in CardType if card.value != "pipeline"]
+NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project"]]
 DATA_ARTIFACTS = list(ArtifactStorageTypes)

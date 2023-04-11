@@ -1,7 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from typing import Optional
 
-from opsml_artifacts import CardRegistry, RunCard
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.projects.base._active_run import ActiveRun
@@ -11,6 +10,7 @@ from opsml_artifacts.projects.base.types import (
     RunInfo,
     Tags,
 )
+from opsml_artifacts.registry import CardRegistry, RunCard
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -23,6 +23,7 @@ def get_card_registries(storage_client: StorageClientType):
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
         runcard=CardRegistry(registry_name="run"),
+        project=CardRegistry(registry_name="project"),
     )
 
     # ensures proper storage client is set
@@ -34,7 +35,6 @@ def get_card_registries(storage_client: StorageClientType):
 class _RunManager:
     def __init__(
         self,
-        project_id: str,
         project_info: ProjectInfo,
         run_id: Optional[str] = None,
     ):
@@ -52,8 +52,6 @@ class _RunManager:
 
         """
 
-        # base attr
-        self._project_id = project_id
         self._project_info = project_info
         self._run_id: Optional[str] = None
         self._run_name: Optional[str] = None
@@ -172,6 +170,7 @@ class _RunManager:
             team=self._project_info.team,
             user_email=self._project_info.user_email,
             uid=self.run_id,
+            project_id=self._project_info.project_id,
         )
 
     def _restore_run(self) -> None:

@@ -1,7 +1,7 @@
 import pydantic
 import pytest
 
-from opsml_artifacts.projects import types
+from opsml_artifacts.projects.base import types
 
 
 def test_project_id() -> None:
