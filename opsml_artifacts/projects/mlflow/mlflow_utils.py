@@ -7,7 +7,7 @@ from mlflow.tracking import MlflowClient
 
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth
-from opsml_artifacts.projects.base.types import CardRegistries
+from opsml_artifacts.projects.base.types import CardRegistries, RunInfo
 from opsml_artifacts.registry import RunCard
 from opsml_artifacts.registry.storage.storage_system import (
     MlflowStorageClient,
@@ -17,14 +17,26 @@ from opsml_artifacts.registry.storage.storage_system import (
 from opsml_artifacts.registry.storage.types import StorageClientSettings
 
 
-@dataclass
-class MlflowRunInfo:
-    storage_client: MlflowStorageClient
-    mlflow_client: MlflowClient
-    registries: CardRegistries
-    runcard: RunCard
-    run_name: Optional[str] = None
-    run_id: Optional[str] = None
+class MlflowRunInfo(RunInfo):
+    def __init__(
+        self,
+        storage_client: MlflowStorageClient,
+        mlflow_client: MlflowClient,
+        registries: CardRegistries,
+        runcard: RunCard,
+        run_id: str,
+        run_name: Optional[str] = None,
+    ):
+
+        super().__init__(
+            storage_client=storage_client,
+            registries=registries,
+            runcard=runcard,
+            run_id=run_id,
+            run_name=run_name,
+        )
+
+        self.mlflow_client = mlflow_client
 
 
 def get_mlflow_storage_client() -> MlflowStorageClient:

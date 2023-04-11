@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Protocol, Tuple, Union, cast
 
 import pandas as pd
 import semver
@@ -114,10 +114,10 @@ class SQLRegistryBase:
         """Sets a unique id to be applied to a card"""
         return uuid.uuid4().hex
 
-    def add_and_commit(self, record: Dict[str, Any]):
+    def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
-    def update_record(self, record: Dict[str, Any]):
+    def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
     def _validate(self, card: ArtifactCard):
@@ -216,7 +216,7 @@ class SQLRegistryBase:
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
-    def check_uid(self, uid: str, table_to_check: str):
+    def check_uid(self, uid: str, table_to_check: str) -> bool:
         raise NotImplementedError
 
     def load_card(
@@ -357,7 +357,7 @@ class ServerRegistry(SQLRegistryBase):
 
         return results_list
 
-    def check_uid(self, uid: str, table_to_check: str):
+    def check_uid(self, uid: str, table_to_check: str) -> bool:
         query = query_creator.uid_exists_query(
             uid=uid,
             table_to_check=table_to_check,
@@ -377,7 +377,7 @@ class ClientRegistry(SQLRegistryBase):
         """Gets the requests session for connecting to the opsml api"""
         return settings.request_client
 
-    def check_uid(self, uid: str, table_to_check: str):
+    def check_uid(self, uid: str, table_to_check: str) -> bool:
 
         data = self._session.post_request(
             route=api_routes.CHECK_UID,
@@ -464,11 +464,10 @@ class ClientRegistry(SQLRegistryBase):
         raise ValueError("Failed to update card")
 
 
-# mypy isnt good with dynamic class creation
 def get_sql_registry_base() -> Any:
     if settings.request_client is not None:
         return cast(Any, ClientRegistry)
     return cast(Any, ServerRegistry)
 
 
-Registry = get_sql_registry_base()
+OpsmlRegistry = get_sql_registry_base()
