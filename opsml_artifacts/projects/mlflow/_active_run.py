@@ -51,7 +51,7 @@ class MlflowActiveRun(ActiveRun):
         """
         super().log_metric(key, value, timestamp, step)
 
-        self.info.mlflow_client.log_metric(
+        self._info.mlflow_client.log_metric(
             run_id=self.run_id,
             key=key,
             value=value,
