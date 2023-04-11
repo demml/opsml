@@ -21,7 +21,6 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     active."""
 
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
-    opsml_info = ProjectInfo(name="test", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         # Create metrics / params / cards
         run = cast(MlflowActiveRun, run)
@@ -82,10 +81,14 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
 
+    opsml_info = ProjectInfo(name="test", team="test", user_email="user@test.com", run_id=info.run_id)
     opsml_project = OpsmlProject(info=opsml_info)
 
-    print(opsml_project.run_data)
-    a
+    # Test RunCard
+    assert opsml_project.metrics["m1"] == 1.1
+    assert opsml_project.params["m1"] == "apple"
+    assert opsml_project.datacard_uids[0] == data_card.uid
+    assert opsml_project.modelcard_uids[0] == model_card.uid
 
 
 def _test_metrics(mlflow_project: MlflowProject) -> None:
