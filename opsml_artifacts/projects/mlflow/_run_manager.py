@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, cast
 
 from mlflow.entities import Run as MlflowRun
 from mlflow.entities import RunStatus
@@ -45,6 +45,10 @@ class _MlflowRunManager(_RunManager):
         self.mlflow_client = mlflow_client
         self._project_id = project_id
         super().__init__(project_info, run_id)
+
+    @property
+    def storage_client(self):
+        return cast(MlflowStorageClient, self._storage_client)
 
     def _get_storage_client(self) -> MlflowStorageClient:
         """Gets the MlflowStorageClient and sets the current client"""
@@ -105,7 +109,7 @@ class _MlflowRunManager(_RunManager):
 
         self._set_run_attr(mlflow_active_run=mlflow_active_run)
         self._create_active_opsml_run()
-        self._active_run.add_tags(tags=self.base_tags)
+        self.active_run.add_tags(tags=self.base_tags)
 
     def _set_run_attr(self, mlflow_active_run: MlflowRun) -> None:
 

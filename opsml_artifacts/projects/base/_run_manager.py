@@ -1,5 +1,5 @@
 # pylint: disable=invalid-envvar-value
-from typing import Optional
+from typing import Optional, cast
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
@@ -58,12 +58,16 @@ class _RunManager:
         self._active_run: Optional[ActiveRun] = None
         self._version: Optional[str] = None
 
-        self.storage_client = self._get_storage_client()
-        self.registries = get_card_registries(storage_client=self.storage_client)
+        self._storage_client = self._get_storage_client()
+        self.registries = get_card_registries(storage_client=self._storage_client)
 
         if run_id is not None:
             self._verify_run_id(run_id)
             self._run_id = run_id
+
+    @property
+    def storage_client(self):
+        return self._storage_client
 
     @property
     def base_tags(self):
@@ -74,6 +78,17 @@ class _RunManager:
         }
 
     @property
+    def active_run(self) -> ActiveRun:
+        if self._active_run is not None:
+            return cast(ActiveRun, self._active_run)
+        raise ValueError("No active run has been set")
+
+    @active_run.setter
+    def active_run(self, active_run: ActiveRun):
+        """Sets the active run"""
+        self._active_run = active_run
+
+    @property
     def version(self) -> str:
         """Current RunCard version"""
         if self._version is not None:
@@ -81,7 +96,7 @@ class _RunManager:
         return "No version set"
 
     @version.setter
-    def version(self, version: str) -> str:
+    def version(self, version: str) -> None:
         """Current RunCard version"""
         self._version = version
 
@@ -96,16 +111,6 @@ class _RunManager:
         self._run_id = run_id
 
     @property
-    def active_run(self) -> Optional[ActiveRun]:
-        """Current active run"""
-        return self._active_run
-
-    @active_run.setter
-    def active_run(self, active_run: ActiveRun):
-        """Sets the active run"""
-        self._active_run = active_run
-
-    @property
     def run_name(self) -> Optional[str]:
         """Get current run name"""
         return self._run_name
@@ -118,7 +123,7 @@ class _RunManager:
     def _get_storage_client(self) -> StorageClientType:
         return settings.storage_client
 
-    def _card_exists(self, run_id: str) -> None:
+    def _card_exists(self, run_id: str) -> bool:
         """Verifies the run exists for the given project."""
 
         card = self.registries.runcard.registry.list_cards(uid=run_id)
@@ -184,7 +189,7 @@ class _RunManager:
 
         """
         self._create_active_opsml_run()
-        self._active_run.add_tags(tags=self.base_tags)
+        self.active_run.add_tags(tags=self.base_tags)
 
     def _set_active_run(self, run_name: Optional[str] = None) -> None:
         """
@@ -200,8 +205,8 @@ class _RunManager:
         return self._create_run(run_name=run_name)
 
     def verify_active(self) -> None:
-        if self.active_run is None:
-            raise ValueError("ActiveRun has not been set")
+        """This fails if ActiveRun is None"""
+        self.active_run
 
     def start_run(self, run_name: Optional[str] = None):
         """
@@ -212,8 +217,8 @@ class _RunManager:
                 Optional run name
         """
         # replace previous version if user is creating a run after finishing another
-        self.version = None
-        if self.active_run is not None:
+        self._version = None
+        if self._active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
         self._set_active_run(run_name=run_name)
@@ -223,13 +228,13 @@ class _RunManager:
 
         # set to None
         self.active_run.create_or_update_runcard()
-        self.version = self.active_run.runcard.version
+        self.version = cast(str, self.active_run.runcard.version)
 
         if self.active_run is not None:
             self.active_run._active = (  # pylint: disable=protected-access
                 False  # prevent use of detached run outside of context manager
             )
-        self.active_run = None  # detach active run
+        self._active_run = None  # detach active run
 
     def end_run(self):
         """Ends a Run"""

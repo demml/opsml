@@ -7,16 +7,19 @@ from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
 from mlflow.tracking import MlflowClient
 
-# helpers
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.projects.base.project import OpsmlProject
 from opsml_artifacts.projects.base.types import MlflowProjectInfo
+from opsml_artifacts.projects.base.utils import _verify_project_id
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow._run_manager import _MlflowRunManager
 
 # porjects
 from opsml_artifacts.projects.mlflow.mlflow_utils import get_mlflow_client
+
+# helpers
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -73,11 +76,11 @@ class MlflowProject(OpsmlProject):
         )
 
         # set opsml ProjectCard
-        super()._verify_project_id(info=info)
+        _verify_project_id(info=info, registries=self._run_mgr.registries)
 
     @property
     def run_data(self) -> RunData:
-        return self._run_mgr.mlflow_client.get_run(self.run_id).data
+        return self._run_mgr.mlflow_client.get_run(self.run_id).data  # type: ignore
 
     def _get_project_id(self, project_id: str, mlflow_client: MlflowClient) -> str:
         """
@@ -137,12 +140,12 @@ class MlflowProject(OpsmlProject):
             run_id=self.run_id,
             artifact_path=artifact_path,
             dst_path=local_path,
-            tracking_uri=self._run_mgr.mlflow_client.tracking_uri,
+            tracking_uri=self._run_mgr.mlflow_client.tracking_uri,  # type: ignore
         )
 
     def list_artifacts(self, path: Optional[str] = None) -> dict[str, float]:
         """List artifacts for the current run"""
-        return self._run_mgr.mlflow_client.list_artifacts(
+        return self._run_mgr.mlflow_client.list_artifacts(  # type: ignore
             run_id=self.run_id,
             path=path,
         )

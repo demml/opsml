@@ -18,7 +18,7 @@ from opsml_artifacts.registry.sql.records import (
     RunRegistryRecord,
 )
 from opsml_artifacts.registry.sql.registry_base import (
-    Registry,
+    OpsmlRegistry,
     SQLRegistryBase,
     VersionType,
 )
@@ -30,7 +30,7 @@ logger = ArtifactLogger.get_logger(__name__)
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
-class DataCardRegistry(Registry):
+class DataCardRegistry(OpsmlRegistry):
     def update_card(self, card: DataCard) -> None:
         """Updates an existing data card in the data registry.
 
@@ -46,7 +46,7 @@ class DataCardRegistry(Registry):
         return registry_name in RegistryTableNames.DATA
 
 
-class ModelCardRegistry(Registry):
+class ModelCardRegistry(OpsmlRegistry):
     def update_card(self, card: ModelCard) -> None:
         """Updates an existing model card.
 
@@ -110,7 +110,7 @@ class ModelCardRegistry(Registry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class RunCardRegistry(Registry):
+class RunCardRegistry(OpsmlRegistry):
     def update_card(self, card: RunCard) -> None:
         """
         Updates an existing experiment card in the registry.
@@ -128,7 +128,7 @@ class RunCardRegistry(Registry):
         return registry_name in RegistryTableNames.RUN
 
 
-class PipelineCardRegistry(Registry):
+class PipelineCardRegistry(OpsmlRegistry):
     def update_card(self, card: PipelineCard) -> None:
         """
         Updates an existing pipeline card in the pipeline registry.
@@ -146,7 +146,7 @@ class PipelineCardRegistry(Registry):
         return registry_name in RegistryTableNames.PIPELINE
 
 
-class ProjectCardRegistry(Registry):
+class ProjectCardRegistry(OpsmlRegistry):
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PROJECT
@@ -177,7 +177,7 @@ class CardRegistry:
         self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
-    def _set_registry(self, registry_name: str) -> Registry:
+    def _set_registry(self, registry_name: str) -> OpsmlRegistry:
         """Returns a SQL registry to be used to register Cards
 
         Args:
@@ -190,7 +190,7 @@ class CardRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
-            for registry in Registry.__subclasses__()
+            for registry in OpsmlRegistry.__subclasses__()
             if registry.validate(
                 registry_name=registry_name,
             )

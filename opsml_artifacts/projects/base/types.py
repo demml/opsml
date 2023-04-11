@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, validator
 
@@ -109,10 +109,18 @@ class CardRegistries(BaseModel):
         self.runcard.registry.storage_client = storage_client
 
 
-@dataclass
+# dataclass inheritance doesnt handle default vals well for <= py3.9
 class RunInfo:
-    storage_client: StorageClientType
-    registries: CardRegistries
-    runcard: RunCard
-    run_name: Optional[str] = None
-    run_id: Optional[str] = None
+    def __init__(
+        self,
+        storage_client: StorageClientType,
+        registries: CardRegistries,
+        runcard: RunCard,
+        run_id: str,
+        run_name: Optional[str] = None,
+    ):
+        self.storage_client = storage_client
+        self.registries = registries
+        self.runcard = runcard
+        self.run_id = run_id
+        self.run_name = run_name
