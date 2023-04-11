@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from opsml_artifacts import DataCard, ModelCard
 from opsml_artifacts.registry.cards.types import CardInfo
 from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo, MlflowActiveRun
+from opsml_artifacts.projects import OpsmlProject, ProjectInfo
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from tests import conftest
 
@@ -20,6 +21,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     active."""
 
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    opsml_info = ProjectInfo(name="test", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         # Create metrics / params / cards
         run = cast(MlflowActiveRun, run)
@@ -79,6 +81,11 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         run.log_param(key="param1", value="value1")
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
+
+    opsml_project = OpsmlProject(info=opsml_info)
+
+    print(opsml_project.run_data)
+    a
 
 
 def _test_metrics(mlflow_project: MlflowProject) -> None:
