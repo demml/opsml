@@ -156,7 +156,7 @@ name = "alembic"
 version = "1.10.3"
 description = "A database migration tool for SQLAlchemy."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "alembic-1.10.3-py3-none-any.whl", hash = "sha256:b2e0a6cfd3a8ce936a1168320bcbe94aefa3f4463cd773a968a55071beb3cd37"},
@@ -2674,7 +2674,7 @@ name = "mako"
 version = "1.2.4"
 description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "Mako-1.2.4-py3-none-any.whl", hash = "sha256:c97c79c018b9165ac9922ae4f32da095ffd3c4e6872b45eded42926deea46818"},
@@ -6348,4 +6348,4 @@ proxy = ["fastapi", "gunicorn", "mlflow", "prometheus-fastapi-instrumentator", "
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "a485fb95ad026d089e1016e78de86f90aaca862164936e1cc64ad38d99ad1ed7"
+content-hash = "c4695474c9ab21372c97092346ec075734625d5480100553744f32a2ba05fce8"
