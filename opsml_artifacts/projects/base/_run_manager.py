@@ -124,7 +124,7 @@ class _RunManager:
     def _verify_run_id(self, run_id: str) -> None:
         """Verifies the run exists for the given project."""
 
-        card = self.registries.runcard.registry.list_cards(uid=run_id)
+        card = self.registries.runcard.registry.list_cards()
 
         if len(card) > 0:
             if not bool(card[0]):
@@ -158,6 +158,7 @@ class _RunManager:
             name=self._project_info.name,
             team=self._project_info.team,
             user_email=self._project_info.user_email,
+            uid=self.run_id,
         )
 
     def _restore_run(self) -> None:

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 import numpy as np
 import pandas as pd
 from pyarrow import Table
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, root_validator, validator, Field
 
 from opsml_artifacts.drift.types import DriftReport
 from opsml_artifacts.helpers.logging import ArtifactLogger
