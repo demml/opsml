@@ -1,10 +1,9 @@
 # pylint: disable=invalid-envvar-value
 import os
 from contextlib import contextmanager
-from typing import Any, Iterator, Optional, cast
+from typing import Iterator, Optional, cast, List
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.projects.base._active_run import ActiveRun, CardHandler
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo
@@ -129,3 +128,13 @@ class OpsmlProject:
     @property
     def tags(self) -> dict[str, str]:
         return self.run_data.tags
+
+    @property
+    def datacard_uids(self) -> List[str]:
+        """DataCards associated with the current run"""
+        return self.run_data.datacard_uids
+
+    @property
+    def modelcard_uids(self) -> List[str]:
+        """ModelCards associated with the current run"""
+        return self.run_data.modelcard_uids
