@@ -6,7 +6,7 @@ from opsml_artifacts.registry.cards import ProjectCard
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 
-def verify_project_id(project_registry: CardRegistry, info: ProjectInfo):
+def get_project_id(project_registry: CardRegistry, info: ProjectInfo):
 
     projects = project_registry.registry.list_cards(name=info.name, team=info.team)
     if bool(projects):
@@ -38,13 +38,38 @@ def verify_runcard_project_match(
         )
 
 
+def _verify_project_id(info: ProjectInfo, registries: CardRegistries):
+    """
+    Checks if the name and team exist as a project in the Project registry. A ProjectCard is created if it
+    doesn't exist. If a run_id is provided, a check is performed to match the project_id to the run_id.
+
+    Args:
+        info:
+            Project info
+
+    """
+
+    if info.run_id is not None:
+        return verify_runcard_project_match(
+            project_id=info.project_id,
+            run_id=info.run_id,
+            runcard_registry=registries.runcard,
+        )
+
+    return get_project_id(
+        project_registry=registries.project,
+        info=info,
+    )
+
+
 def get_card_registries(storage_client: StorageClientType):
 
     """Gets CardRegistries to associate with MlFlow experiment"""
     registries = CardRegistries(
         datacard=CardRegistry(registry_name="data"),
         modelcard=CardRegistry(registry_name="model"),
-        RunCard=CardRegistry(registry_name="run"),
+        runcard=CardRegistry(registry_name="run"),
+        project=CardRegistry(registry_name="project"),
     )
 
     # double check

@@ -44,10 +44,10 @@ class CardHandler:
         registries: CardRegistries,
         card_type: str,
         card: ArtifactCard,
-    ) -> ArtifactCard:
+    ) -> None:
         """Updates an ArtifactCard"""
         registry: CardRegistry = getattr(registries, card_type)
-        return registry.update_card(card=card)
+        registry.update_card(card=card)
 
 
 class ActiveRun:
@@ -130,7 +130,7 @@ class ActiveRun:
         self.add_tag(key=tag_key, value=str(card.version))
 
         # add uid to RunCard
-        self.runcard.add_card_uid(card_type=card_type, uid=card.uid)
+        self.runcard.add_card_uid(card_type=card_type, uid=str(card.uid))
 
     def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """
