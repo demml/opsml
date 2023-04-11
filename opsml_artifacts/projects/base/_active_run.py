@@ -24,6 +24,7 @@ class CardHandler:
         version_type: VersionType = VersionType.MINOR,
     ) -> None:
         """Registers and ArtifactCard"""
+
         registry: CardRegistry = getattr(registries, card_type)
         registry.register_card(card=card, version_type=version_type)
 
@@ -225,13 +226,13 @@ class ActiveRun:
         if self.runcard.uid is not None:
             CardHandler.update_card(
                 registries=self._info.registries,
-                card_type=CardType.RUNCARD.value,
+                card_type=CardType.RUNCARD.name.lower(),
                 card=self.runcard,
             )
         else:
             CardHandler.register_card(
                 registries=self._info.registries,
-                card_type=CardType.RUNCARD.value,
+                card_type=CardType.RUNCARD.name.lower(),
                 card=self.runcard,
             )
 

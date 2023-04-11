@@ -616,8 +616,8 @@ class RunCard(ArtifactCard):
 
     """
 
-    datacard_uids: Optional[List[str]]
-    modelcard_uids: Optional[List[str]]
+    datacard_uids: List[str] = []
+    modelcard_uids: List[str] = []
     pipelinecard_uid: Optional[str]
     metrics: Dict[str, Union[float, int]] = {}
     params: Dict[str, Union[float, int, str]] = {}
@@ -691,14 +691,15 @@ class RunCard(ArtifactCard):
                 Optional step associated with name and value
         """
 
-        self.metrics = {
-            **{
-                key: value,
-                "timestamp": timestamp,
-                "step": step,
-            },
-            **self.metrics,
-        }
+        metrics = {key: value}
+
+        if timestamp is not None:
+            metrics["timestamp"] = timestamp
+
+        if step is not None:
+            metrics["step"] = step
+
+        self.metrics = {**metrics, **self.metrics}
 
     def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
 
@@ -741,6 +742,7 @@ class RunCard(ArtifactCard):
                 """One of DataCard, ModelCard, or PipelineCard must be specified
             """
             )
+
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
     def add_card_uid(self, card_type: CardType, uid: str) -> None:
@@ -753,8 +755,9 @@ class RunCard(ArtifactCard):
             uid:
                 Uid of registered ArtifactCard
         """
-        if card_type.upper() == CardType.DATACARD:
+
+        if CardType.DATACARD in card_type.lower():
             self.datacard_uids = [uid, *self.datacard_uids]
-        elif card_type.upper() == CardType.MODELCARD:
+        elif CardType.MODELCARD in card_type.lower():
             self.modelcard_uids = [uid, *self.modelcard_uids]
         return None

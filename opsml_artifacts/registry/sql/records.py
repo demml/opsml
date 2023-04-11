@@ -44,7 +44,7 @@ class ModelRegistryRecord(BaseModel):
     team: str
     user_email: str
     name: str
-    model_card_uri: str
+    modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
     sample_data_uri: str
@@ -154,7 +154,7 @@ class LoadedDataRecord(LoadRecord):
 
 
 class LoadedModelRecord(LoadRecord):
-    model_card_uri: str
+    modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
     sample_data_uri: str
@@ -170,7 +170,7 @@ class LoadedModelRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        modelcard_definition["model_card_uri"] = values.get("model_card_uri")
+        modelcard_definition["modelcard_uri"] = values.get("modelcard_uri")
         modelcard_definition["trained_model_uri"] = values.get("trained_model_uri")
         modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
@@ -192,7 +192,7 @@ class LoadedModelRecord(LoadRecord):
         """
 
         storage_spec = ArtifactStorageSpecs(
-            save_path=values["model_card_uri"],
+            save_path=values["modelcard_uri"],
             name=values["name"],
             version=values["version"],
             team=values["team"],

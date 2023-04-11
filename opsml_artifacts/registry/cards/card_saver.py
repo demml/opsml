@@ -158,7 +158,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             storage_client=self.storage_client,
         )
 
-        self.card.model_card_uri = storage_path.uri
+        self.card.modelcard_uri = storage_path.uri
 
     def _save_trained_model(self):
         """Saves trained model associated with ModelCard to filesystem"""
