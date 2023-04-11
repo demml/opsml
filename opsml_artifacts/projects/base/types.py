@@ -36,6 +36,11 @@ class ProjectInfo(BaseModel):
     )
     user_email: Optional[str] = None
 
+    run_id: Optional[str] = Field(
+        None,
+        description="An existing run_id to use. If None, a new run is created when the project is activated",
+    )
+
     @property
     def project_id(self) -> str:
         """The unique project identifier."""
@@ -78,10 +83,6 @@ class MlflowProjectInfo(ProjectInfo):
 
     """
 
-    run_id: Optional[str] = Field(
-        None,
-        description="An existing mlflow run_id to use. If None, a new run is created when the project is activated",
-    )
     tracking_uri: Optional[str] = Field(
         None,
         description="The mlflow tracking URI. Defaults to OPSML_TRACKING_URI",
