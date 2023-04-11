@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 
 from opsml_artifacts import CardRegistry, VersionType
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 from opsml_artifacts.projects.base.types import CardRegistries, RunInfo
 from opsml_artifacts.registry.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
@@ -166,6 +167,8 @@ class ActiveRun:
             artifact:
                 Artifact
         """
+        spec = ArtifactStorageSpecs(save_path="misc", filename=name)
+        self._info.registries.runcard.registry.storage_client.storage_spec = spec
 
         storage_path = save_record_artifact_to_storage(
             artifact=artifact,
