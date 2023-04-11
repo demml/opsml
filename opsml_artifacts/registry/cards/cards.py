@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 import numpy as np
 import pandas as pd
 from pyarrow import Table
-from pydantic import BaseModel, root_validator, validator, Field
+from pydantic import BaseModel, root_validator, validator
 
 from opsml_artifacts.drift.types import DriftReport
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -22,6 +22,7 @@ from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ModelRegistryRecord,
     PipelineRegistryRecord,
+    ProjectRegistryRecord,
     RegistryRecord,
     RunRegistryRecord,
 )
@@ -742,4 +743,20 @@ class RunCard(ArtifactCard):
             self.datacard_uids = [uid, *self.datacard_uids]
         elif CardType.MODELCARD in card_type.lower():
             self.modelcard_uids = [uid, *self.modelcard_uids]
-        return None
+
+
+class ProjectCard(ArtifactCard):
+    """
+    Card containg project information
+    """
+
+    project_id: Optional[str] = None
+
+    @validator("project_id", pre=True, always=True)
+    def create_project_id(cls, value, values, **kwargs):  # pylint: disable=no-self-argument
+        return f'{values["name"]}:{values["team"]}'
+
+    def create_registry_record(self) -> RegistryRecord:
+        """Creates a registry record for a project"""
+
+        return ProjectRegistryRecord(**self.dict())

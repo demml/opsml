@@ -83,7 +83,23 @@ class PipelineRegistryRecord(BaseModel):
     timestamp: int = int(round(time.time() * 1_000_000))
 
 
-RegistryRecord = Union[DataRegistryRecord, ModelRegistryRecord, RunRegistryRecord, PipelineRegistryRecord]
+class ProjectRegistryRecord(BaseModel):
+    uid: str
+    name: str
+    team: str
+    project_id: str
+    version: Optional[str]
+    description: Optional[str]
+    timestamp: int = int(round(time.time() * 1_000_000))
+
+
+RegistryRecord = Union[
+    DataRegistryRecord,
+    ModelRegistryRecord,
+    RunRegistryRecord,
+    PipelineRegistryRecord,
+    ProjectRegistryRecord,
+]
 
 
 class LoadRecord(BaseModel):

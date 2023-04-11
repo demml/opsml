@@ -18,12 +18,7 @@ from opsml_artifacts.drift.data_drift import DriftDetector
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
 
-    storage_spec = ArtifactStorageSpecs(
-        save_path="blob",
-        version="1.0.0",
-        team="mlops",
-        name="test",
-    )
+    storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
     pq_writer = ParquetStorage(
@@ -40,12 +35,7 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
-    storage_spec = ArtifactStorageSpecs(
-        save_path="blob",
-        version="1.0.0",
-        team="mlops",
-        name="test",
-    )
+    storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
     with patch.multiple(
@@ -85,12 +75,7 @@ def test_drift_storage(
 
     drift_report = detector.run_drift_diagnostics(return_dataframe=False)
 
-    storage_spec = ArtifactStorageSpecs(
-        save_path="blob",
-        version="1.0.0",
-        team="mlops",
-        name="test",
-    )
+    storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
     drift_writer = JoblibStorage(
@@ -105,12 +90,7 @@ def test_drift_storage(
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib):
     model, data = load_transformer_example
-    storage_spec = ArtifactStorageSpecs(
-        save_path="blob",
-        version="1.0.0",
-        team="mlops",
-        name="test",
-    )
+    storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
     model_storage = TensorflowModelStorage(
@@ -134,13 +114,7 @@ def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
     model, data = load_pytorch_resnet
-    storage_spec = ArtifactStorageSpecs(
-        save_path="blob",
-        version="1.0.0",
-        team="mlops",
-        name="test",
-        storage_client=storage_client,
-    )
+    storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
     model_storage = PyTorchModelStorage(
