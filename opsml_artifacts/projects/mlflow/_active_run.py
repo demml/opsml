@@ -74,6 +74,32 @@ class MlflowActiveRun(ActiveRun):
         super().log_param(key, value)
         self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
+    def log_artifact_from_file(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+        """
+        Logs an artifact for the current run. All artifacts are loaded
+        to a parent directory named "misc".
+        Args:
+            local_path:
+                Local path to object
+            artifact_path:
+                Artifact directory path in Mlflow to log to. This path will be appended
+                to parent directory "misc"
+        Returns:
+            None
+        """
+        self._verify_active()
+
+        _artifact_path = "misc"
+
+        if artifact_path is not None:
+            _artifact_path = f"{_artifact_path}/{artifact_path}"
+
+        self._info.mlflow_client.log_artifact(
+            run_id=self.run_id,
+            local_path=local_path,
+            artifact_path=_artifact_path,
+        )
+
     @property
     def run_data(self):
         return self._info.mlflow_client.get_run(self.run_id).data

@@ -218,13 +218,7 @@ class DataCard(ArtifactCard):
         """Loads data"""
 
         if not bool(self.data):
-            storage_spec = ArtifactStorageSpecs(
-                save_path=self.data_uri,
-                name=self.name,
-                team=self.team,
-                version=self.version,
-                storage_client=self.storage_client,
-            )
+            storage_spec = ArtifactStorageSpecs(save_path=self.data_uri)
 
             self.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
@@ -342,13 +336,7 @@ class ModelCard(ArtifactCard):
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
-        storage_spec = ArtifactStorageSpecs(
-            save_path=self.sample_data_uri,
-            name=self.name,
-            team=self.team,
-            version=self.version,
-            storage_client=self.storage_client,
-        )
+        storage_spec = ArtifactStorageSpecs(save_path=self.sample_data_uri)
 
         self.storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
@@ -363,13 +351,7 @@ class ModelCard(ArtifactCard):
 
         self.load_sample_data()
 
-        storage_spec = ArtifactStorageSpecs(
-            save_path=self.trained_model_uri,
-            name=self.name,
-            team=self.team,
-            version=self.version,
-            storage_client=self.storage_client,
-        )
+        storage_spec = ArtifactStorageSpecs(save_path=self.trained_model_uri)
 
         self.storage_client.storage_spec = storage_spec
         trained_model = load_record_artifact_from_storage(
@@ -737,12 +719,12 @@ class RunCard(ArtifactCard):
         """Creates a registry record from the current RunCard"""
 
         exclude_attr = {"artifacts", "storage_client"}
-        if not any([self.datacard_uids, self.pipelinecard_uid, bool(self.modelcard_uids)]):
-            raise ValueError(
-                """One of DataCard, ModelCard, or PipelineCard must be specified
-            """
-            )
-
+        # if not any([self.datacard_uids, self.pipelinecard_uid, bool(self.modelcard_uids)]):
+        #    raise ValueError(
+        #        """One of DataCard, ModelCard, or PipelineCard must be specified
+        #    """
+        #    )
+        #
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
     def add_card_uid(self, card_type: CardType, uid: str) -> None:

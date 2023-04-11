@@ -141,12 +141,7 @@ class SQLRegistryBase:
         if save_path is None:
             save_path = f"{self.table_name}/{card.team}/{card.name}/v-{card.version}"
 
-        artifact_storage_spec = ArtifactStorageSpecs(
-            save_path=save_path,
-            name=card.name,
-            team=card.team,
-            version=card.version,
-        )
+        artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
 
         card.storage_client = self.storage_client
         self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)

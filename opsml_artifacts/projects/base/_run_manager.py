@@ -58,7 +58,7 @@ class _RunManager:
         self._run_id: Optional[str] = None
         self._run_name: Optional[str] = None
         self._active_run: Optional[ActiveRun] = None
-        self._version = Optional[str] = None
+        self._version: Optional[str] = None
 
         self.storage_client = self._get_storage_client()
         self.registries = get_card_registries(storage_client=self.storage_client)

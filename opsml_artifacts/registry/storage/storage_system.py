@@ -90,7 +90,7 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
-        self._storage_spec = Optional[ArtifactStorageSpecs]
+        self._storage_spec: Optional[ArtifactStorageSpecs] = None
 
     @property
     def storage_spec(self) -> ArtifactStorageSpecs:
@@ -423,7 +423,6 @@ class MlflowStorageClient(StorageClient):
         return file_path
 
     def _log_artifact(self, mlflow_info: MlflowInfo) -> str:
-
         self.mlflow_client.log_artifact(
             run_id=self.run_id,
             local_path=mlflow_info.local_path,
