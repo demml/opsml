@@ -133,12 +133,7 @@ class LoadedDataRecord(LoadRecord):
         storage_client = cast(StorageClientType, values["storage_client"])
 
         if bool(values.get("drift_uri")):
-            storage_spec = ArtifactStorageSpecs(
-                save_path=values["drift_uri"],
-                name=values["name"],
-                team=values["team"],
-                version=values["version"],
-            )
+            storage_spec = ArtifactStorageSpecs(save_path=values["drift_uri"])
 
             storage_client.storage_spec = storage_spec
             return load_record_artifact_from_storage(
@@ -191,12 +186,7 @@ class LoadedModelRecord(LoadRecord):
             Dictionary to be parsed by ModelCard.parse_obj()
         """
 
-        storage_spec = ArtifactStorageSpecs(
-            save_path=values["modelcard_uri"],
-            name=values["name"],
-            version=values["version"],
-            team=values["team"],
-        )
+        storage_spec = ArtifactStorageSpecs(save_path=values["modelcard_uri"])
 
         storage_client.storage_spec = storage_spec
         model_card_definition = load_record_artifact_from_storage(
@@ -244,13 +234,7 @@ class LoadedRunRecord(LoadRecord):
             values["artifacts"] = loaded_artifacts
 
         for name, uri in artifact_uris.items():
-            storage_spec = ArtifactStorageSpecs(
-                save_path=uri,
-                name=values["name"],
-                team=values["team"],
-                version=values["version"],
-                storage_client=storage_client,
-            )
+            storage_spec = ArtifactStorageSpecs(save_path=uri)
 
             storage_client.storage_spec = storage_spec
             loaded_artifacts[name] = load_record_artifact_from_storage(

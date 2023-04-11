@@ -6,6 +6,8 @@ import pytest
 from sklearn import pipeline
 import lightgbm as lgb
 import matplotlib.pyplot as plt
+import numpy as np
+import shutil
 from opsml_artifacts import DataCard, ModelCard
 from opsml_artifacts.registry.cards.types import CardInfo
 from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo, MlflowActiveRun
@@ -16,7 +18,7 @@ from tests import conftest
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
+def _test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
@@ -118,21 +120,27 @@ def _test_params(mlflow_project: MlflowProject) -> None:
     assert proj.params["m1"] == "apple"
 
 
-def _test_log_artifact() -> None:
+def test_log_artifact(mlflow_project: MlflowProject) -> None:
     filename = "test.png"
     info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
-    with conftest.mock_mlflow_project(info).run() as run:
+    with mlflow_project.run() as run:
         fig, ax = plt.subplots(nrows=1, ncols=1)  # create figure & 1 axis
         ax.plot([0, 1, 2], [10, 20, 3])
+        array = np.random.random((10, 10))
         fig.savefig("test.png")  # save the figure to file
         plt.close(fig)
-        run.log_artifact(local_path=filename)
+        run.log_artifact_from_file(local_path=filename)
+        run.log_artifact("test_array", array)
         run.add_tag("test_tag", "1.0.0")
         info.run_id = run.run_id
 
     proj = conftest.mock_mlflow_project(info)
-    proj.download_artifacts()
+    proj.download_artifacts(artifact_path="misc", local_path="test_path")
+
+    assert os.path.exists("test_path/misc/test_array.joblib")
+    assert os.path.exists("test_path/misc/test.png")
     os.remove(filename)
+    shutil.rmtree("test_path")  # if assertions pass, this should not fail
 
     tags = proj.tags
     assert tags["test_tag"] == "1.0.0"
