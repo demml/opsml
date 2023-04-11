@@ -23,9 +23,6 @@ StorageSettings = Union[StorageClientSettings, GcsStorageClientSettings]
 
 class ArtifactStorageSpecs(BaseModel):
     save_path: str
-    name: str
-    version: str
-    team: str
     filename: Optional[str] = None
 
     class Config:

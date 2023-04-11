@@ -121,10 +121,11 @@ class MlflowProject(OpsmlProject):
             tracking_uri=self._run_mgr.mlflow_client.tracking_uri,
         )
 
-    def list_artifacts(self) -> dict[str, float]:
+    def list_artifacts(self, path: Optional[str] = None) -> dict[str, float]:
         """List artifacts for the current run"""
         return self._run_mgr.mlflow_client.list_artifacts(
             run_id=self.run_id,
+            path=path,
         )
 
     @property
