@@ -728,7 +728,7 @@ class RunCard(ArtifactCard):
         #
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
-    def add_card_uid(self, card_type: CardType, uid: str) -> None:
+    def add_card_uid(self, card_type: str, uid: str) -> None:
         """
         Adds a card uid to the appropriact card uid list for tracking
 

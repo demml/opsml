@@ -10,6 +10,10 @@ class MlflowActiveRun(ActiveRun):
 
         self._info = cast(MlflowRunInfo, self._info)
 
+    @property
+    def info(self):
+        return cast(MlflowRunInfo, self._info)
+
     def add_tag(self, key: str, value: str):
         """
         Adds a tag to the current run
@@ -21,7 +25,7 @@ class MlflowActiveRun(ActiveRun):
         """
 
         super().add_tag(key, value)
-        self._info.mlflow_client.set_tag(
+        self.info.mlflow_client.set_tag(
             run_id=self.run_id,
             key=key,
             value=value,
@@ -50,7 +54,7 @@ class MlflowActiveRun(ActiveRun):
         """
         super().log_metric(key, value, timestamp, step)
 
-        self._info.mlflow_client.log_metric(
+        self.info.mlflow_client.log_metric(
             run_id=self.run_id,
             key=key,
             value=value,
@@ -71,7 +75,7 @@ class MlflowActiveRun(ActiveRun):
 
         self._verify_active()
         super().log_param(key, value)
-        self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
+        self.info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
     def log_artifact_from_file(self, local_path: str, artifact_path: Optional[str] = None) -> None:
         """
@@ -93,7 +97,7 @@ class MlflowActiveRun(ActiveRun):
         if artifact_path is not None:
             _artifact_path = f"{_artifact_path}/{artifact_path}"
 
-        self._info.mlflow_client.log_artifact(
+        self.info.mlflow_client.log_artifact(
             run_id=self.run_id,
             local_path=local_path,
             artifact_path=_artifact_path,
@@ -101,7 +105,7 @@ class MlflowActiveRun(ActiveRun):
 
     @property
     def run_data(self):
-        return self._info.mlflow_client.get_run(self.run_id).data
+        return self.info.mlflow_client.get_run(self.run_id).data
 
     @property
     def metrics(self) -> dict[str, float]:
