@@ -217,7 +217,6 @@ class ActiveRun:
 
         self._verify_active()
         self.runcard.log_param(key=key, value=value)
-        # self._info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
     def create_or_update_runcard(self):
         """Creates or updates an active RunCard"""
