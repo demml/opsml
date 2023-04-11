@@ -130,13 +130,13 @@ def test_experiment_card(linear_regression, db_registries, mock_artifact_storage
         user_email="mlops.com",
         datacard_uids=["test_uid"],
     )
-    experiment.add_metric("test_metric", 10)
-    experiment.add_metrics({"test_metric2": 20})
+    experiment.log_metric("test_metric", 10)
+    experiment.log_metrics({"test_metric2": 20})
     assert experiment.metrics.get("test_metric") == 10
     assert experiment.metrics.get("test_metric2") == 20
     # save artifacts
     model, _ = linear_regression
-    experiment.add_artifact("reg_model", artifact=model)
+    experiment.log_artifact("reg_model", artifact=model)
     assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
     registry.register_card(card=experiment)
     loaded_card = registry.load_card(uid=experiment.uid)
@@ -330,8 +330,8 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
         user_email="mlops.com",
         pipeline_code_uri="test_pipe_uri",
     )
-    for card_type in ["data", "data", "model", "experiment"]:
-        pipeline_card.addcard_uid(
+    for card_type in ["data", "run", "model"]:
+        pipeline_card.add_card_uid(
             uid=uuid.uuid4().hex,
             card_type=card_type,
             name=f"{card_type}_{random.randint(0,100)}",
@@ -340,7 +340,7 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
     registry: CardRegistry = db_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
-    loaded_card.addcard_uid(uid="updated_uid", card_type="data", name="update")
+    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
     registry.update_card(card=loaded_card)
     df = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
@@ -361,7 +361,7 @@ def test_full_pipeline_with_loading(
     pipeline_code_uri = "test_pipe_uri"
     data_registry: CardRegistry = db_registries["data"]
     model_registry: CardRegistry = db_registries["model"]
-    experiment_registry: CardRegistry = db_registries["experiment"]
+    experiment_registry: CardRegistry = db_registries["run"]
     pipeline_registry: CardRegistry = db_registries["pipeline"]
     local_client = db_registries["connection_client"]
     model, data = linear_regression
@@ -394,7 +394,7 @@ def test_full_pipeline_with_loading(
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
     )
-    exp_card.add_metric("test_metric", 10)
+    exp_card.log_metric("test_metric", 10)
     experiment_registry.register_card(card=exp_card)
     #### PipelineCard
     pipeline_card = PipelineCard(

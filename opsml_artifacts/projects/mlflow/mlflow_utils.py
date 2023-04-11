@@ -5,10 +5,10 @@ from typing import Optional, cast
 
 from mlflow.tracking import MlflowClient
 
-from opsml_artifacts import RunCard
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlAuth
 from opsml_artifacts.projects.base.types import CardRegistries
+from opsml_artifacts.registry import RunCard
 from opsml_artifacts.registry.storage.storage_system import (
     MlflowStorageClient,
     StorageClientGetter,
@@ -72,24 +72,3 @@ def get_mlflow_client(tracking_uri: Optional[str]) -> MlflowClient:
     mlflow_client = MlflowClient(tracking_uri=tracking_uri)
 
     return mlflow_client
-
-
-def get_project_id(project_id: str, mlflow_client: MlflowClient) -> str:
-    """
-    Finds the project_id from mlflow for the given project. If an
-    existing proejct does not exist, a new one is created.
-
-    Args:
-        project_id:
-            Project identifier
-        mlflow_client:
-            MlflowClient instance
-
-    Returns:
-        The underlying mlflow project_id
-    """
-    # REMINDER: We treat mlflow "experiments" as projects
-    project = mlflow_client.get_experiment_by_name(name=project_id)
-    if project is None:
-        return mlflow_client.create_experiment(name=project_id)
-    return project.experiment_id

@@ -8,7 +8,7 @@ import lightgbm as lgb
 import matplotlib.pyplot as plt
 import numpy as np
 import shutil
-from opsml_artifacts import DataCard, ModelCard
+from opsml_artifacts.registry import DataCard, ModelCard
 from opsml_artifacts.registry.cards.types import CardInfo
 from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo, MlflowActiveRun
 from opsml_artifacts.projects import OpsmlProject, ProjectInfo
@@ -18,11 +18,11 @@ from tests import conftest
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def _test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
+def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         # Create metrics / params / cards
         run = cast(MlflowActiveRun, run)
@@ -83,7 +83,7 @@ def _test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipel
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
 
-    opsml_info = ProjectInfo(name="test", team="test", user_email="user@test.com", run_id=info.run_id)
+    opsml_info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com", run_id=info.run_id)
     opsml_project = OpsmlProject(info=opsml_info)
 
     # Test RunCard
@@ -92,9 +92,15 @@ def _test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipel
     assert opsml_project.datacard_uids[0] == data_card.uid
     assert opsml_project.modelcard_uids[0] == model_card.uid
 
+    with pytest.raises(ValueError):
+        # run_id must be associated with correct project
+        opsml_info = ProjectInfo(name="test-fail", team="test", user_email="user@test.com", run_id=info.run_id)
+        opsml_project = OpsmlProject(info=opsml_info)
 
-def _test_metrics(mlflow_project: MlflowProject) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+
+def test_metrics(mlflow_project: MlflowProject) -> None:
+
+    info = MlflowProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
 
     with proj.run() as run:
@@ -108,8 +114,9 @@ def _test_metrics(mlflow_project: MlflowProject) -> None:
     assert proj.metrics["m1"] == 1.1
 
 
-def _test_params(mlflow_project: MlflowProject) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+def test_params(mlflow_project: MlflowProject) -> None:
+
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_param(key="m1", value="apple")
         info.run_id = run.run_id
@@ -121,8 +128,9 @@ def _test_params(mlflow_project: MlflowProject) -> None:
 
 
 def test_log_artifact(mlflow_project: MlflowProject) -> None:
+
     filename = "test.png"
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         fig, ax = plt.subplots(nrows=1, ncols=1)  # create figure & 1 axis
         ax.plot([0, 1, 2], [10, 20, 3])
@@ -146,11 +154,12 @@ def test_log_artifact(mlflow_project: MlflowProject) -> None:
     assert tags["test_tag"] == "1.0.0"
 
 
-def _test_register_load(
+def test_register_load(
     mlflow_project: MlflowProject,
     linear_regression: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = linear_regression
         data_card = DataCard(
@@ -197,11 +206,11 @@ def _test_register_load(
     loaded_card.load_trained_model()
 
 
-def _test_lgb_model(
+def test_lgb_model(
     mlflow_project: MlflowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = lgb_booster_dataframe
         data_card = DataCard(
@@ -231,12 +240,12 @@ def _test_lgb_model(
     loaded_card.load_trained_model()
 
 
-def _test_pytorch_model(
+def test_pytorch_model(
     mlflow_project: MlflowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
     # another run (pytorch)
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = load_pytorch_resnet
         data_card = DataCard(
@@ -266,12 +275,12 @@ def _test_pytorch_model(
     loaded_card.load_trained_model()
 
 
-def _test_tf_model(
+def test_tf_model(
     mlflow_project: MlflowProject,
     load_transformer_example: tuple[Any, NDArray],
 ):
     # another run (pytorch)
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = MlflowProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = load_transformer_example
         data_card = DataCard(

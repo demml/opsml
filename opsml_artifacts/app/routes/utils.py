@@ -2,10 +2,10 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, cast
 
-from opsml_artifacts import CardRegistry, ModelCard
 from opsml_artifacts.app.core.config import OpsmlConfig
 from opsml_artifacts.app.routes.models import DownloadModelRequest
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry import CardRegistry, ModelCard
 from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.registry.sql.records import load_record

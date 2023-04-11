@@ -34,7 +34,7 @@ class _MlflowRunManager(_RunManager):
 
         Args:
             project_id:
-                Project identifier
+                Mlflow project identifier
             project_info:
                 ProjectInfo
             run_id:
@@ -43,7 +43,8 @@ class _MlflowRunManager(_RunManager):
         """
 
         self.mlflow_client = mlflow_client
-        super().__init__(project_id, project_info, run_id)
+        self._project_id = project_id
+        super().__init__(project_info, run_id)
 
     def _get_storage_client(self) -> MlflowStorageClient:
         """Gets the MlflowStorageClient and sets the current client"""
