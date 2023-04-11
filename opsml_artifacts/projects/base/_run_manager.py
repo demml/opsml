@@ -58,6 +58,7 @@ class _RunManager:
         self._run_id: Optional[str] = None
         self._run_name: Optional[str] = None
         self._active_run: Optional[ActiveRun] = None
+        self._version = Optional[str] = None
 
         self.storage_client = self._get_storage_client()
         self.registries = get_card_registries(storage_client=self.storage_client)
@@ -73,6 +74,18 @@ class _RunManager:
             Tags.TEAM: self._project_info.team,
             Tags.EMAIL: self._project_info.user_email,
         }
+
+    @property
+    def version(self) -> str:
+        """Current RunCard version"""
+        if self._version is not None:
+            return self._version
+        return "No version set"
+
+    @version.setter
+    def version(self, version: str) -> str:
+        """Current RunCard version"""
+        self._version = version
 
     @property
     def run_id(self) -> Optional[str]:
@@ -193,12 +206,14 @@ class _RunManager:
 
     def start_run(self, run_name: Optional[str] = None):
         """
-        Starts an Mlflow run for a given project
+        Starts a project run
 
         Args:
             run_name:
                 Optional run name
         """
+        # replace previous version if user is creating a run after finishing another
+        self.version = None
         if self.active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
@@ -209,6 +224,7 @@ class _RunManager:
 
         # set to None
         self.active_run.create_or_update_runcard()
+        self.version = self.active_run.runcard.version
 
         if self.active_run is not None:
             self.active_run._active = (  # pylint: disable=protected-access

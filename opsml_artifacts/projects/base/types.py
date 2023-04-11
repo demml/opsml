@@ -14,6 +14,7 @@ class Tags(str, Enum):
     NAME = "name"
     TEAM = "team"
     EMAIL = "user_email"
+    VERSION = "version"
 
 
 class ProjectInfo(BaseModel):
