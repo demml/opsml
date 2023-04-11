@@ -223,7 +223,7 @@ class ActiveRun:
         """Creates or updates an active RunCard"""
 
         self._verify_active()
-        if self.runcard.uid is not None:
+        if self.runcard.uid is not None and self.runcard.version is not None:
             CardHandler.update_card(
                 registries=self._info.registries,
                 card_type=CardType.RUNCARD.name.lower(),
