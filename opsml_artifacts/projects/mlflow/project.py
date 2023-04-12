@@ -19,7 +19,6 @@ from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow._run_manager import _MlflowRunManager
 from opsml_artifacts.projects.mlflow.mlflow_utils import get_mlflow_client
 
-
 logger = ArtifactLogger.get_logger(__name__)
 
 
