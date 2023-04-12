@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
@@ -17,7 +17,11 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
     RunRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import OpsmlRegistry, SQLRegistryBase, VersionType
+from opsml_artifacts.registry.sql.registry_base import (
+    OpsmlRegistry,
+    ServerRegistry,
+    VersionType,
+)
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -25,10 +29,8 @@ logger = ArtifactLogger.get_logger(__name__)
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
-# ignoring class inheritance mypy error because OpsmlRegistry is a dynamic Class (Server or Client)
-
 if TYPE_CHECKING:
-    Registry = SQLRegistryBase
+    Registry = ServerRegistry
 else:
     Registry = OpsmlRegistry
 
@@ -160,7 +162,8 @@ class ProjectCardRegistry(Registry):  # type:ignore
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
-        """Interface for connecting to any of the ArtifactCard registries
+        """
+        Interface for connecting to any of the ArtifactCard registries
 
         Args:
             registry_name:
@@ -179,10 +182,10 @@ class CardRegistry:
             CardRegistry(registry_name="data", connection_type="gcp")
         """
 
-        self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
+        self.registry = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
-    def _set_registry(self, registry_name: str) -> OpsmlRegistry:  # type:ignore
+    def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
 
         Args:
@@ -195,7 +198,7 @@ class CardRegistry:
         registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
-            for registry in OpsmlRegistry.__subclasses__()
+            for registry in Registry.__subclasses__()
             if registry.validate(
                 registry_name=registry_name,
             )
