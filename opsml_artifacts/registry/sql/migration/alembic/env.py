@@ -1,12 +1,9 @@
 import os
 from logging.config import fileConfig
 
+# from opsml_artifacts.helpers.settings import settings
 from alembic import context
-from sqlalchemy import create_engine, pool
 
-BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -16,18 +13,16 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from opsml_artifacts.registry.sql.sql_schema import Base
+
 
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata
+# target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-OPSML_TRACKING_URL = os.environ.get("OPSML_TRACKING_URI", BASE_LOCAL_SQL)
 
 
 def run_migrations_offline() -> None:
@@ -43,8 +38,6 @@ def run_migrations_offline() -> None:
 
     """
     context.configure(
-        url=OPSML_TRACKING_URL,
-        target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -60,10 +53,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_engine(OPSML_TRACKING_URL)
+    from opsml_artifacts.helpers.settings import settings
+    from opsml_artifacts.registry import CardRegistry
 
+    connectable = settings.connection_client.get_engine()
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(connection=connection)
 
         with context.begin_transaction():
             context.run_migrations()

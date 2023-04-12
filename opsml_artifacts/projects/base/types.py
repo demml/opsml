@@ -15,7 +15,8 @@ class Tags(str, Enum):
 
 
 class ProjectInfo(BaseModel):
-    """A project identifier.
+    """
+    A project identifier.
 
     Projects are identified by a combination of name and team. Each project must
     be unique within a team. The full project identifier is represented as
