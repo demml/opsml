@@ -7,18 +7,17 @@ from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
 from mlflow.tracking import MlflowClient
 
+# helpers
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.types import OpsmlUri
+
+# projects
 from opsml_artifacts.projects.base.project import OpsmlProject
 from opsml_artifacts.projects.base.types import MlflowProjectInfo
 from opsml_artifacts.projects.base.utils import _verify_project_id
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow._run_manager import _MlflowRunManager
-
-# porjects
 from opsml_artifacts.projects.mlflow.mlflow_utils import get_mlflow_client
-
-# helpers
 
 
 logger = ArtifactLogger.get_logger(__name__)
