@@ -1,6 +1,5 @@
 # pylint: disable=invalid-envvar-value
 import os
-from dataclasses import dataclass
 from typing import Optional, cast
 
 from mlflow.tracking import MlflowClient
