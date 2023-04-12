@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Protocol
 
 import pandas as pd
 import semver
