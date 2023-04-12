@@ -29,6 +29,8 @@ logger = ArtifactLogger.get_logger(__name__)
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
+OpsmlRegistry = cast(Any, OpsmlRegistry)
+
 
 class DataCardRegistry(OpsmlRegistry):
     def update_card(self, card: DataCard) -> None:

@@ -206,7 +206,8 @@ class _RunManager:
 
     def verify_active(self) -> None:
         """This fails if ActiveRun is None"""
-        self.active_run
+        if self.active_run is None:
+            raise ValueError("No ActiveRun has been set")
 
     def start_run(self, run_name: Optional[str] = None):
         """

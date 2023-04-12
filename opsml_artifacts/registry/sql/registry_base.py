@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Protocol, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 import semver
@@ -50,15 +50,18 @@ def load_card_from_record(
     record: LoadedRecordType,
 ) -> ArtifactCard:
 
-    """Loads an artifact card given a tablename and the loaded record
+    """
+    Loads an artifact card given a tablename and the loaded record
     from backend database
 
     Args:
-        table_name (str): Name of table
-        record (loaded record): Loaded record from backend database
+        table_name:
+            Name of table
+        record:
+            Loaded record from backend database
 
     Returns:
-        Artifact Card
+        `ArtifactCard`
     """
 
     card = table_name_card_map[table_name]
@@ -82,17 +85,21 @@ class SQLRegistryBase:
         raise NotImplementedError
 
     def _increment_version(self, version: str, version_type: VersionType) -> str:
-        """Increments a version based on version type
+        """
+        Increments a version based on version type
 
         Args:
-            version: Current version
-            version_type: Type of version increment.
+            version:
+                Current version
+            version_type:
+                Type of version increment.
 
         Raises:
-            ValueError: unknown version_type
+            ValueError:
+                unknown version_type
 
         Returns:
-            New version string
+            New version
         """
         ver: semver.VersionInfo = semver.VersionInfo.parse(version)
         if version_type == VersionType.MAJOR:
@@ -155,8 +162,10 @@ class SQLRegistryBase:
         """Sets a given card's version and uid
 
         Args:
-            card:: Card to set
-            version_type: Type of version increment
+            card:
+                Card to set
+            version_type:
+                Type of version increment
         """
 
         # need to find way to compare previous cards and automatically
@@ -173,11 +182,13 @@ class SQLRegistryBase:
             card.uid = self._get_uid()
 
     def _create_registry_record(self, card: ArtifactCard) -> None:
-        """Creates a registry record from a given ArtifactCard.
+        """
+        Creates a registry record from a given ArtifactCard.
         Saves artifacts prior to creating record
 
         Args:
-            card (ArtifactCard): Card to create a registry record from
+            card:
+                Card to create a registry record from
         """
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
@@ -193,13 +204,15 @@ class SQLRegistryBase:
         Adds new record to registry.
 
         Args:
-            Card (ArtifactCard): Card to register
-            version_type (str): Version type for increment. Options are "major", "minor" and
-            "patch". Defaults to "minor"
-            save_path (str): Blob path to save card artifacts too.
-            This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-            - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
-            env variables. In addition, save_path should specify a directory.
+            Card:
+                Card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
+            save_path:
+                Blob path to save card artifacts too.
+                This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
+                - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
+                env variables. In addition, save_path should specify a directory.
         """
 
         self._validate(card=card)
@@ -267,13 +280,16 @@ class ServerRegistry(SQLRegistryBase):
         self._table.__table__.create(bind=self._engine, checkfirst=True)
 
     def set_version(self, name: str, team: str, version_type: VersionType) -> str:
-        """Sets a version following semantic version standards
+        """
+        Sets a version following semantic version standards
 
         Args:
-            name: Card name
-            team: Team card belongs to
-            version_type: Type of version increment.
-            values are "major", "minor" and "patch
+            name:
+                Card name
+            team:
+                Team card belongs to
+            version_type:
+                Type of version increment. Values are "major", "minor" and "patch
 
         Returns:
             Version string
@@ -324,14 +340,19 @@ class ServerRegistry(SQLRegistryBase):
         version: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
 
-        """Retrieves records from registry
+        """
+        Retrieves records from registry
 
         Args:
-            name (str): Artifact record name
-            team (str): Team data is assigned to
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
-            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
+            name:
+                Artifact record name
+            team:
+                Team data is assigned to
+            version:
+                Optional version number of existing data. If not specified,
+                the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
+            uid:
+                Unique identifier for DataCard. If present, the uid takes precedence.
 
 
         Returns:
@@ -407,7 +428,8 @@ class ClientRegistry(SQLRegistryBase):
         version: Optional[str] = None,
     ) -> pd.DataFrame:
 
-        """Retrieves records from registry
+        """
+        Retrieves records from registry
 
         Args:
             name:
@@ -464,10 +486,11 @@ class ClientRegistry(SQLRegistryBase):
         raise ValueError("Failed to update card")
 
 
-def get_sql_registry_base() -> Any:
+# mypy not happy with dynamic classes
+def get_sql_registry_base():
     if settings.request_client is not None:
-        return cast(Any, ClientRegistry)
-    return cast(Any, ServerRegistry)
+        return ClientRegistry
+    return ServerRegistry
 
 
 OpsmlRegistry = get_sql_registry_base()
