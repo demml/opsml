@@ -29,15 +29,17 @@ logger = ArtifactLogger.get_logger(__name__)
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
-OpsmlRegistry = cast(Any, OpsmlRegistry)
+# ignoring class inheritance mypy error because OpsmlRegistry is a dynamic Class (Server or Client)
 
 
-class DataCardRegistry(OpsmlRegistry):
+class DataCardRegistry(OpsmlRegistry):  # type:ignore
     def update_card(self, card: DataCard) -> None:
-        """Updates an existing data card in the data registry.
+        """
+        Updates an existing data card in the data registry.
 
         Args:
-            data_card: Existing data card record
+            data_card:
+                Existing data card record
         """
 
         record = DataRegistryRecord(**card.dict())
@@ -48,7 +50,7 @@ class DataCardRegistry(OpsmlRegistry):
         return registry_name in RegistryTableNames.DATA
 
 
-class ModelCardRegistry(OpsmlRegistry):
+class ModelCardRegistry(OpsmlRegistry):  # type:ignore
     def update_card(self, card: ModelCard) -> None:
         """Updates an existing model card.
 
@@ -112,7 +114,7 @@ class ModelCardRegistry(OpsmlRegistry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class RunCardRegistry(OpsmlRegistry):
+class RunCardRegistry(OpsmlRegistry):  # type:ignore
     def update_card(self, card: RunCard) -> None:
         """
         Updates an existing experiment card in the registry.
@@ -130,7 +132,7 @@ class RunCardRegistry(OpsmlRegistry):
         return registry_name in RegistryTableNames.RUN
 
 
-class PipelineCardRegistry(OpsmlRegistry):
+class PipelineCardRegistry(OpsmlRegistry):  # type:ignore
     def update_card(self, card: PipelineCard) -> None:
         """
         Updates an existing pipeline card in the pipeline registry.
@@ -148,7 +150,7 @@ class PipelineCardRegistry(OpsmlRegistry):
         return registry_name in RegistryTableNames.PIPELINE
 
 
-class ProjectCardRegistry(OpsmlRegistry):
+class ProjectCardRegistry(OpsmlRegistry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PROJECT
@@ -179,7 +181,7 @@ class CardRegistry:
         self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
-    def _set_registry(self, registry_name: str) -> OpsmlRegistry:
+    def _set_registry(self, registry_name: str) -> OpsmlRegistry:  # type:ignore
         """Returns a SQL registry to be used to register Cards
 
         Args:
