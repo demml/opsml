@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Protocol
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 import semver
@@ -127,7 +127,7 @@ class SQLRegistryBase:
     def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
-    def _validate(self, card: ArtifactCard):
+    def _validate_card_type(self, card: ArtifactCard):
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
@@ -215,7 +215,7 @@ class SQLRegistryBase:
                 env variables. In addition, save_path should specify a directory.
         """
 
-        self._validate(card=card)
+        self._validate_card_type(card=card)
         self._set_card_uid_version(card=card, version_type=version_type)
         self._set_artifact_storage_spec(card=card, save_path=save_path)
         self._create_registry_record(card=card)
@@ -387,6 +387,10 @@ class ServerRegistry(SQLRegistryBase):
             result = sess.scalars(query).first()
         return bool(result)
 
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        raise NotImplementedError
+
 
 class ClientRegistry(SQLRegistryBase):
     def __init__(self, table_name: str):
@@ -484,6 +488,10 @@ class ClientRegistry(SQLRegistryBase):
         if bool(data.get("updated")):
             return record, "update"
         raise ValueError("Failed to update card")
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        raise NotImplementedError
 
 
 # mypy not happy with dynamic classes
