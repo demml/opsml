@@ -40,6 +40,11 @@ class ProjectInfo(BaseModel):
         description="An existing run_id to use. If None, a new run is created when the project is activated",
     )
 
+    tracking_uri: Optional[str] = Field(
+        None,
+        description="Tracking URI. Defaults to OPSML_TRACKING_URI",
+    )
+
     @property
     def project_id(self) -> str:
         """The unique project identifier."""
@@ -59,38 +64,6 @@ class ProjectInfo(BaseModel):
         if value is None:
             return None
         return value.strip().lower().replace("_", "-")
-
-
-class MlflowProjectInfo(ProjectInfo):
-    """
-    An mlflow project identifier.
-
-    Identifies a project with an mlflow backend. By default, projects in mlflow
-    are "experiments". Each project is named after the team and project name
-    with the convention "team:name".
-
-    The following project shows up as an "experiment" in mlflow with the name:
-
-    "devops-ml:iris".
-
-    Args:
-        name:
-            The project name. Must be unique per team.
-        team:
-            The team owning the project.
-        user_email:
-            Optional user email to associate with the project
-        run_id:
-            The run to open the project at. By default, the run will be opened
-            in "read only" mode by the project. To open the run for read /
-            write, open it within a context manager.
-
-    """
-
-    tracking_uri: Optional[str] = Field(
-        None,
-        description="The mlflow tracking URI. Defaults to OPSML_TRACKING_URI",
-    )
 
 
 class CardRegistries(BaseModel):

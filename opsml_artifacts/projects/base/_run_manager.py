@@ -1,4 +1,5 @@
 # pylint: disable=invalid-envvar-value
+import uuid
 from typing import Optional, cast
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
@@ -188,6 +189,10 @@ class _RunManager:
         Creates a RunCard
 
         """
+        # Set run and name
+        self.run_id = uuid.uuid4().hex
+        self.run_name = run_name
+
         self._create_active_opsml_run()
         self.active_run.add_tags(tags=self.base_tags)
 

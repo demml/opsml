@@ -13,7 +13,7 @@ from opsml_artifacts.helpers.types import OpsmlUri
 
 # projects
 from opsml_artifacts.projects.base.project import OpsmlProject
-from opsml_artifacts.projects.base.types import MlflowProjectInfo
+from opsml_artifacts.projects.base.types import ProjectInfo
 from opsml_artifacts.projects.base.utils import _verify_project_id
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow._run_manager import _MlflowRunManager
@@ -23,7 +23,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class MlflowProject(OpsmlProject):
-    def __init__(self, info: MlflowProjectInfo):  # pylint: disable=super-init-not-called
+    def __init__(self, info: ProjectInfo):  # pylint: disable=super-init-not-called
         """
         Instantiates an mlflow project which log cards, metrics and params to
         the opsml registry and mlflow via a "run" object.
@@ -36,7 +36,7 @@ class MlflowProject(OpsmlProject):
         Example:
 
             project: MlFlowProject = get_project(
-                MlFlowProjectInfo(
+                ProjectInfo(
                     name="test-project",
                     team="devops-ml",
                     # If run_id is omitted, a new run is created.

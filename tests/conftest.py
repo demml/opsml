@@ -55,11 +55,14 @@ from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
 from opsml_artifacts.projects.mlflow import MlflowProject
-from opsml_artifacts.projects.base.types import CardRegistries, MlflowProjectInfo
+from opsml_artifacts.projects.base.types import CardRegistries, ProjectInfo
+from opsml_artifacts.projects import OpsmlProject
 
 
 # testing
 from tests.mock_api_registries import CardRegistry
+
+CWD = os.getcwd()
 
 
 def cleanup() -> None:
@@ -70,6 +73,9 @@ def cleanup() -> None:
 
     # remove api mlrun path
     shutil.rmtree(STORAGE_PATH, ignore_errors=True)
+
+    # remove api local path
+    shutil.rmtree("local", ignore_errors=True)
 
     # remove test experiment mlrun path
     shutil.rmtree("mlruns", ignore_errors=True)
@@ -216,13 +222,6 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 ################################################################################
 
 
-def mock_app() -> TestClient:
-    from opsml_artifacts.app.main import OpsmlApp
-
-    opsml_app = OpsmlApp(run_mlflow=True)
-    return TestClient(opsml_app.get_app())
-
-
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
     cleanup()
@@ -259,7 +258,7 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         }
 
 
-def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
+def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
     mlflow_exp: MlflowProject = get_project(info)
     mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
     api_card_registries = CardRegistries.construct(
@@ -281,7 +280,7 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
 @pytest.fixture
 def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowProject]:
     mlflow_exp: MlflowProject = get_project(
-        MlflowProjectInfo(
+        ProjectInfo(
             name="test_exp",
             team="test",
             user_email="test",
@@ -301,10 +300,42 @@ def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowPr
     yield mlflow_exp
 
 
+@pytest.fixture
+def opsml_project(api_registries: dict[str, CardRegistry]) -> Iterator[OpsmlProject]:
+    opsml_run = OpsmlProject(
+        info=ProjectInfo(
+            name="test_exp",
+            team="test",
+            user_email="test",
+            tracking_uri=SQL_PATH,
+        )
+    )
+    api_card_registries = CardRegistries.construct(
+        datacard=api_registries["data"],
+        modelcard=api_registries["model"],
+        runcard=api_registries["run"],
+        project=api_registries["project"],
+    )
+    opsml_run._run_mgr.registries = api_card_registries
+    return opsml_run
+
+
+def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
+    opsml_run = OpsmlProject(info=info)
+    api_card_registries = CardRegistries.construct(
+        datacard=CardRegistry(registry_name="data"),
+        modelcard=CardRegistry(registry_name="model"),
+        runcard=CardRegistry(registry_name="run"),
+        project=CardRegistry(registry_name="project"),
+    )
+    opsml_run._run_mgr.registries = api_card_registries
+    return opsml_run
+
+
 ######## local clients
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def experiment_table_to_migrate():
     from sqlalchemy import Column, JSON, String
     from sqlalchemy.orm import declarative_mixin
@@ -326,7 +357,7 @@ def experiment_table_to_migrate():
         def __repr__(self):
             return f"<SqlMetric({self.__tablename__}"
 
-    return ExperimentSchema
+    yield ExperimentSchema
 
 
 @pytest.fixture(scope="function")
