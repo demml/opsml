@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
@@ -17,11 +17,7 @@ from opsml_artifacts.registry.sql.records import (
     PipelineRegistryRecord,
     RunRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import (
-    OpsmlRegistry,
-    SQLRegistryBase,
-    VersionType,
-)
+from opsml_artifacts.registry.sql.registry_base import OpsmlRegistry, SQLRegistryBase, VersionType
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -31,8 +27,13 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 # ignoring class inheritance mypy error because OpsmlRegistry is a dynamic Class (Server or Client)
 
+if TYPE_CHECKING:
+    Registry = SQLRegistryBase
+else:
+    Registry = OpsmlRegistry
 
-class DataCardRegistry(OpsmlRegistry):  # type:ignore
+
+class DataCardRegistry(Registry):
     def update_card(self, card: DataCard) -> None:
         """
         Updates an existing data card in the data registry.
@@ -50,7 +51,7 @@ class DataCardRegistry(OpsmlRegistry):  # type:ignore
         return registry_name in RegistryTableNames.DATA
 
 
-class ModelCardRegistry(OpsmlRegistry):  # type:ignore
+class ModelCardRegistry(Registry):
     def update_card(self, card: ModelCard) -> None:
         """Updates an existing model card.
 
@@ -75,7 +76,7 @@ class ModelCardRegistry(OpsmlRegistry):  # type:ignore
 
     def register_card(
         self,
-        card: ModelCard,
+        card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
@@ -132,7 +133,7 @@ class RunCardRegistry(OpsmlRegistry):  # type:ignore
         return registry_name in RegistryTableNames.RUN
 
 
-class PipelineCardRegistry(OpsmlRegistry):  # type:ignore
+class PipelineCardRegistry(Registry):  # type:ignore
     def update_card(self, card: PipelineCard) -> None:
         """
         Updates an existing pipeline card in the pipeline registry.
@@ -150,7 +151,7 @@ class PipelineCardRegistry(OpsmlRegistry):  # type:ignore
         return registry_name in RegistryTableNames.PIPELINE
 
 
-class ProjectCardRegistry(OpsmlRegistry):  # type:ignore
+class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PROJECT
