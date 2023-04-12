@@ -50,7 +50,7 @@ import lightgbm as lgb
 from opsml_artifacts.registry import ModelCard
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, RunSchema, PipelineSchema
+from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, RunSchema, PipelineSchema, BaseMixin, Base
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
 from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
 from opsml_artifacts.projects import get_project
@@ -302,6 +302,33 @@ def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowPr
 
 
 ######## local clients
+
+
+@pytest.fixture(scope="function")
+def experiment_table_to_migrate():
+    from sqlalchemy import Column, JSON, String
+    from sqlalchemy.orm import declarative_mixin
+
+    @declarative_mixin
+    class ExperimentMixin:
+        data_card_uids = Column("data_card_uids", JSON)
+        model_card_uids = Column("model_card_uids", JSON)
+        pipeline_card_uid = Column("pipeline_card_uid", String(512))
+        project_id = Column("project_id", String(512))
+        artifact_uris = Column("artifact_uris", JSON)
+        metrics = Column("metrics", JSON)
+        params = Column("params", JSON)
+        tags = Column("tags", JSON)
+
+    class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
+        __tablename__ = "OPSML_EXPERIMENT_REGISTRY"
+
+        def __repr__(self):
+            return f"<SqlMetric({self.__tablename__}"
+
+    return ExperimentSchema
+
+
 @pytest.fixture(scope="function")
 def mock_local_engine():
     local_client = LocalSQLConnection(tracking_uri="sqlite://")

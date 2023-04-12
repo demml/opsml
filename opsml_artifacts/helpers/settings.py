@@ -225,7 +225,6 @@ class DefaultSettings(BaseSettings):
         """Sets tracking url if it doesnt exist and sets storage
         client-related vars
         """
-
         return DefaultAttrCreator(env_vars=env_vars).env_vars
 
     @cached_property
