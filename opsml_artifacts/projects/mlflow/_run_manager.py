@@ -9,7 +9,7 @@ from mlflow.tracking.fluent import end_run as fluent_end_run
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.base._run_manager import _RunManager
-from opsml_artifacts.projects.base.types import MlflowProjectInfo, Tags
+from opsml_artifacts.projects.base.types import ProjectInfo, Tags
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow.mlflow_utils import (
     MlflowRunInfo,
@@ -25,7 +25,7 @@ class _MlflowRunManager(_RunManager):
         self,
         project_id: str,
         mlflow_client: MlflowClient,
-        project_info: MlflowProjectInfo,
+        project_info: ProjectInfo,
         run_id: Optional[str] = None,
     ):
         """

@@ -49,7 +49,7 @@ class OpsmlProject:
                 Run information. if a run_id is given, that run is set
                 as the project's current run.
         """
-
+        print(info)
         # Set the run manager and project_id (creates ProjectCard if project doesn't exist)
         self._run_mgr = _RunManager(run_id=info.run_id, project_info=info)
         self._project_id = _verify_project_id(info=info, registries=self._run_mgr.registries)
