@@ -1,9 +1,8 @@
-from logging.config import fileConfig
 import os
-from sqlalchemy import create_engine
-from sqlalchemy import pool
+from logging.config import fileConfig
 
 from alembic import context
+from sqlalchemy import create_engine, pool
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_artifacts_database.db"
 # this is the Alembic Config object, which provides
@@ -17,9 +16,11 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
+from opsml_artifacts.registry.sql.sql_schema import Base
+
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
