@@ -31,9 +31,9 @@ def test_find_src_dir():
 
 
 def test_gcs_storage_client_integration(mock_gcs):
-    file_path = utils.FindPath.find_filepath(
-        name="example.csv",
-    )
+    FILENAME = "example.csv"
+    file_path = utils.FindPath.find_filepath(name=FILENAME)
+
     # upload
     path = "test_upload/test.csv"
     #
@@ -59,6 +59,10 @@ def test_gcs_storage_client_integration(mock_gcs):
 
     for blob in blobs:
         assert path in blob.name
+
+    bucket, path, file_ = storage_client.parse_gcs_uri("gs://testbucket/blob/example.csv")
+
+    assert file_ == FILENAME
 
     # delete
     storage_client.delete_object(
