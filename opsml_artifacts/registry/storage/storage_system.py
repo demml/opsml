@@ -370,7 +370,7 @@ class MlflowStorageClient(StorageClient):
 
         self._run_id: Optional[str] = None
         self._artifact_path: Optional[str] = None
-        self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
+        self._mlflow_client: Optional[MlFlowClientProto] = None
 
     @property
     def run_id(self) -> Optional[str]:

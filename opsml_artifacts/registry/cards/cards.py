@@ -66,6 +66,10 @@ class ArtifactCard(BaseModel):
         """Creates a registry record from self attributes"""
         raise NotImplementedError
 
+    @property
+    def card_type(self) -> str:
+        raise NotImplementedError
+
 
 class DataCard(ArtifactCard):
     """Create a DataCard from your data.
@@ -256,6 +260,10 @@ class DataCard(ArtifactCard):
 
         curr_info = cast(Dict[str, Union[int, float, str]], self.additional_info)
         self.additional_info = {**info, **curr_info}
+
+    @property
+    def card_type(self) -> str:
+        return CardType.DATACARD.value
 
 
 class ModelCard(ArtifactCard):
@@ -498,6 +506,10 @@ class ModelCard(ArtifactCard):
             start_sess=start_onnx_runtime,
         )
 
+    @property
+    def card_type(self) -> str:
+        return CardType.MODELCARD.value
+
 
 class PipelineCard(ArtifactCard):
     """Create a PipelineCard from specified arguments
@@ -562,6 +574,10 @@ class PipelineCard(ArtifactCard):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current PipelineCard"""
         return PipelineRegistryRecord(**self.dict())
+
+    @property
+    def card_type(self) -> str:
+        return CardType.PIPELINECARD.value
 
 
 class RunCard(ArtifactCard):
@@ -739,10 +755,14 @@ class RunCard(ArtifactCard):
                 Uid of registered ArtifactCard
         """
 
-        if CardType.DATACARD in card_type.lower():
+        if card_type == CardType.DATACARD:
             self.datacard_uids = [uid, *self.datacard_uids]
-        elif CardType.MODELCARD in card_type.lower():
+        elif card_type == CardType.MODELCARD:
             self.modelcard_uids = [uid, *self.modelcard_uids]
+
+    @property
+    def card_type(self) -> str:
+        return CardType.RUNCARD.value
 
 
 class ProjectCard(ArtifactCard):
@@ -760,3 +780,7 @@ class ProjectCard(ArtifactCard):
         """Creates a registry record for a project"""
 
         return ProjectRegistryRecord(**self.dict())
+
+    @property
+    def card_type(self) -> str:
+        return CardType.PROJECTCARD.value

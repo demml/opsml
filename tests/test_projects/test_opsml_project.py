@@ -47,7 +47,6 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     # Retrieve the run and load projects without making the run active (read only mode)
     proj = conftest.mock_opsml_project(info)
 
-    print(proj._run_mgr._run_id)
     assert len(proj.metrics) == 1
     assert proj.metrics["m1"] == 1.1
     assert len(proj.params) == 1

@@ -3,7 +3,9 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, validator
 
-from opsml_artifacts.registry import CardRegistry, RunCard
+from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.types import OpsmlUri
+from opsml_artifacts.registry import CardRegistries, RunCard
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 
@@ -38,11 +40,13 @@ class ProjectInfo(BaseModel):
     run_id: Optional[str] = Field(
         None,
         description="An existing run_id to use. If None, a new run is created when the project is activated",
+        env=OpsmlUri.RUN_ID,
     )
 
-    tracking_uri: Optional[str] = Field(
-        None,
-        description="Tracking URI. Defaults to OPSML_TRACKING_URI",
+    tracking_uri: str = Field(
+        settings.opsml_tracking_uri,
+        description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
+        env=OpsmlUri.TRACKING_URI,
     )
 
     @property
@@ -64,22 +68,6 @@ class ProjectInfo(BaseModel):
         if value is None:
             return None
         return value.strip().lower().replace("_", "-")
-
-
-class CardRegistries(BaseModel):
-    datacard: CardRegistry
-    modelcard: CardRegistry
-    runcard: CardRegistry
-    project: CardRegistry
-
-    class Config:
-        arbitrary_types_allowed = True
-        allow_mutation = True
-
-    def set_storage_client(self, storage_client: StorageClientType):
-        self.datacard.registry.storage_client = storage_client
-        self.modelcard.registry.storage_client = storage_client
-        self.runcard.registry.storage_client = storage_client
 
 
 # dataclass inheritance doesnt handle default vals well for <= py3.9

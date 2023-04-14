@@ -17,7 +17,7 @@ class CardInfo:
     version: Optional[str] = None
 
 
-class ArtifactStorageTypes(str, Enum):
+class ArtifactStorageSystem(str, Enum):
     DATAFRAME = "DataFrame"
     ARROW_TABLE = "Table"
     NDARRAY = "ndarray"
@@ -55,4 +55,4 @@ class RunCardArgs(str, Enum):
 
 
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project"]]
-DATA_ARTIFACTS = list(ArtifactStorageTypes)
+DATA_ARTIFACTS = list(ArtifactStorageSystem)

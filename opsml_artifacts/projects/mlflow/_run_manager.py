@@ -11,50 +11,35 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo, Tags
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
-from opsml_artifacts.projects.mlflow.mlflow_utils import (
-    MlflowRunInfo,
-    mlflow_storage_client,
-)
+from opsml_artifacts.projects.mlflow.mlflow_utils import MlflowRunInfo, set_env_vars
 from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
 class _MlflowRunManager(_RunManager):
-    def __init__(
-        self,
-        project_id: str,
-        mlflow_client: MlflowClient,
-        project_info: ProjectInfo,
-        run_id: Optional[str] = None,
-    ):
+    def __init__(self, project_info: ProjectInfo):
         """
         Manages runs for a given project including storing general attributes and creating, activating and
         ending runs. Also holds storage client needed to store artifacts associated with a run.
 
         Args:
-            project_id:
-                Mlflow project identifier
             project_info:
                 ProjectInfo
-            run_id:
-                Optional project run id
 
         """
 
-        self.mlflow_client = mlflow_client
-        self._project_id = project_id
-        super().__init__(project_info, run_id)
+        # set env vars here in case user wants to change tracking URI on subsequent runs (you never know ¯\_(ツ)_/¯)
+        set_env_vars(tracking_uri=project_info.tracking_uri)
+        self.mlflow_client = MlflowClient(tracking_uri=project_info.tracking_uri)
 
-    @property
-    def storage_client(self):
-        return cast(MlflowStorageClient, self._storage_client)
+        super().__init__(project_info)
 
-    def _get_storage_client(self) -> MlflowStorageClient:
-        """Gets the MlflowStorageClient and sets the current client"""
-
-        mlflow_storage_client.mlflow_client = self.mlflow_client
-        return mlflow_storage_client
+        # set mlflow client for storage client to use (use same mlflow client that run uses)
+        # Reminder: Once routes for uploading objects are written for the opsml server,
+        # we can remove MlflowStorageClient class
+        self._storage_client = cast(MlflowStorageClient, self._storage_client)
+        self._storage_client.mlflow_client = self.mlflow_client
 
     def _verify_run_id(self, run_id: str) -> None:
         """Verifies the run exists for the given project."""
@@ -150,3 +135,28 @@ class _MlflowRunManager(_RunManager):
 
         # needed for when logging models (models are logged via fluent api)
         fluent_end_run()
+
+    def _get_project_id(self) -> str:
+        """
+        Finds the project_id from mlflow for the given project. If an
+        existing proejct does not exist, a new one is created.
+
+        Args:
+            project_id:
+                Project identifier
+            mlflow_client:
+                MlflowClient instance
+
+        Returns:
+            The underlying mlflow project_id
+        """
+
+        super()._get_project_id()
+
+        # REMINDER: We treat mlflow "experiments" as projects
+        project = self.mlflow_client.get_experiment_by_name(
+            name=self._project_info.project_id,
+        )
+        if project is None:
+            return self.mlflow_client.create_experiment(name=self._project_info.project_id)
+        return project.experiment_id

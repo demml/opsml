@@ -52,15 +52,16 @@ from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStora
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, RunSchema, PipelineSchema, BaseMixin, Base
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter, MlflowStorageClient, StorageSystem
 from opsml_artifacts.projects import get_project
 from opsml_artifacts.projects.mlflow import MlflowProject
-from opsml_artifacts.projects.base.types import CardRegistries, ProjectInfo
+from opsml_artifacts.projects.base.types import ProjectInfo
+from opsml_artifacts.registry import CardRegistries
 from opsml_artifacts.projects import OpsmlProject
 
 
 # testing
-from tests.mock_api_registries import CardRegistry
+from tests.mock_api_registries import CardRegistry as ServerCardRegistry
 
 CWD = os.getcwd()
 
@@ -233,7 +234,7 @@ def test_app() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
+def mock_registries(test_client: TestClient) -> dict[str, ServerCardRegistry]:
     def callable_api():
         return test_client
 
@@ -242,66 +243,67 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         from opsml_artifacts.helpers.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
+        registries = CardRegistries()
 
-        data_registry = CardRegistry(registry_name="data")
-        model_registry = CardRegistry(registry_name="model")
-        run_registry = CardRegistry(registry_name="run")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
-        project_registry = CardRegistry(registry_name="project")
+        registries.data = ServerCardRegistry(registry_name="data")
+        registries.model = ServerCardRegistry(registry_name="model")
+        registries.pipeline = ServerCardRegistry(registry_name="pipeline")
+        registries.run = ServerCardRegistry(registry_name="run")
+        registries.project = ServerCardRegistry(registry_name="project")
 
-        return {
-            "data": data_registry,
-            "model": model_registry,
-            "run": run_registry,
-            "pipeline": pipeline_registry,
-            "project": project_registry,
-        }
+        return registries
+
+
+def mlflow_storage_client():
+    mlflow_storage = StorageClientGetter.get_storage_client(
+        storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value)
+    )
+    return mlflow_storage
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
+    info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
-    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
-    api_card_registries = CardRegistries.construct(
-        datacard=CardRegistry(registry_name="data"),
-        modelcard=CardRegistry(registry_name="model"),
-        runcard=CardRegistry(registry_name="run"),
-        project=CardRegistry(registry_name="project"),
-    )
+
+    api_card_registries = CardRegistries()
+    api_card_registries.data = ServerCardRegistry(registry_name="data")
+    api_card_registries.model = ServerCardRegistry(registry_name="model")
+    api_card_registries.run = ServerCardRegistry(registry_name="run")
+    api_card_registries.project = ServerCardRegistry(registry_name="project")
+    api_card_registries.pipeline = ServerCardRegistry(registry_name="pipeline")
+
+    # set storage client
+    mlflow_storage = mlflow_storage_client()
+
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
+    mlflow_exp._run_mgr._storage_client = mlflow_storage
+    mlflow_exp._run_mgr._storage_client.mlflow_client = mlflow_exp._run_mgr.mlflow_client
+
     return mlflow_exp
 
 
 @pytest.fixture(scope="module")
-def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
+def api_registries(test_app: TestClient) -> Iterator[dict[str, ServerCardRegistry]]:
     yield mock_registries(test_app)
 
 
-@pytest.fixture
-def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowProject]:
-    mlflow_exp: MlflowProject = get_project(
-        ProjectInfo(
-            name="test_exp",
-            team="test",
-            user_email="test",
-            tracking_uri=SQL_PATH,
-        )
-    )
-    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
-    api_card_registries = CardRegistries.construct(
-        datacard=api_registries["data"],
-        modelcard=api_registries["model"],
-        runcard=api_registries["run"],
-        project=api_registries["project"],
-    )
-    api_card_registries.set_storage_client(mlflow_storage)
-    mlflow_exp._run_mgr.registries = api_card_registries
+@pytest.fixture(scope="function")
+def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
+    info = ProjectInfo(name="test_exp", team="test", user_email="test", tracking_uri=SQL_PATH)
+    mlflow_exp: MlflowProject = get_project(info=info)
+
+    mlflow_storage = mlflow_storage_client()
+    api_registries.set_storage_client(mlflow_storage)
+    mlflow_exp._run_mgr.registries = api_registries
+    mlflow_exp._run_mgr._storage_client = mlflow_storage
+    mlflow_exp._run_mgr._storage_client.mlflow_client = mlflow_exp._run_mgr.mlflow_client
 
     yield mlflow_exp
 
 
-@pytest.fixture
-def opsml_project(api_registries: dict[str, CardRegistry]) -> Iterator[OpsmlProject]:
+@pytest.fixture(scope="function")
+def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
     opsml_run = OpsmlProject(
         info=ProjectInfo(
             name="test_exp",
@@ -310,24 +312,21 @@ def opsml_project(api_registries: dict[str, CardRegistry]) -> Iterator[OpsmlProj
             tracking_uri=SQL_PATH,
         )
     )
-    api_card_registries = CardRegistries.construct(
-        datacard=api_registries["data"],
-        modelcard=api_registries["model"],
-        runcard=api_registries["run"],
-        project=api_registries["project"],
-    )
-    opsml_run._run_mgr.registries = api_card_registries
+    opsml_run._run_mgr.registries = api_registries
     return opsml_run
 
 
 def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
+    info.tracking_uri = SQL_PATH
     opsml_run = OpsmlProject(info=info)
-    api_card_registries = CardRegistries.construct(
-        datacard=CardRegistry(registry_name="data"),
-        modelcard=CardRegistry(registry_name="model"),
-        runcard=CardRegistry(registry_name="run"),
-        project=CardRegistry(registry_name="project"),
-    )
+
+    api_card_registries = CardRegistries()
+    api_card_registries.data = ServerCardRegistry(registry_name="data")
+    api_card_registries.model = ServerCardRegistry(registry_name="model")
+    api_card_registries.run = ServerCardRegistry(registry_name="run")
+    api_card_registries.project = ServerCardRegistry(registry_name="project")
+    api_card_registries.pipeline = ServerCardRegistry(registry_name="pipeline")
+
     opsml_run._run_mgr.registries = api_card_registries
     return opsml_run
 

@@ -11,6 +11,7 @@ from opsml_artifacts.registry.cards.cards import (
     PipelineCard,
     RunCard,
 )
+from opsml_artifacts.registry.cards.types import CardType
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
     ModelRegistryRecord,
@@ -23,6 +24,7 @@ from opsml_artifacts.registry.sql.registry_base import (
     VersionType,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
+from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -335,3 +337,20 @@ class CardRegistry:
         """
         results = self.registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}
+
+
+class CardRegistries:
+    def __init__(self):
+        """Instantiates class that contains all registeries"""
+        self.data = CardRegistry(registry_name=CardType.DATACARD.value)
+        self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
+        self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
+        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
+        self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
+
+    def set_storage_client(self, storage_client: StorageClientType):
+        self.data.registry.storage_client = storage_client
+        self.model.registry.storage_client = storage_client
+        self.run.registry.storage_client = storage_client
+        self.project.registry.storage_client = storage_client
+        self.pipeline.registry.storage_client = storage_client
