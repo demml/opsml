@@ -165,9 +165,8 @@ class ActiveRun:
             storage_client=self._info.storage_client,
             artifact_type="joblib",
         )
-        artifact_uri = {name: storage_path.uri}
 
-        self.runcard.artifact_uris = {**artifact_uri, **self.runcard.artifact_uris}
+        self.runcard.add_artifact_uri(name=name, uri=storage_path.uri)
 
     def log_metric(
         self,
