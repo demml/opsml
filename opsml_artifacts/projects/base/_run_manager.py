@@ -131,7 +131,7 @@ class _RunManager:
     def _verify_run_id(self, run_id: str) -> None:
         """Verifies the run exists for the given project."""
 
-        card = self.registries.run.registry.list_cards()
+        card = self.registries.run.registry.list_cards(uid=run_id)
 
         if len(card) > 0:
             if not bool(card[0]):
@@ -157,9 +157,8 @@ class _RunManager:
     def _load_runcard(self) -> RunCard:
         """Loads a RunCard or creates a new RunCard"""
 
-        if self.run_id is not None:
-            if self._card_exists(run_id=self.run_id):
-                return self.registries.run.load_card(uid=self.run_id)
+        if self.run_id is not None and self._card_exists(run_id=self.run_id):
+            return self.registries.run.load_card(uid=self.run_id)
 
         return RunCard(
             name=self._project_info.name,

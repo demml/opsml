@@ -18,6 +18,7 @@ class MlflowRunInfo(RunInfo):
         registries: CardRegistries,
         runcard: RunCard,
         run_id: str,
+        base_artifact_uri: str,
         run_name: Optional[str] = None,
     ):
 
@@ -30,6 +31,7 @@ class MlflowRunInfo(RunInfo):
         )
 
         self.mlflow_client = mlflow_client
+        self.base_artifact_path = base_artifact_uri
 
 
 # def get_mlflow_storage_client() -> MlflowStorageClient:

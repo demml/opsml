@@ -103,6 +103,11 @@ class MlflowActiveRun(ActiveRun):
             artifact_path=_artifact_path,
         )
 
+        filename = local_path.split("/")[-1]
+        artifact_uri = f"{self.info.base_artifact_path}/{_artifact_path}/{filename}"
+
+        self.runcard.add_artifact_uri(name=filename, uri=artifact_uri)
+
     @property
     def run_data(self):
         return self.info.mlflow_client.get_run(self.run_id).data
