@@ -10,6 +10,7 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.request_helpers import api_routes
 from opsml_artifacts.helpers.settings import settings
+from opsml_artifacts.helpers.utils import clean_string
 from opsml_artifacts.registry.cards.card_saver import save_card_artifacts
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
@@ -20,13 +21,21 @@ from opsml_artifacts.registry.cards.cards import (
 )
 from opsml_artifacts.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml_artifacts.registry.sql.records import LoadedRecordType, load_record
-from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames, TableSchema
+from opsml_artifacts.registry.sql.sql_schema import (
+    DBInitializer,
+    RegistryTableNames,
+    TableSchema,
+)
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
+
+# initialize tables
+initializer = DBInitializer(engine=settings.connection_client.get_engine())
+initializer.initialize()
 
 
 class VersionType(str, Enum):
@@ -240,9 +249,12 @@ class SQLRegistryBase:
         uid: Optional[str] = None,
     ) -> ArtifactCard:
 
+        cleaned_name = clean_string(name)
+        cleaned_team = clean_string(team)
+
         record_data = self.list_cards(
-            name=name,
-            team=team,
+            name=cleaned_name,
+            team=cleaned_team,
             version=version,
             uid=uid,
         )[0]
@@ -265,7 +277,7 @@ class ServerRegistry(SQLRegistryBase):
 
         self._engine = self._get_engine()
         self._session = self._get_session()
-        self._create_table_if_not_exists()
+        # self._create_table_if_not_exists()
         self.table_name = self._table.__tablename__
 
     def _get_engine(self):
@@ -359,10 +371,13 @@ class ServerRegistry(SQLRegistryBase):
             Dictionary of records
         """
 
+        cleaned_name = clean_string(name)
+        cleaned_team = clean_string(team)
+
         query = query_creator.record_from_table_query(
             table=self._table,
-            name=name,
-            team=team,
+            name=cleaned_name,
+            team=cleaned_team,
             version=version,
             uid=uid,
         )
