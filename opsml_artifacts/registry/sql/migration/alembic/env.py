@@ -1,8 +1,8 @@
 import os
 from logging.config import fileConfig
 
-# from opsml_artifacts.helpers.settings import settings
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 config = context.config
 
@@ -37,7 +37,9 @@ def run_migrations_offline() -> None:
     script output.
 
     """
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
+        url=url,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -53,12 +55,22 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    from opsml_artifacts.helpers.settings import settings
-    from opsml_artifacts.registry import CardRegistry
 
-    connectable = settings.connection_client.get_engine()
-    with connectable.connect() as connection:
-        context.configure(connection=connection)
+    connection = config.attributes.get("connection")
+    if connection is None:
+        engine = engine_from_config(
+            config.get_section(config.config_ini_section),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
+    else:
+        engine = connection.engine
+
+    with engine.connect() as connection:
+        context.configure(
+            connection=connection,
+            version_table="opsml_alembic_version",
+        )
 
         with context.begin_transaction():
             context.run_migrations()

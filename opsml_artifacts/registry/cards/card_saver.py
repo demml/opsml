@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import cast
+from typing import Dict, cast
 
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
@@ -9,18 +9,17 @@ from opsml_artifacts.registry.cards.cards import (
     ProjectCard,
     RunCard,
 )
-from opsml_artifacts.registry.cards.types import (
-    ArtifactStorageSystem,
-    CardType,
-    StoragePath,
-)
+from opsml_artifacts.registry.cards.types import CardType, StoragePath
 from opsml_artifacts.registry.data.formatter import ArrowTable, DataFormatter
 from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.registry.storage.artifact_storage import (
     save_record_artifact_to_storage,
 )
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
-from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
+from opsml_artifacts.registry.storage.types import (
+    ArtifactStorageSpecs,
+    ArtifactStorageType,
+)
 
 
 class CardArtifactSaver:
@@ -114,8 +113,8 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """Saves artifacts from a DataCard"""
 
         self._save_data()
-        if bool(self.card.drift_report):
-            self._save_drift()
+        # if bool(self.card.drift_report):
+        # self._save_drift()
 
         return self.card
 
@@ -141,11 +140,13 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.storage_client.storage_spec = storage_spec
 
         api_def = self._get_onnx_model_def()
-        save_record_artifact_to_storage(
+        storage_path = save_record_artifact_to_storage(
             artifact=api_def.json(),
-            artifact_type=ArtifactStorageSystem.JSON.value,
+            artifact_type=ArtifactStorageType.JSON.value,
             storage_client=self.storage_client,
         )
+
+        self.card.onnx_model_uri = storage_path.uri
 
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
@@ -155,7 +156,14 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(exclude={"sample_input_data", "trained_model", "storage_client"}),
+            artifact=self.card.dict(
+                exclude={
+                    "sample_input_data",
+                    "trained_model",
+                    "storage_client",
+                    "onnx_model_def",
+                }
+            ),
             storage_client=self.storage_client,
         )
 
@@ -213,16 +221,20 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def save_artifacts(self) -> ArtifactCard:
         """Saves all artifacts associated with RunCard to filesystem"""
 
-        # artifact_uris: Dict[str, str] = {}
-        #
-        # if self.card.artifacts is not None:
-        #    for name, artifact in self.card.artifacts.items():
-        #        storage_path = save_record_artifact_to_storage(
-        #            artifact=artifact,
-        #            storage_client=self.storage_client,
-        #        )
-        #        artifact_uris[name] = storage_path.uri
-        # self.card.artifact_uris = artifact_uris
+        # check if artifacts have already been saved (Mlflow runs save artifacts during run)
+        if self.card.artifact_uris is None:
+            artifact_uris: Dict[str, str] = {}
+
+            if self.card.artifacts is not None:
+                for name, artifact in self.card.artifacts.items():
+
+                    storage_path = save_record_artifact_to_storage(
+                        artifact=artifact,
+                        storage_client=self.storage_client,
+                    )
+                    artifact_uris[name] = storage_path.uri
+
+            self.card.artifact_uris = artifact_uris
 
         return self.card
 

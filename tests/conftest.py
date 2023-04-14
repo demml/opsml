@@ -50,9 +50,9 @@ import lightgbm as lgb
 from opsml_artifacts.registry import ModelCard
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, RunSchema, PipelineSchema, BaseMixin, Base
+from opsml_artifacts.registry.sql.sql_schema import BaseMixin, Base, DBInitializer
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.storage.storage_system import StorageClientGetter, MlflowStorageClient, StorageSystem
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter, StorageSystem
 from opsml_artifacts.projects import get_project
 from opsml_artifacts.projects.mlflow import MlflowProject
 from opsml_artifacts.projects.base.types import ProjectInfo
@@ -61,7 +61,7 @@ from opsml_artifacts.projects import OpsmlProject
 
 
 # testing
-from tests.mock_api_registries import CardRegistry as ServerCardRegistry
+from tests.mock_api_registries import CardRegistry as ClientCardRegistry
 
 CWD = os.getcwd()
 
@@ -227,6 +227,7 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 def test_app() -> Iterator[TestClient]:
     cleanup()
     from opsml_artifacts.app.main import OpsmlApp
+    from sqlalchemy.engine.reflection import Inspector
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
@@ -234,7 +235,7 @@ def test_app() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> dict[str, ServerCardRegistry]:
+def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
     def callable_api():
         return test_client
 
@@ -245,11 +246,11 @@ def mock_registries(test_client: TestClient) -> dict[str, ServerCardRegistry]:
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
 
-        registries.data = ServerCardRegistry(registry_name="data")
-        registries.model = ServerCardRegistry(registry_name="model")
-        registries.pipeline = ServerCardRegistry(registry_name="pipeline")
-        registries.run = ServerCardRegistry(registry_name="run")
-        registries.project = ServerCardRegistry(registry_name="project")
+        registries.data = ClientCardRegistry(registry_name="data")
+        registries.model = ClientCardRegistry(registry_name="model")
+        registries.pipeline = ClientCardRegistry(registry_name="pipeline")
+        registries.run = ClientCardRegistry(registry_name="run")
+        registries.project = ClientCardRegistry(registry_name="project")
 
         return registries
 
@@ -266,11 +267,11 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
     mlflow_exp: MlflowProject = get_project(info)
 
     api_card_registries = CardRegistries()
-    api_card_registries.data = ServerCardRegistry(registry_name="data")
-    api_card_registries.model = ServerCardRegistry(registry_name="model")
-    api_card_registries.run = ServerCardRegistry(registry_name="run")
-    api_card_registries.project = ServerCardRegistry(registry_name="project")
-    api_card_registries.pipeline = ServerCardRegistry(registry_name="pipeline")
+    api_card_registries.data = ClientCardRegistry(registry_name="data")
+    api_card_registries.model = ClientCardRegistry(registry_name="model")
+    api_card_registries.run = ClientCardRegistry(registry_name="run")
+    api_card_registries.project = ClientCardRegistry(registry_name="project")
+    api_card_registries.pipeline = ClientCardRegistry(registry_name="pipeline")
 
     # set storage client
     mlflow_storage = mlflow_storage_client()
@@ -283,8 +284,8 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
     return mlflow_exp
 
 
-@pytest.fixture(scope="module")
-def api_registries(test_app: TestClient) -> Iterator[dict[str, ServerCardRegistry]]:
+@pytest.fixture(scope="function")
+def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistry]]:
     yield mock_registries(test_app)
 
 
@@ -321,11 +322,11 @@ def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
     opsml_run = OpsmlProject(info=info)
 
     api_card_registries = CardRegistries()
-    api_card_registries.data = ServerCardRegistry(registry_name="data")
-    api_card_registries.model = ServerCardRegistry(registry_name="model")
-    api_card_registries.run = ServerCardRegistry(registry_name="run")
-    api_card_registries.project = ServerCardRegistry(registry_name="project")
-    api_card_registries.pipeline = ServerCardRegistry(registry_name="pipeline")
+    api_card_registries.data = ClientCardRegistry(registry_name="data")
+    api_card_registries.model = ClientCardRegistry(registry_name="model")
+    api_card_registries.run = ClientCardRegistry(registry_name="run")
+    api_card_registries.project = ClientCardRegistry(registry_name="project")
+    api_card_registries.pipeline = ClientCardRegistry(registry_name="pipeline")
 
     opsml_run._run_mgr.registries = api_card_registries
     return opsml_run
@@ -363,40 +364,35 @@ def experiment_table_to_migrate():
 def mock_local_engine():
     local_client = LocalSQLConnection(tracking_uri="sqlite://")
     engine = local_client.get_engine()
-    return engine
+    return
 
 
-@pytest.fixture(scope="function")
-def db_registries(mock_local_engine):
+@pytest.fixture(scope="module")
+def db_registries():
 
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml_artifacts.registry.sql.registry import CardRegistry
 
-    with patch.multiple(
-        "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
-        get_engine=MagicMock(return_value=mock_local_engine),
-    ) as engine_mock:
+    model_registry = CardRegistry(registry_name="model")
+    data_registry = CardRegistry(registry_name="data")
+    run_registry = CardRegistry(registry_name="run")
+    pipeline_registry = CardRegistry(registry_name="pipeline")
 
-        local_client = LocalSQLConnection(tracking_uri="sqlite://")
-        engine = local_client.get_engine()
+    engine = model_registry.registry._engine
 
-        DataSchema.__table__.create(bind=engine, checkfirst=True)
-        ModelSchema.__table__.create(bind=engine, checkfirst=True)
-        RunSchema.__table__.create(bind=engine, checkfirst=True)
-        PipelineSchema.__table__.create(bind=engine, checkfirst=True)
+    initializer = DBInitializer(engine=engine)
+    # tables are created when settings are called.
+    # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
+    # need to do it manually
 
-        model_registry = CardRegistry(registry_name="model")
-        data_registry = CardRegistry(registry_name="data")
-        run_registry = CardRegistry(registry_name="run")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
+    initializer.initialize()
 
-        yield {
-            "data": data_registry,
-            "model": model_registry,
-            "run": run_registry,
-            "pipeline": pipeline_registry,
-            "connection_client": local_client,
-        }
+    yield {
+        "data": data_registry,
+        "model": model_registry,
+        "run": run_registry,
+        "pipeline": pipeline_registry,
+    }
 
     cleanup()
 

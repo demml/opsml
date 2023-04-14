@@ -4,8 +4,11 @@ import uuid
 from enum import Enum
 from typing import Type, Union, cast
 
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
 
@@ -15,6 +18,8 @@ logger = ArtifactLogger.get_logger(__name__)
 
 Base = declarative_base()
 YEAR_MONTH_DATE = "%Y-%m-%d"
+
+DIR_PATH = os.path.dirname(__file__)
 
 
 class RegistryTableNames(str, Enum):
@@ -48,7 +53,6 @@ class BaseMixin:
 @declarative_mixin
 class DataMixin:
     data_uri = Column("data_uri", String(2048))
-    drift_uri = Column("drift_uri", String(2048))
     feature_map = Column("feature_map", JSON)
     feature_descriptions = Column("feature_descriptions", JSON)
     data_splits = Column("data_splits", JSON)
@@ -69,6 +73,7 @@ class ModelMixin:
     modelcard_uri = Column("modelcard_uri", String(2048))
     datacard_uid = Column("datacard_uid", String(2048))
     trained_model_uri = Column("trained_model_uri", String(2048))
+    onnx_model_uri = Column("onnx_model_uri", String(2048))
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
@@ -144,3 +149,52 @@ class TableSchema:
                 return cast(Type[REGISTRY_TABLES], table_schema)
 
         raise ValueError(f"""Incorrect table name provided {table_name}""")
+
+
+def registry_tables_exist(engine) -> bool:
+    table_names = Inspector.from_engine(engine).get_table_names()
+    return set(table_names) == set(list(RegistryTableNames))
+
+
+class DBInitializer:
+    def __init__(self, engine):
+        self.engine = engine
+
+    def registry_tables_exist(self) -> bool:
+        """Checks if all tables have been created previously"""
+        table_names = Inspector.from_engine(self.engine).get_table_names()
+        return set(table_names) == set(list(RegistryTableNames))
+
+    def create_tables(self):
+        """Creates tables"""
+        logger.info("Creating database tables")
+        Base.metadata.create_all(self.engine)
+
+    def update_tables(self):
+        """Updates tables in db based on alembic revisions"""
+
+        # credit to mlflow for this implementation
+        logger.info("Updating dbs")
+
+        db_url = str(self.engine.url)
+
+        config = self.get_alembic_config(db_url=db_url)
+        with self.engine.begin() as connection:
+            config.attributes["connection"] = connection  # pylint: disable=unsupported-assignment-operation
+            command.upgrade(config, "heads")
+
+    def get_alembic_config(self, db_url: str) -> Config:
+
+        alembic_dir = os.path.join(DIR_PATH, "migration")
+        db_url = db_url.replace("%", "%%")
+        config = Config(os.path.join(alembic_dir, "alembic.ini"))
+        config.set_main_option("sqlalchemy.url", db_url)
+        config.set_main_option("script_location", f"{alembic_dir}/alembic")
+
+        return config
+
+    def initialize(self) -> None:
+        """Create tables if they don't exist and update"""
+        if not self.registry_tables_exist():
+            self.create_tables()
+        self.update_tables()
