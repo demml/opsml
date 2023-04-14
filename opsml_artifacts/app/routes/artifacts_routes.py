@@ -3,7 +3,6 @@ from typing import Union
 from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.responses import StreamingResponse
 
-from opsml_artifacts import CardRegistry
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
     AddRecordRequest,
@@ -26,6 +25,8 @@ from opsml_artifacts.app.routes.utils import (
     iterfile,
 )
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.registry import CardRegistry
+from opsml_artifacts.registry.storage.storage_system import StorageSystem
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -46,12 +47,19 @@ def get_storage_settings() -> StorageSettingsResponse:
 
             if "gs://" in config.STORAGE_URI:
                 return StorageSettingsResponse(
-                    storage_type="gcs",
+                    storage_type=StorageSystem.GCS.value,
                     storage_uri=config.STORAGE_URI,
                 )
 
+        if config.is_proxy and StorageSystem.MLFLOW in config.proxy_root:
+            StorageSettingsResponse(
+                storage_type=StorageSystem.MLFLOW.value,
+                storage_uri=config.STORAGE_URI,
+                proxy=config.is_proxy,
+            )
+
     return StorageSettingsResponse(
-        storage_type="local",
+        storage_type=StorageSystem.LOCAL.value,
         storage_uri=config.STORAGE_URI,
         proxy=config.is_proxy,
     )
