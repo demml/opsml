@@ -80,6 +80,7 @@ class ModelDownloader:
 
         if team is not None:
             team = team.lower()
+            team = team.replace("_", "-")
             self.model_info.team = team
 
     def get_record(self) -> Dict[str, Any]:

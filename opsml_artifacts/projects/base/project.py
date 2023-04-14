@@ -6,7 +6,6 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.base._active_run import ActiveRun, CardHandler
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo
-from opsml_artifacts.projects.base.utils import _verify_project_id
 from opsml_artifacts.registry.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 
@@ -49,10 +48,8 @@ class OpsmlProject:
                 Run information. if a run_id is given, that run is set
                 as the project's current run.
         """
-        print(info)
         # Set the run manager and project_id (creates ProjectCard if project doesn't exist)
-        self._run_mgr = _RunManager(run_id=info.run_id, project_info=info)
-        self._project_id = _verify_project_id(info=info, registries=self._run_mgr.registries)
+        self._run_mgr = _RunManager(project_info=info)
 
     @property
     def run_id(self) -> str:
@@ -68,7 +65,7 @@ class OpsmlProject:
 
     @property
     def project_id(self) -> str:
-        return self._project_id
+        return self._run_mgr.project_id
 
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
@@ -102,7 +99,7 @@ class OpsmlProject:
         Returns
             `ArtifactCard`
         """
-        card_type = CardType(card_type.lower()).name.lower()
+        card_type = CardType(card_type.lower()).value
         return CardHandler.load_card(
             registries=self._run_mgr.registries,
             card_type=card_type,
@@ -111,7 +108,7 @@ class OpsmlProject:
 
     @property
     def run_data(self):
-        return cast(RunCard, self._run_mgr.registries.runcard.load_card(uid=self.run_id))
+        return cast(RunCard, self._run_mgr.registries.run.load_card(uid=self.run_id))
 
     @property
     def metrics(self) -> dict[str, float]:

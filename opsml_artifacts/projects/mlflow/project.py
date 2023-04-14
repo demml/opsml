@@ -1,23 +1,18 @@
 # pylint: disable=invalid-envvar-value
-import os
 from contextlib import contextmanager
 from typing import Iterator, Optional, cast
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
-from mlflow.tracking import MlflowClient
 
 # helpers
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.helpers.types import OpsmlUri
 
 # projects
 from opsml_artifacts.projects.base.project import OpsmlProject
 from opsml_artifacts.projects.base.types import ProjectInfo
-from opsml_artifacts.projects.base.utils import _verify_project_id
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow._run_manager import _MlflowRunManager
-from opsml_artifacts.projects.mlflow.mlflow_utils import get_mlflow_client
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -59,47 +54,12 @@ class MlflowProject(OpsmlProject):
                 as the project's current run.
         """
 
-        tracking_uri = info.tracking_uri or os.getenv(OpsmlUri.TRACKING_URI)
-
-        # dont want to expose mlflow client in project interface
-        mlflow_client = get_mlflow_client(tracking_uri=tracking_uri)
-        project_id = self._get_project_id(project_id=info.project_id, mlflow_client=mlflow_client)
-
         # Set RunManager
-        self._run_mgr = _MlflowRunManager(
-            run_id=info.run_id,
-            mlflow_client=mlflow_client,
-            project_info=info,
-            project_id=project_id,
-        )
-
-        # set opsml ProjectCard
-        _verify_project_id(info=info, registries=self._run_mgr.registries)
+        self._run_mgr = _MlflowRunManager(project_info=info)
 
     @property
     def run_data(self) -> RunData:
         return self._run_mgr.mlflow_client.get_run(self.run_id).data  # type: ignore
-
-    def _get_project_id(self, project_id: str, mlflow_client: MlflowClient) -> str:
-        """
-        Finds the project_id from mlflow for the given project. If an
-        existing proejct does not exist, a new one is created.
-
-        Args:
-            project_id:
-                Project identifier
-            mlflow_client:
-                MlflowClient instance
-
-        Returns:
-            The underlying mlflow project_id
-        """
-
-        # REMINDER: We treat mlflow "experiments" as projects
-        project = mlflow_client.get_experiment_by_name(name=project_id)
-        if project is None:
-            return mlflow_client.create_experiment(name=project_id)
-        return project.experiment_id
 
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[MlflowActiveRun]:

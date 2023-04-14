@@ -20,33 +20,25 @@ class CardHandler:
     @staticmethod
     def register_card(
         registries: CardRegistries,
-        card_type: str,
         card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
     ) -> None:
         """Registers and ArtifactCard"""
 
-        registry: CardRegistry = getattr(registries, card_type)
+        registry: CardRegistry = getattr(registries, card.card_type)
         registry.register_card(card=card, version_type=version_type)
 
     @staticmethod
-    def load_card(
-        registries: CardRegistries,
-        card_type: str,
-        info: CardInfo,
-    ) -> ArtifactCard:
+    def load_card(registries: CardRegistries, card_type: str, info: CardInfo) -> ArtifactCard:
         """Loads an ArtifactCard"""
+
         registry: CardRegistry = getattr(registries, card_type)
         return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
 
     @staticmethod
-    def update_card(
-        registries: CardRegistries,
-        card_type: str,
-        card: ArtifactCard,
-    ) -> None:
+    def update_card(registries: CardRegistries, card: ArtifactCard) -> None:
         """Updates an ArtifactCard"""
-        registry: CardRegistry = getattr(registries, card_type)
+        registry: CardRegistry = getattr(registries, card.card_type)
         registry.update_card(card=card)
 
 
@@ -61,7 +53,6 @@ class ActiveRun:
         """
         self._info = run_info
         self._active = True  # should be active upon instantiation
-
         self.runcard = run_info.runcard
 
     @property
@@ -118,19 +109,17 @@ class ActiveRun:
                 "patch". Defaults to "minor".
         """
         self._verify_active()
-        card_type = card.__class__.__name__.lower()
         CardHandler.register_card(
             registries=self._info.registries,
-            card_type=card_type,
             card=card,
             version_type=version_type,
         )
 
-        tag_key = f"{card_type}-{card.name}"
+        tag_key = f"{card.card_type}-{card.name}"
         self.add_tag(key=tag_key, value=str(card.version))
 
         # add uid to RunCard
-        self.runcard.add_card_uid(card_type=card_type, uid=str(card.uid))
+        self.runcard.add_card_uid(card_type=card.card_type, uid=str(card.uid))
 
     def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
         """
@@ -138,7 +127,7 @@ class ActiveRun:
 
         Args:
             card_type:
-                datacard or modelcard
+                Type of card to load (data, model, run, pipeline)
             info:
                 Card information to retrieve. `uid` takes precedence if it
                 exists. If the optional `version` is specified, that version
@@ -148,7 +137,8 @@ class ActiveRun:
         Returns
             `ArtifactCard`
         """
-        card_type = CardType(card_type.lower()).name.lower()
+        card_type = CardType(card_type.lower()).value
+
         return CardHandler.load_card(
             registries=self._info.registries,
             card_type=card_type,
@@ -168,11 +158,11 @@ class ActiveRun:
                 Artifact
         """
         spec = ArtifactStorageSpecs(save_path="misc", filename=name)
-        self._info.registries.runcard.registry.storage_client.storage_spec = spec
+        self._info.storage_client.storage_spec = spec
 
         storage_path = save_record_artifact_to_storage(
             artifact=artifact,
-            storage_client=self._info.registries.runcard.registry.storage_client,
+            storage_client=self._info.storage_client,
             artifact_type="joblib",
         )
         artifact_uri = {name: storage_path.uri}
@@ -227,17 +217,9 @@ class ActiveRun:
 
         self._verify_active()
         if self.runcard.uid is not None and self.runcard.version is not None:
-            CardHandler.update_card(
-                registries=self._info.registries,
-                card_type=CardType.RUNCARD.name.lower(),
-                card=self.runcard,
-            )
+            CardHandler.update_card(registries=self._info.registries, card=self.runcard)
         else:
-            CardHandler.register_card(
-                registries=self._info.registries,
-                card_type=CardType.RUNCARD.name.lower(),
-                card=self.runcard,
-            )
+            CardHandler.register_card(registries=self._info.registries, card=self.runcard)
 
     @property
     def run_data(self) -> Any:
