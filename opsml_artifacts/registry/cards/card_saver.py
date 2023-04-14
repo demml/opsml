@@ -10,7 +10,7 @@ from opsml_artifacts.registry.cards.cards import (
     RunCard,
 )
 from opsml_artifacts.registry.cards.types import (
-    ArtifactStorageTypes,
+    ArtifactStorageSystem,
     CardType,
     StoragePath,
 )
@@ -143,7 +143,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         api_def = self._get_onnx_model_def()
         save_record_artifact_to_storage(
             artifact=api_def.json(),
-            artifact_type=ArtifactStorageTypes.JSON.value,
+            artifact_type=ArtifactStorageSystem.JSON.value,
             storage_client=self.storage_client,
         )
 

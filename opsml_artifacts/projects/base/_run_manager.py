@@ -11,46 +11,30 @@ from opsml_artifacts.projects.base.types import (
     RunInfo,
     Tags,
 )
-from opsml_artifacts.registry import CardRegistry, RunCard
-from opsml_artifacts.registry.storage.storage_system import StorageClientType
+from opsml_artifacts.projects.base.utils import (
+    get_project_id_from_registry,
+    verify_runcard_project_match,
+)
+from opsml_artifacts.registry import RunCard
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def get_card_registries(storage_client: StorageClientType):
-
-    """Gets CardRegistries to associate with MlFlow experiment"""
-    registries = CardRegistries(
-        datacard=CardRegistry(registry_name="data"),
-        modelcard=CardRegistry(registry_name="model"),
-        runcard=CardRegistry(registry_name="run"),
-        project=CardRegistry(registry_name="project"),
-    )
-
-    # ensures proper storage client is set
-    registries.set_storage_client(storage_client=storage_client)
-
-    return registries
+registries = CardRegistries()
 
 
 class _RunManager:
     def __init__(
         self,
         project_info: ProjectInfo,
-        run_id: Optional[str] = None,
     ):
         """
         Manages runs for a given project including storing general attributes and creating, activating and
         ending runs. Also holds storage client needed to store artifacts associated with a run.
 
         Args:
-            project_id:
-                Project identifier
             project_info:
                 ProjectInfo
-            run_id:
-                Optional project run id
-
         """
 
         self._project_info = project_info
@@ -59,12 +43,21 @@ class _RunManager:
         self._active_run: Optional[ActiveRun] = None
         self._version: Optional[str] = None
 
-        self._storage_client = self._get_storage_client()
-        self.registries = get_card_registries(storage_client=self._storage_client)
+        # in opsml, storage client comes from settings (created once during runtime)
+        # storage and registries are held in run_manager and passed to active run
+        self._storage_client = settings.storage_client
+        self.registries = registries
 
+        run_id = project_info.run_id
         if run_id is not None:
             self._verify_run_id(run_id)
             self._run_id = run_id
+
+        self._project_id = self._get_project_id()
+
+    @property
+    def project_id(self) -> str:
+        return self._project_id
 
     @property
     def storage_client(self):
@@ -121,13 +114,10 @@ class _RunManager:
         """Get current run name"""
         self._run_name = run_name
 
-    def _get_storage_client(self) -> StorageClientType:
-        return settings.storage_client
-
     def _card_exists(self, run_id: str) -> bool:
         """Verifies the run exists for the given project."""
 
-        card = self.registries.runcard.registry.list_cards(uid=run_id)
+        card = self.registries.run.registry.list_cards(uid=run_id)
 
         if len(card) > 0:
             if not bool(card[0]):
@@ -141,7 +131,7 @@ class _RunManager:
     def _verify_run_id(self, run_id: str) -> None:
         """Verifies the run exists for the given project."""
 
-        card = self.registries.runcard.registry.list_cards()
+        card = self.registries.run.registry.list_cards()
 
         if len(card) > 0:
             if not bool(card[0]):
@@ -169,7 +159,7 @@ class _RunManager:
 
         if self.run_id is not None:
             if self._card_exists(run_id=self.run_id):
-                return self.registries.runcard.load_card(uid=self.run_id)
+                return self.registries.run.load_card(uid=self.run_id)
 
         return RunCard(
             name=self._project_info.name,
@@ -204,7 +194,6 @@ class _RunManager:
             run_name:
                 Optional run name
         """
-
         if self.run_id is not None:
             return self._restore_run()
         return self._create_run(run_name=run_name)
@@ -248,3 +237,27 @@ class _RunManager:
         # Remove run id
         logger.info("ending run: %s", self.run_id)
         self._end_run()
+
+    def _get_project_id(self) -> str:
+        """
+        Checks if the name and team exist as a project in the Project registry. A ProjectCard is created if it
+        doesn't exist. If a run_id is provided, a check is performed to match the project_id to the run_id.
+
+        Args:
+            info:
+                Project info
+
+        """
+
+        if self.run_id is not None:
+            verify_runcard_project_match(
+                project_id=self._project_info.project_id,
+                run_id=self.run_id,
+                runcard_registry=self.registries.run,
+            )
+            return self._project_info.project_id
+
+        return get_project_id_from_registry(
+            project_registry=self.registries.project,
+            info=self._project_info,
+        )
