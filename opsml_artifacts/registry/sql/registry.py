@@ -265,12 +265,6 @@ class CardRegistry:
         Returns
             ArtifactCard
         """
-        if name is not None:
-            name = name.lower()
-            name = name.replace("_", "-")
-
-        if team is not None:
-            team = team.lower()
 
         return self.registry.load_card(uid=uid, name=name, team=team, version=version)
 

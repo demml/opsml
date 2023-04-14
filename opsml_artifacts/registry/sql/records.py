@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator, validator
 
-from opsml_artifacts.drift.types import DriftReport
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
 from opsml_artifacts.registry.storage.artifact_storage import (
     load_record_artifact_from_storage,
@@ -11,10 +10,11 @@ from opsml_artifacts.registry.storage.artifact_storage import (
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
+ARBITRARY_ARTIFACT_TYPE = "dict"
+
 
 class DataRegistryRecord(BaseModel):
     data_uri: str
-    drift_uri: Optional[str]
     data_splits: Optional[Dict[str, List[Dict[str, Any]]]]
     version: str
     data_type: str
@@ -47,6 +47,7 @@ class ModelRegistryRecord(BaseModel):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
+    onnx_model_uri: str
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -122,19 +123,16 @@ class LoadRecord(BaseModel):
 
 class LoadedDataRecord(LoadRecord):
     data_uri: str
-    drift_uri: Optional[str]
     data_splits: Optional[List[Dict[str, Any]]]
     data_type: str
     feature_map: Dict[str, str]
     feature_descriptions: Optional[Dict[str, str]]
     dependent_vars: Optional[List[Union[int, str]]]
-    drift_report: Optional[Dict[str, DriftReport]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
         values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
-        values["drift_report"] = LoadedDataRecord.load_drift_report(values=values)
 
         return values
 
@@ -154,7 +152,7 @@ class LoadedDataRecord(LoadRecord):
             storage_client.storage_spec = storage_spec
             return load_record_artifact_from_storage(
                 storage_client=storage_client,
-                artifact_type="dict",
+                artifact_type=ARBITRARY_ARTIFACT_TYPE,
             )
 
         return None
@@ -168,6 +166,7 @@ class LoadedModelRecord(LoadRecord):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
+    onnx_model_uri: str
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -183,6 +182,7 @@ class LoadedModelRecord(LoadRecord):
 
         modelcard_definition["modelcard_uri"] = values.get("modelcard_uri")
         modelcard_definition["trained_model_uri"] = values.get("trained_model_uri")
+        modelcard_definition["onnx_model_uri"] = values.get("onnx_model_uri")
         modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
@@ -207,7 +207,7 @@ class LoadedModelRecord(LoadRecord):
         storage_client.storage_spec = storage_spec
         model_card_definition = load_record_artifact_from_storage(
             storage_client=storage_client,
-            artifact_type="dict",
+            artifact_type=ARBITRARY_ARTIFACT_TYPE,
         )
 
         return model_card_definition
@@ -255,7 +255,7 @@ class LoadedRunRecord(LoadRecord):
             storage_client.storage_spec = storage_spec
             loaded_artifacts[name] = load_record_artifact_from_storage(
                 storage_client=storage_client,
-                artifact_type="artifact",
+                artifact_type=ARBITRARY_ARTIFACT_TYPE,
             )
 
     @staticmethod
