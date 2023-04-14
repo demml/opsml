@@ -21,11 +21,14 @@ class OnnxModelCreator:
         additional_onnx_args: Optional[TorchOnnxArgs] = None,
     ):
 
-        """Instantiates OnnxModelCreator that is used for converting models to Onnx
+        """
+        Instantiates OnnxModelCreator that is used for converting models to Onnx
 
         Args:
-            Model (BaseEstimator, Pipeline, StackingRegressor, Booster): Model to convert
-            input_data (pd.DataFrame, np.ndarray, dict of np.ndarray): Sample of data used to train model
+            Model:
+                Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
+            input_data:
+                Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
         """
         self.model = model
         self.input_data = self._get_one_sample(input_data)
@@ -50,16 +53,18 @@ class OnnxModelCreator:
 
     def get_input_data_type(self, input_data: Any) -> str:
 
-        """Gets the current data type base on model type.
+        """
+        Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
         All others support numpy arrays. This is needed for API signature
         creation when loading model predictors.
 
         Args:
-            input_data (pd.DataFrame, np.ndarray): Sample of data used to train model
+            input_data:
+                Sample of data used to train model
 
         Returns:
-            data type (str)
+            data type
         """
 
         # Onnx supports dataframe schemas for pipelines
@@ -101,10 +106,11 @@ class OnnxModelCreator:
         return model_type.get_type()
 
     def create_onnx_model(self) -> OnnxModelReturn:
-        """Create model card from current model and sample data
+        """
+        Create model card from current model and sample data
 
         Returns
-            OnnxModelReturn
+            `OnnxModelReturn`
         """
 
         model_data = get_model_data(

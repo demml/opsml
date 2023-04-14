@@ -37,7 +37,8 @@ class BaseSQLConnection:
 
 
 class CloudSQLConnection(BaseSQLConnection):
-    """Cloud SQL connection string to pass to the registry for establishing
+    """
+    Cloud SQL connection string to pass to the registry for establishing
     a connection to a MySql or Postgres cloudsql DB
 
     """

@@ -29,10 +29,12 @@ ModelConvertOutput = Tuple[ModelDefinition, Dict[str, Feature], Optional[Dict[st
 # stacking regressor needs to be converted to float32 (all features)
 class DataConverter:
     def __init__(self, model_info: ModelInfo):
-        """DataConverter for for Numpy arrays and non deep-learning estimators
+        """
+        DataConverter for for Numpy arrays and non deep-learning estimators
 
         Args:
-            model_info: ModelInfo class containing model-related information
+            model_info
+                `ModelInfo` class containing model-related information
 
         """
         self.model_info = model_info
@@ -43,11 +45,13 @@ class DataConverter:
         return self.model_info.model_data
 
     def convert_to_float(self, convert_all: bool):
-        """Converts either all non-float32 numeric types to Float32 or
+        """
+        Converts either all non-float32 numeric types to Float32 or
         converts Float64 types to Float32. Skl2Onnx does not support Float64 for some estimator types.
 
         Args:
-            all (boolean): Boolean indicating whether to convert all columns to Float32
+            all:
+                Boolean indicating whether to convert all columns to Float32
 
         """
         self.model_data.data = FloatTypeConverter(
@@ -125,7 +129,8 @@ class NumpyOnnxConverter(DataConverter):
 
 
 class PandasOnnxConverter(DataConverter):
-    """DataConverter for Sklearn estimators that receive a pandas DataFrame as
+    """
+    DataConverter for Sklearn estimators that receive a pandas DataFrame as
     as sample Data. Model is trained with numpy, but original data is in DataFrame
     format
     """
@@ -134,7 +139,8 @@ class PandasOnnxConverter(DataConverter):
         return self._get_py_dataframe_schema()
 
     def get_onnx_data_types(self) -> List[Any]:
-        """Creates a single type spec for a pandas dataframe.
+        """
+        Creates a single type spec for a pandas dataframe.
         This is used for models that supply a dataframe, but are trained with an array.
 
         Example:
@@ -161,7 +167,8 @@ class PandasOnnxConverter(DataConverter):
 
 
 class PandasPipelineOnnxConverter(DataConverter):
-    """DataConverter for Sklearn Pipelines that receive pandas DataFrames as
+    """
+    DataConverter for Sklearn Pipelines that receive pandas DataFrames as
     inputs
     """
 
@@ -203,7 +210,8 @@ class PandasPipelineOnnxConverter(DataConverter):
 
 
 class TensorflowDictOnnxConverter(DataConverter):
-    """DataConverter for TensorFlow/Keras models trained with dictionaries, such as
+    """
+    DataConverter for TensorFlow/Keras models trained with dictionaries, such as
     with multi-input models
     """
 
@@ -211,8 +219,8 @@ class TensorflowDictOnnxConverter(DataConverter):
         return None
 
     def get_onnx_data_types(self) -> List[Any]:
-        """Takes multi input model spec and gets input shape and type for
-        tensorspec
+        """
+        Takes multi input model spec and gets input shape and type for tensorspec
         """
         import tensorflow as tf
 
@@ -244,7 +252,8 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         return None
 
     def get_onnx_data_types(self) -> List[Any]:
-        """Takes model spec and gets input shape and type for
+        """
+        Takes model spec and gets input shape and type for
         tensorspec
         """
         import tensorflow as tf
@@ -302,7 +311,8 @@ class PyTorchOnnxDataConverter(DataConverter):
 
 class PyTorchOnnxDictConverter(DataConverter):
 
-    """DataConverter for Pytorch models trained with dictionary inputs, such as with
+    """
+    DataConverter for Pytorch models trained with dictionary inputs, such as with
     HuggingFace language models that accept input_ids, token_type_ids and
     attention_mask.
     """

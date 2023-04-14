@@ -47,19 +47,23 @@ import lightgbm as lgb
 
 
 # opsml
-from opsml_artifacts import ModelCard
+from opsml_artifacts.registry import ModelCard
 from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.sql.sql_schema import DataSchema, ModelSchema, ExperimentSchema, PipelineSchema
+from opsml_artifacts.registry.sql.sql_schema import BaseMixin, Base, DBInitializer
 from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.storage.storage_system import StorageClientGetter
+from opsml_artifacts.registry.storage.storage_system import StorageClientGetter, StorageSystem
 from opsml_artifacts.projects import get_project
-from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo
-from opsml_artifacts.projects.types import CardRegistries
+from opsml_artifacts.projects.mlflow import MlflowProject
+from opsml_artifacts.projects.base.types import ProjectInfo
+from opsml_artifacts.registry import CardRegistries
+from opsml_artifacts.projects import OpsmlProject
 
 
 # testing
-from tests.mock_api_registries import CardRegistry
+from tests.mock_api_registries import CardRegistry as ClientCardRegistry
+
+CWD = os.getcwd()
 
 
 def cleanup() -> None:
@@ -70,6 +74,9 @@ def cleanup() -> None:
 
     # remove api mlrun path
     shutil.rmtree(STORAGE_PATH, ignore_errors=True)
+
+    # remove api local path
+    shutil.rmtree("local", ignore_errors=True)
 
     # remove test experiment mlrun path
     shutil.rmtree("mlruns", ignore_errors=True)
@@ -216,17 +223,11 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 ################################################################################
 
 
-def mock_app() -> TestClient:
-    from opsml_artifacts.app.main import OpsmlApp
-
-    opsml_app = OpsmlApp(run_mlflow=True)
-    return TestClient(opsml_app.get_app())
-
-
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
     cleanup()
     from opsml_artifacts.app.main import OpsmlApp
+    from sqlalchemy.engine.reflection import Inspector
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
@@ -234,7 +235,7 @@ def test_app() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
+def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
     def callable_api():
         return test_client
 
@@ -243,117 +244,155 @@ def mock_registries(test_client: TestClient) -> dict[str, CardRegistry]:
         from opsml_artifacts.helpers.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
+        registries = CardRegistries()
 
-        data_registry = CardRegistry(registry_name="data")
-        model_registry = CardRegistry(registry_name="model")
-        experiment_registry = CardRegistry(registry_name="experiment")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
+        registries.data = ClientCardRegistry(registry_name="data")
+        registries.model = ClientCardRegistry(registry_name="model")
+        registries.pipeline = ClientCardRegistry(registry_name="pipeline")
+        registries.run = ClientCardRegistry(registry_name="run")
+        registries.project = ClientCardRegistry(registry_name="project")
 
-        return {
-            "data": data_registry,
-            "model": model_registry,
-            "experiment": experiment_registry,
-            "pipeline": pipeline_registry,
-        }
+        return registries
 
 
-def mock_mlflow_project(info: MlflowProjectInfo) -> MlflowProject:
-    mlflow_exp: MlflowProject = get_project(info)
-    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
-    api_card_registries = CardRegistries.construct(
-        datacard=CardRegistry(registry_name="data"),
-        modelcard=CardRegistry(registry_name="model"),
-        experimentcard=CardRegistry(registry_name="experiment"),
+def mlflow_storage_client():
+    mlflow_storage = StorageClientGetter.get_storage_client(
+        storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value)
     )
+    return mlflow_storage
+
+
+def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
+    info.tracking_uri = SQL_PATH
+    mlflow_exp: MlflowProject = get_project(info)
+
+    api_card_registries = CardRegistries()
+    api_card_registries.data = ClientCardRegistry(registry_name="data")
+    api_card_registries.model = ClientCardRegistry(registry_name="model")
+    api_card_registries.run = ClientCardRegistry(registry_name="run")
+    api_card_registries.project = ClientCardRegistry(registry_name="project")
+    api_card_registries.pipeline = ClientCardRegistry(registry_name="pipeline")
+
+    # set storage client
+    mlflow_storage = mlflow_storage_client()
+
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
+    mlflow_exp._run_mgr._storage_client = mlflow_storage
+    mlflow_exp._run_mgr._storage_client.mlflow_client = mlflow_exp._run_mgr.mlflow_client
+
     return mlflow_exp
 
 
-# @pytest.fixture(scope="module")
-# def test_app() -> Iterator[TestClient]:
-#
-#    cleanup()
-#    from opsml_artifacts.app.main import OpsmlApp, config
-#    from opsml_artifacts.app.core.initialize_mlflow import initialize_mlflow
-#
-#    mlflow_config = initialize_mlflow()
-#    if mlflow_config.MLFLOW_SERVER_SERVE_ARTIFACTS:
-#        config.is_proxy = True
-#        config.proxy_root = mlflow_config.MLFLOW_SERVER_ARTIFACT_ROOT
-#
-#    opsml_app = OpsmlApp(run_mlflow=True)
-#    with TestClient(opsml_app.get_app()) as tc:
-#        yield tc
-#    cleanup()
-
-
-@pytest.fixture(scope="module")
-def api_registries(test_app: TestClient) -> Iterator[dict[str, CardRegistry]]:
+@pytest.fixture(scope="function")
+def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistry]]:
     yield mock_registries(test_app)
 
 
-@pytest.fixture
-def mlflow_project(api_registries: dict[str, CardRegistry]) -> Iterator[MlflowProject]:
-    mlflow_exp: MlflowProject = get_project(
-        MlflowProjectInfo(
+@pytest.fixture(scope="function")
+def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
+    info = ProjectInfo(name="test_exp", team="test", user_email="test", tracking_uri=SQL_PATH)
+    mlflow_exp: MlflowProject = get_project(info=info)
+
+    mlflow_storage = mlflow_storage_client()
+    api_registries.set_storage_client(mlflow_storage)
+    mlflow_exp._run_mgr.registries = api_registries
+    mlflow_exp._run_mgr._storage_client = mlflow_storage
+    mlflow_exp._run_mgr._storage_client.mlflow_client = mlflow_exp._run_mgr.mlflow_client
+
+    yield mlflow_exp
+
+
+@pytest.fixture(scope="function")
+def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
+    opsml_run = OpsmlProject(
+        info=ProjectInfo(
             name="test_exp",
             team="test",
             user_email="test",
             tracking_uri=SQL_PATH,
         )
     )
-    mlflow_storage = mlflow_exp._run_mgr._get_storage_client()
-    api_card_registries = CardRegistries.construct(
-        datacard=api_registries["data"],
-        modelcard=api_registries["model"],
-        experimentcard=api_registries["experiment"],
-    )
-    api_card_registries.set_storage_client(mlflow_storage)
-    mlflow_exp._run_mgr.registries = api_card_registries
+    opsml_run._run_mgr.registries = api_registries
+    return opsml_run
 
-    yield mlflow_exp
+
+def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
+    info.tracking_uri = SQL_PATH
+    opsml_run = OpsmlProject(info=info)
+
+    api_card_registries = CardRegistries()
+    api_card_registries.data = ClientCardRegistry(registry_name="data")
+    api_card_registries.model = ClientCardRegistry(registry_name="model")
+    api_card_registries.run = ClientCardRegistry(registry_name="run")
+    api_card_registries.project = ClientCardRegistry(registry_name="project")
+    api_card_registries.pipeline = ClientCardRegistry(registry_name="pipeline")
+
+    opsml_run._run_mgr.registries = api_card_registries
+    return opsml_run
 
 
 ######## local clients
+
+
+@pytest.fixture(scope="module")
+def experiment_table_to_migrate():
+    from sqlalchemy import Column, JSON, String
+    from sqlalchemy.orm import declarative_mixin
+
+    @declarative_mixin
+    class ExperimentMixin:
+        data_card_uids = Column("data_card_uids", JSON)
+        model_card_uids = Column("model_card_uids", JSON)
+        pipeline_card_uid = Column("pipeline_card_uid", String(512))
+        project_id = Column("project_id", String(512))
+        artifact_uris = Column("artifact_uris", JSON)
+        metrics = Column("metrics", JSON)
+        params = Column("params", JSON)
+        tags = Column("tags", JSON)
+
+    class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
+        __tablename__ = "OPSML_EXPERIMENT_REGISTRY"
+
+        def __repr__(self):
+            return f"<SqlMetric({self.__tablename__}"
+
+    yield ExperimentSchema
+
+
 @pytest.fixture(scope="function")
 def mock_local_engine():
     local_client = LocalSQLConnection(tracking_uri="sqlite://")
     engine = local_client.get_engine()
-    return engine
+    return
 
 
-@pytest.fixture(scope="function")
-def db_registries(mock_local_engine):
+@pytest.fixture(scope="module")
+def db_registries():
 
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml_artifacts.registry.sql.registry import CardRegistry
 
-    with patch.multiple(
-        "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
-        get_engine=MagicMock(return_value=mock_local_engine),
-    ) as engine_mock:
+    model_registry = CardRegistry(registry_name="model")
+    data_registry = CardRegistry(registry_name="data")
+    run_registry = CardRegistry(registry_name="run")
+    pipeline_registry = CardRegistry(registry_name="pipeline")
 
-        local_client = LocalSQLConnection(tracking_uri="sqlite://")
-        engine = local_client.get_engine()
+    engine = model_registry.registry._engine
 
-        DataSchema.__table__.create(bind=engine, checkfirst=True)
-        ModelSchema.__table__.create(bind=engine, checkfirst=True)
-        ExperimentSchema.__table__.create(bind=engine, checkfirst=True)
-        PipelineSchema.__table__.create(bind=engine, checkfirst=True)
+    initializer = DBInitializer(engine=engine)
+    # tables are created when settings are called.
+    # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
+    # need to do it manually
 
-        model_registry = CardRegistry(registry_name="model")
-        data_registry = CardRegistry(registry_name="data")
-        experiment_registry = CardRegistry(registry_name="experiment")
-        pipeline_registry = CardRegistry(registry_name="pipeline")
+    initializer.initialize()
 
-        yield {
-            "data": data_registry,
-            "model": model_registry,
-            "experiment": experiment_registry,
-            "pipeline": pipeline_registry,
-            "connection_client": local_client,
-        }
+    yield {
+        "data": data_registry,
+        "model": model_registry,
+        "run": run_registry,
+        "pipeline": pipeline_registry,
+    }
 
     cleanup()
 
@@ -397,54 +436,6 @@ def mock_gcs_storage_response():
 
     with patch("httpx.Client", MockHTTPX) as mock_requests:
         yield mock_requests
-
-
-@pytest.fixture(scope="function")
-def load_transformer_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
-    data = np.load("tests/assets/transformer_data.npy")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_multi_input_keras_example():
-    import tensorflow as tf
-
-    loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
-    data = joblib.load("tests/assets/multi_input_data.joblib")
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_pytorch_resnet():
-    import torch
-
-    loaded_model = torch.load("tests/assets/resnet.pt")
-    data = torch.randn(1, 3, 224, 224).numpy()
-
-    return loaded_model, data
-
-
-@pytest.fixture(scope="function")
-def load_pytorch_language():
-
-    import torch
-    from transformers import AutoTokenizer
-
-    model_name = "sshleifer/tiny-distilbert-base-cased"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    data = tokenizer(
-        "this is a test",
-        padding="max_length",
-        truncation=True,
-        return_tensors="pt",
-    )
-    sample_data = {name: values.numpy() for name, values in data.items()}
-    loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
-
-    return loaded_model, sample_data
 
 
 @pytest.fixture(scope="function")
@@ -553,6 +544,26 @@ def drift_dataframe():
 ###############################################################################
 # Moodels
 ################################################################################
+
+
+@pytest.fixture(scope="session")
+def load_pytorch_language():
+
+    import torch
+    from transformers import AutoTokenizer
+
+    model_name = "sshleifer/tiny-distilbert-base-cased"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    data = tokenizer(
+        "this is a test",
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt",
+    )
+    sample_data = {name: values.numpy() for name, values in data.items()}
+    loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
+
+    return loaded_model, sample_data
 
 
 @pytest.fixture(scope="session")
