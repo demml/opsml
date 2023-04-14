@@ -1,5 +1,5 @@
 import pandas as pd
-import time
+from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml_artifacts.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
@@ -143,6 +143,50 @@ def test_experiment_card(linear_regression, db_registries, mock_artifact_storage
     assert loaded_card.uid == experiment.uid
 
 
+def test_local_model_registry(db_registries, sklearn_pipeline):
+
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = sklearn_pipeline
+    data_card = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry: CardRegistry = db_registries["model"]
+    model_registry.register_card(model_card)
+
+    assert path.exists(model_card.onnx_model_uri)
+    assert path.exists(model_card.trained_model_uri)
+    assert path.exists(model_card.sample_data_uri)
+
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+
+    assert loaded_card != model_card
+    assert loaded_card.onnx_model_def is None
+    assert loaded_card.trained_model is None
+    assert loaded_card.sample_input_data is None
+
+    loaded_card.load_onnx_model_definition()
+    loaded_card.load_trained_model()
+
+    assert loaded_card.trained_model is not None
+    assert loaded_card.sample_input_data is not None
+    assert loaded_card.onnx_model_def is not None
+
+
 @patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
 @patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
 def test_register_model(
@@ -156,6 +200,7 @@ def test_register_model(
 
     model_card_mock.return_value = None
     model, data = sklearn_pipeline
+
     # create data card
     data_registry: CardRegistry = db_registries["data"]
 
@@ -363,7 +408,6 @@ def test_full_pipeline_with_loading(
     model_registry: CardRegistry = db_registries["model"]
     experiment_registry: CardRegistry = db_registries["run"]
     pipeline_registry: CardRegistry = db_registries["pipeline"]
-    local_client = db_registries["connection_client"]
     model, data = linear_regression
     #### Create DataCard
     data_card = DataCard(

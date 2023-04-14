@@ -5,6 +5,7 @@ from typing import Any, Dict, cast
 from opsml_artifacts.app.core.config import OpsmlConfig
 from opsml_artifacts.app.routes.models import DownloadModelRequest
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.utils import clean_string
 from opsml_artifacts.registry import CardRegistry, ModelCard
 from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.model.types import ModelApiDef
@@ -70,18 +71,8 @@ class ModelDownloader:
         self._file_path = file_path
 
     def clean_info(self):
-        name = self.model_info.name
-        team = self.model_info.team
-
-        if name is not None:
-            name = name.lower()
-            name = name.replace("_", "-")
-            self.model_info.name = name
-
-        if team is not None:
-            team = team.lower()
-            team = team.replace("_", "-")
-            self.model_info.team = team
+        self.model_info.name = clean_string(self.model_info.name)
+        self.model_info.team = clean_string(self.model_info.team)
 
     def get_record(self) -> Dict[str, Any]:
         record = self.registry.registry.list_cards(

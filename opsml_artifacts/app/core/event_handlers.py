@@ -7,6 +7,7 @@ from fastapi import FastAPI, Response
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.sql.registry import CardRegistries
+from opsml_artifacts.registry.sql.registry_base import initializer
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -23,6 +24,7 @@ def _init_rollbar():
 
 def _init_registries(app: FastAPI):
     app.state.registries = CardRegistries()
+    initializer.initialize()
 
 
 def _shutdown_registries(app: FastAPI):

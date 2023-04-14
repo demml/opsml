@@ -1,7 +1,6 @@
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
-from pathlib import Path
 import pandas as pd
 from pydantic import ValidationError
 from opsml_artifacts.registry import DataCard, ModelCard, RunCard, PipelineCard
