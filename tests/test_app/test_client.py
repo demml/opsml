@@ -26,7 +26,7 @@ def test_client(test_app):
 def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
 
     # create data card
-    registry = api_registries["data"]
+    registry = api_registries.data
 
     data_card = DataCard(
         data=test_data,
@@ -52,7 +52,7 @@ def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parq
 
 def test_run_card(linear_regression, api_registries, mock_artifact_storage_clients):
 
-    registry = api_registries["run"]
+    registry = api_registries.run
 
     experiment = RunCard(
         name="test_df",
@@ -88,7 +88,7 @@ def test_register_model(
     model_card_mock.return_value = None
     model, data = sklearn_pipeline
     # create data card
-    data_registry = api_registries["data"]
+    data_registry = api_registries.data
 
     data_card = DataCard(
         data=data,
@@ -107,7 +107,7 @@ def test_register_model(
         datacard_uid=data_card.uid,
     )
 
-    model_registry = api_registries["model"]
+    model_registry = api_registries.model
     model_registry.register_card(model_card1)
 
     loaded_model_record.return_value = model_card1.dict()
@@ -172,7 +172,7 @@ def test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, m
     team = "mlops"
     user_email = "mlops.com"
 
-    registry = api_registries["data"]
+    registry = api_registries.data
 
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
@@ -234,7 +234,7 @@ def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
             name=f"{card_type}_{random.randint(0,100)}",
         )
     # register
-    registry = api_registries["pipeline"]
+    registry = api_registries.pipeline
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
@@ -258,10 +258,10 @@ def test_full_pipeline_with_loading(
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
-    data_registry = api_registries["data"]
-    model_registry = api_registries["model"]
-    experiment_registry = api_registries["run"]
-    pipeline_registry = api_registries["pipeline"]
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+    experiment_registry = api_registries.run
+    pipeline_registry = api_registries.pipeline
     model, data = linear_regression
     #### Create DataCard
     data_card = DataCard(
