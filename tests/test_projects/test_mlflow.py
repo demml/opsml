@@ -143,6 +143,11 @@ def test_log_artifact(mlflow_project: MlflowProject) -> None:
         run.add_tag("test_tag", "1.0.0")
         info.run_id = run.run_id
 
+    # test proxy change
+    fake_uri = "mlflow-artifacts:/4/test/test.png"
+    replaced_uri = mlflow_project._run_mgr.storage_client.replace_proxy_prefix(uri=fake_uri)
+    assert "mlruns" in replaced_uri  # "mlruns" is the default storage path set in conftest
+
     proj = conftest.mock_mlflow_project(info)
     proj.download_artifacts(artifact_path="misc", local_path="test_path")
 
