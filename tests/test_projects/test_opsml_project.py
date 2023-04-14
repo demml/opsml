@@ -16,7 +16,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
-    """ify that we can read artifacts / metrics / cards without making a run
+    """verify that we can read artifacts / metrics / cards without making a run
     active."""
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
@@ -80,3 +80,50 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
         run.log_param(key="param1", value="value1")
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
+    with pytest.raises(ValueError):
+        proj._run_mgr.active_run
+    with pytest.raises(ValueError):
+        proj._run_mgr.verify_active()
+    with pytest.raises(ValueError):
+        info.run_id = "run_id_fail"
+        proj = conftest.mock_opsml_project(info)
+
+
+def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
+    """Verify a run con be continued"""
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    with opsml_project.run(run_name="test") as run:
+        # Create metrics / params / cards
+        run = cast(ActiveRun, run)
+        run.log_metric(key="m1", value=1.1)
+        run.log_param(key="m1", value="apple")
+        info.run_id = run.run_id
+
+    new_proj = conftest.mock_opsml_project(info)
+
+    with new_proj.run() as run:
+        run = cast(ActiveRun, run)
+        run.log_metric(key="m2", value=1.2)
+        run.log_param(key="m2", value="banana")
+
+    read_project = conftest.mock_opsml_project(info)
+
+    assert len(read_project.metrics) == 2
+    assert read_project.metrics["m1"] == 1.1
+    assert read_project.metrics["m2"] == 1.2
+    assert len(read_project.params) == 2
+    assert read_project.params["m1"] == "apple"
+    assert read_project.params["m2"] == "banana"
+
+
+def test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
+    """Verify starting another run inside another fails"""
+
+    with opsml_project.run(run_name="test") as run:
+        # Create metrics / params / cards
+        run = cast(ActiveRun, run)
+
+        with pytest.raises(ValueError):
+            with opsml_project.run() as run:
+                print("fail")

@@ -1,5 +1,6 @@
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-outside-toplevel,disable=invalid-envvar-value
 
+import os
 import shutil
 import tempfile
 import uuid
@@ -13,6 +14,7 @@ import pandas as pd
 from numpy.typing import NDArray
 from pyarrow.fs import LocalFileSystem
 
+from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -493,7 +495,28 @@ class MlflowStorageClient(StorageClient):
         # need to re-write storage path for saving to ArtifactCard
         storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
 
-        return storage_uri
+        return self.replace_proxy_prefix(uri=storage_uri)
+
+    def replace_proxy_prefix(self, uri: str):
+        """
+        Replaces proxy prefix if present
+
+        Args:
+            Uri:
+                Uri to check
+
+        Returns:
+            replaced uri
+        """
+
+        proxy_prefix = "mlflow-artifacts:"
+        storage_uri = str(os.getenv(OpsmlUri.STORAGE_URI))
+
+        if proxy_prefix in uri:
+            new_uri = uri.replace(proxy_prefix, storage_uri)
+            return os.path.normpath(new_uri)
+
+        return uri
 
     def _get_mlflow_dir(self, filename: str) -> str:
 

@@ -61,6 +61,7 @@ class _MlflowRunManager(_RunManager):
             mlflow_client=self.mlflow_client,
             registries=self.registries,
             runcard=super()._load_runcard(),
+            base_artifact_uri=self.storage_client.artifact_path,
         )
 
         self.active_run = MlflowActiveRun(run_info=run_info)
