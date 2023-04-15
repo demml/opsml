@@ -380,7 +380,7 @@ class GcpCredsSetter:
     def __init__(self, service_creds: Optional[str] = None):
         """Set credentials"""
 
-        self.service_base64_creds: Optional[str] = service_creds or os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
+        self.service_base64_creds = service_creds or os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
 
     def get_creds(self) -> GcpCreds:
         service_creds, project_name = self.get_base64_creds()
