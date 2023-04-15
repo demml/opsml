@@ -134,7 +134,6 @@ class DataCard(ArtifactCard):
         uid:
             Unique id assigned to the DataCard
 
-
     Returns:
         DataCard
 
