@@ -57,6 +57,7 @@ steps:
         from_secret: SONAR_HOST
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
+      SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
     depends_on:
       - py39
       - py310
@@ -116,6 +117,7 @@ steps:
         from_secret: SONAR_HOST
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
+      SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
     depends_on:
       - py39
       - quality-checks
