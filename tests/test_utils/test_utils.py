@@ -1,8 +1,10 @@
 import os
 from pathlib import PosixPath
-
+import base64
 from opsml_artifacts.helpers import utils
 from opsml_artifacts.helpers import gcp_utils
+from google.oauth2.service_account import Credentials
+import json
 
 # from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.gcp_utils import GCPClient
@@ -86,3 +88,24 @@ def test_gcp_scheduler_integration(mock_gcp_scheduler):
         gcp_project="test",
         gcp_region="test",
     )
+
+
+def test_gcp_creds(gcp_cred_path: str):
+
+    with open(gcp_cred_path) as creds:
+        creds = json.load(creds)
+
+    json_creds = json.dumps(creds)
+    base64_creds = base64.b64encode(json_creds.encode("utf-8")).decode("utf-8")
+    creds, project = gcp_utils.GcpCredsSetter(service_creds=base64_creds).get_base64_creds()
+
+    assert isinstance(creds, Credentials)
+
+
+def test_gcp_default_creds(gcp_cred_path: str):
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_cred_path
+
+    creds, project = gcp_utils.GcpCredsSetter().get_base64_creds()
+
+    assert isinstance(creds, Credentials)
