@@ -15,7 +15,7 @@ REMOVE_CHARS = re.escape(PUNCTUATION)
 def clean_string(name: Optional[str] = None) -> Optional[str]:
     if name is not None:
         _name = name.strip()
-        _name = name.lower()
+        _name = _name.lower()
         _name = re.sub("[" + REMOVE_CHARS + "]", "", _name)
         _name = _name.replace("_", "-")
 
