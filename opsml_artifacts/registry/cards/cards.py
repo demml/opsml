@@ -134,7 +134,6 @@ class DataCard(ArtifactCard):
         uid:
             Unique id assigned to the DataCard
 
-
     Returns:
         DataCard
 
@@ -356,6 +355,11 @@ class ModelCard(ArtifactCard):
 
     def load_trained_model(self):
         """Loads original trained model"""
+
+        if not all([bool(self.trained_model_uri), bool(self.sample_data_uri)]):
+            raise ValueError(
+                """Trained model uri and sample data uri must both be set to load a trained model""",
+            )
 
         self.load_sample_data()
 
