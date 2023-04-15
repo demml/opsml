@@ -9,6 +9,7 @@ import uuid
 import random
 from pydantic import ValidationError
 from unittest.mock import patch, MagicMock
+import pytest
 
 
 @pytest.mark.parametrize(
@@ -164,6 +165,12 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
         user_email="mlops.com",
         datacard_uid=data_card.uid,
     )
+
+    with pytest.raises(ValueError):
+        model_card.load_onnx_model_definition()
+
+    with pytest.raises(ValueError):
+        model_card.load_trained_model()
 
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(model_card)

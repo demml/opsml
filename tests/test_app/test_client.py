@@ -9,11 +9,30 @@ import random
 
 
 def test_client(test_app):
+    """Test settings"""
 
     response = test_app.get("/opsml/settings")
 
     assert response.status_code == 200
     assert response.json()["proxy"] == True
+
+
+def test_debug(test_app):
+    """Test debug path"""
+
+    response = test_app.get("/opsml/debug")
+
+    assert "tmp.db" in response.json()["url"]
+    assert "mlruns" in response.json()["storage"]
+    assert response.status_code == 200
+
+
+def test_error(test_app):
+    """Test error path"""
+
+    response = test_app.get("/opsml/error")
+
+    assert response.status_code == 500
 
 
 @pytest.mark.parametrize(
