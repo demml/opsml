@@ -13,7 +13,7 @@ class RegistryUpdater:
         self.model_estimator = model_estimator
 
     def update_registry_converter(self):
-        pass
+        """Only used for specific registries but called for all"""
 
     @staticmethod
     def validate(model_estimator: str) -> bool:
