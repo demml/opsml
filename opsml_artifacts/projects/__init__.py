@@ -13,8 +13,8 @@ for dep in _optional_deps:
         importlib.import_module(dep)
         if dep == "mlflow":
             from opsml_artifacts.projects import mlflow
-    except ImportError as e:
-        raise e
+    except ImportError as error:
+        raise error
 
 
 def get_project(info: ProjectInfo) -> OpsmlProject:
