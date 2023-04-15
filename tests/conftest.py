@@ -107,9 +107,13 @@ class Bucket(BaseModel):
 
 
 @pytest.fixture(scope="function")
-def mock_gcp_vars():
-    cred_path = os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
-    creds, _ = load_credentials_from_file(cred_path)
+def gcp_cred_path():
+    return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
+
+
+@pytest.fixture(scope="function")
+def mock_gcp_vars(gcp_cred_path):
+    creds, _ = load_credentials_from_file(gcp_cred_path)
     mock_vars = {
         "gcp_project": "test",
         "gcs_bucket": "test",
