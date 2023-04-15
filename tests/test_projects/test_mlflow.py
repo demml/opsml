@@ -60,6 +60,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         card_type="model",
         info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
     )
+
     loaded_card.load_trained_model()
     assert loaded_card.uid is not None
     assert loaded_card.trained_model is not None
@@ -100,15 +101,11 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
 
 def test_metrics(mlflow_project: MlflowProject) -> None:
-
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
-
     with proj.run() as run:
         run.log_metric(key="m1", value=1.1)
-
         info.run_id = run.run_id
-
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.metrics) == 1
@@ -116,12 +113,10 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
 
 
 def test_params(mlflow_project: MlflowProject) -> None:
-
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_param(key="m1", value="apple")
         info.run_id = run.run_id
-
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.params) == 1
@@ -129,7 +124,6 @@ def test_params(mlflow_project: MlflowProject) -> None:
 
 
 def test_log_artifact(mlflow_project: MlflowProject) -> None:
-
     filename = "test.png"
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
@@ -142,20 +136,16 @@ def test_log_artifact(mlflow_project: MlflowProject) -> None:
         run.log_artifact("test_array", array)
         run.add_tag("test_tag", "1.0.0")
         info.run_id = run.run_id
-
     # test proxy change
     fake_uri = "mlflow-artifacts:/4/test/test.png"
     replaced_uri = mlflow_project._run_mgr.storage_client.replace_proxy_prefix(uri=fake_uri)
     assert "mlruns" in replaced_uri  # "mlruns" is the default storage path set in conftest
-
     proj = conftest.mock_mlflow_project(info)
     proj.download_artifacts(artifact_path="misc", local_path="test_path")
-
     assert os.path.exists("test_path/misc/test_array.joblib")
     assert os.path.exists("test_path/misc/test.png")
     os.remove(filename)
     shutil.rmtree("test_path")  # if assertions pass, this should not fail
-
     tags = proj.tags
     assert tags["test_tag"] == "1.0.0"
 
@@ -164,7 +154,6 @@ def test_register_load(
     mlflow_project: MlflowProject,
     linear_regression: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
-
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = linear_regression
@@ -175,7 +164,6 @@ def test_register_load(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
@@ -185,7 +173,6 @@ def test_register_load(
             datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
-
         ## Load model card
         loaded_model_card: ModelCard = run.load_card(
             card_type="model",
@@ -194,7 +181,6 @@ def test_register_load(
         loaded_model_card.load_trained_model()
         assert loaded_model_card.uid is not None
         assert loaded_model_card.trained_model is not None
-
         # Load data card by uid
         loaded_data_card: DataCard = run.load_card(
             card_type="data", info=CardInfo(name="linear_data", team="mlops", uid=data_card.uid)
@@ -203,7 +189,6 @@ def test_register_load(
         assert loaded_data_card.uid == data_card.uid
         info.run_id = run.run_id
         model_uid = loaded_model_card.uid
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
@@ -226,7 +211,6 @@ def test_lgb_model(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
@@ -237,7 +221,6 @@ def test_lgb_model(
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
@@ -261,7 +244,6 @@ def test_pytorch_model(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
@@ -272,7 +254,6 @@ def test_pytorch_model(
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
@@ -296,7 +277,6 @@ def test_tf_model(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
@@ -307,7 +287,6 @@ def test_tf_model(
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
