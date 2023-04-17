@@ -6,9 +6,12 @@ import pytest
 from sklearn import pipeline
 import lightgbm as lgb
 import matplotlib.pyplot as plt
-from opsml_artifacts import DataCard, ModelCard
+import numpy as np
+import shutil
+from opsml_artifacts.registry import DataCard, ModelCard
 from opsml_artifacts.registry.cards.types import CardInfo
-from opsml_artifacts.projects.mlflow import MlflowProject, MlflowProjectInfo, ActiveRun
+from opsml_artifacts.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
+from opsml_artifacts.projects import OpsmlProject, ProjectInfo
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from tests import conftest
 
@@ -19,10 +22,10 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         # Create metrics / params / cards
-        run = cast(ActiveRun, run)
+        run = cast(MlflowActiveRun, run)
         run.log_metric(key="m1", value=1.1)
         run.log_param(key="m1", value="apple")
         model, data = sklearn_pipeline
@@ -39,12 +42,13 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
             name="pipeline_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
 
     # Retrieve the run and load projects without making the run active (read only mode)
+
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.metrics) == 1
     assert proj.metrics["m1"] == 1.1
@@ -56,6 +60,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         card_type="model",
         info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
     )
+
     loaded_card.load_trained_model()
     assert loaded_card.uid is not None
     assert loaded_card.trained_model is not None
@@ -80,16 +85,27 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
 
+    opsml_info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com", run_id=info.run_id)
+    opsml_project = OpsmlProject(info=opsml_info)
+
+    # Test RunCard
+    assert opsml_project.metrics["m1"] == 1.1
+    assert opsml_project.params["m1"] == "apple"
+    assert opsml_project.datacard_uids[0] == data_card.uid
+    assert opsml_project.modelcard_uids[0] == model_card.uid
+
+    with pytest.raises(ValueError):
+        # run_id must be associated with correct project
+        opsml_info = ProjectInfo(name="test-fail", team="test", user_email="user@test.com", run_id=info.run_id)
+        opsml_project = OpsmlProject(info=opsml_info)
+
 
 def test_metrics(mlflow_project: MlflowProject) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
-
     with proj.run() as run:
         run.log_metric(key="m1", value=1.1)
-
         info.run_id = run.run_id
-
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.metrics) == 1
@@ -97,33 +113,37 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
 
 
 def test_params(mlflow_project: MlflowProject) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_param(key="m1", value="apple")
         info.run_id = run.run_id
-
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.params) == 1
     assert proj.params["m1"] == "apple"
 
 
-def test_log_artifact() -> None:
+def test_log_artifact(mlflow_project: MlflowProject) -> None:
     filename = "test.png"
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
-    with conftest.mock_mlflow_project(info).run() as run:
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    with mlflow_project.run() as run:
         fig, ax = plt.subplots(nrows=1, ncols=1)  # create figure & 1 axis
         ax.plot([0, 1, 2], [10, 20, 3])
+        array = np.random.random((10, 10))
         fig.savefig("test.png")  # save the figure to file
         plt.close(fig)
-        run.log_artifact(local_path=filename)
+        run.log_artifact_from_file(local_path=filename)
+        run.log_artifact("test_array", array)
         run.add_tag("test_tag", "1.0.0")
         info.run_id = run.run_id
+    # test proxy change
 
     proj = conftest.mock_mlflow_project(info)
-    proj.download_artifacts()
+    proj.download_artifacts(artifact_path="misc", local_path="test_path")
+    assert os.path.exists("test_path/misc/test_array.joblib")
+    assert os.path.exists("test_path/misc/test.png")
     os.remove(filename)
-
+    shutil.rmtree("test_path")  # if assertions pass, this should not fail
     tags = proj.tags
     assert tags["test_tag"] == "1.0.0"
 
@@ -132,7 +152,7 @@ def test_register_load(
     mlflow_project: MlflowProject,
     linear_regression: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = linear_regression
         data_card = DataCard(
@@ -142,17 +162,15 @@ def test_register_load(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
             name="linear_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
-
         ## Load model card
         loaded_model_card: ModelCard = run.load_card(
             card_type="model",
@@ -161,7 +179,6 @@ def test_register_load(
         loaded_model_card.load_trained_model()
         assert loaded_model_card.uid is not None
         assert loaded_model_card.trained_model is not None
-
         # Load data card by uid
         loaded_data_card: DataCard = run.load_card(
             card_type="data", info=CardInfo(name="linear_data", team="mlops", uid=data_card.uid)
@@ -170,7 +187,6 @@ def test_register_load(
         assert loaded_data_card.uid == data_card.uid
         info.run_id = run.run_id
         model_uid = loaded_model_card.uid
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
@@ -183,7 +199,7 @@ def test_lgb_model(
     mlflow_project: MlflowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = lgb_booster_dataframe
         data_card = DataCard(
@@ -193,18 +209,16 @@ def test_lgb_model(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
             name="lgb_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
@@ -218,7 +232,7 @@ def test_pytorch_model(
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
     # another run (pytorch)
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = load_pytorch_resnet
         data_card = DataCard(
@@ -228,18 +242,16 @@ def test_pytorch_model(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
             name="resnet_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
@@ -253,7 +265,7 @@ def test_tf_model(
     load_transformer_example: tuple[Any, NDArray],
 ):
     # another run (pytorch)
-    info = MlflowProjectInfo(name="test", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
         model, data = load_transformer_example
         data_card = DataCard(
@@ -263,18 +275,16 @@ def test_tf_model(
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
-
         model_card = ModelCard(
             trained_model=model,
             sample_input_data=data[0:1],
             name="transformer_model",
             team="mlops",
             user_email="mlops.com",
-            data_card_uid=data_card.uid,
+            datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
         info.run_id = run.run_id
-
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
         card_type="model",
