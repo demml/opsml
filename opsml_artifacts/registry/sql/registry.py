@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
@@ -7,35 +7,44 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry.cards.cards import (
     ArtifactCard,
     DataCard,
-    ExperimentCard,
     ModelCard,
     PipelineCard,
+    RunCard,
 )
+from opsml_artifacts.registry.cards.types import CardType
 from opsml_artifacts.registry.sql.records import (
     DataRegistryRecord,
-    ExperimentRegistryRecord,
     ModelRegistryRecord,
     PipelineRegistryRecord,
+    RunRegistryRecord,
 )
 from opsml_artifacts.registry.sql.registry_base import (
-    Registry,
-    SQLRegistryBase,
+    OpsmlRegistry,
+    ServerRegistry,
     VersionType,
 )
 from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
+from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
+if TYPE_CHECKING:
+    Registry = ServerRegistry
+else:
+    Registry = OpsmlRegistry
+
 
 class DataCardRegistry(Registry):
     def update_card(self, card: DataCard) -> None:
-        """Updates an existing data card in the data registry.
+        """
+        Updates an existing data card in the data registry.
 
         Args:
-            data_card: Existing data card record
+            data_card:
+                Existing data card record
         """
 
         record = DataRegistryRecord(**card.dict())
@@ -66,12 +75,12 @@ class ModelCardRegistry(Registry):
         if not exists:
             raise ValueError("ModelCard must be assoicated with a valid DataCard uid")
 
-    def _has_data_card_uid(self, uid: Optional[str]) -> bool:
+    def _has_datacard_uid(self, uid: Optional[str]) -> bool:
         return bool(uid)
 
     def register_card(
         self,
-        card: ModelCard,
+        card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
         save_path: Optional[str] = None,
     ) -> None:
@@ -93,11 +102,11 @@ class ModelCardRegistry(Registry):
 
         model_card = cast(ModelCard, card)
 
-        if not self._has_data_card_uid(uid=model_card.data_card_uid):
+        if not self._has_datacard_uid(uid=model_card.datacard_uid):
             raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
-        if model_card.data_card_uid is not None:
-            self._validate_datacard_uid(uid=model_card.data_card_uid)
+        if model_card.datacard_uid is not None:
+            self._validate_datacard_uid(uid=model_card.datacard_uid)
 
         return super().register_card(
             card=card,
@@ -110,28 +119,32 @@ class ModelCardRegistry(Registry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class ExperimentCardRegistry(Registry):
-    def update_card(self, card: ExperimentCard) -> None:
-        """Updates an existing experiment card in the registry.
+class RunCardRegistry(OpsmlRegistry):  # type:ignore
+    def update_card(self, card: RunCard) -> None:
+        """
+        Updates an existing experiment card in the registry.
 
         Args:
-            card: Existing experiment card
+            card:
+                Existing experiment card
         """
 
-        record = ExperimentRegistryRecord(**card.dict())
+        record = RunRegistryRecord(**card.dict())
         self.update_record(record=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.EXPERIMENT
+        return registry_name in RegistryTableNames.RUN
 
 
-class PipelineCardRegistry(Registry):
+class PipelineCardRegistry(Registry):  # type:ignore
     def update_card(self, card: PipelineCard) -> None:
-        """Updates an existing pipeline card in the pipeline registry.
+        """
+        Updates an existing pipeline card in the pipeline registry.
 
         Args:
-            card: Existing pipeline card
+            card:
+                Existing pipeline card
         """
 
         record = PipelineRegistryRecord(**card.dict())
@@ -142,10 +155,17 @@ class PipelineCardRegistry(Registry):
         return registry_name in RegistryTableNames.PIPELINE
 
 
+class ProjectCardRegistry(Registry):  # type:ignore
+    @staticmethod
+    def validate(registry_name: str):
+        return registry_name in RegistryTableNames.PROJECT
+
+
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
-        """Interface for connecting to any of the ArtifactCard registries
+        """
+        Interface for connecting to any of the ArtifactCard registries
 
         Args:
             registry_name:
@@ -164,7 +184,7 @@ class CardRegistry:
             CardRegistry(registry_name="data", connection_type="gcp")
         """
 
-        self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
+        self.registry = self._set_registry(registry_name=registry_name)
         self.table_name = self.registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
@@ -245,12 +265,6 @@ class CardRegistry:
         Returns
             ArtifactCard
         """
-        if name is not None:
-            name = name.lower()
-            name = name.replace("_", "-")
-
-        if team is not None:
-            team = team.lower()
 
         return self.registry.load_card(uid=uid, name=name, team=team, version=version)
 
@@ -287,13 +301,12 @@ class CardRegistry:
         self,
         card: ArtifactCard,
     ) -> None:
-        """Update and artifact card (DataCard only) based on current registry
+        """
+        Update and artifact card (DataCard only) based on current registry
 
         Args:
-            card (DataCard or ModelCard): Card to register
-
-        Returns:
-            None
+            card:
+                Card to register
         """
 
         if not hasattr(self.registry, "update_card"):
@@ -304,14 +317,34 @@ class CardRegistry:
         return self.registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
-        """Query column values from a specific Card
+        """
+        Query column values from a specific Card
 
         Args:
-            uid (str): Uid of Card
-            columns (List[str]): List of columns to query
+            uid:
+                Uid of Card
+            columns:
+                List of columns to query
 
         Returns:
             Dictionary of column, values pairs
         """
         results = self.registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}
+
+
+class CardRegistries:
+    def __init__(self):
+        """Instantiates class that contains all registeries"""
+        self.data = CardRegistry(registry_name=CardType.DATACARD.value)
+        self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
+        self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
+        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
+        self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
+
+    def set_storage_client(self, storage_client: StorageClientType):
+        self.data.registry.storage_client = storage_client
+        self.model.registry.storage_client = storage_client
+        self.run.registry.storage_client = storage_client
+        self.project.registry.storage_client = storage_client
+        self.pipeline.registry.storage_client = storage_client

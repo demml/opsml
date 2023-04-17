@@ -6,20 +6,12 @@ from fastapi import FastAPI, Response
 
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.cards.types import CardType
-from opsml_artifacts.registry.sql.registry import CardRegistry
+from opsml_artifacts.registry.sql.registry import CardRegistries
+from opsml_artifacts.registry.sql.registry_base import initializer
 
 logger = ArtifactLogger.get_logger(__name__)
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
-
-
-class CardRegistries:
-    def __init__(self):
-        self.data = CardRegistry(registry_name=CardType.DATA.value)
-        self.model = CardRegistry(registry_name=CardType.MODEL.value)
-        self.experiment = CardRegistry(registry_name=CardType.EXPERIMENT.value)
-        self.pipeline = CardRegistry(registry_name=CardType.PIPELINE.value)
 
 
 def _init_rollbar():
@@ -32,6 +24,7 @@ def _init_rollbar():
 
 def _init_registries(app: FastAPI):
     app.state.registries = CardRegistries()
+    initializer.initialize()
 
 
 def _shutdown_registries(app: FastAPI):

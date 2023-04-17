@@ -1,8 +1,10 @@
 import os
 from pathlib import PosixPath
-
+import base64
 from opsml_artifacts.helpers import utils
 from opsml_artifacts.helpers import gcp_utils
+from google.oauth2.service_account import Credentials
+import json
 
 # from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.gcp_utils import GCPClient
@@ -31,9 +33,9 @@ def test_find_src_dir():
 
 
 def test_gcs_storage_client_integration(mock_gcs):
-    file_path = utils.FindPath.find_filepath(
-        name="example.csv",
-    )
+    FILENAME = "example.csv"
+    file_path = utils.FindPath.find_filepath(name=FILENAME)
+
     # upload
     path = "test_upload/test.csv"
     #
@@ -60,6 +62,10 @@ def test_gcs_storage_client_integration(mock_gcs):
     for blob in blobs:
         assert path in blob.name
 
+    bucket, path, file_ = storage_client.parse_gcs_uri("gs://testbucket/blob/example.csv")
+
+    assert file_ == FILENAME
+
     # delete
     storage_client.delete_object(
         gcs_bucket="test_bucket",
@@ -82,3 +88,24 @@ def test_gcp_scheduler_integration(mock_gcp_scheduler):
         gcp_project="test",
         gcp_region="test",
     )
+
+
+def test_gcp_creds(gcp_cred_path: str):
+
+    with open(gcp_cred_path) as creds:
+        creds = json.load(creds)
+
+    json_creds = json.dumps(creds)
+    base64_creds = base64.b64encode(json_creds.encode("utf-8")).decode("utf-8")
+    creds, project = gcp_utils.GcpCredsSetter(service_creds=base64_creds).get_base64_creds()
+
+    assert isinstance(creds, Credentials)
+
+
+def test_gcp_default_creds(gcp_cred_path: str):
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_cred_path
+
+    creds, project = gcp_utils.GcpCredsSetter().get_base64_creds()
+
+    assert isinstance(creds, Credentials)

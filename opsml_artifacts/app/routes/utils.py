@@ -2,10 +2,11 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, cast
 
-from opsml_artifacts import CardRegistry, ModelCard
 from opsml_artifacts.app.core.config import OpsmlConfig
 from opsml_artifacts.app.routes.models import DownloadModelRequest
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.utils import clean_string
+from opsml_artifacts.registry import CardRegistry, ModelCard
 from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.model.types import ModelApiDef
 from opsml_artifacts.registry.sql.records import load_record
@@ -17,25 +18,34 @@ BASE_SAVE_PATH = "app"
 MODEL_FILE = "model_def.json"
 
 
-def get_real_path(current_path: str, config: OpsmlConfig) -> str:
-    new_path = current_path.replace(config.proxy_root, f"{config.STORAGE_URI}/")
+def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
+    new_path = current_path.replace(proxy_root, f"{storage_root}/")
     return new_path
 
 
-def switch_out_proxy_location(
+def replace_proxy_root(
     record: Dict[str, Any],
-    config: OpsmlConfig,
+    storage_root: str,
+    proxy_root: str,
 ) -> Dict[str, Any]:
 
     for name, value in record.items():
         if "uri" in name:
             if isinstance(value, str):
-                real_path = get_real_path(current_path=value, config=config)
+                real_path = get_real_path(
+                    current_path=value,
+                    proxy_root=proxy_root,
+                    storage_root=storage_root,
+                )
                 record[name] = real_path
-            if isinstance(value, dict):
-                for nested_name, nested_value in value.items():
-                    real_path = get_real_path(current_path=nested_value, config=config)
-                    value[nested_name] = real_path
+
+        if isinstance(value, dict):
+            replace_proxy_root(
+                record=value,
+                storage_root=storage_root,
+                proxy_root=proxy_root,
+            )
+
     return record
 
 
@@ -70,17 +80,8 @@ class ModelDownloader:
         self._file_path = file_path
 
     def clean_info(self):
-        name = self.model_info.name
-        team = self.model_info.team
-
-        if name is not None:
-            name = name.lower()
-            name = name.replace("_", "-")
-            self.model_info.name = name
-
-        if team is not None:
-            team = team.lower()
-            self.model_info.team = team
+        self.model_info.name = clean_string(self.model_info.name)
+        self.model_info.team = clean_string(self.model_info.team)
 
     def get_record(self) -> Dict[str, Any]:
         record = self.registry.registry.list_cards(
@@ -93,9 +94,10 @@ class ModelDownloader:
         if len(record) < 1:
             raise ValueError("No model record found. Please check api parameters")
 
-        return switch_out_proxy_location(
+        return replace_proxy_root(
             record=record[0],  # only 1 record should be returned
-            config=self.config,
+            storage_root=self.config.STORAGE_URI,
+            proxy_root=self.config.proxy_root,
         )
 
     def load_card(self) -> ArtifactCard:
@@ -151,3 +153,19 @@ def iterfile(file_path: str, chunk_size: int):
     with open(file_path, "rb") as file_:
         while chunk := file_.read(chunk_size):
             yield chunk
+
+
+# class MaxBodySizeException(Exception):
+#    def __init__(self, body_len: str):
+#        self.body_len = body_len
+#
+#
+# class MaxBodySizeValidator:
+#    def __init__(self, max_size: int):
+#        self.body_len = 0
+#        self.max_size = max_size
+#
+#    def __call__(self, chunk: bytes):
+#        self.body_len += len(chunk)
+#        if self.body_len > self.max_size:
+#            raise MaxBodySizeException(body_len=self.body_len)

@@ -1,11 +1,25 @@
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
 
 from pydantic import BaseModel
 
 FilePath = Union[List[str], str]
+
+
+class ArtifactStorageType(str, Enum):
+    DATAFRAME = "DataFrame"
+    ARROW_TABLE = "Table"
+    NDARRAY = "ndarray"
+    TF_MODEL = "keras"
+    PYTORCH = "pytorch"
+    JSON = "json"
+    BOOSTER = "booster"
+
+
+ARTIFACT_TYPES = list(ArtifactStorageType)
 
 
 class StorageClientSettings(BaseModel):
@@ -23,9 +37,6 @@ StorageSettings = Union[StorageClientSettings, GcsStorageClientSettings]
 
 class ArtifactStorageSpecs(BaseModel):
     save_path: str
-    name: str
-    version: str
-    team: str
     filename: Optional[str] = None
 
     class Config:

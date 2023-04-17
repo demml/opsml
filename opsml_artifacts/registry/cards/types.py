@@ -17,29 +17,31 @@ class CardInfo:
     version: Optional[str] = None
 
 
-class ArtifactStorageTypes(str, Enum):
-    DATAFRAME = "DataFrame"
-    ARROW_TABLE = "Table"
-    NDARRAY = "ndarray"
-    TF_MODEL = "keras"
-    PYTORCH = "pytorch"
-    JSON = "json"
-    BOOSTER = "booster"
+# class CardType(str, Enum):
+# DATA = "data"
+# MODEL = "model"
+# RUN = "run"
+# PIPELINE = "pipeline"
 
 
 class CardType(str, Enum):
-    DATA = "data"
-    MODEL = "model"
-    EXPERIMENT = "experiment"
-    PIPELINE = "pipeline"
-
-
-class CardName(str, Enum):
     DATACARD = "data"
-    EXPERIMENTCARD = "experiment"
+    RUNCARD = "run"
     MODELCARD = "model"
     PIPELINECARD = "pipeline"
+    PROJECTCARD = "project"
 
 
-NON_PIPELINE_CARDS = [card.value for card in CardType if card.value != "pipeline"]
-DATA_ARTIFACTS = list(ArtifactStorageTypes)
+class PipelineCardArgs(str, Enum):
+    DATA_UIDS = "datacard_uids"
+    MODEL_UIDS = "modelcard_uids"
+    RUN_UIDS = "runcard_uids"
+
+
+class RunCardArgs(str, Enum):
+    DATA_UID = "datacard_uid"
+    MODEL_UIDS = "modelcard_uids"
+    PIPELINE_UID = "pipelinecard_uid"
+
+
+NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project"]]

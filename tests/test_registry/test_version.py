@@ -1,6 +1,7 @@
 import pytest
 from opsml_artifacts.registry.sql.registry_base import VersionType
 from opsml_artifacts.registry.sql.semver import get_version_to_search
+from pytest_lazyfixture import lazy_fixture
 
 
 def test_semvar(db_registries):

@@ -81,11 +81,12 @@ class OpsmlApp:
     def build_app(self):
 
         self.app.include_router(api_router)
-        self.add_startup()
-        self.add_shutdown()
 
         if self.run_mlflow:
             self.build_mlflow_app()
+
+        self.add_startup()
+        self.add_shutdown()
 
         self.add_middleware()
         self.add_instrument()

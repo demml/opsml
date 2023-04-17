@@ -13,11 +13,7 @@ import pyarrow.parquet as pq
 import zarr
 
 from opsml_artifacts.helpers.utils import all_subclasses
-from opsml_artifacts.registry.cards.types import (
-    DATA_ARTIFACTS,
-    ArtifactStorageTypes,
-    StoragePath,
-)
+from opsml_artifacts.registry.cards.types import StoragePath
 from opsml_artifacts.registry.storage.storage_system import (
     ArtifactClass,
     MlflowStorageClient,
@@ -25,7 +21,11 @@ from opsml_artifacts.registry.storage.storage_system import (
     StorageSystem,
     cleanup_files,
 )
-from opsml_artifacts.registry.storage.types import FilePath
+from opsml_artifacts.registry.storage.types import (
+    ARTIFACT_TYPES,
+    ArtifactStorageType,
+    FilePath,
+)
 
 
 class ArtifactStorage:
@@ -247,7 +247,7 @@ class JoblibStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type not in DATA_ARTIFACTS
+        return artifact_type not in ARTIFACT_TYPES
 
 
 class ParquetStorage(ArtifactStorage):
@@ -298,7 +298,7 @@ class ParquetStorage(ArtifactStorage):
             filesystem=self.storage_filesystem,
         ).read()
 
-        if self.artifact_type == ArtifactStorageTypes.DATAFRAME:
+        if self.artifact_type == ArtifactStorageType.DATAFRAME:
             return pa_table.to_pandas()
 
         return pa_table
@@ -306,8 +306,8 @@ class ParquetStorage(ArtifactStorage):
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
-            ArtifactStorageTypes.ARROW_TABLE,
-            ArtifactStorageTypes.DATAFRAME,
+            ArtifactStorageType.ARROW_TABLE,
+            ArtifactStorageType.DATAFRAME,
         ]
 
 
@@ -370,7 +370,7 @@ class NumpyStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageTypes.NDARRAY
+        return artifact_type == ArtifactStorageType.NDARRAY
 
 
 class JSONStorage(ArtifactStorage):
@@ -422,7 +422,7 @@ class JSONStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageTypes.JSON
+        return artifact_type == ArtifactStorageType.JSON
 
 
 class TensorflowModelStorage(ArtifactStorage):
@@ -502,7 +502,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageTypes.TF_MODEL
+        return artifact_type == ArtifactStorageType.TF_MODEL
 
 
 class PyTorchModelStorage(ArtifactStorage):
@@ -555,7 +555,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageTypes.PYTORCH
+        return artifact_type == ArtifactStorageType.PYTORCH
 
 
 class LightGBMBooster(JoblibStorage):
@@ -571,7 +571,7 @@ class LightGBMBooster(JoblibStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageTypes.BOOSTER
+        return artifact_type == ArtifactStorageType.BOOSTER
 
 
 def save_record_artifact_to_storage(

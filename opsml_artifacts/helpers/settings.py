@@ -12,6 +12,7 @@ from opsml_artifacts.registry.sql.connectors import BaseSQLConnection, SQLConnec
 from opsml_artifacts.registry.storage.storage_system import (
     StorageClientGetter,
     StorageClientType,
+    StorageSystem,
 )
 from opsml_artifacts.registry.storage.types import (
     GcsStorageClientSettings,
@@ -26,30 +27,40 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class StorageSettingsGetter:
-    def __init__(self, storage_uri: Optional[str] = None):
+    def __init__(
+        self,
+        storage_uri: Optional[str] = None,
+        storage_type: str = StorageSystem.LOCAL.value,
+    ):
         self.storage_uri = storage_uri
+        self.storage_type = storage_type
 
     def _get_gcs_settings(self) -> GcsStorageClientSettings:
-        storage_settings: Dict[str, Any] = {}
         from opsml_artifacts.helpers.gcp_utils import (  # pylint: disable=import-outside-toplevel
             GcpCredsSetter,
         )
 
         gcp_creds = GcpCredsSetter().get_creds()
-        storage_settings["credentials"] = gcp_creds.creds
-        storage_settings["storage_type"] = "gcs"
-        storage_settings["storage_uri"] = self.storage_uri
-        storage_settings["gcp_project"] = gcp_creds.project
 
-        return GcsStorageClientSettings(**storage_settings)
+        return GcsStorageClientSettings(
+            storage_type=self.storage_type,
+            storage_uri=self.storage_uri,
+            gcp_project=gcp_creds.project,
+            credentials=gcp_creds.creds,
+        )
 
     def _get_default_settings(self) -> StorageClientSettings:
-        return StorageClientSettings(storage_uri=self.storage_uri)
+
+        return StorageClientSettings(
+            storage_uri=self.storage_uri,
+            storage_type=self.storage_type,
+        )
 
     def get_storage_settings(self) -> StorageSettings:
+
+        if self.storage_type == StorageSystem.GCS:
+            return self._get_gcs_settings()
         if self.storage_uri is not None:
-            if "gs://" in self.storage_uri:
-                return self._get_gcs_settings()
             return self._get_default_settings()
         return StorageClientSettings()
 
@@ -93,7 +104,7 @@ class DefaultAttrCreator:
         )
 
     def _get_api_client(self, tracking_uri: str) -> None:
-        """Checks if tracking url is an http and sets a request client
+        """Checks if tracking url is http and sets a request client
 
         Args:
             tracking_uri (str): URL for tracking
@@ -103,6 +114,7 @@ class DefaultAttrCreator:
         password = os.environ.get(OpsmlAuth.PASSWORD)
 
         if "http" in tracking_uri:
+
             request_client = ApiClient(base_url=tracking_uri)
             if all(bool(cred) for cred in [username, password]):
                 request_client.client.auth = httpx.BasicAuth(
@@ -141,25 +153,39 @@ class DefaultAttrCreator:
         """
         request_client = cast(ApiClient, self._env_vars.get("request_client"))
         storage_settings = request_client.get_request(route=api_routes.SETTINGS)
-        storage_uri = storage_settings.get("storage_uri")
 
-        if bool(storage_settings.get("proxy")):
-            storage_uri = "local"
+        storage_uri = storage_settings.get("storage_uri")
+        storage_type = storage_settings.get("storage_type")
 
         return StorageSettingsGetter(
             storage_uri=storage_uri,
+            storage_type=str(storage_type),
         ).get_storage_settings()
 
+    def _get_storage_type(self, storage_uri: str):
+        if "gs://" in storage_uri:
+            return StorageSystem.GCS.value
+        return StorageSystem.LOCAL.value
+
     def _get_storage_settings_from_local(self) -> StorageSettings:
-        """Gets storage info from external opsml api
+        """
+        Gets storage info from external opsml api
 
         Returns:
             StorageClientSettings
 
         """
         storage_uri = os.environ.get(OpsmlUri.STORAGE_URI)
+
+        if storage_uri is not None:
+            storage_type = self._get_storage_type(storage_uri=storage_uri)
+
+        else:
+            raise ValueError("Missing OPSML_STORAGE_URI env variable")
+
         return StorageSettingsGetter(
             storage_uri=storage_uri,
+            storage_type=storage_type,
         ).get_storage_settings()
 
     @property

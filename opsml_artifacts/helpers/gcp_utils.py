@@ -50,9 +50,7 @@ class GCSStorageClient(GCPService):
             gcp storage client
 
         """
-        self.client = storage.Client(
-            credentials=gcp_credentials,
-        )
+        self.client = storage.Client(credentials=gcp_credentials)
 
     def list_objects(
         self,
@@ -114,8 +112,10 @@ class GCSStorageClient(GCPService):
         """Delete object from gcs
 
         Args:
-            gcs_bucket (str): Name of GCS bucket
-            blob_path (str): Path to object in gcs (including object name)
+            gcs_bucket:
+                Name of GCS bucket
+            blob_path:
+                Path to object in gcs (including object name)
 
         """
 
@@ -132,10 +132,11 @@ class GCSStorageClient(GCPService):
         """Parses gcs url
 
         Args:
-            gcs_uri (str): Uri for gcs object
+            gcs_uri:
+                Uri for gcs object
 
         Return:
-            gcs_bucket and path
+            gcs_bucket blob_path and filename
         """
 
         split_url = gcs_uri.split("/")
@@ -150,7 +151,8 @@ class GCSStorageClient(GCPService):
         """Delete object from gcs
 
         Args:
-            gcs_uri (str): GCS uri of object
+            gcs_uri:
+                GCS uri of object
 
         """
 
@@ -172,9 +174,12 @@ class GCSStorageClient(GCPService):
         """Upload local file to gcs
 
         Args:
-            gcs_bucket (str): Name of gcs bucket
-            filename (str): Local filename to upload
-            destination_path (str): gcs path to write to
+            gcs_bucket:
+                Name of gcs bucket
+            filename:
+                Local filename to upload
+            destination_path:
+                gcs path to write to
 
         Returns:
             Location of gcs object
@@ -372,10 +377,10 @@ class GCPClient:
 
 
 class GcpCredsSetter:
-    def __init__(self):
+    def __init__(self, service_creds: Optional[str] = None):
         """Set credentials"""
 
-        self.service_base64_creds: Optional[str] = os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
+        self.service_base64_creds = service_creds or os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
 
     def get_creds(self) -> GcpCreds:
         service_creds, project_name = self.get_base64_creds()

@@ -2,13 +2,18 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from opsml_artifacts.registry.cards.cards import ArtifactCard, PipelineCard
-from opsml_artifacts.registry.cards.types import NON_PIPELINE_CARDS, CardType
+from opsml_artifacts.registry.cards.types import (
+    NON_PIPELINE_CARDS,
+    CardType,
+    PipelineCardArgs,
+    RunCardArgs,
+)
 from opsml_artifacts.registry.sql.registry import CardRegistry
 
 DATA_ATTRS = ["name", "team", "version", "data_type", "dependent_vars"]
-MODEL_ATTRS = ["name", "team", "version", "data_card_uid", "model_type"]
-EXP_ATTRS = ["data_card_uids", "model_card_uids", "metrics"]
-POP_ATTRS = ["data_card_uids", "model_card_uids", "data_card_uid"]
+MODEL_ATTRS = ["name", "team", "version", "datacard_uid", "model_type"]
+EXP_ATTRS = [PipelineCardArgs.DATA_UIDS, PipelineCardArgs.MODEL_UIDS, "metrics"]
+POP_ATTRS = [PipelineCardArgs.DATA_UIDS, PipelineCardArgs.MODEL_UIDS, "datacard_uid"]
 
 
 class Visualizer:
@@ -142,9 +147,9 @@ class DependencyParser:
 
         elif card_type == "model":
             card_attr = self._get_artifact_attr(card_uid=card_uid, registry_type=card_type, attributes=MODEL_ATTRS)
-            data_card_uid = str(card_attr.get("data_card_uid"))
+            datacard_uid = str(card_attr.get(RunCardArgs.DATA_UID))
             data_attr = self._get_artifact_attr(
-                card_uid=data_card_uid,
+                card_uid=datacard_uid,
                 registry_type="data",
                 attributes=["name"],
             )
@@ -154,7 +159,7 @@ class DependencyParser:
             artifact_names = []
             card_attr = self._get_artifact_attr(card_uid=card_uid, registry_type=card_type, attributes=EXP_ATTRS)
             for key_name, type_ in zip(
-                ["data_card_uids", "model_card_uids"],
+                [PipelineCardArgs.DATA_UIDS, PipelineCardArgs.MODEL_UIDS],
                 ["data", "model"],
             ):
                 if bool(card_attr.get(key_name)):
@@ -174,17 +179,17 @@ class DependencyParser:
 
 
 class PipelineLoader:
-    def __init__(self, pipeline_card_uid: str):
+    def __init__(self, pipelinecard_uid: str):
         """Loads all cards assoicated with a PipelineCard.
 
         Args:
-            pipeline_card_uid (str) Uid of a PipelineCard
+            pipelinecard_uid (str) Uid of a PipelineCard
         """
-        self.pipline_card = self._load_pipeline_card(uid=pipeline_card_uid)
+        self.pipline_card = self._load_pipeline_card(uid=pipelinecard_uid)
         self._card_deck: Dict[str, ArtifactCard] = {}
 
     def _load_pipeline_card(self, uid: str) -> PipelineCard:
-        registry = CardRegistry(registry_name=CardType.PIPELINE.value)
+        registry = CardRegistry(registry_name=CardType.PIPELINECARD.value)
         loaded_card = registry.load_card(uid=uid)
         return cast(PipelineCard, loaded_card)
 
@@ -194,7 +199,7 @@ class PipelineLoader:
 
     def load_cards(self):
         for card_type in NON_PIPELINE_CARDS:
-            cards = getattr(self.pipline_card, f"{card_type}_card_uids")
+            cards = getattr(self.pipline_card, f"{card_type}card_uids")
             if bool(cards):
                 self._load_cards(cards=cards, card_type=card_type)
 
@@ -204,7 +209,7 @@ class PipelineLoader:
     def card_uids(self) -> Dict[str, Dict[str, str]]:
         card_uids = cast(Dict[str, Dict[str, str]], {})
         for card_type in NON_PIPELINE_CARDS:
-            cards = getattr(self.pipline_card, f"{card_type}_card_uids")
+            cards = getattr(self.pipline_card, f"{card_type}card_uids")
             if bool(cards):
                 for card_name, card_uid in cards.items():
                     card_uids[card_name] = {
@@ -216,7 +221,7 @@ class PipelineLoader:
     @cached_property
     def _registries(self):
         registries = {}
-        for name in ["data", "model", "experiment"]:
+        for name in ["data", "model", "run"]:
             registries[name] = CardRegistry(name)
         return registries
 
