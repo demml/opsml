@@ -14,7 +14,6 @@ import pandas as pd
 from numpy.typing import NDArray
 from pyarrow.fs import LocalFileSystem
 
-from opsml_artifacts.helpers.types import OpsmlUri
 from opsml_artifacts.helpers.utils import all_subclasses
 from opsml_artifacts.registry.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -365,6 +364,7 @@ class MlflowStorageClient(StorageClient):
         self,
         storage_settings: StorageSettings,
     ):
+
         super().__init__(
             storage_settings=storage_settings,
             backend=StorageSystem.MLFLOW.value,
@@ -510,10 +510,9 @@ class MlflowStorageClient(StorageClient):
         """
 
         proxy_prefix = "mlflow-artifacts:"
-        storage_uri = str(os.getenv(OpsmlUri.STORAGE_URI))
 
         if proxy_prefix in uri:
-            new_uri = uri.replace(proxy_prefix, storage_uri)
+            new_uri = uri.replace(proxy_prefix, self.base_path_prefix)
             return os.path.normpath(new_uri)
 
         return uri
