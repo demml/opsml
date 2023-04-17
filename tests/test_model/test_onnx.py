@@ -1,4 +1,4 @@
-from opsml_artifacts.registry.cards.cards import ModelCard
+from opsml.registry.cards.cards import ModelCard
 import numpy as np
 import pytest
 import pandas as pd

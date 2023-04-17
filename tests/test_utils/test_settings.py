@@ -1,6 +1,6 @@
-from opsml_artifacts.helpers.settings import DefaultSettings
-from opsml_artifacts.registry.storage.types import GcsStorageClientSettings
-from opsml_artifacts.helpers.gcp_utils import GcpCredsSetter
+from opsml.helpers.settings import DefaultSettings
+from opsml.registry.storage.types import GcsStorageClientSettings
+from opsml.helpers.gcp_utils import GcpCredsSetter
 import os
 
 
@@ -58,6 +58,6 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
 
 
 def test_table_creation(monkeypatch):
-    from opsml_artifacts.helpers.settings import settings
+    from opsml.helpers.settings import settings
 
     assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
