@@ -49,7 +49,7 @@ class ApiClient:
         if response.status_code == 200:
             return response.json()
 
-        raise ValueError(f"""Failed to to make server call for post request Url: {route}""")
+        raise ValueError(f"""Failed to to make server call for post request Url: {route}, {response.reason_phrase}""")
 
     @retry(stop=stop_after_attempt(3))
     def get_request(self, route: str) -> Dict[str, Any]:

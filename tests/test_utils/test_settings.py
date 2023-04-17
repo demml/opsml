@@ -55,3 +55,9 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
 
     settings.set_storage(storage_settings=storage_settings)
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
+
+
+def test_table_creation(monkeypatch):
+    from opsml_artifacts.helpers.settings import settings
+
+    assert settings.storage_client.__class__.__name__ == "LocalStorageClient"

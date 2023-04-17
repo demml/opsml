@@ -1,4 +1,5 @@
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-outside-toplevel,disable=invalid-envvar-value
+
 
 import shutil
 import tempfile
@@ -90,7 +91,7 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
-        self._storage_spec = Optional[ArtifactStorageSpecs]
+        self._storage_spec: Optional[ArtifactStorageSpecs] = None
 
     @property
     def storage_spec(self) -> ArtifactStorageSpecs:
@@ -363,6 +364,7 @@ class MlflowStorageClient(StorageClient):
         self,
         storage_settings: StorageSettings,
     ):
+
         super().__init__(
             storage_settings=storage_settings,
             backend=StorageSystem.MLFLOW.value,
@@ -370,7 +372,7 @@ class MlflowStorageClient(StorageClient):
 
         self._run_id: Optional[str] = None
         self._artifact_path: Optional[str] = None
-        self._mlflow_client: Optional[MlFlowClientProto] = None  # setting Any so no mlflow import needed
+        self._mlflow_client: Optional[MlFlowClientProto] = None
 
     @property
     def run_id(self) -> Optional[str]:
@@ -423,7 +425,6 @@ class MlflowStorageClient(StorageClient):
         return file_path
 
     def _log_artifact(self, mlflow_info: MlflowInfo) -> str:
-
         self.mlflow_client.log_artifact(
             run_id=self.run_id,
             local_path=mlflow_info.local_path,
