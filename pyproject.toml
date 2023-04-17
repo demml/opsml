@@ -39,6 +39,8 @@ tf2onnx ="^1.13.0"
 uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
 wsgi-basic-auth = {version="^1.1.0", optional = true}
+alembic = "^1.10.3"
+streaming-form-data = "^1.11.0"
 
 [tool.poetry.extras]
 proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow"]
@@ -98,7 +100,7 @@ target-version = ['py310']
 include = '\.pyi?$'
 
 [tool.pylint.MASTER]
-ignore-paths = [ "opsml_artifacts/.local_tests/*"]
+ignore-paths = [ "opsml_artifacts/.local_tests/*","opsml_artifacts/registry/sql/migration/*"]
 
 [tool.pylint.messages_control]
 max-line-length = 120
@@ -144,7 +146,7 @@ plugins = [
     "sqlalchemy.ext.mypy.plugin",
     "sqlmypy",
 ]
-exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/registry/sql/query_helpers.py"]
+exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/registry/sql/query_helpers.py", "opsml_artifacts/registry/sql/migration/*"]
 
 
 [tool.coverage.paths]
@@ -188,6 +190,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
+    "opsml_artifacts/registry/sql/migration/*",
 ]
 
 # Allow unused variables when underscore-prefixed.
