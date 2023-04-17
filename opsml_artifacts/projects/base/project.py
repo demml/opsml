@@ -6,7 +6,7 @@ from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.projects.base._active_run import ActiveRun, CardHandler
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo
-from opsml_artifacts.registry.cards import ArtifactCard, RunCard
+from opsml_artifacts.registry.cards.cards import ArtifactCard, RunCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 
 logger = ArtifactLogger.get_logger(__name__)

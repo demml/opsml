@@ -51,12 +51,12 @@ def get_storage_settings() -> StorageSettingsResponse:
                     storage_uri=config.STORAGE_URI,
                 )
 
-        if config.is_proxy and StorageSystem.MLFLOW in config.proxy_root:
-            StorageSettingsResponse(
-                storage_type=StorageSystem.MLFLOW.value,
-                storage_uri=config.STORAGE_URI,
-                proxy=config.is_proxy,
-            )
+        # if config.is_proxy and StorageSystem.MLFLOW in config.proxy_root:
+        # return StorageSettingsResponse(
+        # storage_type=StorageSystem.MLFLOW.value,
+        # storage_uri=config.STORAGE_URI,
+        # proxy=config.is_proxy,
+        # )
 
     return StorageSettingsResponse(
         storage_type=StorageSystem.LOCAL.value,
@@ -109,6 +109,7 @@ def list_cards(
 ) -> ListResponse:
 
     """Lists a Card"""
+
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
@@ -135,7 +136,6 @@ def add_record(
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
     registry.registry.add_and_commit(record=payload.record)
-
     return AddRecordResponse(registered=True)
 
 

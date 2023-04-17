@@ -231,7 +231,6 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 def test_app() -> Iterator[TestClient]:
     cleanup()
     from opsml_artifacts.app.main import OpsmlApp
-    from sqlalchemy.engine.reflection import Inspector
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
