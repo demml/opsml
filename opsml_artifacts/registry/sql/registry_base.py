@@ -34,8 +34,15 @@ logger = ArtifactLogger.get_logger(__name__)
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 # initialize tables
-initializer = DBInitializer(engine=settings.connection_client.get_engine())
-initializer.initialize()
+if settings.request_client is None:
+    initializer = DBInitializer(engine=settings.connection_client.get_engine())
+    initializer.initialize()
+
+
+def sort_semvers(semvers: List[str]):
+    """Sorts a list of semvers"""
+    semvers.sort(key=lambda x: [int(y) for y in x.split(".")])
+    semvers.reverse()
 
 
 class VersionType(str, Enum):
@@ -241,6 +248,14 @@ class SQLRegistryBase:
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         raise NotImplementedError
 
+    def _sort_by_version(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+        versions = [record["version"] for record in records]
+        sort_semvers(versions)
+
+        for record in records:
+            if record["version"] == versions[0]:
+                return record
+
     def load_card(
         self,
         name: Optional[str] = None,
@@ -252,12 +267,14 @@ class SQLRegistryBase:
         cleaned_name = clean_string(name)
         cleaned_team = clean_string(team)
 
-        record_data = self.list_cards(
+        records = self.list_cards(
             name=cleaned_name,
             team=cleaned_team,
             version=version,
             uid=uid,
-        )[0]
+        )
+
+        record_data = self._sort_by_version(records=records)
 
         loaded_record = load_record(
             table_name=self.table_name,
@@ -314,11 +331,14 @@ class ServerRegistry(SQLRegistryBase):
         )
 
         with self._session() as sess:
-            result = sess.scalars(query).first()
+            results = sess.scalars(query).all()
+        if bool(results):
 
-        if bool(result):
+            versions = [result.version for result in results]
+            sort_semvers(versions)
+
             return self._increment_version(
-                version=result.version,
+                version=versions[0],
                 version_type=version_type,
             )
         return "1.0.0"
@@ -478,6 +498,7 @@ class ClientRegistry(SQLRegistryBase):
 
     @log_card_change
     def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+
         data = self._session.post_request(
             route=api_routes.CREATE,
             json={

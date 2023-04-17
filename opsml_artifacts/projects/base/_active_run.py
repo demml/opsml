@@ -2,16 +2,33 @@
 from typing import Any, Dict, Optional
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.projects.base.types import CardRegistries, RunInfo
-from opsml_artifacts.registry import CardRegistry, VersionType
-from opsml_artifacts.registry.cards import ArtifactCard
+from opsml_artifacts.registry import CardRegistry, VersionType, CardRegistries, RunCard
+from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 from opsml_artifacts.registry.storage.artifact_storage import (
     save_record_artifact_to_storage,
 )
 from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
+from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
+
+
+# dataclass inheritance doesnt handle default vals well for <= py3.9
+class RunInfo:
+    def __init__(
+        self,
+        storage_client: StorageClientType,
+        registries: CardRegistries,
+        runcard: RunCard,
+        run_id: str,
+        run_name: Optional[str] = None,
+    ):
+        self.storage_client = storage_client
+        self.registries = registries
+        self.runcard = runcard
+        self.run_id = run_id
+        self.run_name = run_name
 
 
 class CardHandler:

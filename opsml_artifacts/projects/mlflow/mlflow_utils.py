@@ -5,8 +5,8 @@ from typing import Optional
 from mlflow.tracking import MlflowClient
 
 from opsml_artifacts.helpers.types import OpsmlAuth
-from opsml_artifacts.projects.base.types import CardRegistries, RunInfo
-from opsml_artifacts.registry import RunCard
+from opsml_artifacts.projects.base._active_run import RunInfo
+from opsml_artifacts.registry import RunCard, CardRegistries
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 

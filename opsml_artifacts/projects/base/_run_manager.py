@@ -4,11 +4,10 @@ from typing import Optional, cast
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.projects.base._active_run import ActiveRun
+from opsml_artifacts.registry import CardRegistries
+from opsml_artifacts.projects.base._active_run import ActiveRun, RunInfo
 from opsml_artifacts.projects.base.types import (
-    CardRegistries,
     ProjectInfo,
-    RunInfo,
     Tags,
 )
 from opsml_artifacts.projects.base.utils import (
