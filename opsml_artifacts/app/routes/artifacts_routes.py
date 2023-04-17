@@ -23,6 +23,7 @@ from opsml_artifacts.app.routes.utils import (
     ModelDownloader,
     delete_dir,
     iterfile,
+    replace_proxy_root,
 )
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.registry import CardRegistry
@@ -106,14 +107,23 @@ def list_cards(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    dataframe = registry.list_cards(
+    records = registry.registry.list_cards(
         uid=payload.uid,
         name=payload.name,
         team=payload.team,
         version=payload.version,
     )
 
-    records = dataframe.to_dict("records")
+    if config.is_proxy:
+
+        records = [
+            replace_proxy_root(
+                record=record,
+                storage_root=config.STORAGE_URI,
+                proxy_root=config.proxy_root,
+            )
+            for record in records
+        ]
 
     return ListResponse(records=records)
 
