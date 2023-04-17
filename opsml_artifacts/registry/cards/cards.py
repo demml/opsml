@@ -415,7 +415,6 @@ class ModelCard(ArtifactCard):
 
         if not bool(self.onnx_model_def):
             self._create_and_set_onnx_attr()
-
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:

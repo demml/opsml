@@ -12,9 +12,13 @@ from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo, Tags
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow.mlflow_utils import MlflowRunInfo, set_env_vars
-from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient
+from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient, StorageSystem
+from opsml_artifacts.registry.storage.types import StorageClientSettings
+
 
 logger = ArtifactLogger.get_logger(__name__)
+
+mflow_storage = MlflowStorageClient(storage_settings=StorageClientSettings())
 
 
 class _MlflowRunManager(_RunManager):
@@ -38,7 +42,8 @@ class _MlflowRunManager(_RunManager):
         # set mlflow client for storage client to use (use same mlflow client that run uses)
         # Reminder: Once routes for uploading objects are written for the opsml server,
         # we can remove MlflowStorageClient class
-        self._storage_client = cast(MlflowStorageClient, self._storage_client)
+        self.registries.set_storage_client(storage_client=mflow_storage)
+        self._storage_client = mflow_storage
         self._storage_client.mlflow_client = self.mlflow_client
 
     def _verify_run_id(self, run_id: str) -> None:

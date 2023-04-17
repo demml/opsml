@@ -50,7 +50,10 @@ class StorageSettingsGetter:
         )
 
     def _get_default_settings(self) -> StorageClientSettings:
-        return StorageClientSettings(storage_uri=self.storage_uri)
+        return StorageClientSettings(
+            storage_uri=self.storage_uri,
+            storage_type=self.storage_type,
+        )
 
     def get_storage_settings(self) -> StorageSettings:
 
@@ -110,6 +113,7 @@ class DefaultAttrCreator:
         password = os.environ.get(OpsmlAuth.PASSWORD)
 
         if "http" in tracking_uri:
+
             request_client = ApiClient(base_url=tracking_uri)
             if all(bool(cred) for cred in [username, password]):
                 request_client.client.auth = httpx.BasicAuth(
@@ -148,6 +152,7 @@ class DefaultAttrCreator:
         """
         request_client = cast(ApiClient, self._env_vars.get("request_client"))
         storage_settings = request_client.get_request(route=api_routes.SETTINGS)
+
         storage_uri = storage_settings.get("storage_uri")
         storage_type = storage_settings.get("storage_type")
 
@@ -159,8 +164,6 @@ class DefaultAttrCreator:
     def _get_storage_type(self, storage_uri: str):
         if "gs://" in storage_uri:
             return StorageSystem.GCS.value
-        if StorageSystem.MLFLOW in storage_uri:
-            return StorageSystem.MLFLOW.value
         return StorageSystem.LOCAL.value
 
     def _get_storage_settings_from_local(self) -> StorageSettings:
@@ -172,8 +175,10 @@ class DefaultAttrCreator:
 
         """
         storage_uri = os.environ.get(OpsmlUri.STORAGE_URI)
+
         if storage_uri is not None:
             storage_type = self._get_storage_type(storage_uri=storage_uri)
+
         else:
             raise ValueError("Missing OPSML_STORAGE_URI env variable")
 
@@ -245,6 +250,7 @@ class DefaultSettings(BaseSettings):
         """Sets tracking url if it doesnt exist and sets storage
         client-related vars
         """
+
         return DefaultAttrCreator(env_vars=env_vars).env_vars
 
     @cached_property
