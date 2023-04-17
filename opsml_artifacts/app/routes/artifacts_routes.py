@@ -33,8 +33,8 @@ logger = ArtifactLogger.get_logger(__name__)
 router = APIRouter()
 CHUNK_SIZE = 31457280
 
-MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
-MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
+# MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
+# MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 
 
 @router.get("/settings", response_model=StorageSettingsResponse, name="settings")
