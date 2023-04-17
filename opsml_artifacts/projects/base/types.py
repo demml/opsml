@@ -5,8 +5,6 @@ from pydantic import BaseModel, Field, validator
 
 from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.helpers.types import OpsmlUri
-from opsml_artifacts.registry import CardRegistries, RunCard
-from opsml_artifacts.registry.storage.storage_system import StorageClientType
 
 
 class Tags(str, Enum):
@@ -68,20 +66,3 @@ class ProjectInfo(BaseModel):
         if value is None:
             return None
         return value.strip().lower().replace("_", "-")
-
-
-# dataclass inheritance doesnt handle default vals well for <= py3.9
-class RunInfo:
-    def __init__(
-        self,
-        storage_client: StorageClientType,
-        registries: CardRegistries,
-        runcard: RunCard,
-        run_id: str,
-        run_name: Optional[str] = None,
-    ):
-        self.storage_client = storage_client
-        self.registries = registries
-        self.runcard = runcard
-        self.run_id = run_id
-        self.run_name = run_name

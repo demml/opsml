@@ -231,7 +231,6 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 def test_app() -> Iterator[TestClient]:
     cleanup()
     from opsml_artifacts.app.main import OpsmlApp
-    from sqlalchemy.engine.reflection import Inspector
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
@@ -261,7 +260,10 @@ def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
 
 def mlflow_storage_client():
     mlflow_storage = StorageClientGetter.get_storage_client(
-        storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value)
+        storage_settings=StorageClientSettings(
+            storage_type=StorageSystem.MLFLOW.value,
+            storage_uri=STORAGE_PATH,
+        )
     )
     return mlflow_storage
 
