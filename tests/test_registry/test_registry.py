@@ -2,9 +2,9 @@ import pandas as pd
 from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml_artifacts.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
-from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
-from opsml_artifacts.registry.sql.registry import CardRegistry
+from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
+from opsml.registry.cards.pipeline_loader import PipelineLoader
+from opsml.registry.sql.registry import CardRegistry
 import uuid
 import random
 from pydantic import ValidationError
@@ -194,8 +194,8 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     assert loaded_card.onnx_model_def is not None
 
 
-@patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
-@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
+@patch("opsml.registry.cards.cards.ModelCard.load_trained_model")
+@patch("opsml.registry.sql.records.LoadedModelRecord.load_model_card_definition")
 def test_register_model(
     loaded_model_record,
     model_card_mock,
@@ -459,7 +459,7 @@ def test_full_pipeline_with_loading(
     )
     pipeline_registry.register_card(card=pipeline_card)
     with patch(
-        "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
+        "opsml.registry.cards.pipeline_loader.PipelineLoader._load_cards",
         return_value=None,
     ):
         loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)

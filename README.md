@@ -117,7 +117,7 @@ When connecting to the ArtifactCard registries you will need to supply either a 
 Run the following to create a local connection
 
 ```python
-from opsml_artifacts.registry import LocalSQLConnection
+from opsml.registry import LocalSQLConnection
 
 local_conn = LocalSQLConnection()
 ```
@@ -126,7 +126,7 @@ local_conn = LocalSQLConnection()
 There are a few ways to create a Cloud SQL connection
 
 ```python
-from opsml_artifacts.registry import CloudSQLConnection
+from opsml.registry import CloudSQLConnection
 
 cloud_sql = CloudSQLConnection(
     gcp_project="your_gcp_project",
@@ -174,7 +174,7 @@ Quit the yapping and show me an example!
 The following example shows how to create a DataCard. For more information on what you can do with DataCards, refer to additional examples in the example dir.
 
 ```python
-from opsml_artifacts.registry import SnowflakeQueryRunner, DataCard, CardRegistry, LocalSQLConnection
+from opsml.registry import SnowflakeQueryRunner, DataCard, CardRegistry, LocalSQLConnection
 
 query_runner = SnowflakeQueryRunner(on_vpn=True) #query runner is a temporary wrapper for pyshipt sql (needed for network issues in vertex, see opsml-pipelines docs)
 
@@ -227,7 +227,7 @@ data_registry.register_card(card=data_card)
 
 ### Searching for and Loading Existing DataCards
 ```python
-from opsml_artifacts.registry import CardRegistry, LocalSQLConnection
+from opsml.registry import CardRegistry, LocalSQLConnection
 
 local_conn = LocalSQLConnection()
 data_registry = CardRegistry(registry_name="data", connection_client=local_conn)
@@ -264,7 +264,7 @@ The following example shows how to create a ModelCard. For more information on w
 - We will use the DataCard from the previous example to train a model and create a ModelCard
 
 ```python
-from opsml_artifacts.registry import ModelCard
+from opsml.registry import ModelCard
 from lightgbm import LGBMRegressor
 
 model_registry = CardRegistry(registry_name="model", connection_client=local_conn) #load the model registry

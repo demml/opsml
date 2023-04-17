@@ -1,5 +1,5 @@
-from opsml_artifacts.helpers.settings import DefaultConnector
-from opsml_artifacts.registry.sql.connectors.base import CloudSQLConnection
+from opsml.helpers.settings import DefaultConnector
+from opsml.registry.sql.connectors.base import CloudSQLConnection
 
 
 def test_cloudsql_parsing():

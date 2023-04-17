@@ -1,6 +1,6 @@
 PROJECT=poetry-template
 PYTHON_VERSION=3.9.16
-SOURCE_OBJECTS=opsml_artifacts
+SOURCE_OBJECTS=opsml
 
 
 deploy.requirements:
