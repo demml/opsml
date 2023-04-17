@@ -29,7 +29,8 @@ class QueryCreator:
                 table.name == name,
                 table.team == team,
             )
-            .order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
+            .order_by(table.timestamp.desc(), table.version.desc())
+            .limit(20)  # type: ignore
         )
 
     def record_from_table_query(
