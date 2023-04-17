@@ -1,14 +1,7 @@
 from typing import Union
 
-
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Body,
-    Request,
-)
+from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.responses import StreamingResponse
-
 
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
