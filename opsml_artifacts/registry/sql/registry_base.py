@@ -95,6 +95,7 @@ class SQLRegistryBase:
         self.table_name = table_name
         self.supported_card = f"{table_name.split('_')[1]}Card"
         self.storage_client = settings.storage_client
+
         self._table = TableSchema.get_table(table_name=table_name)
 
     def _get_session(self):
@@ -168,6 +169,7 @@ class SQLRegistryBase:
         artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
 
         card.storage_client = self.storage_client
+
         self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
 
     def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):
@@ -206,6 +208,7 @@ class SQLRegistryBase:
             card:
                 Card to create a registry record from
         """
+
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
         self.add_and_commit(record=record.dict())
@@ -255,6 +258,7 @@ class SQLRegistryBase:
         for record in records:
             if record["version"] == versions[0]:
                 return record
+        raise ValueError("Error parsing semvers")
 
     def load_card(
         self,

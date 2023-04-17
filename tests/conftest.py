@@ -260,7 +260,10 @@ def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
 
 def mlflow_storage_client():
     mlflow_storage = StorageClientGetter.get_storage_client(
-        storage_settings=StorageClientSettings(storage_type=StorageSystem.MLFLOW.value)
+        storage_settings=StorageClientSettings(
+            storage_type=StorageSystem.MLFLOW.value,
+            storage_uri=STORAGE_PATH,
+        )
     )
     return mlflow_storage
 

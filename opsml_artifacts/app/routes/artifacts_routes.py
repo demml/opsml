@@ -1,7 +1,14 @@
 from typing import Union
 
-from fastapi import APIRouter, BackgroundTasks, Body, Request
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Request,
+)
 from fastapi.responses import StreamingResponse
+
 
 from opsml_artifacts.app.core.config import config
 from opsml_artifacts.app.routes.models import (
@@ -31,7 +38,10 @@ from opsml_artifacts.registry.storage.storage_system import StorageSystem
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
-CHUNK_SIZE = 31457280  # 30 chunks
+CHUNK_SIZE = 31457280
+
+MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
+MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 
 
 @router.get("/settings", response_model=StorageSettingsResponse, name="settings")
@@ -40,9 +50,6 @@ def get_storage_settings() -> StorageSettingsResponse:
 
     if bool(config.STORAGE_URI):
 
-        # TODO (steven) - Think of a different way to do this in the future
-        # do we need to return anything if using proxy for both registration and storage?
-
         if not config.is_proxy:
 
             if "gs://" in config.STORAGE_URI:
@@ -50,13 +57,6 @@ def get_storage_settings() -> StorageSettingsResponse:
                     storage_type=StorageSystem.GCS.value,
                     storage_uri=config.STORAGE_URI,
                 )
-
-        # if config.is_proxy and StorageSystem.MLFLOW in config.proxy_root:
-        # return StorageSettingsResponse(
-        # storage_type=StorageSystem.MLFLOW.value,
-        # storage_uri=config.STORAGE_URI,
-        # proxy=config.is_proxy,
-        # )
 
     return StorageSettingsResponse(
         storage_type=StorageSystem.LOCAL.value,
@@ -192,3 +192,53 @@ def download_model(
         media_type="application/octet-stream",
         headers=headers,
     )
+
+
+# flush this out next pr (need upload and download path)
+# @router.post("/upload", name="upload")
+# async def upload_file(request: Request):
+#
+#    body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
+#    filename = request.headers.get("Filename")
+#
+#    if not filename:
+#        raise HTTPException( ddd
+#            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+#            detail="Filename header is missing",
+#        )
+#
+#    try:
+#        filepath = os.path.join("./", os.path.basename(filename))
+#        file_ = FileTarget(filepath, validator=MaxSizeValidator(MAX_FILE_SIZE))
+#        parser = StreamingFormDataParser(headers=request.headers)
+#        parser.register("file", file_)
+#
+#        async for chunk in request.stream():
+#            body_validator(chunk)
+#            parser.data_received(chunk)
+#
+#    except ClientDisconnect:
+#        logger.error("Client disconnected")
+#
+#    except MaxBodySizeException as e:
+#        raise HTTPException(
+#            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+#            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes)
+# #exceeded ({e.body_len} bytes read)",
+#        )
+#    except streaming_form_data.validators.ValidationError:
+#        raise HTTPException(
+#            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+#            detail=f"Maximum file size limit ({MAX_FILE_SIZE} bytes) exceeded",
+#        )
+#
+#    except Exception:
+#        raise HTTPException(
+#            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="There was an error uploading the file"
+#        )
+#
+#    if not file_.multipart_filename:
+#        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File is missing")
+#
+#    return {"message": f"Successfuly uploaded {filename}"}
+#

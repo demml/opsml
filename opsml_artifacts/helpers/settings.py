@@ -50,6 +50,7 @@ class StorageSettingsGetter:
         )
 
     def _get_default_settings(self) -> StorageClientSettings:
+
         return StorageClientSettings(
             storage_uri=self.storage_uri,
             storage_type=self.storage_type,

@@ -5204,6 +5204,50 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 reference = "shipt-resolve"
 
 [[package]]
+name = "streaming-form-data"
+version = "1.11.0"
+description = "Streaming parser for multipart/form-data"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "streaming-form-data-1.11.0.tar.gz", hash = "sha256:202cea84200e8d412dd22b3ae522e1896a8a7d041aae809278b003b64ed1712b"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:b073baa08f349ab4737ebb673e8dc5c4cd19be6c8d18f43262e659d95b290733"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:fe46eff0cb5aebcc752c7ee3258bbeaa6aa9007bad9c32cfbd46d00df5c1f4d4"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:1428e0fe38d7d5dea984a772a235955a4f4e6e846d2f377239b7b8a42b2ab455"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:5bffc52d57f6733c5462b8fb19b4d7ce54c2faea3c7d5b12725b86740be1c7c9"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:89a20560924bbbd07fc51f3f7b6710744e8b845028a9af338b6caa9c2611f7bb"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-win32.whl", hash = "sha256:8db536c6387d27b2ce9b89e58269ff79d8da197f1f3c300f53dc130271bb5f78"},
+    {file = "streaming_form_data-1.11.0-cp36-cp36m-win_amd64.whl", hash = "sha256:5dfb34b8e147c4f30ada3ab333b517cbc8c273e06a0f464c85f92e70647bbbd6"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:a780dc298ff4da1d20c9deae02f817c08de59e0094b591627727efe6e94574af"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:f7bf111cd071853089b3904ec9dd9250959a45e88ea05ce078b2632375597cef"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:1eccecf020053de8bfba7844ac9e0ed2cb1ca2a3d39980aa9077ca3f31048b1f"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:5358cc32bf775944d366525c2854620e55548563f40868f01ea4af6f252b682b"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:ab59d14825cb4ed9d96eb17a2f78f5a96935fb4e8e6b98fcae5ce07fcd6e0fa9"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-win32.whl", hash = "sha256:267a4921decbd3a800463d72b6a8df362e17cad7825924a5a61e3cbc7bacf96d"},
+    {file = "streaming_form_data-1.11.0-cp37-cp37m-win_amd64.whl", hash = "sha256:cf8de78d747e95db780cd18672783735bcb811ea495b8e4546c8fa534829d90d"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:9ff76ec968a1c04dcc94fd66fae343b9fc576cb455fdd3f93370dad5fa1d8771"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-manylinux1_i686.whl", hash = "sha256:f348e67d55dcb60ce8571647dd0e18aa4205091c9c1d1f1b0ee2816e8f612421"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:e551dc5604af5b971224c5c82c132ec8d99bc3da627ad6228ff899f1b1043839"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:1d56ac0fb880cb8143cbfd5c67361fc6caa0ab5e9863074555304ad27c1d0e2b"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:aa07f1c565436319862abb338e3a9ae68855b09fc5ceb83564c34a53af852c52"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-win32.whl", hash = "sha256:70321f427e0600c7d5b74fd8f91a4478edb92143bd9fd051dd11a18c1e08a37c"},
+    {file = "streaming_form_data-1.11.0-cp38-cp38-win_amd64.whl", hash = "sha256:406cd5a23eef77f360b549b93fa64a8ee724309063ab1dce528e1c8e397cb56f"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:adc810f256214af1dc45b9351cca1f8e7af60fb9de07bb3ab9ba1379770c51f7"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-manylinux1_i686.whl", hash = "sha256:27a21a95d9d05448f638c049b2da1406a6d4ac357c6e8bec4268d9a2f99bdd76"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:1fbdd0df497465524e2010ae1465582663c9fb2a1f933075fddb6710a0cf9f17"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:52fd1ea2a8c0b4ac56b99903214e239f0e8b9266f65c8cae6c00787aaf1f9cfe"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:301dba4f0b634d4e7e632172cc9fb6e0db136ce6a12b0f5cf118d25f0aaa484e"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-win32.whl", hash = "sha256:b208c0918cdf2e274d286c78f3f6b1fd5e9c0cf35bc1dc33a60d1c3c4edf0b51"},
+    {file = "streaming_form_data-1.11.0-cp39-cp39-win_amd64.whl", hash = "sha256:d33096083ae86837b7f8dfd3653b7cf87044d7ffb6b52102114e46a74a3a1164"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
+reference = "shipt-resolve"
+
+[[package]]
 name = "sympy"
 version = "1.11.1"
 description = "Computer algebra system (CAS) in Python"
@@ -6348,4 +6392,4 @@ proxy = ["fastapi", "gunicorn", "mlflow", "prometheus-fastapi-instrumentator", "
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "c4695474c9ab21372c97092346ec075734625d5480100553744f32a2ba05fce8"
+content-hash = "35ff14a58977b5da4870b5e119d909105087bcfe73e7f36d7741e595a29027ea"

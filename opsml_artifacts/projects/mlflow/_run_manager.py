@@ -1,5 +1,5 @@
 import os
-from typing import Optional, cast
+from typing import Optional
 
 from mlflow.entities import Run as MlflowRun
 from mlflow.entities import RunStatus
@@ -8,17 +8,16 @@ from mlflow.tracking import MlflowClient
 from mlflow.tracking.fluent import end_run as fluent_end_run
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml_artifacts.helpers.settings import settings
 from opsml_artifacts.projects.base._run_manager import _RunManager
 from opsml_artifacts.projects.base.types import ProjectInfo, Tags
 from opsml_artifacts.projects.mlflow._active_run import MlflowActiveRun
 from opsml_artifacts.projects.mlflow.mlflow_utils import MlflowRunInfo, set_env_vars
-from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient, StorageSystem
-from opsml_artifacts.registry.storage.types import StorageClientSettings
-
+from opsml_artifacts.registry.storage.storage_system import MlflowStorageClient
 
 logger = ArtifactLogger.get_logger(__name__)
 
-mflow_storage = MlflowStorageClient(storage_settings=StorageClientSettings())
+mflow_storage = MlflowStorageClient(storage_settings=settings.storage_settings)
 
 
 class _MlflowRunManager(_RunManager):

@@ -2,14 +2,14 @@
 from typing import Any, Dict, Optional
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry import CardRegistry, VersionType, CardRegistries, RunCard
+from opsml_artifacts.registry import CardRegistries, CardRegistry, RunCard, VersionType
 from opsml_artifacts.registry.cards.cards import ArtifactCard
 from opsml_artifacts.registry.cards.types import CardInfo, CardType
 from opsml_artifacts.registry.storage.artifact_storage import (
     save_record_artifact_to_storage,
 )
-from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 from opsml_artifacts.registry.storage.storage_system import StorageClientType
+from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 

@@ -4,17 +4,13 @@ from typing import Optional, cast
 
 from opsml_artifacts.helpers.logging import ArtifactLogger
 from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.registry import CardRegistries
 from opsml_artifacts.projects.base._active_run import ActiveRun, RunInfo
-from opsml_artifacts.projects.base.types import (
-    ProjectInfo,
-    Tags,
-)
+from opsml_artifacts.projects.base.types import ProjectInfo, Tags
 from opsml_artifacts.projects.base.utils import (
     get_project_id_from_registry,
     verify_runcard_project_match,
 )
-from opsml_artifacts.registry import RunCard
+from opsml_artifacts.registry import CardRegistries, RunCard
 
 logger = ArtifactLogger.get_logger(__name__)
 
