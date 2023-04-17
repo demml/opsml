@@ -5,11 +5,11 @@ import pytest
 from sklearn import pipeline
 
 
-from opsml_artifacts.registry import DataCard, ModelCard
-from opsml_artifacts.registry.cards.types import CardInfo
-from opsml_artifacts.projects.base._active_run import ActiveRun
-from opsml_artifacts.projects import OpsmlProject, ProjectInfo
-from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml.registry import DataCard, ModelCard
+from opsml.registry.cards.types import CardInfo
+from opsml.projects.base._active_run import ActiveRun
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
 
 logger = ArtifactLogger.get_logger(__name__)

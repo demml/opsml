@@ -4,7 +4,7 @@ import os
 import pathlib
 
 # setting initial env vars to override default sql db
-# these must be set prior to importing opsml_artifacts sicne they establish their
+# these must be set prior to importing opsml sicne they establish their
 DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
 SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
 STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
@@ -47,17 +47,17 @@ import lightgbm as lgb
 
 
 # opsml
-from opsml_artifacts.registry import ModelCard
-from opsml_artifacts.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
-from opsml_artifacts.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml_artifacts.registry.sql.sql_schema import BaseMixin, Base, DBInitializer
-from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.storage.storage_system import StorageClientGetter, StorageSystem
-from opsml_artifacts.projects import get_project
-from opsml_artifacts.projects.mlflow import MlflowProject
-from opsml_artifacts.projects.base.types import ProjectInfo
-from opsml_artifacts.registry import CardRegistries
-from opsml_artifacts.projects import OpsmlProject
+from opsml.registry import ModelCard
+from opsml.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
+from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
+from opsml.registry.sql.sql_schema import BaseMixin, Base, DBInitializer
+from opsml.registry.sql.connectors.connector import LocalSQLConnection
+from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem
+from opsml.projects import get_project
+from opsml.projects.mlflow import MlflowProject
+from opsml.projects.base.types import ProjectInfo
+from opsml.registry import CardRegistries
+from opsml.projects import OpsmlProject
 
 
 # testing
@@ -135,7 +135,7 @@ def mock_gcp_creds(mock_gcp_vars):
     )
 
     with patch.multiple(
-        "opsml_artifacts.helpers.gcp_utils.GcpCredsSetter",
+        "opsml.helpers.gcp_utils.GcpCredsSetter",
         get_creds=MagicMock(return_value=creds),
     ) as mock_gcp_creds:
 
@@ -184,7 +184,7 @@ def mock_pathlib():
 @pytest.fixture(scope="function")
 def mock_joblib_storage(mock_pathlib):
     with patch.multiple(
-        "opsml_artifacts.registry.storage.artifact_storage.JoblibStorage",
+        "opsml.registry.storage.artifact_storage.JoblibStorage",
         _write_joblib=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_joblib:
@@ -194,7 +194,7 @@ def mock_joblib_storage(mock_pathlib):
 @pytest.fixture(scope="function")
 def mock_json_storage(mock_pathlib):
     with patch.multiple(
-        "opsml_artifacts.registry.storage.artifact_storage.JSONStorage",
+        "opsml.registry.storage.artifact_storage.JSONStorage",
         _write_json=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_json:
@@ -230,7 +230,7 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
     cleanup()
-    from opsml_artifacts.app.main import OpsmlApp
+    from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
@@ -244,7 +244,7 @@ def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
 
     with patch("httpx.Client", callable_api):
 
-        from opsml_artifacts.helpers.settings import settings
+        from opsml.helpers.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
@@ -378,7 +378,7 @@ def mock_local_engine():
 def db_registries():
 
     # force opsml to use CardRegistry with SQL connection (non-proxy)
-    from opsml_artifacts.registry.sql.registry import CardRegistry
+    from opsml.registry.sql.registry import CardRegistry
 
     model_registry = CardRegistry(registry_name="model")
     data_registry = CardRegistry(registry_name="data")
@@ -409,8 +409,8 @@ def mock_model_cli_loader(db_registries):
 
     model_registry = db_registries["model"]
     from pathlib import Path
-    from opsml_artifacts.scripts.load_model_card import ModelLoader
-    from opsml_artifacts.registry.model.types import ModelApiDef
+    from opsml.scripts.load_model_card import ModelLoader
+    from opsml.registry.model.types import ModelApiDef
 
     class MockModelLoader(ModelLoader):
         def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
@@ -419,7 +419,7 @@ def mock_model_cli_loader(db_registries):
         def _set_registry(self) -> Any:
             return model_registry
 
-    with patch("opsml_artifacts.scripts.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
+    with patch("opsml.scripts.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
 
         yield mock_cli_loader
 
@@ -469,7 +469,7 @@ def mock_gcp_scheduler():
         def _create_job_class(self, job: dict):
             return "job"
 
-    with patch("opsml_artifacts.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
+    with patch("opsml.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
 
         yield mock_scheduler
 
@@ -490,7 +490,7 @@ def mock_gcs(test_df):
         def __init__(self):
             self.client = StorageClient()
 
-    with patch("opsml_artifacts.helpers.gcp_utils.GCSStorageClient", MockStorage) as mock_storage:
+    with patch("opsml.helpers.gcp_utils.GCSStorageClient", MockStorage) as mock_storage:
         yield mock_storage
 
 

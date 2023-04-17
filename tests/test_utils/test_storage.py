@@ -1,18 +1,17 @@
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
-from opsml_artifacts.registry.storage.artifact_storage import (
+from opsml.registry.storage.artifact_storage import (
     ParquetStorage,
     JoblibStorage,
     NumpyStorage,
     TensorflowModelStorage,
     PyTorchModelStorage,
 )
-from opsml_artifacts.registry.storage.types import ArtifactStorageSpecs
-from opsml_artifacts.drift.data_drift import DriftDetector
+from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.drift.data_drift import DriftDetector
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])

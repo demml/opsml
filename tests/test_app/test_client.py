@@ -3,7 +3,7 @@ from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 import pandas as pd
 from pydantic import ValidationError
-from opsml_artifacts.registry import DataCard, ModelCard, RunCard, PipelineCard
+from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard
 import uuid
 import random
 
@@ -92,8 +92,8 @@ def test_run_card(linear_regression, api_registries, mock_artifact_storage_clien
     assert loaded_card.uid == experiment.uid
 
 
-@patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
-@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
+@patch("opsml.registry.cards.cards.ModelCard.load_trained_model")
+@patch("opsml.registry.sql.records.LoadedModelRecord.load_model_card_definition")
 def test_register_model(
     loaded_model_record,
     model_card_mock,
@@ -271,7 +271,7 @@ def test_full_pipeline_with_loading(
     mock_pyarrow_parquet_write,
     mock_artifact_storage_clients,
 ):
-    from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
+    from opsml.registry.cards.pipeline_loader import PipelineLoader
 
     team = "mlops"
     user_email = "mlops.com"
@@ -324,7 +324,7 @@ def test_full_pipeline_with_loading(
     )
     pipeline_registry.register_card(card=pipeline_card)
     with patch(
-        "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
+        "opsml.registry.cards.pipeline_loader.PipelineLoader._load_cards",
         return_value=None,
     ):
         loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
@@ -336,8 +336,8 @@ def test_full_pipeline_with_loading(
             loader.visualize()
 
 
-@patch("opsml_artifacts.app.routes.utils.ModelDownloader.load_card")
-@patch("opsml_artifacts.registry.cards.cards.ModelCard._get_sample_data_for_api")
+@patch("opsml.app.routes.utils.ModelDownloader.load_card")
+@patch("opsml.registry.cards.cards.ModelCard._get_sample_data_for_api")
 def test_download_model(
     sample_data,
     mock_load_card,
