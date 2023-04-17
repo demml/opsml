@@ -416,6 +416,8 @@ class MlflowStorageClient(StorageClient):
         temp_path.mkdir(parents=True, exist_ok=True)
         abs_temp_path = str(temp_path.resolve())
 
+        rpath = self.replace_proxy_prefix(uri=rpath, reverse=True)
+
         file_path = mlflow.artifacts.download_artifacts(
             artifact_uri=rpath,
             dst_path=abs_temp_path,
@@ -497,7 +499,7 @@ class MlflowStorageClient(StorageClient):
 
         return self.replace_proxy_prefix(uri=storage_uri)
 
-    def replace_proxy_prefix(self, uri: str):
+    def replace_proxy_prefix(self, uri: str, reverse: False):
         """
         Replaces proxy prefix if present
 
@@ -510,6 +512,15 @@ class MlflowStorageClient(StorageClient):
         """
 
         proxy_prefix = "mlflow-artifacts:"
+
+        if reverse:
+            if "gs" in uri:
+                split_uri = "/".join(uri.split("/")[2:])
+            else:
+                split_uri = "/".join(uri.split("/")[1:])
+
+            new_uri = f"{proxy_prefix}/{split_uri}"
+            return os.path.normpath(new_uri)
 
         if proxy_prefix in uri:
             new_uri = uri.replace(proxy_prefix, self.base_path_prefix)
