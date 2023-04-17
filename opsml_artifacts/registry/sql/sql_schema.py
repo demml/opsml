@@ -190,6 +190,7 @@ class DBInitializer:
         config = Config(os.path.join(alembic_dir, "alembic.ini"))
         config.set_main_option("sqlalchemy.url", db_url)
         config.set_main_option("script_location", f"{alembic_dir}/alembic")
+        config.attributes["configure_logger"] = False  # pylint: disable=unsupported-assignment-operation
 
         return config
 
