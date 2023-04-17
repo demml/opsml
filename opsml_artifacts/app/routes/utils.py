@@ -18,25 +18,34 @@ BASE_SAVE_PATH = "app"
 MODEL_FILE = "model_def.json"
 
 
-def get_real_path(current_path: str, config: OpsmlConfig) -> str:
-    new_path = current_path.replace(config.proxy_root, f"{config.STORAGE_URI}/")
+def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
+    new_path = current_path.replace(proxy_root, f"{storage_root}/")
     return new_path
 
 
-def switch_out_proxy_location(
+def replace_proxy_root(
     record: Dict[str, Any],
-    config: OpsmlConfig,
+    storage_root: str,
+    proxy_root: str,
 ) -> Dict[str, Any]:
 
     for name, value in record.items():
         if "uri" in name:
             if isinstance(value, str):
-                real_path = get_real_path(current_path=value, config=config)
+                real_path = get_real_path(
+                    current_path=value,
+                    proxy_root=proxy_root,
+                    storage_root=storage_root,
+                )
                 record[name] = real_path
-            if isinstance(value, dict):
-                for nested_name, nested_value in value.items():
-                    real_path = get_real_path(current_path=nested_value, config=config)
-                    value[nested_name] = real_path
+
+        if isinstance(value, dict):
+            replace_proxy_root(
+                record=value,
+                storage_root=storage_root,
+                proxy_root=proxy_root,
+            )
+
     return record
 
 
@@ -85,9 +94,10 @@ class ModelDownloader:
         if len(record) < 1:
             raise ValueError("No model record found. Please check api parameters")
 
-        return switch_out_proxy_location(
+        return replace_proxy_root(
             record=record[0],  # only 1 record should be returned
-            config=self.config,
+            storage_root=self.config.STORAGE_URI,
+            proxy_root=self.config.proxy_root,
         )
 
     def load_card(self) -> ArtifactCard:
