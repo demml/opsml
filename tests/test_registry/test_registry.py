@@ -81,7 +81,7 @@ def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_wr
         )
         registry.register_card(card=data_card, version_type="major")
 
-        for i in range(0, 5):
+        for i in range(0, 12):
             data_card = DataCard(
                 data=test_array,
                 name="test_df",
@@ -96,14 +96,14 @@ def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_wr
             team=data_card.team,
             version="2.*.*",
         )
-        assert df.shape[0] == 6
+        assert df.shape[0] == 13
 
         df = registry.list_cards(
             name=data_card.name,
             team=data_card.team,
             version="^2.3.0",
         )
-        assert df.shape[0] == 6
+        assert df.shape[0] == 13
 
         df = registry.list_cards(
             name=data_card.name,
@@ -119,7 +119,7 @@ def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_wr
             version="^2.3.0",
         )
 
-        assert card.version == "2.5.0"
+        assert card.version == "2.12.0"
 
 
 def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
