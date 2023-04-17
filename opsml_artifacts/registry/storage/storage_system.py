@@ -1,6 +1,6 @@
 # pylint: disable=import-outside-toplevel,disable=invalid-envvar-value
 
-import os
+
 import shutil
 import tempfile
 import uuid
@@ -495,27 +495,7 @@ class MlflowStorageClient(StorageClient):
         # need to re-write storage path for saving to ArtifactCard
         storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
 
-        return self.replace_proxy_prefix(uri=storage_uri)
-
-    def replace_proxy_prefix(self, uri: str):
-        """
-        Replaces proxy prefix if present
-
-        Args:
-            Uri:
-                Uri to check
-
-        Returns:
-            replaced uri
-        """
-
-        proxy_prefix = "mlflow-artifacts:"
-
-        if proxy_prefix in uri:
-            new_uri = uri.replace(proxy_prefix, self.base_path_prefix)
-            return os.path.normpath(new_uri)
-
-        return uri
+        return storage_uri
 
     def _get_mlflow_dir(self, filename: str) -> str:
 
