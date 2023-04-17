@@ -2,22 +2,22 @@ import os
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.cards.cards import (
+from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.cards.cards import (
     ArtifactCard,
     DataCard,
     RunCard,
     ModelCard,
     PipelineCard,
 )
-from opsml_artifacts.registry.sql.records import (
+from opsml.registry.sql.records import (
     DataRegistryRecord,
     RunRegistryRecord,
     PipelineRegistryRecord,
     ModelRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
-from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
+from opsml.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
 

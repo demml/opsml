@@ -1,15 +1,15 @@
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
-from opsml_artifacts.scripts.update_registries import update_registries
-from opsml_artifacts.registry.sql.connectors.connector import LocalSQLConnection
-from opsml_artifacts.registry.sql.migration.migrate import run_alembic_migrations
+from opsml.scripts.update_registries import update_registries
+from opsml.registry.sql.connectors.connector import LocalSQLConnection
+from opsml.registry.sql.migration.migrate import run_alembic_migrations
 from sqlalchemy.engine.reflection import Inspector
 
 
 def test_migrations(mock_local_engine, experiment_table_to_migrate):
 
     with patch.multiple(
-        "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
+        "opsml.registry.sql.connectors.connector.LocalSQLConnection",
         get_engine=MagicMock(return_value=mock_local_engine),
     ) as engine_mock:
 
@@ -36,7 +36,7 @@ def test_cli(mock_local_engine, experiment_table_to_migrate):
     runner = CliRunner()
 
     with patch.multiple(
-        "opsml_artifacts.registry.sql.connectors.connector.LocalSQLConnection",
+        "opsml.registry.sql.connectors.connector.LocalSQLConnection",
         get_engine=MagicMock(return_value=mock_local_engine),
     ) as engine_mock:
 

@@ -1,13 +1,13 @@
 import os
 from pathlib import PosixPath
 import base64
-from opsml_artifacts.helpers import utils
-from opsml_artifacts.helpers import gcp_utils
+from opsml.helpers import utils
+from opsml.helpers import gcp_utils
 from google.oauth2.service_account import Credentials
 import json
 
-# from opsml_artifacts.helpers.settings import settings
-from opsml_artifacts.helpers.gcp_utils import GCPClient
+# from opsml.helpers.settings import settings
+from opsml.helpers.gcp_utils import GCPClient
 
 
 def test_find_path():
