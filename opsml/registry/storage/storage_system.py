@@ -20,6 +20,7 @@ from opsml.registry.model.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     OnnxModelType,
 )
+from opsml.helpers.request_helpers import ApiClient
 from opsml.registry.storage.types import (
     ArtifactStorageSpecs,
     FilePath,
@@ -34,6 +35,7 @@ class StorageSystem(str, Enum):
     GCS = "gcs"
     LOCAL = "local"
     MLFLOW = "mlflow"
+    API = "api"
 
 
 class ArtifactClass(str, Enum):
@@ -242,6 +244,41 @@ class LocalStorageClient(StorageClient):
     @staticmethod
     def validate(storage_backend: str) -> bool:
         return storage_backend == StorageSystem.LOCAL
+
+
+class ApiStorageClient(LocalStorageClient):
+    def __init__(self, storage_settings: StorageSettings):
+
+        super().__init__(
+            storage_settings=storage_settings,
+            backend=StorageSystem.API.value,
+        )
+
+        self.api_client = storage_settings.api_client
+
+    def upload(
+        self,
+        local_path: str,
+        write_path: str,
+        recursive: bool = False,
+        **kwargs,
+    ) -> str:
+
+        """Uploads local artifact to server
+
+        Args:
+            storage_uri: Path where current artifact has been saved to
+        """
+
+        print(local_path, write_path)
+        a
+        self.api_client.upload_file(filename=local_path, storage_path=write_path)
+
+        return write_path
+
+    @staticmethod
+    def validate(storage_backend: str) -> bool:
+        return storage_backend == StorageSystem.API
 
 
 class MlflowModelSaver:
@@ -522,7 +559,12 @@ class MlflowStorageClient(StorageClient):
         return storage_backend == StorageSystem.MLFLOW
 
 
-StorageClientType = Union[LocalStorageClient, GCSFSStorageClient, MlflowStorageClient]
+StorageClientType = Union[
+    LocalStorageClient,
+    GCSFSStorageClient,
+    MlflowStorageClient,
+    ApiStorageClient,
+]
 
 
 class StorageClientGetter:
