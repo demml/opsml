@@ -13,6 +13,7 @@ class ApiRoutes:
     SETTINGS = "settings"
     CREATE = "create"
     UPDATE = "update"
+    UPLOAD = "upload"
 
 
 api_routes = ApiRoutes()
@@ -60,3 +61,22 @@ class ApiClient:
             return response.json()
 
         raise ValueError(f"""Failed to to make server call for get request Url: {route}""")
+
+    @retry(stop=stop_after_attempt(3))
+    def upload_file(self, filename: str, storage_path: str) -> Dict[str, Any]:
+
+        files = {"file": open(filename, "rb")}
+        headers = {"Filename": filename, "StoragePath": storage_path}
+
+        response = self.client.post(
+            url=f"{self._base_url}/{ApiRoutes.UPLOAD}",
+            files=files,
+            headers=headers,
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        raise ValueError(
+            f"""Failed to to make server call for post request Url: {ApiRoutes.UPLOAD}, {response.reason_phrase}"""
+        )

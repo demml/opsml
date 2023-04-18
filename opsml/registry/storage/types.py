@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
 
 from pydantic import BaseModel
+from opsml.helpers.request_helpers import ApiClient
 
 FilePath = Union[List[str], str]
 
@@ -32,7 +33,19 @@ class GcsStorageClientSettings(StorageClientSettings):
     gcp_project: Optional[str] = None
 
 
-StorageSettings = Union[StorageClientSettings, GcsStorageClientSettings]
+class ApiStorageClientSettings(StorageClientSettings):
+    api_client: Optional[ApiClient] = None
+
+    class Config:
+        allow_mutation = True
+        arbitrary_types_allowed = True
+
+
+StorageSettings = Union[
+    StorageClientSettings,
+    GcsStorageClientSettings,
+    ApiStorageClientSettings,
+]
 
 
 class ArtifactStorageSpecs(BaseModel):

@@ -1,7 +1,7 @@
 from opsml.helpers.settings import DefaultSettings
-from opsml.registry.storage.types import GcsStorageClientSettings
+from opsml.registry.storage.types import GcsStorageClientSettings, StorageClientSettings, ApiStorageClientSettings
 from opsml.helpers.gcp_utils import GcpCredsSetter
-import os
+from opsml.registry.storage.storage_system import StorageSystem
 
 
 def test_default_local_settings():
@@ -57,7 +57,16 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
 
 
-def test_table_creation(monkeypatch):
+def test_table_creation():
     from opsml.helpers.settings import settings
 
     assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
+
+
+def test_api_storage(api_registries):
+    """Tests settings for presence of ApiStorageClient when using api"""
+
+    settings = DefaultSettings()
+    from opsml.helpers.settings import settings
+
+    assert settings.storage_client.__class__.__name__ == "ApiStorageClient"

@@ -11,6 +11,8 @@ from opsml.registry.cards.cards import ArtifactCard
 from opsml.registry.model.types import ModelApiDef
 from opsml.registry.sql.records import load_record
 from opsml.registry.sql.registry_base import load_card_from_record
+from opsml.registry.storage.storage_system import StorageClientType
+from streaming_form_data.targets import FileTarget
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -155,17 +157,34 @@ def iterfile(file_path: str, chunk_size: int):
             yield chunk
 
 
-# class MaxBodySizeException(Exception):
-#    def __init__(self, body_len: str):
-#        self.body_len = body_len
-#
-#
-# class MaxBodySizeValidator:
-#    def __init__(self, max_size: int):
-#        self.body_len = 0
-#        self.max_size = max_size
-#
-#    def __call__(self, chunk: bytes):
-#        self.body_len += len(chunk)
-#        if self.body_len > self.max_size:
-#            raise MaxBodySizeException(body_len=self.body_len)
+class MaxBodySizeException(Exception):
+    def __init__(self, body_len: str):
+        self.body_len = body_len
+
+
+class MaxBodySizeValidator:
+    def __init__(self, max_size: int):
+        self.body_len = 0
+        self.max_size = max_size
+
+    def __call__(self, chunk: bytes):
+        self.body_len += len(chunk)
+        if self.body_len > self.max_size:
+            raise MaxBodySizeException(body_len=self.body_len)
+
+
+class ExternalFileTarget(FileTarget):
+    def __init__(
+        self,
+        filename: str,
+        storage_client: StorageClientType,
+        allow_overwrite: bool = True,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
+
+        self.storage_client = fs
+
+    def on_start(self):
+        self._fd = self.storage_client.open(self.filename, self._mode)
