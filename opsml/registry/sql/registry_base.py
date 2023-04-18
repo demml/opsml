@@ -82,7 +82,8 @@ def load_card_from_record(
 
 class SQLRegistryBase:
     def __init__(self, table_name: str):
-        """Base class for SQL Registries to inherit from
+        """
+        Base class for SQL Registries to inherit from
 
         Args:
             table_name:

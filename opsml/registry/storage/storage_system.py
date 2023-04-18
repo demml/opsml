@@ -269,8 +269,9 @@ class ApiStorageClient(LocalStorageClient):
         Args:
             storage_uri: Path where current artifact has been saved to
         """
+        import os
 
-        print(local_path, write_path)
+        assert os.path.isfile(local_path)
         a
         self.api_client.upload_file(filename=local_path, storage_path=write_path)
 

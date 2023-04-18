@@ -64,6 +64,9 @@ class ApiClient:
 
     @retry(stop=stop_after_attempt(3))
     def upload_file(self, filename: str, storage_path: str) -> Dict[str, Any]:
+        import os
+
+        assert os.path.isfile(filename)
 
         files = {"file": open(filename, "rb")}
         headers = {"Filename": filename, "StoragePath": storage_path}
