@@ -17,6 +17,7 @@ from opsml.registry.storage.storage_system import (
 from opsml.registry.storage.types import (
     GcsStorageClientSettings,
     StorageClientSettings,
+    ApiStorageClientSettings,
     StorageSettings,
 )
 
@@ -49,6 +50,13 @@ class StorageSettingsGetter:
             credentials=gcp_creds.creds,
         )
 
+    def _get_api_storage_settings(self) -> ApiStorageClientSettings:
+        """Returns storage settings for using Api storage class"""
+        return ApiStorageClientSettings(
+            storage_type=self.storage_type,
+            storage_uri=self.storage_uri,
+        )
+
     def _get_default_settings(self) -> StorageClientSettings:
 
         return StorageClientSettings(
@@ -60,8 +68,13 @@ class StorageSettingsGetter:
 
         if self.storage_type == StorageSystem.GCS:
             return self._get_gcs_settings()
+
+        if self.storage_type == StorageSystem.API:
+            return self._get_api_storage_settings()
+
         if self.storage_uri is not None:
             return self._get_default_settings()
+
         return StorageClientSettings()
 
 
@@ -98,10 +111,16 @@ class DefaultAttrCreator:
     def _set_storage_client(self) -> None:
         """Sets storage info and storage client attributes for DefaultSettings"""
 
-        self._get_storage_settings()
+        storage_settings = self._get_storage_settings()
+
+        if isinstance(storage_settings, ApiStorageClientSettings):
+            storage_settings.api_client = self._env_vars["request_client"]
+
         self._env_vars["storage_client"] = StorageClientGetter.get_storage_client(
-            storage_settings=self._env_vars["storage_settings"],
+            storage_settings=storage_settings,
         )
+
+        self._env_vars["storage_settings"] = storage_settings
 
     def _get_api_client(self, tracking_uri: str) -> None:
         """Checks if tracking url is http and sets a request client
@@ -123,7 +142,7 @@ class DefaultAttrCreator:
                 )
             self._env_vars["request_client"] = request_client
 
-    def _get_storage_settings(self) -> None:
+    def _get_storage_settings(self) -> StorageSettings:
         """Sets storage info based on tracking url. If tracking url is
         http then external api will be used to get storage info. If no
         external api is detected, local defaults will be used.
@@ -136,16 +155,18 @@ class DefaultAttrCreator:
         """
 
         if self._env_vars.get("request_client") is not None:
-            self._env_vars["storage_settings"] = self._get_storage_settings_from_api()
+            return self._get_storage_settings_from_api()
 
         else:
-            self._env_vars["storage_settings"] = self._get_storage_settings_from_local()
+            return self._get_storage_settings_from_local()
 
     def _get_storage_settings_from_api(self) -> StorageSettings:
-        """Gets storage info from external opsml api
+        """
+        Gets storage info from external opsml api
 
         Args:
-            opsml_tracking_uri (str): External opsml api
+            opsml_tracking_uri:
+                External opsml api
 
         Returns:
             StorageClientSettings
