@@ -297,6 +297,11 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistr
 
 
 @pytest.fixture(scope="function")
+def api_storage_client(api_registries):
+    return api_registries.data.registry.storage_client
+
+
+@pytest.fixture(scope="function")
 def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
     info = ProjectInfo(name="test_exp", team="test", user_email="test", tracking_uri=SQL_PATH)
     mlflow_exp: MlflowProject = get_project(info=info)

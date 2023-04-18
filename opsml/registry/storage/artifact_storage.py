@@ -280,7 +280,6 @@ class ParquetStorage(ArtifactStorage):
             where=file_path,
             filesystem=self.storage_filesystem,
         )
-
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame]:
