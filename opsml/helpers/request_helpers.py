@@ -1,8 +1,10 @@
-from typing import Any, Dict, Optional
+import json as py_json
 import os
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 import httpx
 from tenacity import retry, stop_after_attempt
-import json as py_json
 
 PATH_PREFIX = "opsml"
 
@@ -99,16 +101,17 @@ class ApiClient:
     def stream_download_file_request(
         self,
         route: str,
-        local_path: str,
-        read_path: str,
+        local_dir: str,
+        read_dir: str,
         filename: str,
     ) -> Dict[str, Any]:
 
-        with open(os.path.join(local_path, filename), "wb") as local_file:
+        Path(local_dir).mkdir(parents=True, exist_ok=True)
+        with open(os.path.join(local_dir, filename), "wb") as local_file:
             with self.client.stream(
                 method="POST",
                 url=f"{self._base_url}/{route}",
-                json={"read_path": os.path.join(read_path, filename)},
+                json={"read_path": os.path.join(read_dir, filename)},
             ) as response:
 
                 for data in response.iter_bytes():
