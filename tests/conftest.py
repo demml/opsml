@@ -233,13 +233,13 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
-    # cleanup()
+    cleanup()
     from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
-    # cleanup()
+    cleanup()
 
 
 def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
@@ -410,7 +410,7 @@ def db_registries():
         "pipeline": pipeline_registry,
     }
 
-    # cleanup()
+    cleanup()
 
 
 @pytest.fixture(scope="function")

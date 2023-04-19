@@ -1,7 +1,10 @@
+import os
 import shutil
 from pathlib import Path
 from typing import Any, Dict, cast
-import os
+
+from streaming_form_data.targets import FileTarget
+
 from opsml.app.core.config import OpsmlConfig
 from opsml.app.routes.models import DownloadModelRequest
 from opsml.helpers.logging import ArtifactLogger
@@ -11,8 +14,7 @@ from opsml.registry.cards.cards import ArtifactCard
 from opsml.registry.model.types import ModelApiDef
 from opsml.registry.sql.records import load_record
 from opsml.registry.sql.registry_base import load_card_from_record
-from opsml.registry.storage.storage_system import StorageClientType, LocalStorageClient
-from streaming_form_data.targets import FileTarget
+from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
 

@@ -15,9 +15,9 @@ from opsml.registry.storage.storage_system import (
     StorageSystem,
 )
 from opsml.registry.storage.types import (
+    ApiStorageClientSettings,
     GcsStorageClientSettings,
     StorageClientSettings,
-    ApiStorageClientSettings,
     StorageSettings,
 )
 
