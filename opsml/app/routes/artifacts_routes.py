@@ -23,6 +23,10 @@ from opsml.app.routes.models import (
     UpdateRecordResponse,
     VersionRequest,
     VersionResponse,
+    StorageUri,
+    DownloadFileRequest,
+    ListFileRequest,
+    ListFileResponse,
 )
 from opsml.app.routes.utils import (
     MODEL_FILE,
@@ -174,7 +178,7 @@ def update_record(
     return UpdateRecordResponse(updated=True)
 
 
-@router.post("/download", name="download")
+@router.post("/download_model", name="download_model")
 def download_model(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -216,11 +220,15 @@ def download_model(
 
 # flush this out next pr (need upload and download path)
 @router.post("/upload", name="upload")
-async def upload_file(request: Request):
+async def upload_file(
+    request: Request,
+    response_model=StorageUri,
+):
     """Uploads files in chunks to storage destination"""
 
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
     filename = request.headers.get("Filename")
+    write_path = request.headers.get("WritePath")
 
     if not filename:
         raise HTTPException(
@@ -231,6 +239,7 @@ async def upload_file(request: Request):
 
         file_ = ExternalFileTarget(
             filename=filename,
+            write_path=write_path,
             storage_client=request.app.state.storage_client,
             validator=MaxSizeValidator(MAX_FILE_SIZE),
         )
@@ -248,22 +257,95 @@ async def upload_file(request: Request):
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"""
-                Maximum request body size limit ({MAX_REQUEST_BODY_SIZE}.
-                Bytes exceeded ({e.body_len} bytes read)""",
+               Maximum request body size limit ({MAX_REQUEST_BODY_SIZE}.
+               Bytes exceeded ({e.body_len} bytes read)""",
         )
     except streaming_form_data.validators.ValidationError:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Maximum file size limit ({MAX_FILE_SIZE} bytes) exceeded",
         )
-    except Exception:
+    except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="There was an error uploading the file",
+            detail=f"There was an error uploading the file. {error}",
         )
+
     if not file_.multipart_filename:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File is missing",
         )
-    return {"message": f"Successfuly uploaded {filename}"}
+    return StorageUri(
+        storage_uri=os.path.join(write_path, filename),
+    )
+
+
+# eventually combine download_file and download_model
+
+
+@router.post("/download_file", name="download_file")
+def download_file(
+    request: Request,
+    payload: DownloadFileRequest,
+) -> StreamingResponse:
+
+    """Downloads a file
+
+    Args:
+        read_path (str):
+            Path to read from
+
+    Returns:
+        Streaming file response
+    """
+
+    try:
+
+        storage_client = request.app.state.storage_client
+        return StreamingResponse(
+            storage_client.iterfile(
+                file_path=payload.read_path,
+                chunk_size=CHUNK_SIZE,
+            ),
+            media_type="application/octet-stream",
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error uploading the file. {error}",
+        )
+
+
+@router.post("/list_files", name="list_files")
+def list_files(
+    request: Request,
+    payload: ListFileRequest,
+) -> StreamingResponse:
+
+    """Downloads a file
+
+    Args:
+        read_path (str):
+            Path to search
+
+    Returns:
+        List of files
+    """
+
+    try:
+
+        storage_client = request.app.state.storage_client
+        files = storage_client.list_files(payload.read_path)
+
+        if len(files) == 1:
+            files = [file_.split("/")[-1] for file_ in files]
+
+        return ListFileResponse(files=files)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error uploading the file. {error}",
+        )

@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from opsml.registry.sql.registry_base import VersionType
 
 
+class StorageUri(BaseModel):
+    storage_uri: str
+
+
 class HealthCheckResult(BaseModel):
     is_alive: bool
 
@@ -90,3 +94,15 @@ class DownloadModelRequest(BaseModel):
     version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
+
+
+class DownloadFileRequest(BaseModel):
+    read_path: Optional[str] = None
+
+
+class ListFileRequest(BaseModel):
+    read_path: Optional[str] = None
+
+
+class ListFileResponse(BaseModel):
+    files: List[str]
