@@ -3,12 +3,13 @@
 
 import shutil
 import tempfile
+import os
 import uuid
 from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, Generator, Optional, Tuple, Union, cast
+from typing import Any, Dict, Generator, Optional, Tuple, Union, cast, IO, List
 
 import pandas as pd
 from numpy.typing import NDArray
@@ -20,7 +21,7 @@ from opsml.registry.model.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     OnnxModelType,
 )
-from opsml.helpers.request_helpers import ApiClient
+from opsml.helpers.request_helpers import ApiRoutes
 from opsml.registry.storage.types import (
     ArtifactStorageSpecs,
     FilePath,
@@ -156,7 +157,15 @@ class StorageClient:
     def store(self, storage_uri: str, **kwargs):
         raise NotImplementedError
 
-    def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
+    def open(self, filename: str, model: str):
+        raise NotImplementedError
+
+    def iterfile(self, file_path: str, chunk_size: int) -> bytes:
+        with self.open(file_path, "rb") as file_:
+            while chunk := file_.read(chunk_size):
+                yield chunk
+
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
     def upload(
@@ -200,6 +209,9 @@ class GCSFSStorageClient(StorageClient):
             backend=StorageSystem.GCS.value,
         )
 
+    def open(self, filename: str, mode: str) -> IO:
+        return self.client.open(filename, mode)
+
     def list_files(self, storage_uri: str) -> FilePath:
         bucket = storage_uri.split("/")[2]
         file_path = "/".join(storage_uri.split("/")[3:])
@@ -210,11 +222,7 @@ class GCSFSStorageClient(StorageClient):
         """Create store for use with Zarr arrays"""
         import gcsfs  # pylint: disable=import-outside-toplevel
 
-        return gcsfs.GCSMap(
-            storage_uri,
-            gcs=self.client,
-            check=False,
-        )
+        return gcsfs.GCSMap(storage_uri, gcs=self.client, check=False)
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -236,7 +244,12 @@ class LocalStorageClient(StorageClient):
         return save_path, filename
 
     def list_files(self, storage_uri: str) -> FilePath:
+        if os.path.isdir(storage_uri):
+            return os.listdir(storage_uri)
         return [storage_uri]
+
+    def open(self, filename: str, mode: str) -> IO:
+        return open(file=filename, mode=mode)
 
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
@@ -256,6 +269,61 @@ class ApiStorageClient(LocalStorageClient):
 
         self.api_client = storage_settings.api_client
 
+    def list_files(self, storage_uri: str) -> FilePath:
+
+        response = self.api_client.post_request(
+            route=ApiRoutes.LIST_FILES,
+            json={"read_path": storage_uri},
+        )
+
+        return response.get("files")
+
+    def _upload_file(
+        self,
+        local_path: str,
+        write_path: str,
+        filename: str,
+        recursive: bool = False,
+        **kwargs,
+    ) -> str:
+
+        files = {"file": open(f"{local_path}/{filename}", "rb")}
+        headers = {"Filename": filename, "WritePath": write_path}
+
+        response = self.api_client.stream_post_request(
+            route=ApiRoutes.UPLOAD,
+            files=files,
+            headers=headers,
+        )
+
+        return response.get("storage_uri")
+
+    def upload_single_file(self, local_path, write_path):
+
+        filename = local_path.split("/")[-1]
+
+        # paths should be directories for uploading
+        local_path = "/".join(local_path.split("/")[:-1])
+        write_path = "/".join(write_path.split("/")[:-1])
+
+        return self._upload_file(
+            local_path=local_path,
+            write_path=write_path,
+            filename=filename,
+        )
+
+    def upload_directory(self, local_path, write_path):
+        filenames = os.listdir(local_path)
+
+        for filename in filenames:
+            self._upload_file(
+                local_path=local_path,
+                write_path=write_path,
+                filename=filename,
+            )
+
+        return write_path
+
     def upload(
         self,
         local_path: str,
@@ -264,18 +332,83 @@ class ApiStorageClient(LocalStorageClient):
         **kwargs,
     ) -> str:
 
-        """Uploads local artifact to server
+        """
+        Uploads local artifact to server
 
         Args:
-            storage_uri: Path where current artifact has been saved to
+            local_path:
+                Local path to artifact(s)
+
+            write_path:
+                Path where current artifact has been saved to
+        Returns:
+            Write path
         """
-        import os
 
-        assert os.path.isfile(local_path)
-        a
-        self.api_client.upload_file(filename=local_path, storage_path=write_path)
+        is_dir = kwargs.get("is_dir", False)
 
-        return write_path
+        if not is_dir:
+            return self.upload_single_file(local_path=local_path, write_path=write_path)
+
+        return self.upload_directory(local_path=local_path, write_path=write_path)
+
+    def download_directory(
+        self,
+        rpath: FilePath,
+        lpath: str,
+        files: List[str],
+        recursive: bool = False,
+    ) -> str:
+
+        for file_ in files:
+            self.api_client.stream_download_file_request(
+                route=ApiRoutes.DOWNLOAD_FILE,
+                local_path=lpath,
+                read_path=rpath,
+                filename=file_,
+            )
+        return lpath
+
+    def download_file(
+        self,
+        rpath: FilePath,
+        lpath: str,
+        filename: str,
+        recursive: bool = False,
+    ) -> str:
+
+        read_path = "/".join(rpath.split("/")[:-1])
+
+        self.api_client.stream_download_file_request(
+            route=ApiRoutes.DOWNLOAD_FILE,
+            local_path=lpath,
+            read_path=read_path,
+            filename=filename,
+        )
+
+        return os.path.join(lpath, filename)
+
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+
+        files = kwargs.get("files", None)
+
+        if len(files) == 1:
+
+            return self.download_file(
+                rpath=rpath,
+                lpath=lpath,
+                filename=files[0],
+            )
+
+        return self.download_directory(
+            rpath=rpath,
+            lpath=lpath,
+            files=files,
+        )
+
+    def store(self, storage_uri: str, **kwargs):
+        """Wrapper method needed for working with data artifacts (zarr)"""
+        return storage_uri
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -447,10 +580,15 @@ class MlflowStorageClient(StorageClient):
 
         return save_path, filename
 
-    def download(self, rpath: FilePath, lpath: str, recursive: bool = False) -> Optional[str]:
+    def download(self, rpath: FilePath, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         import mlflow
 
         temp_path = Path("temp")
+
+        if not recursive:
+            filename = lpath.split("/")[-1]
+            temp_path = temp_path / filename
+
         temp_path.mkdir(parents=True, exist_ok=True)
         abs_temp_path = str(temp_path.resolve())
 

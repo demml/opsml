@@ -348,14 +348,14 @@ def test_download_model(
     mock_load_card.return_value = test_model_card
     sample_data.return_value = {"Inputs": [1, 2]}
 
-    response = test_app.post(url="opsml/download", json={"uid": "test-uid"})
+    response = test_app.post(url="opsml/download_model", json={"uid": "test-uid"})
 
     assert response.status_code == 200
 
 
 def test_download_model_failure(test_app):
 
-    response = test_app.post(url="opsml/download", json={"name": "pip"})
+    response = test_app.post(url="opsml/download_model", json={"name": "pip"})
 
     # should fail
     assert response.status_code == 500

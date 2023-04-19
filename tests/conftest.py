@@ -16,7 +16,7 @@ os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = "mlflow-artifacts:/"
 os.environ["_MLFLOW_SERVER_FILE_STORE"] = SQL_PATH
 os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
 
-
+import uuid
 import pytest
 import shutil
 import httpx
@@ -111,6 +111,10 @@ def gcp_cred_path():
     return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
 
 
+def save_path():
+    return f"blob/{uuid.uuid4().hex}"
+
+
 @pytest.fixture(scope="function")
 def mock_gcp_vars(gcp_cred_path):
     creds, _ = load_credentials_from_file(gcp_cred_path)
@@ -165,9 +169,9 @@ def local_storage_client():
 def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
-        ls=MagicMock(return_value=["gs://test"]),
+        ls=MagicMock(return_value=["test"]),
         upload=MagicMock(return_value=True),
-        download=MagicMock(return_value=True),
+        download=MagicMock(return_value="gs://test"),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
 
@@ -229,13 +233,13 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
 
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
-    cleanup()
+    # cleanup()
     from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
-    cleanup()
+    # cleanup()
 
 
 def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
@@ -406,7 +410,7 @@ def db_registries():
         "pipeline": pipeline_registry,
     }
 
-    cleanup()
+    # cleanup()
 
 
 @pytest.fixture(scope="function")
