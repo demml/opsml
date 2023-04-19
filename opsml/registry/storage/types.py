@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
 
 from pydantic import BaseModel
+
 from opsml.helpers.request_helpers import ApiClient
 
 FilePath = Union[List[str], str]

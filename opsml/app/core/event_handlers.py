@@ -6,8 +6,8 @@ from fastapi import FastAPI, Response
 
 from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.registry import CardRegistries
 from opsml.helpers.settings import settings
+from opsml.registry.sql.registry import CardRegistries
 from opsml.registry.sql.registry_base import initializer
 
 logger = ArtifactLogger.get_logger(__name__)

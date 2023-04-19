@@ -101,18 +101,6 @@ class ArtifactStorage:
             recursive (bool): Whether to recursively upload all files and folder in a given path
         """
 
-        if self.is_data:
-            if self.is_storage_a_proxy:
-
-                # intermediate step to upload data to proxy
-                return self.storage_client.upload(
-                    local_path=file_path,
-                    write_path=storage_uri,
-                    **kwargs,
-                )
-
-            return file_path
-
         if self.is_storage_local:
             return storage_uri
 
@@ -413,12 +401,10 @@ class NumpyStorage(ArtifactStorage):
 
         # if isinstance(file_path, list):
         # file_path = file_path[0]
-
         store = self.storage_client.store(
             storage_uri=file_path,
             **{"store_type": "download"},
         )
-
         return zarr.load(store)
 
     # def load_artifact(self, storage_uri: str) -> Any:
@@ -527,12 +513,13 @@ class TensorflowModelStorage(ArtifactStorage):
                 **{"model": artifact, "model_type": self.artifact_type},
             )
 
-        artifact.save(storage_uri)
+        artifact.save(file_path)
 
         return self._upload_artifact(
             file_path=file_path,
-            storage_uri=f"{storage_uri}/",
+            storage_uri=storage_uri,
             recursive=True,
+            **{"is_dir": True},
         )
 
     def _load_artifact(self, file_path: FilePath):
@@ -556,14 +543,6 @@ class TensorflowModelStorage(ArtifactStorage):
             return download_path
 
         return tmp_path
-
-    @cleanup_files
-    def load_artifact(self, storage_uri: str) -> Any:
-
-        file_path = self._list_files(storage_uri=storage_uri)
-        with tempfile.TemporaryDirectory() as tmp_dir:  # noqa
-            loadable_filepath = self._download_artifact(file_path=file_path, tmp_path=cast(IO, tmp_dir))
-            return self._load_artifact(loadable_filepath), loadable_filepath
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

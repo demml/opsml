@@ -1,42 +1,41 @@
+import os
 from typing import Union
 
-from fastapi import APIRouter, BackgroundTasks, Body, Request, HTTPException, status
+import streaming_form_data
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
-
+from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
-import streaming_form_data
-from starlette.requests import ClientDisconnect
-import os
 
 from opsml.app.core.config import config
 from opsml.app.routes.models import (
     AddRecordRequest,
     AddRecordResponse,
+    DownloadFileRequest,
     DownloadModelRequest,
+    ListFileRequest,
+    ListFileResponse,
     ListRequest,
     ListResponse,
     StorageSettingsResponse,
+    StorageUri,
     UidExistsRequest,
     UidExistsResponse,
     UpdateRecordRequest,
     UpdateRecordResponse,
     VersionRequest,
     VersionResponse,
-    StorageUri,
-    DownloadFileRequest,
-    ListFileRequest,
-    ListFileResponse,
 )
 from opsml.app.routes.utils import (
     MODEL_FILE,
+    ExternalFileTarget,
+    MaxBodySizeException,
+    MaxBodySizeValidator,
     ModelDownloader,
     delete_dir,
     iterfile,
     replace_proxy_root,
-    MaxBodySizeException,
-    MaxBodySizeValidator,
-    ExternalFileTarget,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
@@ -335,13 +334,8 @@ def list_files(
     """
 
     try:
-
         storage_client = request.app.state.storage_client
         files = storage_client.list_files(payload.read_path)
-
-        if len(files) == 1:
-            files = [file_.split("/")[-1] for file_ in files]
-
         return ListFileResponse(files=files)
 
     except Exception as error:
