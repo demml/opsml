@@ -126,6 +126,7 @@ class ArtifactStorage:
     def _list_files(self, storage_uri: str) -> FilePath:
         """list files"""
         files = self.storage_client.list_files(storage_uri=storage_uri)
+
         if self.is_data:
             if not self.is_storage_a_proxy:
                 return files
@@ -142,15 +143,15 @@ class ArtifactStorage:
     def save_artifact(self, artifact: Any) -> StoragePath:
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, tmp_uri = temp_output
+
             storage_uri = self._save_artifact(
                 artifact=artifact,
                 storage_uri=storage_uri,
                 tmp_uri=tmp_uri,
             )
-
             return StoragePath(uri=storage_uri)
 
-    def _download_artifact(self, file_path: FilePath, tmp_path: IO) -> Any:
+    def __download_artifact(self, file_path: FilePath, tmp_path: IO) -> Any:
         """Downloads an artifact from a file_path
 
         Args:
@@ -176,13 +177,61 @@ class ArtifactStorage:
 
         return tmp_path
 
+    def _download_artifact(
+        self,
+        files: FilePath,
+        file_path: FilePath,
+        tmp_path: IO,
+    ) -> Any:
+        """Downloads an artifact from a file_path
+
+        Args:
+            file_path (FilePath): List of file paths or single file path
+            tmp_path (IO): Temporary file to write to if downloading prior to loading
+        """
+        if self.is_storage_local:
+            return file_path
+
+        loadable_path = self.storage_client.download(
+            rpath=file_path,
+            lpath=tmp_path.name,
+            **{"files": files},
+        )
+
+        return loadable_path or tmp_path
+
+    def _download_artifacts(
+        self,
+        files: FilePath,
+        file_path: FilePath,
+        tmp_path: str,
+    ) -> Any:
+
+        if self.is_storage_local:
+            return file_path
+
+        loadable_path = self.storage_client.download(
+            rpath=file_path,
+            lpath=tmp_path,
+            **{"files": files},
+        )
+
+        return loadable_path or tmp_path
+
     @cleanup_files
     def load_artifact(self, storage_uri: str) -> Tuple[Any, str]:
-        file_path = self._list_files(storage_uri=storage_uri)
-        with self.storage_client.create_named_tempfile(file_suffix=self.file_suffix) as tmpfile:
-            loadable_filepath = self._download_artifact(file_path=file_path, tmp_path=tmpfile)
+        files = self.storage_client.list_files(storage_uri=storage_uri)
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            loadable_filepath = self._download_artifacts(
+                files=files,
+                file_path=storage_uri,
+                tmp_path=tmpdirname,
+            )
+
             artifact = self._load_artifact(file_path=loadable_filepath)
-            return artifact, loadable_filepath
+
+        return artifact, loadable_filepath
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -265,22 +314,34 @@ class ParquetStorage(ArtifactStorage):
         """Writes the artifact as a parquet table to the specified storage location
 
         Args:
-            artifact (Parquet table): Parquet table to write
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
+            artifact:
+                Parquet table to write
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used
+                for some storage client.
 
         Returns:
             Storage path
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+
         pq.write_table(
             table=artifact,
             where=file_path,
             filesystem=self.storage_filesystem,
         )
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+
+        if self.is_storage_a_proxy:
+            return self.storage_client.upload(
+                local_path=file_path,
+                write_path=storage_uri,
+                **{"is_dir": False},
+            )
+
+        return file_path
 
     def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame]:
         """Loads pyarrow data to original saved type
@@ -288,6 +349,7 @@ class ParquetStorage(ArtifactStorage):
         Args:
             files (List[str]): List of filenames that make up the parquet dataset
         """
+
         pa_table: pa.Table = pq.ParquetDataset(
             path_or_paths=file_path,
             filesystem=self.storage_filesystem,
@@ -317,7 +379,6 @@ class NumpyStorage(ArtifactStorage):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
-            file_suffix="zarr",
             artifact_class=ArtifactClass.DATA.value,
         )
 
@@ -337,31 +398,40 @@ class NumpyStorage(ArtifactStorage):
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
         store = self.storage_client.store(storage_uri=file_path)
         zarr.save(store, artifact)
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+
+        if self.is_storage_a_proxy:
+
+            return self.storage_client.upload(
+                local_path=file_path,
+                write_path=storage_uri,
+                **{"is_dir": True},
+            )
+
+        return file_path
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
 
-        if isinstance(file_path, list):
-            file_path = file_path[0]
+        # if isinstance(file_path, list):
+        # file_path = file_path[0]
 
         store = self.storage_client.store(
             storage_uri=file_path,
             **{"store_type": "download"},
         )
+
         return zarr.load(store)
 
-    def load_artifact(self, storage_uri: str) -> Any:
-        """Loads a numpy ndarray from a zarr directory
-
-        Args:
-            storage_uri (str): Storage uri of zarr array
-
-        Returns:
-            numpy ndarray
-        """
-
-        files = self._list_files(storage_uri=storage_uri)
-        return self._load_artifact(file_path=files)
+    # def load_artifact(self, storage_uri: str) -> Any:
+    #    """Loads a numpy ndarray from a zarr directory
+    #
+    #    Args:
+    #        storage_uri (str): Storage uri of zarr array
+    #
+    #    Returns:
+    #        numpy ndarray
+    #    """
+    #
+    #    return self._load_artifact(file_path=storage_uri)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

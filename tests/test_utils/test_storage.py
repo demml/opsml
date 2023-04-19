@@ -1,6 +1,7 @@
 import numpy as np
 import pyarrow as pa
 import pytest
+import uuid
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 from opsml.registry.storage.artifact_storage import (
@@ -12,10 +13,44 @@ from opsml.registry.storage.artifact_storage import (
 )
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.drift.data_drift import DriftDetector
+from tests import conftest
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
 def test_api_parquet(test_arrow_table, storage_client):
+    storage_spec = ArtifactStorageSpecs(save_path=conftest.save_path())
+
+    storage_client.storage_spec = storage_spec
+    pq_writer = ParquetStorage(
+        storage_client=storage_client,
+        artifact_type="Table",
+    )
+    metadata = pq_writer.save_artifact(artifact=test_arrow_table)
+
+    assert isinstance(metadata.uri, str)
+
+    table = pq_writer.load_artifact(storage_uri=metadata.uri)
+    assert isinstance(table, pa.Table)
+
+
+@pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
+def test_api_numpy(test_array, storage_client):
+    storage_spec = ArtifactStorageSpecs(save_path=conftest.save_path())
+
+    storage_client.storage_spec = storage_spec
+    numpy_writer = NumpyStorage(
+        storage_client=storage_client,
+        artifact_type="ndarray",
+    )
+    metadata = numpy_writer.save_artifact(artifact=test_array)
+
+    array = numpy_writer.load_artifact(storage_uri=metadata.uri)
+    assert isinstance(array, np.ndarray)
+
+
+@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
+def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+
     storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
@@ -32,25 +67,7 @@ def test_api_parquet(test_arrow_table, storage_client):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
-def _test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
-
-    storage_spec = ArtifactStorageSpecs(save_path="blob")
-
-    storage_client.storage_spec = storage_spec
-    pq_writer = ParquetStorage(
-        storage_client=storage_client,
-        artifact_type="Table",
-    )
-    metadata = pq_writer.save_artifact(artifact=test_arrow_table)
-
-    assert isinstance(metadata.uri, str)
-
-    table = pq_writer.load_artifact(storage_uri=metadata.uri)
-    assert isinstance(table, pa.Table)
-
-
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
-def _test_array(test_array, storage_client, mock_pyarrow_parquet_write):
+def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
     storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
