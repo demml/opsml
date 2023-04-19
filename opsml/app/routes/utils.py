@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from typing import Any, Dict, cast
-
+import os
 from opsml.app.core.config import OpsmlConfig
 from opsml.app.routes.models import DownloadModelRequest
 from opsml.helpers.logging import ArtifactLogger
@@ -11,7 +11,7 @@ from opsml.registry.cards.cards import ArtifactCard
 from opsml.registry.model.types import ModelApiDef
 from opsml.registry.sql.records import load_record
 from opsml.registry.sql.registry_base import load_card_from_record
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage.storage_system import StorageClientType, LocalStorageClient
 from streaming_form_data.targets import FileTarget
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -177,6 +177,7 @@ class ExternalFileTarget(FileTarget):
     def __init__(
         self,
         filename: str,
+        write_path: str,
         storage_client: StorageClientType,
         allow_overwrite: bool = True,
         *args,
@@ -184,7 +185,14 @@ class ExternalFileTarget(FileTarget):
     ):
         super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
 
-        self.storage_client = fs
+        self.storage_client = storage_client
+        self.write_path = write_path
+        self.filepath = f"{self.write_path}/{filename}"
+        self._create_base_path()
+
+    def _create_base_path(self):
+        if isinstance(self.storage_client, LocalStorageClient):
+            self.storage_client._make_path(folder_path=self.write_path)
 
     def on_start(self):
-        self._fd = self.storage_client.open(self.filename, self._mode)
+        self._fd = self.storage_client.open(self.filepath, self._mode)
