@@ -70,6 +70,7 @@ def get_storage_settings() -> StorageSettingsResponse:
             return StorageSettingsResponse(
                 storage_type=StorageSystem.API.value,
                 storage_uri=config.STORAGE_URI,
+                proxy=config.is_proxy,
             )
 
     return StorageSettingsResponse(
