@@ -8,15 +8,13 @@ workspace:
 
 trigger:
   event:
-    - push
     - pull_request
 
 steps:
   - name: py39
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
-      - poetry install --all-extras --with dev
-      - poetry run install_integration --integration gcp
+      - make setup.unit
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -27,7 +25,7 @@ steps:
   - name: py310
     image: harbor.shipttech.com/apps/pyopsml/python:py3.10.10_poetry_1.3.2
     commands:
-      - poetry install --all-extras --with dev
+      - make setup.unit
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -40,7 +38,7 @@ steps:
   - name: quality-checks
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
-      - make setup.project
+      - make setup.quality
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -83,7 +81,7 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
-      - poetry install --all-extras --with dev
+      - make setup.unit
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -97,7 +95,7 @@ steps:
         - push
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
-      - make setup.project
+      - make setup.quality
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
