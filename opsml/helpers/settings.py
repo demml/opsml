@@ -114,7 +114,7 @@ class DefaultAttrCreator:
         storage_settings = self._get_storage_settings()
 
         if isinstance(storage_settings, ApiStorageClientSettings):
-            storage_settings.api_client = self._env_vars["request_client"]
+            storage_settings.client = self._env_vars["request_client"]
 
         self._env_vars["storage_client"] = StorageClientGetter.get_storage_client(
             storage_settings=storage_settings,
@@ -157,8 +157,7 @@ class DefaultAttrCreator:
         if self._env_vars.get("request_client") is not None:
             return self._get_storage_settings_from_api()
 
-        else:
-            return self._get_storage_settings_from_local()
+        return self._get_storage_settings_from_local()
 
     def _get_storage_settings_from_api(self) -> StorageSettings:
         """

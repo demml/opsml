@@ -1,4 +1,3 @@
-import os
 import shutil
 from pathlib import Path
 from typing import Any, Dict, cast
@@ -160,7 +159,7 @@ def iterfile(file_path: str, chunk_size: int):
 
 
 class MaxBodySizeException(Exception):
-    def __init__(self, body_len: str):
+    def __init__(self, body_len: int):
         self.body_len = body_len
 
 
@@ -176,7 +175,7 @@ class MaxBodySizeValidator:
 
 
 class ExternalFileTarget(FileTarget):
-    def __init__(
+    def __init__(  # pylint: disable=keyword-arg-before-vararg
         self,
         filename: str,
         write_path: str,
@@ -194,7 +193,7 @@ class ExternalFileTarget(FileTarget):
 
     def _create_base_path(self):
         if isinstance(self.storage_client, LocalStorageClient):
-            self.storage_client._make_path(folder_path=self.write_path)
+            self.storage_client._make_path(folder_path=self.write_path)  # pylint: disable=protected-access
 
     def on_start(self):
         self._fd = self.storage_client.open(self.filepath, self._mode)

@@ -35,11 +35,17 @@ class GcsStorageClientSettings(StorageClientSettings):
 
 
 class ApiStorageClientSettings(StorageClientSettings):
-    api_client: Optional[ApiClient] = None
+    client: Optional[ApiClient] = None
 
     class Config:
         allow_mutation = True
         arbitrary_types_allowed = True
+
+    @property
+    def api_client(self) -> ApiClient:
+        if self.client is not None:
+            return self.client
+        raise ValueError("ApiClient has not been set")
 
 
 StorageSettings = Union[

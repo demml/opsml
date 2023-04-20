@@ -1,7 +1,7 @@
 import json as py_json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt
@@ -88,12 +88,16 @@ class ApiClient:
             for data in response.iter_bytes():
                 result = data.decode("utf-8")
 
-        result = py_json.loads(result)
+        response_result = cast(Dict[str, Any], py_json.loads(result))
+
         if response.status_code == 200:
-            return result
+            return response_result
 
         raise ValueError(
-            f"""Failed to to make server call for post request Url: {ApiRoutes.UPLOAD}, {result.get("detail")}"""
+            f"""
+            Failed to to make server call for post request Url: {ApiRoutes.UPLOAD}.
+            {response_result.get("detail")}
+            """
         )
 
     # need to write another method for downloading files
@@ -118,12 +122,16 @@ class ApiClient:
                     local_file.write(data)
 
         if response.status_code == 200:
-            return None
+            return {"status": 200}  # filler return
 
-        result = py_json.loads(data.decode("utf-8"))
+        response_result = cast(
+            Dict[str, Any], py_json.loads(data.decode("utf-8"))  # pylint: disable=undefined-loop-variable
+        )
 
         raise ValueError(
-            f"""Failed to to make server call for post request Url: {ApiRoutes.DOWNLOAD_FILE}, {result.get("detail")}"""
+            f"""Failed to to make server call for post request Url: {ApiRoutes.DOWNLOAD_FILE}.
+              {response_result.get("detail")}
+            """
         )
 
     # @retry(stop=stop_after_attempt(3))
