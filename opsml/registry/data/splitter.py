@@ -111,7 +111,6 @@ class DataSplitter:
         self.split_attributes = split_attributes
 
     def split(self, data: Union[pd.DataFrame, np.ndarray]):
-
         splitter = next(
             (
                 splitter

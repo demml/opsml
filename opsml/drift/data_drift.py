@@ -73,7 +73,6 @@ class FeatureImportanceCalculator:
     def combine_feature_importance_auc(
         self, feature_importances: List[float], feature_aucs: List[float]
     ) -> Dict[Optional[str], FeatureImportance]:
-
         feature_dict = {}
         for feature_name, importance, computed_auc in zip(self.features_and_target, feature_importances, feature_aucs):
             feature_dict[feature_name] = FeatureImportance(
@@ -110,7 +109,6 @@ class DriftFeatures:
         categorical_features: List[Optional[str]],
         target_feature: Optional[str] = None,
     ):
-
         self.dtypes = dtypes
         self.target_feature = target_feature
         self.feature_list = self.create_feature_list()
@@ -152,7 +150,6 @@ class DriftDetectorData:
         reference_data: DriftData,
         current_data: DriftData,
     ):
-
         self.reference_data = reference_data
         self.current_data = current_data
 
@@ -170,7 +167,6 @@ class DriftDetectorData:
         return x_train
 
     def create_drift_data(self) -> DriftData:
-
         x_drift = self.create_x_data()
         y_drift = self.create_y_data()
         target = np.vstack((self.reference_data.y.reshape(-1, 1), self.current_data.y.reshape(-1, 1)))
@@ -190,7 +186,6 @@ class FeatureHistogram:
         self.feature_type = feature_type
 
     def compute_feature_histogram(self, data: np.ndarray) -> HistogramOutput:
-
         if FeatureTypes(self.feature_type) == FeatureTypes.NUMERIC:
             hist, edges = np.histogram(data, bins=self.bins, density=False)
         else:
@@ -247,7 +242,6 @@ class FeatureStats:
         return nbr_missing, percent_missing
 
     def compute_stats(self) -> FeatureStatsOutput:
-
         # count number of missing records
         nbr_missing_records, percent_missing = self.count_missing()
 
@@ -276,7 +270,6 @@ class DriftDetector:
         dependent_var_name: str,
         categorical_features: Optional[List[Optional[str]]] = None,
     ):
-
         """Calculates a drift report for reference vs current data
 
         Args:
@@ -355,7 +348,6 @@ class DriftDetector:
         feature_importance: Dict[Optional[str], FeatureImportance],
         feature_stats: Dict[str, DriftReport],
     ):
-
         for feature, stats in feature_stats.items():
             stats.feature_importance = feature_importance[feature].importance
             stats.feature_auc = feature_importance[feature].auc
@@ -363,7 +355,6 @@ class DriftDetector:
         return feature_stats
 
     def create_feature_stats(self) -> Dict[str, DriftReport]:
-
         stats = {}
         for feature in self.features_and_target:
             stats[feature] = self.compute_feature_stats(feature=feature)
@@ -399,7 +390,6 @@ class DriftDetector:
         )
 
     def get_ref_curr_feature_data(self, feature: str, data_ind: str = "X"):
-
         if data_ind == "X":
             ref_data = self.drift_data.reference_data.X[feature].to_numpy().reshape(-1, 1)
             curr_data = self.drift_data.current_data.X[feature].to_numpy().reshape(-1, 1)
@@ -410,7 +400,6 @@ class DriftDetector:
         return ref_data, curr_data
 
     def extract_feature_attributes_for_stats(self, feature: str) -> ExtractedAttributes:
-
         if feature == self.drift_features.target_feature:
             target_val = 1
             data_ind = "y"
@@ -473,7 +462,6 @@ class DriftReportParser:
         self.feature_importance.importance.append(feature_report.feature_importance)
 
     def append_to_feature_data(self, feature: str, feature_report: DriftReport):
-
         for label in ["reference", "current"]:
             hist: HistogramOutput = getattr(feature_report, f"{label}_distribution")
             self.feature_distributions.feature = [

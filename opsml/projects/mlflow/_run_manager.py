@@ -102,7 +102,6 @@ class _MlflowRunManager(_RunManager):
         self.active_run.add_tags(tags=self.base_tags)
 
     def _set_run_attr(self, mlflow_active_run: MlflowRun) -> None:
-
         # Set run and name
         self.run_id = mlflow_active_run.info.run_id
         self.run_name = mlflow_active_run.info.run_name
@@ -130,7 +129,6 @@ class _MlflowRunManager(_RunManager):
         self.storage_client.artifact_path = mlflow_active_run.info.artifact_uri
 
     def _end_run(self) -> None:
-
         super()._end_run()
         self.mlflow_client.set_tag(run_id=self.run_id, key=Tags.VERSION, value=self.version)
         self.mlflow_client.set_terminated(run_id=self.run_id)
