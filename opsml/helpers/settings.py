@@ -58,14 +58,12 @@ class StorageSettingsGetter:
         )
 
     def _get_default_settings(self) -> StorageClientSettings:
-
         return StorageClientSettings(
             storage_uri=self.storage_uri,
             storage_type=self.storage_type,
         )
 
     def get_storage_settings(self) -> StorageSettings:
-
         if self.storage_type == StorageSystem.GCS:
             return self._get_gcs_settings()
 
@@ -133,7 +131,6 @@ class DefaultAttrCreator:
         password = os.environ.get(OpsmlAuth.PASSWORD)
 
         if "http" in tracking_uri:
-
             request_client = ApiClient(base_url=tracking_uri)
             if all(bool(cred) for cred in [username, password]):
                 request_client.client.auth = httpx.BasicAuth(

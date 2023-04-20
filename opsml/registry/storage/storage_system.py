@@ -75,12 +75,10 @@ class MlFlowDirs(str, Enum):
 
 
 def cleanup_files(func):
-
     """Decorator for deleting files if needed"""
 
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
-
         artifact, loadable_filepath = func(self, *args, **kwargs)
 
         if isinstance(loadable_filepath, list):
@@ -102,7 +100,6 @@ class StorageClient:
         client: Any = LocalFileSystem(),
         backend: str = StorageSystem.LOCAL.value,
     ):
-
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
@@ -120,7 +117,6 @@ class StorageClient:
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
-
         filename = self.storage_spec.filename or uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
@@ -133,7 +129,6 @@ class StorageClient:
         tmp_dir: str,
         file_suffix: Optional[str] = None,
     ):
-
         base_path, filename = self.create_save_path(file_suffix=file_suffix)
         local_path = f"{tmp_dir}/{filename}"
 
@@ -144,9 +139,7 @@ class StorageClient:
         self,
         file_suffix: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
-
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
                 tmp_dir=tmpdirname,
@@ -155,7 +148,6 @@ class StorageClient:
 
     @contextmanager
     def create_named_tempfile(self, file_suffix: Optional[str]):
-
         if file_suffix is not None:
             if "." not in file_suffix:
                 file_suffix = f".{file_suffix}"
@@ -244,7 +236,6 @@ class LocalStorageClient(StorageClient):
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
-
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
         )
@@ -254,7 +245,6 @@ class LocalStorageClient(StorageClient):
         return save_path, filename
 
     def list_files(self, storage_uri: str) -> FilePath:
-
         if os.path.isdir(storage_uri):
             paths = []
             for path, _, files in os.walk(storage_uri):
@@ -277,7 +267,6 @@ class LocalStorageClient(StorageClient):
 
 class ApiStorageClient(LocalStorageClient):
     def __init__(self, storage_settings: StorageSettings):
-
         super().__init__(
             storage_settings=storage_settings,
             backend=StorageSystem.API.value,
@@ -287,7 +276,6 @@ class ApiStorageClient(LocalStorageClient):
         self.api_client = storage_settings.api_client
 
     def list_files(self, storage_uri: str) -> FilePath:
-
         response = self.api_client.post_request(
             route=ApiRoutes.LIST_FILES,
             json={"read_path": storage_uri},
@@ -307,7 +295,6 @@ class ApiStorageClient(LocalStorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-
         files = {"file": open(os.path.join(local_dir, filename), "rb")}  # pylint: disable=consider-using-with
         headers = {"Filename": filename, "WritePath": write_dir}
 
@@ -323,7 +310,6 @@ class ApiStorageClient(LocalStorageClient):
         raise ValueError("No storage_uri found")
 
     def upload_single_file(self, local_path, write_path):
-
         filename = os.path.basename(local_path)
 
         # paths should be directories for uploading
@@ -337,9 +323,7 @@ class ApiStorageClient(LocalStorageClient):
         )
 
     def upload_directory(self, local_path, write_path):
-
         for path, _, files in os.walk(local_path):
-
             for filename in files:
                 write_dir = path.replace(local_path, write_path)
 
@@ -358,7 +342,6 @@ class ApiStorageClient(LocalStorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-
         """
         Uploads local artifact to server
 
@@ -384,7 +367,6 @@ class ApiStorageClient(LocalStorageClient):
         files: List[str],
         recursive: bool = False,
     ) -> str:
-
         for file_ in files:
             read_dir = os.path.dirname(file_)
             local_dir = read_dir.replace(rpath, lpath)
@@ -400,7 +382,6 @@ class ApiStorageClient(LocalStorageClient):
         return lpath
 
     def download_file(self, lpath: str, filename: str) -> str:
-
         read_dir = os.path.dirname(filename)
         file_ = os.path.basename(filename)
 
@@ -414,7 +395,6 @@ class ApiStorageClient(LocalStorageClient):
         return os.path.join(lpath, filename)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
-
         files = kwargs.get("files", None)
         if len(files) == 1:
             return self.download_file(lpath=lpath, filename=files[0])
@@ -443,7 +423,6 @@ class MlflowModelSaver:
         self.artifact_path = artifact_path
 
     def _get_model_signature(self):
-
         from mlflow.models.signature import infer_signature
 
         signature = infer_signature(model_input=self.sample_data)
@@ -549,7 +528,6 @@ class MlflowStorageClient(StorageClient):
         self,
         storage_settings: StorageSettings,
     ):
-
         super().__init__(
             storage_settings=storage_settings,
             backend=StorageSystem.MLFLOW.value,
@@ -590,7 +568,6 @@ class MlflowStorageClient(StorageClient):
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
-
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
         )
@@ -628,7 +605,6 @@ class MlflowStorageClient(StorageClient):
         return mlflow_info.filename
 
     def _log_model(self, mlflow_info: MlflowInfo) -> str:
-
         model_type = str(mlflow_info.model_type)
         model_logger = next(
             (
@@ -667,7 +643,6 @@ class MlflowStorageClient(StorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-
         """Uploads local artifact to mflow
 
         Args:
@@ -692,7 +667,6 @@ class MlflowStorageClient(StorageClient):
         return storage_uri
 
     def _get_mlflow_dir(self, filename: str) -> str:
-
         "Sets individual directories for all mlflow artifacts"
         if any(name in filename for name in DataArtifactNames):
             return MlFlowDirs.DATA_DIR.value
@@ -727,7 +701,6 @@ class StorageClientGetter:
     def get_storage_client(
         storage_settings: StorageSettings,
     ) -> StorageClientType:
-
         storage_client = next(
             (
                 storage_client

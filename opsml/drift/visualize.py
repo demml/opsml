@@ -25,7 +25,6 @@ class AltairChart:
         self.dropdown_field_name = dropdown_field_name
 
     def build_dropdown_selection(self, name: str):
-
         dropdown = alt.binding_select(
             options=self.data[self.dropdown_field_name].unique(),
             name=name,

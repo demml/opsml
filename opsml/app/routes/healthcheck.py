@@ -13,7 +13,6 @@ def get_healthcheck() -> HealthCheckResult:
 
 @router.get("/debug", response_model=DebugResponse, name="debug")
 async def debug() -> DebugResponse:
-
     return DebugResponse(
         url=config.TRACKING_URI,
         storage=config.STORAGE_URI,
