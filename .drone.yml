@@ -8,6 +8,7 @@ workspace:
 
 trigger:
   event:
+    - push
     - pull_request
 
 steps:
@@ -15,6 +16,7 @@ steps:
     image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
     commands:
       - poetry install --all-extras --with dev
+      - poetry run install_integration --integration gcp
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
