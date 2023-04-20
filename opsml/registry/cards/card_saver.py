@@ -129,7 +129,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         return onnx_predictor.get_api_model()
 
     def _save_api_definition(self):
-
         storage_spec = self._copy_artifact_storage_info()
         storage_spec.filename = "api-def"
         self.storage_client.storage_spec = storage_spec
@@ -222,7 +221,6 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
             if self.card.artifacts is not None:
                 for name, artifact in self.card.artifacts.items():
-
                     storage_path = save_record_artifact_to_storage(
                         artifact=artifact,
                         storage_client=self.storage_client,
@@ -265,7 +263,6 @@ class ProjectCardArtifactSaver(CardArtifactSaver):
 
 
 def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
-
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:

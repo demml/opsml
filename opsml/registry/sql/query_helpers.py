@@ -41,7 +41,6 @@ class QueryCreator:
         team: Optional[str] = None,
         version: Optional[str] = None,
     ) -> Select:
-
         """Creates a sql query based on table, uid, name, team and version
 
         Args:
@@ -62,7 +61,6 @@ class QueryCreator:
         filters = []
         for field, value in zip(["name", "team", "version"], [name, team, version]):
             if value is not None:
-
                 if field == "version":
                     version = get_version_to_search(version=version)
                     filters.append(getattr(table, field).like(f"{version}%"))
@@ -82,7 +80,6 @@ class QueryCreator:
         return cast(Select, select(sql_table))
 
     def uid_exists_query(self, uid: str, table_to_check: str) -> Select:
-
         table = TableSchema.get_table(table_name=table_to_check)
         query = self._get_base_select_query(table=table.uid)  # type: ignore
         query = query.filter(table.uid == uid)
@@ -91,12 +88,10 @@ class QueryCreator:
 
 
 def log_card_change(func):
-
     """Decorator for logging card changes"""
 
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:
-
         record, state = func(self, *args, **kwargs)
         name = str(record.get("name"))
         version = str(record.get("version"))

@@ -79,7 +79,6 @@ class OpsmlApp:
         self.app.middleware("http")(rollbar_middleware)
 
     def build_app(self):
-
         self.app.include_router(api_router)
 
         if self.run_mlflow:

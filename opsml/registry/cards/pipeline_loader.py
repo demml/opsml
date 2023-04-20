@@ -22,7 +22,6 @@ class Visualizer:
         relationships: Dict[str, List[Optional[str]]],
         pipeline_card_name: str,
     ):
-
         """Creates a visualize class to build a graphviz object
 
         Args:

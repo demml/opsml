@@ -61,7 +61,6 @@ def load_card_from_record(
     table_name: str,
     record: LoadedRecordType,
 ) -> ArtifactCard:
-
     """
     Loads an artifact card given a tablename and the loaded record
     from backend database
@@ -264,7 +263,6 @@ class SQLRegistryBase:
         version: Optional[str] = None,
         uid: Optional[str] = None,
     ) -> ArtifactCard:
-
         cleaned_name = clean_string(name)
         cleaned_team = clean_string(team)
 
@@ -334,7 +332,6 @@ class ServerRegistry(SQLRegistryBase):
         with self._session() as sess:
             results = sess.scalars(query).all()
         if bool(results):
-
             versions = [result.version for result in results]
             sort_semvers(versions)
 
@@ -372,7 +369,6 @@ class ServerRegistry(SQLRegistryBase):
         team: Optional[str] = None,
         version: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-
         """
         Retrieves records from registry
 
@@ -439,7 +435,6 @@ class ClientRegistry(SQLRegistryBase):
         return settings.request_client
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
-
         data = self._session.post_request(
             route=api_routes.CHECK_UID,
             json={"uid": uid, "table_name": table_to_check},
@@ -448,7 +443,6 @@ class ClientRegistry(SQLRegistryBase):
         return bool(data.get("uid_exists"))
 
     def set_version(self, name: str, team: str, version_type: VersionType = VersionType.MINOR) -> str:
-
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
@@ -467,7 +461,6 @@ class ClientRegistry(SQLRegistryBase):
         team: Optional[str] = None,
         version: Optional[str] = None,
     ) -> pd.DataFrame:
-
         """
         Retrieves records from registry
 
@@ -499,7 +492,6 @@ class ClientRegistry(SQLRegistryBase):
 
     @log_card_change
     def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-
         data = self._session.post_request(
             route=api_routes.CREATE,
             json={

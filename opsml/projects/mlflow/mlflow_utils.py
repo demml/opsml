@@ -21,7 +21,6 @@ class MlflowRunInfo(RunInfo):
         base_artifact_uri: str,
         run_name: Optional[str] = None,
     ):
-
         super().__init__(
             storage_client=storage_client,
             registries=registries,
@@ -58,7 +57,6 @@ def set_env_vars(tracking_uri: str):
 
     # set username and password while running project
     if all(bool(os.getenv(cred)) for cred in OpsmlAuth):
-
         os.environ["MLFLOW_TRACKING_USERNAME"] = str(os.getenv(OpsmlAuth.USERNAME))
         os.environ["MLFLOW_TRACKING_PASSWORD"] = str(os.getenv(OpsmlAuth.PASSWORD))
 

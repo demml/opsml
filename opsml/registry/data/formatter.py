@@ -49,7 +49,6 @@ class PandasFormatter(ArrowFormatter):
 class NumpyFormatter(ArrowFormatter):
     @staticmethod
     def convert(data: np.ndarray) -> ArrowTable:
-
         """Convert numpy array to pyarrow table
 
         Args:
@@ -73,7 +72,6 @@ class NumpyFormatter(ArrowFormatter):
 class ArrowTableFormatter(ArrowFormatter):
     @staticmethod
     def convert(data: pa.Table) -> ArrowTable:
-
         """Take pyarrow table and returns pyarrow table
 
         Args:
@@ -97,7 +95,6 @@ class ArrowTableFormatter(ArrowFormatter):
 class DataFormatter:
     @staticmethod
     def convert_data_to_arrow(data: Union[pd.DataFrame, np.ndarray, pa.Table]) -> ArrowTable:
-
         """
         Converts a pandas dataframe or numpy array into a py arrow table.
         Args:

@@ -20,7 +20,6 @@ class OnnxModelCreator:
         input_data: InputData,
         additional_onnx_args: Optional[TorchOnnxArgs] = None,
     ):
-
         """
         Instantiates OnnxModelCreator that is used for converting models to Onnx
 
@@ -39,7 +38,6 @@ class OnnxModelCreator:
         self.input_data_type = type(self.input_data)
 
     def _get_one_sample(self, input_data: InputData) -> InputData:  # fix the any types later
-
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
         if not isinstance(input_data, InputDataType.DICT.value):
@@ -52,7 +50,6 @@ class OnnxModelCreator:
         return sample_dict
 
     def get_input_data_type(self, input_data: Any) -> str:
-
         """
         Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
@@ -94,7 +91,6 @@ class OnnxModelCreator:
         return self.model.__class__.__name__
 
     def get_onnx_model_type(self) -> str:
-
         model_type = next(
             (
                 model_type

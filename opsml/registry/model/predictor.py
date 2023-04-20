@@ -104,7 +104,6 @@ class ApiSigCreator:
         raise NotImplementedError
 
     def _create_api_sig(self, features: Dict[str, Any]):
-
         pydantic_fields = self._get_pydantic_sig(features=features)
         base = self._get_pydantic_base()
 
@@ -163,7 +162,6 @@ class SklearnSigCreator(ApiSigCreator):
 
 class DeepLearningSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
-
         if self.data_type == InputDataType.DICT.name:
             return DeepLearningDictBase
         return DeepLearningNumpyBase
@@ -181,7 +179,6 @@ class ApiSigCreatorGetter:
         model_type: str,
         data_schema: Optional[Dict[str, Feature]],
     ):
-
         creator = next(
             (
                 sig_creator
@@ -212,7 +209,6 @@ class OnnxModelPredictor:
         sample_api_data: Dict[str, Any],
         start_sess: bool = True,
     ):
-
         """Instantiates predictor class from ModelCard.
 
         Args:
@@ -242,7 +238,6 @@ class OnnxModelPredictor:
         self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
 
     def get_api_model(self) -> ModelApiDef:
-
         return ModelApiDef(
             model_name=self.model_name,
             model_type=self.model_type,
@@ -256,7 +251,6 @@ class OnnxModelPredictor:
         )
 
     def predict(self, data: Dict[str, Any]) -> Any:
-
         """Run prediction on onnx model. Data is expected to conform to pydantic
         schema as defined in "api_sig" attribute. This schema will be used when
         deploying the model api.

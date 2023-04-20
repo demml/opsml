@@ -42,7 +42,6 @@ class GCSStorageClient(GCPService):
         self,
         gcp_credentials: Optional[Credentials] = None,
     ):
-
         """Instantiates GCP storage client
 
         Args:
@@ -77,7 +76,6 @@ class GCSStorageClient(GCPService):
         blob_path: Union[str, None] = None,
         destination_filename: Union[str, None] = None,
     ):
-
         """Download an object from gcs
 
         Args:
@@ -147,7 +145,6 @@ class GCSStorageClient(GCPService):
         return bucket, blob_path, filename
 
     def delete_object_from_url(self, gcs_uri: str):
-
         """Delete object from gcs
 
         Args:
@@ -205,7 +202,6 @@ class GCPMLScheduler(GCPService):
         self,
         gcp_credentials: Optional[Credentials] = None,
     ):
-
         """Class for interacting with GCP cloud scheduler
 
         Args:
@@ -240,7 +236,6 @@ class GCPMLScheduler(GCPService):
         return f"{parent_path}/jobs/{job_name}"
 
     def job_already_exists(self, job_name):
-
         """Checks if schedule job exists
 
         Args:
@@ -287,7 +282,6 @@ class GCPMLScheduler(GCPService):
         payload: Dict[str, str],
         scheduler_uri: str,
     ) -> Any:
-
         """Create cloud scheduler job
 
         Args:
@@ -328,7 +322,6 @@ class GCPMLScheduler(GCPService):
         gcp_project: str,
         gcp_region: str,
     ):
-
         """Submits schedule to cloud scheduler
 
         Args:
@@ -365,7 +358,6 @@ class GCPClient:
         service_name: str,
         gcp_credentials: Optional[Credentials] = None,
     ) -> ClientTypes:
-
         service = next(
             service
             for service in GCPService.__subclasses__()

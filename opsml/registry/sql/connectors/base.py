@@ -66,7 +66,6 @@ class CloudSQLConnection(BaseSQLConnection):
         raise NotImplementedError
 
     def _conn(self):
-
         """Creates the mysql or postgres CloudSQL client"""
         from google.cloud.sql.connector import Connector
 

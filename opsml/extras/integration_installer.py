@@ -1,6 +1,7 @@
 from typing import List, Optional
+
 from opsml.extras.installer_base import Installer
-from opsml.extras.types import IntegrationType, InstallType
+from opsml.extras.types import IntegrationType
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -21,7 +22,7 @@ class GcpInstaller(Installer):
         return BASE_GCP_REQUIREMENTS
 
     @staticmethod
-    def validate(integration_type: IntegrationType) -> bool:
+    def validate(integration_type: str) -> bool:
         return integration_type == IntegrationType.GCP
 
 
@@ -37,7 +38,7 @@ class VertexInstaller(Installer):
         ]
 
     @staticmethod
-    def validate(integration_type: IntegrationType) -> bool:
+    def validate(integration_type: str) -> bool:
         return integration_type == IntegrationType.VERTEX
 
 
@@ -49,11 +50,11 @@ class KubeFlowInstaller(Installer):
         return ["kfp>=1.8.19,<2.0.0"]
 
     @staticmethod
-    def validate(integration_type: IntegrationType) -> bool:
+    def validate(integration_type: str) -> bool:
         return integration_type == IntegrationType.KUBEFLOW
 
 
-def get_installer(integration_type: IntegrationType, install_type: InstallType) -> Optional[Installer]:
+def get_installer(integration_type: str, install_type: str) -> Optional[Installer]:
     """
     Gets the correct integration installer and installs necessary packages
     Args:

@@ -22,7 +22,6 @@ class ModelLoader:
         registry: CardRegistry,
         base_path: str = BASE_SAVE_PATH,
     ):
-
         self.model_info = model_info
         self.base_path = base_path
         self._file_path: Optional[str] = None
@@ -42,7 +41,6 @@ class ModelLoader:
         return path / MODEL_FILE
 
     def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
-
         with filepath.open("w", encoding="utf-8") as file_:
             file_.write(api_def.json())
         logger.info("Saved api model def to %s", filepath)

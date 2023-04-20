@@ -31,7 +31,6 @@ def replace_proxy_root(
     storage_root: str,
     proxy_root: str,
 ) -> Dict[str, Any]:
-
     for name, value in record.items():
         if "uri" in name:
             if isinstance(value, str):
@@ -133,7 +132,6 @@ class ModelDownloader:
         return path / MODEL_FILE
 
     def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
-
         with filepath.open("w", encoding="utf-8") as file_:
             file_.write(api_def.json())
         logger.info("Saved api model def to %s", filepath)

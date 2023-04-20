@@ -33,7 +33,6 @@ logger = ArtifactLogger.get_logger(__name__)
 
 class ModelConverter:
     def __init__(self, model_info: ModelInfo):
-
         self.model_info = model_info
         self.data_converter = OnnxDataConverter(model_info=model_info)
 
@@ -53,7 +52,6 @@ class ModelConverter:
         onnx_preds: List[Union[float, int]],
         model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
     ) -> bool:
-
         if not isinstance(model_preds, list):
             model_preds = cast(Union[float, int], model_preds)
             valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
@@ -91,7 +89,6 @@ class ModelConverter:
         feature_dict = {}
 
         for sig in signature:
-
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
             dim_shape = [dim.dim_value for dim in shape_dims]
@@ -105,7 +102,6 @@ class ModelConverter:
         return feature_dict
 
     def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
-
         input_dict = self._parse_onnx_sigature(onnx_model.graph.input)
         output_dict = self._parse_onnx_sigature(onnx_model.graph.output)
 
@@ -148,7 +144,6 @@ class ModelConverter:
 
 class SklearnOnnxModel(ModelConverter):
     def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
-
         if len(shape_dims) == 0:
             return None, None
 
@@ -206,7 +201,6 @@ class SklearnOnnxModel(ModelConverter):
         return self.update_onnx_registries()
 
     def _convert_data_for_onnx(self) -> None:
-
         """Converts float64 or all data to float32 depending on Sklearn estimator type
         Because Stacking and Pipeline estimators have intermediate output nodes, Onnx will
         typically inject Float32 for these outputs (it infers these at creation).
@@ -237,7 +231,6 @@ class SklearnOnnxModel(ModelConverter):
         return None
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
-
         """Converts sklearn model to ONNX ModelProto"""
         from skl2onnx import convert_sklearn
 
@@ -261,7 +254,6 @@ class SklearnOnnxModel(ModelConverter):
 
 class LighGBMBoosterOnnxModel(ModelConverter):
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
-
         """Converts sklearn model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
 
@@ -334,7 +326,6 @@ class PytorchArgBuilder:
 
 class PyTorchOnnxModel(ModelConverter):
     def __init__(self, model_info: ModelInfo):
-
         self.additional_args = self._get_additional_model_args(
             additional_onnx_args=model_info.additional_model_args,
             input_data=model_info.model_data.data,
@@ -378,7 +369,6 @@ class PyTorchOnnxModel(ModelConverter):
         return self._post_process_prediction(predictions=pred)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
-
         """Validates an onnx model on sample data"""
         inputs = self.data_converter.convert_data()
         model_preds = self._model_predict()
@@ -458,7 +448,6 @@ class OnnxModelConverter:
         self.model_info = model_info
 
     def convert_model(self) -> OnnxModelReturn:
-
         converter = next(
             (
                 converter

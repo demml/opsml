@@ -184,7 +184,6 @@ class DBInitializer:
             command.upgrade(config, "heads")
 
     def get_alembic_config(self, db_url: str) -> Config:
-
         alembic_dir = os.path.join(DIR_PATH, "migration")
         db_url = db_url.replace("%", "%%")
         config = Config(os.path.join(alembic_dir, "alembic.ini"))

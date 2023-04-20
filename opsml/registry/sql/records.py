@@ -171,7 +171,6 @@ class LoadedModelRecord(LoadRecord):
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
-
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_model_card_definition(
             values=values,
@@ -193,7 +192,6 @@ class LoadedModelRecord(LoadRecord):
         values: Dict[str, Any],
         storage_client: StorageClientType,
     ) -> Dict[str, Any]:
-
         """Loads a model card definition from current attributes
 
         Returns:
@@ -228,7 +226,6 @@ class LoadedRunRecord(LoadRecord):
 
     @root_validator(pre=True)
     def load_exp_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
-
         storage_client = cast(StorageClientType, values["storage_client"])
         cls.load_artifacts(values=values, storage_client=storage_client)
         return values
@@ -286,7 +283,6 @@ def load_record(
     record_data: Dict[str, Any],
     storage_client: StorageClientType,
 ) -> LoadedRecordType:
-
     record = next(
         record
         for record in LoadRecord.__subclasses__()

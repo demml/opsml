@@ -56,9 +56,7 @@ def get_storage_settings() -> StorageSettingsResponse:
     """Returns backend storage path and type"""
 
     if bool(config.STORAGE_URI):
-
         if not config.is_proxy:
-
             if "gs://" in config.STORAGE_URI:
                 return StorageSettingsResponse(
                     storage_type=StorageSystem.GCS.value,
@@ -85,7 +83,6 @@ def check_uid(
     request: Request,
     payload: UidExistsRequest = Body(...),
 ) -> UidExistsResponse:
-
     """Checks if a uid already exists in the database"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
@@ -103,7 +100,6 @@ def set_version(
     request: Request,
     payload: VersionRequest = Body(...),
 ) -> Union[VersionResponse, UidExistsResponse]:
-
     """Sets the version for an artifact card"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
@@ -122,7 +118,6 @@ def list_cards(
     request: Request,
     payload: ListRequest = Body(...),
 ) -> ListResponse:
-
     """Lists a Card"""
 
     table_for_registry = payload.table_name.split("_")[1].lower()
@@ -136,7 +131,6 @@ def list_cards(
     )
 
     if config.is_proxy:
-
         records = [
             replace_proxy_root(
                 record=record,
@@ -154,7 +148,6 @@ def add_record(
     request: Request,
     payload: AddRecordRequest = Body(...),
 ) -> AddRecordResponse:
-
     """Adds Card record to a registry"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
@@ -168,7 +161,6 @@ def update_record(
     request: Request,
     payload: UpdateRecordRequest = Body(...),
 ) -> UpdateRecordResponse:
-
     """Updates a specific artifact card"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
@@ -184,7 +176,6 @@ def download_model(
     background_tasks: BackgroundTasks,
     payload: DownloadModelRequest,
 ) -> StreamingResponse:
-
     """Downloads a Model API definition
 
     Args:
@@ -243,7 +234,6 @@ async def upload_file(
         )
 
     try:
-
         file_ = ExternalFileTarget(
             filename=filename,
             write_path=write_path,
@@ -299,7 +289,6 @@ def download_file(
     request: Request,
     payload: DownloadFileRequest,
 ) -> StreamingResponse:
-
     """Downloads a file
 
     Args:
@@ -311,7 +300,6 @@ def download_file(
     """
 
     try:
-
         storage_client = request.app.state.storage_client
         return StreamingResponse(
             storage_client.iterfile(
@@ -333,7 +321,6 @@ def list_files(
     request: Request,
     payload: ListFileRequest,
 ) -> ListFileResponse:
-
     """Downloads a file
 
     Args:

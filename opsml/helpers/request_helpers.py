@@ -47,7 +47,6 @@ class ApiClient:
         route: str,
         json: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-
         response = self.client.post(
             url=f"{self._base_url}/{route}",
             json=json,
@@ -60,7 +59,6 @@ class ApiClient:
 
     @retry(stop=stop_after_attempt(3))
     def get_request(self, route: str) -> Dict[str, Any]:
-
         response = self.client.get(url=f"{self._base_url}/{route}")
 
         if response.status_code == 200:
@@ -76,7 +74,6 @@ class ApiClient:
         files: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-
         with self.client.stream(
             method="POST",
             url=f"{self._base_url}/{route}",
@@ -84,7 +81,6 @@ class ApiClient:
             headers=headers,
             json=json,
         ) as response:
-
             for data in response.iter_bytes():
                 result = data.decode("utf-8")
 
@@ -109,7 +105,6 @@ class ApiClient:
         read_dir: str,
         filename: str,
     ) -> Dict[str, Any]:
-
         Path(local_dir).mkdir(parents=True, exist_ok=True)
         with open(os.path.join(local_dir, filename), "wb") as local_file:
             with self.client.stream(
@@ -117,7 +112,6 @@ class ApiClient:
                 url=f"{self._base_url}/{route}",
                 json={"read_path": os.path.join(read_dir, filename)},
             ) as response:
-
                 for data in response.iter_bytes():
                     local_file.write(data)
 
