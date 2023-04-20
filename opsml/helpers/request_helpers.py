@@ -96,7 +96,6 @@ class ApiClient:
             """
         )
 
-    # need to write another method for downloading files
     @retry(stop=stop_after_attempt(3))
     def stream_download_file_request(
         self,
@@ -105,7 +104,7 @@ class ApiClient:
         read_dir: str,
         filename: str,
     ) -> Dict[str, Any]:
-        Path(local_dir).mkdir(parents=True, exist_ok=True)
+        Path(local_dir).mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
         with open(os.path.join(local_dir, filename), "wb") as local_file:
             with self.client.stream(
                 method="POST",
@@ -127,19 +126,3 @@ class ApiClient:
               {response_result.get("detail")}
             """
         )
-
-    # @retry(stop=stop_after_attempt(3))
-    # def download_file(self, local_path: str, read_path: str) -> Dict[str, Any]:
-
-
-#
-#    with self.client.stream(
-#        method="POST",
-#        url=f"{self._base_url}/{ApiRoutes.DOWNLOAD_FILE}",
-#        json=json
-#    ):
-#        pass
-#
-#    raise ValueError(
-#        f"""Failed to to make server call for post request Url: {ApiRoutes.UPLOAD}, {response.reason_phrase}"""
-#    )

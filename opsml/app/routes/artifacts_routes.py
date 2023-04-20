@@ -2,7 +2,7 @@ import os
 from typing import Union
 
 import streaming_form_data
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Request, status
+from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
@@ -32,9 +32,6 @@ from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
     MaxBodySizeValidator,
-    ModelDownloader,
-    delete_dir,
-    iterfile,
     replace_proxy_root,
 )
 from opsml.helpers.logging import ArtifactLogger
@@ -171,42 +168,63 @@ def update_record(
 
 
 @router.post("/download_model", name="download_model")
-def download_model(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    payload: DownloadModelRequest,
-) -> StreamingResponse:
-    """Downloads a Model API definition
+def download_model(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
+    """
+    Downloads a Model API definition
 
     Args:
-        name (str): Optional name of model
-        version (str): Optional semVar version of model
-        team (str): Optional team name
-        uid (str): Optional uid of ModelCard
+        name:
+            Optional name of model
+        version:
+            Optional semVar version of model
+        team:
+            Optional team name
+        uid:
+            Optional uid of ModelCard
 
     Returns:
         FileResponse object containing model definition json
     """
 
     registry: CardRegistry = getattr(request.app.state.registries, "model")
+    storage_client = request.app.state.storage_client
 
-    loader = ModelDownloader(
-        registry=registry,
-        model_info=payload,
-        config=config,
+    cards = registry.registry.list_cards(
+        name=payload.name,
+        team=payload.team,
+        version=payload.version,
+        uid=payload.uid,
     )
-    loader.download_model()
-    background_tasks.add_task(delete_dir, dir_path=loader.base_path)
+
+    if len(cards) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="More than one model found",
+        )
+
+    if not bool(cards):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No model found",
+        )
 
     headers = {"Content-Disposition": f'attachment; filename="{MODEL_FILE}"'}
-    return StreamingResponse(
-        iterfile(
-            file_path=loader.file_path,
-            chunk_size=CHUNK_SIZE,
-        ),
-        media_type="application/octet-stream",
-        headers=headers,
-    )
+    record = cards[0].get("onnx_model_uri")
+
+    try:
+        return StreamingResponse(
+            storage_client.iterfile(
+                file_path=record,
+                chunk_size=CHUNK_SIZE,
+            ),
+            headers=headers,
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error downloading model. {error}",
+        ) from error
 
 
 # flush this out next pr (need upload and download path)
