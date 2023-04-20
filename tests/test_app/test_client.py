@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard
 import uuid
 import random
+import json
 
 
 def test_client(test_app):
@@ -315,21 +316,107 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
         loader.visualize()
 
 
-@patch("opsml.app.routes.utils.ModelDownloader.load_card")
-@patch("opsml.registry.cards.cards.ModelCard._get_sample_data_for_api")
-def test_download_model(
-    sample_data,
-    mock_load_card,
-    test_app,
-    test_model_card,
-):
+def test_download_model(test_app, api_registries, linear_regression):
 
-    mock_load_card.return_value = test_model_card
-    sample_data.return_value = {"Inputs": [1, 2]}
+    team = "mlops"
+    user_email = "mlops.com"
 
-    response = test_app.post(url="opsml/download_model", json={"uid": "test-uid"})
+    model, data = linear_regression
 
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    #### Create DataCard
+    data_card = DataCard(
+        data=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+    )
+
+    data_registry.register_card(card=data_card)
+    ###### ModelCard
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card)
+
+    result = ""
+    with test_app.stream(method="POST", url="opsml/download_model", json={"uid": model_card.uid}) as response:
+
+        for data in response.iter_bytes():
+            result += data.decode("utf-8")
+
+    model_def = json.loads(result)
+
+    assert model_def["model_name"] == model_card.name
+    assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
+
+
+def test_download_multiple_model_failure(test_app, api_registries, linear_regression):
+
+    team = "mlops"
+    user_email = "mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    #### Create DataCard
+    data_card = DataCard(
+        data=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+    )
+
+    data_registry.register_card(card=data_card)
+    ###### ModelCard
+    model_card1 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card1)
+
+    model_card2 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card2)
+
+    result = ""
+    with test_app.stream(
+        method="POST",
+        url="opsml/download_model",
+        json={
+            "model_name": model_card1.name,
+            "team": model_card1.team,
+        },
+    ) as response:
+
+        for data in response.iter_bytes():
+            result += data.decode("utf-8")
+
+    assert response.status_code == 500
+    assert json.loads(data.decode("utf-8"))["detail"] == "More than one model found"
 
 
 def test_download_model_failure(test_app):
@@ -338,3 +425,4 @@ def test_download_model_failure(test_app):
 
     # should fail
     assert response.status_code == 500
+    assert response.json()["detail"] == "No model found"
