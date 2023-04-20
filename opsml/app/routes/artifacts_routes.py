@@ -230,11 +230,18 @@ async def upload_file(
     filename = request.headers.get("Filename")
     write_path = request.headers.get("WritePath")
 
-    if not filename:
+    if filename is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Filename header is missing",
         )
+
+    if write_path is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="No write path provided",
+        )
+
     try:
 
         file_ = ExternalFileTarget(
@@ -253,29 +260,32 @@ async def upload_file(
     except ClientDisconnect:
         logger.error("Client disconnected")
 
-    except MaxBodySizeException as e:
+    except MaxBodySizeException as error:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"""
                Maximum request body size limit ({MAX_REQUEST_BODY_SIZE}.
-               Bytes exceeded ({e.body_len} bytes read)""",
-        )
-    except streaming_form_data.validators.ValidationError:
+               Bytes exceeded ({error.body_len} bytes read)""",
+        ) from error
+
+    except streaming_form_data.validators.ValidationError as error:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Maximum file size limit ({MAX_FILE_SIZE} bytes) exceeded",
-        )
+        ) from error
+
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error uploading the file. {error}",
-        )
+        ) from error
 
     if not file_.multipart_filename:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File is missing",
         )
+
     return StorageUri(
         storage_uri=os.path.join(write_path, filename),
     )
@@ -315,14 +325,14 @@ def download_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error uploading the file. {error}",
-        )
+        ) from error
 
 
 @router.post("/list_files", name="list_files")
 def list_files(
     request: Request,
     payload: ListFileRequest,
-) -> StreamingResponse:
+) -> ListFileResponse:
 
     """Downloads a file
 
@@ -343,4 +353,4 @@ def list_files(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error uploading the file. {error}",
-        )
+        ) from error
