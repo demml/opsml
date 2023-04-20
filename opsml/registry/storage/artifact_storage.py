@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import IO, Any, Optional, Tuple, Union, cast
+from typing import Any, Optional, Tuple, Union
 
 import joblib
 import numpy as np
@@ -139,59 +139,33 @@ class ArtifactStorage:
             )
             return StoragePath(uri=storage_uri)
 
-    def __download_artifact(self, file_path: FilePath, tmp_path: IO) -> Any:
-        """Downloads an artifact from a file_path
+    # ef _download_artifact(
+    #   self,
+    #   files: FilePath,
+    #   file_path: FilePath,
+    #   tmp_path: IO,
+    # -> Any:
+    #   """Downloads an artifact from a file_path
 
-        Args:
-            file_path (FilePath): List of file paths or single file path
-            tmp_path (IO): Temporary file to write to if downloading prior to loading
-        """
-        if self.is_storage_local:
-            return file_path
+    #   Args:
+    #       file_path (FilePath): List of file paths or single file path
+    #       tmp_path (IO): Temporary file to write to if downloading prior to loading
+    #   """
+    #   if self.is_storage_local:
+    #       return file_path
 
-        loadable_filepath = self.storage_client.download(rpath=file_path, lpath=tmp_path.name)
-        if isinstance(loadable_filepath, list):
-            if len(loadable_filepath) == 1:
-                if bool(loadable_filepath[0]):
-                    return loadable_filepath
-            else:
-                if len(loadable_filepath) > 1:
-                    return loadable_filepath
+    #   loadable_path = self.storage_client.download(
+    #       rpath=file_path,
+    #       lpath=tmp_path.name,
+    #       **{"files": files},
+    #   )
 
-            return tmp_path
-
-        if loadable_filepath is not None:
-            return loadable_filepath
-
-        return tmp_path
-
-    def _download_artifact(
-        self,
-        files: FilePath,
-        file_path: FilePath,
-        tmp_path: IO,
-    ) -> Any:
-        """Downloads an artifact from a file_path
-
-        Args:
-            file_path (FilePath): List of file paths or single file path
-            tmp_path (IO): Temporary file to write to if downloading prior to loading
-        """
-        if self.is_storage_local:
-            return file_path
-
-        loadable_path = self.storage_client.download(
-            rpath=file_path,
-            lpath=tmp_path.name,
-            **{"files": files},
-        )
-
-        return loadable_path or tmp_path
+    #   return loadable_path or tmp_path
 
     def _download_artifacts(
         self,
         files: FilePath,
-        file_path: FilePath,
+        file_path: str,
         tmp_path: str,
     ) -> Any:
 
@@ -201,6 +175,7 @@ class ArtifactStorage:
         loadable_path = self.storage_client.download(
             rpath=file_path,
             lpath=tmp_path,
+            recursive=False,
             **{"files": files},
         )
 
@@ -260,13 +235,17 @@ class JoblibStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
 
-        """Writes the artifact as a joblib file to a storage_uri
+        """
+        Writes the artifact as a joblib file to a storage_uri
 
         Args:
-            artifact (Any): Artifact to write to joblib
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
+            artifact:
+                Artifact to write to joblib
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used
+                for some storage client.
 
         Returns:
             Storage path
@@ -299,7 +278,8 @@ class ParquetStorage(ArtifactStorage):
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-        """Writes the artifact as a parquet table to the specified storage location
+        """
+        Writes the artifact as a parquet table to the specified storage location
 
         Args:
             artifact:
@@ -332,10 +312,15 @@ class ParquetStorage(ArtifactStorage):
         return file_path
 
     def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame]:
-        """Loads pyarrow data to original saved type
+        """
+        Loads pyarrow data to original saved type
 
         Args:
-            files (List[str]): List of filenames that make up the parquet dataset
+            file_path:
+                List of filenames that make up the parquet dataset
+
+        Returns
+            Pandas DataFrame or Pyarrow table
         """
 
         pa_table: pa.Table = pq.ParquetDataset(
@@ -371,13 +356,17 @@ class NumpyStorage(ArtifactStorage):
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-        """Writes the artifact as a zarr array to the specified storage location
+        """
+        Writes the artifact as a zarr array to the specified storage location
 
         Args:
-            artifact (Numpy array): Numpy array to write
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
+            artifact:
+                Numpy array to write
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used
+                for some storage client.
 
         Returns:
             Storage path
@@ -399,25 +388,11 @@ class NumpyStorage(ArtifactStorage):
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
 
-        # if isinstance(file_path, list):
-        # file_path = file_path[0]
         store = self.storage_client.store(
-            storage_uri=file_path,
+            storage_uri=str(file_path),
             **{"store_type": "download"},
         )
         return zarr.load(store)
-
-    # def load_artifact(self, storage_uri: str) -> Any:
-    #    """Loads a numpy ndarray from a zarr directory
-    #
-    #    Args:
-    #        storage_uri (str): Storage uri of zarr array
-    #
-    #    Returns:
-    #        numpy ndarray
-    #    """
-    #
-    #    return self._load_artifact(file_path=storage_uri)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -450,10 +425,12 @@ class JSONStorage(ArtifactStorage):
         """Writes the artifact as a json file to a storage_uri
 
         Args:
-            artifact (Any): Artifact to write to json
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
+            artifact:
+                Artifact to write to json
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used or some storage client.
 
         Returns:
             Storage path
@@ -496,10 +473,12 @@ class TensorflowModelStorage(ArtifactStorage):
         """Saves a tensorflow model
 
         Args:
-            artifact (Any): Artifact to write to json
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
+            artifact:
+                Artifact to write to json
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used for some storage clients.
 
         Returns:
             Storage path
@@ -527,23 +506,6 @@ class TensorflowModelStorage(ArtifactStorage):
 
         return tf.keras.models.load_model(file_path)
 
-    def _download_artifact(self, file_path: FilePath, tmp_path: IO) -> Any:
-        """Downloads tensorflow model directory from a file_path
-
-        Args:
-            file_path (FilePath): List of file paths or single file path
-            tmp_path (IO): Temporary file to write to if downloading prior to loading
-        """
-        if self.is_storage_local:
-            return file_path
-
-        download_path = self.storage_client.download(rpath=file_path, lpath=f"{tmp_path}/", recursive=True)
-
-        if download_path is not None:
-            return download_path
-
-        return tmp_path
-
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type == ArtifactStorageType.TF_MODEL
@@ -566,13 +528,16 @@ class PyTorchModelStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
 
-        """Saves a pytorch model
+        """
+        Saves a pytorch model
 
         Args:
-            artifact (Any): Artifact to write to json
-            storage_uri (str): Path to write to
-            tmp_uri (str): Temporary uri to write to. This will be used
-            for some storage client.
+            artifact:
+                Artifact to write to json
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used for some storage clients.
 
         Returns:
             Storage path

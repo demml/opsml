@@ -9,7 +9,18 @@ from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import IO, Any, Dict, Generator, List, Optional, Tuple, Union, cast
+from typing import (
+    IO,
+    Any,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import pandas as pd
 from numpy.typing import NDArray
@@ -23,6 +34,7 @@ from opsml.registry.model.types import (
     OnnxModelType,
 )
 from opsml.registry.storage.types import (
+    ApiStorageClientSettings,
     ArtifactStorageSpecs,
     FilePath,
     GcsStorageClientSettings,
@@ -157,15 +169,15 @@ class StorageClient:
     def store(self, storage_uri: str, **kwargs):
         raise NotImplementedError
 
-    def open(self, filename: str, model: str):
+    def open(self, filename: str, mode: str):
         raise NotImplementedError
 
-    def iterfile(self, file_path: str, chunk_size: int) -> bytes:
+    def iterfile(self, file_path: str, chunk_size: int) -> Iterator[bytes]:
         with self.open(file_path, "rb") as file_:
             while chunk := file_.read(chunk_size):
                 yield chunk
 
-    def download(self, rpath: FilePath, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         return self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
     def upload(
@@ -252,8 +264,8 @@ class LocalStorageClient(StorageClient):
 
         return [storage_uri]
 
-    def open(self, filename: str, mode: str) -> IO:
-        return open(file=filename, mode=mode)
+    def open(self, filename: str, mode: str, encoding: Optional[str] = None) -> IO:
+        return open(file=filename, mode=mode, encoding=encoding)
 
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
@@ -271,6 +283,7 @@ class ApiStorageClient(LocalStorageClient):
             backend=StorageSystem.API.value,
         )
 
+        storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
 
     def list_files(self, storage_uri: str) -> FilePath:
@@ -279,8 +292,12 @@ class ApiStorageClient(LocalStorageClient):
             route=ApiRoutes.LIST_FILES,
             json={"read_path": storage_uri},
         )
+        files = response.get("files")
 
-        return response.get("files")
+        if files is not None:
+            return cast(List[str], files)
+
+        raise ValueError("No files found")
 
     def _upload_file(
         self,
@@ -291,7 +308,7 @@ class ApiStorageClient(LocalStorageClient):
         **kwargs,
     ) -> str:
 
-        files = {"file": open(os.path.join(local_dir, filename), "rb")}
+        files = {"file": open(os.path.join(local_dir, filename), "rb")}  # pylint: disable=consider-using-with
         headers = {"Filename": filename, "WritePath": write_dir}
 
         response = self.api_client.stream_post_request(
@@ -299,8 +316,11 @@ class ApiStorageClient(LocalStorageClient):
             files=files,
             headers=headers,
         )
+        storage_uri = response.get("storage_uri")
 
-        return response.get("storage_uri")
+        if storage_uri is not None:
+            return storage_uri
+        raise ValueError("No storage_uri found")
 
     def upload_single_file(self, local_path, write_path):
 
@@ -359,8 +379,8 @@ class ApiStorageClient(LocalStorageClient):
 
     def download_directory(
         self,
-        rpath: FilePath,
-        lpath: Path,
+        rpath: str,
+        lpath: str,
         files: List[str],
         recursive: bool = False,
     ) -> str:
@@ -393,7 +413,7 @@ class ApiStorageClient(LocalStorageClient):
 
         return os.path.join(lpath, filename)
 
-    def download(self, rpath: FilePath, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
 
         files = kwargs.get("files", None)
         if len(files) == 1:
@@ -539,6 +559,9 @@ class MlflowStorageClient(StorageClient):
         self._artifact_path: Optional[str] = None
         self._mlflow_client: Optional[MlFlowClientProto] = None
 
+    def open(self, filename: str, mode: str):
+        """not used"""
+
     @property
     def run_id(self) -> Optional[str]:
         return self._run_id
@@ -574,13 +597,12 @@ class MlflowStorageClient(StorageClient):
 
         return save_path, filename
 
-    def download(self, rpath: FilePath, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         import mlflow
 
         # temp_path = Path("temp")
         temp_path = lpath
 
-        temp_path = Path(lpath)
         if not recursive:
             filename = os.path.basename(lpath)
             temp_path = f"{temp_path}/{filename}"

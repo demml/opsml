@@ -17,25 +17,6 @@ from opsml.drift.data_drift import DriftDetector
 from tests import conftest
 
 
-@pytest.mark.parametrize("storage_client", [lazy_fixture("mlflow_storage_client")])
-def test_api_tensorflow_model(storage_client, load_transformer_example):
-    model, data = load_transformer_example
-    storage_spec = ArtifactStorageSpecs(save_path=conftest.save_path())
-
-    storage_client.storage_spec = storage_spec
-    model_storage = TensorflowModelStorage(
-        artifact_type="keras",
-        storage_client=storage_client,
-    )
-
-    metadata = model_storage.save_artifact(artifact=model)
-
-    model = model_storage.load_artifact(storage_uri=metadata.uri)
-
-    assert model == model
-
-
-"""
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
 def test_api_parquet(test_arrow_table, storage_client):
     storage_spec = ArtifactStorageSpecs(save_path=conftest.save_path())
@@ -283,4 +264,3 @@ def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
     ):
 
         model = model_storage.load_artifact(storage_uri=metadata.uri)
-"""
