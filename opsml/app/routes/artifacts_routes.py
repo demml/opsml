@@ -281,9 +281,6 @@ async def upload_file(
     )
 
 
-# eventually combine download_file and download_model
-
-
 @router.post("/download_file", name="download_file")
 def download_file(
     request: Request,
@@ -312,7 +309,7 @@ def download_file(
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"There was an error uploading the file. {error}",
+            detail=f"There was an error downloading the file. {error}",
         ) from error
 
 
@@ -339,5 +336,5 @@ def list_files(
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"There was an error uploading the file. {error}",
+            detail=f"There was an error listing files. {error}",
         ) from error
