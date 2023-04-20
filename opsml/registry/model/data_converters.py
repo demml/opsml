@@ -115,7 +115,6 @@ class NumpyOnnxConverter(DataConverter):
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
         if model_info.data_type == InputDataType.NUMPY_ARRAY.value:
-
             if model_info.model_type in AVAILABLE_MODEL_TYPES and model_info.model_type not in [
                 OnnxModelType.TF_KERAS,
                 OnnxModelType.PYTORCH,
@@ -155,7 +154,6 @@ class PandasOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-
         return (
             model_info.data_type == InputDataType.PANDAS_DATAFRAME.value
             and model_info.model_type != OnnxModelType.SKLEARN_PIPELINE
@@ -175,7 +173,6 @@ class PandasPipelineOnnxConverter(DataConverter):
         return self._get_onnx_dataframe_schema()
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-
         """Converts pandas dataframe associated with SKLearn pipeline"""
 
         rows_shape = self.model_data.shape[0]
@@ -230,7 +227,6 @@ class TensorflowDictOnnxConverter(DataConverter):
         return spec
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-
         onnx_data = {}
         for key, val in self.model_data.data.items():
             onnx_data[key] = val.astype(np.float32)
@@ -366,12 +362,10 @@ class PyTorchOnnxDictConverter(DataConverter):
 
 class OnnxDataConverter:
     def __init__(self, model_info: ModelInfo):
-
         self.model_info = model_info
         self.converter = self._get_converter()
 
     def _get_converter(self):
-
         converter = next(
             (
                 converter

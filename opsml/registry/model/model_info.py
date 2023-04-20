@@ -172,7 +172,6 @@ class DataDictionary(ModelData):
 
 
 def get_model_data(data_type: type, input_data: Any):
-
     """Sets the appropriate ModelData subclass depending
     on data_type passed
 
@@ -203,7 +202,6 @@ class FloatTypeConverter:
 
     def _convert_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
         for feature, feature_type in zip(data.columns, data.dtypes):
-
             if not self.convert_all:
                 if DataDtypes.FLOAT64 in str(feature_type):
                     data[feature] = data[feature].astype(np.float32)

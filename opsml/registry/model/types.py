@@ -129,7 +129,6 @@ class Base(BaseModel):
         raise NotImplementedError
 
     def to_numpy(self, type_: str, values: Any):
-
         if type_ == OnnxDataProto.DOUBLE.name:
             return np.array(values, np.float64)
 
@@ -147,7 +146,6 @@ class Base(BaseModel):
 
 class NumpyBase(Base):
     def to_onnx(self):
-
         values = list(self.dict().values())
         for _, type_ in self.feature_map.items():  # there can only be one
             array = self.to_numpy(type_=type_, values=values)
@@ -318,7 +316,6 @@ def get_onnx_tensor_spec(
     dtype: str,
     input_shape: Union[Tuple[int, ...], List[int]],
 ) -> TensorType:
-
     """Takes a dtype and input shape and returns Onnx Tensor type proto to be
     used with Onnx model
 

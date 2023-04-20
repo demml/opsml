@@ -34,7 +34,6 @@ class ArtifactStorage:
         file_suffix: Optional[str] = None,
         artifact_class: Optional[str] = None,
     ):
-
         """Instantiates base ArtifactStorage class
 
         Args:
@@ -168,7 +167,6 @@ class ArtifactStorage:
         file_path: str,
         tmp_path: str,
     ) -> Any:
-
         if self.is_storage_local:
             return file_path
 
@@ -221,7 +219,6 @@ class JoblibStorage(ArtifactStorage):
         joblib.dump(artifact, file_path)
 
     def _write_artifact(self, artifact: Any, file_path: str, storage_uri: str):
-
         # hack for mlflow
         if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
             return self._upload_artifact(
@@ -234,7 +231,6 @@ class JoblibStorage(ArtifactStorage):
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-
         """
         Writes the artifact as a joblib file to a storage_uri
 
@@ -377,7 +373,6 @@ class NumpyStorage(ArtifactStorage):
         zarr.save(store, artifact)
 
         if self.is_storage_a_proxy:
-
             return self.storage_client.upload(
                 local_path=file_path,
                 write_path=storage_uri,
@@ -387,7 +382,6 @@ class NumpyStorage(ArtifactStorage):
         return file_path
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
-
         store = self.storage_client.store(
             storage_uri=str(file_path),
             **{"store_type": "download"},
@@ -421,7 +415,6 @@ class JSONStorage(ArtifactStorage):
             file_.write(artifact)
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-
         """Writes the artifact as a json file to a storage_uri
 
         Args:
@@ -441,7 +434,6 @@ class JSONStorage(ArtifactStorage):
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
-
         with open(str(file_path), encoding="utf-8") as json_file:
             return json.load(json_file)
 
@@ -469,7 +461,6 @@ class TensorflowModelStorage(ArtifactStorage):
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-
         """Saves a tensorflow model
 
         Args:
@@ -527,7 +518,6 @@ class PyTorchModelStorage(ArtifactStorage):
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-
         """
         Saves a pytorch model
 
@@ -588,7 +578,6 @@ def save_record_artifact_to_storage(
     storage_client: StorageClientType,
     artifact_type: Optional[str] = None,
 ) -> StoragePath:
-
     _artifact_type: str = artifact_type or artifact.__class__.__name__
 
     storage_type = next(
@@ -609,7 +598,6 @@ def save_record_artifact_to_storage(
 
 
 def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType):
-
     if not bool(storage_client.storage_spec.save_path):
         return None
 

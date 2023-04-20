@@ -149,7 +149,6 @@ class DataCard(ArtifactCard):
 
     @validator("data_uri", pre=True, always=True)
     def check_data(cls, data_uri, values):  # pylint: disable=no-self-argument
-
         if data_uri is None and values["data"] is None:
             raise ValueError("Data must be supplied when no data_uri is present")
 
@@ -169,7 +168,6 @@ class DataCard(ArtifactCard):
 
     @validator("feature_descriptions", pre=True, always=True)
     def lower_descriptions(cls, feature_descriptions):  # pylint: disable=no-self-argument
-
         if feature_descriptions is None:
             return feature_descriptions
 
@@ -184,7 +182,6 @@ class DataCard(ArtifactCard):
         return value or {}
 
     def split_data(self) -> Optional[DataHolder]:
-
         """
         Loops through data splits and splits data either by indexing or
         column values
@@ -200,7 +197,6 @@ class DataCard(ArtifactCard):
         return data_splits
 
     def _parse_data_splits(self) -> DataHolder:
-
         data_holder = DataHolder()
         self.data_splits = cast(List[Dict[str, Any]], self.data_splits)
         for split in self.data_splits:
@@ -226,7 +222,6 @@ class DataCard(ArtifactCard):
             logger.info("Data has already been loaded")
 
     def create_registry_record(self) -> RegistryRecord:
-
         """
         Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
@@ -426,7 +421,6 @@ class ModelCard(ArtifactCard):
         return version
 
     def _set_onnx_attributes(self, onnx_model: OnnxModelReturn) -> None:
-
         setattr(
             self,
             "onnx_model_data",
@@ -459,7 +453,6 @@ class ModelCard(ArtifactCard):
         self._set_onnx_attributes(onnx_model=onnx_model)
 
     def _get_sample_data_for_api(self) -> Dict[str, Any]:
-
         """
         Converts sample data to dictionary that can be used
         to validate an onnx model
@@ -491,7 +484,6 @@ class ModelCard(ArtifactCard):
         self,
         start_onnx_runtime: bool = True,
     ) -> OnnxModelPredictor:
-
         """
         Loads a model from serialized string
 
@@ -719,7 +711,6 @@ class RunCard(ArtifactCard):
         self.metrics = {**metrics, **self.metrics}
 
     def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
-
         """
         Log metrics to the existing RunCard metric dictionary
 

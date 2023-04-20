@@ -6,7 +6,6 @@ from opsml.registry.cards import ProjectCard
 
 
 def get_project_id_from_registry(project_registry: CardRegistry, info: ProjectInfo) -> str:
-
     projects = project_registry.registry.list_cards(name=info.name, team=info.team)
     if bool(projects):
         return projects[0]["project_id"]

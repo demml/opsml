@@ -137,7 +137,6 @@ class _RunManager:
                 raise ValueError("Invalid run_id")
 
     def _create_active_opsml_run(self):
-
         # Create opsml active run
         run_info = RunInfo(
             run_id=self.run_id,
@@ -214,7 +213,6 @@ class _RunManager:
         logger.info("starting run: %s", self.run_id)
 
     def _end_run(self) -> None:
-
         # set to None
         self.active_run.create_or_update_runcard()
         self.version = cast(str, self.active_run.runcard.version)
