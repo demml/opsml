@@ -8,7 +8,7 @@ from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.cards.types import CardType, PipelineCardArgs
+from opsml.registry.cards.types import CardInfo, CardType, PipelineCardArgs
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.model.types import (
@@ -41,6 +41,7 @@ class ArtifactCard(BaseModel):
     user_email: str
     version: Optional[str] = None
     uid: Optional[str] = None
+    info: Optional[CardInfo] = None
     storage_client: Optional[StorageClientType]
 
     class Config:
@@ -49,15 +50,23 @@ class ArtifactCard(BaseModel):
         smart_union = True
 
     @root_validator(pre=True)
-    def lowercase(cls, env_vars):  # pylint: disable=no-self-argument)
-        """Lowercase name and team"""
-        lowercase_vars = {}
-        for key, val in env_vars.items():
+    def validate(cls, env_vars):  # pylint: disable=no-self-argument)
+        """Validate base args and Lowercase name and team"""
+
+        card_info = env_vars.get("info")
+
+        for key in ["name", "team", "user_email", "version", "uid"]:
+            val = env_vars.get(key)
+
+            if card_info is not None:
+                val = val or getattr(card_info, key)
+
             if key in ["name", "team"]:
                 val = clean_string(val)
-            lowercase_vars[key] = val
 
-        return lowercase_vars
+            env_vars[key] = val
+
+        return env_vars
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from self attributes"""

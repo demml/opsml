@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 from typing import Optional
 
@@ -30,21 +31,23 @@ class ProjectInfo(BaseModel):
     )
     team: str = Field(
         ...,
-        description="The owning team",
+        description="Team to associate with project",
         min_length=1,
     )
-    user_email: Optional[str] = None
+    user_email: Optional[str] = Field(
+        None,
+        description="Email to associate with project",
+        min_length=1,
+    )
 
     run_id: Optional[str] = Field(
-        None,
+        os.environ.get(OpsmlUri.RUN_ID),
         description="An existing run_id to use. If None, a new run is created when the project is activated",
-        env=OpsmlUri.RUN_ID,
     )
 
     tracking_uri: str = Field(
         settings.opsml_tracking_uri,
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
-        env=OpsmlUri.TRACKING_URI,
     )
 
     @property

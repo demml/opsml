@@ -10,18 +10,28 @@ class StoragePath:
 
 @dataclass
 class CardInfo:
+
+    """
+    Class that holds info related to an Artifact Card
+
+    Args:
+        name:
+            Name of card
+        team:
+            Team name
+        user_email:
+            Email
+        uid:
+            Unique id of card
+        version:
+            Version of card
+    """
+
     name: Optional[str] = None
     team: Optional[str] = None
     user_email: Optional[str] = None
     uid: Optional[str] = None
     version: Optional[str] = None
-
-
-# class CardType(str, Enum):
-# DATA = "data"
-# MODEL = "model"
-# RUN = "run"
-# PIPELINE = "pipeline"
 
 
 class CardType(str, Enum):
