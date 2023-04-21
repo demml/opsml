@@ -204,7 +204,6 @@ model_registry.register_card(model_card)
 import os
 import numpy as np
 from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import RunCard
 
 info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
 with opsml_project.run() as run:
