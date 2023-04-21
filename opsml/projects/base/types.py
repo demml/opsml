@@ -13,6 +13,7 @@ class Tags(str, Enum):
     TEAM = "team"
     EMAIL = "user_email"
     VERSION = "version"
+    MLFLOW_VERSION = "mlflow.source.git.commit"  # hack for mlflow version
 
 
 class ProjectInfo(BaseModel):
