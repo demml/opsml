@@ -248,7 +248,7 @@ def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
 
     with patch("httpx.Client", callable_api):
 
-        from opsml.helpers.settings import settings
+        from opsml.registry.sql.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()

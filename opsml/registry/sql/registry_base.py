@@ -9,7 +9,6 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes
-from opsml.helpers.settings import settings
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.cards import (
@@ -21,6 +20,7 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml.registry.sql.records import LoadedRecordType, load_record
+from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import DBInitializer, RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
 

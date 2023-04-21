@@ -117,9 +117,12 @@ class StorageClient:
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
+
         filename = self.storage_spec.filename or uuid.uuid4().hex
+
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
+
         base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
 
         return base_path + f"/{filename}", filename
@@ -139,6 +142,7 @@ class StorageClient:
         self,
         file_suffix: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
+
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
@@ -232,18 +236,6 @@ class GCSFSStorageClient(StorageClient):
 
 
 class LocalStorageClient(StorageClient):
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        save_path, filename = super().create_save_path(
-            file_suffix=file_suffix,
-        )
-
-        self._make_path("/".join(save_path.split("/")[:-1]))
-
-        return save_path, filename
-
     def list_files(self, storage_uri: str) -> FilePath:
         if os.path.isdir(storage_uri):
             paths = []
