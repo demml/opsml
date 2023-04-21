@@ -241,12 +241,12 @@ class ActiveRun:
 
     @property
     def metrics(self) -> dict[str, float]:
-        raise NotImplementedError
+        raise self.runcard.metrics
 
     @property
     def params(self) -> dict[str, str]:
-        raise NotImplementedError
+        return self.runcard.params
 
     @property
     def tags(self) -> dict[str, str]:
-        raise NotImplementedError
+        raise self.runcard.tags
