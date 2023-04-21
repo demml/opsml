@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, validator
 
-from opsml.helpers.settings import settings
 from opsml.helpers.types import OpsmlUri
+from opsml.registry.sql.settings import settings
 
 
 class Tags(str, Enum):
