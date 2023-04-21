@@ -9,7 +9,7 @@ def test_semvar(db_registries):
 
     for i in range(0, 10):
         expected_version = f"1.{i+1}.0"
-        new_version = model_registry.registry._increment_version(version=f"1.{i}.0", version_type=VersionType.MINOR)
+        new_version = model_registry._registry._increment_version(version=f"1.{i}.0", version_type=VersionType.MINOR)
 
         assert expected_version == new_version
 

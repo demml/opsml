@@ -745,12 +745,7 @@ class RunCard(ArtifactCard):
         """Creates a registry record from the current RunCard"""
 
         exclude_attr = {"artifacts", "storage_client"}
-        # if not any([self.datacard_uids, self.pipelinecard_uid, bool(self.modelcard_uids)]):
-        #    raise ValueError(
-        #        """One of DataCard, ModelCard, or PipelineCard must be specified
-        #    """
-        #    )
-        #
+
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
     def add_artifact_uri(self, name: str, uri: str):

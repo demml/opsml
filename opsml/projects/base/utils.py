@@ -6,7 +6,11 @@ from opsml.registry.cards import ProjectCard
 
 
 def get_project_id_from_registry(project_registry: CardRegistry, info: ProjectInfo) -> str:
-    projects = project_registry.registry.list_cards(name=info.name, team=info.team)
+    projects = project_registry.list_cards(
+        name=info.name,
+        team=info.team,
+        as_dataframe=False,
+    )
     if bool(projects):
         return projects[0]["project_id"]
 
@@ -25,7 +29,7 @@ def verify_runcard_project_match(
     run_id: str,
     runcard_registry: CardRegistry,
 ):
-    run = runcard_registry.registry.list_cards(uid=run_id)[0]
+    run = runcard_registry.list_cards(uid=run_id, as_dataframe=False)[0]
 
     if run.get("project_id") != project_id:
         raise ValueError(

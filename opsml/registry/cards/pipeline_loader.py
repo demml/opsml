@@ -1,6 +1,8 @@
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import pandas as pd
+
 from opsml.registry.cards.cards import ArtifactCard, PipelineCard
 from opsml.registry.cards.types import (
     NON_PIPELINE_CARDS,
@@ -122,7 +124,9 @@ class DependencyParser:
     def _get_artifact_attr(
         self, card_uid: str, registry_type: str, attributes: List[str]
     ) -> Dict[str, Union[str, int, float]]:
-        attr = self.registries[registry_type].list_cards(uid=card_uid)[attributes][0:1].T.to_dict()[0]
+        registry = self.registries[registry_type]
+        cards: pd.DataFrame = registry.list_cards(uid=card_uid)
+        attr = cards[attributes][0:1].T.to_dict()[0]
         return attr
 
     def _get_artifact_names(self, card_record: Dict[str, Any], key_name: str, card_type: str) -> List[str]:
