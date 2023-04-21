@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h4 align="center">Trading cards for machine learning workflows</h4>
+<h4 align="center">Tooling for machine learning workflows</h4>
 
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
@@ -60,18 +60,16 @@
 
 ## What is it?
 
-`OpsML-Artifacts` is a library for tracking,  storing, versioning, and reproducing artifacts (aka Artifact Cards) across the ML-lifecycle. Think of it as trading cards for machine learning.
-
-<p align="center">
-  <img src="images/card-flow.png"  width="480" height="400" alt="py opsml logo"/>
-</p>
+`OpsML` is a tooling library that simplifies the machine learning project lifecycle.
 
 ## Features:
-  - **Simple Design**:  Standardized design for all card types and registries to make switching between and registering different cards easy.
+  - **Simple Design**: Standardized design that can easily be incorporated into existing workflows.
 
-  - **Automation**: Automatic type checking (the power of pydantic!) for card attributes. Automated processes depending on card type (Onnx conversion for model, api signature generation, data schema creation)
+  - **Cards**: Track, version, and store a variety of ML artifacts via cards (data, models, runs, pipelines) and a SQL-based card registry system. Think "trading cards for machine learning".
 
-  - **Short**: Easy to integrate into your existing workflows. You just need a card type and a registry to get started
+  - **Automation**: Automated processes including Onnx model conversion, api generation from Onnx model, data schema inference, code conversion and packaging for production.
+  
+  - **Pipelines**: Coming soon. Auto-pipeline creation
 
 ## Installation:
 Before installing, you will need to set up your Artifactory credentials.
@@ -92,10 +90,61 @@ url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
 default = true
 ```
 
-Next, add opsml-artifacts to your environment
+Next, add opsml to your environment
 ```bash
-poetry add opsml-artifacts
+poetry add opsml
 ```
+## Optional Dependencies
+`Opsml` is designed to work with a variety of 3rd-party integrations depending on your use-case.
+
+Types of extras that can be installed:
+
+- **postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
+  ```bash
+  poetry add opsml[postgres]
+  ```
+
+- **Server**: Installs necessary packages for setting up an `Fastapi`/`Mlflow` based `Opsml` server
+  ```bash
+  poetry add opsml[server]
+  ```
+
+- **Mlflow**: Installs Mlflow for client-side interaction with an `Opsml` server
+  ```bash
+  poetry add opsml[mlflow]
+  ```
+
+- **gcp_mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
+  ```bash
+  poetry add opsml[gcp_mysql]
+  ```
+
+- **gcp_postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
+  ```bash
+  poetry add opsml[gcp_postgres]
+  ```
+
+
+## Getting Started
+`Opsml` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `Opsml` server (details on how to set up an `Opsml` server are below (TODO))
+
+Running locally:
+ 
+- **OPSML_TRACKING_URL**: **Required** This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of server. If this variable is not set, it will default to a local `SQLite` connection.
+
+- **OPSML_TRACKING_URL**: **Optional** This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file systems and google cloud storage.
+If running `Opsml` as an all-in-one interfact, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
+
+
+
+
+
+Cards (aka Artifact Cards) are one of the primary interfaces for `Opsml`
+
+
+<p align="center">
+  <img src="images/card-flow.png"  width="480" height="400" alt="py opsml logo"/>
+</p>
 
 ## SQL DB Resources
 
