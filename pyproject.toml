@@ -30,8 +30,6 @@ tenacity = "^8.2.2"
 tf2onnx ="^1.13.0"
 zarr = ">2.12.0"
 
-
-
 # optional dependencies for server
 fastapi = {version="^0.92.0", optional = true}
 gunicorn = {version="^20.1.0", optional = true}
@@ -52,7 +50,6 @@ pymysql = {version="^1.0.2", optional = true}
 # optional dep for visualization
 #fn-graph = {version="^0.14.3", optional = true}
 graphviz = {version="^0.20.1", optional = true}
-
 
 [tool.poetry.extras]
 server = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
@@ -88,6 +85,7 @@ ruff = "^0.0.242"
 sqlalchemy-stubs = "^0.4"
 types-pymysql = "^1.0.19.1"
 types-requests = "^2.28.11.7"
+black = "22.3.0"
 flake8 = "^4.0.1"
 pylint = "^2.14.5"
 isort = "^5.10.1"
