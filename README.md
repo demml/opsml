@@ -99,7 +99,7 @@ poetry add opsml
 
 Types of extras that can be installed:
 
-- **postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
+- **Postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
   ```bash
   poetry add opsml[postgres]
   ```
@@ -114,12 +114,12 @@ Types of extras that can be installed:
   poetry add opsml[mlflow]
   ```
 
-- **gcp_mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add opsml[gcp_mysql]
   ```
 
-- **gcp_postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP-postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add opsml[gcp_postgres]
   ```
@@ -127,295 +127,120 @@ Types of extras that can be installed:
 
 ## Getting Started
 `Opsml` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `Opsml` server (details on how to set up an `Opsml` server are below (TODO))
-
-Running locally:
  
-- **OPSML_TRACKING_URL**: **Required** This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of server. If this variable is not set, it will default to a local `SQLite` connection.
+- **OPSML_TRACKING_URI**: **Required** This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
 
-- **OPSML_TRACKING_URL**: **Optional** This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file systems and google cloud storage.
+- **OPSML_STORAGE_URI**: **Optional** This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file systems and google cloud storage.
 If running `Opsml` as an all-in-one interfact, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
 
 
-
-
-
-Cards (aka Artifact Cards) are one of the primary interfaces for `Opsml`
-
-
-<p align="center">
-  <img src="images/card-flow.png"  width="480" height="400" alt="py opsml logo"/>
-</p>
-
-## SQL DB Resources
-
-`OpsML-Artifacts` currently works out of the box with a local SQLite database or GCP CloudSQL. If you would like to use GCP resources you will need to configure you GCP credentials in 1 or 2 ways.
-
-1. Set `GOOGLE_ACCOUNT_JSON_BASE64` as an env variable. This key can be found in our slack channel.
-
-```bash
-export GOOGLE_ACCOUNT_JSON_BASE64='our shared key'
-```
-
-2. Install the [google cloud sdk](https://cloud.google.com/sdk/docs/install) and make sure you are added to our core gcp project (tbd)
-
-
-## Connecting to the ArtifactCard registries
-When connecting to the ArtifactCard registries you will need to supply either a connection client or pass a connection type (string). 
-
-### Local Connection
-Run the following to create a local connection
-
-```python
-from opsml.registry import LocalSQLConnection
-
-local_conn = LocalSQLConnection()
-```
-
-### GCP Cloud SQL
-There are a few ways to create a Cloud SQL connection
-
-```python
-from opsml.registry import CloudSQLConnection
-
-cloud_sql = CloudSQLConnection(
-    gcp_project="your_gcp_project",
-    gcs_bucket="your_gcs_bucket",
-    gcp_region="your_gcp_region",
-    db_instance_name="your_db_instance_name",
-    db_name="your_db_name",
-    db_username="your_username",
-    db_password="your_password",
-    db_type="mysql"
-    )
-```
-
-In the example above, we created a cloud sql connection by manually inputing the required args.
-
-If you prefer not to do this, you can also set these required args as env variables using the "OPSML" prefix (e.g. `OPSML_GCP_PROJECT`)
-
-It's also possible to use GCP Secret Manager to set and call the required args (same naming convention as with env vars). Make sure your user credentials or the service account credentials have access to read these secrets.
-
-```python
-cloud_sql = CloudSQLConnection(load_from_secrets=True)
-```
-
-You will see how to use these connections in the examples below
-
-## Create a Card
-
-Think of ArtifactCards as trading cards that you can link together in a set or deck. Each card can exist independently and provides descriptive information related to the card type.
-
-<p align="center">
-  <img src="images/cards.png"  width="345" height="222"/>
-</p>
-
-There are 4 card types in `Opsml-Artifacts`.
+## Cards
+Cards (aka Artifact Cards) are one of the primary interfaces for working with `Opsml`.
 
 Card Types:
 - `DataCard`: Card used to store data-related information (data, dependent variables, feature descriptions, split logic, etc.)
-- `ModelCards`: Card used to store trained model and model information
-- `ExperimentCard`: Stores artifact and metric info related to Data, Model, or Pipeline cards.
-- `PipelineCard`: Stores information related to training pipeline and all other cards created within the pipeline (Data, Experiment, Model)
+- `ModelCard`: Card used to store trained model and model information
+- `RunCard`: Stores artifact and metric info related to Data, Model, or Pipeline cards.
+- `PipelineCard`: Stores information related to a training pipeline and all other cards created within the pipeline (Data, Run, Model)
+- `ProjectCard`: Stores information related to unique projects. You will most likely never interact with this card directly.
 
-Quit the yapping and show me an example!
 
-## DataCard
-The following example shows how to create a DataCard. For more information on what you can do with DataCards, refer to additional examples in the example dir.
-
-```python
-from opsml.registry import SnowflakeQueryRunner, DataCard, CardRegistry, LocalSQLConnection
-
-query_runner = SnowflakeQueryRunner(on_vpn=True) #query runner is a temporary wrapper for pyshipt sql (needed for network issues in vertex, see opsml-pipelines docs)
-
-dataframe = query_runner.query_to_dataframe(sql_file="data.sql") #executes sql file or raw sql. data.sql is in examples dir
-
-# Subset features
-features = [
-    "NBR_ADDRESSES",
-    "NBR_ORDERS",
-    "NBR_RX",
-    "NBR_APT",
-    "METRO_X",
-    "METRO_Y",
-    "METRO_Z",
-    "APT_FLG",
-    "DROP_OFF_TIME",
-    "EVAL_FLG",
-]
-DEPENDENT_VAR = "DROP_OFF_TIME"
-
-# Define DataCard attributes (see examples dir for more detailed information)
-DATA_NAME = "tarp_drop_off"
-TEAM = "SPMS"
-USER_EMAIL = "steven.forrester@shipt.com"
-DATA_SPLITS = [
-    {"label": "train", "column": "EVAL_FLG", "column_value": 0},
-    {"label": "test", "column": "EVAL_FLG", "column_value": 1},
-]
-
-# Create DataCard
-data_card = DataCard(
-    data=dataframe[features],
-    name=DATA_NAME,
-    team=TEAM,
-    user_email=USER_EMAIL,
-    data_splits=DATA_SPLITS,
-    dependent_vars=[DEPENDENT_VAR],
-)
-
-#register card
-local_conn = LocalSQLConnection()
-data_registry = CardRegistry(registry_name="data", connection_client=local_conn) # CardRegistry accepts "data", "model", "pipeline" and "experiment"
-data_registry.register_card(card=data_card)
-```
-
-#### Output
-```bash
-{"message": "DATA_REGISTRY: tarp_drop_off registered as version 2", "timestamp": "2023-02-09T00:57:22.131787Z", "app_env": "development", "level": "INFO"}
-```
-
-### Searching for and Loading Existing DataCards
-```python
-from opsml.registry import CardRegistry, LocalSQLConnection
-
-local_conn = LocalSQLConnection()
-data_registry = CardRegistry(registry_name="data", connection_client=local_conn)
-tarp_list = data_registry.list_cards(team="SPMS", name="tarp_drop_off")
-
-print(tarp_list.loc[:, ~tarp_list.columns.isin(["feature_map", "data_splits", "drift_uri"])].to_markdown()) # Filter some of the columns for readability
-```
-#### Output
-|    | uid                              | date       |     timestamp | app_env     | name          | team   |   version | user_email                 | data_uri                                                                                                   | feature_descriptions   | data_type   | additional_info   | dependent_vars    |
-|---:|:---------------------------------|:-----------|--------------:|:------------|:--------------|:-------|----------:|:---------------------------|:-----------------------------------------------------------------------------------------------------------|:-----------------------|:------------|:------------------|:------------------|
-|  0 | e18e5bd3fbb145a182d0fe61e24b1d66 | 2023-02-09 | 1675904151384 | development | tarp_drop_off | SPMS   |         2 | steven.forrester@shipt.com | /home/steven.forrester/DATA_REGISTRY/SPMS/tarp_drop_off/version-2/6de7a703618e4718a39f301b50dda8dc.parquet |                        | DataFrame   | {}                | ['DROP_OFF_TIME'] |
-|  1 | 66f62d5cb36b43939f45d3dc6ed1244a | 2023-02-09 | 1675904151384 | development | tarp_drop_off | SPMS   |         1 | steven.forrester@shipt.com | /home//DATA_REGISTRY/SPMS/tarp_drop_off/version-1/3bb215cfb7634d95992d6f6a1a6ecc26.parquet |                        | DataFrame   | {}                | ['DROP_OFF_TIME'] |
-
-```python
-
-data_card = data_registry.load_card(uid="e18e5bd3fbb145a182d0fe61e24b1d66") 
-data_card.load_data() # data is not automatically loaded with the card (prevents loading issues with big data)
-# load_card can take a few arguments. Be sure to check to docstring
-print(loaded_card.data.head().to_markdown())
-```
-
-#### Output
-|    |   NBR_ADDRESSES |   NBR_ORDERS |   NBR_RX |   NBR_APT |   METRO_X |   METRO_Y |   METRO_Z |   APT_FLG |   DROP_OFF_TIME |   EVAL_FLG |
-|---:|----------------:|-------------:|---------:|----------:|----------:|----------:|----------:|----------:|----------------:|-----------:|
-|  0 |               1 |            1 |        0 |         0 |   824.547 |  -5135.84 |   3678.71 |         0 |         4.39407 |          0 |
-|  1 |               2 |            2 |        0 |         0 | -2498.36  |  -3835.84 |   4431.04 |         0 |         9.75429 |          0 |
-|  2 |               6 |            6 |        0 |         1 |  -676.719 |  -5314.67 |   3447.6  |         1 |        20.2536  |          0 |
-|  3 |               1 |            2 |        0 |         0 | -2499.95  |  -4649.47 |   3566.83 |         0 |         8.03023 |          0 |
-|  4 |               2 |            2 |        0 |         2 | -2476.13  |  -4684.47 |   3537.54 |         1 |        11.7914  |          0 |
-
-## ModelCard
-The following example shows how to create a ModelCard. For more information on what you can do with ModelCards, refer to additional examples in the example dir.
-
-- We will use the DataCard from the previous example to train a model and create a ModelCard
-
-```python
-from opsml.registry import ModelCard
-from lightgbm import LGBMRegressor
-
-model_registry = CardRegistry(registry_name="model", connection_client=local_conn) #load the model registry
-
-data_splits = data_card.split_data() # get the data splits defined by split logic (data_card.data_splits)
-
-# Prepare train data
-data_splits.train.pop("EVAL_FLG") # pop off eval flg
-y_train = data_splits.train.pop("DROP_OFF_TIME") # get train target
-
-# Prepare test data
-data_splits.test.pop("EVAL_FLG") # pop off eval flg
-y_test = data_splits.test.pop("DROP_OFF_TIME") # get test target
-
-# fit model
-lgb_model = LGBMRegressor()
-lgb_model.fit(data_splits.train, y_train)
-
-model_card = ModelCard(
-    trained_model=lgb_model,
-    sample_input_data=data_splits.train[:10],
-    name="tarp_lgb",
-    team=TEAM, # defined above
-    user_email=USER_EMAIL, # defined above
-    data_card_uid=data_card.uid # this is required if you are planning on registering the model
-)
-
-model_registry = CardRegistry(registry_name="model", connection_client=local_conn)
-model_registry.register_card(card=model_card)
-```
-#### Output
-
-```bash
-{"level": "INFO", "message": "Registering lightgbm onnx converter", "timestamp": "2023-02-09T01:04:18.498558Z", "app_env": "development", "host": null, "pid": 742575}
-{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-02-09T01:04:18.808954Z", "app_env": "development", "host": null, "pid": 742575}
-{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-02-09T01:04:18.841828Z", "app_env": "development", "host": null, "pid": 742575}
-{"message": "MODEL_REGISTRY: tarp_lgb registered as version 1", "timestamp": "2023-02-09T01:04:18.874386Z", "app_env": "development", "level": "INFO"}
-```
-
-ModelCardCreator returns a ModelCard containing your model serialized into Onnx format
-
-## ModelCard Predictor
-ModelCards create serialized onnx model definitions from the provided model. The onnx model implementation can be accessed through `your_model_card.onnx_model()`. Onnx models are also created when registering a model card.
-
-```python
-onnx_model = model_card.onnx_model()
-
-# Checkout the automated api sig (inferred from training data sample)
-onnx_model.input_sig.schema()
-```
-
-```text
-{'title': 'Features',
- 'type': 'object',
- 'properties': {'NBR_ADDRESSES': {'title': 'Nbr Addresses', 'type': 'integer'},
-  'NBR_ORDERS': {'title': 'Nbr Orders', 'type': 'integer'},
-  'NBR_RX': {'title': 'Nbr Rx', 'type': 'integer'},
-  'NBR_APT': {'title': 'Nbr Apt', 'type': 'integer'},
-  'METRO_X': {'title': 'Metro X', 'type': 'number'},
-  'METRO_Y': {'title': 'Metro Y', 'type': 'number'},
-  'METRO_Z': {'title': 'Metro Z', 'type': 'number'},
-  'APT_FLG': {'title': 'Apt Flg', 'type': 'integer'}},
- 'required': ['NBR_ADDRESSES',
-  'NBR_ORDERS',
-  'NBR_RX',
-  'NBR_APT',
-  'METRO_X',
-  'METRO_Y',
-  'METRO_Z',
-  'APT_FLG']}
-```
-
-```python
-# FastAPI models (like our production ML apis) expect a dictionary as input
-# Our input data was a pandas schema, so lets convert that
-# Numpy arrays are also supported 
-record = data_splits.test[0:1].to_dict(orient='records')[0]
-
-# if testing a model that was trained on a numpy array, the model will expect a dictionary with a single list
-# record = {"data": list(np.ravel(data[:1]))}
-
-# test the onnx model 
-onnx_pred = float(np.ravel(onnx_model.predict(record))[0])
-
-# Compare to original model
-orig_pred = float(onnx_model.predict_with_model(model_card.trained_model, record)[0])
-
-print(f"Onnx: {round(onnx_pred,4)}", f"Lightgbm: {round(orig_pred,4)}")
-```
-
-```text
-Onnx: 7.1003 Lightgbm: 7.1003
-```
-
-## Benchmarks
- - The following shows the performance imporvements of using a serialized onnx model vs its python equivalent (time for 1000 single predictions)
- - All times were normalized to the python model time
-
-<p align="left">
-  <img src="images/onnx-time-comparison.png"  width="398" height="237"/>
+<p align="center">
+  <img src="images/card-flow.png"  width="457" height="332" alt="py opsml logo"/>
 </p>
 
+
+## Example (Creating Cards)
+
+```python
+
+import os
+import numpy as np
+from opsml.registry import DataCard, ModelCard, CardRegistry
+
+# create some fake data
+X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+
+col_names = []
+for i in range(0, X_train.shape[1]):
+    col_names.append(f"col_{i}")
+
+X = pd.DataFrame(X_train, columns=col_names)
+y = np.random.randint(1, 10, size=(1000, 1))
+
+# Create a DataCard
+# All of the following attributes are required
+data_card = DataCard(
+    data=X,
+    name="linear-reg-data",
+    team="opsml",
+    user_email="user@email.com",
+  )
+
+# Register a card
+# During registration a card is assigned a unique id and SemVer
+data_registry = CardRegistry(registry_type="data")
+data_registry.register_card(data_card)
+print(data_card.version)
+#> 1.0.0
+
+# Create a ModelCard (and link it to data)
+model_card = ModelCard(
+    trained_model=reg,
+    sample_input_data=X[0:1],
+    name="linear_reg",
+    team="mlops",
+    user_email="user@email.com",
+    datacard_uid=data_card.uid, # a ModelCard cannot be registered without linking it to a registered DataCard
+    )
+model_registry = CardRegistry(registry_type="model")
+model_registry.register_card(model_card)   
+```
+
+## Creating A Run
+
+```python
+
+import os
+import numpy as np
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry import RunCard
+
+info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+with opsml_project.run() as run:
+
+  # create some fake data
+  X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+
+  col_names = []
+  for i in range(0, X_train.shape[1]):
+      col_names.append(f"col_{i}")
+
+  X = pd.DataFrame(X_train, columns=col_names)
+  y = np.random.randint(1, 10, size=(1000, 1))
+
+  # Create metrics / params / cards
+  run.log_metric(key="m1", value=1.1)
+  run.log_param(key="m1", value="apple")
+
+  data_card = DataCard(
+    data=X,
+    name="linear-reg-data",
+    team="opsml",
+    user_email="user@email.com",
+  )
+  run.register_card(card=data_card, version_type="major") # you can specify "major", "minor", "patch"
+
+  model_card = ModelCard(
+    trained_model=reg,
+    sample_input_data=X[0:1],
+    name="linear_reg",
+    team="mlops",
+    user_email="user@email.com",
+    datacard_uid=data_card.uid,
+    )
+  run.register_card(card=model_card)
+```
 
 ## Contributing
 - If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `to_dos` directory readme and get started :smiley:
