@@ -50,7 +50,7 @@
   <a href="#what-is-it">What is it?</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
-  <a href="#create-a-card">Create a Card</a> •
+  <a href="#cards">Cards</a> •
   <a href="#datacard">DataCard</a> •
   <a href="#modelcard">ModelCard</a> •
   <a href="#modelcard-predictor">ModelCard Predictor</a> •
@@ -150,7 +150,8 @@ Card Types:
 </p>
 
 
-## Example (Creating Cards)
+### Creating Cards
+All Cards within `Opsml` follow the same design with a few specific required arguments for each card type. The following example shows how to create a DataCard and a ModelCard.
 
 ```python
 
@@ -169,10 +170,10 @@ X = pd.DataFrame(X_train, columns=col_names)
 y = np.random.randint(1, 10, size=(1000, 1))
 
 # Create a DataCard
-# All of the following attributes are required
+# All of the following args are required
 data_card = DataCard(
     data=X,
-    name="linear-reg-data",
+    name="linear-reg",
     team="opsml",
     user_email="user@email.com",
   )
@@ -188,58 +189,129 @@ print(data_card.version)
 model_card = ModelCard(
     trained_model=reg,
     sample_input_data=X[0:1],
-    name="linear_reg",
+    name="linear-reg",
     team="mlops",
     user_email="user@email.com",
     datacard_uid=data_card.uid, # a ModelCard cannot be registered without linking it to a registered DataCard
     )
 model_registry = CardRegistry(registry_type="model")
 model_registry.register_card(model_card)   
+
+# Code is complete and will run as-is
 ```
 
-## Creating A Run
+### Creating A Run
+Runs are unqiue context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `RunCard`.
+
+The following example shows how to create a simple run as well as use `CardInfo` to store helper info
 
 ```python
 
-import os
 import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
 from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry import CardInfo, DataCard, ModelCard
 
-info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
-with opsml_project.run() as run:
+card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
-  # create some fake data
-  X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+# to use runs, you must create and use a project
+project_info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+project = OpsmlProject(info=project_info)
 
-  col_names = []
-  for i in range(0, X_train.shape[1]):
-      col_names.append(f"col_{i}")
+# start the run
+with project.run(run_name="optional_run_name") as run:
 
-  X = pd.DataFrame(X_train, columns=col_names)
-  y = np.random.randint(1, 10, size=(1000, 1))
+    # create some fake data
+    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
 
-  # Create metrics / params / cards
-  run.log_metric(key="m1", value=1.1)
-  run.log_param(key="m1", value="apple")
+    col_names = []
+    for i in range(0, X_train.shape[1]):
+        col_names.append(f"col_{i}")
 
-  data_card = DataCard(
-    data=X,
-    name="linear-reg-data",
-    team="opsml",
-    user_email="user@email.com",
-  )
-  run.register_card(card=data_card, version_type="major") # you can specify "major", "minor", "patch"
+    X = pd.DataFrame(X_train, columns=col_names)
+    y = np.random.randint(1, 10, size=(1000, 1))
 
-  model_card = ModelCard(
-    trained_model=reg,
-    sample_input_data=X[0:1],
-    name="linear_reg",
-    team="mlops",
-    user_email="user@email.com",
-    datacard_uid=data_card.uid,
+    # train model
+    reg = LinearRegression().fit(X.to_numpy(), y)
+
+    # Create metrics / params / cards
+    run.log_metric(key="m1", value=1.1)
+    run.log_param(key="m1", value="apple")
+
+    # lets use card_info instead of writing required args multiple times
+    data_card = DataCard(data=X, info=card_info)
+    run.register_card(card=data_card, version_type="major")  # you can specify "major", "minor", "patch"
+
+    model_card = ModelCard(
+        trained_model=reg,
+        sample_input_data=X[0:1],
+        datacard_uid=data_card.uid,
+        info=card_info,
     )
-  run.register_card(card=model_card)
+    run.register_card(card=model_card)
+
+print(run.params)
+#> {'m1': 'apple'}
+
+run_registry = CardRegistry("run")
+print(run_registry.list_cards(uid=run.run_id, as_dataframe=False)) # can return a dataframe or list of dictionaries
+"""
+[
+    {
+        "app_env": "development",
+        "uid": "bb6e93f3e2f74181a912fd26cade5457",
+        "team": "opsml",
+        "user_email": "user@email.com",
+        "modelcard_uids": ["cebb61885204433a8f7e701dca7dcfec"],
+        "project_id": "opsml:opsml-dev",
+        "metrics": {"m1": 1.1},
+        "tags": {
+            "model-linear-reg": "1.3.0",
+            "data-linear-reg": "4.0.0",
+            "user_email": "user@email.com",
+            "team": "opsml",
+            "name": "opsml-dev",
+        },
+        "timestamp": 1682105422060914,
+        "name": "opsml-dev",
+        "date": "2023-04-21",
+        "version": "1.3.0",
+        "datacard_uids": ["748bfcbf553742f5814e3eeea166e38f"],
+        "pipelinecard_uid": None,
+        "artifact_uris": {},
+        "params": {"m1": "apple"},
+    }
+]
+"""
+# Code is complete and will run as-is
 ```
+
+### Creating an MlFlow Run
+The `Opsml` server is configured to work with Mlflow out of the box as a UI and creating an Mlflow `Run` is the same as the previous example with the exception of specific classes that are used.
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+from opsml.projects import ProjectInfo, MlflowProject  # use MlflowProject class
+from opsml.registry import CardInfo, DataCard, ModelCard, CardRegistry
+
+card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
+
+# to use runs, you must create and use a project
+project_info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+project = MlflowProject(info=project_info)
+
+# start the run
+with project.run(run_name="optional_run_name") as run:
+
+    """Code is the same as previous example"""
+```
+
+
 
 ## Contributing
 - If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `to_dos` directory readme and get started :smiley:
