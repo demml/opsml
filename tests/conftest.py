@@ -302,7 +302,7 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistr
 
 @pytest.fixture(scope="function")
 def api_storage_client(api_registries):
-    return api_registries.data.registry.storage_client
+    return api_registries.data._registry.storage_client
 
 
 @pytest.fixture(scope="function")
@@ -394,7 +394,7 @@ def db_registries():
     run_registry = CardRegistry(registry_name="run")
     pipeline_registry = CardRegistry(registry_name="pipeline")
 
-    engine = model_registry.registry._engine
+    engine = model_registry._registry._engine
 
     initializer = DBInitializer(engine=engine)
     # tables are created when settings are called.

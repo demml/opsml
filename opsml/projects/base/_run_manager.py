@@ -1,4 +1,4 @@
-# pylint: disable=invalid-envvar-value
+# pylint: disable=invalid-envvar-value,disable=protected-access
 import uuid
 from typing import Optional, cast
 
@@ -112,7 +112,7 @@ class _RunManager:
     def _card_exists(self, run_id: str) -> bool:
         """Verifies the run exists for the given project."""
 
-        card = self.registries.run.registry.list_cards(uid=run_id)
+        card = self.registries.run._registry.list_cards(uid=run_id)
 
         if len(card) > 0:
             if not bool(card[0]):
@@ -126,7 +126,7 @@ class _RunManager:
     def _verify_run_id(self, run_id: str) -> None:
         """Verifies the run exists for the given project."""
 
-        card = self.registries.run.registry.list_cards(uid=run_id)
+        card = self.registries.run._registry.list_cards(uid=run_id)
 
         if len(card) > 0:
             if not bool(card[0]):
