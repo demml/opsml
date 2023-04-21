@@ -130,7 +130,8 @@ class _MlflowRunManager(_RunManager):
 
     def _end_run(self) -> None:
         super()._end_run()
-        self.mlflow_client.set_tag(run_id=self.run_id, key=Tags.VERSION, value=self.version)
+        self.mlflow_client.set_tag(run_id=self.run_id, key=Tags.MLFLOW_VERSION, value=self.version)
+
         self.mlflow_client.set_terminated(run_id=self.run_id)
 
         # set to None
