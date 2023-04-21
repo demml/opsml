@@ -74,15 +74,13 @@ class ArtifactStorage:
     def _get_correct_storage_uri(self, storage_uri: str, tmp_uri: str) -> str:
         """Sets the correct storage uri based on the backend storage client"""
 
-        # data artifacts need special handling since they use file systems directly
-        if self.is_data:
-            if self.is_storage_a_proxy:
-                return tmp_uri  # need to write to temp first
-            return storage_uri
-
-        # for all other artifacts
         if self.is_storage_local:
             return storage_uri
+
+        # data artifacts need special handling since they use file systems directly
+        if self.is_data and not self.is_storage_a_proxy:
+            return storage_uri
+
         return tmp_uri
 
     def _upload_artifact(
@@ -128,38 +126,15 @@ class ArtifactStorage:
         raise NotImplementedError
 
     def save_artifact(self, artifact: Any) -> StoragePath:
+
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, tmp_uri = temp_output
-
             storage_uri = self._save_artifact(
                 artifact=artifact,
                 storage_uri=storage_uri,
                 tmp_uri=tmp_uri,
             )
             return StoragePath(uri=storage_uri)
-
-    # ef _download_artifact(
-    #   self,
-    #   files: FilePath,
-    #   file_path: FilePath,
-    #   tmp_path: IO,
-    # -> Any:
-    #   """Downloads an artifact from a file_path
-
-    #   Args:
-    #       file_path (FilePath): List of file paths or single file path
-    #       tmp_path (IO): Temporary file to write to if downloading prior to loading
-    #   """
-    #   if self.is_storage_local:
-    #       return file_path
-
-    #   loadable_path = self.storage_client.download(
-    #       rpath=file_path,
-    #       lpath=tmp_path.name,
-    #       **{"files": files},
-    #   )
-
-    #   return loadable_path or tmp_path
 
     def _download_artifacts(
         self,
