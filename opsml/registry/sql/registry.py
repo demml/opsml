@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
@@ -180,8 +181,8 @@ class CardRegistry:
             CardRegistry(registry_name="data", connection_type="gcp")
         """
 
-        self.registry = self._set_registry(registry_name=registry_name)
-        self.table_name = self.registry._table.__tablename__
+        self._registry = self._set_registry(registry_name=registry_name)
+        self.table_name = self._registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
@@ -210,7 +211,8 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> pd.DataFrame:
+        as_dataframe: bool = True,
+    ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
         Args:
@@ -234,8 +236,11 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        card_list = self.registry.list_cards(uid=uid, name=name, team=team, version=version)
-        return pd.DataFrame(card_list)
+        card_list = self._registry.list_cards(uid=uid, name=name, team=team, version=version)
+
+        if as_dataframe:
+            return pd.DataFrame(card_list)
+        return card_list
 
     def load_card(
         self,
@@ -262,7 +267,7 @@ class CardRegistry:
             ArtifactCard
         """
 
-        return self.registry.load_card(uid=uid, name=name, team=team, version=version)
+        return self._registry.load_card(uid=uid, name=name, team=team, version=version)
 
     def register_card(
         self,
@@ -287,7 +292,7 @@ class CardRegistry:
                 specify a directory.
         """
 
-        self.registry.register_card(
+        self._registry.register_card(
             card=card,
             version_type=version_type,
             save_path=save_path,
@@ -305,12 +310,12 @@ class CardRegistry:
                 Card to register
         """
 
-        if not hasattr(self.registry, "update_card"):
+        if not hasattr(self._registry, "update_card"):
             raise ValueError(f"""{card.__class__.__name__} has no 'update_card' attribute""")
 
-        self.registry = cast(DataCardRegistry, self.registry)
+        self._registry = cast(DataCardRegistry, self._registry)
         card = cast(DataCard, card)
-        return self.registry.update_card(card=card)
+        return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
         """
@@ -325,7 +330,7 @@ class CardRegistry:
         Returns:
             Dictionary of column, values pairs
         """
-        results = self.registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
+        results = self._registry.list_cards(uid=uid)[0]
         return {col: results[col] for col in columns}
 
 
@@ -339,8 +344,6 @@ class CardRegistries:
         self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
 
     def set_storage_client(self, storage_client: StorageClientType):
-        self.data.registry.storage_client = storage_client
-        self.model.registry.storage_client = storage_client
-        self.run.registry.storage_client = storage_client
-        self.project.registry.storage_client = storage_client
-        self.pipeline.registry.storage_client = storage_client
+        for attr in ["data", "model", "run", "project", "pipeline"]:
+            registry: CardRegistry = getattr(self, attr)
+            registry._registry.storage_client = storage_client
