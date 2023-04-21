@@ -1,5 +1,6 @@
+# pylint: disable=protected-access
 import os
-from typing import Union
+from typing import Any, Dict, List, Union
 
 import streaming_form_data
 from fastapi import APIRouter, Body, HTTPException, Request, status
@@ -19,7 +20,6 @@ from opsml.app.routes.models import (
     ListRequest,
     ListResponse,
     StorageSettingsResponse,
-    StorageUri,
     UidExistsRequest,
     UidExistsResponse,
     UpdateRecordRequest,
@@ -84,7 +84,7 @@ def check_uid(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    if registry.registry.check_uid(
+    if registry._registry.check_uid(
         uid=payload.uid,
         table_to_check=payload.table_name,
     ):
@@ -101,7 +101,7 @@ def set_version(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    version = registry.registry.set_version(
+    version = registry._registry.set_version(
         name=payload.name,
         team=payload.team,
         version_type=payload.version_type,
@@ -120,11 +120,12 @@ def list_cards(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    records = registry.registry.list_cards(
+    records = registry.list_cards(
         uid=payload.uid,
         name=payload.name,
         team=payload.team,
         version=payload.version,
+        as_dataframe=False,
     )
 
     if config.is_proxy:
@@ -149,7 +150,7 @@ def add_record(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    registry.registry.add_and_commit(record=payload.record)
+    registry._registry.add_and_commit(record=payload.record)
     return AddRecordResponse(registered=True)
 
 
@@ -162,7 +163,7 @@ def update_record(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    registry.registry.update_record(record=payload.record)
+    registry._registry.update_record(record=payload.record)
 
     return UpdateRecordResponse(updated=True)
 
@@ -189,11 +190,12 @@ def download_model(request: Request, payload: DownloadModelRequest) -> Streaming
     registry: CardRegistry = getattr(request.app.state.registries, "model")
     storage_client = request.app.state.storage_client
 
-    cards = registry.registry.list_cards(
+    cards: List[Dict[str, Any]] = registry.list_cards(
         name=payload.name,
         team=payload.team,
         version=payload.version,
         uid=payload.uid,
+        as_dataframe=False,
     )
 
     if len(cards) > 1:
@@ -227,12 +229,9 @@ def download_model(request: Request, payload: DownloadModelRequest) -> Streaming
         ) from error
 
 
-# flush this out next pr (need upload and download path)
+# upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload")
-async def upload_file(
-    request: Request,
-    response_model=StorageUri,
-):
+async def upload_file(request: Request):
     """Uploads files in chunks to storage destination"""
 
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
@@ -294,9 +293,9 @@ async def upload_file(
             detail="File is missing",
         )
 
-    return StorageUri(
-        storage_uri=os.path.join(write_path, filename),
-    )
+    return {
+        "storage_uri": os.path.join(write_path, filename),
+    }
 
 
 @router.post("/download_file", name="download_file")
