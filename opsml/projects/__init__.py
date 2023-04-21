@@ -7,14 +7,18 @@ from opsml.projects.base.types import ProjectInfo
 importlib = __import__("importlib")
 
 _optional_deps = ["mlflow"]
+has_mlflow = False
 
 for dep in _optional_deps:
     try:
         importlib.import_module(dep)
         if dep == "mlflow":
-            from opsml.projects import mlflow
+            has_mlflow = True
     except ImportError as error:
-        raise error
+        pass
+
+if has_mlflow:
+    from opsml.projects.mlflow import MlflowProject
 
 
 def get_project(info: ProjectInfo) -> OpsmlProject:
