@@ -1,4 +1,4 @@
-from opsml.helpers.settings import DefaultConnector
+from opsml.registry.sql.settings import DefaultConnector
 from opsml.registry.sql.connectors.base import CloudSQLConnection
 
 

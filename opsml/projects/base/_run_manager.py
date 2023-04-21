@@ -3,7 +3,6 @@ import uuid
 from typing import Optional, cast
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.settings import settings
 from opsml.projects.base._active_run import ActiveRun, RunInfo
 from opsml.projects.base.types import ProjectInfo, Tags
 from opsml.projects.base.utils import (
@@ -11,6 +10,7 @@ from opsml.projects.base.utils import (
     verify_runcard_project_match,
 )
 from opsml.registry import CardRegistries, RunCard
+from opsml.registry.sql.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
 
