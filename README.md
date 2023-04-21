@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="images/opsml-artifacts-logo-cropped.png"  width="409" height="123" alt="py opsml logo"/>
+  <img src="images/opsml-logo.png"  width="400" height="400" alt="opsml logo"/>
   <br>
 </h1>
 
