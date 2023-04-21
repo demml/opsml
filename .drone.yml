@@ -63,6 +63,22 @@ steps:
       - py310
       - quality-checks
 
+  - name: publish-release-candidate
+    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      - make prep.pre.patch
+      - make publish
+    depends_on:
+      - py39
+      - py310
+      - quality-checks
+      - code-analysis
+
 ---
 name: publish-release
 kind: pipeline
