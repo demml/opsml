@@ -236,6 +236,19 @@ class GCSFSStorageClient(StorageClient):
 
 
 class LocalStorageClient(StorageClient):
+    def create_save_path(
+        self,
+        file_suffix: Optional[str] = None,
+    ) -> Tuple[str, str]:
+
+        save_path, filename = super().create_save_path(
+            file_suffix=file_suffix,
+        )
+
+        self._make_path("/".join(save_path.split("/")[:-1]))
+
+        return save_path, filename
+
     def list_files(self, storage_uri: str) -> FilePath:
         if os.path.isdir(storage_uri):
             paths = []
@@ -266,6 +279,22 @@ class ApiStorageClient(LocalStorageClient):
 
         storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
+
+        super().create_save_path
+
+    def create_save_path(
+        self,
+        file_suffix: Optional[str] = None,
+    ) -> Tuple[str, str]:
+
+        filename = self.storage_spec.filename or uuid.uuid4().hex
+
+        if file_suffix is not None:
+            filename = f"{filename}.{str(file_suffix)}"
+
+        base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
+
+        return base_path + f"/{filename}", filename
 
     def list_files(self, storage_uri: str) -> FilePath:
         response = self.api_client.post_request(
