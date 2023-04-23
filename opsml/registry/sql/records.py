@@ -25,7 +25,7 @@ class DataRegistryRecord(BaseModel):
     additional_info: Optional[Dict[str, Union[float, int, str]]]
     dependent_vars: Optional[List[Union[int, str]]]
     timestamp: int = int(round(time.time() * 1_000_000))
-    runcard_uids: Optional[List[str]]
+    runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
 
     class Config:
@@ -52,7 +52,7 @@ class ModelRegistryRecord(BaseModel):
     sample_data_type: str
     model_type: str
     timestamp: int = int(round(time.time() * 1_000_000))
-    runcard_uids: Optional[List[str]]
+    runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
 
 
@@ -131,7 +131,7 @@ class LoadedDataRecord(LoadRecord):
     feature_descriptions: Optional[Dict[str, str]]
     dependent_vars: Optional[List[Union[int, str]]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
-    runcard_uids: Optional[List[str]]
+    runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)
@@ -174,7 +174,7 @@ class LoadedModelRecord(LoadRecord):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
-    runcard_uids: Optional[List[str]]
+    runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)

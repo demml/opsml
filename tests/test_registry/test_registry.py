@@ -420,6 +420,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
     )
     exp_card.log_metric("test_metric", 10)
     experiment_registry.register_card(card=exp_card)
+
     #### PipelineCard
     pipeline_card = PipelineCard(
         name="test_pipeline",
