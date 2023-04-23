@@ -1,8 +1,15 @@
 # pylint: disable=invalid-envvar-value
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, CardRegistry, RunCard, VersionType, DataCard, ModelCard
+from opsml.registry import (
+    CardRegistries,
+    CardRegistry,
+    DataCard,
+    ModelCard,
+    RunCard,
+    VersionType,
+)
 from opsml.registry.cards.cards import ArtifactCard
 from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
@@ -126,8 +133,8 @@ class ActiveRun:
         self._verify_active()
 
         # add runuid to card
-        if isinstance(card, DataCard) or isinstance(card, ModelCard):
-            card.runcard_uids.append(self.runcard.uid)
+        if isinstance(card, (DataCard, ModelCard)):
+            card.runcard_uid = self.runcard.uid
 
         CardHandler.register_card(
             registries=self._info.registries,
@@ -246,12 +253,12 @@ class ActiveRun:
 
     @property
     def metrics(self) -> dict[str, float]:
-        raise self.runcard.metrics
+        return self.runcard.metrics
 
     @property
-    def params(self) -> dict[str, str]:
+    def params(self) -> Dict[str, Union[float, int, str]]:
         return self.runcard.params
 
     @property
     def tags(self) -> dict[str, str]:
-        raise self.runcard.tags
+        return self.runcard.tags

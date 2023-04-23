@@ -59,7 +59,7 @@ class DataMixin:
     data_type = Column("data_type", String(512))
     additional_info = Column("additional_info", JSON)
     dependent_vars = Column("dependent_vars", JSON)
-    runcard_uids = Column("runcard_uids", JSON)
+    runcard_uid = Column("runcard_uid", String(2048))
     pipelinecard_uid = Column("pipelinecard_uid", String(2048))
 
 
@@ -79,7 +79,7 @@ class ModelMixin:
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
-    runcard_uids = Column("runcard_uids", JSON)
+    runcard_uid = Column("runcard_uid", String(2048))
     pipelinecard_uid = Column("pipelinecard_uid", String(2048))
 
 
