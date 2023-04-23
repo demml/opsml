@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Dict, Optional, Union, cast
 
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo
@@ -117,7 +117,7 @@ class MlflowActiveRun(ActiveRun):
         return self.run_data.metrics
 
     @property
-    def params(self) -> dict[str, str]:
+    def params(self) -> Dict[str, Union[float, int, str]]:
         return self.run_data.params
 
     @property

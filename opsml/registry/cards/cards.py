@@ -8,7 +8,7 @@ from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.cards.types import CardInfo, CardType, PipelineCardArgs
+from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.model.types import (
@@ -125,8 +125,8 @@ class DataCard(ArtifactCard):
                     {"label": "test", "indices": [5,6,7,8]},
                     ]
 
-        runcard_uids:
-            RunCards associated with the current run
+        runcard_uid:
+            Id of RunCard that created the DataCard
 
         pipelinecard_uid:
             Associated PipelineCard
@@ -157,8 +157,9 @@ class DataCard(ArtifactCard):
     dependent_vars: Optional[List[Union[int, str]]]
     feature_descriptions: Optional[Dict[str, str]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
-    runcard_uids: Optional[List[str]] = []
+    runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
+    sql_logic: Dict[str, str] = {}
 
     @property
     def has_data_splits(self):
@@ -303,8 +304,8 @@ class ModelCard(ArtifactCard):
             Optional dictionary of the data schema used in model training
         additional_onnx_args:
             Optional pydantic model containing Torch args for model conversion to onnx.
-        runcard_uids:
-            RunCards associated with the current run
+        runcard_uid:
+            RunCard associated with the ModelCard
         pipelinecard_uid:
             Associated PipelineCard
     """
@@ -322,7 +323,7 @@ class ModelCard(ArtifactCard):
     model_type: Optional[str]
     additional_onnx_args: Optional[TorchOnnxArgs]
     data_schema: Optional[Dict[str, Feature]]
-    runcard_uids: Optional[List[str]] = []
+    runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
 
     class Config:

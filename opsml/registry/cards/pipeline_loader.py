@@ -189,7 +189,7 @@ class PipelineLoader:
             pipelinecard_uid (str) Uid of a PipelineCard
         """
         self.pipline_card = self._load_pipeline_card(uid=pipelinecard_uid)
-        self._card_deck: Dict[str, ArtifactCard] = {}
+        self._card_deck: Dict[str, List[ArtifactCard]] = {}
 
     def _load_pipeline_card(self, uid: str) -> PipelineCard:
         registry = CardRegistry(registry_name=CardType.PIPELINECARD.value)
@@ -217,7 +217,7 @@ class PipelineLoader:
         for card_type in NON_PIPELINE_CARDS:
             cards = getattr(self.pipline_card, f"{card_type}card_uids")
             if bool(cards):
-                card_uids[card_type] = [card_uid for card_uid in cards]
+                card_uids[card_type] = cards
 
         return card_uids
 

@@ -280,8 +280,6 @@ class ApiStorageClient(LocalStorageClient):
         storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
 
-        super().create_save_path
-
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,

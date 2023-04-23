@@ -5,14 +5,15 @@ Revises: fd32b1afafd5
 Create Date: 2023-04-23 19:30:22.774935
 
 """
-from alembic import op
-import sqlalchemy as inspect
-
-from enum import Enum
 import os
-from sqlalchemy.engine.reflection import Inspector
+from enum import Enum
+
+import sqlalchemy as inspect
+from alembic import op
 from sqlalchemy import Column, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.engine.reflection import Inspector
+
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -24,12 +25,12 @@ class RegistryTableNames(str, Enum):
 
 
 class AddCols(str, Enum):
-    RUNCARD_UIDS = "runcard_uids"
+    RUNCARD_UID = "runcard_uid"
     PIPELINECARD_UID = "pipelinecard_uid"
 
 
 sql_schema = {
-    AddCols.RUNCARD_UIDS: Column("runcard_uids", JSON),
+    AddCols.RUNCARD_UID: Column("runcard_uid", String(2048)),
     AddCols.PIPELINECARD_UID: Column("pipelinecard_uid", String(2048)),
 }
 
