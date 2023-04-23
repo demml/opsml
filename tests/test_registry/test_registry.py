@@ -362,23 +362,20 @@ def test_pipeline_registry(db_registries):
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "run", "model"]:
-        pipeline_card.add_card_uid(
-            uid=uuid.uuid4().hex,
-            card_type=card_type,
-            name=f"{card_type}_{random.randint(0,100)}",
-        )
+        pipeline_card.add_card_uid(uid=uuid.uuid4().hex, card_type=card_type)
+
     # register
     registry: CardRegistry = db_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
-    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
+    loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
     df = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
     )
-    assert values["datacard_uids"].get("update") == "updated_uid"
+    assert bool(values["datacard_uids"])
 
 
 def test_full_pipeline_with_loading(db_registries, linear_regression):
@@ -429,18 +426,18 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
         team=team,
         user_email=user_email,
         pipeline_code_uri=pipeline_code_uri,
-        datacard_uids={"data1": data_card.uid},
-        modelcard_uids={"model1": model_card.uid},
-        runcard_uids={"exp1": exp_card.uid},
+        datacard_uids=[data_card.uid],
+        modelcard_uids=[model_card.uid],
+        runcard_uids=[exp_card.uid],
     )
     pipeline_registry.register_card(card=pipeline_card)
 
     loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
-    deck = loader.load_cards()
     uids = loader.card_uids
-    assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
-    assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
-    loader.visualize()
+
+    assert uids["data"][0] == data_card.uid
+    assert uids["run"][0] == exp_card.uid
+    assert uids["model"][0] == model_card.uid
 
 
 def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):

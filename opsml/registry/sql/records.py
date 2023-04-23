@@ -25,6 +25,8 @@ class DataRegistryRecord(BaseModel):
     additional_info: Optional[Dict[str, Union[float, int, str]]]
     dependent_vars: Optional[List[Union[int, str]]]
     timestamp: int = int(round(time.time() * 1_000_000))
+    runcard_uids: Optional[List[str]]
+    pipelinecard_uid: Optional[str]
 
     class Config:
         smart_union = True
@@ -50,6 +52,8 @@ class ModelRegistryRecord(BaseModel):
     sample_data_type: str
     model_type: str
     timestamp: int = int(round(time.time() * 1_000_000))
+    runcard_uids: Optional[List[str]]
+    pipelinecard_uid: Optional[str]
 
 
 class RunRegistryRecord(BaseModel):
@@ -76,9 +80,9 @@ class PipelineRegistryRecord(BaseModel):
     uid: Optional[str]
     version: Optional[str]
     pipeline_code_uri: Optional[str]
-    datacard_uids: Optional[Dict[str, str]]
-    modelcard_uids: Optional[Dict[str, str]]
-    runcard_uids: Optional[Dict[str, str]]
+    datacard_uids: List[str]
+    modelcard_uids: List[str]
+    runcard_uids: List[str]
     timestamp: int = int(round(time.time() * 1_000_000))
 
 
@@ -127,6 +131,8 @@ class LoadedDataRecord(LoadRecord):
     feature_descriptions: Optional[Dict[str, str]]
     dependent_vars: Optional[List[Union[int, str]]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
+    runcard_uids: Optional[List[str]]
+    pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
@@ -168,6 +174,8 @@ class LoadedModelRecord(LoadRecord):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
+    runcard_uids: Optional[List[str]]
+    pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
@@ -261,9 +269,9 @@ class LoadedRunRecord(LoadRecord):
 # same as piplelineregistry (duplicating to stay with theme of separate records)
 class LoadedPipelineRecord(LoadRecord):
     pipeline_code_uri: Optional[str]
-    datacard_uids: Optional[Dict[str, str]]
-    modelcard_uids: Optional[Dict[str, str]]
-    runcard_uids: Optional[Dict[str, str]]
+    datacard_uids: Optional[List[str]]
+    modelcard_uids: Optional[List[str]]
+    runcard_uids: Optional[List[str]]
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
