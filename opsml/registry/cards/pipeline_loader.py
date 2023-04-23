@@ -197,8 +197,10 @@ class PipelineLoader:
         return cast(PipelineCard, loaded_card)
 
     def _load_cards(self, cards: Dict[str, str], card_type: str):
-        for card_name, card_uid in cards.items():
-            self._card_deck[card_name] = self._registries[card_type].load_card(uid=card_uid)
+
+        card_list = [self._registries[card_type].load_card(uid=card_uid) for card_uid in cards]
+
+        self._card_deck[card_type] = card_list
 
     def load_cards(self):
         for card_type in NON_PIPELINE_CARDS:
@@ -211,14 +213,12 @@ class PipelineLoader:
     @cached_property
     def card_uids(self) -> Dict[str, Dict[str, str]]:
         card_uids = cast(Dict[str, Dict[str, str]], {})
+
         for card_type in NON_PIPELINE_CARDS:
             cards = getattr(self.pipline_card, f"{card_type}card_uids")
             if bool(cards):
-                for card_name, card_uid in cards.items():
-                    card_uids[card_name] = {
-                        "card_type": card_type,
-                        "uid": card_uid,
-                    }
+                card_uids[card_type] = [card_uid for card_uid in cards]
+
         return card_uids
 
     @cached_property

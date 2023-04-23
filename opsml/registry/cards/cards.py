@@ -157,8 +157,8 @@ class DataCard(ArtifactCard):
     dependent_vars: Optional[List[Union[int, str]]]
     feature_descriptions: Optional[Dict[str, str]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
-    runcard_uids = set[Optional[str]] = {}
-    pipelinecard_uid = Optional[str] = None
+    runcard_uids: Optional[List[str]] = []
+    pipelinecard_uid: Optional[str] = None
 
     @property
     def has_data_splits(self):
@@ -322,8 +322,8 @@ class ModelCard(ArtifactCard):
     model_type: Optional[str]
     additional_onnx_args: Optional[TorchOnnxArgs]
     data_schema: Optional[Dict[str, Feature]]
-    runcard_uids = set[Optional[str]] = {}
-    pipelinecard_uid = Optional[str] = None
+    runcard_uids: Optional[List[str]] = []
+    pipelinecard_uid: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -561,33 +561,24 @@ class PipelineCard(ArtifactCard):
         pipeline_code_uri:
             Storage uri of pipeline code
         datacard_uids:
-            Optional dictionary of DataCard uids to associate with pipeline
+            Optional list of DataCard uids to associate with pipeline
         modelcard_uids:
-            Optional dictionary of ModelCard uids to associate with pipeline
+            Optional list of ModelCard uids to associate with pipeline
         runcard_uids:
-            Optional dictionary of RunCard uids to associate with pipeline
+            Optional list of RunCard uids to associate with pipeline
 
     """
 
     pipeline_code_uri: Optional[str] = None
-    datacard_uids: Optional[Dict[str, str]]
-    modelcard_uids: Optional[Dict[str, str]]
-    runcard_uids: Optional[Dict[str, str]]
+    datacard_uids: List[Optional[str]] = []
+    modelcard_uids: List[Optional[str]] = []
+    runcard_uids: List[Optional[str]] = []
 
-    @root_validator(pre=True)
-    def set_data_uids(cls, values) -> Dict[str, Dict[str, str]]:  # pylint: disable=no-self-argument
-        for uid_type in list(PipelineCardArgs):
-            if values.get(uid_type) is None:
-                values[uid_type] = {}
-        return values
-
-    def add_card_uid(self, uid: str, card_type: str, name: Optional[str] = None):
+    def add_card_uid(self, uid: str, card_type: str):
         """
         Adds Card uid to appropriate card type attribute
 
         Args:
-            name:
-                Optional name to associate with uid
             uid:
                 Card uid
             card_type:
@@ -598,7 +589,7 @@ class PipelineCard(ArtifactCard):
             raise ValueError("""Only 'model', 'run' and 'data' are allowed values for card_type""")
 
         current_ids = getattr(self, f"{card_type}card_uids")
-        new_ids = {**current_ids, **{name: uid}}
+        new_ids = [*current_ids, *[uid]]
         setattr(self, f"{card_type}card_uids", new_ids)
 
     def load_pipeline_code(self):
