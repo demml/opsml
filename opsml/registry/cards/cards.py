@@ -125,6 +125,12 @@ class DataCard(ArtifactCard):
                     {"label": "test", "indices": [5,6,7,8]},
                     ]
 
+        runcard_uids:
+            RunCards associated with the current run
+
+        pipelinecard_uid:
+            Associated PipelineCard
+
         The following are non-required args and are set after registering a DataCard
 
         data_uri:
@@ -151,6 +157,8 @@ class DataCard(ArtifactCard):
     dependent_vars: Optional[List[Union[int, str]]]
     feature_descriptions: Optional[Dict[str, str]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
+    runcard_uids = set[Optional[str]] = {}
+    pipelinecard_uid = Optional[str] = None
 
     @property
     def has_data_splits(self):
@@ -295,6 +303,10 @@ class ModelCard(ArtifactCard):
             Optional dictionary of the data schema used in model training
         additional_onnx_args:
             Optional pydantic model containing Torch args for model conversion to onnx.
+        runcard_uids:
+            RunCards associated with the current run
+        pipelinecard_uid:
+            Associated PipelineCard
     """
 
     trained_model: Optional[Any]
@@ -310,6 +322,8 @@ class ModelCard(ArtifactCard):
     model_type: Optional[str]
     additional_onnx_args: Optional[TorchOnnxArgs]
     data_schema: Optional[Dict[str, Feature]]
+    runcard_uids = set[Optional[str]] = {}
+    pipelinecard_uid = Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True

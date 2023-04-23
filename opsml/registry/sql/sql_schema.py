@@ -59,6 +59,8 @@ class DataMixin:
     data_type = Column("data_type", String(512))
     additional_info = Column("additional_info", JSON)
     dependent_vars = Column("dependent_vars", JSON)
+    runcard_uids = Column("runcard_uids", JSON)
+    pipelinecard_uid = Column("pipelinecard_uid", String(2048))
 
 
 class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
@@ -77,6 +79,8 @@ class ModelMixin:
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
+    runcard_uids = Column("runcard_uids", JSON)
+    pipelinecard_uid = Column("pipelinecard_uid", String(2048))
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
