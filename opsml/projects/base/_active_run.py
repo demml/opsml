@@ -2,7 +2,7 @@
 from typing import Any, Dict, Optional
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, CardRegistry, RunCard, VersionType
+from opsml.registry import CardRegistries, CardRegistry, RunCard, VersionType, DataCard, ModelCard
 from opsml.registry.cards.cards import ArtifactCard
 from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
@@ -124,6 +124,11 @@ class ActiveRun:
                 "patch". Defaults to "minor".
         """
         self._verify_active()
+
+        # add runuid to card
+        if isinstance(card, DataCard) or isinstance(card, ModelCard):
+            card.runcard_uids.append(self.runcard.uid)
+
         CardHandler.register_card(
             registries=self._info.registries,
             card=card,
