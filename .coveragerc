@@ -1,8 +1,8 @@
 [run]
 omit = 
     *tests*
-    *opsml_artifacts/connector/*
-    *opsml_artifacts/.local_tests/*
+    *opsml/connector/*
+    *opsml/.local_tests/*
     */tmp/*
-    *opsml_artifacts/helpers/settings.py
+    *opsml/helpers/settings.py
     */opt/*

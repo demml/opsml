@@ -2,9 +2,9 @@ import pandas as pd
 from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml_artifacts.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
-from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
-from opsml_artifacts.registry.sql.registry import CardRegistry
+from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
+from opsml.registry.cards.pipeline_loader import PipelineLoader
+from opsml.registry.sql.registry import CardRegistry
 import uuid
 import random
 from pydantic import ValidationError
@@ -20,12 +20,7 @@ import pytest
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(
-    db_registries,
-    test_data,
-    data_splits,
-    mock_pyarrow_parquet_write,
-):
+def test_register_data(db_registries, test_data, data_splits):
 
     # create data card
     registry = db_registries["data"]
@@ -37,92 +32,133 @@ def test_register_data(
         data_splits=data_splits,
     )
 
-    # for numpy array
-    with patch.multiple("zarr", save=MagicMock(return_value=None)):
-        registry.register_card(card=data_card)
+    registry.register_card(card=data_card)
 
-        df = registry.list_cards(name=data_card.name, team=data_card.team)
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards(name=data_card.name, team=data_card.team)
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards(name=data_card.name)
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards(name=data_card.name)
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards()
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards()
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
-        assert df.shape[0] == 1
+    df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
+    assert df.shape[0] == 1
 
 
-def test_semver_registry_list(db_registries, test_array, mock_pyarrow_parquet_write):
+def test_datacard_sql(db_registries, test_array):
+
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        data=test_array,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    name = "test"
+    query = "select * from test_table"
+    data_card.add_sql(name=name, query=query)
+
+    assert data_card.sql_logic[name] == query
+
+    name = "test"
+    filename = "test_sql.sql"
+    data_card.add_sql(name=name, filename=filename)
+
+    assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+
+    ### Test add failure
+    with pytest.raises(ValueError):
+        data_card.add_sql(name="fail", filename="fail.sql")
+
+    with pytest.raises(ValueError):
+        data_card.add_sql(name="fail")
+
+    ## Test instantiation
+    data_card = DataCard(data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: query})
+    assert data_card.sql_logic[name] == query
+
+    data_card = DataCard(
+        data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: filename}
+    )
+    assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+
+    ## Test instantiation failure
+    with pytest.raises(ValueError):
+        data_card = DataCard(
+            data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={"fail": "fail.sql"}
+        )
+
+
+def test_semver_registry_list(db_registries, test_array):
 
     # create data card
     registry = db_registries["data"]
 
-    # for numpy array
-    with patch.multiple("zarr", save=MagicMock(return_value=None)):
-
-        # version 1
-        for i in range(0, 5):
-            data_card = DataCard(
-                data=test_array,
-                name="test_df",
-                team="mlops",
-                user_email="mlops.com",
-            )
-            registry.register_card(card=data_card)
-
-        # version 2
+    # version 1
+    for i in range(0, 5):
         data_card = DataCard(
             data=test_array,
             name="test_df",
             team="mlops",
             user_email="mlops.com",
         )
-        registry.register_card(card=data_card, version_type="major")
+        registry.register_card(card=data_card)
 
-        for i in range(0, 12):
-            data_card = DataCard(
-                data=test_array,
-                name="test_df",
-                team="mlops",
-                user_email="mlops.com",
-            )
-            registry.register_card(card=data_card)
+    # version 2
+    data_card = DataCard(
+        data=test_array,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    registry.register_card(card=data_card, version_type="major")
 
-        # should return 6 versions
-        df = registry.list_cards(
-            name=data_card.name,
-            team=data_card.team,
-            version="2.*.*",
+    for i in range(0, 12):
+        data_card = DataCard(
+            data=test_array,
+            name="test_df",
+            team="mlops",
+            user_email="mlops.com",
         )
-        assert df.shape[0] == 13
+        registry.register_card(card=data_card)
 
-        df = registry.list_cards(
-            name=data_card.name,
-            team=data_card.team,
-            version="^2.3.0",
-        )
-        assert df.shape[0] == 13
+    # should return 6 versions
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="2.*.*",
+    )
+    assert df.shape[0] == 13
 
-        df = registry.list_cards(
-            name=data_card.name,
-            team=data_card.team,
-            version="~2.3.0",
-        )
-        assert df.shape[0] == 1
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^2.3.0",
+    )
+    assert df.shape[0] == 13
 
-        # should return
-        card = registry.load_card(
-            name=data_card.name,
-            team=data_card.team,
-            version="^2.3.0",
-        )
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="~2.3.0",
+    )
+    assert df.shape[0] == 1
 
-        assert card.version == "2.12.0"
+    # should return
+    card = registry.load_card(
+        name=data_card.name,
+        team=data_card.team,
+        version="^2.3.0",
+    )
+
+    assert card.version == "2.12.0"
 
 
-def test_experiment_card(linear_regression, db_registries, mock_artifact_storage_clients):
+def test_experiment_card(linear_regression, db_registries):
 
     registry: CardRegistry = db_registries["run"]
     experiment = RunCard(
@@ -194,18 +230,8 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     assert loaded_card.onnx_model_def is not None
 
 
-@patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
-@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
-def test_register_model(
-    loaded_model_record,
-    model_card_mock,
-    db_registries,
-    sklearn_pipeline,
-    mock_pyarrow_parquet_write,
-    mock_artifact_storage_clients,
-):
+def test_register_model(db_registries, sklearn_pipeline):
 
-    model_card_mock.return_value = None
     model, data = sklearn_pipeline
 
     # create data card
@@ -231,7 +257,6 @@ def test_register_model(
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(model_card1)
 
-    loaded_model_record.return_value = model_card1.dict()
     loaded_card = model_registry.load_card(uid=model_card1.uid)
     loaded_card.load_trained_model()
 
@@ -322,7 +347,7 @@ def test_data_card_splits(test_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_load_data_card(db_registries, test_data):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -342,10 +367,12 @@ def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mo
         data_splits=data_split,
         additional_info={"input_metadata": 20},
         dependent_vars=[200, "test"],
+        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
     )
 
     data_card.add_info(info={"added_metadata": 10})
     registry.register_card(card=data_card)
+
     loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
 
     loaded_data.load_data()
@@ -355,6 +382,9 @@ def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mo
     assert isinstance(loaded_data.dependent_vars[0], int)
     assert isinstance(loaded_data.dependent_vars[1], str)
     assert bool(loaded_data)
+    assert loaded_data.sql_logic["test"] == "SELECT * FROM TEST_TABLE"
+
+    assert loaded_data.data_splits == data_split
 
     # update
     loaded_data.version = "1.2.0"
@@ -375,7 +405,7 @@ def test_load_data_card(db_registries, test_data, mock_pyarrow_parquet_write, mo
         )
 
 
-def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
+def test_pipeline_registry(db_registries):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -383,31 +413,24 @@ def test_pipeline_registry(db_registries, mock_pyarrow_parquet_write):
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "run", "model"]:
-        pipeline_card.add_card_uid(
-            uid=uuid.uuid4().hex,
-            card_type=card_type,
-            name=f"{card_type}_{random.randint(0,100)}",
-        )
+        pipeline_card.add_card_uid(uid=uuid.uuid4().hex, card_type=card_type)
+
     # register
     registry: CardRegistry = db_registries["pipeline"]
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
-    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
+    loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
     df = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
     )
-    assert values["datacard_uids"].get("update") == "updated_uid"
+    assert bool(values["datacard_uids"])
 
 
-def test_full_pipeline_with_loading(
-    db_registries,
-    linear_regression,
-    mock_pyarrow_parquet_write,
-    mock_artifact_storage_clients,
-):
+def test_full_pipeline_with_loading(db_registries, linear_regression):
+
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
@@ -416,6 +439,7 @@ def test_full_pipeline_with_loading(
     experiment_registry: CardRegistry = db_registries["run"]
     pipeline_registry: CardRegistry = db_registries["pipeline"]
     model, data = linear_regression
+
     #### Create DataCard
     data_card = DataCard(
         data=data,
@@ -423,19 +447,19 @@ def test_full_pipeline_with_loading(
         team=team,
         user_email=user_email,
     )
-    with patch.multiple("zarr", save=MagicMock(return_value=None)):
-        data_registry.register_card(card=data_card)
-        ###### ModelCard
-        model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[:1],
-            name="test_model",
-            team=team,
-            user_email=user_email,
-            datacard_uid=data_card.uid,
-        )
 
-        model_registry.register_card(model_card)
+    data_registry.register_card(card=data_card)
+    ###### ModelCard
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card)
 
     ##### RunCard
     exp_card = RunCard(
@@ -447,28 +471,25 @@ def test_full_pipeline_with_loading(
     )
     exp_card.log_metric("test_metric", 10)
     experiment_registry.register_card(card=exp_card)
+
     #### PipelineCard
     pipeline_card = PipelineCard(
         name="test_pipeline",
         team=team,
         user_email=user_email,
         pipeline_code_uri=pipeline_code_uri,
-        datacard_uids={"data1": data_card.uid},
-        modelcard_uids={"model1": model_card.uid},
-        runcard_uids={"exp1": exp_card.uid},
+        datacard_uids=[data_card.uid],
+        modelcard_uids=[model_card.uid],
+        runcard_uids=[exp_card.uid],
     )
     pipeline_registry.register_card(card=pipeline_card)
-    with patch(
-        "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
-        return_value=None,
-    ):
-        loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
-        with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
-            deck = loader.load_cards()
-            uids = loader.card_uids
-            assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
-            assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
-            loader.visualize()
+
+    loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
+    uids = loader.card_uids
+
+    assert uids["data"][0] == data_card.uid
+    assert uids["run"][0] == exp_card.uid
+    assert uids["model"][0] == model_card.uid
 
 
 def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
