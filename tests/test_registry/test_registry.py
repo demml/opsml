@@ -381,8 +381,7 @@ def test_load_data_card(db_registries, test_data):
     assert bool(loaded_data)
     assert loaded_data.sql_logic["test"] == "SELECT * FROM TEST_TABLE"
 
-    print(loaded_data.data_splits)
-    a
+    assert loaded_data.data_splits == data_split
 
     # update
     loaded_data.version = "1.2.0"
