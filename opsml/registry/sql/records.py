@@ -27,6 +27,7 @@ class DataRegistryRecord(BaseModel):
     timestamp: int = int(round(time.time() * 1_000_000))
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
+    datacard_uri: str
 
     class Config:
         smart_union = True
@@ -133,12 +134,20 @@ class LoadedDataRecord(LoadRecord):
     additional_info: Optional[Dict[str, Union[float, int, str]]]
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
+    datacard_uri: str
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
-        values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
+        storage_client = cast(StorageClientType, values["storage_client"])
+        datacard_definition = cls.load_datacard_definition(
+            save_path=values["datacard_uri"],
+            storage_client=storage_client,
+        )
+        datacard_definition
+        # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
+        datacard_definition["datacard_uri"] = values["datacard_uri"]
 
-        return values
+        return datacard_definition
 
     @staticmethod
     def get_splits(splits):
@@ -161,6 +170,28 @@ class LoadedDataRecord(LoadRecord):
 
         return None
 
+    @classmethod
+    def load_datacard_definition(
+        cls,
+        save_path: str,
+        storage_client: StorageClientType,
+    ) -> Dict[str, Any]:
+        """Loads a model card definition from current attributes
+
+        Returns:
+            Dictionary to be parsed by ModelCard.parse_obj()
+        """
+
+        storage_spec = ArtifactStorageSpecs(save_path=save_path)
+
+        storage_client.storage_spec = storage_spec
+        datacard_definition = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+        )
+
+        return datacard_definition
+
     @staticmethod
     def validate_table(table_name: str) -> bool:
         return table_name == RegistryTableNames.DATA
@@ -180,7 +211,7 @@ class LoadedModelRecord(LoadRecord):
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
         storage_client = cast(StorageClientType, values["storage_client"])
-        modelcard_definition = cls.load_model_card_definition(
+        modelcard_definition = cls.load_modelcard_definition(
             values=values,
             storage_client=storage_client,
         )
@@ -195,7 +226,7 @@ class LoadedModelRecord(LoadRecord):
         return modelcard_definition
 
     @classmethod
-    def load_model_card_definition(
+    def load_modelcard_definition(
         cls,
         values: Dict[str, Any],
         storage_client: StorageClientType,
