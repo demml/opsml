@@ -5,11 +5,11 @@ import pytest
 from sklearn import pipeline
 
 
-from opsml_artifacts.registry import DataCard, ModelCard
-from opsml_artifacts.registry.cards.types import CardInfo
-from opsml_artifacts.projects.base._active_run import ActiveRun
-from opsml_artifacts.projects import OpsmlProject, ProjectInfo
-from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml.registry import DataCard, ModelCard
+from opsml.registry.cards.types import CardInfo
+from opsml.projects.base._active_run import ActiveRun
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -44,6 +44,8 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
         run.register_card(card=model_card)
         info.run_id = run.run_id
 
+        assert data_card.runcard_uid == run.run_id
+
     # Retrieve the run and load projects without making the run active (read only mode)
     proj = conftest.mock_opsml_project(info)
 
@@ -67,6 +69,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     )
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
+    assert loaded_data_card.runcard_uid == proj.run_id
 
     # load data
     assert loaded_data_card.data is None
