@@ -74,6 +74,9 @@ def test_datacard_sql(db_registries, test_array):
     with pytest.raises(ValueError):
         data_card.add_sql(name="fail", filename="fail.sql")
 
+    with pytest.raises(ValueError):
+        data_card.add_sql(name="fail")
+
     ## Test instantiation
     data_card = DataCard(data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: query})
     assert data_card.sql_logic[name] == query
