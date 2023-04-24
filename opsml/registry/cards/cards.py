@@ -308,12 +308,14 @@ class DataCard(ArtifactCard):
         if query is not None:
             self.sql_logic[name] = query
 
-        else:
+        elif filename is not None:
             sql_path = FindPath.find_filepath(name=filename)
             with open(sql_path, "r", encoding="utf-8") as file_:
                 query = file_.read()
-
             self.sql_logic[name] = query
+
+        else:
+            raise ValueError("SQL Query or Filename must be provided")
 
     @property
     def card_type(self) -> str:
