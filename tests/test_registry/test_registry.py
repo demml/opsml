@@ -47,6 +47,49 @@ def test_register_data(db_registries, test_data, data_splits):
     assert df.shape[0] == 1
 
 
+def test_datacard_sql(db_registries, test_array):
+
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        data=test_array,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    name = "test"
+    query = "select * from test_table"
+    data_card.add_sql(name=name, query=query)
+
+    assert data_card.sql_logic[name] == query
+
+    name = "test"
+    filename = "test_sql.sql"
+    data_card.add_sql(name=name, filename=filename)
+
+    assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+
+    ### Test add failure
+    with pytest.raises(ValueError):
+        data_card.add_sql(name="fail", filename="fail.sql")
+
+    ## Test instantiation
+    data_card = DataCard(data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: query})
+    assert data_card.sql_logic[name] == query
+
+    data_card = DataCard(
+        data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: filename}
+    )
+    assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+
+    ## Test instantiation failure
+    with pytest.raises(ValueError):
+        data_card = DataCard(
+            data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={"fail": "fail.sql"}
+        )
+
+
 def test_semver_registry_list(db_registries, test_array):
 
     # create data card
@@ -321,10 +364,14 @@ def test_load_data_card(db_registries, test_data):
         data_splits=data_split,
         additional_info={"input_metadata": 20},
         dependent_vars=[200, "test"],
+        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
     )
 
     data_card.add_info(info={"added_metadata": 10})
     registry.register_card(card=data_card)
+
+    print(data_card.sql_logic)
+
     loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
 
     loaded_data.load_data()
@@ -334,6 +381,9 @@ def test_load_data_card(db_registries, test_data):
     assert isinstance(loaded_data.dependent_vars[0], int)
     assert isinstance(loaded_data.dependent_vars[1], str)
     assert bool(loaded_data)
+
+    print(loaded_data.sql_logic)
+    assert loaded_data.sql_logic["test"] == "SELECT * FROM TEST_TABLE"
 
     # update
     loaded_data.version = "1.2.0"

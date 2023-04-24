@@ -7,7 +7,7 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import clean_string
+from opsml.helpers.utils import FindPath, clean_string
 from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.model.predictor import OnnxModelPredictor
@@ -131,6 +131,9 @@ class DataCard(ArtifactCard):
         pipelinecard_uid:
             Associated PipelineCard
 
+        sql_logic:
+            Dictionary of strings containing sql logic used to create the data
+
         The following are non-required args and are set after registering a DataCard
 
         data_uri:
@@ -159,7 +162,8 @@ class DataCard(ArtifactCard):
     additional_info: Optional[Dict[str, Union[float, int, str]]]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    sql_logic: Dict[str, str] = {}
+    datacard_uri: Optional[str] = None
+    sql_logic: Dict[Optional[str], Optional[str]] = {}
 
     @property
     def has_data_splits(self):
@@ -198,6 +202,25 @@ class DataCard(ArtifactCard):
     @validator("additional_info", pre=True, always=True)
     def check_info(cls, value):  # pylint: disable=no-self-argument
         return value or {}
+
+    @validator("sql_logic", pre=True, always=True)
+    def load_sql(cls, sql_logic, values):  # pylint: disable=no-self-argument
+        if not bool(sql_logic):
+            return sql_logic
+
+        for name, query in sql_logic.items():
+            if ".sql" in query:
+                try:
+
+                    sql_path = FindPath.find_filepath(name=query)
+                    with open(sql_path, "r", encoding="utf-8") as file_:
+                        query_ = file_.read()
+                    sql_logic[name] = query_
+
+                except Exception as error:
+                    raise ValueError(f"Could not load sql file {query}. {error}") from error
+
+        return sql_logic
 
     def split_data(self) -> Optional[DataHolder]:
         """
@@ -263,6 +286,34 @@ class DataCard(ArtifactCard):
 
         curr_info = cast(Dict[str, Union[int, float, str]], self.additional_info)
         self.additional_info = {**info, **curr_info}
+
+    def add_sql(
+        self,
+        name: str,
+        query: Optional[str] = None,
+        filename: Optional[str] = None,
+    ):
+        """
+        Adds a query or query from file to the sql_logic dictionary. Either a query or
+        a filename pointing to a sql file are required in addition to a name.
+
+        Args:
+            name:
+                Name for sql query
+            query:
+                SQL query
+            filename:
+                Filename of sql query
+        """
+        if query is not None:
+            self.sql_logic[name] = query
+
+        else:
+            sql_path = FindPath.find_filepath(name=filename)
+            with open(sql_path, "r", encoding="utf-8") as file_:
+                query = file_.read()
+
+            self.sql_logic[name] = query
 
     @property
     def card_type(self) -> str:

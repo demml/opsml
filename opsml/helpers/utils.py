@@ -31,24 +31,32 @@ class FindPath:
         """Finds the file path of a given file.
 
         Args:
-            name (str): Name of file
-            path (str): Optional. Base path to search
+            name:
+                Name of file
+            path:
+                Optional. Base path to search
 
         Returns:
-            filepath (str)
+            filepath
         """
         if path is None:
             path = os.getcwd()
 
         paths = list(Path(path).rglob(name))
-        file_path = paths[0]
+
+        try:
+            file_path = paths[0]
+        except IndexError as error:
+            raise ValueError(f"No path found for file {name}. {error}") from error
 
         if file_path is not None:
             return file_path
 
         raise exceptions.MissingKwarg(
-            f"""{name} file was not found in the current path.
-                    Check to make sure you specified the correct name."""
+            f"""
+            {name} file was not found in the current path: {path}.
+            Check to make sure you specified the correct name.
+            """
         )
 
     @staticmethod
