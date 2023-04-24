@@ -555,8 +555,6 @@ def save_record_artifact_to_storage(
 ) -> StoragePath:
     _artifact_type: str = artifact_type or artifact.__class__.__name__
 
-    print(artifact)
-
     storage_type = next(
         (
             storage_type

@@ -23,6 +23,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     active."""
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
     with mlflow_project.run() as run:
         # Create metrics / params / cards
         run = cast(MlflowActiveRun, run)
