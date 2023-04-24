@@ -59,7 +59,12 @@ class DataCardArtifactSaver(CardArtifactSaver):
         self.storage_client.storage_spec = storage_spec
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(exclude={"data"}),
+            artifact=self.card.dict(
+                exclude={
+                    "data",
+                    "storage_client",
+                }
+            ),
             storage_client=self.storage_client,
         )
 

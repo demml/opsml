@@ -45,13 +45,14 @@ depends_on = None
 def upgrade() -> None:
     """Adds new columns for DataCards and ModelCards"""
 
-    logger.info("Running runcard_uids and pipelinecard_uid revision")
+    logger.info("Running datacard_uri, runcard_uids and pipelinecard_uid revision")
     bind = op.get_context().bind
     insp = Inspector.from_engine(bind=bind)
 
     for table_name in RegistryTableNames:
         columns = insp.get_columns(table_name.value)
 
+        # add pipelinecard uid and runcard uid updates
         for add_col in AddCols:
             if not any(column.get("name") == add_col.value for column in columns):
                 op.add_column(
@@ -59,6 +60,33 @@ def upgrade() -> None:
                     column=sql_schema[table_name],
                 )
 
+        # add datacard_uri
+        if table_name == RegistryTableNames.DATA:
+            if not any(column.get("name") == "datacard_uri" for column in columns):
+                op.add_column(
+                    table_name=table_name,
+                    column=Column("datacard_uri", String(2048)),
+                )
+
 
 def downgrade() -> None:
-    pass
+    bind = op.get_context().bind
+    insp = Inspector.from_engine(bind=bind)
+    for table_name in RegistryTableNames:
+        columns = insp.get_columns(table_name.value)
+
+        # add pipelinecard uid and runcard uid updates
+        for add_col in AddCols:
+            if any(column.get("name") == add_col.value for column in columns):
+                op.drop_column(
+                    table_name=table_name,
+                    column_name=add_col.value,
+                )
+
+        # add datacard_uri
+        if table_name == RegistryTableNames.DATA:
+            if any(column.get("name") == "datacard_uri" for column in columns):
+                op.drop_column(
+                    table_name=table_name,
+                    column_name="datacard_uri",
+                )

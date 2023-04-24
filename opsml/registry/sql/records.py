@@ -143,9 +143,9 @@ class LoadedDataRecord(LoadRecord):
             save_path=values["datacard_uri"],
             storage_client=storage_client,
         )
-        datacard_definition
         # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
-        datacard_definition["datacard_uri"] = values["datacard_uri"]
+        datacard_definition["datacard_uri"] = values.get("datacard_uri")
+        datacard_definition["storage_client"] = values.get("storage_client")
 
         return datacard_definition
 
