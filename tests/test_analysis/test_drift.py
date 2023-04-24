@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 import tempfile
-from opsml_artifacts.drift.data_drift import (
+from opsml.drift.data_drift import (
     DriftFeatures,
     DriftDetectorData,
     FeatureImportanceCalculator,
@@ -15,8 +15,8 @@ from opsml_artifacts.drift.data_drift import (
     ParsedFeatureDataFrames,
     DriftVisualizer,
 )
-from opsml_artifacts.drift.visualize import NumericChart, CategoricalChart, AucChart
-from opsml_artifacts.drift.types import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
+from opsml.drift.visualize import NumericChart, CategoricalChart, AucChart
+from opsml.drift.types import FeatureImportance, DriftData, FeatureStatsOutput, HistogramOutput
 
 
 @pytest.mark.parametrize("categorical", [[], ["col_10"]])

@@ -1,6 +1,6 @@
 # opsml-artifacts
 mlruns/
-opsml_artifacts/api/
+opsml/api/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

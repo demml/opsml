@@ -1,4 +1,4 @@
-from opsml_artifacts.app.routes.utils import replace_proxy_root
+from opsml.app.routes.utils import replace_proxy_root
 
 
 def test_replace_proxy():

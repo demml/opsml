@@ -8,11 +8,11 @@ import lightgbm as lgb
 import matplotlib.pyplot as plt
 import numpy as np
 import shutil
-from opsml_artifacts.registry import DataCard, ModelCard
-from opsml_artifacts.registry.cards.types import CardInfo
-from opsml_artifacts.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
-from opsml_artifacts.projects import OpsmlProject, ProjectInfo
-from opsml_artifacts.helpers.logging import ArtifactLogger
+from opsml.registry import DataCard, ModelCard
+from opsml.registry.cards.types import CardInfo
+from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
 
 logger = ArtifactLogger.get_logger(__name__)

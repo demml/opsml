@@ -2,22 +2,22 @@ import os
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-from opsml_artifacts.helpers.logging import ArtifactLogger
-from opsml_artifacts.registry.cards.cards import (
+from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.cards.cards import (
     ArtifactCard,
     DataCard,
     RunCard,
     ModelCard,
     PipelineCard,
 )
-from opsml_artifacts.registry.sql.records import (
+from opsml.registry.sql.records import (
     DataRegistryRecord,
     RunRegistryRecord,
     PipelineRegistryRecord,
     ModelRegistryRecord,
 )
-from opsml_artifacts.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
-from opsml_artifacts.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
+from opsml.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -25,7 +25,7 @@ logger = ArtifactLogger.get_logger(__name__)
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
-# Separate module for use the ClientRegistry to force use of ClientRegistry for some tests
+# Separate module to force use of ClientRegistry for some tests
 Registry = ClientRegistry
 
 
@@ -191,8 +191,8 @@ class CardRegistry:
 
         """
 
-        self.registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
-        self.table_name = self.registry._table.__tablename__
+        self._registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
+        self.table_name = self._registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
 
@@ -222,17 +222,20 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-    ) -> pd.DataFrame:
-
+        as_dataframe: bool = True,
+    ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
         Args:
-            name (str): Card name
-            team (str): Team associated with card
-            version (int): Optional version number of existing data. If not specified,
-            the most recent version will be used
-            uid (str): Unique identifier for Card. If present, the uid takes precedence.
-
+            name:
+                Card name
+            team:
+                Team associated with card
+            version:
+                Optional version number of existing data. If not specified, the
+                most recent version will be used
+            uid:
+                Unique identifier for Card. If present, the uid takes precedence.
 
         Returns:
             pandas dataframe of records
@@ -244,8 +247,11 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        card_list = self.registry.list_cards(uid=uid, name=name, team=team, version=version)
-        return pd.DataFrame(card_list)
+        card_list = self._registry.list_cards(uid=uid, name=name, team=team, version=version)
+
+        if as_dataframe:
+            return pd.DataFrame(card_list)
+        return card_list
 
     def load_card(
         self,
@@ -274,7 +280,7 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        return self.registry.load_card(uid=uid, name=name, team=team, version=version)
+        return self._registry.load_card(uid=uid, name=name, team=team, version=version)
 
     def register_card(
         self,
@@ -298,7 +304,7 @@ class CardRegistry:
                 specify a directory.
         """
 
-        self.registry.register_card(
+        self._registry.register_card(
             card=card,
             version_type=version_type,
             save_path=save_path,
@@ -317,12 +323,12 @@ class CardRegistry:
             None
         """
 
-        if not hasattr(self.registry, "update_card"):
+        if not hasattr(self._registry, "update_card"):
             raise ValueError(f"""{card.__class__.__name__} has no 'update_card' attribute""")
 
-        self.registry = cast(DataCardRegistry, self.registry)
+        self._registry = cast(DataCardRegistry, self._registry)
         card = cast(DataCard, card)
-        return self.registry.update_card(card=card)
+        return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
         """Query column values from a specific Card
@@ -334,5 +340,5 @@ class CardRegistry:
         Returns:
             Dictionary of column, values pairs
         """
-        results = self.registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
+        results = self._registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}

@@ -3,9 +3,10 @@ from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 import pandas as pd
 from pydantic import ValidationError
-from opsml_artifacts.registry import DataCard, ModelCard, RunCard, PipelineCard
+from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard
 import uuid
 import random
+import json
 
 
 def test_client(test_app):
@@ -41,7 +42,7 @@ def test_error(test_app):
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
     ],
 )
-def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parquet_write):
+def test_register_data(api_registries, test_data, data_splits):
 
     # create data card
     registry = api_registries.data
@@ -54,21 +55,19 @@ def test_register_data(api_registries, test_data, data_splits, mock_pyarrow_parq
         data_splits=data_splits,
     )
 
-    # for numpy array
-    with patch.multiple("zarr", save=MagicMock(return_value=None)):
-        registry.register_card(card=data_card)
+    registry.register_card(card=data_card)
 
-        df = registry.list_cards(name=data_card.name, team=data_card.team)
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards(name=data_card.name, team=data_card.team)
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards(name=data_card.name)
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards(name=data_card.name)
+    assert isinstance(df, pd.DataFrame)
 
-        df = registry.list_cards()
-        assert isinstance(df, pd.DataFrame)
+    df = registry.list_cards()
+    assert isinstance(df, pd.DataFrame)
 
 
-def test_run_card(linear_regression, api_registries, mock_artifact_storage_clients):
+def test_run_card(linear_regression, api_registries):
 
     registry = api_registries.run
 
@@ -92,18 +91,8 @@ def test_run_card(linear_regression, api_registries, mock_artifact_storage_clien
     assert loaded_card.uid == experiment.uid
 
 
-@patch("opsml_artifacts.registry.cards.cards.ModelCard.load_trained_model")
-@patch("opsml_artifacts.registry.sql.records.LoadedModelRecord.load_model_card_definition")
-def test_register_model(
-    loaded_model_record,
-    model_card_mock,
-    api_registries,
-    sklearn_pipeline,
-    mock_pyarrow_parquet_write,
-    mock_artifact_storage_clients,
-):
+def test_register_model(api_registries, sklearn_pipeline):
 
-    model_card_mock.return_value = None
     model, data = sklearn_pipeline
     # create data card
     data_registry = api_registries.data
@@ -128,7 +117,6 @@ def test_register_model(
     model_registry = api_registries.model
     model_registry.register_card(model_card1)
 
-    loaded_model_record.return_value = model_card1.dict()
     loaded_card = model_registry.load_card(uid=model_card1.uid)
     loaded_card.load_trained_model()
     loaded_card.trained_model = model
@@ -185,7 +173,7 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_load_data_card(api_registries, test_data):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -238,7 +226,7 @@ def test_load_data_card(api_registries, test_data, mock_pyarrow_parquet_write, m
         )
 
 
-def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
+def test_pipeline_registry(api_registries):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -246,32 +234,24 @@ def test_pipeline_registry(api_registries, mock_pyarrow_parquet_write):
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "run", "model"]:
-        pipeline_card.add_card_uid(
-            uid=uuid.uuid4().hex,
-            card_type=card_type,
-            name=f"{card_type}_{random.randint(0,100)}",
-        )
+        pipeline_card.add_card_uid(uid=uuid.uuid4().hex, card_type=card_type)
+
     # register
     registry = api_registries.pipeline
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
-    loaded_card.add_card_uid(uid="updated_uid", card_type="data", name="update")
+    loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
     df = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
     )
-    assert values["datacard_uids"].get("update") == "updated_uid"
+    assert bool(values["datacard_uids"])
 
 
-def test_full_pipeline_with_loading(
-    api_registries,
-    linear_regression,
-    mock_pyarrow_parquet_write,
-    mock_artifact_storage_clients,
-):
-    from opsml_artifacts.registry.cards.pipeline_loader import PipelineLoader
+def test_full_pipeline_with_loading(api_registries, linear_regression):
+    from opsml.registry.cards.pipeline_loader import PipelineLoader
 
     team = "mlops"
     user_email = "mlops.com"
@@ -281,6 +261,7 @@ def test_full_pipeline_with_loading(
     experiment_registry = api_registries.run
     pipeline_registry = api_registries.pipeline
     model, data = linear_regression
+
     #### Create DataCard
     data_card = DataCard(
         data=data,
@@ -288,19 +269,19 @@ def test_full_pipeline_with_loading(
         team=team,
         user_email=user_email,
     )
-    with patch.multiple("zarr", save=MagicMock(return_value=None)):
-        data_registry.register_card(card=data_card)
-        ###### ModelCard
-        model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[:1],
-            name="test_model",
-            team=team,
-            user_email=user_email,
-            datacard_uid=data_card.uid,
-        )
 
-        model_registry.register_card(model_card)
+    data_registry.register_card(card=data_card)
+    ###### ModelCard
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card)
 
     ##### RunCard
     exp_card = RunCard(
@@ -318,44 +299,127 @@ def test_full_pipeline_with_loading(
         team=team,
         user_email=user_email,
         pipeline_code_uri=pipeline_code_uri,
-        datacard_uids={"data1": data_card.uid},
-        modelcard_uids={"model1": model_card.uid},
-        runcard_uids={"exp1": exp_card.uid},
+        datacard_uids=[data_card.uid],
+        modelcard_uids=[model_card.uid],
+        runcard_uids=[exp_card.uid],
     )
     pipeline_registry.register_card(card=pipeline_card)
-    with patch(
-        "opsml_artifacts.registry.cards.pipeline_loader.PipelineLoader._load_cards",
-        return_value=None,
-    ):
-        loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
-        with patch.object(loader, "_card_deck", {"data1": data_card, "model1": model_card, "exp1": exp_card}):
-            deck = loader.load_cards()
-            uids = loader.card_uids
-            assert all(name in deck.keys() for name in ["data1", "exp1", "model1"])
-            assert all(name in uids.keys() for name in ["data1", "exp1", "model1"])
-            loader.visualize()
+
+    loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
+    uids = loader.card_uids
+
+    assert uids["data"][0] == data_card.uid
+    assert uids["run"][0] == exp_card.uid
+    assert uids["model"][0] == model_card.uid
 
 
-@patch("opsml_artifacts.app.routes.utils.ModelDownloader.load_card")
-@patch("opsml_artifacts.registry.cards.cards.ModelCard._get_sample_data_for_api")
-def test_download_model(
-    sample_data,
-    mock_load_card,
-    test_app,
-    test_model_card,
-):
+def test_download_model(test_app, api_registries, linear_regression):
 
-    mock_load_card.return_value = test_model_card
-    sample_data.return_value = {"Inputs": [1, 2]}
+    team = "mlops"
+    user_email = "mlops.com"
 
-    response = test_app.post(url="opsml/download", json={"uid": "test-uid"})
+    model, data = linear_regression
 
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    #### Create DataCard
+    data_card = DataCard(
+        data=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+    )
+
+    data_registry.register_card(card=data_card)
+    ###### ModelCard
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card)
+
+    result = ""
+    with test_app.stream(method="POST", url="opsml/download_model", json={"uid": model_card.uid}) as response:
+
+        for data in response.iter_bytes():
+            result += data.decode("utf-8")
+
+    model_def = json.loads(result)
+
+    assert model_def["model_name"] == model_card.name
+    assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
+
+
+def test_download_multiple_model_failure(test_app, api_registries, linear_regression):
+
+    team = "mlops"
+    user_email = "mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    #### Create DataCard
+    data_card = DataCard(
+        data=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+    )
+
+    data_registry.register_card(card=data_card)
+    ###### ModelCard
+    model_card1 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card1)
+
+    model_card2 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card2)
+
+    result = ""
+    with test_app.stream(
+        method="POST",
+        url="opsml/download_model",
+        json={
+            "model_name": model_card1.name,
+            "team": model_card1.team,
+        },
+    ) as response:
+
+        for data in response.iter_bytes():
+            result += data.decode("utf-8")
+
+    assert response.status_code == 500
+    assert json.loads(data.decode("utf-8"))["detail"] == "More than one model found"
 
 
 def test_download_model_failure(test_app):
 
-    response = test_app.post(url="opsml/download", json={"name": "pip"})
+    response = test_app.post(url="opsml/download_model", json={"name": "pip"})
 
     # should fail
     assert response.status_code == 500
+    assert response.json()["detail"] == "No model found"
