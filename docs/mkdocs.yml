@@ -1,0 +1,64 @@
+site_name: OpsML
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: stylesheets/extra.css
+      toggle:
+        icon: material/weather-night
+        name: dark mode
+        
+    - scheme: slate
+      primary: stylesheets/extra.css
+      toggle:
+        icon: material/weather-sunny
+        name: light mode
+
+
+nav:
+  - OpsML Overview: 'index.md'
+  - Getting Started: 'getting_started.md'
+  - Cards:
+      - 'cards/artifact_cards.md'
+      - 'cards/data_card.md'
+      - 'cards/model_card.md'
+      - 'cards/run_card.md'
+      - 'cards/pipeline_card.md'
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - admonition
+  - codehilite
+  - extra
+  - pymdownx.snippets
+  - pymdownx.tabbed
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+
+  - pymdownx.superfences:
+      custom_fences:
+      - name: mermaid
+        class: mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format ''
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji 
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+plugins:
+  - search
+  - mkdocstrings
+
+repo_url: https://github.com/shipt/opsml
+repo_name: opsml
+extra_css:
+- css/termynal.css
+- css/custom.css
+- stylesheets/extra.css
+extra_javascript:
+- js/termynal.js
+- js/custom.js
