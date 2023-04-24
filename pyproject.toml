@@ -97,6 +97,12 @@ sqlalchemy2-stubs = "0.0.2a32"
 mypy = "1.0.0"
 types-protobuf = "^4.21.0.3"
 
+
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.1.7"
+mkdocstrings = {extras = ["python"], version = "^0.21.2"}
+
 [tool.poetry.scripts]
 load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file"
 install_integration = "opsml.scripts.install_integration:install_extra_packages"
