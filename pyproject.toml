@@ -1,53 +1,66 @@
 [tool.poetry]
-name = "opsml-artifacts"
+name = "opsml"
 version = "0.2.4"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
+
+# required dependencies
+
 python = ">=3.9,<=3.11"
+alembic = "^1.10.3"
 altair = "^4.2.0"
-cloud-sql-python-connector = {version="^1.2.0", optional = true}
 cryptography = "^39.0.1"
-fastapi = {version="^0.92.0", optional = true}
-gcsfs = {version="^2022.11.0", optional = true}
-google-auth = {version="1.35.0", optional = true}
-google-cloud-scheduler = {version="^2.9.0", optional = true}
-google-cloud-storage = {version="^2.2.1", optional = true}
-graphviz = {version="^0.20.1", optional = true}
-gunicorn = {version="^20.1.0", optional = true}
 httpx ="^0.23.3"
-mlflow = {version="^2.2.1", optional=true}
 numpy = ">=1.21.6,<=1.24.1"
 onnx = "^1.12.0"
 onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
 pandas = ">=1.4.0,<=1.5.3"
-pg8000 = {version="^1.29.4", optional = true}
-prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
 pyarrow = ">=8.0.0"
 pydantic = ">=1.10.0, <=1.10.4"
-pymysql = {version="^1.0.2", optional = true}
 python-json-logger = "^2.0.6"
-rollbar = {version="^0.16.3", optional = true}
 scikit-learn = ">=1.0"
 semver = "2.13.0"
 skl2onnx = "^1.13"
+streaming-form-data = "^1.11.0"
 sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
 tf2onnx ="^1.13.0"
-uvicorn = {version="^0.20.0", optional = true}
 zarr = ">2.12.0"
+
+# optional dependencies for sql
+psycopg2 = {version="^2.9.6", optional = true}
+
+# optional dependencies for server
+fastapi = {version="^0.92.0", optional = true}
+gunicorn = {version="^20.1.0", optional = true}
+libclang = {version="<=15.0.6.1", optional=true}
+llvmlite = {version="^0.39.1", optional=true}
+mlflow = {version="^2.2.1", optional=true}
+numba = {version="^0.56.0", optional=true}
+prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
+rollbar = {version="^0.16.3", optional = true}
+uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
-alembic = "^1.10.3"
-streaming-form-data = "^1.11.0"
+
+# optional dependencies for cloud-sql
+cloud-sql-python-connector = {version="^1.2.0", optional = true}
+pg8000 = {version="^1.29.4", optional = true}
+pymysql = {version="^1.0.2", optional = true}
+
+# optional dep for visualization
+#fn-graph = {version="^0.14.3", optional = true}
+graphviz = {version="^0.20.1", optional = true}
 
 [tool.poetry.extras]
-proxy = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow"]
-mlflow = ["mlflow"]
+server = ["fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
+mlflow = ["mlflow", "libclang", "llvmlite", "numba"]
 graphviz = ["graphviz"]
-gcp_mysql = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pymysql" ]
-gcp_postgres = ["cloud-sql-python-connector","google-auth","google-cloud-storage",  "google-cloud-scheduler","gcsfs", "pg8000" ]
+gcp_mysql = ["cloud-sql-python-connector", "pymysql"]
+gcp_postgres = ["cloud-sql-python-connector", "pg8000"]
+postgres = ["psycopg2"]
 
 [tool.poetry.group.dev]
 optional = true
@@ -64,11 +77,9 @@ torchvision = "^0.14.1"
 tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
-llvmlite = "^0.39.1"
-numba = "^0.56.0"
-libclang = "<=15.0.6.1"
 functiontrace = "^0.3.7"
 transformers = "^4.27.3"
+snakeviz = "^2.1.1"
 
 [tool.poetry.group.dev-lints]
 optional = true
@@ -87,9 +98,10 @@ mypy = "1.0.0"
 types-protobuf = "^4.21.0.3"
 
 [tool.poetry.scripts]
-load_model_card_to_file = "opsml_artifacts.scripts.load_model_card:load_model_card_to_file"
-opsml-uvicorn-server = 'opsml_artifacts.app.main:opsml_uvicorn_server'
-opsml-gunicorn-server = 'opsml_artifacts.app.main:opsml_gunicorn_server'
+load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file"
+install_integration = "opsml.scripts.install_integration:install_extra_packages"
+opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
+opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
 
 [tool.isort]
 profile = "black"
@@ -100,7 +112,7 @@ target-version = ['py310']
 include = '\.pyi?$'
 
 [tool.pylint.MASTER]
-ignore-paths = [ "opsml_artifacts/.local_tests/*","opsml_artifacts/registry/sql/migration/*"]
+ignore-paths = [ "opsml/.local_tests/*","opsml/registry/sql/migration/*"]
 
 [tool.pylint.messages_control]
 max-line-length = 120
@@ -146,15 +158,15 @@ plugins = [
     "sqlalchemy.ext.mypy.plugin",
     "sqlmypy",
 ]
-exclude = ["opsml_artifacts/.local_tests/*", "opsml_artifacts/registry/sql/query_helpers.py", "opsml_artifacts/registry/sql/migration/*"]
+exclude = ["opsml/.local_tests/*", "opsml/registry/sql/query_helpers.py", "opsml/registry/sql/migration/*"]
 
 
 [tool.coverage.paths]
-source = ["opsml_artifacts", "*/site-packages"]
+source = ["opsml", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["opsml_artifacts"]
+source = ["opsml"]
 
 [tool.coverage.report]
 show_missing = true
@@ -190,7 +202,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "opsml_artifacts/registry/sql/migration/*",
+    "opsml/registry/sql/migration/*",
 ]
 
 # Allow unused variables when underscore-prefixed.
@@ -200,7 +212,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 target-version = "py39"
 
 [tool.ruff.per-file-ignores]
-"__init__.py" = ["F841","F401"]
+"__init__.py" = ["F841","F401","F811"]
 
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
@@ -210,10 +222,3 @@ max-complexity = 10
 requires = ["poetry-core>=1.2.2"]
 build-backend = "poetry.core.masonry.api"
 
-[[tool.poetry.source]]
-# Access Shipt's private Artifactory remote PyPi repository. It serves as a caching proxy.
-# Generate Identity Token in Artifactory and use it as password and then have these ENV's set:
-name = "shipt-resolve"
-url = "https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple"
-#url = "https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-virtual/simple"
-default = true
