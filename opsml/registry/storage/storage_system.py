@@ -597,12 +597,16 @@ class MlflowStorageClient(StorageClient):
     def swap_proxy_root(self, rpath: str) -> str:
         """Swaps the realpath with the expected mlflow proxy path"""
 
-        proxy_root = Path(self.artifact_path).parts[0]
-        artifact_path = "/".join(Path(rpath).parts[2:])
+        if "http" in self.mlflow_client.tracking_uri:
 
-        download_path = os.path.join(proxy_root, artifact_path)
+            proxy_root = Path(self.artifact_path).parts[0]
+            artifact_path = "/".join(Path(rpath).parts[2:])
 
-        return download_path
+            download_path = os.path.join(proxy_root, artifact_path)
+
+            return download_path
+
+        return rpath
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         import mlflow

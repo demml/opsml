@@ -307,12 +307,14 @@ def api_storage_client(api_registries):
 
 @pytest.fixture(scope="function")
 def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
+
     info = ProjectInfo(name="test_exp", team="test", user_email="test", tracking_uri=SQL_PATH)
     mlflow_exp: MlflowProject = get_project(info=info)
 
     mlflow_storage = mlflow_storage_client()
     api_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_registries
+
     mlflow_exp._run_mgr._storage_client = mlflow_storage
     mlflow_exp._run_mgr._storage_client.mlflow_client = mlflow_exp._run_mgr.mlflow_client
 
