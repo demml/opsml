@@ -51,6 +51,20 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(DataCard, self._card)
 
+    def _save_datacard(self):
+        """Saves a datacard to file system"""
+
+        storage_spec = self._copy_artifact_storage_info()
+        storage_spec.filename = "datacard"
+        self.storage_client.storage_spec = storage_spec
+
+        storage_path = save_record_artifact_to_storage(
+            artifact=self.card.dict(exclude={"data"}),
+            storage_client=self.storage_client,
+        )
+
+        self.card.datacard_uri = storage_path.uri
+
     def _convert_data_to_arrow(self) -> ArrowTable:
         """Converts data to arrow table
 
@@ -108,6 +122,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """Saves artifacts from a DataCard"""
 
         self._save_data()
+        self._save_datacard()
         # if bool(self.card.drift_report):
         # self._save_drift()
 
