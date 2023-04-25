@@ -18,7 +18,7 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
 
   - name: py39
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make test.unit
     environment:
@@ -30,7 +30,7 @@ steps:
       - setup
 
   - name: py310
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.10.10_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make test.unit
     environment:
@@ -42,7 +42,7 @@ steps:
       - py39 
 
   - name: quality-checks
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make lints.ci
     environment:
@@ -71,7 +71,7 @@ steps:
       - quality-checks
 
   - name: publish-release-candidate
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -113,7 +113,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make setup.unit
       - make test.unit
@@ -129,7 +129,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make setup.quality
       - make lints.ci
@@ -164,7 +164,7 @@ steps:
     when:
       event:
         - push
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -182,7 +182,7 @@ steps:
     when:
       event:
         - tag
-    image: harbor.shipttech.com/apps/pyopsml/python:py3.9.16_poetry_1.3.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
