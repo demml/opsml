@@ -35,7 +35,7 @@ setup: setup.python setup.sysdep.poetry setup.poetry-template
 setup.unit:
 	poetry install --all-extras --with dev
 	poetry run install_integration --integration gcp
-setup.quality:
+setup.project:
 	poetry install --all-extras --with dev,dev-lints
 	poetry run install_integration --integration gcp
 setup.uninstall:
