@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard
+from opsml.registry import CardInfo, DataCard, CardRegistry
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
@@ -39,3 +39,10 @@ print(splits.train.head())
 19    2.0   110.0   43.0   68.0
 12   14.0   215.0  105.0   64.0
 """
+
+data_registry = CardRegistry(registry_name="data")
+data_registry.register_card(card=data_card)
+
+# list cards
+cards = data_registry.list_cards(uid=data_card.uid, as_dataframe=False)  # can also supply, name, team, version
+print(cards[0])
