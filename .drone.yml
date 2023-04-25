@@ -2,10 +2,6 @@ kind: pipeline
 name: test-and-build
 type: docker
 
-workspace:
-  base: /usr/src/py39
-  path: ${DRONE_REPO_NAME}
-
 trigger:
   event:
     - pull_request
