@@ -404,7 +404,6 @@ class GcpCredsSetter:
             Tuple containing user credentials and project name
         """
         user_creds, _ = google.auth.default()
-
         if user_creds is None:
             logger.info("No gcp credentials found. Using defaults")
 
