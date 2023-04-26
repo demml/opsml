@@ -114,7 +114,7 @@ class OpsmlProject:
     def metrics(self) -> METRICS:
         return self.run_data.metrics
 
-    def get_metric(self, name: str):  # type this later
+    def get_metric(self, name: str) -> Union[List[Metric], Metric]:  # type this later
         """
         Get metric by name
 
@@ -131,7 +131,7 @@ class OpsmlProject:
     def params(self) -> PARAMS:
         return self.run_data.params
 
-    def get_param(self, name: str):  # type this later
+    def get_param(self, name: str) -> Union[List[Param], Param]:  # type this later
         """
         Get param by name
 
