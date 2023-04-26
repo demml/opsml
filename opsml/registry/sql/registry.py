@@ -6,7 +6,7 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardType
+from opsml.registry.cards.types import CardType, CardInfo
 
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
@@ -194,6 +194,7 @@ class CardRegistry:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
+        info: Optional[CardInfo] = None,
     ) -> ArtifactCard:
         """Loads a specific card
 
@@ -212,6 +213,13 @@ class CardRegistry:
         Returns
             ArtifactCard
         """
+
+        # find better way to do this later
+        if info is not None:
+            name = name or info.name
+            team = team or info.team
+            uid = uid or info.uid
+            version = version or info.version
 
         return self._registry.load_card(uid=uid, name=name, team=team, version=version)
 

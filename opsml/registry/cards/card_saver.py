@@ -306,7 +306,6 @@ class RunCardArtifactSaver(CardArtifactSaver):
             artifact=self.card.dict(exclude={"artifacts", "storage_client"}),
             storage_client=self.storage_client,
         )
-
         self.card.runcard_uri = storage_path.uri
 
     def _save_run_artifacts(self) -> None:
