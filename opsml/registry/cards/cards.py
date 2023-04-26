@@ -880,10 +880,9 @@ class RunCard(ArtifactCard):
 
             if len(metric) > 1:
                 return metric
-            elif len(metric) == 1:
+            if len(metric) == 1:
                 return metric[0]
-            else:
-                return metric
+            return metric
 
         raise ValueError(f"Metric {metric} is not defined")
 
@@ -904,10 +903,9 @@ class RunCard(ArtifactCard):
 
             if len(param) > 1:
                 return param
-            elif len(param) == 1:
+            if len(param) == 1:
                 return param[0]
-            else:
-                return param
+            return param
 
         raise ValueError(f"Param {param} is not defined")
 

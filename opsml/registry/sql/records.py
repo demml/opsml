@@ -299,7 +299,7 @@ class LoadedRunRecord(LoadRecord):
         cls,
         artifact_uris: Dict[str, Any],
         storage_client: StorageClientType,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """Loads run artifacts to pydantic model"""
 
         loaded_artifacts: Dict[str, Any] = {}

@@ -1,6 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Optional, Union, cast
+from typing import Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler

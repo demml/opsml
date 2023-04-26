@@ -315,6 +315,7 @@ class ApiStorageClient(LocalStorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
+
         files = {"file": open(os.path.join(local_dir, filename), "rb")}  # pylint: disable=consider-using-with
         headers = {"Filename": filename, "WritePath": write_dir}
 

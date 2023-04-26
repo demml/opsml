@@ -241,9 +241,9 @@ def download_model(request: Request, payload: DownloadModelRequest) -> Streaming
 async def upload_file(request: Request):
     """Uploads files in chunks to storage destination"""
 
-    body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
     filename = request.headers.get("Filename")
     write_path = request.headers.get("WritePath")
+    body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
     if filename is None:
         raise HTTPException(
@@ -299,7 +299,6 @@ async def upload_file(request: Request):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File is missing",
         )
-
     return {
         "storage_uri": os.path.join(write_path, filename),
     }

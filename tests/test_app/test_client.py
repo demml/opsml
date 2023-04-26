@@ -71,28 +71,54 @@ def test_register_data(api_registries, test_data, data_splits):
         registry.list_cards()
 
 
+def test_register_large_data(api_registries):
+
+    import numpy as np
+
+    # create a numpy 1d-array
+    x = np.random.rand(500000, 100)
+    size = (x.size * x.itemsize) / 1_000_000_000
+
+    # create data card
+    registry = api_registries.data
+
+    data_card = DataCard(
+        data=x,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    registry.register_card(card=data_card)
+
+    loaded_card = registry.load_card(uid=data_card.uid)
+    loaded_card.load_data()
+
+    assert (loaded_card.data == x).all()
+    assert loaded_card.data.shape == x.shape
+
+
 def test_run_card(linear_regression, api_registries):
 
     registry = api_registries.run
 
-    experiment = RunCard(
+    run = RunCard(
         name="test_df",
         team="mlops",
         user_email="mlops.com",
         datacard_uids=["test_uid"],
     )
-    experiment.log_metric("test_metric", 10)
-    experiment.log_metrics({"test_metric2": 20})
-    assert experiment.metrics.get("test_metric") == 10
-    assert experiment.metrics.get("test_metric2") == 20
+    run.log_metric("test_metric", 10)
+    run.log_metrics({"test_metric2": 20})
+    assert run.get_metric("test_metric").value == 10
+    assert run.get_metric("test_metric2").value == 20
     # save artifacts
     model, _ = linear_regression
-    experiment.log_artifact("reg_model", artifact=model)
-    assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
-    registry.register_card(card=experiment)
+    run.log_artifact("reg_model", artifact=model)
+    assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+    registry.register_card(card=run)
 
-    loaded_card = registry.load_card(uid=experiment.uid)
-    assert loaded_card.uid == experiment.uid
+    loaded_card = registry.load_card(uid=run.uid)
+    assert loaded_card.uid == run.uid
 
 
 def test_register_model(api_registries, sklearn_pipeline):
@@ -269,7 +295,7 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
     pipeline_code_uri = "test_pipe_uri"
     data_registry = api_registries.data
     model_registry = api_registries.model
-    experiment_registry = api_registries.run
+    run_registry = api_registries.run
     pipeline_registry = api_registries.pipeline
     model, data = linear_regression
 
@@ -295,15 +321,15 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
     model_registry.register_card(model_card)
 
     ##### RunCard
-    exp_card = RunCard(
+    run = RunCard(
         name="test_experiment",
         team=team,
         user_email=user_email,
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
     )
-    exp_card.log_metric("test_metric", 10)
-    experiment_registry.register_card(card=exp_card)
+    run.log_metric("test_metric", 10)
+    run_registry.register_card(card=run)
     #### PipelineCard
     pipeline_card = PipelineCard(
         name="test_pipeline",
@@ -312,7 +338,7 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
         pipeline_code_uri=pipeline_code_uri,
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
-        runcard_uids=[exp_card.uid],
+        runcard_uids=[run.uid],
     )
     pipeline_registry.register_card(card=pipeline_card)
 
@@ -320,7 +346,7 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
     uids = loader.card_uids
 
     assert uids["data"][0] == data_card.uid
-    assert uids["run"][0] == exp_card.uid
+    assert uids["run"][0] == run.uid
     assert uids["model"][0] == model_card.uid
 
 

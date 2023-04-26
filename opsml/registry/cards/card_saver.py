@@ -1,7 +1,7 @@
 import os
-from functools import cached_property
-from typing import Dict, cast, Optional
 from enum import Enum
+from functools import cached_property
+from typing import Dict, Optional, cast
 
 from opsml.registry.cards.cards import (
     ArtifactCard,
@@ -56,6 +56,10 @@ class CardArtifactSaver:
     @save_path.setter
     def save_path(self, save_path: str) -> None:
         self.storage_client.storage_spec.save_path = save_path
+
+    @property
+    def storage_spec(self) -> ArtifactStorageSpecs:
+        return self.storage_client.storage_spec
 
     def save_artifacts(self) -> ArtifactCard:
         raise NotImplementedError
@@ -245,6 +249,8 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             uri=self.card.trained_model_uri,
         )
 
+        self.storage_spec.sample_data = self.card.sample_input_data
+
         storage_path = save_record_artifact_to_storage(
             artifact=self.card.trained_model,
             artifact_type=self.card.model_type,
@@ -303,7 +309,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
         self.card.runcard_uri = storage_path.uri
 
-    def _save_run_artifacts(self) -> ArtifactCard:
+    def _save_run_artifacts(self) -> None:
         """Saves all artifacts associated with RunCard to filesystem"""
 
         # check if artifacts have already been saved (Mlflow runs save artifacts during run)

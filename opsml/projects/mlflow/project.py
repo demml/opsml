@@ -1,6 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Optional, Union, cast
+from typing import Iterator, List, Optional, Union, cast
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
@@ -111,7 +111,7 @@ class MlflowProject(OpsmlProject):
 
     @property
     def metrics(self) -> METRICS:
-        metrics: Dict[str, Metric] = {}
+        metrics: METRICS = {}
         for key, value in self.run_data.metrics.items():
             metrics[key] = [Metric(name=key, value=value)]  # keep consistency with RunCard type
         return metrics
@@ -127,11 +127,16 @@ class MlflowProject(OpsmlProject):
             `Metric`
 
         """
-        return self.metrics.get(name)[0]
+        metric = self.metrics.get(name)
+
+        if metric is not None:
+            return metric[0]
+
+        raise ValueError(f"Metric {name} not found")
 
     @property
     def params(self) -> PARAMS:
-        params: Dict[str, Param] = {}
+        params: PARAMS = {}
         for key, value in self.run_data.params.items():
             params[key] = [Param(name=key, value=value)]
         return params
@@ -147,7 +152,11 @@ class MlflowProject(OpsmlProject):
             `Param`
 
         """
-        return self.params.get(name)[0]
+        param = self.params.get(name)
+        if param is not None:
+            return param[0]
+
+        raise ValueError(f"Param {name} not found")
 
     @property
     def tags(self) -> dict[str, str]:
