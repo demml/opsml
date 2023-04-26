@@ -112,16 +112,14 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
         run.log_metric(key="m2", value=1.2)
         run.log_param(key="m2", value="banana")
 
-    print(run.metrics)
-
     read_project = conftest.mock_opsml_project(info)
 
     assert len(read_project.metrics) == 2
-    assert read_project.metrics["m1"] == 1.1
-    assert read_project.metrics["m2"] == 1.2
+    assert read_project.get_metric("m1").value == 1.1
+    assert read_project.get_metric("m2").value == 1.2
     assert len(read_project.params) == 2
-    assert read_project.params["m1"] == "apple"
-    assert read_project.params["m2"] == "banana"
+    assert read_project.get_param("m1").value == "apple"
+    assert read_project.get_param("m2").value == "banana"
 
 
 def _test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:

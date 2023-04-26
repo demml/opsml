@@ -116,7 +116,7 @@ class ModelCardRegistry(Registry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class RunCardRegistry(OpsmlRegistry):  # type:ignore
+class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.RUN
@@ -286,10 +286,7 @@ class CardRegistry:
             save_path=save_path,
         )
 
-    def update_card(
-        self,
-        card: ArtifactCard,
-    ) -> None:
+    def update_card(self, card: ArtifactCard) -> None:
         """
         Update an artifact card based on current registry
 
@@ -297,7 +294,6 @@ class CardRegistry:
             card:
                 Card to register
         """
-
         return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:

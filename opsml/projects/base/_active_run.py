@@ -61,7 +61,6 @@ class CardHandler:
     def update_card(registries: CardRegistries, card: ArtifactCard) -> None:
         """Updates an ArtifactCard"""
         registry: CardRegistry = getattr(registries, card.card_type)
-        a
         registry.update_card(card=card)
 
 
