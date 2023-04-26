@@ -15,9 +15,7 @@ from tests import conftest
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def _test_opsml_read_only(
-    opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
-) -> None:
+def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
 
