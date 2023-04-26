@@ -1,13 +1,20 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, cast, Union, Dict
+from typing import Dict, Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler
 from opsml.projects.base._run_manager import _RunManager
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry.cards.cards import ArtifactCard, RunCard
-from opsml.registry.cards.types import CardInfo, CardType, METRICS, Metric, Param, PARAMS
+from opsml.registry.cards.types import (
+    METRICS,
+    PARAMS,
+    CardInfo,
+    CardType,
+    Metric,
+    Param,
+)
 
 logger = ArtifactLogger.get_logger(__name__)
 

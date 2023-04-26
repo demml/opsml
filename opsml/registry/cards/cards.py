@@ -7,8 +7,15 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath, clean_string, TypeChecker
-from opsml.registry.cards.types import CardInfo, CardType, Metric, METRICS, PARAMS, Param
+from opsml.helpers.utils import FindPath, TypeChecker, clean_string
+from opsml.registry.cards.types import (
+    METRICS,
+    PARAMS,
+    CardInfo,
+    CardType,
+    Metric,
+    Param,
+)
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.model.types import (

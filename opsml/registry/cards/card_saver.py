@@ -1,6 +1,7 @@
+import os
 from functools import cached_property
 from typing import Dict, cast
-import os
+
 from opsml.registry.cards.cards import (
     ArtifactCard,
     DataCard,

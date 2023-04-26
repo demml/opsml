@@ -1,6 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Iterator, Optional, cast, Union, List, Dict
+from typing import Dict, Iterator, List, Optional, Union, cast
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
@@ -13,7 +13,7 @@ from opsml.projects.base.project import OpsmlProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.projects.mlflow._active_run import MlflowActiveRun
 from opsml.projects.mlflow._run_manager import _MlflowRunManager
-from opsml.registry.cards.types import Metric, Param, METRICS, PARAMS
+from opsml.registry.cards.types import METRICS, PARAMS, Metric, Param
 
 logger = ArtifactLogger.get_logger(__name__)
 
