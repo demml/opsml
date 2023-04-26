@@ -32,6 +32,7 @@ from opsml.registry.sql.records import (
     ProjectRegistryRecord,
     RegistryRecord,
     RunRegistryRecord,
+    ARBITRARY_ARTIFACT_TYPE,
 )
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -908,6 +909,16 @@ class RunCard(ArtifactCard):
             return param
 
         raise ValueError(f"Param {param} is not defined")
+
+    def load_artifacts(self) -> None:
+        if bool(self.artifact_uris):
+            for name, uri in self.artifact_uris.items():
+                storage_spec = ArtifactStorageSpecs(save_path=uri)
+                self.storage_client.storage_spec = storage_spec
+                self.artifacts[name] = load_record_artifact_from_storage(
+                    storage_client=self.storage_client,
+                    artifact_type=ARBITRARY_ARTIFACT_TYPE,
+                )
 
     @property
     def card_type(self) -> str:

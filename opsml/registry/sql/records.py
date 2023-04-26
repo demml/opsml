@@ -246,7 +246,7 @@ class LoadedRunRecord(LoadRecord):
     modelcard_uids: Optional[List[str]]
     pipelinecard_uid: Optional[str]
     artifact_uris: Dict[str, str]
-    artifacts: Dict[str, Any]
+    artifacts: Dict[str, Any] = {}
     metrics: METRICS
     project_id: Optional[str]
     params: PARAMS
@@ -254,7 +254,7 @@ class LoadedRunRecord(LoadRecord):
     runcard_uri: str
 
     @root_validator(pre=True)
-    def load_exp_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+    def load_run_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
         storage_client = cast(StorageClientType, values["storage_client"])
 
         runcard_definition = cls.load_runcard_definition(
@@ -262,13 +262,8 @@ class LoadedRunRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        loaded_artifacts = cls.load_artifacts(
-            artifact_uris=values.get("artifact_uris"),
-            storage_client=storage_client,
-        )
-
         runcard_definition["runcard_uri"] = values.get("runcard_uri")
-        runcard_definition["artifacts"] = loaded_artifacts
+        runcard_definition["storage_client"] = values.get("storage_client")
 
         return runcard_definition
 
@@ -293,27 +288,6 @@ class LoadedRunRecord(LoadRecord):
         )
 
         return runcard_definition
-
-    @classmethod
-    def load_artifacts(
-        cls,
-        artifact_uris: Dict[str, Any],
-        storage_client: StorageClientType,
-    ) -> Dict[str, Any]:
-        """Loads run artifacts to pydantic model"""
-
-        loaded_artifacts: Dict[str, Any] = {}
-
-        if not bool(artifact_uris):
-            for name, uri in artifact_uris.items():
-                storage_spec = ArtifactStorageSpecs(save_path=uri)
-                storage_client.storage_spec = storage_spec
-
-                loaded_artifacts[name] = load_record_artifact_from_storage(
-                    storage_client=storage_client,
-                    artifact_type=ARBITRARY_ARTIFACT_TYPE,
-                )
-        return loaded_artifacts
 
     @staticmethod
     def validate_table(table_name: str) -> bool:

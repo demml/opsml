@@ -4,7 +4,8 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
-
+import matplotlib.pyplot as plt
+import numpy as np
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
@@ -42,12 +43,21 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
             datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
+
+        # save and artifact
+        array = np.random.random((10, 10))
+        run.log_artifact(name="array", artifact=array)
+
         info.run_id = run.run_id
 
         assert data_card.runcard_uid == run.run_id
 
     # Retrieve the run and load projects without making the run active (read only mode)
     proj = conftest.mock_opsml_project(info)
+
+    runcard = proj.run_data
+    runcard.load_artifacts()
+    assert (runcard.artifacts.get("array") == array).all()
 
     assert len(proj.metrics) == 1
     assert proj.get_metric("m1").value == 1.1
