@@ -1,13 +1,13 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, cast
+from typing import Iterator, List, Optional, cast, Union, Dict
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler
 from opsml.projects.base._run_manager import _RunManager
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry.cards.cards import ArtifactCard, RunCard
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.registry.cards.types import CardInfo, CardType, METRICS, Metric, Param, PARAMS
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -111,12 +111,38 @@ class OpsmlProject:
         return cast(RunCard, self._run_mgr.registries.run.load_card(uid=self.run_id))
 
     @property
-    def metrics(self) -> dict[str, float]:
+    def metrics(self) -> METRICS:
         return self.run_data.metrics
 
+    def get_metric(self, name: str):  # type this later
+        """
+        Get metric by name
+
+        Args:
+            name: str
+
+        Returns:
+            List of Metric or Metric
+
+        """
+        return self.run_data.get_metric(name=name)
+
     @property
-    def params(self) -> dict[str, str]:
+    def params(self) -> PARAMS:
         return self.run_data.params
+
+    def get_param(self, name: str):  # type this later
+        """
+        Get param by name
+
+        Args:
+            name: str
+
+        Returns:
+            List of Param or Param
+
+        """
+        return self.run_data.get_param(name=name)
 
     @property
     def tags(self) -> dict[str, str]:

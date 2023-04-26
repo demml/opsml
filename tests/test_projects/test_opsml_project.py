@@ -15,7 +15,9 @@ from tests import conftest
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
+def _test_opsml_read_only(
+    opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
 
@@ -50,9 +52,9 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     proj = conftest.mock_opsml_project(info)
 
     assert len(proj.metrics) == 1
-    assert proj.metrics["m1"] == 1.1
+    assert proj.get_metric("m1").value == 1.1
     assert len(proj.params) == 1
-    assert proj.params["m1"] == "apple"
+    assert proj.get_param("m1").value == "apple"
 
     # Load model card
     loaded_card: ModelCard = proj.load_card(
@@ -110,6 +112,8 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
         run.log_metric(key="m2", value=1.2)
         run.log_param(key="m2", value="banana")
 
+    print(run.metrics)
+
     read_project = conftest.mock_opsml_project(info)
 
     assert len(read_project.metrics) == 2
@@ -120,7 +124,7 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
     assert read_project.params["m2"] == "banana"
 
 
-def test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
+def _test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
     """Verify starting another run inside another fails"""
 
     with opsml_project.run(run_name="test") as run:

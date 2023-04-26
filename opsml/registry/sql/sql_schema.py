@@ -93,8 +93,7 @@ class RunMixin:
     pipelinecard_uid = Column("pipelinecard_uid", String(512))
     project_id = Column("project_id", String(512))
     artifact_uris = Column("artifact_uris", JSON)
-    metrics = Column("metrics", JSON)
-    params = Column("params", JSON)
+    runcard_uri = Column("runcard_uri", String(512))
     tags = Column("tags", JSON)
 
 
