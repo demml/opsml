@@ -59,6 +59,7 @@ class ArtifactClass(str, Enum):
 class DataArtifactNames(str, Enum):
     PARQUET = "parquet"
     ZARR = "zarr"
+    DATACARD = "datacard"
 
 
 class ModelArtifactNames(str, Enum):
@@ -553,7 +554,7 @@ class MlflowStorageClient(StorageClient):
         )
 
         self._run_id: Optional[str] = None
-        self._artifact_path: Optional[str] = None
+        self._artifact_path: str = "mlflow-artifacts:/"
         self._mlflow_client: Optional[MlFlowClientProto] = None
 
     def open(self, filename: str, mode: str):
@@ -593,21 +594,34 @@ class MlflowStorageClient(StorageClient):
 
         return save_path, filename
 
+    def swap_proxy_root(self, rpath: str) -> str:
+        """Swaps the realpath with the expected mlflow proxy path"""
+
+        if "http" in self.mlflow_client.tracking_uri:
+
+            proxy_root = Path(self.artifact_path).parts[0]
+            artifact_path = "/".join(Path(rpath).parts[2:])
+
+            download_path = os.path.join(proxy_root, artifact_path)
+
+            return download_path
+
+        return rpath
+
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         import mlflow
 
-        # temp_path = Path("temp")
         temp_path = lpath
 
         if not recursive:
             filename = os.path.basename(lpath)
             temp_path = f"{temp_path}/{filename}"
 
-        # temp_path.mkdir(parents=True, exist_ok=True)
-        # abs_temp_path = str(temp_path.resolve())
+        download_path = self.swap_proxy_root(rpath=rpath)
+
         abs_temp_path = temp_path
         file_path = mlflow.artifacts.download_artifacts(
-            artifact_uri=rpath,
+            artifact_uri=download_path,
             dst_path=abs_temp_path,
             tracking_uri=self.mlflow_client.tracking_uri,
         )

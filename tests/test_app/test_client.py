@@ -5,7 +5,7 @@ import pandas as pd
 from pydantic import ValidationError
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard
 import uuid
-import random
+import tenacity
 import json
 
 
@@ -65,6 +65,10 @@ def test_register_data(api_registries, test_data, data_splits):
 
     df = registry.list_cards()
     assert isinstance(df, pd.DataFrame)
+
+    with pytest.raises(tenacity.RetryError):
+        registry._registry.table_name = "no_table"
+        registry.list_cards()
 
 
 def test_run_card(linear_regression, api_registries):
@@ -224,6 +228,13 @@ def test_load_data_card(api_registries, test_data):
             additional_info={"input_metadata": 20},
             dependent_vars=[200, "test"],
         )
+
+    # load card again
+    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version="1.2.0")
+    loaded_data.data_uri = "fail"
+
+    with pytest.raises(tenacity.RetryError):
+        loaded_data.load_data()
 
 
 def test_pipeline_registry(api_registries):
