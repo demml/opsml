@@ -1,7 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Extra, root_validator, validator
+from pydantic import BaseModel, Extra, root_validator
 
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -13,17 +13,12 @@ ARBITRARY_ARTIFACT_TYPE = "dict"
 
 class DataRegistryRecord(BaseModel):
     data_uri: str
-    data_splits: Optional[Dict[str, List[Dict[str, Any]]]]
     version: str
     data_type: str
     name: str
     team: str
-    feature_map: Dict[str, str]
-    feature_descriptions: Optional[Dict[str, str]]
     user_email: str
     uid: Optional[str]
-    additional_info: Optional[Dict[str, Union[float, int, str]]]
-    dependent_vars: Optional[List[Union[int, str]]]
     timestamp: int = int(round(time.time() * 1_000_000))
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
@@ -31,12 +26,6 @@ class DataRegistryRecord(BaseModel):
 
     class Config:
         smart_union = True
-
-    @validator("data_splits", pre=True)
-    def convert_to_dict(cls, splits):  # pylint: disable=no-self-argument
-        if bool(splits):
-            return {"splits": splits}
-        return None
 
 
 class ModelRegistryRecord(BaseModel):
