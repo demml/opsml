@@ -117,18 +117,6 @@ class ModelCardRegistry(Registry):
 
 
 class RunCardRegistry(OpsmlRegistry):  # type:ignore
-    def update_card(self, card: RunCard) -> None:
-        """
-        Updates an existing experiment card in the registry.
-
-        Args:
-            card:
-                Existing experiment card
-        """
-
-        record = RunRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.RUN
@@ -303,18 +291,13 @@ class CardRegistry:
         card: ArtifactCard,
     ) -> None:
         """
-        Update and artifact card (DataCard only) based on current registry
+        Update an artifact card based on current registry
 
         Args:
             card:
                 Card to register
         """
 
-        if not hasattr(self._registry, "update_card"):
-            raise ValueError(f"""{card.__class__.__name__} has no 'update_card' attribute""")
-
-        self._registry = cast(DataCardRegistry, self._registry)
-        card = cast(DataCard, card)
         return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
