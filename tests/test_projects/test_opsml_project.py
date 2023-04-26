@@ -122,7 +122,7 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
     assert read_project.get_param("m2").value == "banana"
 
 
-def _test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
+def test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
     """Verify starting another run inside another fails"""
 
     with opsml_project.run(run_name="test") as run:
