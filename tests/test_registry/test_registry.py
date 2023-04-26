@@ -156,28 +156,42 @@ def test_semver_registry_list(db_registries, test_array):
     assert card.version == "2.12.0"
 
 
-def test_experiment_card(linear_regression, db_registries):
+def test_runcard(linear_regression, db_registries):
 
     registry: CardRegistry = db_registries["run"]
-    experiment = RunCard(
+    run = RunCard(
         name="test_df",
         team="mlops",
         user_email="mlops.com",
         datacard_uids=["test_uid"],
     )
-    experiment.log_metric("test_metric", 10)
-    experiment.log_metrics({"test_metric2": 20})
-    assert experiment.get_metric("test_metric").value == 10
-    assert experiment.get_metric("test_metric2").value == 20
+    run.log_metric("test_metric", 10)
+    run.log_metrics({"test_metric2": 20})
+    assert run.get_metric("test_metric").value == 10
+    assert run.get_metric("test_metric2").value == 20
     # save artifacts
     model, _ = linear_regression
-    experiment.log_artifact("reg_model", artifact=model)
-    assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
-    registry.register_card(card=experiment)
-    loaded_card = registry.load_card(uid=experiment.uid)
-    assert loaded_card.uid == experiment.uid
+    run.log_artifact("reg_model", artifact=model)
+    assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+    registry.register_card(card=run)
+    loaded_card = registry.load_card(uid=run.uid)
+    assert loaded_card.uid == run.uid
     assert loaded_card.get_metric("test_metric").value == 10
     assert loaded_card.get_metric("test_metric2").value == 20
+
+    with pytest.raises(ValueError):
+        loaded_card.get_metric("test")
+
+    with pytest.raises(ValueError):
+        loaded_card.get_param("test")
+
+    # metrics take floats, ints
+    with pytest.raises(ValueError):
+        loaded_card.log_metric("test_fail", "10")
+
+    # params take floats, ints, str
+    with pytest.raises(ValueError):
+        loaded_card.log_param("test_fail", model)
 
 
 def test_local_model_registry(db_registries, sklearn_pipeline):

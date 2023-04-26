@@ -1,6 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Iterator, Optional, cast, Union
+from typing import Iterator, Optional, cast, Union, List, Dict
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
@@ -13,6 +13,7 @@ from opsml.projects.base.project import OpsmlProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.projects.mlflow._active_run import MlflowActiveRun
 from opsml.projects.mlflow._run_manager import _MlflowRunManager
+from opsml.registry.cards.types import Metric, Param, METRICS, PARAMS
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -109,10 +110,13 @@ class MlflowProject(OpsmlProject):
         )
 
     @property
-    def metrics(self) -> dict[str, Union[int, float]]:
-        return self.run_data.metrics
+    def metrics(self) -> METRICS:
+        metrics: Dict[str, Metric] = {}
+        for key, value in self.run_data.metrics.items():
+            metrics[key] = [Metric(name=key, value=value)]  # keep consistency with RunCard type
+        return metrics
 
-    def get_metric(self, name: str):
+    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
         """
         Get metric by name
 
@@ -120,12 +124,19 @@ class MlflowProject(OpsmlProject):
             name: str
 
         Returns:
-            Float or Int
+            `Metric`
 
         """
-        return self.run_data.metrics.get(name)
+        return self.metrics.get(name)[0]
 
-    def get_param(self, name: str):  # type this later
+    @property
+    def params(self) -> PARAMS:
+        params: Dict[str, Param] = {}
+        for key, value in self.run_data.params.items():
+            params[key] = [Param(name=key, value=value)]
+        return params
+
+    def get_param(self, name: str) -> Union[List[Param], Param]:
         """
         Get param by name
 
@@ -133,14 +144,10 @@ class MlflowProject(OpsmlProject):
             name: str
 
         Returns:
-            List of Param or Param
+            `Param`
 
         """
-        return self.run_data.params.get(name)
-
-    @property
-    def params(self) -> dict[str, str]:
-        return self.run_data.params
+        return self.params.get(name)[0]
 
     @property
     def tags(self) -> dict[str, str]:
