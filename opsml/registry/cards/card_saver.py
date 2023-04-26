@@ -1,6 +1,6 @@
 from functools import cached_property
 from typing import Dict, cast
-
+import os
 from opsml.registry.cards.cards import (
     ArtifactCard,
     DataCard,
@@ -232,7 +232,26 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(RunCard, self._card)
 
-    def save_artifacts(self) -> ArtifactCard:
+    def _save_runcard(self):
+        """Saves a runcard"""
+
+        storage_spec = self._copy_artifact_storage_info()
+
+        # for updates
+        if self.card.runcard_uri is not None:
+            storage_spec.save_path = os.path.dirname(self.card.runcard_uri)
+
+        storage_spec.filename = "runcard"
+        self.storage_client.storage_spec = storage_spec
+
+        storage_path = save_record_artifact_to_storage(
+            artifact=self.card.dict(exclude={"artifacts", "storage_client"}),
+            storage_client=self.storage_client,
+        )
+
+        self.card.runcard_uri = storage_path.uri
+
+    def _save_run_artifacts(self) -> ArtifactCard:
         """Saves all artifacts associated with RunCard to filesystem"""
 
         # check if artifacts have already been saved (Mlflow runs save artifacts during run)
@@ -248,6 +267,10 @@ class RunCardArtifactSaver(CardArtifactSaver):
                     artifact_uris[name] = storage_path.uri
 
             self.card.artifact_uris = artifact_uris
+
+    def save_artifacts(self) -> ArtifactCard:
+        self._save_run_artifacts()
+        self._save_runcard()
 
         return self.card
 

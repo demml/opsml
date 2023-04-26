@@ -195,6 +195,21 @@ class SQLRegistryBase:
         if card.uid is None:
             card.uid = self._get_uid()
 
+    def _update_registry_record(self, card: ArtifactCard) -> None:
+        """
+        Updates a registry record from a given ArtifactCard.
+        Saves artifacts prior to creating record
+
+        Args:
+            card:
+                Card to create a registry record from
+        """
+
+        card = save_card_artifacts(card=card, storage_client=self.storage_client)
+
+        record = card.create_registry_record()
+        self.update_record(record=record)
+
     def _create_registry_record(self, card: ArtifactCard) -> None:
         """
         Creates a registry record from a given ArtifactCard.
@@ -234,6 +249,16 @@ class SQLRegistryBase:
         self._set_card_uid_version(card=card, version_type=version_type)
         self._set_artifact_storage_spec(card=card, save_path=save_path)
         self._create_registry_record(card=card)
+
+    def update_card(self, card: ArtifactCard) -> None:
+        """
+        Updates a registry record.
+
+        Args:
+            Card:
+                Card to update
+        """
+        self._update_registry_record(card=card)
 
     def list_cards(
         self,
