@@ -169,6 +169,7 @@ def test_runcard(linear_regression, db_registries):
     run.log_metrics({"test_metric2": 20})
     assert run.get_metric("test_metric").value == 10
     assert run.get_metric("test_metric2").value == 20
+
     # save artifacts
     model, _ = linear_regression
     run.log_artifact("reg_model", artifact=model)
@@ -192,6 +193,17 @@ def test_runcard(linear_regression, db_registries):
     # params take floats, ints, str
     with pytest.raises(ValueError):
         loaded_card.log_param("test_fail", model)
+
+    # test updating
+    loaded_card.log_metric("updated_metric", 20)
+    registry.update_card(card=loaded_card)
+
+    # should be same runid
+    loaded_card = registry.load_card(uid=run.uid)
+    assert loaded_card.get_metric("updated_metric").value == 20
+    print(loaded_card.runcard_uri)
+    print(run.runcard_uri)
+    assert loaded_card.runcard_uri == run.runcard_uri
 
 
 def test_local_model_registry(db_registries, sklearn_pipeline):

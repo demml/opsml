@@ -10,14 +10,12 @@ from opsml.registry.cards.cards import (
     DataCard,
     ModelCard,
     PipelineCard,
-    RunCard,
 )
 from opsml.registry.cards.types import CardType
 from opsml.registry.sql.records import (
     DataRegistryRecord,
     ModelRegistryRecord,
     PipelineRegistryRecord,
-    RunRegistryRecord,
 )
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
@@ -35,34 +33,12 @@ else:
 
 
 class DataCardRegistry(Registry):
-    def update_card(self, card: DataCard) -> None:
-        """
-        Updates an existing data card in the data registry.
-
-        Args:
-            data_card:
-                Existing data card record
-        """
-
-        record = DataRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.DATA
 
 
 class ModelCardRegistry(Registry):
-    def update_card(self, card: ModelCard) -> None:
-        """Updates an existing model card.
-
-        Args:
-            model_card: Existing model card record
-        """
-
-        record = ModelRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
@@ -123,18 +99,6 @@ class RunCardRegistry(Registry):  # type:ignore
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
-    def update_card(self, card: PipelineCard) -> None:
-        """
-        Updates an existing pipeline card in the pipeline registry.
-
-        Args:
-            card:
-                Existing pipeline card
-        """
-
-        record = PipelineRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PIPELINE
