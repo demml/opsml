@@ -7,8 +7,8 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath, clean_string
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.helpers.utils import FindPath, clean_string, TypeChecker
+from opsml.registry.cards.types import CardInfo, CardType, Metric, METRICS, PARAMS, Param
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.model.types import (
@@ -696,12 +696,13 @@ class RunCard(ArtifactCard):
     datacard_uids: List[str] = []
     modelcard_uids: List[str] = []
     pipelinecard_uid: Optional[str]
-    metrics: Dict[str, Union[float, int]] = {}
-    params: Dict[str, Union[float, int, str]] = {}
+    metrics: METRICS = {}
+    params: PARAMS = {}
     artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
     project_id: Optional[str]
+    runcard_uri: Optional[str]
 
     def add_tag(self, key: str, value: str):
         """
@@ -733,7 +734,10 @@ class RunCard(ArtifactCard):
             params:
                 Dictionary of parameters
         """
-        self.params = {**params, **self.params}
+
+        for key, value in params.items():
+            # check key
+            self.log_param(key, value)
 
     def log_param(self, key: str, value: Union[int, float, str]):
         """
@@ -745,7 +749,15 @@ class RunCard(ArtifactCard):
             value:
                 Param value
         """
-        self.params = {**{key: value}, **self.params}
+
+        TypeChecker.check_param_type(param=value)
+        param = Param(name=key, value=value)
+
+        if self.params.get(key) is not None:
+            self.params[key].append(param)
+
+        else:
+            self.params[key] = [param]
 
     def log_metric(
         self,
@@ -768,15 +780,13 @@ class RunCard(ArtifactCard):
                 Optional step associated with name and value
         """
 
-        metrics = {key: value}
+        TypeChecker.check_metric_type(metric=value)
+        metric = Metric(name=key, value=value, timestamp=timestamp, step=step)
 
-        if timestamp is not None:
-            metrics["timestamp"] = timestamp
-
-        if step is not None:
-            metrics["step"] = step
-
-        self.metrics = {**metrics, **self.metrics}
+        if self.metrics.get(key) is not None:
+            self.metrics[key].append(metric)
+        else:
+            self.metrics[key] = [metric]
 
     def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
         """
@@ -788,7 +798,8 @@ class RunCard(ArtifactCard):
                 to add to the current metric set
         """
 
-        self.metrics = {**metrics, **self.metrics}
+        for key, value in metrics.items():
+            self.log_metric(key, value)
 
     def log_artifact(self, name: str, artifact: Any) -> None:
         """
@@ -812,7 +823,7 @@ class RunCard(ArtifactCard):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current RunCard"""
 
-        exclude_attr = {"artifacts", "storage_client"}
+        exclude_attr = {"artifacts", "storage_client", "params", "metrics"}
 
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
@@ -844,6 +855,54 @@ class RunCard(ArtifactCard):
             self.datacard_uids = [uid, *self.datacard_uids]
         elif card_type == CardType.MODELCARD:
             self.modelcard_uids = [uid, *self.modelcard_uids]
+
+    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
+        """
+        Gets a metric by name
+
+        Args:
+            name:
+                Name of metric
+
+        Returns:
+            List of dictionaries or dictionary containing value
+
+        """
+        metric = self.metrics.get(name)
+        if metric is not None:
+
+            if len(metric) > 1:
+                return metric
+            elif len(metric) == 1:
+                return metric[0]
+            else:
+                return metric
+
+        raise ValueError(f"Metric {metric} is not defined")
+
+    def get_param(self, name: str) -> Union[List[Param], Param]:
+        """
+        Gets a metric by name
+
+        Args:
+            name:
+                Name of param
+
+        Returns:
+            List of dictionaries or dictionary containing value
+
+        """
+        param = self.params.get(name)
+        if param is not None:
+
+            if len(param) > 1:
+                return param
+            elif len(param) == 1:
+                return param[0]
+            else:
+                return param
+
+        raise ValueError(f"Param {param} is not defined")
 
     @property
     def card_type(self) -> str:

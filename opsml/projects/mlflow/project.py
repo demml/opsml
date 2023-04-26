@@ -1,6 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Iterator, Optional, cast
+from typing import Iterator, Optional, cast, Union
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
@@ -109,8 +109,34 @@ class MlflowProject(OpsmlProject):
         )
 
     @property
-    def metrics(self) -> dict[str, float]:
+    def metrics(self) -> dict[str, Union[int, float]]:
         return self.run_data.metrics
+
+    def get_metric(self, name: str):
+        """
+        Get metric by name
+
+        Args:
+            name: str
+
+        Returns:
+            Float or Int
+
+        """
+        return self.run_data.metrics.get(name)
+
+    def get_param(self, name: str):  # type this later
+        """
+        Get param by name
+
+        Args:
+            name: str
+
+        Returns:
+            List of Param or Param
+
+        """
+        return self.run_data.params.get(name)
 
     @property
     def params(self) -> dict[str, str]:

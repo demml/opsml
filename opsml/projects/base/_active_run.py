@@ -61,6 +61,7 @@ class CardHandler:
     def update_card(registries: CardRegistries, card: ArtifactCard) -> None:
         """Updates an ArtifactCard"""
         registry: CardRegistry = getattr(registries, card.card_type)
+        a
         registry.update_card(card=card)
 
 
@@ -242,6 +243,7 @@ class ActiveRun:
         """Creates or updates an active RunCard"""
 
         self._verify_active()
+
         if self.runcard.uid is not None and self.runcard.version is not None:
             CardHandler.update_card(registries=self._info.registries, card=self.runcard)
         else:
