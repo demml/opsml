@@ -53,13 +53,11 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     # Retrieve the run and load projects without making the run active (read only mode)
 
     proj = conftest.mock_mlflow_project(info)
-    assert len(proj.metrics) == 1
+    assert len(proj.metrics) == 2
 
-    print(run.run_data)
-    print(proj.metrics)
-    assert proj.metrics["m1"] == 1.1
-    # assert len(proj.params) == 1
-    # assert proj.params["m1"] == "apple"
+    assert proj.get_metric("m1").value == 1.1
+    assert len(proj.params) == 1
+    assert proj.get_param("m1").value == "apple"
     #
     ## Load model card
     # loaded_card: ModelCard = proj.load_card(
