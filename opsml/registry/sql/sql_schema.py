@@ -53,12 +53,7 @@ class BaseMixin:
 @declarative_mixin
 class DataMixin:
     data_uri = Column("data_uri", String(2048))
-    feature_map = Column("feature_map", JSON)
-    feature_descriptions = Column("feature_descriptions", JSON)
-    data_splits = Column("data_splits", JSON)
     data_type = Column("data_type", String(512))
-    additional_info = Column("additional_info", JSON)
-    dependent_vars = Column("dependent_vars", JSON)
     runcard_uid = Column("runcard_uid", String(2048))
     pipelinecard_uid = Column("pipelinecard_uid", String(2048))
     datacard_uri = Column("datacard_uri", String(2048))
