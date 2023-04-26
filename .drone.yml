@@ -115,7 +115,6 @@ steps:
         - push
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
-      - make setup.unit
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -131,7 +130,6 @@ steps:
         - push
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
-      - make setup.quality
       - make lints.ci
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
