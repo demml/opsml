@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator
 
+from opsml.registry.cards.types import METRICS, PARAMS
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
-from opsml.registry.cards.types import PARAMS, METRICS
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
