@@ -57,7 +57,7 @@ def upgrade() -> None:
             if not any(column.get("name") == add_col.value for column in columns):
                 op.add_column(
                     table_name=table_name,
-                    column=sql_schema[table_name],
+                    column=sql_schema[add_col],
                 )
 
         # add datacard_uri

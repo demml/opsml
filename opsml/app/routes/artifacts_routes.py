@@ -117,28 +117,35 @@ def list_cards(
 ) -> ListResponse:
     """Lists a Card"""
 
-    table_for_registry = payload.table_name.split("_")[1].lower()
-    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+    try:
+        table_for_registry = payload.table_name.split("_")[1].lower()
+        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    records = registry.list_cards(
-        uid=payload.uid,
-        name=payload.name,
-        team=payload.team,
-        version=payload.version,
-        as_dataframe=False,
-    )
+        records = registry.list_cards(
+            uid=payload.uid,
+            name=payload.name,
+            team=payload.team,
+            version=payload.version,
+            as_dataframe=False,
+        )
 
-    if config.is_proxy:
-        records = [
-            replace_proxy_root(
-                record=record,
-                storage_root=config.STORAGE_URI,
-                proxy_root=config.proxy_root,
-            )
-            for record in records
-        ]
+        if config.is_proxy:
+            records = [
+                replace_proxy_root(
+                    record=record,
+                    storage_root=config.STORAGE_URI,
+                    proxy_root=config.proxy_root,
+                )
+                for record in records
+            ]
 
-    return ListResponse(records=records)
+        return ListResponse(records=records)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"""Error listing cards. {error}""",
+        ) from error
 
 
 @router.post("/create", response_model=AddRecordResponse, name="create")
