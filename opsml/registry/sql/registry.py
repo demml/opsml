@@ -5,18 +5,9 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.cards import (
-    ArtifactCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-)
+from opsml.registry.cards.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardType
-from opsml.registry.sql.records import (
-    DataRegistryRecord,
-    ModelRegistryRecord,
-    PipelineRegistryRecord,
-)
+
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
@@ -40,7 +31,7 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     def update_card(self, card: ArtifactCard) -> None:
-        raise ("Updates are not available for ModelCards")
+        raise ValueError("Updates are not available for ModelCards")
 
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
