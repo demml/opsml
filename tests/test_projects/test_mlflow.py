@@ -59,22 +59,22 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     assert len(proj.params) == 1
     assert proj.get_param("m1").value == "apple"
     #
-    ## Load model card
-    # loaded_card: ModelCard = proj.load_card(
-    #    card_type="model",
-    #    info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
-    # )
-    #
-    # loaded_card.load_trained_model()
-    # assert loaded_card.uid is not None
-    # assert loaded_card.trained_model is not None
-    #
-    ## Load data card by uid
-    # loaded_data_card: DataCard = proj.load_card(
-    #    card_type="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
-    # )
-    # assert loaded_data_card.uid is not None
-    # assert loaded_data_card.uid == data_card.uid
+    # Load model card
+    loaded_card: ModelCard = proj.load_card(
+        card_type="model",
+        info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
+    )
+
+    loaded_card.load_trained_model()
+    assert loaded_card.uid is not None
+    assert loaded_card.trained_model is not None
+
+    # Load data card by uid
+    loaded_data_card: DataCard = proj.load_card(
+        card_type="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+    )
+    assert loaded_data_card.uid is not None
+    assert loaded_data_card.uid == data_card.uid
 
     # load data
     assert loaded_data_card.data is None
@@ -93,8 +93,8 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     opsml_project = OpsmlProject(info=opsml_info)
 
     # Test RunCard
-    assert opsml_project.metrics["m1"] == 1.1
-    assert opsml_project.params["m1"] == "apple"
+    assert opsml_project.get_metric("m1").value == 1.1
+    assert opsml_project.get_param("m1").value == "apple"
     assert opsml_project.datacard_uids[0] == data_card.uid
     assert opsml_project.modelcard_uids[0] == model_card.uid
 
@@ -104,7 +104,8 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         opsml_project = OpsmlProject(info=opsml_info)
 
 
-def _test_metrics(mlflow_project: MlflowProject) -> None:
+def test_metrics(mlflow_project: MlflowProject) -> None:
+
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
     with proj.run() as run:
@@ -113,21 +114,23 @@ def _test_metrics(mlflow_project: MlflowProject) -> None:
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.metrics) == 1
-    assert proj.metrics["m1"] == 1.1
+    assert proj.get_metric("m1").value == 1.1
 
 
-def _test_params(mlflow_project: MlflowProject) -> None:
+def test_params(mlflow_project: MlflowProject) -> None:
+
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_param(key="m1", value="apple")
         info.run_id = run.run_id
+
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.params) == 1
-    assert proj.params["m1"] == "apple"
+    assert proj.get_param("m1").value == "apple"
 
 
-def _test_log_artifact(mlflow_project: MlflowProject) -> None:
+def test_log_artifact(mlflow_project: MlflowProject) -> None:
     filename = "test.png"
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
@@ -152,7 +155,7 @@ def _test_log_artifact(mlflow_project: MlflowProject) -> None:
     assert tags["test_tag"] == "1.0.0"
 
 
-def _test_register_load(
+def test_register_load(
     mlflow_project: MlflowProject,
     linear_regression: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
@@ -199,7 +202,7 @@ def _test_register_load(
     loaded_card.load_trained_model()
 
 
-def _test_lgb_model(
+def test_lgb_model(
     mlflow_project: MlflowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
@@ -231,7 +234,7 @@ def _test_lgb_model(
     loaded_card.load_trained_model()
 
 
-def _test_pytorch_model(
+def test_pytorch_model(
     mlflow_project: MlflowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
@@ -264,7 +267,7 @@ def _test_pytorch_model(
     loaded_card.load_trained_model()
 
 
-def _test_tf_model(
+def test_tf_model(
     mlflow_project: MlflowProject,
     load_transformer_example: tuple[Any, NDArray],
 ):
