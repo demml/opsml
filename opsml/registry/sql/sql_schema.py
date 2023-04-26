@@ -156,11 +156,6 @@ class TableSchema:
         raise ValueError(f"""Incorrect table name provided {table_name}""")
 
 
-def registry_tables_exist(engine) -> bool:
-    table_names = Inspector.from_engine(engine).get_table_names()
-    return set(table_names) == set(list(RegistryTableNames))
-
-
 class DBInitializer:
     def __init__(self, engine):
         self.engine = engine
@@ -168,7 +163,8 @@ class DBInitializer:
     def registry_tables_exist(self) -> bool:
         """Checks if all tables have been created previously"""
         table_names = Inspector.from_engine(self.engine).get_table_names()
-        return set(table_names) == set(list(RegistryTableNames))
+        registry_tables = list(RegistryTableNames)
+        return all(registry_table in table_names for registry_table in registry_tables)
 
     def create_tables(self):
         """Creates tables"""
@@ -179,7 +175,7 @@ class DBInitializer:
         """Updates tables in db based on alembic revisions"""
 
         # credit to mlflow for this implementation
-        logger.info("Updating dbs")
+        logger.info("Checking for updates")
 
         db_url = str(self.engine.url)
 
