@@ -201,8 +201,6 @@ def test_runcard(linear_regression, db_registries):
     # should be same runid
     loaded_card = registry.load_card(uid=run.uid)
     assert loaded_card.get_metric("updated_metric").value == 20
-    print(loaded_card.runcard_uri)
-    print(run.runcard_uri)
     assert loaded_card.runcard_uri == run.runcard_uri
 
 
@@ -254,6 +252,9 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     assert loaded_card.trained_model is not None
     assert loaded_card.sample_input_data is not None
     assert loaded_card.onnx_model_def is not None
+
+    with pytest.raises(ValueError):
+        model_registry.update_card(loaded_card)
 
 
 def test_register_model(db_registries, sklearn_pipeline):
