@@ -32,11 +32,14 @@ class SaveName(str, Enum):
 
 class CardArtifactSaver:
     def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
-        """Parent class for saving artifacts belonging to cards
+        """
+        Parent class for saving artifacts belonging to cards
 
         Args:
-            card (Card): ArtifactCard with artifacts to save
-            card_storage_info (ArtifactStorageSpecs): Extra info to use with artifact storage
+            card:
+                ArtifactCard with artifacts to save
+            card_storage_info:
+                Extra info to use with artifact storage
         """
 
         self._card = card
@@ -63,7 +66,8 @@ class CardArtifactSaver:
         return self.storage_client.storage_spec.copy(deep=True)
 
     def _set_storage_spec(self, filename: str, uri: Optional[str] = None) -> None:
-        """Gets storage spec for saving
+        """
+        Gets storage spec for saving
 
         Args:
             filename:
