@@ -26,13 +26,13 @@ from opsml.registry.model.types import (
     TorchOnnxArgs,
 )
 from opsml.registry.sql.records import (
+    ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
     ModelRegistryRecord,
     PipelineRegistryRecord,
     ProjectRegistryRecord,
     RegistryRecord,
     RunRegistryRecord,
-    ARBITRARY_ARTIFACT_TYPE,
 )
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -911,7 +911,7 @@ class RunCard(ArtifactCard):
         raise ValueError(f"Param {param} is not defined")
 
     def load_artifacts(self) -> None:
-        if bool(self.artifact_uris):
+        if bool(self.artifact_uris) and self.storage_client is not None:
             for name, uri in self.artifact_uris.items():
                 storage_spec = ArtifactStorageSpecs(save_path=uri)
                 self.storage_client.storage_spec = storage_spec
@@ -919,6 +919,10 @@ class RunCard(ArtifactCard):
                     storage_client=self.storage_client,
                     artifact_type=ARBITRARY_ARTIFACT_TYPE,
                 )
+            return None
+
+        logger.info("No artifact uris associated with RunCard")
+        return None
 
     @property
     def card_type(self) -> str:

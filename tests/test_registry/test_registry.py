@@ -124,7 +124,7 @@ def test_semver_registry_list(db_registries, test_array):
         )
         registry.register_card(card=data_card)
 
-    # should return 6 versions
+    # should return 13 versions
     df = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
