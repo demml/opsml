@@ -585,6 +585,10 @@ class MlflowStorageClient(StorageClient):
     def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
 
+    # @property
+    # def experiment_id(self) -> str:
+    # return self.mlflow_client.get_run(self.run_id).info.experiment_id
+
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
@@ -600,12 +604,16 @@ class MlflowStorageClient(StorageClient):
 
         if "http" in self.mlflow_client.tracking_uri:
 
-            proxy_root = Path(self.artifact_path).parts[0]
-            artifact_path = "/".join(Path(rpath).parts[2:])
+            path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
 
-            download_path = os.path.join(proxy_root, artifact_path)
+            mlflow_path = os.path.normpath(
+                os.path.join(
+                    self.artifact_path,
+                    path_to_file,
+                )
+            )
 
-            return download_path
+            return mlflow_path
 
         return rpath
 
