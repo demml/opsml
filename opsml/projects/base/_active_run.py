@@ -11,7 +11,7 @@ from opsml.registry import (
     VersionType,
 )
 from opsml.registry.cards.cards import ArtifactCard
-from opsml.registry.cards.types import CardInfo, CardType, METRICS, PARAMS
+from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
