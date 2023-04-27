@@ -128,6 +128,7 @@ class LoadedDataRecord(LoadRecord):
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
         storage_client = cast(StorageClientType, values["storage_client"])
+
         datacard_definition = cls.load_datacard_definition(
             save_path=values["datacard_uri"],
             storage_client=storage_client,
@@ -229,6 +230,8 @@ class LoadedModelRecord(LoadRecord):
         storage_spec = ArtifactStorageSpecs(save_path=values["modelcard_uri"])
 
         storage_client.storage_spec = storage_spec
+        storage_client.storage_spec.runcard_uid = values["runcard_uid"]
+
         model_card_definition = load_record_artifact_from_storage(
             storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
