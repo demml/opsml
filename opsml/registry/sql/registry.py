@@ -6,8 +6,7 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardType, CardInfo
-
+from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
@@ -158,6 +157,7 @@ class CardRegistry:
         team: Optional[str] = None,
         version: Optional[str] = None,
         as_dataframe: bool = True,
+        info: Optional[CardInfo] = None,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -175,6 +175,12 @@ class CardRegistry:
         Returns:
             pandas dataframe of records
         """
+
+        if info is not None:
+            name = name or info.name
+            team = team or info.team
+            uid = uid or info.uid
+            version = version or info.version
 
         if name is not None:
             name = name.lower()
