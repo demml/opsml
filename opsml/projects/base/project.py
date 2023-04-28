@@ -48,7 +48,7 @@ class OpsmlProject:
             with project.run() as run:
                 # Now that the run context is entered, it's in read/write mode
                 # You can write cards, params, and metrics to the project.
-                run.log_param(key="my_param", value="12.34")
+                run.log_parameter(key="my_param", value="12.34")
 
         Args:
             info:
@@ -138,7 +138,7 @@ class OpsmlProject:
     def params(self) -> PARAMS:
         return self.run_data.params
 
-    def get_param(self, name: str) -> Union[List[Param], Param]:  # type this later
+    def get_parameter(self, name: str) -> Union[List[Param], Param]:  # type this later
         """
         Get param by name
 
@@ -149,7 +149,7 @@ class OpsmlProject:
             List of Param or Param
 
         """
-        return self.run_data.get_param(name=name)
+        return self.run_data.get_parameter(name=name)
 
     @property
     def tags(self) -> dict[str, str]:

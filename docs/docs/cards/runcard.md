@@ -51,7 +51,7 @@ with project.run(run_name="optional_run_name") as run:
 
     # Create metrics / params
     run.log_metric(key="mape", value=mape)
-    run.log_param(key="alpha", value=0.5)
+    run.log_parameter(key="alpha", value=0.5)
 
     data_card = DataCard(data=X, info=card_info)
     run.register_card(card=data_card, version_type="major")  # you can specify "major", "minor", "patch"
@@ -67,7 +67,7 @@ with project.run(run_name="optional_run_name") as run:
 print(run.runcard.get_metric("mape"))
 # > Metric(name='mape', value=0.8489706297619047, step=None, timestamp=None)
 
-print(run.runcard.get_param("alpha"))
+print(run.runcard.get_parameter("alpha"))
 # > Param(name='alpha', value=0.5)
 
 ```
@@ -77,8 +77,8 @@ print(run.runcard.get_param("alpha"))
         members:
             - add_tag
             - ladd_tags
-            - log_param
-            - log_params
+            - log_parameter
+            - log_parameters
             - log_metric
             - log_metrics
             - log_artifact

@@ -224,7 +224,7 @@ class ActiveRun:
             step=step,
         )
 
-    def log_param(self, key: str, value: str) -> None:
+    def log_parameter(self, key: str, value: str) -> None:
         """
         Logs a parameter to project run
 
@@ -236,7 +236,7 @@ class ActiveRun:
         """
 
         self._verify_active()
-        self.runcard.log_param(key=key, value=value)
+        self.runcard.log_parameter(key=key, value=value)
 
     def create_or_update_runcard(self):
         """Creates or updates an active RunCard"""

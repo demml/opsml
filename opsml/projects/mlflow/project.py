@@ -47,7 +47,7 @@ class MlflowProject(OpsmlProject):
             with project.run() as run:
                 # Now that the run context is entered, it's in read/write mode
                 # You can write cards, params, and metrics to the project.
-                run.log_param(key="my_param", value="12.34")
+                run.log_parameter(key="my_param", value="12.34")
 
         Args:
             info:
@@ -141,7 +141,7 @@ class MlflowProject(OpsmlProject):
             params[key] = [Param(name=key, value=value)]
         return params
 
-    def get_param(self, name: str) -> Union[List[Param], Param]:
+    def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
         Get param by name
 
