@@ -1,6 +1,6 @@
 import os
 
-os.environ["OPSML_TRACKING_URI"] = "http://localhost:8889"
+os.environ["OPSML_TRACKING_URI"] = "http://localhost:8889/"
 
 # Data
 from sklearn.datasets import load_linnerud
@@ -15,7 +15,7 @@ data["Pulse"] = target.Pulse
 
 
 # Split indices
-indices = np.arange(700000)
+indices = np.arange(data.shape[0])
 
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
@@ -33,16 +33,16 @@ data_card = DataCard(
 )
 
 # splits look good
-# splits = data_card.split_data()
-# print(splits.train.head())
+splits = data_card.split_data()
+print(splits.train.head())
 
 """   
     Chins  Situps  Jumps  Pulse
-18   15.0   225.0   73.0   54.0
-10   17.0   120.0   38.0   50.0
-14    6.0    70.0   31.0   46.0
-19    2.0   110.0   43.0   68.0
-12   14.0   215.0  105.0   64.0
+15   12.0   210.0  120.0   62.0
+17   11.0   230.0   80.0   52.0
+16    4.0    60.0   25.0   54.0
+8    15.0   200.0   40.0   74.0
+5     4.0   101.0   42.0   56.0
 """
 
 data_registry = CardRegistry(registry_name="data")
@@ -56,29 +56,19 @@ print(cards[0])
 
 """
 {
-    "timestamp": 1682472648928559,
     "name": "linnerrud",
-    "version": "1.2.0",
-    "data_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.2.0/linnerrud.parquet",
-    "feature_descriptions": None,
-    "data_type": "DataFrame",
-    "dependent_vars": ["Pulse"],
-    "pipelinecard_uid": None,
-    "date": "2023-04-26",
-    "uid": "38da1aaecfac42048cbde821a55289ab",
-    "app_env": "development",
+    "date": "2023-04-28",
+    "version": "1.0.0",
+    "data_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/linnerrud.parquet",
+    "runcard_uid": None,
+    "datacard_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/datacard.joblib",
+    "uid": "06a28a3bc2504bdd83c20a622439236d",
+    "app_env": "staging",
+    "timestamp": 1682699807492552,
     "team": "opsml",
     "user_email": "user@email.com",
-    "feature_map": {"Chins": "double", "Situps": "double", "Jumps": "double", "Pulse": "double"},
-    "data_splits": {
-        "splits": [
-            {"label": "train", "indices": [9, 8, 11, 2, 6, 12, 14, 1, 7, 4, 13, 19, 16, 17, 15, 10]},
-            {"label": "test", "indices": [18, 5, 3, 0]},
-        ]
-    },
-    "additional_info": {},
-    "runcard_uid": None,
-    "datacard_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.2.0/datacard.joblib",
+    "data_type": "DataFrame",
+    "pipelinecard_uid": None,
 }
 """
 # code will run as-is

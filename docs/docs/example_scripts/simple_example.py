@@ -70,9 +70,9 @@ print(data_registry.list_cards(info=card_info, as_dataframe=False))
         "timestamp": 1682622948626806,
         "name": "linnerrud",
         "version": "1.0.0",
-        "data_uri": "/***/***/opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/linnerrud.parquet",
+        "data_uri": "/opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/linnerrud.parquet",
         "runcard_uid": None,
-        "datacard_uri": "/***/***/opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/datacard.joblib",
+        "datacard_uri": "/opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/datacard.joblib",
         "app_env": "development",
         "uid": "873978bf4c3a49be819b9813f8d02ae8",
         "date": "2023-04-27",
@@ -94,20 +94,18 @@ print(model_registry.list_cards(info=card_info, as_dataframe=False))
         "team": "opsml",
         "user_email": "user@email.com",
         "datacard_uid": "873978bf4c3a49be819b9813f8d02ae8",
-        "onnx_model_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json",
+        "onnx_model_uri": "/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json",
         "sample_data_type": "DataFrame",
         "runcard_uid": None,
         "timestamp": 1682622948628464,
         "date": "2023-04-27",
         "name": "linnerrud",
         "version": "1.0.0",
-        "modelcard_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/modelcard.joblib",
-        "trained_model_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/trained-model.joblib",
-        "sample_data_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/sample-model-data.parquet",
+        "modelcard_uri": "opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/modelcard.joblib",
+        "trained_model_uri": "/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/trained-model.joblib",
+        "sample_data_uri": "/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/sample-model-data.parquet",
         "model_type": "sklearn_estimator",
         "pipelinecard_uid": None,
     }
 ]
 """
-
-print(modelcard.onnx_model_def)
