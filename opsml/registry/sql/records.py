@@ -38,7 +38,7 @@ class ModelRegistryRecord(BaseModel):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: str
+    onnx_model_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -191,7 +191,7 @@ class LoadedModelRecord(LoadRecord):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: str
+    onnx_model_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -200,6 +200,7 @@ class LoadedModelRecord(LoadRecord):
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
@@ -211,6 +212,7 @@ class LoadedModelRecord(LoadRecord):
         modelcard_definition["onnx_model_uri"] = values.get("onnx_model_uri")
         modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
+        modelcard_definition["model_type"] = values.get("model_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
 
         return modelcard_definition

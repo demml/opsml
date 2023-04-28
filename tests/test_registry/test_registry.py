@@ -223,6 +223,36 @@ def test_runcard(linear_regression, db_registries):
     assert loaded_card.runcard_uri == run.runcard_uri
 
 
+def test_local_model_registry_no_onnx(db_registries, sklearn_pipeline):
+
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = sklearn_pipeline
+    data_card = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+        no_onnx=True,
+    )
+
+    model_registry: CardRegistry = db_registries["model"]
+    model_registry.register_card(card=model_card)
+
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    assert loaded_card.onnx_model_uri is None
+
+
 def test_local_model_registry(db_registries, sklearn_pipeline):
 
     # create data card

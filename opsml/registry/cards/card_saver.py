@@ -277,7 +277,8 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def save_artifacts(self):
         """Save model artifacts associated with ModelCard"""
-        self._save_api_definition()
+        if not self.card.no_onnx:
+            self._save_api_definition()
         self._save_modelcard()
         self._save_trained_model()
         self._save_sample_data()
