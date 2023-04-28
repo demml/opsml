@@ -35,8 +35,8 @@ data_card = DataCard(
 )
 
 # splits look good
-# splits = data_card.split_data()
-# print(splits.train.head())
+splits = data_card.split_data()
+print(splits.train.head())
 
 """   
     Chins  Situps  Jumps  Pulse
