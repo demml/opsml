@@ -253,6 +253,7 @@ class SQLRegistryBase:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
@@ -263,10 +264,13 @@ class SQLRegistryBase:
         versions = [record["version"] for record in records]
         sort_semvers(versions)
 
-        for record in records:
-            if record["version"] == versions[0]:
-                return record
-        raise ValueError("Error parsing semvers")
+        sorted_records = []
+        for version in versions:
+            for record in records:
+                if record["version"] == version:
+                    sorted_records.append(record)
+
+        return sorted_records
 
     def load_card(
         self,
@@ -278,18 +282,17 @@ class SQLRegistryBase:
         cleaned_name = clean_string(name)
         cleaned_team = clean_string(team)
 
-        records = self.list_cards(
+        record = self.list_cards(
             name=cleaned_name,
             team=cleaned_team,
             version=version,
             uid=uid,
+            limit=1,
         )
-
-        record_data = self._sort_by_version(records=records)
 
         loaded_record = load_record(
             table_name=self.table_name,
-            record_data=record_data,
+            record_data=record[0],
             storage_client=self.storage_client,
         )
 
@@ -380,6 +383,7 @@ class ServerRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -394,6 +398,8 @@ class ServerRegistry(SQLRegistryBase):
                 the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
             uid:
                 Unique identifier for DataCard. If present, the uid takes precedence.
+            limit:
+                Places a limit on result list. Results are sorted by SemVer
 
 
         Returns:
@@ -411,16 +417,18 @@ class ServerRegistry(SQLRegistryBase):
             uid=uid,
         )
 
-        results_list = []
+        records = []
         with self._session() as sess:
             results = sess.execute(query).all()
 
         for row in results:
             result_dict = row[0].__dict__
             result_dict.pop("_sa_instance_state")
-            results_list.append(result_dict)
+            records.append(result_dict)
 
-        return results_list
+        sorted_records = self._sort_by_version(records=records)
+
+        return sorted_records[:limit]
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         query = query_creator.uid_exists_query(
@@ -472,6 +480,7 @@ class ClientRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -496,6 +505,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version,
                 "uid": uid,
+                "limit": limit,
                 "table_name": self.table_name,
             },
         )
