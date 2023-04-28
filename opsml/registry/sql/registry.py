@@ -156,8 +156,9 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-        as_dataframe: bool = True,
         info: Optional[CardInfo] = None,
+        limit: Optional[int] = None,
+        as_dataframe: bool = True,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -188,7 +189,13 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        card_list = self._registry.list_cards(uid=uid, name=name, team=team, version=version)
+        card_list = self._registry.list_cards(
+            uid=uid,
+            name=name,
+            team=team,
+            version=version,
+            limit=limit,
+        )
 
         if as_dataframe:
             return pd.DataFrame(card_list)
