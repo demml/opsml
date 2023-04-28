@@ -137,7 +137,7 @@ def test_semver_registry_list(db_registries, test_array):
         team=data_card.team,
         version="^2.3.0",
     )
-    assert df.shape[0] == 13
+    assert df.shape[0] == 1
 
     df = registry.list_cards(
         name=data_card.name,
@@ -160,6 +160,15 @@ def test_semver_registry_list(db_registries, test_array):
         team=data_card.team,
         version="^2.3.0",
         limit=1,
+        as_dataframe=False,
+    )
+    assert len(record) == 1
+    assert record[0].get("version") == "2.12.0"
+
+    record = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^2.3.0",
         as_dataframe=False,
     )
     assert len(record) == 1
