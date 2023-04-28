@@ -71,6 +71,61 @@ def test_register_data(api_registries, test_data, data_splits):
         registry.list_cards()
 
 
+def test_semver_registry_list(api_registries, test_array):
+
+    # create data card
+    registry = api_registries.data
+
+    data_card = DataCard(
+        data=test_array,
+        name="test_array",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    registry.register_card(card=data_card)
+
+    # version 2
+    data_card = DataCard(
+        data=test_array,
+        name="test_array",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    registry.register_card(card=data_card, version_type="major")
+
+    for i in range(0, 12):
+        data_card = DataCard(
+            data=test_array,
+            name="test_array",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        registry.register_card(card=data_card)
+
+    # should return 13 versions
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="2.*.*",
+    )
+    assert df.shape[0] == 13
+
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^2.3.0",
+    )
+    assert df.shape[0] == 1
+
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="~2.3.0",
+    )
+    assert df.shape[0] == 1
+
+
 def test_register_large_data(api_registries):
 
     import numpy as np
