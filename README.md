@@ -243,7 +243,7 @@ with project.run(run_name="optional_run_name") as run:
 
     # Create metrics / params / cards
     run.log_metric(key="m1", value=1.1)
-    run.log_param(key="m1", value="apple")
+    run.log_parameter(key="m1", value="apple")
 
     # lets use card_info instead of writing required args multiple times
     data_card = DataCard(data=X, info=card_info)

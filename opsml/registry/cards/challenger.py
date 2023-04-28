@@ -16,7 +16,7 @@ class BattleReport:
     challenger_win: bool
 
 
-# eventually find a way to tell if a model has been deployed and use that for comparison
+# eventually find a way to tell if a model has been deployed and use that for comparison as well
 class ModelChallenger:
     def __init__(
         self,
@@ -25,6 +25,21 @@ class ModelChallenger:
         challenger: ModelCard,
         lower_is_better: bool = True,
     ):
+        """
+        Instantiates ModelChallenger class
+
+        Args:
+            metric_name:
+                Name of metric to evaluate
+            metrice_value:
+                Challenger metric value
+            challenger:
+                ModelCard of challenger
+            lower_is_better:
+                Whether a lower metric value is better or not
+
+
+        """
         self._metric_name = metric_name
         self._challenger_result = metric_value
         self._challenger = challenger

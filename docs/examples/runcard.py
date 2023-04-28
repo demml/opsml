@@ -41,7 +41,7 @@ with project.run(run_name="optional_run_name") as run:
 
     # Create metrics / params
     run.log_metric(key="mape", value=mape)
-    run.log_param(key="alpha", value=0.5)
+    run.log_parameter(key="alpha", value=0.5)
 
     # lets use card_info instead of writing required args multiple times
     data_card = DataCard(data=X, info=card_info)
@@ -58,5 +58,5 @@ with project.run(run_name="optional_run_name") as run:
 print(run.runcard.get_metric("mape"))
 # > Metric(name='mape', value=0.8489706297619047, step=None, timestamp=None)
 
-print(run.runcard.get_param("alpha"))
+print(run.runcard.get_parameter("alpha"))
 # > Param(name='alpha', value=0.5)
