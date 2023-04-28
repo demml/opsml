@@ -30,7 +30,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         run.log_metric(key="m1", value=1.1)
         run.log_metric(key="mape", value=2, step=1)
         run.log_metric(key="mape", value=2, step=2)
-        run.log_param(key="m1", value="apple")
+        run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline
         data_card = DataCard(
             data=data,
@@ -57,7 +57,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
     assert proj.get_metric("m1").value == 1.1
     assert len(proj.params) == 1
-    assert proj.get_param("m1").value == "apple"
+    assert proj.get_parameter("m1").value == "apple"
     #
     # Load model card
     loaded_card: ModelCard = proj.load_card(
@@ -85,7 +85,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     with pytest.raises(ValueError):
         run.register_card(data_card)
     with pytest.raises(ValueError):
-        run.log_param(key="param1", value="value1")
+        run.log_parameter(key="param1", value="value1")
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
 
@@ -94,7 +94,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
     # Test RunCard
     assert opsml_project.get_metric("m1").value == 1.1
-    assert opsml_project.get_param("m1").value == "apple"
+    assert opsml_project.get_parameter("m1").value == "apple"
     assert opsml_project.datacard_uids[0] == data_card.uid
     assert opsml_project.modelcard_uids[0] == model_card.uid
 
@@ -121,13 +121,13 @@ def test_params(mlflow_project: MlflowProject) -> None:
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
-        run.log_param(key="m1", value="apple")
+        run.log_parameter(key="m1", value="apple")
         info.run_id = run.run_id
 
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
     assert len(proj.params) == 1
-    assert proj.get_param("m1").value == "apple"
+    assert proj.get_parameter("m1").value == "apple"
 
 
 def test_log_artifact(mlflow_project: MlflowProject) -> None:

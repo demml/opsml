@@ -8,10 +8,8 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 
 from opsml.projects import ProjectInfo
-
 from opsml.projects.mlflow import MlflowProject
-from opsml.registry.cards import CardInfo
-from opsml.registry import DataCard, ModelCard, CardRegistry
+from opsml.registry import DataCard, ModelCard
 
 
 def fake_data():
@@ -33,12 +31,14 @@ with project.run(run_name="test-run") as run:
 
     X, y = fake_data()
     reg = LinearRegression().fit(X.to_numpy(), y)
+
     data_card = DataCard(
         data=X,
         name="pipeline-data",
         team="mlops",
         user_email="mlops.com",
     )
+
     run.register_card(card=data_card)
 
     # create a fake figure
@@ -61,4 +61,4 @@ with project.run(run_name="test-run") as run:
     for i in range(0, 100):
         run.log_metric("test", i)
 
-    run.log_param("blaaaaaah", 10)
+    run.log_parameter("blaaaaaah", 10)
