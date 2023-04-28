@@ -2,6 +2,8 @@ site_name: OpsML
 
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/git-alt
   palette:
     - scheme: default
       primary: stylesheets/extra.css
@@ -16,30 +18,36 @@ theme:
         name: light mode
 
 
+  features:
+        - navigation.sections
+  font:
+    text: Roboto
+    code: Roboto Mono
+  logo: 'images/opsml-logo.png'
+
+repo_name: opsml
+repo_url: https://github.com/shipt/opsml
+edit_uri: edit/main/docs/
+
 nav:
   - OpsML Overview: 'index.md'
-  - Getting Started: 'getting_started.md'
   - Cards:
-      - 'cards/artifact_cards.md'
-      - 'cards/data_card.md'
-      - 'cards/model_card.md'
-      - 'cards/run_card.md'
-      - 'cards/pipeline_card.md'
-
+      - Overview: 'cards/overview.md'
+      - DataCard: 'cards/datacard.md'
+      - ModelCard: 'cards/modelcard.md'
+      - RunCard: 'cards/runcard.md'
+      #- RunCard: 'getting_started.md'
+      #- ProjectCard: 'getting_started.md'
+      #- PipelineCard: 'getting_started.md'
+ 
 markdown_extensions:
+  - tables
   - toc:
       permalink: true
-  - markdown.extensions.codehilite:
-      guess_lang: false
+      title: Page contents
   - admonition
-  - codehilite
-  - extra
-  - pymdownx.snippets
-  - pymdownx.tabbed
-  - attr_list
-  - md_in_html
-  - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.extra
 
   - pymdownx.superfences:
       custom_fences:
@@ -49,14 +57,12 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji 
       emoji_generator: !!python/name:materialx.emoji.to_svg
+
 plugins:
   - search
   - mkdocstrings
 
-repo_url: https://github.com/shipt/opsml
-repo_name: opsml
 extra_css:
-- css/termynal.css
 - css/custom.css
 - stylesheets/extra.css
 extra_javascript:

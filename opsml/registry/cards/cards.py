@@ -570,7 +570,11 @@ class ModelCard(ArtifactCard):
         start_onnx_runtime: bool = True,
     ) -> OnnxModelPredictor:
         """
-        Loads a model from serialized string
+        Loads an onnx model from string or creates an onnx model from trained model
+
+        Args:
+            start_onnx_runtime:
+                Whether to start the onnx runtime session or not
 
         Returns
             `OnnxModelPredictor`

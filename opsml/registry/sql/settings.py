@@ -22,6 +22,7 @@ from opsml.registry.storage.types import (
 )
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
+STORAGE_URI = f"{os.path.expanduser('~')}/opsml_artifacts"
 
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -192,7 +193,7 @@ class DefaultAttrCreator:
             StorageClientSettings
 
         """
-        storage_uri = os.environ.get(OpsmlUri.STORAGE_URI)
+        storage_uri = os.environ.get(OpsmlUri.STORAGE_URI, STORAGE_URI)
 
         if storage_uri is not None:
             storage_type = self._get_storage_type(storage_uri=storage_uri)

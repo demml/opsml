@@ -169,8 +169,6 @@ class DBInitializer:
         """Updates tables in db based on alembic revisions"""
 
         # credit to mlflow for this implementation
-        logger.info("Checking for updates")
-
         db_url = str(self.engine.url)
 
         config = self.get_alembic_config(db_url=db_url)

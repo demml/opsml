@@ -62,10 +62,18 @@ print(data_card.version)
 # > 1.0.0
 
 # list cards
-cards = data_registry.list_cards(uid=data_card.uid, as_dataframe=False)  # can also supply, name, team, version
+cards = data_registry.list_cards(
+    uid=data_card.uid, 
+    as_dataframe=False,
+    )  # can also supply, name, team, version
 print(cards[0])
 
-"""
+```
+*(Code will run as-is)*
+
+Output:
+
+```json
 {
     "timestamp": 1682472648928559,
     "name": "linnerrud",
@@ -91,11 +99,55 @@ print(cards[0])
     "runcard_uid": None,
     "datacard_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.2.0/datacard.joblib",
 }
-
-"""
-# code will run as-is
-
 ```
+
+
+## DataCard Args
+
+`data`
+: np.ndarray, pd.DataFrame, or pyarrow Table. You're data (Required)
+
+`name`
+: Name for the data (Required)
+
+`team`
+: Team data belongs to (Required)
+
+`user_email`
+: Email to associate with data (Required)
+
+`data_splits`
+: Split logic for your data. Optional list containing split logic. Defaults to None.
+
+    Logic for data splits can be defined in the following three ways:
+
+    You can specify as many splits as you'd like
+
+    (1) Split based on column value (works for pd.DataFrame)
+
+        splits = [
+            {"label": "train", "column": "DF_COL", "column_value": 0}, -> "val" can also be a string
+            {"label": "test",  "column": "DF_COL", "column_value": 1},
+            {"label": "eval",  "column": "DF_COL", "column_value": 2},
+            ]
+
+    (2) Index slicing by start and stop (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
+
+        splits = [
+            {"label": "train", "start": 0, "stop": 10},
+            {"label": "test", "start": 11, "stop": 15},
+            ]
+
+    (3) Index slicing by list (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
+
+        splits = [
+            {"label": "train", "indices": [1,2,3,4]},
+            {"label": "test", "indices": [5,6,7,8]},
+            ]
+
+- **feature_descriptions**: Dictionary contain feature descriptions (key -> feature name, value -> Description)
+- **additional_info**: Dictionary used as storage object for extra information you'd like to provide.
+
 
 ## Docs
 
@@ -107,4 +159,4 @@ print(cards[0])
             - card_type
         show_root_heading: true
         show_source: true
-        heading_level: 2
+        heading_level: 3
