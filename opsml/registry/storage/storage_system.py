@@ -585,10 +585,6 @@ class MlflowStorageClient(StorageClient):
     def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
 
-    # @property
-    # def experiment_id(self) -> str:
-    # return self.mlflow_client.get_run(self.run_id).info.experiment_id
-
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
