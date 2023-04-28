@@ -738,7 +738,7 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**tags, **self.tags}
 
-    def log_params(self, params: Dict[str, Union[float, int, str]]):
+    def log_parameters(self, params: Dict[str, Union[float, int, str]]):
         """
         Logs params to current RunCard
 
@@ -749,9 +749,9 @@ class RunCard(ArtifactCard):
 
         for key, value in params.items():
             # check key
-            self.log_param(key, value)
+            self.log_parameter(key, value)
 
-    def log_param(self, key: str, value: Union[int, float, str]):
+    def log_parameter(self, key: str, value: Union[int, float, str]):
         """
         Logs params to current RunCard
 
@@ -891,7 +891,7 @@ class RunCard(ArtifactCard):
 
         raise ValueError(f"Metric {metric} is not defined")
 
-    def get_param(self, name: str) -> Union[List[Param], Param]:
+    def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
         Gets a metric by name
 

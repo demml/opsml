@@ -203,7 +203,7 @@ def test_runcard(linear_regression, db_registries):
         loaded_card.get_metric("test")
 
     with pytest.raises(ValueError):
-        loaded_card.get_param("test")
+        loaded_card.get_parameter("test")
 
     # metrics take floats, ints
     with pytest.raises(ValueError):
@@ -211,7 +211,7 @@ def test_runcard(linear_regression, db_registries):
 
     # params take floats, ints, str
     with pytest.raises(ValueError):
-        loaded_card.log_param("test_fail", model)
+        loaded_card.log_parameter("test_fail", model)
 
     # test updating
     loaded_card.log_metric("updated_metric", 20)
