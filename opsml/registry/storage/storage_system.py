@@ -413,7 +413,7 @@ class ApiStorageClient(LocalStorageClient):
             filename=file_,
         )
 
-        return os.path.join(lpath, filename)
+        return os.path.join(lpath, file_)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         files = kwargs.get("files", None)
@@ -617,7 +617,6 @@ class MlflowStorageClient(StorageClient):
         import mlflow
 
         temp_path = lpath
-
         if not recursive:
             filename = os.path.basename(lpath)
             temp_path = f"{temp_path}/{filename}"

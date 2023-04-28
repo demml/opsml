@@ -25,6 +25,9 @@ Return either a list of dictionaries or a dataframe containing card metadata.
     - Team: Team associated with card *(Optional)*
     - Version: Version of Card *(Optional)*
     - uid: Uid of card *(Optional)*
+    - info: `CardInfo` dataclass that can be used in place of Name, Team, Version and Uid
+    - limit: Limit result
+    - as_dataframe: Returns a dataframe if true else list of dictionaries
 
     Example:
 
@@ -37,6 +40,9 @@ Return either a list of dictionaries or a dataframe containing card metadata.
     # examples
     registry.list_cards() 
     # will list all cards in registry
+
+    registry.list_cards(limit=10) 
+    # will list cards and limit the result to 10
     
     registry.list_cards(name="linear-reg")
      # list all cards with name "linear-reg"
@@ -48,17 +54,29 @@ Return either a list of dictionaries or a dataframe containing card metadata.
     # list card with name "linear-reg" with team "opsml" and version 1.0.0
 
     registry.list_cards(name="linear-reg", team="opsml", version="1.*.*") 
-    # list card with name "linear-reg" with team "opsml" and major version of "1"
+    # list cards with name "linear-reg" with team "opsml" and major version of "1"
 
     registry.list_cards(name="linear-reg", team="opsml", version="^2.3.4") 
-    # list card with name "linear-reg" with team "opsml" and major version of ""
+    # list card with name "linear-reg" with team "opsml" and latest version < 3.0.0
 
-    registry.list_cards(uid=uid, as_dataframe=False) # will return a list of di
+    registry.list_cards(name="linear-reg", team="opsml", version="~2.3.4") 
+    # list card with name "linear-reg" with team "opsml" and latest version < 2.4.0
+
+    registry.list_cards(uid=uid, as_dataframe=False)
     # list card by uid
     # will return a list of dictionaries instead of a dataframe
 
-
     ```
 
+  **Loading Cards**
+  Load an Artifact card from a registry. 
+  : Required Args:
+    
+      - Name: Name of card *(Optional)*
+      - Team: Team associated with card *(Optional)*
+      - Version: Version of Card *(Optional)*
+      - uid: Uid of card *(Optional)*
+      - info: `CardInfo` dataclass that can be used in place of Name, Team, Version and Uid
+ 
 
 

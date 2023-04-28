@@ -230,7 +230,6 @@ class LoadedModelRecord(LoadRecord):
         storage_spec = ArtifactStorageSpecs(save_path=values["modelcard_uri"])
 
         storage_client.storage_spec = storage_spec
-
         model_card_definition = load_record_artifact_from_storage(
             storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
