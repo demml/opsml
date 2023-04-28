@@ -155,13 +155,15 @@ def test_semver_registry_list(db_registries, test_array):
 
     assert card.version == "2.12.0"
 
-    df = registry.list_cards(
+    record = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
         version="^2.3.0",
         limit=1,
+        as_dataframe=False,
     )
-    assert df.shape[0] == 1
+    assert len(record) == 1
+    assert record[0].get("version") == "2.12.0"
 
 
 def test_runcard(linear_regression, db_registries):
