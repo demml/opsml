@@ -1,4 +1,19 @@
 :root {
-  --md-primary-fg-color:        #038767;
-  --md-primary-fg-color--shipt: #3C2B50;
+  --md-primary-fg-color: #038767;
+  --md-secondary-fg-color: #502D91;
 }
+
+
+.md-typeset {
+  font-size: 17px;
+}
+
+.md-sidebar--primary {
+  width: 8rem;
+}
+
+.md-sidebar--secondary {
+  width: 10rem;
+}
+
+
