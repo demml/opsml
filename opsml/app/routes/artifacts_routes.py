@@ -126,6 +126,7 @@ def list_cards(
             name=payload.name,
             team=payload.team,
             version=payload.version,
+            limit=payload.limit,
             as_dataframe=False,
         )
 

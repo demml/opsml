@@ -23,6 +23,7 @@ from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import DBInitializer, RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.sql.semver import sort_semvers, SemVerSymbols
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -33,12 +34,6 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 if settings.request_client is None:
     initializer = DBInitializer(engine=settings.connection_client.get_engine())
     initializer.initialize()
-
-
-def sort_semvers(semvers: List[str]):
-    """Sorts a list of semvers"""
-    semvers.sort(key=lambda x: [int(y) for y in x.split(".")])
-    semvers.reverse()
 
 
 class VersionType(str, Enum):
@@ -427,6 +422,11 @@ class ServerRegistry(SQLRegistryBase):
             records.append(result_dict)
 
         sorted_records = self._sort_by_version(records=records)
+
+        if version is not None:
+            if any(symbol in version for symbol in [SemVerSymbols.CARET, SemVerSymbols.TILDE]):
+                # return top version
+                return sorted_records[:1]
 
         return sorted_records[:limit]
 
