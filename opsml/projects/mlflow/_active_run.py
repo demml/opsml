@@ -76,7 +76,7 @@ class MlflowActiveRun(ActiveRun):
 
         self._verify_active()
         super().log_parameter(key, value)
-        self.info.mlflow_client.log_parameter(run_id=self.run_id, key=key, value=value)
+        self.info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
     def log_artifact_from_file(self, local_path: str, artifact_path: Optional[str] = None) -> None:
         """
