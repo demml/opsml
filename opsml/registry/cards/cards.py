@@ -22,7 +22,7 @@ from opsml.registry.model.types import (
     DataDict,
     Feature,
     ModelDefinition,
-    OnnxModelReturn,
+    ModelReturn,
     TorchOnnxArgs,
 )
 from opsml.registry.sql.records import (
@@ -386,6 +386,7 @@ class ModelCard(ArtifactCard):
     data_schema: Optional[Dict[str, Feature]]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
+    no_onnx: bool = False
 
     class Config:
         arbitrary_types_allowed = True
@@ -489,7 +490,8 @@ class ModelCard(ArtifactCard):
         }
 
         if not bool(self.onnx_model_def):
-            self._create_and_set_onnx_attr()
+            self._create_and_set_model_attr(no_onnx=self.no_onnx)
+
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
@@ -505,37 +507,42 @@ class ModelCard(ArtifactCard):
 
         return version
 
-    def _set_onnx_attributes(self, onnx_model: OnnxModelReturn) -> None:
+    def _set_model_attributes(self, model_return: ModelReturn) -> None:
         setattr(
             self,
             "onnx_model_data",
             DataDict(
-                data_type=onnx_model.data_type,
-                input_features=onnx_model.onnx_input_features,
-                output_features=onnx_model.onnx_output_features,
+                data_type=model_return.data_type,
+                input_features=model_return.onnx_input_features,
+                output_features=model_return.onnx_output_features,
             ),
         )
 
-        setattr(self, "onnx_model_def", onnx_model.model_definition)
-        setattr(self, "data_schema", onnx_model.data_schema)
-        setattr(self, "model_type", onnx_model.model_type)
+        setattr(self, "onnx_model_def", model_return.model_definition)
+        setattr(self, "data_schema", model_return.data_schema)
+        setattr(self, "model_type", model_return.model_type)
 
-    def _create_and_set_onnx_attr(self) -> None:
+    def _create_and_set_model_attr(self, no_onnx: bool) -> None:
         """
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
+
+        Args:
+            no_onnx:
+                Whether to convert to onnx or not
         """
         from opsml.registry.model.creator import (  # pylint: disable=import-outside-toplevel
-            OnnxModelCreator,
+            create_model,
         )
 
-        model_creator = OnnxModelCreator(
+        model_return = create_model(
             model=self.trained_model,
             input_data=self.sample_input_data,
             additional_onnx_args=self.additional_onnx_args,
+            no_onnx=self.no_onnx,
         )
-        onnx_model = model_creator.create_onnx_model()
-        self._set_onnx_attributes(onnx_model=onnx_model)
+
+        self._set_model_attributes(model_return=model_return)
 
     def _get_sample_data_for_api(self) -> Dict[str, Any]:
         """
@@ -582,7 +589,7 @@ class ModelCard(ArtifactCard):
         """
 
         if not bool(self.onnx_model_def):
-            self._create_and_set_onnx_attr()
+            self._create_and_set_model_attr(no_onnx=False)
 
         version = self._set_version_for_predictor()
 
