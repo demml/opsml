@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 import pandas as pd
 import semver
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.expression import ColumnElement, FromClause
+from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes
@@ -20,10 +20,10 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml.registry.sql.records import LoadedRecordType, load_record
+from opsml.registry.sql.semver import SemVerSymbols, sort_semvers
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import DBInitializer, RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
-from opsml.registry.sql.semver import sort_semvers, SemVerSymbols
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -255,7 +255,7 @@ class SQLRegistryBase:
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         raise NotImplementedError
 
-    def _sort_by_version(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         versions = [record["version"] for record in records]
         sort_semvers(versions)
 
@@ -372,6 +372,46 @@ class ServerRegistry(SQLRegistryBase):
 
         return record, "updated"
 
+    def _parse_sql_results(self, results: Any) -> List[Dict[str, Any]]:
+        """
+        Helper for parsing sql results
+
+        Args:
+            results:
+                Returned object sql query
+
+        Returns:
+            List of dictionaries
+        """
+        records: List[Dict[str, Any]] = []
+
+        for row in results:
+            result_dict = row[0].__dict__
+            result_dict.pop("_sa_instance_state")
+            records.append(result_dict)
+
+        return records
+
+    def _get_sql_records(self, query: Select) -> List[Dict[str, Any]]:
+        """
+        Gets sql records from database given a query
+
+        Args:
+            query:
+                sql query
+        Returns:
+            List of records
+        """
+
+        with self._session() as sess:
+            results = sess.execute(query).all()
+
+        records = self._parse_sql_results(results=results)
+
+        sorted_records = self._sort_by_version(records=records)
+
+        return sorted_records
+
     def list_cards(
         self,
         uid: Optional[str] = None,
@@ -412,16 +452,7 @@ class ServerRegistry(SQLRegistryBase):
             uid=uid,
         )
 
-        records = []
-        with self._session() as sess:
-            results = sess.execute(query).all()
-
-        for row in results:
-            result_dict = row[0].__dict__
-            result_dict.pop("_sa_instance_state")
-            records.append(result_dict)
-
-        sorted_records = self._sort_by_version(records=records)
+        sorted_records = self._get_sql_records(query=query)
 
         if version is not None:
             if any(symbol in version for symbol in [SemVerSymbols.CARET, SemVerSymbols.TILDE]):

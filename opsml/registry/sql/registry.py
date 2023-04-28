@@ -10,7 +10,6 @@ from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.sql.semver import SemVerSymbols
 
 logger = ArtifactLogger.get_logger(__name__)
 

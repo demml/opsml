@@ -1,6 +1,6 @@
-from typing import List
 import re
 from enum import Enum
+from typing import List
 
 
 def sort_semvers(semvers: List[str]):
