@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from opsml.registry.model.model_info import FloatTypeConverter, ModelData, ModelInfo
-from opsml.registry.model.types import (
+from opsml.model.model_info import FloatTypeConverter, ModelData, ModelInfo
+from opsml.model.types import (
     AVAILABLE_MODEL_TYPES,
     DataDtypes,
     Feature,
