@@ -2,10 +2,10 @@ from typing import Any, Dict, Optional, cast
 
 import numpy as np
 
-from opsml.registry.model.model_converters import OnnxModelConverter
-from opsml.registry.model.model_info import ModelInfo, get_model_data
-from opsml.registry.model.model_types import ModelType, OnnxModelType
-from opsml.registry.model.types import (
+from opsml.model.model_converters import OnnxModelConverter
+from opsml.model.model_info import ModelInfo, get_model_data
+from opsml.model.model_types import ModelType, OnnxModelType
+from opsml.model.types import (
     Feature,
     InputData,
     InputDataType,

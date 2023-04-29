@@ -24,7 +24,6 @@ python-json-logger = "^2.0.6"
 scikit-learn = ">=1.0"
 semver = "2.13.0"
 skl2onnx = "^1.13"
-streaming-form-data = "^1.11.0"
 sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
 tf2onnx ="^1.13.0"
@@ -44,6 +43,10 @@ prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
 rollbar = {version="^0.16.3", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
+streaming-form-data = {version="^1.11.0", optional = true}
+
+# optional dependency for seldon
+seldon-core = {version="^1.16.0", optional = true}
 
 # optional dependencies for cloud-sql
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
@@ -61,6 +64,7 @@ graphviz = ["graphviz"]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000"]
 postgres = ["psycopg2"]
+seldon = ["seldon-core"]
 
 [tool.poetry.group.dev]
 optional = true
@@ -71,7 +75,7 @@ pytest-lazy-fixture = "^0.6.3"
 altair-viewer = "^0.4.0"
 pytest-cov = "^3.0.0"
 coverage = {extras = ["toml"], version = "^6.5.0"}
-tensorflow = "^2.11.1"
+#tensorflow = "2.11.1"
 torch = "^1.13.1"
 torchvision = "^0.14.1"
 tabulate = "^0.9.0"
@@ -80,6 +84,7 @@ xgboost = "^1.7.1"
 functiontrace = "^0.3.7"
 transformers = "^4.27.3"
 snakeviz = "^2.1.1"
+tensorflow = "2.9.0"
 
 [tool.poetry.group.dev-lints]
 optional = true
@@ -102,6 +107,7 @@ types-protobuf = "^4.21.0.3"
 [tool.poetry.group.docs.dependencies]
 mkdocs-material = "^9.1.7"
 mkdocstrings = {extras = ["python"], version = "^0.21.2"}
+
 
 [tool.poetry.scripts]
 load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file"
