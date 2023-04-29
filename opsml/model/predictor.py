@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Ty
 import numpy as np
 from pydantic import create_model
 
-from opsml.registry.model.types import (
+from opsml.model.types import (
     ApiSigTypes,
     Base,
     DataDict,

@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 from opsml.scripts.load_model_card import load_model_card_to_file
-from opsml.registry.model.types import ModelDownloadInfo
+from opsml.model.types import ModelDownloadInfo
 from unittest.mock import patch, MagicMock
 
 

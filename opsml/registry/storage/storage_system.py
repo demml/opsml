@@ -28,7 +28,7 @@ from pyarrow.fs import LocalFileSystem
 
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.helpers.utils import all_subclasses
-from opsml.registry.model.types import (
+from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     OnnxModelType,
@@ -365,11 +365,9 @@ class ApiStorageClient(LocalStorageClient):
     ) -> str:
         """
         Uploads local artifact to server
-
         Args:
             local_path:
                 Local path to artifact(s)
-
             write_path:
                 Path where current artifact has been saved to
         Returns:
@@ -681,7 +679,6 @@ class MlflowStorageClient(StorageClient):
         **kwargs,
     ) -> str:
         """Uploads local artifact to mflow
-
         Args:
             storage_uri: Path where current artifact has been saved to
         """

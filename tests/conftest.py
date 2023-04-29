@@ -421,7 +421,7 @@ def mock_model_cli_loader(db_registries):
     model_registry = db_registries["model"]
     from pathlib import Path
     from opsml.scripts.load_model_card import ModelLoader
-    from opsml.registry.model.types import ModelApiDef
+    from opsml.model.types import ModelApiDef
 
     class MockModelLoader(ModelLoader):
         def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:

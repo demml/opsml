@@ -5,7 +5,7 @@ import click
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry, ModelCard
-from opsml.registry.model.types import ModelApiDef, ModelDownloadInfo
+from opsml.model.types import ModelApiDef, ModelDownloadInfo
 
 logger = ArtifactLogger.get_logger(__name__)
 

@@ -17,8 +17,8 @@ from opsml.registry.cards.types import (
     Param,
 )
 from opsml.registry.data.splitter import DataHolder, DataSplitter
-from opsml.registry.model.predictor import OnnxModelPredictor
-from opsml.registry.model.types import (
+from opsml.model.predictor import OnnxModelPredictor
+from opsml.model.types import (
     DataDict,
     Feature,
     ModelDefinition,
@@ -531,7 +531,7 @@ class ModelCard(ArtifactCard):
             no_onnx:
                 Whether to convert to onnx or not
         """
-        from opsml.registry.model.creator import (  # pylint: disable=import-outside-toplevel
+        from opsml.model.creator import (  # pylint: disable=import-outside-toplevel
             create_model,
         )
 

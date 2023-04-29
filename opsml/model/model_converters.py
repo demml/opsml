@@ -12,10 +12,10 @@ from numpy.typing import NDArray
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.model.data_converters import OnnxDataConverter
-from opsml.registry.model.model_info import ModelInfo
-from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.model.types import (
+from opsml.model.data_converters import OnnxDataConverter
+from opsml.model.model_info import ModelInfo
+from opsml.model.registry_updaters import OnnxRegistryUpdater
+from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,

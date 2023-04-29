@@ -1,4 +1,4 @@
-from opsml.registry.model.model_info import FloatTypeConverter, get_model_data
+from opsml.model.model_info import FloatTypeConverter, get_model_data
 import pytest
 from numpy.typing import NDArray
 import pandas as pd

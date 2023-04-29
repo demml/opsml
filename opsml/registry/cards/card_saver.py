@@ -13,7 +13,7 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
-from opsml.registry.model.types import ModelApiDef
+from opsml.model.types import ModelApiDef
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
