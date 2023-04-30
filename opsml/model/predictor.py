@@ -28,7 +28,7 @@ class ApiSigCreator:
         data_type: str,
         data_dict: DataDict,
         model_type: str,
-        data_schema: Optional[Dict[str, Feature]],
+        data_schema: Optional[Dict[str, Feature]] = None,
     ):
         self.data_schema = data_schema
         self.data_type = data_type
