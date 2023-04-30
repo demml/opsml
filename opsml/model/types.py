@@ -202,11 +202,14 @@ class ApiSigTypes(Enum):
     INT = int
     INT32 = int
     INT64 = int
+    NUMBER = float
     FLOAT = float
     FLOAT32 = float
     FLOAT64 = float
     DOUBLE = float
     STR = str
+    STRING = str
+    ARRAY = list
 
 
 @dataclass
