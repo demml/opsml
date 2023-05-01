@@ -21,7 +21,7 @@ from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     DataDict,
     Feature,
-    ModelDefinition,
+    OnnxModelDefinition,
     ModelReturn,
     TorchOnnxArgs,
 )
@@ -375,7 +375,7 @@ class ModelCard(ArtifactCard):
     sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]]
     datacard_uid: Optional[str]
     onnx_model_data: Optional[DataDict]
-    onnx_model_def: Optional[ModelDefinition]
+    onnx_model_def: Optional[OnnxModelDefinition]
     modelcard_uri: Optional[str]
     trained_model_uri: Optional[str]
     onnx_model_uri: Optional[str]
@@ -463,7 +463,7 @@ class ModelCard(ArtifactCard):
             artifact_type=ArtifactStorageType.JSON.value,
         )
 
-        model_def = ModelDefinition(
+        model_def = OnnxModelDefinition(
             onnx_version=onnx_model.get("onnx_version"),
             model_bytes=bytes.fromhex(onnx_model.get("onnx_definition")),
         )
@@ -594,7 +594,7 @@ class ModelCard(ArtifactCard):
         version = self._set_version_for_predictor()
 
         # recast to make mypy happy
-        model_def = cast(ModelDefinition, self.onnx_model_def)
+        model_def = cast(OnnxModelDefinition, self.onnx_model_def)
         model_type = str(self.model_type)
         model_data = cast(DataDict, self.onnx_model_data)
 
