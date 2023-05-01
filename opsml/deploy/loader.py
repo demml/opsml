@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple, Type, cast
 import onnxruntime as rt
 from opsml.deploy.common import LoadedApiModelDef
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.predictor import ApiSigCreatorGetter
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -11,70 +12,57 @@ logger = ArtifactLogger.get_logger(__name__)
 MODEL_SUFFIX = "model_def.json"
 
 
-class ApiRequestResponseLoader:
-    def __init__(
-        self,
-        expected_data_type: str,
-        model_type: str,
-        sample_data: Any,
-        input_features: Dict[str, Any],
-        output_features: Dict[str, Any],
-    ):
-        self.expected_data_type = expected_data_type
-        self.model_type = model_type
-        self.input_features = input_features
-        self.output_features = output_features
-        self.sample_data = sample_data
-
-
-class Model:
-    def __init__(self, model_path: str):
-        """Loads a ModelCard schema from JSON path
-        Args:
-            model_path (str): Path to JSON file
-        Returns:
-            Instantiated Onnx model to be used with API app
-        """
-        self.model = LoadedApiModelDef.parse_file(model_path)
-        self.name = self.model.model_name
-        self.version = self.model.model_version
-
-        self.sig_creator = ApiSigCreator(
-            expected_data_type=str(self.model.data_dict.get("data_type")),
-            model_type=self.model.model_type,
-            sample_data=self.model.sample_data,
-            input_features=cast(Dict[str, Any], self.model.input_signature.get("properties")),
-            output_features=cast(Dict[str, Any], self.model.output_signature.get("properties")),
-        )
-
-        self.sess: rt.InferenceSession = None
-        self._output_names = None
-        self.request_sig, self.response_sig = self.create_api_models()
-        self._confirm_model_loaded()
-
-    def _confirm_model_loaded(self):
-        logger.info("Model %s v%s successfully loaded", self.name, self.version)
-
-
+# class Model:
+#    def __init__(self, model_path: str):
+#        """Loads a ModelCard schema from JSON path
+#        Args:
+#            model_path (str): Path to JSON file
+#        Returns:
+#            Instantiated Onnx model to be used with API app
+#        """
+#        self.model = LoadedApiModelDef.parse_file(model_path)
+#        self.name = self.model.model_name
+#        self.version = self.model.model_version
 #
-#    def _create_request_model(self) -> Type[BaseModel]:
-#        """Creates a request model to be used in Model predict route"""
+#        self.sig_creator = A
 #
-#        input_title = f"{self.model.input_signature.get('title')}"
-#        return self.sig_creator.create_model(
-#            signature=self.sig_creator.input_features,
-#            sig_model_name=f"{input_title}-{self.name}.v{self.version}",
+#
+#        ApiSigCreator(
+#            expected_data_type=str(self.model.data_dict.get("data_type")),
+#            model_type=self.model.model_type,
+#            sample_data=self.model.sample_data,
+#            input_features=cast(Dict[str, Any], self.model.input_signature.get("properties")),
+#            output_features=cast(Dict[str, Any], self.model.output_signature.get("properties")),
 #        )
 #
-#    def _create_response_model(self) -> Type[BaseModel]:
-#        """Creates a response model to be used when returning model predictions"""
+#        self.sess: rt.InferenceSession = None
+#        self._output_names = None
+#        self.request_sig, self.response_sig = self.create_api_models()
+#        self._confirm_model_loaded()
 #
-#        return self.sig_creator.create_model(
-#            signature=self.sig_creator.output_features,
-#            sig_model_name=f"Prediction-{self.name}.v{self.version}",
-#        )
+#    def _confirm_model_loaded(self):
+#        logger.info("Model %s v%s successfully loaded", self.name, self.version)
 #
-#    def create_api_models(self) -> Tuple[Type[BaseModel], Type[BaseModel]]:
+#
+##
+##    def _create_request_model(self) -> Type[BaseModel]:
+##        """Creates a request model to be used in Model predict route"""
+##
+##        input_title = f"{self.model.input_signature.get('title')}"
+##        return self.sig_creator.create_model(
+##            signature=self.sig_creator.input_features,
+##            sig_model_name=f"{input_title}-{self.name}.v{self.version}",
+##        )
+##
+##    def _create_response_model(self) -> Type[BaseModel]:
+##        """Creates a response model to be used when returning model predictions"""
+##
+##        return self.sig_creator.create_model(
+##            signature=self.sig_creator.output_features,
+##            sig_model_name=f"Prediction-{self.name}.v{self.version}",
+##        )
+##
+##    def create_api_models(self) -> Tuple[Type[BaseModel], Type[BaseModel]]:
 #        request = self._create_request_model()
 #        response = self._create_response_model()
 #

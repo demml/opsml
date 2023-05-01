@@ -104,13 +104,13 @@ class DataDict(BaseModel):
     output_features: Dict[str, Feature]
 
 
-class ModelDefinition(BaseModel):
+class OnnxModelDefinition(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
     model_bytes: bytes = Field(..., description="Onnx model as serialized string")
 
 
 class ModelReturn(BaseModel):
-    model_definition: Optional[ModelDefinition] = None
+    model_definition: Optional[OnnxModelDefinition] = None
     onnx_input_features: Dict[str, Feature]  # change this later
     onnx_output_features: Dict[str, Feature]  # change this later
     data_schema: Optional[Dict[str, Feature]] = None
@@ -239,11 +239,10 @@ class ModelApiDef(BaseModel):
     model_type: str
     onnx_definition: bytes
     onnx_version: str
-    input_signature: dict
-    output_signature: dict
     model_version: str
-    data_dict: dict
+    data_dict: DataDict
     sample_data: dict
+    data_schema: Optional[dict] = None
 
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}

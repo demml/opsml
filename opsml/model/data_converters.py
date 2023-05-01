@@ -11,13 +11,13 @@ from opsml.model.types import (
     DataDtypes,
     Feature,
     InputDataType,
-    ModelDefinition,
+    OnnxModelDefinition,
     OnnxModelType,
     TorchOnnxArgs,
     get_onnx_tensor_spec,
 )
 
-ModelConvertOutput = Tuple[ModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
+ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
 
 
 # lgb and xgb need to be converted to float32

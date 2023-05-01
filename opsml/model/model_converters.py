@@ -20,7 +20,7 @@ from opsml.model.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
     Feature,
-    ModelDefinition,
+    OnnxModelDefinition,
     ModelReturn,
     OnnxDataProto,
     OnnxModelType,
@@ -107,13 +107,13 @@ class ModelConverter:
 
         return input_dict, output_dict
 
-    def create_model_def(self, onnx_model: ModelProto) -> ModelDefinition:
+    def create_model_def(self, onnx_model: ModelProto) -> OnnxModelDefinition:
         """Creates Model definition
 
         Args:
             onnx_model (ModelProto): Onnx model
         """
-        return ModelDefinition(
+        return OnnxModelDefinition(
             onnx_version=ONNX_VERSION,
             model_bytes=onnx_model.SerializeToString(),
         )
@@ -129,6 +129,7 @@ class ModelConverter:
         model_def = self.create_model_def(onnx_model=onnx_model)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
+        print(data_schema)
         return ModelReturn(
             model_definition=model_def,
             onnx_input_features=input_onnx_features,
