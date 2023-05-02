@@ -1,16 +1,10 @@
 # pylint: disable=import-outside-toplevel
 from typing import Any, Dict, Optional
-
+from functools import cached_property
 import numpy as np
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import (
-    DataDict,
-    Feature,
-    InputDataType,
-    ModelApiDef,
-    OnnxModelType,
-)
+from opsml.model.types import DataDict, Feature, InputDataType, ModelApiDef, OnnxModelType, Base
 
 
 # need to build response object for prediction
@@ -42,17 +36,28 @@ class OnnxModelPredictor:
         self.onnx_version = onnx_version
         self.sample_api_data = sample_api_data
 
+        # placeholder for eventual trained model predictor expansion
+        self.to_onnx = True
+
         # methods
         if start_sess:
             self.sess = self._create_onnx_session(model_definition=model_definition)
             self._output_names = [output.name for output in self.sess.get_outputs()]
 
-        api_sig_creator = ApiSigCreatorGetter.get_sig_creator(
+        self.sig_creator = ApiSigCreatorGetter.get_sig_creator(
             model_type=model_type,
             data_schema=data_schema,
             data_dict=data_dict,
+            to_onnx=self.to_onnx,
         )
-        self.input_sig, self.output_sig = api_sig_creator.get_input_output_sig()
+
+    @cached_property
+    def input_sig(self) -> Base:
+        return self.sig_creator.input_sig
+
+    @cached_property
+    def output_sig(self) -> Base:
+        return self.sig_creator.output_sig
 
     def get_api_model(self) -> ModelApiDef:
         return ModelApiDef(
@@ -79,7 +84,7 @@ class OnnxModelPredictor:
             Prediction (array or float depending on model type)
         """
 
-        pred_data = self.input_sig(**data)
+        pred_data = self.sig_creator.input_sig(**data)
 
         predictions = self.sess.run(
             output_names=self._output_names,
@@ -100,7 +105,7 @@ class OnnxModelPredictor:
             Predicition (float)
         """
 
-        pred_data = self.input_sig(**data)
+        pred_data = self.sig_creator.input_sig(**data)
 
         if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
             data_for_pred = pred_data.to_dataframe()

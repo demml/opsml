@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, root_validator, validator  # pylint: disable=no-name-in-module
 from skl2onnx.common.data_types import (
     DoubleTensorType,
     FloatTensorType,
@@ -122,6 +122,21 @@ class ModelReturn(BaseModel):
 
 
 class Base(BaseModel):
+    feature_map: Optional[Dict[str, Feature]] = None
+
+    class Config:
+        allow_mutation = True
+
+    @property
+    def feature_map(self) -> Dict[str, Feature]:
+        if self.feature_map is not None:
+            return self.feature_map
+        raise ValueError("feature_map has not been set")
+
+    @feature_map.setter
+    def feature_map(self, feature_map: Dict[str, Feature]) -> None:
+        self.feature_map = feature_map
+
     def to_onnx(self):
         raise NotImplementedError
 
@@ -147,8 +162,11 @@ class Base(BaseModel):
 class NumpyBase(Base):
     def to_onnx(self):
         values = list(self.dict().values())
-        for _, type_ in self.feature_map.items():  # there can only be one
-            array = self.to_numpy(type_=type_, values=values)
+        for _, feature in self.feature_map.items():  # there can only be one
+            array = self.to_numpy(
+                type_=feature.feature_type,
+                values=values,
+            )
             return {"inputs": array.reshape(1, -1)}
 
     def to_dataframe(self):
@@ -160,7 +178,10 @@ class DictBase(Base):
         feats = {}
 
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            array = self.to_numpy(
+                type_=self.feature_map[feat].feature_type,
+                values=feat_val,
+            )
             feats[feat] = array.reshape(1, -1)
         return feats
 
@@ -172,7 +193,7 @@ class DeepLearningNumpyBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
             feats[feat] = np.expand_dims(array, axis=0)
         return feats
 
@@ -188,7 +209,7 @@ class DeepLearningDictBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
             feats[feat] = np.expand_dims(array, axis=0)
 
         return feats
@@ -210,6 +231,25 @@ class ApiSigTypes(Enum):
     STR = str
     STRING = str
     ARRAY = list
+
+
+class SeldonSigTypes(str, Enum):
+
+    INT32 = "INT32"
+    INT64 = "INT64"
+    NUMBER = "FP32"
+    FLOAT = "FP32"
+    FLOAT16 = "FP16"
+    FLOAT32 = "FP32"
+    FLOAT64 = "FP64"
+    DOUBLE = "FP64"
+
+
+class PydanticDataTypes(Enum):
+    NUMBER = float
+    INTEGER = int
+    STRING = str
+    ANY = Any
 
 
 @dataclass
@@ -247,6 +287,12 @@ class ModelApiDef(BaseModel):
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
         allow_extra = True
+
+    @validator("onnx_definition", pre=True)
+    def convert_to_bytes(cls, onnx_definition) -> bytes:  # pylint: disable = no-self-argument
+        if isinstance(onnx_definition, str):
+            return bytes.fromhex(onnx_definition)
+        return onnx_definition
 
 
 class ModelDownloadInfo(BaseModel):

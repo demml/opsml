@@ -11,8 +11,8 @@ from pytest_lazyfixture import lazy_fixture
         lazy_fixture("linear_regression"),  # linear regress with numpy
         lazy_fixture("random_forest_classifier"),  # random forest with dataframe
         lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
-        # lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
-        # lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
+        lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
+        lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
         # lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         # lazy_fixture("sklearn_pipeline_advanced"),
         # lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
@@ -64,7 +64,10 @@ def test_model_predict(model_and_data):
             pred_dict[label] = np.ravel(pred).tolist()
 
         else:
-            pred_dict[label] = pred
+            if isinstance(pred, list):
+                pred_dict[label] = pred
+            else:
+                pred_dict[label] = list(pred.flatten())
 
     out_sig = predictor.output_sig(**pred_dict)
     pred_orig = predictor.predict_with_model(model, record)

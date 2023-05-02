@@ -587,7 +587,7 @@ class ModelCard(ArtifactCard):
             `OnnxModelPredictor`
 
         """
-
+        # todo: clean this up
         if not bool(self.onnx_model_def):
             self._create_and_set_model_attr(no_onnx=False)
 
