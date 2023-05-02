@@ -18,13 +18,7 @@ from opsml.registry.cards.types import (
 )
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.model.predictor import OnnxModelPredictor
-from opsml.model.types import (
-    DataDict,
-    Feature,
-    OnnxModelDefinition,
-    ModelReturn,
-    TorchOnnxArgs,
-)
+from opsml.model.types import DataDict, Feature, OnnxModelDefinition, ModelReturn, TorchOnnxArgs, ApiDataSchemas
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
@@ -383,7 +377,7 @@ class ModelCard(ArtifactCard):
     sample_data_type: Optional[str]
     model_type: Optional[str]
     additional_onnx_args: Optional[TorchOnnxArgs]
-    data_schema: Optional[Dict[str, Feature]]
+    data_schema: Optional[ApiDataSchemas]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     no_onnx: bool = False
@@ -508,18 +502,8 @@ class ModelCard(ArtifactCard):
         return version
 
     def _set_model_attributes(self, model_return: ModelReturn) -> None:
-        setattr(
-            self,
-            "onnx_model_data",
-            DataDict(
-                data_type=model_return.data_type,
-                input_features=model_return.onnx_input_features,
-                output_features=model_return.onnx_output_features,
-            ),
-        )
-
         setattr(self, "onnx_model_def", model_return.model_definition)
-        setattr(self, "data_schema", model_return.data_schema)
+        setattr(self, "data_schema", model_return.api_data_schema)
         setattr(self, "model_type", model_return.model_type)
 
     def _create_and_set_model_attr(self, no_onnx: bool) -> None:
@@ -594,9 +578,10 @@ class ModelCard(ArtifactCard):
         version = self._set_version_for_predictor()
 
         # recast to make mypy happy
+        # todo: refactor
         model_def = cast(OnnxModelDefinition, self.onnx_model_def)
         model_type = str(self.model_type)
-        model_data = cast(DataDict, self.onnx_model_data)
+        data_schema = cast(ApiDataSchemas, self.data_schema)
 
         sample_api_data = self._get_sample_data_for_api()
 
@@ -604,8 +589,7 @@ class ModelCard(ArtifactCard):
             model_name=self.name,
             model_type=model_type,
             model_definition=model_def.model_bytes,
-            data_dict=model_data,
-            data_schema=self.data_schema,
+            data_schema=data_schema,
             model_version=version,
             onnx_version=model_def.onnx_version,
             sample_api_data=sample_api_data,

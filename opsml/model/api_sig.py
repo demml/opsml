@@ -17,6 +17,7 @@ from opsml.model.types import (
     NumpyBase,
     OnnxModelType,
     PydanticDataTypes,
+    ApiDataSchemas,
 )
 
 PydanticFields = Dict[str, Tuple[Any, ...]]
@@ -123,13 +124,7 @@ class PydanticFeatureGenerator:
 
 
 class ApiSigCreator:
-    def __init__(
-        self,
-        data_dict: DataDict,
-        model_type: str,
-        data_schema: Optional[Dict[str, Feature]],
-        to_onnx: bool,
-    ):
+    def __init__(self, data_schema: ApiDataSchemas, model_type: str, to_onnx: bool):
         """
         Creates an API signature from model metadata
 
@@ -145,26 +140,35 @@ class ApiSigCreator:
                 return sig
 
         """
+
         self.data_schema = data_schema
         self.model_type = model_type
-        self.data_dict = data_dict
         self.to_onnx = to_onnx
+
+    @property
+    def input_features(self) -> Dict[str, Feature]:
+        return self.data_schema.model_data_schema.input_features
+
+    @property
+    def output_features(self) -> Dict[str, Feature]:
+        return self.data_schema.model_data_schema.output_features
 
     @cached_property
     def input_sig(self) -> Base:
-        input_sig = self._get_input_sig(features=self.data_dict.input_features)
-        input_sig.feature_map = self.data_dict.input_features
+        input_sig = self._get_input_sig(features=self.input_features)
+        input_sig.feature_map = self.input_features  # need for conversions
 
         return input_sig
 
     @cached_property
     def output_sig(self) -> Base:
-        output_sig = self._get_output_sig(features=self.data_dict.output_features)
-        output_sig.feature_map = self.data_dict.output_features
+
+        output_sig = self._get_output_sig(features=self.output_features)
+        output_sig.feature_map = self.output_features  # need for conversions
 
         return output_sig
 
-    def _get_pydantic_sig(self, features: Dict[str, Any]) -> PydanticFields:
+    def _get_pydantic_sig(self, features: Dict[str, Feature]) -> PydanticFields:
         """
         Infers the pydantic model needed for API signature
 
@@ -180,23 +184,19 @@ class ApiSigCreator:
             PydanticFields model to be used with FastAPI
         """
 
-        pydantic_generator = PydanticFeatureGenerator(
-            features=features,
-            model_type=self.model_type,
-        )
-
+        pydantic_generator = PydanticFeatureGenerator(features=features, model_type=self.model_type)
         return pydantic_generator.get_pydantic_fields()
 
     def _get_pydantic_base(self):
         raise NotImplementedError
 
-    def _get_base_fields(self, features: Dict[str, Any]) -> Tuple[Base, PydanticFields]:
+    def _get_base_fields(self, features: Dict[str, Feature]) -> Tuple[Base, PydanticFields]:
         pydantic_fields = self._get_pydantic_sig(features=features)
         base = self._get_pydantic_base()
 
         return base, pydantic_fields
 
-    def _get_input_sig(self, features: Dict[str, Any]) -> Type[Base]:
+    def _get_input_sig(self, features: Dict[str, Feature]) -> Type[Base]:
         base, fields = self._get_base_fields(features=features)
         input_sig = create_model("Features", **fields, __base__=base)  # type: ignore
         return input_sig
@@ -206,7 +206,7 @@ class ApiSigCreator:
             return field_value
         return (conlist(field_value[0]), ...)
 
-    def _get_output_sig(self, features: Dict[str, Any]) -> Type[Base]:
+    def _get_output_sig(self, features: Dict[str, Feature]) -> Type[Base]:
         base, fields = self._get_base_fields(features=features)
 
         if not self.to_onnx:
@@ -232,9 +232,9 @@ class SklearnSigCreator(ApiSigCreator):
         return NumpyBase
 
     #
-    def _get_input_sig(self, features: Dict[str, Any]) -> Type[Base]:
+    def _get_input_sig(self, features: Dict[str, Feature]) -> Type[Base]:
         if self.data_schema is not None:
-            return super()._get_input_sig(features=self.data_schema)
+            return super()._get_input_sig(features=self.data_schema.input_data_schema)
         return super()._get_input_sig(features=features)
 
     @staticmethod
@@ -256,10 +256,9 @@ class DeepLearningSigCreator(ApiSigCreator):
 class ApiSigCreatorGetter:
     @staticmethod
     def get_sig_creator(
-        data_dict: DataDict,
         model_type: str,
         to_onnx: bool,
-        data_schema: Optional[Dict[str, Feature]] = None,
+        data_schema: ApiDataSchemas,
     ):
         creator = next(
             (
@@ -270,7 +269,6 @@ class ApiSigCreatorGetter:
         )
 
         return creator(
-            data_dict=data_dict,
             model_type=model_type,
             data_schema=data_schema,
             to_onnx=to_onnx,

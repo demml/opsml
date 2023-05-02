@@ -4,7 +4,7 @@ from functools import cached_property
 import numpy as np
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import DataDict, Feature, InputDataType, ModelApiDef, OnnxModelType, Base
+from opsml.model.types import InputDataType, ModelApiDef, OnnxModelType, Base, ApiDataSchemas
 
 
 # need to build response object for prediction
@@ -15,8 +15,7 @@ class OnnxModelPredictor:
         model_type: str,
         model_definition: bytes,
         onnx_version: str,
-        data_dict: DataDict,
-        data_schema: Optional[Dict[str, Feature]],
+        data_schema: ApiDataSchemas,
         model_version: str,
         sample_api_data: Dict[str, Any],
         start_sess: bool = True,
@@ -29,7 +28,6 @@ class OnnxModelPredictor:
 
         self.model_name = model_name
         self.model_type = model_type
-        self.data_dict = data_dict
         self.data_schema = data_schema
         self.model_version = model_version
         self.model_definition = model_definition
@@ -46,8 +44,7 @@ class OnnxModelPredictor:
 
         self.sig_creator = ApiSigCreatorGetter.get_sig_creator(
             model_type=model_type,
-            data_schema=data_schema,
-            data_dict=data_dict,
+            data_schema=self.data_schema,
             to_onnx=self.to_onnx,
         )
 
@@ -66,9 +63,9 @@ class OnnxModelPredictor:
             onnx_definition=self.model_definition,
             onnx_version=self.onnx_version,
             model_version=self.model_version,
-            data_dict=self.data_dict,
+            model_data_schema=self.data_dict,
             sample_data=self.sample_api_data,
-            data_schema=self.data_schema,
+            api_data_schema=self.data_schema,
         )
 
     def predict(self, data: Dict[str, Any]) -> Any:
