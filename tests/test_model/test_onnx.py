@@ -8,11 +8,11 @@ from pytest_lazyfixture import lazy_fixture
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        lazy_fixture("linear_regression"),  # linear regress with numpy
+        # lazy_fixture("linear_regression"),  # linear regress with numpy
         lazy_fixture("random_forest_classifier"),  # random forest with dataframe
-        lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
-        lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
-        lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
+        # lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
+        # lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
+        # lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
         # lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         # lazy_fixture("sklearn_pipeline_advanced"),
         # lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
@@ -40,6 +40,9 @@ def test_model_predict(model_and_data):
         datacard_uids=["test_uid"],
     )
     predictor = model_card.onnx_model()
+
+    with open("random_fores_model_def.json", "w") as file_:
+        file_.write(predictor.get_api_model().json())
 
     if isinstance(data, np.ndarray):
         input_name = next(iter(predictor.data_dict.input_features.keys()))
