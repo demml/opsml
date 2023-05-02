@@ -1,8 +1,9 @@
 # pylint: disable=import-outside-toplevel
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type
-
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, cast, Union
+from pydantic.types import ConstrainedList
+from functools import cached_property
 import numpy as np
-from pydantic import create_model
+from pydantic import create_model, conlist
 
 from opsml.model.types import (
     ApiSigTypes,
@@ -15,10 +16,110 @@ from opsml.model.types import (
     InputDataType,
     NumpyBase,
     OnnxModelType,
+    PydanticDataTypes,
 )
 
 PydanticFields = Dict[str, Tuple[Any, ...]]
 PredictFunc = Callable[[Dict[str, Any]], Any]
+
+
+class PydanticFeatureGenerator:
+    def __init__(
+        self,
+        features: Dict[str, Feature],
+        model_type: str,
+    ):
+        """
+        Generates pydanitc field for api cretion
+
+        Args:
+            features:
+                Dictionary of `Feature`
+
+        """
+
+        self.features = features
+        self.model_type = model_type
+        self.pydantic_fields: PydanticFields = {}
+
+    def _is_list_type(self, feature: Feature) -> bool:
+
+        """
+        Checks if feature is a list type
+
+        Args:
+            feature:
+                `Feature`
+
+        Returns
+            boolean
+        """
+        if feature.feature_type == "UNDEFINED":
+            return True
+
+        # it is assumed pytorch/tensorflow will be feeding list/arrays
+        if self.model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]:
+            return True
+
+        if len(feature.shape) > 1 and feature.shape[1] > 1:
+            return True
+
+        return False
+
+    def _get_feature_shape(self, feature: Feature) -> Optional[Union[List[int], int]]:
+        """
+        Gets feature shape
+
+        Args:
+            feature:
+                `Feature`
+
+        Returns
+            Optional list of ints or int
+
+        """
+        feature_len = len(feature.shape)
+        if feature_len > 1:
+            if feature_len > 2:
+                return feature.shape[1:]
+            return None if feature.shape[1] == 0 else feature.shape[1]
+        return None
+
+    def _get_list_feature_type(self, feature: Feature) -> List[Any]:
+        """Creates list feature type to be used with pydantic model.
+
+        Args:
+            feature:
+                `Feature`
+
+        Returns:
+            _type_: _description_
+        """
+        feature_shape = self._get_feature_shape(feature=feature)
+        feature_type = ApiSigTypes[feature.feature_type].value
+
+        if isinstance(feature_shape, list):
+            shape_len = len(feature_shape)
+        else:
+            shape_len = 1
+        for _ in range(shape_len):
+            feature_type = conlist(feature_type)  # type: ignore
+
+        return feature_type
+
+    def _get_field_from_feature(self, feature: Feature) -> Union[List[Any], str, int, float]:
+        """Infer field type and shape from feature"""
+        if self._is_list_type(feature=feature):
+            return self._get_list_feature_type(feature=feature)
+        return ApiSigTypes[feature.feature_type].value
+
+    def get_pydantic_fields(self) -> PydanticFields:
+        """Iterate through provided fields and create pydantic field for `create_model`"""
+        for input_name, feature in self.features.items():
+            field_info = self._get_field_from_feature(feature=feature)
+            self.pydantic_fields[input_name] = (field_info, ...)
+
+        return self.pydantic_fields
 
 
 class ApiSigCreator:
@@ -27,65 +128,45 @@ class ApiSigCreator:
         data_dict: DataDict,
         model_type: str,
         data_schema: Optional[Dict[str, Feature]],
+        to_onnx: bool,
     ):
         """
         Creates an API signature from model metadata
 
         Arga:
-            data_type:
-                type of data
             data_dict:
                 Data dict of data_type, input features, and outputs from model
             model_type:
                 Type of model
             data_schema:
                 Schema from sample input data
+            to_onnx:
+                Whether the api sig is being generated for an onnx model. This is needed for the
+                return sig
 
         """
         self.data_schema = data_schema
         self.model_type = model_type
         self.data_dict = data_dict
+        self.to_onnx = to_onnx
 
-    def _is_list_type(self, feature: Feature):
-        if feature.feature_type == "UNDEFINED":
-            return True
-        if self.model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]:
-            return True
-        if len(feature.shape) > 1 and feature.shape[1] > 1:
-            return True
-        return False
+    @cached_property
+    def input_sig(self) -> Base:
+        input_sig = self._get_input_sig(features=self.data_dict.input_features)
+        input_sig.feature_map = self.data_dict.input_features
 
-    def _get_feature_shape(self, feature: Feature):
-        feature_len = len(feature.shape)
-        if feature_len > 1:
-            if feature_len > 2:
-                return feature.shape[1:]
-            return None if feature.shape[1] == 0 else feature.shape[1]
-        return None
+        return input_sig
 
-    def _infer_pydantic_fields(self, features: Dict[str, Feature]) -> PydanticFields:
-        pydantic_fields: PydanticFields = {}
+    @cached_property
+    def output_sig(self) -> Base:
+        output_sig = self._get_output_sig(features=self.data_dict.output_features)
+        output_sig.feature_map = self.data_dict.output_features
 
-        for input_name, feature in features.items():
-            if self._is_list_type(feature=feature):
-                feature_shape = self._get_feature_shape(feature=feature)
-                field_info = ApiSigTypes[feature.feature_type].value
-
-                if isinstance(feature_shape, list):
-                    shape_len = len(feature_shape)
-                else:
-                    shape_len = 1
-                for _ in range(shape_len):
-                    field_info = List[field_info]  # type: ignore
-
-            else:
-                field_info = ApiSigTypes[feature.feature_type].value
-            pydantic_fields[input_name] = (field_info, ...)
-
-        return pydantic_fields
+        return output_sig
 
     def _get_pydantic_sig(self, features: Dict[str, Any]) -> PydanticFields:
-        """Infers the pydantic model needed for API signature
+        """
+        Infers the pydantic model needed for API signature
 
         If model was trained on dataframe and expects to supply
         values as prediction to API, _infer_pydantic_fields will be
@@ -99,54 +180,44 @@ class ApiSigCreator:
             PydanticFields model to be used with FastAPI
         """
 
-        return self._infer_pydantic_fields(features=features)
+        pydantic_generator = PydanticFeatureGenerator(
+            features=features,
+            model_type=self.model_type,
+        )
 
-    def _get_feature_type_map(self, features: Dict[str, Feature]):
-        """Generates feature map of name and type for input data.
-        This is used to convert data to the correct type for onnx.
-        """
-
-        feature_map = {}
-        for name, feature in features.items():
-            feature_map[name] = feature.feature_type
-        return feature_map
+        return pydantic_generator.get_pydantic_fields()
 
     def _get_pydantic_base(self):
         raise NotImplementedError
 
-    def _create_api_sig(self, features: Dict[str, Any]):
+    def _get_base_fields(self, features: Dict[str, Any]) -> Tuple[Base, PydanticFields]:
         pydantic_fields = self._get_pydantic_sig(features=features)
         base = self._get_pydantic_base()
 
-        feature_sig = create_model("Features", **pydantic_fields, __base__=base)  # type: ignore
-        return feature_sig
+        return base, pydantic_fields
 
-    def get_api_sig(self, features: Dict[str, Any]) -> Type[Base]:
-        if not TYPE_CHECKING:
-            feature_sig = self._create_api_sig(features=features)
-        else:
-            feature_sig = Base
+    def _get_input_sig(self, features: Dict[str, Any]) -> Type[Base]:
+        base, fields = self._get_base_fields(features=features)
+        input_sig = create_model("Features", **fields, __base__=base)  # type: ignore
+        return input_sig
 
-        return feature_sig
+    def _convert_to_conlist(self, field_value: Tuple[Any, Ellipsis]) -> Tuple[ConstrainedList, Ellipsis]:
+        if issubclass(field_value[0], ConstrainedList):
+            return field_value
+        return (conlist(field_value[0]), ...)
 
-    def _get_input_sig(self) -> Type[Base]:
-        return self.get_api_sig(features=self.data_dict.input_features)
+    def _get_output_sig(self, features: Dict[str, Any]) -> Type[Base]:
+        base, fields = self._get_base_fields(features=features)
 
-    def _get_output_sig(self) -> Type[Base]:
-        return self.get_api_sig(features=self.data_dict.output_features)
+        if not self.to_onnx:
+            return create_model("Predictions", **fields, __base__=base)
 
-    def get_input_output_sig(self) -> Tuple[Type[Base], Type[Base]]:
-        input_sig = self._get_input_sig()
-        output_sig = self._get_output_sig()
+        # Onnx assumes array output
+        for field_name, field_value in fields.items():
+            field = self._convert_to_conlist(field_value=field_value)
+            fields[field_name] = field
 
-        input_sig.feature_map = self._get_feature_type_map(  # type: ignore
-            features=self.data_dict.input_features,
-        )
-        output_sig.feature_map = self._get_feature_type_map(  # type: ignore
-            features=self.data_dict.output_features,
-        )
-
-        return input_sig, output_sig
+        return create_model("Predictions", **fields, __base__=base)
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
@@ -161,10 +232,10 @@ class SklearnSigCreator(ApiSigCreator):
         return NumpyBase
 
     #
-    def _get_input_sig(self) -> Type[Base]:
+    def _get_input_sig(self, features: Dict[str, Any]) -> Type[Base]:
         if self.data_schema is not None:
-            return self.get_api_sig(features=self.data_schema)
-        return self.get_api_sig(features=self.data_dict.input_features)
+            return super()._get_input_sig(features=self.data_schema)
+        return super()._get_input_sig(features=features)
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
@@ -187,6 +258,7 @@ class ApiSigCreatorGetter:
     def get_sig_creator(
         data_dict: DataDict,
         model_type: str,
+        to_onnx: bool,
         data_schema: Optional[Dict[str, Feature]] = None,
     ):
         creator = next(
@@ -201,4 +273,5 @@ class ApiSigCreatorGetter:
             data_dict=data_dict,
             model_type=model_type,
             data_schema=data_schema,
+            to_onnx=to_onnx,
         )
