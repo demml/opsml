@@ -9,7 +9,6 @@ from opsml.model.predictor import ApiSigCreatorGetter
 
 logger = ArtifactLogger.get_logger(__name__)
 
-MODEL_PATH = os.getenv("MODELCARD_FILEPATH", "*model_def.json")
 
 # todo: expand out to handle non-onnx models
 class Model:
@@ -110,12 +109,17 @@ class Model:
 
 class ModelLoader:
     def __init__(self):
+
+        self.model_path = os.getenv("OPSML_MODELAPI_JSON", "*model_def.json")
         self.model_files = self._get_model_files()
+
+        print(self.model_path)
+        print(self.model_files)
 
     def _get_model_files(self) -> List[str]:
         """Load model file from environment"""
 
-        return list(set(glob.glob(f"**/**/{MODEL_PATH}", recursive=True)))
+        return list(set(glob.glob(f"**/**/{self.model_path}", recursive=True)))
 
     def load_models(self) -> List[Model]:
         """Load models"""
