@@ -41,9 +41,6 @@ def test_model_predict(model_and_data):
     )
     predictor = model_card.onnx_model()
 
-    with open("random_fores_model_def.json", "w") as file_:
-        file_.write(predictor.get_api_model().json())
-
     if isinstance(data, np.ndarray):
         input_name = next(iter(predictor.data_dict.input_features.keys()))
 
