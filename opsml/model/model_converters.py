@@ -129,7 +129,6 @@ class ModelConverter:
         model_def = self.create_model_def(onnx_model=onnx_model)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        print(data_schema)
         return ModelReturn(
             model_definition=model_def,
             onnx_input_features=input_onnx_features,

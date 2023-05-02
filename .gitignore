@@ -115,3 +115,4 @@ examples/.DS_Store
 test_scripts*
 tmp.db
 opsml_artifacts
+opsml/deploy/seldon/api_test.txt
