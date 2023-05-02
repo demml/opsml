@@ -99,9 +99,12 @@ class Feature(BaseModel):
 class DataDict(BaseModel):
     """Datamodel for feature info"""
 
-    data_type: str
+    data_type: Optional[str] = None
     input_features: Dict[str, Feature]
     output_features: Dict[str, Feature]
+
+    class Config:
+        allow_mutation = True
 
 
 class OnnxModelDefinition(BaseModel):
@@ -109,11 +112,17 @@ class OnnxModelDefinition(BaseModel):
     model_bytes: bytes = Field(..., description="Onnx model as serialized string")
 
 
+class ApiDataSchemas(BaseModel):
+    model_data_schema: DataDict  # expected model inputs and outputs
+    input_data_schema: Optional[Dict[str, Feature]] = None  # what the api can be fed
+
+    class Config:
+        allow_mutation = True
+
+
 class ModelReturn(BaseModel):
     model_definition: Optional[OnnxModelDefinition] = None
-    onnx_input_features: Dict[str, Feature]  # change this later
-    onnx_output_features: Dict[str, Feature]  # change this later
-    data_schema: Optional[Dict[str, Feature]] = None
+    api_data_schema: ApiDataSchemas
     model_type: str = "placeholder"
     data_type: str = "placeholder"
 
@@ -280,9 +289,8 @@ class ModelApiDef(BaseModel):
     onnx_definition: bytes
     onnx_version: str
     model_version: str
-    data_dict: DataDict
     sample_data: dict
-    data_schema: Optional[dict] = None
+    data_schemas: ApiDataSchemas
 
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}

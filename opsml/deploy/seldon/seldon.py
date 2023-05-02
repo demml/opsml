@@ -1,4 +1,4 @@
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, List
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import Feature, SeldonSigTypes
 from opsml.deploy.loader import ModelLoader
@@ -16,9 +16,8 @@ class SeldonModel:
         self,
         features: Dict[str, Any],
         feature_map: Dict[str, Feature],
-    ):
-        sig_meta = []
-
+    ) -> List[Dict[str, Union[list, str, int, float]]]:
+        sig_meta: List[Dict[str, Union[list, str, int, float]]] = []
         for feature in features:
             feature_info = feature_map[feature]
             sig_meta.append(
@@ -31,7 +30,7 @@ class SeldonModel:
 
         return sig_meta
 
-    def init_metadata(self):
+    def init_metadata(self) -> Dict[str, Union[list, str, int, float]]:
         """Creates metadata for loaded model"""
 
         inputs = self._get_sig_metadata(

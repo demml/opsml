@@ -113,9 +113,6 @@ class ModelLoader:
         self.model_path = os.getenv("OPSML_MODELAPI_JSON", "*model_def.json")
         self.model_files = self._get_model_files()
 
-        print(self.model_path)
-        print(self.model_files)
-
     def _get_model_files(self) -> List[str]:
         """Load model file from environment"""
 

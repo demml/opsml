@@ -25,6 +25,8 @@ from opsml.model.types import (
     OnnxDataProto,
     OnnxModelType,
     TorchOnnxArgs,
+    ApiDataSchemas,
+    DataDict,
 )
 
 ONNX_VERSION = onnx.__version__
@@ -129,12 +131,15 @@ class ModelConverter:
         model_def = self.create_model_def(onnx_model=onnx_model)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return ModelReturn(
-            model_definition=model_def,
-            onnx_input_features=input_onnx_features,
-            onnx_output_features=output_onnx_features,
-            data_schema=data_schema,
+        schema = ApiDataSchemas(
+            model_data_schema=DataDict(
+                input_features=input_onnx_features,
+                output_features=output_onnx_features,
+            ),
+            input_data_schema=data_schema,
         )
+
+        return ModelReturn(model_definition=model_def, api_data_schema=schema)
 
     @staticmethod
     def validate(model_type: str) -> bool:

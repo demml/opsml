@@ -174,7 +174,7 @@ class OnnxModelCreator(ModelCreator):
 
         onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
         onnx_model_return.model_type = self.model_type
-        onnx_model_return.data_type = self.onnx_data_type
+        onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
 
         # add onnx version
         return onnx_model_return
