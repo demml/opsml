@@ -1,14 +1,6 @@
 # pylint: disable=import-outside-toplevel
 from functools import cached_property
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from pydantic import conlist, create_model
 
