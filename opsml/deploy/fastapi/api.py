@@ -5,14 +5,12 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 
-
 from opsml.deploy.fastapi.event_handler import start_app_handler, stop_app_handler
-from opsml.deploy.fastapi.middleware import rollbar_middleware
-
-from opsml.deploy.fastapi.routes import RouteCreator
 from opsml.deploy.fastapi.gunicorn import GunicornApplication
-from opsml.helpers.logging import ArtifactLogger
+from opsml.deploy.fastapi.middleware import rollbar_middleware
+from opsml.deploy.fastapi.routes import RouteCreator
 from opsml.deploy.loader import ModelLoader
+from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 

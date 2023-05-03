@@ -5,8 +5,8 @@ import rollbar
 from fastapi import FastAPI, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from opsml.helpers.logging import ArtifactLogger
 from opsml.deploy.loader import Model
+from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
