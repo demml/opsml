@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+
 """Base code for Onnx model conversion"""
 from dataclasses import asdict, dataclass
 from enum import Enum
@@ -130,8 +132,6 @@ class ModelReturn(BaseModel):
 
 
 class Base(BaseModel):
-    feature_map: Optional[Dict[str, Feature]] = None
-
     class Config:
         allow_mutation = True
 

@@ -9,7 +9,14 @@ from pydantic import BaseModel, root_validator, validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath, TypeChecker, clean_string
 from opsml.model.predictor import OnnxModelPredictor
-from opsml.model.types import ApiDataSchemas, DataDict, ModelReturn, OnnxModelDefinition, TorchOnnxArgs, Feature
+from opsml.model.types import (
+    ApiDataSchemas,
+    DataDict,
+    Feature,
+    ModelReturn,
+    OnnxModelDefinition,
+    TorchOnnxArgs,
+)
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,

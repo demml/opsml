@@ -1,9 +1,16 @@
 # pylint: disable=import-outside-toplevel
 from functools import cached_property
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, TYPE_CHECKING
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from pydantic import conlist, create_model
-from pydantic.types import ConstrainedList
 
 from opsml.model.types import (
     ApiDataSchemas,
@@ -164,7 +171,7 @@ class ApiSigCreator:
     @cached_property
     def input_sig(self) -> Base:
         input_sig = self._get_input_sig(features=self.input_features)
-        input_sig.feature_map = self.input_features  # need for conversions
+        input_sig.feature_map = self.input_features  # type: ignore
 
         return input_sig
 
@@ -172,7 +179,7 @@ class ApiSigCreator:
     def output_sig(self) -> Base:
 
         output_sig = self._get_output_sig(features=self.output_features)
-        output_sig.feature_map = self.output_features  # need for conversions
+        output_sig.feature_map = self.output_features  # type: ignore
 
         return output_sig
 
@@ -180,16 +187,15 @@ class ApiSigCreator:
         """
         Infers the pydantic model needed for API signature
 
-        If model was trained on dataframe and expects to supply
-        values as prediction to API, _infer_pydantic_fields will be
-        called to infer features and types.
+        Args:
+            features:
+                Dictionary of keys and `Feature` objects
 
-        If model was trained on Numpy array and expects to supply
-        array/list to API, _infer_pydantic_list will be called, which
-        will create a pydantic model that expects a list of feaure size.
+            is_input:
+                bool indicating if created sig is for api input
 
         Returns
-            PydanticFields model to be used with FastAPI
+            PydanticFields model to be used with an API
         """
 
         pydantic_generator = PydanticFeatureGenerator(
@@ -203,21 +209,52 @@ class ApiSigCreator:
         raise NotImplementedError
 
     def _get_base_fields(self, features: Dict[str, Feature], is_input: bool) -> Tuple[Base, PydanticFields]:
+        """
+        Creates fields and `Base` for api signature
+
+        Args:
+            features:
+                Dictionary of keys and `Feature` objects
+
+            is_input:
+                bool indicating if created sig is for api input
+
+        Returns:
+            `Base` and `PydanticFields`
+        """
         pydantic_fields = self._get_pydantic_sig(features=features, is_input=is_input)
         base = self._get_pydantic_base()
 
         return base, pydantic_fields
 
     def _get_input_sig(self, features: Dict[str, Feature]) -> Base:
+        """
+        Creates input sig for a model
+
+        Args:
+            features:
+                Dictionary of keys and `Feature` objects
+
+        Returns:
+            Pydantic `Base`
+
+        """
         base, fields = self._get_base_fields(features=features, is_input=True)
         return create_model("Features", **fields, __base__=base)  # type: ignore
 
-    def _convert_to_conlist(self, field_value: Tuple[Any, ellipsis]) -> Tuple[Type[List[Any]], ellipsis]:
-        if issubclass(field_value[0], ConstrainedList):
-            return field_value
-        return (conlist(field_value[0]), ...)
-
     def _get_output_sig(self, features: Dict[str, Feature]) -> Base:
+        """
+        Creates output sig for a model
+
+        Args:
+            features:
+                Dictionary of keys and `Feature` objects
+
+        Returns:
+            Pydantic `Base`
+
+        """
+
         base, fields = self._get_base_fields(features=features, is_input=False)
 
         return create_model("Predictions", **fields, __base__=base)  # type: ignore
@@ -229,6 +266,10 @@ class ApiSigCreator:
 
 class SklearnSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
+        """
+        Gets pydantic base for sklearn model that depends on type. Onnx accepts dictionary inputs for pipeline
+        models
+        """
         if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
             if self.data_type == InputDataType.PANDAS_DATAFRAME.name:
                 return DictBase  # onnx sklearn pipelines can accept dictionaries
@@ -236,6 +277,19 @@ class SklearnSigCreator(ApiSigCreator):
 
     #
     def _get_input_sig(self, features: Dict[str, Feature]) -> Base:
+        """
+        Generates an input sig for an sklearn model. Onnx mainly supports arrays as input; however,
+        there are times where we'd like to supply a dict to an api instead of an array for feature mapping.
+        If a data schema (dict of features, determined by sample training data) is detected, this method will change
+        the input sig to accept a dictionary as input.
+
+        Args:
+            features:
+                Dictionary of keys and `Feature` objects
+
+        Returns:
+            Pydantic `Base`
+        """
         if self.data_schema.input_data_schema is not None:
             return super()._get_input_sig(features=self.data_schema.input_data_schema)
         return super()._get_input_sig(features=features)
@@ -247,6 +301,7 @@ class SklearnSigCreator(ApiSigCreator):
 
 class DeepLearningSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
+        """Gets pydantic base for deep learning models"""
         if self.data_type == InputDataType.DICT.name:
             return DeepLearningDictBase
         return DeepLearningNumpyBase
