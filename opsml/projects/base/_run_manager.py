@@ -213,7 +213,7 @@ class _RunManager:
         logger.info("starting run: %s", self.run_id)
 
     def _end_run(self) -> None:
-        # set to None
+        logger.info("ending run: %s", self.run_id)
         self.active_run.create_or_update_runcard()
         self.version = cast(str, self.active_run.runcard.version)
 
@@ -222,13 +222,14 @@ class _RunManager:
                 False  # prevent use of detached run outside of context manager
             )
         self._active_run = None  # detach active run
+        # self.run_id = None  # set run manager run_id to None, so run is not accidently restarted
 
     def end_run(self):
         """Ends a Run"""
 
         # Remove run id
-        logger.info("ending run: %s", self.run_id)
         self._end_run()
+        self.run_id = None  # set run manager run_id to None, so run is not accidently restarted
 
     def _get_project_id(self) -> str:
         """

@@ -1,6 +1,24 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional, Union
+
+
+@dataclass
+class Metric:
+    name: str
+    value: Union[float, int]
+    step: Optional[int] = None
+    timestamp: Optional[int] = None
+
+
+@dataclass
+class Param:
+    name: str
+    value: Union[float, int, str]
+
+
+METRICS = Dict[str, List[Metric]]
+PARAMS = Dict[str, List[Param]]
 
 
 @dataclass

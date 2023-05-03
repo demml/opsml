@@ -21,8 +21,8 @@ from opsml.registry.model.types import (
     UPDATE_REGISTRY_MODELS,
     Feature,
     ModelDefinition,
+    ModelReturn,
     OnnxDataProto,
-    OnnxModelReturn,
     OnnxModelType,
     TorchOnnxArgs,
 )
@@ -118,7 +118,7 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def convert(self) -> OnnxModelReturn:
+    def convert(self) -> ModelReturn:
         """Converts model to onnx model, validates it, and create an
         onnx feature dictionary
 
@@ -129,7 +129,7 @@ class ModelConverter:
         model_def = self.create_model_def(onnx_model=onnx_model)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return OnnxModelReturn(
+        return ModelReturn(
             model_definition=model_def,
             onnx_input_features=input_onnx_features,
             onnx_output_features=output_onnx_features,
@@ -447,7 +447,7 @@ class OnnxModelConverter:
         """
         self.model_info = model_info
 
-    def convert_model(self) -> OnnxModelReturn:
+    def convert_model(self) -> ModelReturn:
         converter = next(
             (
                 converter

@@ -23,6 +23,20 @@ def clean_string(name: Optional[str] = None) -> Optional[str]:
     return None
 
 
+class TypeChecker:
+    @staticmethod
+    def check_metric_type(metric: Union[int, float]):
+        if isinstance(metric, (int, float)):
+            return metric
+        raise ValueError("Metric is not of valid type (int, float)")
+
+    @staticmethod
+    def check_param_type(param: Union[int, float, str]):
+        if isinstance(param, (int, float, str)):
+            return param
+        raise ValueError("Param is not of valid type (int, float, str)")
+
+
 class FindPath:
     """Helper class for finding paths to artifacts"""
 

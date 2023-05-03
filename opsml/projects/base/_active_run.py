@@ -1,5 +1,5 @@
 # pylint: disable=invalid-envvar-value
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import (
@@ -11,7 +11,7 @@ from opsml.registry import (
     VersionType,
 )
 from opsml.registry.cards.cards import ArtifactCard
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -224,7 +224,7 @@ class ActiveRun:
             step=step,
         )
 
-    def log_param(self, key: str, value: str) -> None:
+    def log_parameter(self, key: str, value: str) -> None:
         """
         Logs a parameter to project run
 
@@ -236,12 +236,13 @@ class ActiveRun:
         """
 
         self._verify_active()
-        self.runcard.log_param(key=key, value=value)
+        self.runcard.log_parameter(key=key, value=value)
 
     def create_or_update_runcard(self):
         """Creates or updates an active RunCard"""
 
         self._verify_active()
+
         if self.runcard.uid is not None and self.runcard.version is not None:
             CardHandler.update_card(registries=self._info.registries, card=self.runcard)
         else:
@@ -252,11 +253,11 @@ class ActiveRun:
         raise NotImplementedError
 
     @property
-    def metrics(self) -> dict[str, float]:
+    def metrics(self) -> METRICS:
         return self.runcard.metrics
 
     @property
-    def params(self) -> Dict[str, Union[float, int, str]]:
+    def params(self) -> PARAMS:
         return self.runcard.params
 
     @property

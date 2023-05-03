@@ -40,6 +40,7 @@ class QueryCreator:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> Select:
         """Creates a sql query based on table, uid, name, team and version
 

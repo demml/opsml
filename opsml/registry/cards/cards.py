@@ -7,18 +7,26 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath, clean_string
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.helpers.utils import FindPath, TypeChecker, clean_string
+from opsml.registry.cards.types import (
+    METRICS,
+    PARAMS,
+    CardInfo,
+    CardType,
+    Metric,
+    Param,
+)
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.model.types import (
     DataDict,
     Feature,
     ModelDefinition,
-    OnnxModelReturn,
+    ModelReturn,
     TorchOnnxArgs,
 )
 from opsml.registry.sql.records import (
+    ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
     ModelRegistryRecord,
     PipelineRegistryRecord,
@@ -378,6 +386,7 @@ class ModelCard(ArtifactCard):
     data_schema: Optional[Dict[str, Feature]]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
+    no_onnx: bool = False
 
     class Config:
         arbitrary_types_allowed = True
@@ -481,7 +490,8 @@ class ModelCard(ArtifactCard):
         }
 
         if not bool(self.onnx_model_def):
-            self._create_and_set_onnx_attr()
+            self._create_and_set_model_attr(no_onnx=self.no_onnx)
+
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
@@ -497,37 +507,42 @@ class ModelCard(ArtifactCard):
 
         return version
 
-    def _set_onnx_attributes(self, onnx_model: OnnxModelReturn) -> None:
+    def _set_model_attributes(self, model_return: ModelReturn) -> None:
         setattr(
             self,
             "onnx_model_data",
             DataDict(
-                data_type=onnx_model.data_type,
-                input_features=onnx_model.onnx_input_features,
-                output_features=onnx_model.onnx_output_features,
+                data_type=model_return.data_type,
+                input_features=model_return.onnx_input_features,
+                output_features=model_return.onnx_output_features,
             ),
         )
 
-        setattr(self, "onnx_model_def", onnx_model.model_definition)
-        setattr(self, "data_schema", onnx_model.data_schema)
-        setattr(self, "model_type", onnx_model.model_type)
+        setattr(self, "onnx_model_def", model_return.model_definition)
+        setattr(self, "data_schema", model_return.data_schema)
+        setattr(self, "model_type", model_return.model_type)
 
-    def _create_and_set_onnx_attr(self) -> None:
+    def _create_and_set_model_attr(self, no_onnx: bool) -> None:
         """
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
+
+        Args:
+            no_onnx:
+                Whether to convert to onnx or not
         """
         from opsml.registry.model.creator import (  # pylint: disable=import-outside-toplevel
-            OnnxModelCreator,
+            create_model,
         )
 
-        model_creator = OnnxModelCreator(
+        model_return = create_model(
             model=self.trained_model,
             input_data=self.sample_input_data,
             additional_onnx_args=self.additional_onnx_args,
+            no_onnx=self.no_onnx,
         )
-        onnx_model = model_creator.create_onnx_model()
-        self._set_onnx_attributes(onnx_model=onnx_model)
+
+        self._set_model_attributes(model_return=model_return)
 
     def _get_sample_data_for_api(self) -> Dict[str, Any]:
         """
@@ -562,7 +577,11 @@ class ModelCard(ArtifactCard):
         start_onnx_runtime: bool = True,
     ) -> OnnxModelPredictor:
         """
-        Loads a model from serialized string
+        Loads an onnx model from string or creates an onnx model from trained model
+
+        Args:
+            start_onnx_runtime:
+                Whether to start the onnx runtime session or not
 
         Returns
             `OnnxModelPredictor`
@@ -570,7 +589,7 @@ class ModelCard(ArtifactCard):
         """
 
         if not bool(self.onnx_model_def):
-            self._create_and_set_onnx_attr()
+            self._create_and_set_model_attr(no_onnx=False)
 
         version = self._set_version_for_predictor()
 
@@ -696,12 +715,13 @@ class RunCard(ArtifactCard):
     datacard_uids: List[str] = []
     modelcard_uids: List[str] = []
     pipelinecard_uid: Optional[str]
-    metrics: Dict[str, Union[float, int]] = {}
-    params: Dict[str, Union[float, int, str]] = {}
+    metrics: METRICS = {}
+    params: PARAMS = {}
     artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
     project_id: Optional[str]
+    runcard_uri: Optional[str]
 
     def add_tag(self, key: str, value: str):
         """
@@ -725,7 +745,7 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**tags, **self.tags}
 
-    def log_params(self, params: Dict[str, Union[float, int, str]]):
+    def log_parameters(self, params: Dict[str, Union[float, int, str]]):
         """
         Logs params to current RunCard
 
@@ -733,9 +753,12 @@ class RunCard(ArtifactCard):
             params:
                 Dictionary of parameters
         """
-        self.params = {**params, **self.params}
 
-    def log_param(self, key: str, value: Union[int, float, str]):
+        for key, value in params.items():
+            # check key
+            self.log_parameter(key, value)
+
+    def log_parameter(self, key: str, value: Union[int, float, str]):
         """
         Logs params to current RunCard
 
@@ -745,7 +768,15 @@ class RunCard(ArtifactCard):
             value:
                 Param value
         """
-        self.params = {**{key: value}, **self.params}
+
+        TypeChecker.check_param_type(param=value)
+        param = Param(name=key, value=value)
+
+        if self.params.get(key) is not None:
+            self.params[key].append(param)
+
+        else:
+            self.params[key] = [param]
 
     def log_metric(
         self,
@@ -768,15 +799,13 @@ class RunCard(ArtifactCard):
                 Optional step associated with name and value
         """
 
-        metrics = {key: value}
+        TypeChecker.check_metric_type(metric=value)
+        metric = Metric(name=key, value=value, timestamp=timestamp, step=step)
 
-        if timestamp is not None:
-            metrics["timestamp"] = timestamp
-
-        if step is not None:
-            metrics["step"] = step
-
-        self.metrics = {**metrics, **self.metrics}
+        if self.metrics.get(key) is not None:
+            self.metrics[key].append(metric)
+        else:
+            self.metrics[key] = [metric]
 
     def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
         """
@@ -788,7 +817,8 @@ class RunCard(ArtifactCard):
                 to add to the current metric set
         """
 
-        self.metrics = {**metrics, **self.metrics}
+        for key, value in metrics.items():
+            self.log_metric(key, value)
 
     def log_artifact(self, name: str, artifact: Any) -> None:
         """
@@ -812,7 +842,7 @@ class RunCard(ArtifactCard):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current RunCard"""
 
-        exclude_attr = {"artifacts", "storage_client"}
+        exclude_attr = {"artifacts", "storage_client", "params", "metrics"}
 
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
@@ -844,6 +874,66 @@ class RunCard(ArtifactCard):
             self.datacard_uids = [uid, *self.datacard_uids]
         elif card_type == CardType.MODELCARD:
             self.modelcard_uids = [uid, *self.modelcard_uids]
+
+    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
+        """
+        Gets a metric by name
+
+        Args:
+            name:
+                Name of metric
+
+        Returns:
+            List of dictionaries or dictionary containing value
+
+        """
+        metric = self.metrics.get(name)
+        if metric is not None:
+
+            if len(metric) > 1:
+                return metric
+            if len(metric) == 1:
+                return metric[0]
+            return metric
+
+        raise ValueError(f"Metric {metric} is not defined")
+
+    def get_parameter(self, name: str) -> Union[List[Param], Param]:
+        """
+        Gets a metric by name
+
+        Args:
+            name:
+                Name of param
+
+        Returns:
+            List of dictionaries or dictionary containing value
+
+        """
+        param = self.params.get(name)
+        if param is not None:
+
+            if len(param) > 1:
+                return param
+            if len(param) == 1:
+                return param[0]
+            return param
+
+        raise ValueError(f"Param {param} is not defined")
+
+    def load_artifacts(self) -> None:
+        if bool(self.artifact_uris) and self.storage_client is not None:
+            for name, uri in self.artifact_uris.items():
+                storage_spec = ArtifactStorageSpecs(save_path=uri)
+                self.storage_client.storage_spec = storage_spec
+                self.artifacts[name] = load_record_artifact_from_storage(
+                    storage_client=self.storage_client,
+                    artifact_type=ARBITRARY_ARTIFACT_TYPE,
+                )
+            return None
+
+        logger.info("No artifact uris associated with RunCard")
+        return None
 
     @property
     def card_type(self) -> str:

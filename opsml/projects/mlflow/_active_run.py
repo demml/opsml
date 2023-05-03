@@ -1,7 +1,8 @@
-from typing import Dict, Optional, Union, cast
+from typing import Optional, cast
 
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo
+from opsml.registry.cards.types import METRICS, PARAMS
 
 
 class MlflowActiveRun(ActiveRun):
@@ -62,7 +63,7 @@ class MlflowActiveRun(ActiveRun):
             step=step,
         )
 
-    def log_param(self, key: str, value: str) -> None:
+    def log_parameter(self, key: str, value: str) -> None:
         """
         Logs a parameter to project run
 
@@ -74,7 +75,7 @@ class MlflowActiveRun(ActiveRun):
         """
 
         self._verify_active()
-        super().log_param(key, value)
+        super().log_parameter(key, value)
         self.info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
     def log_artifact_from_file(self, local_path: str, artifact_path: Optional[str] = None) -> None:
@@ -113,11 +114,11 @@ class MlflowActiveRun(ActiveRun):
         return self.info.mlflow_client.get_run(self.run_id).data
 
     @property
-    def metrics(self) -> dict[str, float]:
+    def metrics(self) -> METRICS:
         return self.run_data.metrics
 
     @property
-    def params(self) -> Dict[str, Union[float, int, str]]:
+    def params(self) -> PARAMS:
         return self.run_data.params
 
     @property

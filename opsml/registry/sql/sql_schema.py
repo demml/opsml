@@ -53,12 +53,7 @@ class BaseMixin:
 @declarative_mixin
 class DataMixin:
     data_uri = Column("data_uri", String(2048))
-    feature_map = Column("feature_map", JSON)
-    feature_descriptions = Column("feature_descriptions", JSON)
-    data_splits = Column("data_splits", JSON)
     data_type = Column("data_type", String(512))
-    additional_info = Column("additional_info", JSON)
-    dependent_vars = Column("dependent_vars", JSON)
     runcard_uid = Column("runcard_uid", String(2048))
     pipelinecard_uid = Column("pipelinecard_uid", String(2048))
     datacard_uri = Column("datacard_uri", String(2048))
@@ -98,8 +93,7 @@ class RunMixin:
     pipelinecard_uid = Column("pipelinecard_uid", String(512))
     project_id = Column("project_id", String(512))
     artifact_uris = Column("artifact_uris", JSON)
-    metrics = Column("metrics", JSON)
-    params = Column("params", JSON)
+    runcard_uri = Column("runcard_uri", String(512))
     tags = Column("tags", JSON)
 
 
@@ -175,8 +169,6 @@ class DBInitializer:
         """Updates tables in db based on alembic revisions"""
 
         # credit to mlflow for this implementation
-        logger.info("Checking for updates")
-
         db_url = str(self.engine.url)
 
         config = self.get_alembic_config(db_url=db_url)

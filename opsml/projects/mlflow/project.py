@@ -1,6 +1,6 @@
 # pylint: disable=invalid-envvar-value
 from contextlib import contextmanager
-from typing import Iterator, Optional, cast
+from typing import Iterator, List, Optional, Union, cast
 
 from mlflow.artifacts import download_artifacts
 from mlflow.entities.run_data import RunData
@@ -13,6 +13,7 @@ from opsml.projects.base.project import OpsmlProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.projects.mlflow._active_run import MlflowActiveRun
 from opsml.projects.mlflow._run_manager import _MlflowRunManager
+from opsml.registry.cards.types import METRICS, PARAMS, Metric, Param
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -46,7 +47,7 @@ class MlflowProject(OpsmlProject):
             with project.run() as run:
                 # Now that the run context is entered, it's in read/write mode
                 # You can write cards, params, and metrics to the project.
-                run.log_param(key="my_param", value="12.34")
+                run.log_parameter(key="my_param", value="12.34")
 
         Args:
             info:
@@ -109,12 +110,53 @@ class MlflowProject(OpsmlProject):
         )
 
     @property
-    def metrics(self) -> dict[str, float]:
-        return self.run_data.metrics
+    def metrics(self) -> METRICS:
+        metrics: METRICS = {}
+        for key, value in self.run_data.metrics.items():
+            metrics[key] = [Metric(name=key, value=value)]  # keep consistency with RunCard type
+        return metrics
+
+    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
+        """
+        Get metric by name
+
+        Args:
+            name: str
+
+        Returns:
+            `Metric`
+
+        """
+        metric = self.metrics.get(name)
+
+        if metric is not None:
+            return metric[0]
+
+        raise ValueError(f"Metric {name} not found")
 
     @property
-    def params(self) -> dict[str, str]:
-        return self.run_data.params
+    def params(self) -> PARAMS:
+        params: PARAMS = {}
+        for key, value in self.run_data.params.items():
+            params[key] = [Param(name=key, value=value)]
+        return params
+
+    def get_parameter(self, name: str) -> Union[List[Param], Param]:
+        """
+        Get param by name
+
+        Args:
+            name: str
+
+        Returns:
+            `Param`
+
+        """
+        param = self.params.get(name)
+        if param is not None:
+            return param[0]
+
+        raise ValueError(f"Param {name} not found")
 
     @property
     def tags(self) -> dict[str, str]:

@@ -1,0 +1,70 @@
+site_name: OpsML
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/git-alt
+  palette:
+    - scheme: default
+      primary: stylesheets/extra.css
+      toggle:
+        icon: material/weather-night
+        name: dark mode
+        
+    - scheme: slate
+      primary: stylesheets/extra.css
+      toggle:
+        icon: material/weather-sunny
+        name: light mode
+
+
+  features:
+        - navigation.sections
+  font:
+    text: Roboto
+    code: Roboto Mono
+  logo: 'images/opsml-logo.png'
+
+repo_name: opsml
+repo_url: https://github.com/shipt/opsml
+edit_uri: edit/main/docs/
+
+nav:
+  - OpsML Overview: 'index.md'
+  - Cards:
+      - Overview: 'cards/overview.md'
+      - DataCard: 'cards/datacard.md'
+      - ModelCard: 'cards/modelcard.md'
+      - RunCard: 'cards/runcard.md'
+      #- RunCard: 'getting_started.md'
+      #- ProjectCard: 'getting_started.md'
+      #- PipelineCard: 'getting_started.md'
+ 
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+      title: Page contents
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.extra
+
+  - pymdownx.superfences:
+      custom_fences:
+      - name: mermaid
+        class: mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format ''
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji 
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+plugins:
+  - search
+  - mkdocstrings
+
+extra_css:
+- css/custom.css
+- stylesheets/extra.css
+extra_javascript:
+- js/termynal.js
+- js/custom.js

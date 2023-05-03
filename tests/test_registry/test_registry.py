@@ -6,9 +6,7 @@ from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCar
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 import uuid
-import random
 from pydantic import ValidationError
-from unittest.mock import patch, MagicMock
 import pytest
 
 
@@ -126,7 +124,7 @@ def test_semver_registry_list(db_registries, test_array):
         )
         registry.register_card(card=data_card)
 
-    # should return 6 versions
+    # should return 13 versions
     df = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
@@ -139,7 +137,7 @@ def test_semver_registry_list(db_registries, test_array):
         team=data_card.team,
         version="^2.3.0",
     )
-    assert df.shape[0] == 13
+    assert df.shape[0] == 1
 
     df = registry.list_cards(
         name=data_card.name,
@@ -157,27 +155,102 @@ def test_semver_registry_list(db_registries, test_array):
 
     assert card.version == "2.12.0"
 
+    record = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^2.3.0",
+        limit=1,
+        as_dataframe=False,
+    )
+    assert len(record) == 1
+    assert record[0].get("version") == "2.12.0"
 
-def test_experiment_card(linear_regression, db_registries):
+    record = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^2.3.0",
+        as_dataframe=False,
+    )
+    assert len(record) == 1
+    assert record[0].get("version") == "2.12.0"
+
+
+def test_runcard(linear_regression, db_registries):
 
     registry: CardRegistry = db_registries["run"]
-    experiment = RunCard(
+    run = RunCard(
         name="test_df",
         team="mlops",
         user_email="mlops.com",
         datacard_uids=["test_uid"],
     )
-    experiment.log_metric("test_metric", 10)
-    experiment.log_metrics({"test_metric2": 20})
-    assert experiment.metrics.get("test_metric") == 10
-    assert experiment.metrics.get("test_metric2") == 20
+    run.log_metric("test_metric", 10)
+    run.log_metrics({"test_metric2": 20})
+    assert run.get_metric("test_metric").value == 10
+    assert run.get_metric("test_metric2").value == 20
+
     # save artifacts
     model, _ = linear_regression
-    experiment.log_artifact("reg_model", artifact=model)
-    assert experiment.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
-    registry.register_card(card=experiment)
-    loaded_card = registry.load_card(uid=experiment.uid)
-    assert loaded_card.uid == experiment.uid
+    run.log_artifact("reg_model", artifact=model)
+    assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+    registry.register_card(card=run)
+    loaded_card = registry.load_card(uid=run.uid)
+    assert loaded_card.uid == run.uid
+    assert loaded_card.get_metric("test_metric").value == 10
+    assert loaded_card.get_metric("test_metric2").value == 20
+
+    with pytest.raises(ValueError):
+        loaded_card.get_metric("test")
+
+    with pytest.raises(ValueError):
+        loaded_card.get_parameter("test")
+
+    # metrics take floats, ints
+    with pytest.raises(ValueError):
+        loaded_card.log_metric("test_fail", "10")
+
+    # params take floats, ints, str
+    with pytest.raises(ValueError):
+        loaded_card.log_parameter("test_fail", model)
+
+    # test updating
+    loaded_card.log_metric("updated_metric", 20)
+    registry.update_card(card=loaded_card)
+
+    # should be same runid
+    loaded_card = registry.load_card(uid=run.uid)
+    assert loaded_card.get_metric("updated_metric").value == 20
+    assert loaded_card.runcard_uri == run.runcard_uri
+
+
+def test_local_model_registry_no_onnx(db_registries, sklearn_pipeline):
+
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = sklearn_pipeline
+    data_card = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+        no_onnx=True,
+    )
+
+    model_registry: CardRegistry = db_registries["model"]
+    model_registry.register_card(card=model_card)
+
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    assert loaded_card.onnx_model_uri is None
 
 
 def test_local_model_registry(db_registries, sklearn_pipeline):
@@ -228,6 +301,9 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     assert loaded_card.trained_model is not None
     assert loaded_card.sample_input_data is not None
     assert loaded_card.onnx_model_def is not None
+
+    with pytest.raises(ValueError):
+        model_registry.update_card(loaded_card)
 
 
 def test_register_model(db_registries, sklearn_pipeline):
