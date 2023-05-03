@@ -1,8 +1,9 @@
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Extra, root_validator, validator
+from pydantic import BaseModel, Extra, root_validator
 
+from opsml.registry.cards.types import METRICS, PARAMS
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -13,17 +14,12 @@ ARBITRARY_ARTIFACT_TYPE = "dict"
 
 class DataRegistryRecord(BaseModel):
     data_uri: str
-    data_splits: Optional[Dict[str, List[Dict[str, Any]]]]
     version: str
     data_type: str
     name: str
     team: str
-    feature_map: Dict[str, str]
-    feature_descriptions: Optional[Dict[str, str]]
     user_email: str
     uid: Optional[str]
-    additional_info: Optional[Dict[str, Union[float, int, str]]]
-    dependent_vars: Optional[List[Union[int, str]]]
     timestamp: int = int(round(time.time() * 1_000_000))
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
@@ -31,12 +27,6 @@ class DataRegistryRecord(BaseModel):
 
     class Config:
         smart_union = True
-
-    @validator("data_splits", pre=True)
-    def convert_to_dict(cls, splits):  # pylint: disable=no-self-argument
-        if bool(splits):
-            return {"splits": splits}
-        return None
 
 
 class ModelRegistryRecord(BaseModel):
@@ -48,7 +38,7 @@ class ModelRegistryRecord(BaseModel):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: str
+    onnx_model_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -68,10 +58,9 @@ class RunRegistryRecord(BaseModel):
     pipelinecard_uid: Optional[str]
     project_id: Optional[str]
     artifact_uris: Optional[Dict[str, str]]
-    metrics: Optional[Dict[str, Union[float, int]]]
-    params: Dict[str, Union[float, int, str]]
     tags: Dict[str, str]
     timestamp: int = int(round(time.time() * 1_000_000))
+    runcard_uri: str
 
 
 class PipelineRegistryRecord(BaseModel):
@@ -139,6 +128,7 @@ class LoadedDataRecord(LoadRecord):
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
         storage_client = cast(StorageClientType, values["storage_client"])
+
         datacard_definition = cls.load_datacard_definition(
             save_path=values["datacard_uri"],
             storage_client=storage_client,
@@ -179,12 +169,12 @@ class LoadedDataRecord(LoadRecord):
         """Loads a model card definition from current attributes
 
         Returns:
-            Dictionary to be parsed by ModelCard.parse_obj()
+            Dictionary to be parsed by DataCard.parse_obj()
         """
 
         storage_spec = ArtifactStorageSpecs(save_path=save_path)
-
         storage_client.storage_spec = storage_spec
+
         datacard_definition = load_record_artifact_from_storage(
             storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
@@ -201,7 +191,7 @@ class LoadedModelRecord(LoadRecord):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: str
+    onnx_model_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -210,6 +200,7 @@ class LoadedModelRecord(LoadRecord):
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
@@ -221,6 +212,7 @@ class LoadedModelRecord(LoadRecord):
         modelcard_definition["onnx_model_uri"] = values.get("onnx_model_uri")
         modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
+        modelcard_definition["model_type"] = values.get("model_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
 
         return modelcard_definition
@@ -257,40 +249,48 @@ class LoadedRunRecord(LoadRecord):
     modelcard_uids: Optional[List[str]]
     pipelinecard_uid: Optional[str]
     artifact_uris: Dict[str, str]
-    artifacts: Optional[Dict[str, Any]]
-    metrics: Optional[Dict[str, Union[int, float]]]
+    artifacts: Dict[str, Any] = {}
+    metrics: METRICS
     project_id: Optional[str]
-    params: Dict[str, Union[float, int, str]]
+    params: PARAMS
     tags: Dict[str, str]
+    runcard_uri: str
 
     @root_validator(pre=True)
-    def load_exp_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+    def load_run_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
         storage_client = cast(StorageClientType, values["storage_client"])
-        cls.load_artifacts(values=values, storage_client=storage_client)
-        return values
+
+        runcard_definition = cls.load_runcard_definition(
+            runcard_uri=values.get("runcard_uri"),
+            storage_client=storage_client,
+        )
+
+        runcard_definition["runcard_uri"] = values.get("runcard_uri")
+        runcard_definition["storage_client"] = values.get("storage_client")
+
+        return runcard_definition
 
     @classmethod
-    def load_artifacts(
+    def load_runcard_definition(
         cls,
-        values: Dict[str, Any],
+        runcard_uri: str,
         storage_client: StorageClientType,
-    ) -> None:
-        """Loads run artifacts to pydantic model"""
+    ) -> Dict[str, Any]:
+        """Loads a model card definition from current attributes
 
-        loaded_artifacts: Dict[str, Any] = {}
-        artifact_uris = values.get("artifact_uris", loaded_artifacts)
+        Returns:
+            Dictionary to be parsed by RunCard.parse_obj()
+        """
 
-        if not bool(artifact_uris):
-            values["artifacts"] = loaded_artifacts
+        storage_spec = ArtifactStorageSpecs(save_path=runcard_uri)
 
-        for name, uri in artifact_uris.items():
-            storage_spec = ArtifactStorageSpecs(save_path=uri)
+        storage_client.storage_spec = storage_spec
+        runcard_definition = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+        )
 
-            storage_client.storage_spec = storage_spec
-            loaded_artifacts[name] = load_record_artifact_from_storage(
-                storage_client=storage_client,
-                artifact_type=ARBITRARY_ARTIFACT_TYPE,
-            )
+        return runcard_definition
 
     @staticmethod
     def validate_table(table_name: str) -> bool:

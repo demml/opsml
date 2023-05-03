@@ -5,20 +5,8 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.cards import (
-    ArtifactCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    RunCard,
-)
-from opsml.registry.cards.types import CardType
-from opsml.registry.sql.records import (
-    DataRegistryRecord,
-    ModelRegistryRecord,
-    PipelineRegistryRecord,
-    RunRegistryRecord,
-)
+from opsml.registry.cards.cards import ArtifactCard, ModelCard
+from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
@@ -35,33 +23,14 @@ else:
 
 
 class DataCardRegistry(Registry):
-    def update_card(self, card: DataCard) -> None:
-        """
-        Updates an existing data card in the data registry.
-
-        Args:
-            data_card:
-                Existing data card record
-        """
-
-        record = DataRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.DATA
 
 
 class ModelCardRegistry(Registry):
-    def update_card(self, card: ModelCard) -> None:
-        """Updates an existing model card.
-
-        Args:
-            model_card: Existing model card record
-        """
-
-        record = ModelRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
+    def update_card(self, card: ArtifactCard) -> None:
+        raise ValueError("Updates are not available for ModelCards")
 
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
@@ -116,37 +85,13 @@ class ModelCardRegistry(Registry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class RunCardRegistry(OpsmlRegistry):  # type:ignore
-    def update_card(self, card: RunCard) -> None:
-        """
-        Updates an existing experiment card in the registry.
-
-        Args:
-            card:
-                Existing experiment card
-        """
-
-        record = RunRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
+class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.RUN
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
-    def update_card(self, card: PipelineCard) -> None:
-        """
-        Updates an existing pipeline card in the pipeline registry.
-
-        Args:
-            card:
-                Existing pipeline card
-        """
-
-        record = PipelineRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PIPELINE
@@ -211,6 +156,8 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        info: Optional[CardInfo] = None,
+        limit: Optional[int] = None,
         as_dataframe: bool = True,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
@@ -230,16 +177,29 @@ class CardRegistry:
             pandas dataframe of records
         """
 
+        if info is not None:
+            name = name or info.name
+            team = team or info.team
+            uid = uid or info.uid
+            version = version or info.version
+
         if name is not None:
             name = name.lower()
 
         if team is not None:
             team = team.lower()
 
-        card_list = self._registry.list_cards(uid=uid, name=name, team=team, version=version)
+        card_list = self._registry.list_cards(
+            uid=uid,
+            name=name,
+            team=team,
+            version=version,
+            limit=limit,
+        )
 
         if as_dataframe:
             return pd.DataFrame(card_list)
+
         return card_list
 
     def load_card(
@@ -248,6 +208,7 @@ class CardRegistry:
         team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
+        info: Optional[CardInfo] = None,
     ) -> ArtifactCard:
         """Loads a specific card
 
@@ -266,6 +227,13 @@ class CardRegistry:
         Returns
             ArtifactCard
         """
+
+        # find better way to do this later
+        if info is not None:
+            name = name or info.name
+            team = team or info.team
+            uid = uid or info.uid
+            version = version or info.version
 
         return self._registry.load_card(uid=uid, name=name, team=team, version=version)
 
@@ -298,23 +266,14 @@ class CardRegistry:
             save_path=save_path,
         )
 
-    def update_card(
-        self,
-        card: ArtifactCard,
-    ) -> None:
+    def update_card(self, card: ArtifactCard) -> None:
         """
-        Update and artifact card (DataCard only) based on current registry
+        Update an artifact card based on current registry
 
         Args:
             card:
                 Card to register
         """
-
-        if not hasattr(self._registry, "update_card"):
-            raise ValueError(f"""{card.__class__.__name__} has no 'update_card' attribute""")
-
-        self._registry = cast(DataCardRegistry, self._registry)
-        card = cast(DataCard, card)
         return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:

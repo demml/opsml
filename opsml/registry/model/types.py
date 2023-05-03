@@ -109,13 +109,13 @@ class ModelDefinition(BaseModel):
     model_bytes: bytes = Field(..., description="Onnx model as serialized string")
 
 
-class OnnxModelReturn(BaseModel):
-    model_definition: ModelDefinition
-    onnx_input_features: Dict[str, Feature]
-    onnx_output_features: Dict[str, Feature]
-    data_schema: Optional[Dict[str, Feature]]
-    model_type: str = "None"
-    data_type: str = "None"
+class ModelReturn(BaseModel):
+    model_definition: Optional[ModelDefinition] = None
+    onnx_input_features: Dict[str, Feature]  # change this later
+    onnx_output_features: Dict[str, Feature]  # change this later
+    data_schema: Optional[Dict[str, Feature]] = None
+    model_type: str = "placeholder"
+    data_type: str = "placeholder"
 
     class Config:
         allow_mutation = True
