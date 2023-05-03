@@ -4,13 +4,16 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
-
+import matplotlib.pyplot as plt
+import numpy as np
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
+
 from tests import conftest
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -24,7 +27,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
-        run.log_param(key="m1", value="apple")
+        run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline
         data_card = DataCard(
             data=data,
@@ -42,6 +45,11 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
             datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
+
+        # save and artifact
+        array = np.random.random((10, 10))
+        run.log_artifact(name="array", artifact=array)
+
         info.run_id = run.run_id
 
         assert data_card.runcard_uid == run.run_id
@@ -49,10 +57,14 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     # Retrieve the run and load projects without making the run active (read only mode)
     proj = conftest.mock_opsml_project(info)
 
+    runcard = proj.run_data
+    runcard.load_artifacts()
+    assert (runcard.artifacts.get("array") == array).all()
+
     assert len(proj.metrics) == 1
-    assert proj.metrics["m1"] == 1.1
+    assert proj.get_metric("m1").value == 1.1
     assert len(proj.params) == 1
-    assert proj.params["m1"] == "apple"
+    assert proj.get_parameter("m1").value == "apple"
 
     # Load model card
     loaded_card: ModelCard = proj.load_card(
@@ -80,7 +92,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     with pytest.raises(ValueError):
         run.register_card(data_card)
     with pytest.raises(ValueError):
-        run.log_param(key="param1", value="value1")
+        run.log_parameter(key="param1", value="value1")
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
     with pytest.raises(ValueError):
@@ -100,7 +112,7 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
-        run.log_param(key="m1", value="apple")
+        run.log_parameter(key="m1", value="apple")
         info.run_id = run.run_id
 
     new_proj = conftest.mock_opsml_project(info)
@@ -108,16 +120,16 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
     with new_proj.run() as run:
         run = cast(ActiveRun, run)
         run.log_metric(key="m2", value=1.2)
-        run.log_param(key="m2", value="banana")
+        run.log_parameter(key="m2", value="banana")
 
     read_project = conftest.mock_opsml_project(info)
 
     assert len(read_project.metrics) == 2
-    assert read_project.metrics["m1"] == 1.1
-    assert read_project.metrics["m2"] == 1.2
+    assert read_project.get_metric("m1").value == 1.1
+    assert read_project.get_metric("m2").value == 1.2
     assert len(read_project.params) == 2
-    assert read_project.params["m1"] == "apple"
-    assert read_project.params["m2"] == "banana"
+    assert read_project.get_parameter("m1").value == "apple"
+    assert read_project.get_parameter("m2").value == "banana"
 
 
 def test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
