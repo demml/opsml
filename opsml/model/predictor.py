@@ -1,7 +1,8 @@
 # pylint: disable=import-outside-toplevel
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Union, List
 from functools import cached_property
 import numpy as np
+from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
 from opsml.model.types import InputDataType, ModelApiDef, OnnxModelType, Base, ApiDataSchemas
@@ -48,6 +49,10 @@ class OnnxModelPredictor:
             to_onnx=self.to_onnx,
         )
 
+    @property
+    def data_type(self):
+        return self.data_schema.model_data_schema.data_type
+
     @cached_property
     def input_sig(self) -> Base:
         return self.sig_creator.input_sig
@@ -63,9 +68,8 @@ class OnnxModelPredictor:
             onnx_definition=self.model_definition,
             onnx_version=self.onnx_version,
             model_version=self.model_version,
-            model_data_schema=self.data_dict,
             sample_data=self.sample_api_data,
-            api_data_schema=self.data_schema,
+            data_schema=self.data_schema,
         )
 
     def predict(self, data: Dict[str, Any]) -> Any:
@@ -83,12 +87,42 @@ class OnnxModelPredictor:
 
         pred_data = self.sig_creator.input_sig(**data)
 
-        predictions = self.sess.run(
+        prediction = self.sess.run(
             output_names=self._output_names,
             input_feed=pred_data.to_onnx(),
         )
 
-        return predictions
+        return self._extract_predictions(prediction=prediction)
+
+    def _extract_from_array(self, prediction: NDArray) -> Union[int, str, float, List[Any]]:
+        flat_pred = prediction.flatten()
+
+        if flat_pred.ndim == 1 and flat_pred.shape[0] == 1:
+            return flat_pred[0]
+
+        # todo: what if prediction is ndimensional?
+        return list(flat_pred)
+
+    def _extract_predictions(self, prediction: List[Any]) -> Dict[str, Any]:
+        """Parses onnx runtime prediction
+
+        Args:
+            Predictions (List): Onnx runtime prediction list
+
+        Returns:
+            Prediction in the form of a key value mapping
+        """
+        output_dict = {}
+
+        for idx, output in enumerate(self._output_names):
+            pred = prediction[idx]
+
+            if isinstance(pred, np.ndarray):
+                output_dict[output] = self._extract_from_array(prediction=pred)
+            else:
+                output_dict[output] = pred
+
+        return output_dict
 
     def predict_with_model(self, model: Any, data: Dict[str, Any]) -> Any:
         """Will test prediction against model by sending data through
@@ -115,7 +149,7 @@ class OnnxModelPredictor:
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
 
-            if self.data_dict.data_type == InputDataType.DICT:
+            if self.data_type == InputDataType.DICT:
                 data_for_pred = {
                     name: torch.from_numpy(value) for name, value in feed_data.items()  # pylint: disable=no-member
                 }

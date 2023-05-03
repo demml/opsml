@@ -543,7 +543,7 @@ class ModelCard(ArtifactCard):
         )
 
         if isinstance(sample_data, np.ndarray):
-            model_data = cast(DataDict, self.onnx_model_data)
+            model_data = self.data_schema.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
             return {input_name: sample_data[0, :].tolist()}
 

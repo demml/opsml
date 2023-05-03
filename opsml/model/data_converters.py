@@ -224,6 +224,7 @@ class TensorflowDictOnnxConverter(DataConverter):
             shape_[0] = None
             input_name = getattr(input_, "name", "inputs")
             spec.append(tf.TensorSpec(shape_, dtype, name=input_name))
+
         return spec
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:

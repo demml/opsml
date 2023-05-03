@@ -14,12 +14,12 @@ class SeldonModel:
 
     def _get_sig_metadata(
         self,
-        features: Dict[str, Any],
-        feature_map: Dict[str, Feature],
+        features: Dict[str, Feature],
     ) -> List[Dict[str, Union[list, str, int, float]]]:
         sig_meta: List[Dict[str, Union[list, str, int, float]]] = []
-        for feature in features:
-            feature_info = feature_map[feature]
+
+        for feature, feature_info in features.items():
+
             sig_meta.append(
                 {
                     "datatype": SeldonSigTypes[feature_info.feature_type].value,
@@ -33,16 +33,8 @@ class SeldonModel:
     def init_metadata(self) -> Dict[str, Union[list, str, int, float]]:
         """Creates metadata for loaded model"""
 
-        inputs = self._get_sig_metadata(
-            features=self.model.input_sig.schema().get("properties"),
-            feature_map=self.model.input_sig.feature_map,
-        )
-
-        outputs = self._get_sig_metadata(
-            features=self.model.output_sig.schema().get("properties"),
-            feature_map=self.model.output_sig.feature_map,
-        )
-
+        inputs = self._get_sig_metadata(features=self.model.input_features)
+        outputs = self._get_sig_metadata(features=self.model.output_features)
         meta = {
             "name": self.model.name,
             "platform": "seldon",
