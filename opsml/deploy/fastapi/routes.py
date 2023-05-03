@@ -1,12 +1,12 @@
 import uuid
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 from fastapi import Body, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
-from opsml.deploy.fastapi.pydantic_models import HealthCheck
-from opsml.helpers.logging import ArtifactLogger
-from opsml.deploy.loader import Model
 
+from opsml.deploy.fastapi.pydantic_models import HealthCheck
+from opsml.deploy.loader import Model
+from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
