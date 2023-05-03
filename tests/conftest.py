@@ -1,5 +1,5 @@
-from typing import Any, Iterator
-
+from typing import Any, Iterator, Optional, Union
+from dataclasses import dataclass
 import os
 import pathlib
 
@@ -58,6 +58,7 @@ from opsml.projects.mlflow import MlflowProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.projects import OpsmlProject
+from opsml.deploy.fastapi.api import ModelApi
 
 
 # testing
@@ -755,6 +756,13 @@ def test_model_card(sklearn_pipeline):
     return model_card
 
 
+################################################################
+
+# API mocks
+
+#################################################################
+
+
 @pytest.fixture(scope="function")
 def linear_reg_api_example():
     return 6.0, {"inputs": [1, 1]}
@@ -899,3 +907,19 @@ def sklearn_pipeline_api_example():
     record = {"CAT1": "a", "CAT2": "c", "num1": 0.5, "num2": 0.6, "num3": 0}
 
     return 0.5, record
+
+
+@pytest.fixture(scope="module")
+def fastapi_model_app():
+    model_api = ModelApi(port=8000)
+    model_api.build_api()
+    app = model_api.app
+
+    return app
+
+
+@pytest.fixture(scope="module")
+def test_fastapi_client(fastapi_model_app):
+
+    with TestClient(fastapi_model_app) as test_client:
+        yield test_client
