@@ -1,14 +1,15 @@
-from typing import Union, Dict, Any, List
+from typing import Dict, List, Union
+
+from opsml.deploy.loader import ModelLoader
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import Feature, SeldonSigTypes
-from opsml.deploy.loader import ModelLoader
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
 class SeldonModel:
     def __init__(self):
-        """Class for loading a model in from a ModelDefinition and deploying it through Seldon"""
+        """Class for loading a model from a ModelDefinition and deploying it through Seldon"""
         self.model = ModelLoader().load_models()[0]
         self.model.start_onnx_session()
 
