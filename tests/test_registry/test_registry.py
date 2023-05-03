@@ -7,7 +7,6 @@ from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 import uuid
 from pydantic import ValidationError
-import pytest
 
 
 @pytest.mark.parametrize(

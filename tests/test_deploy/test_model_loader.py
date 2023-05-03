@@ -6,8 +6,8 @@ import pytest
 @pytest.mark.parametrize(
     "model_api_path",
     [
-        "linear_reg_model_def.json",
-        "random_forest_model_def.json",
+        "linear_regression_model_def.json",
+        "random_forest_classifier_model_def.json",
     ],
 )
 def test_model(model_api_path):

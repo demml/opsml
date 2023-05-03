@@ -243,7 +243,7 @@ class ApiSigTypes(Enum):
 
 
 class SeldonSigTypes(str, Enum):
-
+    UNDEFINED = "Any"
     INT32 = "INT32"
     INT64 = "INT64"
     NUMBER = "FP32"
@@ -290,7 +290,7 @@ class ModelApiDef(BaseModel):
     onnx_version: str
     model_version: str
     sample_data: dict
-    data_schemas: ApiDataSchemas
+    data_schema: ApiDataSchemas
 
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
