@@ -89,8 +89,8 @@ class ModelConverter:
 
     def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
-
         for sig in signature:
+
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
             dim_shape = [dim.dim_value for dim in shape_dims]
@@ -101,6 +101,7 @@ class ModelConverter:
                 feature_type=OnnxDataProto(data_type).name,
                 shape=dim_shape,
             )
+
         return feature_dict
 
     def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
