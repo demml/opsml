@@ -1,13 +1,15 @@
 import glob
-from typing import Any, Dict, List, cast, Union
-import onnxruntime as rt
 import os
-import numpy as np
-from numpy.typing import NDArray
 from functools import cached_property
-from opsml.model.types import ModelApiDef, Base, Feature
+from typing import Any, Dict, List, Union, cast
+
+import numpy as np
+import onnxruntime as rt
+from numpy.typing import NDArray
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import ApiSigCreatorGetter
+from opsml.model.types import Base, Feature, ModelApiDef
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -53,8 +55,8 @@ class Model:
         return self.sig_creator.output_sig
 
     @property
-    def to_onnx(self) -> str:
-        return True if self.model.onnx_definition is not None else False
+    def to_onnx(self) -> bool:
+        return bool(self.model.onnx_definition)
 
     @property
     def version(self) -> str:
@@ -102,7 +104,7 @@ class Model:
         # todo: what if prediction is ndimensional?
         return list(flat_pred)
 
-    def _extract_predictions(self, prediction: List[Any]) -> Dict[str, List[Any]]:
+    def _extract_predictions(self, prediction: List[Any]) -> Dict[str, Union[int, str, float, List[Any]]]:
         """Parses onnx runtime prediction
 
         Args:
