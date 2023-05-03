@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, root_validator, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
 from skl2onnx.common.data_types import (
     DoubleTensorType,
     FloatTensorType,
@@ -124,7 +124,6 @@ class ModelReturn(BaseModel):
     model_definition: Optional[OnnxModelDefinition] = None
     api_data_schema: ApiDataSchemas
     model_type: str = "placeholder"
-    data_type: str = "placeholder"
 
     class Config:
         allow_mutation = True
@@ -135,16 +134,6 @@ class Base(BaseModel):
 
     class Config:
         allow_mutation = True
-
-    @property
-    def feature_map(self) -> Dict[str, Feature]:
-        if self.feature_map is not None:
-            return self.feature_map
-        raise ValueError("feature_map has not been set")
-
-    @feature_map.setter
-    def feature_map(self, feature_map: Dict[str, Feature]) -> None:
-        self.feature_map = feature_map
 
     def to_onnx(self):
         raise NotImplementedError
@@ -242,8 +231,11 @@ class ApiSigTypes(Enum):
     ARRAY = list
 
 
+# this is partly a hack to get Seldons metadata to work
+# seldon metadata only accepts float, bool, int
 class SeldonSigTypes(str, Enum):
-    UNDEFINED = "Any"
+    UNDEFINED = "BYTES"
+    INT = "INT32"
     INT32 = "INT32"
     INT64 = "INT64"
     NUMBER = "FP32"
@@ -252,6 +244,7 @@ class SeldonSigTypes(str, Enum):
     FLOAT32 = "FP32"
     FLOAT64 = "FP64"
     DOUBLE = "FP64"
+    STR = "BYTES"
 
 
 class PydanticDataTypes(Enum):

@@ -8,6 +8,8 @@ from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath, TypeChecker, clean_string
+from opsml.model.predictor import OnnxModelPredictor
+from opsml.model.types import ApiDataSchemas, DataDict, ModelReturn, OnnxModelDefinition, TorchOnnxArgs, Feature
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
@@ -17,8 +19,6 @@ from opsml.registry.cards.types import (
     Param,
 )
 from opsml.registry.data.splitter import DataHolder, DataSplitter
-from opsml.model.predictor import OnnxModelPredictor
-from opsml.model.types import DataDict, Feature, OnnxModelDefinition, ModelReturn, TorchOnnxArgs, ApiDataSchemas
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
@@ -410,6 +410,18 @@ class ModelCard(ArtifactCard):
             ]
         )
 
+    @property
+    def model_data_schema(self) -> DataDict:
+        if self.data_schema is not None:
+            return self.data_schema.model_data_schema
+        raise ValueError("Model data schema has not been set")
+
+    @property
+    def input_data_schema(self) -> Dict[str, Feature]:
+        if self.data_schema is not None and self.data_schema.input_data_schema is not None:
+            return self.data_schema.input_data_schema
+        raise ValueError("Model input data schema has not been set or is not needed for this model")
+
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
@@ -543,7 +555,7 @@ class ModelCard(ArtifactCard):
         )
 
         if isinstance(sample_data, np.ndarray):
-            model_data = self.data_schema.model_data_schema
+            model_data = self.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
             return {input_name: sample_data[0, :].tolist()}
 

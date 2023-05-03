@@ -4,8 +4,8 @@ from typing import Optional, cast
 import click
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistry, ModelCard
 from opsml.model.types import ModelApiDef, ModelDownloadInfo
+from opsml.registry import CardRegistry, ModelCard
 
 logger = ArtifactLogger.get_logger(__name__)
 

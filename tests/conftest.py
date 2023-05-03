@@ -892,3 +892,10 @@ def tensorflow_api_example():
         "department": [-0.4160802, -0.27275354, 0.67165923, 0.37333506],
     }
     return prediction, record
+
+
+@pytest.fixture(scope="function")
+def sklearn_pipeline_api_example():
+    record = {"CAT1": "a", "CAT2": "c", "num1": 0.5, "num2": 0.6, "num3": 0}
+
+    return 0.5, record

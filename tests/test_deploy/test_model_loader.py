@@ -22,4 +22,4 @@ def test_model(model_api_path):
 def test_models():
     os.environ.pop("OPSML_MODELAPI_JSON")
     models = ModelLoader().model_files
-    assert len(models) == 2
+    assert len(models) == 4

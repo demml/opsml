@@ -19,14 +19,14 @@ from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
-    Feature,
-    OnnxModelDefinition,
-    ModelReturn,
-    OnnxDataProto,
-    OnnxModelType,
-    TorchOnnxArgs,
     ApiDataSchemas,
     DataDict,
+    Feature,
+    ModelReturn,
+    OnnxDataProto,
+    OnnxModelDefinition,
+    OnnxModelType,
+    TorchOnnxArgs,
 )
 
 ONNX_VERSION = onnx.__version__

@@ -1,14 +1,14 @@
 # pylint: disable=import-outside-toplevel
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, cast, Union
-from pydantic.types import ConstrainedList
 from functools import cached_property
-import numpy as np
-from pydantic import create_model, conlist
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, TYPE_CHECKING
+
+from pydantic import conlist, create_model
+from pydantic.types import ConstrainedList
 
 from opsml.model.types import (
+    ApiDataSchemas,
     ApiSigTypes,
     Base,
-    DataDict,
     DeepLearningDictBase,
     DeepLearningNumpyBase,
     DictBase,
@@ -16,8 +16,6 @@ from opsml.model.types import (
     InputDataType,
     NumpyBase,
     OnnxModelType,
-    PydanticDataTypes,
-    ApiDataSchemas,
 )
 
 PydanticFields = Dict[str, Tuple[Any, ...]]
@@ -210,20 +208,19 @@ class ApiSigCreator:
 
         return base, pydantic_fields
 
-    def _get_input_sig(self, features: Dict[str, Feature]) -> Type[Base]:
+    def _get_input_sig(self, features: Dict[str, Feature]) -> Base:
         base, fields = self._get_base_fields(features=features, is_input=True)
-        input_sig = create_model("Features", **fields, __base__=base)  # type: ignore
-        return input_sig
+        return create_model("Features", **fields, __base__=base)  # type: ignore
 
-    def _convert_to_conlist(self, field_value: Tuple[Any, Ellipsis]) -> Tuple[ConstrainedList, Ellipsis]:
+    def _convert_to_conlist(self, field_value: Tuple[Any, ellipsis]) -> Tuple[Type[List[Any]], ellipsis]:
         if issubclass(field_value[0], ConstrainedList):
             return field_value
         return (conlist(field_value[0]), ...)
 
-    def _get_output_sig(self, features: Dict[str, Feature]) -> Type[Base]:
+    def _get_output_sig(self, features: Dict[str, Feature]) -> Base:
         base, fields = self._get_base_fields(features=features, is_input=False)
 
-        return create_model("Predictions", **fields, __base__=base)
+        return create_model("Predictions", **fields, __base__=base)  # type: ignore
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
@@ -238,7 +235,7 @@ class SklearnSigCreator(ApiSigCreator):
         return NumpyBase
 
     #
-    def _get_input_sig(self, features: Dict[str, Feature]) -> Type[Base]:
+    def _get_input_sig(self, features: Dict[str, Feature]) -> Base:
         if self.data_schema.input_data_schema is not None:
             return super()._get_input_sig(features=self.data_schema.input_data_schema)
         return super()._get_input_sig(features=features)
