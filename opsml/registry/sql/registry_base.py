@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 import pandas as pd
 import semver
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.expression import ColumnElement, FromClause
+from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes
@@ -20,6 +20,7 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml.registry.sql.records import LoadedRecordType, load_record
+from opsml.registry.sql.semver import SemVerSymbols, sort_semvers
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import DBInitializer, RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -33,12 +34,6 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 if settings.request_client is None:
     initializer = DBInitializer(engine=settings.connection_client.get_engine())
     initializer.initialize()
-
-
-def sort_semvers(semvers: List[str]):
-    """Sorts a list of semvers"""
-    semvers.sort(key=lambda x: [int(y) for y in x.split(".")])
-    semvers.reverse()
 
 
 class VersionType(str, Enum):
@@ -207,6 +202,7 @@ class SQLRegistryBase:
 
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
+
         self.add_and_commit(record=record.dict())
 
     def register_card(
@@ -235,26 +231,42 @@ class SQLRegistryBase:
         self._set_artifact_storage_spec(card=card, save_path=save_path)
         self._create_registry_record(card=card)
 
+    def update_card(self, card: ArtifactCard) -> None:
+        """
+        Updates a registry record.
+
+        Args:
+            Card:
+                Card to update
+        """
+        card = save_card_artifacts(card=card, storage_client=self.storage_client)
+        record = card.create_registry_record()
+        self.update_record(record=record.dict())
+
     def list_cards(
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         raise NotImplementedError
 
-    def _sort_by_version(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         versions = [record["version"] for record in records]
         sort_semvers(versions)
 
-        for record in records:
-            if record["version"] == versions[0]:
-                return record
-        raise ValueError("Error parsing semvers")
+        sorted_records = []
+        for version in versions:
+            for record in records:
+                if record["version"] == version:
+                    sorted_records.append(record)
+
+        return sorted_records
 
     def load_card(
         self,
@@ -266,18 +278,17 @@ class SQLRegistryBase:
         cleaned_name = clean_string(name)
         cleaned_team = clean_string(team)
 
-        records = self.list_cards(
+        record = self.list_cards(
             name=cleaned_name,
             team=cleaned_team,
             version=version,
             uid=uid,
+            limit=1,
         )
-
-        record_data = self._sort_by_version(records=records)
 
         loaded_record = load_record(
             table_name=self.table_name,
-            record_data=record_data,
+            record_data=record[0],
             storage_client=self.storage_client,
         )
 
@@ -362,12 +373,53 @@ class ServerRegistry(SQLRegistryBase):
 
         return record, "updated"
 
+    def _parse_sql_results(self, results: Any) -> List[Dict[str, Any]]:
+        """
+        Helper for parsing sql results
+
+        Args:
+            results:
+                Returned object sql query
+
+        Returns:
+            List of dictionaries
+        """
+        records: List[Dict[str, Any]] = []
+
+        for row in results:
+            result_dict = row[0].__dict__
+            result_dict.pop("_sa_instance_state")
+            records.append(result_dict)
+
+        return records
+
+    def _get_sql_records(self, query: Select) -> List[Dict[str, Any]]:
+        """
+        Gets sql records from database given a query
+
+        Args:
+            query:
+                sql query
+        Returns:
+            List of records
+        """
+
+        with self._session() as sess:
+            results = sess.execute(query).all()
+
+        records = self._parse_sql_results(results=results)
+
+        sorted_records = self._sort_by_version(records=records)
+
+        return sorted_records
+
     def list_cards(
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -382,6 +434,8 @@ class ServerRegistry(SQLRegistryBase):
                 the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
             uid:
                 Unique identifier for DataCard. If present, the uid takes precedence.
+            limit:
+                Places a limit on result list. Results are sorted by SemVer
 
 
         Returns:
@@ -399,16 +453,14 @@ class ServerRegistry(SQLRegistryBase):
             uid=uid,
         )
 
-        results_list = []
-        with self._session() as sess:
-            results = sess.execute(query).all()
+        sorted_records = self._get_sql_records(query=query)
 
-        for row in results:
-            result_dict = row[0].__dict__
-            result_dict.pop("_sa_instance_state")
-            results_list.append(result_dict)
+        if version is not None:
+            if any(symbol in version for symbol in [SemVerSymbols.CARET, SemVerSymbols.TILDE]):
+                # return top version
+                return sorted_records[:1]
 
-        return results_list
+        return sorted_records[:limit]
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         query = query_creator.uid_exists_query(
@@ -460,6 +512,7 @@ class ClientRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -484,6 +537,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version,
                 "uid": uid,
+                "limit": limit,
                 "table_name": self.table_name,
             },
         )
@@ -515,7 +569,7 @@ class ClientRegistry(SQLRegistryBase):
         )
 
         if bool(data.get("updated")):
-            return record, "update"
+            return record, "updated"
         raise ValueError("Failed to update card")
 
     @staticmethod

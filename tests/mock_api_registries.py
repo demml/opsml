@@ -122,20 +122,6 @@ class ModelCardRegistry(Registry):
 
 
 class RunCardRegistry(Registry):
-    def update_card(self, card: RunCard) -> None:
-
-        """Updates an existing pipeline card in the pipeline registry
-
-        Args:
-            card: Existing pipeline card
-
-        Returns:
-            None
-        """
-
-        record = RunRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.RUN
@@ -323,11 +309,6 @@ class CardRegistry:
             None
         """
 
-        if not hasattr(self._registry, "update_card"):
-            raise ValueError(f"""{card.__class__.__name__} has no 'update_card' attribute""")
-
-        self._registry = cast(DataCardRegistry, self._registry)
-        card = cast(DataCard, card)
         return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:

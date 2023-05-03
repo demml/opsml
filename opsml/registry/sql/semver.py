@@ -1,5 +1,12 @@
 import re
 from enum import Enum
+from typing import List
+
+
+def sort_semvers(semvers: List[str]):
+    """Sorts a list of semvers"""
+    semvers.sort(key=lambda x: [int(y) for y in x.split(".")])
+    semvers.reverse()
 
 
 class SemVerSymbols(str, Enum):
