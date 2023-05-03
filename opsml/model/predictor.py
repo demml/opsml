@@ -1,11 +1,18 @@
 # pylint: disable=import-outside-toplevel
-from typing import Any, Dict, Union, List
 from functools import cached_property
+from typing import Any, Dict, List, Union
+
 import numpy as np
 from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import InputDataType, ModelApiDef, OnnxModelType, Base, ApiDataSchemas
+from opsml.model.types import (
+    ApiDataSchemas,
+    Base,
+    InputDataType,
+    ModelApiDef,
+    OnnxModelType,
+)
 
 
 # need to build response object for prediction
