@@ -275,6 +275,12 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     )
 
     with pytest.raises(ValueError):
+        model_card.model_data_schema
+
+    with pytest.raises(ValueError):
+        model_card.input_data_schema
+
+    with pytest.raises(ValueError):
         model_card.load_onnx_model_definition()
 
     with pytest.raises(ValueError):
