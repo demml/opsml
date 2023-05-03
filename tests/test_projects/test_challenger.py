@@ -9,11 +9,9 @@ import numpy as np
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
-from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.projects import OpsmlProject
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.challenger import ModelChallenger
-
-from tests import conftest
+from opsml.model.challenger import ModelChallenger
 
 
 logger = ArtifactLogger.get_logger(__name__)
