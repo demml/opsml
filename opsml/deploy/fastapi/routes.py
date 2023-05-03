@@ -1,12 +1,12 @@
 import uuid
-from typing import Any, List, Optional
+from typing import List, Optional, Any
 
 from fastapi import Body, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
 from opsml.deploy.fastapi.pydantic_models import HealthCheck
 from opsml.helpers.logging import ArtifactLogger
 from opsml.deploy.loader import Model
-from opsml.model.types import Base
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -27,8 +27,8 @@ class RouteCreator:
         self,
         route: str,
         name: str,
-        response_sig: Base,
-        request_sig: Base,
+        response_sig: Any,
+        request_sig: Any,
     ):
         @self.app.post(route, name=name, response_model=response_sig)
         async def predict(
@@ -54,10 +54,18 @@ class RouteCreator:
         @self.app.get("/healtherror", name="healtherror")
         def get_healtherror() -> HealthCheck:
             try:
-                assert 10 == 11
+                var1 = 10
+                var2 = 11
+                assert var1 == var2
             except Exception:  # pylint: disable=broad-exception-caught
                 pass
             raise HTTPException(status_code=500, detail="Test error")
+
+    def _create_route_list(self):
+        @self.app.get("/route_list")
+        def get_route_list():
+            url_list = [{"path": route.path, "name": route.name} for route in self.app.routes]
+            return url_list
 
     def create_model_routes(self):
 
@@ -71,4 +79,5 @@ class RouteCreator:
 
         self._create_healthcheck()
         self._create_healtherror()
+        self._create_route_list()
         logger.info("Created all routes for model api")
