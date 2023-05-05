@@ -13,6 +13,7 @@ from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
+    ModelApiDef,
     ModelReturn,
     OnnxModelDefinition,
     TorchOnnxArgs,
@@ -220,7 +221,6 @@ class DataCard(ArtifactCard):
         for name, query in sql_logic.items():
             if ".sql" in query:
                 try:
-
                     sql_path = FindPath.find_filepath(name=query)
                     with open(sql_path, "r", encoding="utf-8") as file_:
                         query_ = file_.read()
@@ -258,7 +258,7 @@ class DataCard(ArtifactCard):
     def load_data(self):
         """Loads data"""
 
-        if not bool(self.data):
+        if not bool(self.data) and self.storage_client is not None:
             storage_spec = ArtifactStorageSpecs(save_path=self.data_uri)
 
             self.storage_client.storage_spec = storage_spec
@@ -450,17 +450,41 @@ class ModelCard(ArtifactCard):
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
-        self.load_sample_data()
+        if self.storage_client is not None:
+            self.load_sample_data()
+            storage_spec = ArtifactStorageSpecs(save_path=self.trained_model_uri)
+            self.storage_client.storage_spec = storage_spec
+            trained_model = load_record_artifact_from_storage(
+                storage_client=self.storage_client,
+                artifact_type=self.model_type,
+            )
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.trained_model_uri)
+            setattr(self, "trained_model", trained_model)
 
-        self.storage_client.storage_spec = storage_spec
-        trained_model = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
-            artifact_type=self.model_type,
+    def _load_metadata(self, storage_client: StorageClientType) -> ModelApiDef:
+        """Loads onnx metadata"""
+
+        # get metadata
+        storage_spec = ArtifactStorageSpecs(save_path=self.onnx_model_uri)
+        storage_client.storage_spec = storage_spec
+        onnx_model_metadata = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ArtifactStorageType.JSON.value,
         )
 
-        setattr(self, "trained_model", trained_model)
+        return ModelApiDef.parse_obj(onnx_model_metadata)
+
+    def _load_onnx_model(self, metadata: ModelApiDef, storage_client: StorageClientType) -> Any:
+        """Loads the actuall onnx file"""
+        # get onnx model
+
+        storage_client.storage_spec.save_path = metadata.onnx_uri
+        onnx_model = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ArtifactStorageType.ONNX.value,
+        )
+
+        return onnx_model
 
     def load_onnx_model_definition(self):
         """Loads the onnx model definition"""
@@ -468,20 +492,19 @@ class ModelCard(ArtifactCard):
         if self.onnx_model_uri is None:
             raise ValueError("No onnx model uri exists. Please check the registry or register a new model")
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.onnx_model_uri)
+        if self.storage_client is not None:
+            metadata = self._load_metadata(storage_client=self.storage_client)
+            onnx_model = self._load_onnx_model(
+                metadata=metadata,
+                storage_client=self.storage_client,
+            )
 
-        self.storage_client.storage_spec = storage_spec
-        onnx_model = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
-            artifact_type=ArtifactStorageType.JSON.value,
-        )
+            model_def = OnnxModelDefinition(
+                onnx_version=metadata.onnx_version,
+                model_bytes=onnx_model.SerializeToString(),
+            )
 
-        model_def = OnnxModelDefinition(
-            onnx_version=onnx_model.get("onnx_version"),
-            model_bytes=bytes.fromhex(onnx_model.get("onnx_definition")),
-        )
-
-        setattr(self, "onnx_model_def", model_def)
+            setattr(self, "onnx_model_def", model_def)
 
     def create_registry_record(self) -> RegistryRecord:
         """
@@ -892,7 +915,6 @@ class RunCard(ArtifactCard):
         """
         metric = self.metrics.get(name)
         if metric is not None:
-
             if len(metric) > 1:
                 return metric
             if len(metric) == 1:
@@ -915,7 +937,6 @@ class RunCard(ArtifactCard):
         """
         param = self.params.get(name)
         if param is not None:
-
             if len(param) > 1:
                 return param
             if len(param) == 1:
