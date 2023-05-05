@@ -66,6 +66,7 @@ class ModelArtifactNames(str, Enum):
     MODELCARD = "modelcard"
     TRAINED_MODEL = "trained-model"
     API_DEF = "api-def"
+    ONNX = ".onnx"
 
 
 class MlFlowDirs(str, Enum):
@@ -118,7 +119,6 @@ class StorageClient:
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
-
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
@@ -143,7 +143,6 @@ class StorageClient:
         self,
         file_suffix: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
-
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
@@ -241,7 +240,6 @@ class LocalStorageClient(StorageClient):
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
-
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
         )
@@ -285,7 +283,6 @@ class ApiStorageClient(LocalStorageClient):
         self,
         file_suffix: Optional[str] = None,
     ) -> Tuple[str, str]:
-
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
@@ -315,7 +312,6 @@ class ApiStorageClient(LocalStorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-
         files = {"file": open(os.path.join(local_dir, filename), "rb")}  # pylint: disable=consider-using-with
         headers = {"Filename": filename, "WritePath": write_dir}
 
@@ -597,7 +593,6 @@ class MlflowStorageClient(StorageClient):
         """Swaps the realpath with the expected mlflow proxy path"""
 
         if "http" in self.mlflow_client.tracking_uri:
-
             path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
 
             mlflow_path = os.path.normpath(
@@ -610,6 +605,14 @@ class MlflowStorageClient(StorageClient):
             return mlflow_path
 
         return rpath
+
+    def swap_mlflow_root(self, rpath: str) -> str:
+        """Swaps mlflow path with storage path (used for onnx proto path)"""
+
+        path_to_file = "/".join(rpath.split("mlflow-artifacts:/")[1:])
+        mlflow_path = os.path.join(self.base_path_prefix, path_to_file)
+
+        return mlflow_path
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         import mlflow
@@ -697,6 +700,9 @@ class MlflowStorageClient(StorageClient):
 
         # need to re-write storage path for saving to ArtifactCard
         storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
+
+        if ModelArtifactNames.ONNX in storage_uri:
+            storage_uri = self.swap_mlflow_root(rpath=storage_uri)
 
         return storage_uri
 
