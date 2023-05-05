@@ -43,7 +43,6 @@ class PydanticFeatureGenerator:
         self.is_input = is_input
 
     def _is_list_type(self, feature: Feature) -> bool:
-
         """
         Checks if feature is a list type
 
@@ -169,7 +168,6 @@ class ApiSigCreator:
 
     @cached_property
     def output_sig(self) -> Base:
-
         output_sig = self._get_output_sig(features=self.output_features)
         output_sig.feature_map = self.output_features  # type: ignore
 

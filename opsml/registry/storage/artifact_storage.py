@@ -11,7 +11,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
-
+from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.storage.storage_system import (
@@ -126,7 +126,6 @@ class ArtifactStorage:
         raise NotImplementedError
 
     def save_artifact(self, artifact: Any) -> StoragePath:
-
         with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
             storage_uri, tmp_uri = temp_output
             storage_uri = self._save_artifact(
@@ -173,6 +172,59 @@ class ArtifactStorage:
     def validate(artifact_type: str) -> bool:
         """validate table type"""
         raise NotImplementedError
+
+
+class OnnxStorage(ArtifactStorage):
+    """Class that saves and onnx model"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            file_suffix="onnx",
+            artifact_class=ArtifactClass.OTHER.value,
+        )
+
+    def _write_onnx(self, artifact: Any, file_path: FilePath) -> None:
+        with open(str(file_path), "wb") as file_:
+            file_.write(artifact)
+
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+        """
+        Writes the artifact as a joblib file to a storage_uri
+
+        Args:
+            artifact:
+                Artifact to write to onnx
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used
+                for some storage clients.
+
+        Returns:
+            Storage path
+        """
+
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+        self._write_onnx(artifact=artifact, file_path=file_path)
+        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+
+    def _load_artifact(self, file_path: FilePath) -> ModelProto:
+        from onnx import load
+
+        with open(str(file_path), "rb") as file_:
+            onnx_model = load(file_)
+
+        return onnx_model
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageType.ONNX
 
 
 class JoblibStorage(ArtifactStorage):

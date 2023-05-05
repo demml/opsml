@@ -6,13 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import (
-    ApiDataSchemas,
-    Base,
-    InputDataType,
-    ModelApiDef,
-    OnnxModelType,
-)
+from opsml.model.types import ApiDataSchemas, Base, InputDataType, OnnxModelType
 
 
 # need to build response object for prediction
@@ -67,17 +61,6 @@ class OnnxModelPredictor:
     @cached_property
     def output_sig(self) -> Base:
         return self.sig_creator.output_sig
-
-    def get_api_model(self) -> ModelApiDef:
-        return ModelApiDef(
-            model_name=self.model_name,
-            model_type=self.model_type,
-            onnx_definition=self.model_definition,
-            onnx_version=self.onnx_version,
-            model_version=self.model_version,
-            sample_data=self.sample_api_data,
-            data_schema=self.data_schema,
-        )
 
     def predict(self, data: Dict[str, Any]) -> Any:
         """Run prediction on onnx model. Data is expected to conform to pydantic

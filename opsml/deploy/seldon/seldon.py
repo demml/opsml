@@ -20,7 +20,6 @@ class SeldonModel:
         sig_meta: List[Dict[str, Union[list, str, int, float]]] = []
 
         for feature, feature_info in features.items():
-
             sig_meta.append(
                 {
                     "datatype": SeldonSigTypes[feature_info.feature_type].value,

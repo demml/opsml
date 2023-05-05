@@ -56,7 +56,7 @@ class Model:
 
     @property
     def to_onnx(self) -> bool:
-        return bool(self.model.onnx_definition)
+        return bool(self.model.onnx_uri)
 
     @property
     def version(self) -> str:
@@ -70,12 +70,16 @@ class Model:
     def name(self) -> str:
         return self.model.model_name
 
+    @property
+    def proto_path(self) -> str:
+        proto_file = self.model.onnx_uri.split("/")[-1]
+        return glob.glob(f"**/**/{proto_file}", recursive=True)[0]
+
     def start_onnx_session(self):
-        self.sess = cast(rt.InferenceSession, rt.InferenceSession(self.model.onnx_definition))
+        self.sess = cast(rt.InferenceSession, rt.InferenceSession(self.proto_path))
         self._output_names = [output.name for output in self.sess.get_outputs()]
 
     def predict(self, payload: Base) -> Dict[str, List[Any]]:
-
         prediction = self._predict_and_extract(payload=payload)
 
         return prediction
@@ -135,7 +139,6 @@ class Model:
 
 class ModelLoader:
     def __init__(self):
-
         self.model_path = os.getenv("OPSML_MODELAPI_JSON", "*model_def.json")
         self.model_files = self._get_model_files()
 
