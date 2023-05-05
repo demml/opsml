@@ -8,6 +8,16 @@ from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath, TypeChecker, clean_string
+from opsml.model.predictor import OnnxModelPredictor
+from opsml.model.types import (
+    ApiDataSchemas,
+    DataDict,
+    Feature,
+    ModelApiDef,
+    ModelReturn,
+    OnnxModelDefinition,
+    TorchOnnxArgs,
+)
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
@@ -17,14 +27,6 @@ from opsml.registry.cards.types import (
     Param,
 )
 from opsml.registry.data.splitter import DataHolder, DataSplitter
-from opsml.registry.model.predictor import OnnxModelPredictor
-from opsml.registry.model.types import (
-    DataDict,
-    Feature,
-    ModelDefinition,
-    ModelReturn,
-    TorchOnnxArgs,
-)
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
@@ -219,7 +221,6 @@ class DataCard(ArtifactCard):
         for name, query in sql_logic.items():
             if ".sql" in query:
                 try:
-
                     sql_path = FindPath.find_filepath(name=query)
                     with open(sql_path, "r", encoding="utf-8") as file_:
                         query_ = file_.read()
@@ -257,7 +258,7 @@ class DataCard(ArtifactCard):
     def load_data(self):
         """Loads data"""
 
-        if not bool(self.data):
+        if not bool(self.data) and self.storage_client is not None:
             storage_spec = ArtifactStorageSpecs(save_path=self.data_uri)
 
             self.storage_client.storage_spec = storage_spec
@@ -375,7 +376,7 @@ class ModelCard(ArtifactCard):
     sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]]
     datacard_uid: Optional[str]
     onnx_model_data: Optional[DataDict]
-    onnx_model_def: Optional[ModelDefinition]
+    onnx_model_def: Optional[OnnxModelDefinition]
     modelcard_uri: Optional[str]
     trained_model_uri: Optional[str]
     onnx_model_uri: Optional[str]
@@ -383,7 +384,7 @@ class ModelCard(ArtifactCard):
     sample_data_type: Optional[str]
     model_type: Optional[str]
     additional_onnx_args: Optional[TorchOnnxArgs]
-    data_schema: Optional[Dict[str, Feature]]
+    data_schema: Optional[ApiDataSchemas]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     no_onnx: bool = False
@@ -416,6 +417,18 @@ class ModelCard(ArtifactCard):
             ]
         )
 
+    @property
+    def model_data_schema(self) -> DataDict:
+        if self.data_schema is not None:
+            return self.data_schema.model_data_schema
+        raise ValueError("Model data schema has not been set")
+
+    @property
+    def input_data_schema(self) -> Dict[str, Feature]:
+        if self.data_schema is not None and self.data_schema.input_data_schema is not None:
+            return self.data_schema.input_data_schema
+        raise ValueError("Model input data schema has not been set or is not needed for this model")
+
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
@@ -437,17 +450,41 @@ class ModelCard(ArtifactCard):
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
-        self.load_sample_data()
+        if self.storage_client is not None:
+            self.load_sample_data()
+            storage_spec = ArtifactStorageSpecs(save_path=self.trained_model_uri)
+            self.storage_client.storage_spec = storage_spec
+            trained_model = load_record_artifact_from_storage(
+                storage_client=self.storage_client,
+                artifact_type=self.model_type,
+            )
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.trained_model_uri)
+            setattr(self, "trained_model", trained_model)
 
-        self.storage_client.storage_spec = storage_spec
-        trained_model = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
-            artifact_type=self.model_type,
+    def _load_metadata(self, storage_client: StorageClientType) -> ModelApiDef:
+        """Loads onnx metadata"""
+
+        # get metadata
+        storage_spec = ArtifactStorageSpecs(save_path=self.onnx_model_uri)
+        storage_client.storage_spec = storage_spec
+        onnx_model_metadata = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ArtifactStorageType.JSON.value,
         )
 
-        setattr(self, "trained_model", trained_model)
+        return ModelApiDef.parse_obj(onnx_model_metadata)
+
+    def _load_onnx_model(self, metadata: ModelApiDef, storage_client: StorageClientType) -> Any:
+        """Loads the actuall onnx file"""
+        # get onnx model
+
+        storage_client.storage_spec.save_path = metadata.onnx_uri
+        onnx_model = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ArtifactStorageType.ONNX.value,
+        )
+
+        return onnx_model
 
     def load_onnx_model_definition(self):
         """Loads the onnx model definition"""
@@ -455,20 +492,20 @@ class ModelCard(ArtifactCard):
         if self.onnx_model_uri is None:
             raise ValueError("No onnx model uri exists. Please check the registry or register a new model")
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.onnx_model_uri)
+        if self.storage_client is not None:
+            metadata = self._load_metadata(storage_client=self.storage_client)
 
-        self.storage_client.storage_spec = storage_spec
-        onnx_model = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
-            artifact_type=ArtifactStorageType.JSON.value,
-        )
+            onnx_model = self._load_onnx_model(
+                metadata=metadata,
+                storage_client=self.storage_client,
+            )
 
-        model_def = ModelDefinition(
-            onnx_version=onnx_model.get("onnx_version"),
-            model_bytes=bytes.fromhex(onnx_model.get("onnx_definition")),
-        )
+            model_def = OnnxModelDefinition(
+                onnx_version=metadata.onnx_version,
+                model_bytes=onnx_model.SerializeToString(),
+            )
 
-        setattr(self, "onnx_model_def", model_def)
+            setattr(self, "onnx_model_def", model_def)
 
     def create_registry_record(self) -> RegistryRecord:
         """
@@ -508,18 +545,8 @@ class ModelCard(ArtifactCard):
         return version
 
     def _set_model_attributes(self, model_return: ModelReturn) -> None:
-        setattr(
-            self,
-            "onnx_model_data",
-            DataDict(
-                data_type=model_return.data_type,
-                input_features=model_return.onnx_input_features,
-                output_features=model_return.onnx_output_features,
-            ),
-        )
-
         setattr(self, "onnx_model_def", model_return.model_definition)
-        setattr(self, "data_schema", model_return.data_schema)
+        setattr(self, "data_schema", model_return.api_data_schema)
         setattr(self, "model_type", model_return.model_type)
 
     def _create_and_set_model_attr(self, no_onnx: bool) -> None:
@@ -531,7 +558,7 @@ class ModelCard(ArtifactCard):
             no_onnx:
                 Whether to convert to onnx or not
         """
-        from opsml.registry.model.creator import (  # pylint: disable=import-outside-toplevel
+        from opsml.model.creator import (  # pylint: disable=import-outside-toplevel
             create_model,
         )
 
@@ -559,7 +586,7 @@ class ModelCard(ArtifactCard):
         )
 
         if isinstance(sample_data, np.ndarray):
-            model_data = cast(DataDict, self.onnx_model_data)
+            model_data = self.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
             return {input_name: sample_data[0, :].tolist()}
 
@@ -587,16 +614,17 @@ class ModelCard(ArtifactCard):
             `OnnxModelPredictor`
 
         """
-
+        # todo: clean this up
         if not bool(self.onnx_model_def):
             self._create_and_set_model_attr(no_onnx=False)
 
         version = self._set_version_for_predictor()
 
         # recast to make mypy happy
-        model_def = cast(ModelDefinition, self.onnx_model_def)
+        # todo: refactor
+        model_def = cast(OnnxModelDefinition, self.onnx_model_def)
         model_type = str(self.model_type)
-        model_data = cast(DataDict, self.onnx_model_data)
+        data_schema = cast(ApiDataSchemas, self.data_schema)
 
         sample_api_data = self._get_sample_data_for_api()
 
@@ -604,8 +632,7 @@ class ModelCard(ArtifactCard):
             model_name=self.name,
             model_type=model_type,
             model_definition=model_def.model_bytes,
-            data_dict=model_data,
-            data_schema=self.data_schema,
+            data_schema=data_schema,
             model_version=version,
             onnx_version=model_def.onnx_version,
             sample_api_data=sample_api_data,
@@ -889,7 +916,6 @@ class RunCard(ArtifactCard):
         """
         metric = self.metrics.get(name)
         if metric is not None:
-
             if len(metric) > 1:
                 return metric
             if len(metric) == 1:
@@ -912,7 +938,6 @@ class RunCard(ArtifactCard):
         """
         param = self.params.get(name)
         if param is not None:
-
             if len(param) > 1:
                 return param
             if len(param) == 1:

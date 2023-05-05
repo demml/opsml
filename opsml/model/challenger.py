@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import experimental_feature
 from opsml.registry.cards.cards import ModelCard, RunCard
 from opsml.registry.cards.types import CardInfo, Metric
 from opsml.registry.sql.registry import CardRegistries
@@ -18,6 +19,7 @@ class BattleReport:
 
 # eventually find a way to tell if a model has been deployed and use that for comparison as well
 class ModelChallenger:
+    @experimental_feature
     def __init__(
         self,
         metric_name: str,
