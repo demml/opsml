@@ -134,6 +134,7 @@ class ArtifactStorage:
                 storage_uri=storage_uri,
                 tmp_uri=tmp_uri,
             )
+
             return StoragePath(uri=storage_uri)
 
     def _download_artifacts(
@@ -256,6 +257,7 @@ class JoblibStorage(ArtifactStorage):
             )
 
         self._write_joblib(artifact=artifact, file_path=file_path)
+
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
