@@ -12,17 +12,19 @@ from numpy.typing import NDArray
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.model.data_converters import OnnxDataConverter
-from opsml.registry.model.model_info import ModelInfo
-from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.model.types import (
+from opsml.model.data_converters import OnnxDataConverter
+from opsml.model.model_info import ModelInfo
+from opsml.model.registry_updaters import OnnxRegistryUpdater
+from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
+    ApiDataSchemas,
+    DataDict,
     Feature,
-    ModelDefinition,
     ModelReturn,
     OnnxDataProto,
+    OnnxModelDefinition,
     OnnxModelType,
     TorchOnnxArgs,
 )
@@ -87,8 +89,8 @@ class ModelConverter:
 
     def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
-
         for sig in signature:
+
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
             dim_shape = [dim.dim_value for dim in shape_dims]
@@ -99,6 +101,7 @@ class ModelConverter:
                 feature_type=OnnxDataProto(data_type).name,
                 shape=dim_shape,
             )
+
         return feature_dict
 
     def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
@@ -107,13 +110,13 @@ class ModelConverter:
 
         return input_dict, output_dict
 
-    def create_model_def(self, onnx_model: ModelProto) -> ModelDefinition:
+    def create_model_def(self, onnx_model: ModelProto) -> OnnxModelDefinition:
         """Creates Model definition
 
         Args:
             onnx_model (ModelProto): Onnx model
         """
-        return ModelDefinition(
+        return OnnxModelDefinition(
             onnx_version=ONNX_VERSION,
             model_bytes=onnx_model.SerializeToString(),
         )
@@ -129,12 +132,15 @@ class ModelConverter:
         model_def = self.create_model_def(onnx_model=onnx_model)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return ModelReturn(
-            model_definition=model_def,
-            onnx_input_features=input_onnx_features,
-            onnx_output_features=output_onnx_features,
-            data_schema=data_schema,
+        schema = ApiDataSchemas(
+            model_data_schema=DataDict(
+                input_features=input_onnx_features,
+                output_features=output_onnx_features,
+            ),
+            input_data_schema=data_schema,
         )
+
+        return ModelReturn(model_definition=model_def, api_data_schema=schema)
 
     @staticmethod
     def validate(model_type: str) -> bool:

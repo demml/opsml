@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+
 """Base code for Onnx model conversion"""
 from dataclasses import asdict, dataclass
 from enum import Enum
@@ -99,29 +101,40 @@ class Feature(BaseModel):
 class DataDict(BaseModel):
     """Datamodel for feature info"""
 
-    data_type: str
+    data_type: Optional[str] = None
     input_features: Dict[str, Feature]
     output_features: Dict[str, Feature]
 
+    class Config:
+        allow_mutation = True
 
-class ModelDefinition(BaseModel):
+
+class OnnxModelDefinition(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
     model_bytes: bytes = Field(..., description="Onnx model as serialized string")
 
 
+class ApiDataSchemas(BaseModel):
+    model_data_schema: DataDict  # expected model inputs and outputs
+    input_data_schema: Optional[Dict[str, Feature]] = None  # what the api can be fed
+
+    class Config:
+        allow_mutation = True
+
+
 class ModelReturn(BaseModel):
-    model_definition: Optional[ModelDefinition] = None
-    onnx_input_features: Dict[str, Feature]  # change this later
-    onnx_output_features: Dict[str, Feature]  # change this later
-    data_schema: Optional[Dict[str, Feature]] = None
+    model_definition: Optional[OnnxModelDefinition] = None
+    api_data_schema: ApiDataSchemas
     model_type: str = "placeholder"
-    data_type: str = "placeholder"
 
     class Config:
         allow_mutation = True
 
 
 class Base(BaseModel):
+    class Config:
+        allow_mutation = True
+
     def to_onnx(self):
         raise NotImplementedError
 
@@ -147,8 +160,11 @@ class Base(BaseModel):
 class NumpyBase(Base):
     def to_onnx(self):
         values = list(self.dict().values())
-        for _, type_ in self.feature_map.items():  # there can only be one
-            array = self.to_numpy(type_=type_, values=values)
+        for _, feature in self.feature_map.items():  # there can only be one
+            array = self.to_numpy(
+                type_=feature.feature_type,
+                values=values,
+            )
             return {"inputs": array.reshape(1, -1)}
 
     def to_dataframe(self):
@@ -160,7 +176,10 @@ class DictBase(Base):
         feats = {}
 
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            array = self.to_numpy(
+                type_=self.feature_map[feat].feature_type,
+                values=feat_val,
+            )
             feats[feat] = array.reshape(1, -1)
         return feats
 
@@ -172,7 +191,7 @@ class DeepLearningNumpyBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
             feats[feat] = np.expand_dims(array, axis=0)
         return feats
 
@@ -188,7 +207,7 @@ class DeepLearningDictBase(Base):
     def to_onnx(self):
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat], values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
             feats[feat] = np.expand_dims(array, axis=0)
 
         return feats
@@ -202,11 +221,37 @@ class ApiSigTypes(Enum):
     INT = int
     INT32 = int
     INT64 = int
+    NUMBER = float
     FLOAT = float
     FLOAT32 = float
     FLOAT64 = float
     DOUBLE = float
     STR = str
+    STRING = str
+    ARRAY = list
+
+
+# this is partly a hack to get Seldons metadata to work
+# seldon metadata only accepts float, bool, int
+class SeldonSigTypes(str, Enum):
+    UNDEFINED = "BYTES"
+    INT = "INT32"
+    INT32 = "INT32"
+    INT64 = "INT64"
+    NUMBER = "FP32"
+    FLOAT = "FP32"
+    FLOAT16 = "FP16"
+    FLOAT32 = "FP32"
+    FLOAT64 = "FP64"
+    DOUBLE = "FP64"
+    STR = "BYTES"
+
+
+class PydanticDataTypes(Enum):
+    NUMBER = float
+    INTEGER = int
+    STRING = str
+    ANY = Any
 
 
 @dataclass
@@ -234,13 +279,11 @@ class TorchOnnxArgs:
 class ModelApiDef(BaseModel):
     model_name: str
     model_type: str
-    onnx_definition: bytes
+    onnx_uri: str
     onnx_version: str
-    input_signature: dict
-    output_signature: dict
     model_version: str
-    data_dict: dict
     sample_data: dict
+    data_schema: ApiDataSchemas
 
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
