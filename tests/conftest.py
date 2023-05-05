@@ -1,5 +1,5 @@
-from typing import Any, Iterator
-
+from typing import Any, Iterator, Optional, Union
+from dataclasses import dataclass
 import os
 import pathlib
 
@@ -58,6 +58,7 @@ from opsml.projects.mlflow import MlflowProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.projects import OpsmlProject
+from opsml.deploy.fastapi.api import ModelApi
 
 
 # testing
@@ -80,6 +81,9 @@ def cleanup() -> None:
 
     # remove test experiment mlrun path
     shutil.rmtree("mlruns", ignore_errors=True)
+
+    # remove test folder for loading model
+    shutil.rmtree("loader_test", ignore_errors=True)
 
 
 ################ Test Classes
@@ -132,7 +136,6 @@ def mock_gcp_vars(gcp_cred_path):
 
 @pytest.fixture(scope="function")
 def mock_gcp_creds(mock_gcp_vars):
-
     creds = GcpCreds(
         creds=mock_gcp_vars["gcp_creds"],
         project=mock_gcp_vars["gcp_project"],
@@ -142,7 +145,6 @@ def mock_gcp_creds(mock_gcp_vars):
         "opsml.helpers.gcp_utils.GcpCredsSetter",
         get_creds=MagicMock(return_value=creds),
     ) as mock_gcp_creds:
-
         yield mock_gcp_creds
 
 
@@ -160,7 +162,6 @@ def gcp_storage_client(mock_gcp_vars):
 
 @pytest.fixture(scope="function")
 def local_storage_client():
-
     storage_client = StorageClientGetter.get_storage_client(storage_settings=StorageClientSettings())
     return storage_client
 
@@ -247,7 +248,6 @@ def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
         return test_client
 
     with patch("httpx.Client", callable_api):
-
         from opsml.registry.sql.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
@@ -273,7 +273,6 @@ def mlflow_storage_client():
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
-
     info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
 
@@ -307,7 +306,6 @@ def api_storage_client(api_registries):
 
 @pytest.fixture(scope="function")
 def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
-
     info = ProjectInfo(name="test_exp", team="test", user_email="test", tracking_uri=SQL_PATH)
     mlflow_exp: MlflowProject = get_project(info=info)
 
@@ -387,7 +385,6 @@ def mock_local_engine():
 
 @pytest.fixture(scope="module")
 def db_registries():
-
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml.registry.sql.registry import CardRegistry
 
@@ -417,21 +414,20 @@ def db_registries():
 
 @pytest.fixture(scope="function")
 def mock_model_cli_loader(db_registries):
-
     model_registry = db_registries["model"]
     from pathlib import Path
     from opsml.scripts.load_model_card import ModelLoader
-    from opsml.registry.model.types import ModelApiDef
+    from opsml.model.types import ModelApiDef
 
     class MockModelLoader(ModelLoader):
-        def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
-            pass
+        @property
+        def base_path(self) -> str:
+            return "loader_test"
 
         def _set_registry(self) -> Any:
             return model_registry
 
     with patch("opsml.scripts.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
-
         yield mock_cli_loader
 
 
@@ -481,7 +477,6 @@ def mock_gcp_scheduler():
             return "job"
 
     with patch("opsml.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
-
         yield mock_scheduler
 
 
@@ -566,7 +561,6 @@ def drift_dataframe():
 
 @pytest.fixture(scope="session")
 def load_pytorch_language():
-
     import torch
     from transformers import AutoTokenizer
 
@@ -652,7 +646,6 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
 
 @pytest.fixture(scope="session")
 def sklearn_pipeline_advanced() -> tuple[Pipeline, pd.DataFrame]:
-
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
@@ -751,5 +744,174 @@ def test_model_card(sklearn_pipeline):
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
+        version="1.0.0",
     )
     return model_card
+
+
+################################################################
+
+### API mocks
+
+#################################################################
+
+
+@pytest.fixture(scope="function")
+def linear_reg_api_example():
+    return 6.0, {"inputs": [1, 1]}
+
+
+@pytest.fixture(scope="function")
+def random_forest_api_example():
+    record = {
+        "col_0": -0.8720515927961947,
+        "col_1": -3.2912296580011247,
+        "col_2": -4.933565864371848,
+        "col_3": -4.760871124559602,
+        "col_4": -4.663587917354173,
+        "col_5": -9.116647051793624,
+        "col_6": -4.154678055358668,
+        "col_7": -4.670396869411925,
+        "col_8": -4.392686260289228,
+        "col_9": -5.314893665635682,
+        "col_10": 2.0,
+    }
+
+    return 2, record
+
+
+@pytest.fixture(scope="function")
+def tensorflow_api_example():
+    record = {
+        "title": [6448.0, 1046.0, 5305.0, 61.0, 6536.0, 6846.0, 7111.0, 2616.0, 8486.0, 6376.0],
+        "body": [
+            8773.0,
+            834.0,
+            8479.0,
+            2176.0,
+            4610.0,
+            8978.0,
+            1843.0,
+            9090.0,
+            108.0,
+            1894.0,
+            5109.0,
+            5259.0,
+            6029.0,
+            3274.0,
+            4893.0,
+            6842.0,
+            5180.0,
+            3806.0,
+            7638.0,
+            7974.0,
+            6575.0,
+            7027.0,
+            8622.0,
+            4418.0,
+            7190.0,
+            7566.0,
+            8229.0,
+            8612.0,
+            9264.0,
+            2129.0,
+            8997.0,
+            3908.0,
+            6012.0,
+            3212.0,
+            649.0,
+            3030.0,
+            3538.0,
+            723.0,
+            7829.0,
+            7891.0,
+            578.0,
+            2080.0,
+            6893.0,
+            8127.0,
+            7131.0,
+            1405.0,
+            9556.0,
+            8495.0,
+            3976.0,
+            5414.0,
+            1994.0,
+            5236.0,
+            3162.0,
+            7749.0,
+            3275.0,
+            2963.0,
+            2403.0,
+            6157.0,
+            5980.0,
+            1788.0,
+            6849.0,
+            5209.0,
+            4861.0,
+            281.0,
+            7498.0,
+            5745.0,
+            891.0,
+            1681.0,
+            5208.0,
+            21.0,
+            7302.0,
+            2131.0,
+            5611.0,
+            476.0,
+            8018.0,
+            1996.0,
+            3719.0,
+            5497.0,
+            5153.0,
+            5819.0,
+            3545.0,
+            3935.0,
+            5961.0,
+            5283.0,
+            8219.0,
+            7065.0,
+            9959.0,
+            5395.0,
+            3522.0,
+            7269.0,
+            3448.0,
+            4219.0,
+            8831.0,
+            7094.0,
+            5242.0,
+            2099.0,
+            6223.0,
+            3535.0,
+            551.0,
+            4417.0,
+        ],
+        "tags": [1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+    }
+    prediction = {
+        "priority": 0.22161353,
+        "department": [-0.4160802, -0.27275354, 0.67165923, 0.37333506],
+    }
+    return prediction, record
+
+
+@pytest.fixture(scope="function")
+def sklearn_pipeline_api_example():
+    record = {"CAT1": "a", "CAT2": "c", "num1": 0.5, "num2": 0.6, "num3": 0}
+
+    return 0.5, record
+
+
+@pytest.fixture(scope="module")
+def fastapi_model_app():
+    model_api = ModelApi(port=8000)
+    model_api.build_api()
+    app = model_api.app
+
+    return app
+
+
+@pytest.fixture(scope="module")
+def test_fastapi_client(fastapi_model_app):
+    with TestClient(fastapi_model_app) as test_client:
+        yield test_client

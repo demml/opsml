@@ -7,7 +7,6 @@ from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 import uuid
 from pydantic import ValidationError
-import pytest
 
 
 @pytest.mark.parametrize(
@@ -274,6 +273,12 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
         user_email="mlops.com",
         datacard_uid=data_card.uid,
     )
+
+    with pytest.raises(ValueError):
+        model_card.model_data_schema
+
+    with pytest.raises(ValueError):
+        model_card.input_data_schema
 
     with pytest.raises(ValueError):
         model_card.load_onnx_model_definition()
