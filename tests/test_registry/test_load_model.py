@@ -2,14 +2,14 @@ from click.testing import CliRunner
 from opsml.scripts.load_model_card import load_model_card_to_file
 from opsml.model.types import ModelDownloadInfo
 from unittest.mock import patch, MagicMock
+from tests.conftest import cleanup
 
 
-def test_cli_class(db_registries, mock_model_cli_loader, test_model_card, mock_pathlib):
+def test_cli_class(db_registries, mock_model_cli_loader, test_model_card):
     with patch.multiple(
         "opsml.registry.sql.registry.CardRegistry",
         load_card=MagicMock(return_value=test_model_card),
     ):
-
         model_info = ModelDownloadInfo(
             name="driven_drop_off_predictor",
             team="SPMS",
@@ -25,9 +25,10 @@ def test_cli_class(db_registries, mock_model_cli_loader, test_model_card, mock_p
 
         loader.save_to_local_file()
 
+    cleanup()
 
-def test_load_model_card_version(mock_model_cli_loader, test_model_card, mock_pathlib):
 
+def test_load_model_card_version(mock_model_cli_loader, test_model_card):
     with patch.multiple(
         "opsml.registry.sql.registry.CardRegistry",
         load_card=MagicMock(return_value=test_model_card),
@@ -40,3 +41,4 @@ def test_load_model_card_version(mock_model_cli_loader, test_model_card, mock_pa
             runner = CliRunner()
             result = runner.invoke(load_model_card_to_file, arg_list)
             assert result.exit_code == 0
+    cleanup()

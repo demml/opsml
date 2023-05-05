@@ -6,12 +6,11 @@ import pytest
 @pytest.mark.parametrize(
     "model_api_path",
     [
-        "linear_regression_model_def.json",
+        "linear_reg_model_def.json",
         "random_forest_classifier_model_def.json",
     ],
 )
 def test_model(model_api_path):
-
     os.environ["OPSML_MODELAPI_JSON"] = model_api_path
     models = ModelLoader().model_files
     loader = Model(model_path=models[0])
