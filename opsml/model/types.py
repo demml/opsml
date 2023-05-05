@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 from skl2onnx.common.data_types import (
     DoubleTensorType,
     FloatTensorType,
@@ -279,7 +279,7 @@ class TorchOnnxArgs:
 class ModelApiDef(BaseModel):
     model_name: str
     model_type: str
-    onnx_definition: bytes
+    onnx_uri: str
     onnx_version: str
     model_version: str
     sample_data: dict
@@ -288,12 +288,6 @@ class ModelApiDef(BaseModel):
     class Config:
         json_encoders = {bytes: lambda bs: bs.hex()}
         allow_extra = True
-
-    @validator("onnx_definition", pre=True)
-    def convert_to_bytes(cls, onnx_definition) -> bytes:  # pylint: disable = no-self-argument
-        if isinstance(onnx_definition, str):
-            return bytes.fromhex(onnx_definition)
-        return onnx_definition
 
 
 class ModelDownloadInfo(BaseModel):

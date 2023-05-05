@@ -32,6 +32,7 @@ def test_tensorflow(test_fastapi_client, tensorflow_api_example):
         json=example,
     )
     prediction = response.json()
+
     priority = prediction.get("priority")
     department = prediction.get("department")
 

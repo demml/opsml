@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, List, Optional
 
-from fastapi import Body, FastAPI, Header, Request
+from fastapi import BackgroundTasks, Body, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
 
 from opsml.deploy.fastapi.pydantic_models import HealthCheck
@@ -9,10 +9,6 @@ from opsml.deploy.loader import Model
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
-
-
-async def log_prediction(message: str):
-    logger.info(message)
 
 
 # todo: allow for user-generated background tasks
@@ -35,6 +31,7 @@ class RouteCreator:
             request: Request,
             payload: request_sig = Body(...),
             x_request_id: Optional[str] = Header(None),
+            background_tasks=BackgroundTasks,
         ) -> response_sig:
 
             if x_request_id is None:

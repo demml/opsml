@@ -8,7 +8,7 @@ import math
 @pytest.mark.parametrize(
     "model_api_path, api_example",
     [
-        ("linear_regression_model_def.json", lazy_fixture("linear_reg_api_example")),
+        ("linear_reg_model_def.json", lazy_fixture("linear_reg_api_example")),
         ("random_forest_classifier_model_def.json", lazy_fixture("random_forest_api_example")),
         ("tensorflow_multi_model_def.json", lazy_fixture("tensorflow_api_example")),
         ("sklearn_pipeline_model_def.json", lazy_fixture("sklearn_pipeline_api_example")),
