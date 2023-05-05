@@ -2,10 +2,12 @@ from typing import Any, Dict, Optional, cast
 
 import numpy as np
 
-from opsml.registry.model.model_converters import OnnxModelConverter
-from opsml.registry.model.model_info import ModelInfo, get_model_data
-from opsml.registry.model.model_types import ModelType, OnnxModelType
-from opsml.registry.model.types import (
+from opsml.model.model_converters import OnnxModelConverter
+from opsml.model.model_info import ModelInfo, get_model_data
+from opsml.model.model_types import ModelType, OnnxModelType
+from opsml.model.types import (
+    ApiDataSchemas,
+    DataDict,
     Feature,
     InputData,
     InputDataType,
@@ -88,12 +90,15 @@ class TrainedModelMetadataCreator(ModelCreator):
 
     def create_model(self) -> ModelReturn:
 
-        return ModelReturn(
-            onnx_input_features={"placeholder": Feature(feature_type="str", shape=[1])},
-            onnx_output_features={"placeholder": Feature(feature_type="str", shape=[1])},
-            model_type=self.model_type,
-            data_type=InputDataType(type(self.input_data)).name,
+        api_schema = ApiDataSchemas(
+            model_data_schema=DataDict(
+                input_features={"placeholder": Feature(feature_type="str", shape=[1])},
+                output_features={"placeholder": Feature(feature_type="str", shape=[1])},
+                data_type=InputDataType(type(self.input_data)).name,
+            )
         )
+
+        return ModelReturn(api_data_schema=api_schema, model_type=self.model_type)
 
     @staticmethod
     def validate(no_onnx: bool) -> bool:
@@ -174,7 +179,7 @@ class OnnxModelCreator(ModelCreator):
 
         onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
         onnx_model_return.model_type = self.model_type
-        onnx_model_return.data_type = self.onnx_data_type
+        onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
 
         # add onnx version
         return onnx_model_return

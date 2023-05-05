@@ -5,19 +5,19 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from opsml.registry.model.model_info import FloatTypeConverter, ModelData, ModelInfo
-from opsml.registry.model.types import (
+from opsml.model.model_info import FloatTypeConverter, ModelData, ModelInfo
+from opsml.model.types import (
     AVAILABLE_MODEL_TYPES,
     DataDtypes,
     Feature,
     InputDataType,
-    ModelDefinition,
+    OnnxModelDefinition,
     OnnxModelType,
     TorchOnnxArgs,
     get_onnx_tensor_spec,
 )
 
-ModelConvertOutput = Tuple[ModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
+ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
 
 
 # lgb and xgb need to be converted to float32
@@ -224,6 +224,7 @@ class TensorflowDictOnnxConverter(DataConverter):
             shape_[0] = None
             input_name = getattr(input_, "name", "inputs")
             spec.append(tf.TensorSpec(shape_, dtype, name=input_name))
+
         return spec
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:

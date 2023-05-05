@@ -4,8 +4,8 @@ from typing import Optional, cast
 import click
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.types import ModelApiDef, ModelDownloadInfo
 from opsml.registry import CardRegistry, ModelCard
-from opsml.registry.model.types import ModelApiDef, ModelDownloadInfo
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -23,53 +23,86 @@ class ModelLoader:
         base_path: str = BASE_SAVE_PATH,
     ):
         self.model_info = model_info
-        self.base_path = base_path
-        self._file_path: Optional[str] = None
+        self._base_path = base_path
+        self._dir_path: Optional[Path] = None
         self.registry = registry
 
     @property
-    def file_path(self) -> str:
-        return str(self._file_path)
+    def dir_path(self) -> Path:
+        if self._dir_path is not None:
+            return self._dir_path
+        raise ValueError("No dir_path set")
 
-    @file_path.setter
-    def file_path(self, file_path: str):
-        self._file_path = file_path
+    @dir_path.setter
+    def dir_path(self, dir_path: Path):
+        self._dir_path = dir_path
 
-    def _set_path(self, api_def: ModelApiDef) -> Path:
-        path = Path(f"{self.base_path}/onnx_model/{self.model_info.name}/v{api_def.model_version}/")
+    @property
+    def base_path(self) -> str:
+        return self._base_path
+
+    def _set_path(self, version: str) -> None:
+        path = Path(f"{self.base_path}/onnx_model/{self.model_info.name}/v{version}/")
         path.mkdir(parents=True, exist_ok=True)
-        return path / MODEL_FILE
+        self.dir_path = path
 
-    def _write_api_json(self, api_def: ModelApiDef, filepath: Path) -> None:
-        with filepath.open("w", encoding="utf-8") as file_:
+    def _write_api_json(self, api_def: ModelApiDef) -> None:
+        save_path = self.dir_path / MODEL_FILE
+
+        with save_path.open("w", encoding="utf-8") as file_:
             file_.write(api_def.json())
-        logger.info("Saved api model def to %s", filepath)
+        logger.info(
+            "Saved api model def to %s",
+            save_path.absolute().as_posix(),
+        )
 
     def _save_api_def(self, api_def: ModelApiDef):
         if self.model_info.name is None:
             self.model_info.name = api_def.model_name
 
-        filepath = self._set_path(api_def=api_def)
-        self._write_api_json(api_def=api_def, filepath=filepath)
-        path = filepath.absolute().as_posix()
-        self.file_path = path
+        self._write_api_json(api_def=api_def)
 
     def load_and_save_model(self, version: Optional[str] = None):
-        model_card = self.registry.load_card(
-            name=self.model_info.name,
-            team=self.model_info.team,
-            version=self.model_info.version,
-            uid=self.model_info.uid,
+        model_card = cast(
+            ModelCard,
+            self.registry.load_card(
+                name=self.model_info.name,
+                team=self.model_info.team,
+                version=self.model_info.version,
+                uid=self.model_info.uid,
+            ),
         )
 
-        api_def = self._get_model_api_def(model_card=cast(ModelCard, model_card))
+        api_def = self._get_model_api_def(model_card=model_card)
+
         self._save_api_def(api_def=api_def)
 
-    def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
-        onnx_model = model_card.onnx_model()
-        api_model = onnx_model.get_api_model()
+    def _save_onnx(self, model_definition: bytes) -> str:
+        save_path = self.dir_path / "model.onnx"
+        with save_path.open("wb") as file_:
+            file_.write(model_definition)
 
-        return api_model
+        return save_path.absolute().as_posix()
+
+    def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
+        """Gets Onnx model api definition"""
+
+        onnx_model = model_card.onnx_model()
+
+        self._set_path(version=onnx_model.model_version)
+        onnx_proto_path = self._save_onnx(model_definition=onnx_model.model_definition)
+
+        if model_card.onnx_model_def is not None:
+            return ModelApiDef(
+                model_name=model_card.name,
+                model_type=model_card.model_type,
+                onnx_uri=onnx_proto_path,
+                onnx_version=model_card.onnx_model_def.onnx_version,
+                model_version=model_card.version,
+                sample_data=model_card._get_sample_data_for_api(),  # pylint: disable=protected-access
+                data_schema=model_card.data_schema,
+            )
+        raise ValueError("No onnx definition defined")
 
     def save_to_local_file(self) -> None:
         self.load_and_save_model()

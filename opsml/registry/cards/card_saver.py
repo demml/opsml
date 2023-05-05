@@ -3,6 +3,7 @@ from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
 
+from opsml.model.types import ModelApiDef
 from opsml.registry.cards.cards import (
     ArtifactCard,
     DataCard,
@@ -13,7 +14,6 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
-from opsml.registry.model.types import ModelApiDef
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -24,7 +24,7 @@ class SaveName(str, Enum):
     RUNCARD = "runcard"
     MODELCARD = "modelcard"
     PIPLELINECARD = "pipelinecard"
-    ONNX_DEF = "api-def"
+    ONNX_API_DEF = "api-def"
     TRAINED_MODEL = "trained-model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DRIFT_REPORT = "drift_report"
@@ -198,19 +198,46 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ModelCard, self._card)
 
-    def _get_onnx_model_def(self) -> ModelApiDef:
+    def _get_onnx_model_def(self, onnx_uri: str) -> ModelApiDef:
         """Create Onnx Model from trained model"""
-        onnx_predictor = self.card.onnx_model(start_onnx_runtime=False)
-        return onnx_predictor.get_api_model()
 
-    def _save_api_definition(self):
+        return ModelApiDef(
+            model_name=self.card.name,
+            model_type=self.card.model_type,
+            onnx_uri=onnx_uri,
+            onnx_version=self.card.onnx_model_def.onnx_version,
+            model_version=self.card.version,
+            sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
+            data_schema=self.card.data_schema,
+        )
 
+    def _save_onnx_model(self) -> StoragePath:
         self._set_storage_spec(
-            filename=SaveName.ONNX_DEF,
+            filename=f"{self.card.name}-v{self.card.version.replace('.', '-')}",
             uri=self.card.onnx_model_uri,
         )
 
-        api_def = self._get_onnx_model_def()
+        # creates an onnx model
+        self.card.onnx_model(start_onnx_runtime=False)
+
+        storage_path = save_record_artifact_to_storage(
+            artifact=self.card.onnx_model_def.model_bytes,
+            artifact_type=ArtifactStorageType.ONNX.value,
+            storage_client=self.storage_client,
+        )
+
+        return storage_path
+
+    def _save_api_definition(self):
+        onnx_path = self._save_onnx_model()
+
+        self._set_storage_spec(
+            filename=SaveName.ONNX_API_DEF,
+            uri=self.card.onnx_model_uri,
+        )
+
+        api_def = self._get_onnx_model_def(onnx_uri=onnx_path.uri)
+
         storage_path = save_record_artifact_to_storage(
             artifact=api_def.json(),
             artifact_type=ArtifactStorageType.JSON.value,

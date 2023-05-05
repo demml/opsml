@@ -19,6 +19,7 @@ class ArtifactStorageType(str, Enum):
     PYTORCH = "pytorch"
     JSON = "json"
     BOOSTER = "booster"
+    ONNX = "onnx"
 
 
 ARTIFACT_TYPES = list(ArtifactStorageType)
@@ -30,6 +31,7 @@ class StorageClientSettings(BaseModel):
 
 
 class GcsStorageClientSettings(StorageClientSettings):
+    storage_type: str = "gcs"
     credentials: Optional[Any] = None
     gcp_project: Optional[str] = None
 

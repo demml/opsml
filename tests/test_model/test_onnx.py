@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 import pandas as pd
 from pytest_lazyfixture import lazy_fixture
+from opsml.model.types import ModelApiDef
 
 
 @pytest.mark.parametrize(
@@ -23,7 +24,6 @@ from pytest_lazyfixture import lazy_fixture
     ],
 )
 def test_model_predict(model_and_data):
-
     model, data = model_and_data
 
     if isinstance(data, dict):
@@ -42,7 +42,7 @@ def test_model_predict(model_and_data):
     predictor = model_card.onnx_model()
 
     if isinstance(data, np.ndarray):
-        input_name = next(iter(predictor.data_dict.input_features.keys()))
+        input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
 
         record = {input_name: data[0, :].tolist()}
 
@@ -56,15 +56,27 @@ def test_model_predict(model_and_data):
 
     pred_onnx = predictor.predict(record)
 
-    #
-    ## test output sig
-    pred_dict = {}
-    for label, pred in zip(predictor._output_names, pred_onnx):
-        if predictor.model_type in ["keras", "pytorch"]:
-            pred_dict[label] = np.ravel(pred).tolist()
-
-        else:
-            pred_dict[label] = pred
-
-    out_sig = predictor.output_sig(**pred_dict)
+    out_sig = predictor.output_sig(**pred_onnx)
     pred_orig = predictor.predict_with_model(model, record)
+
+
+# for random testing of definitions
+
+# filename = "sklearn_pipeline"
+#    with open(f"{filename}-v1-0-0.onnx", "wb") as file_:
+#        file_.write(model_card.onnx_model_def.model_bytes)
+#
+#    model_def = ModelApiDef(
+#        model_name=model_card.name,
+#        model_type=model_card.model_type,
+#        onnx_version=predictor.onnx_version,
+#        model_version=predictor.model_version,
+#        onnx_uri=f"{filename}-v1-0-0.onnx",
+#        data_schema=predictor.data_schema,
+#        sample_data=model_card._get_sample_data_for_api(),
+#    )
+#
+#    import json
+#
+#    with open(f"{filename}_model_def.json", "w") as file_:
+#        json.dump(model_def.dict(), file_)

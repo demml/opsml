@@ -17,7 +17,7 @@ data["Pulse"] = target.Pulse
 
 
 # Split indices
-indices = np.arange(700000)
+indices = np.arange(data.shape[0])
 
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
