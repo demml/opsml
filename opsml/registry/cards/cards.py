@@ -494,6 +494,7 @@ class ModelCard(ArtifactCard):
 
         if self.storage_client is not None:
             metadata = self._load_metadata(storage_client=self.storage_client)
+
             onnx_model = self._load_onnx_model(
                 metadata=metadata,
                 storage_client=self.storage_client,
