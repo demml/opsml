@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator
 
-from opsml.registry.cards.types import METRICS, PARAMS
+from opsml.registry.cards.types import METRICS, PARAMS, ModelCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -45,6 +45,17 @@ class ModelRegistryRecord(BaseModel):
     timestamp: int = int(round(time.time() * 1_000_000))
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
+
+    @root_validator(pre=True)
+    def set_uris(cls, values):
+
+        uris = values.get("uris")
+        values["trained_model_uri"] = uris.trained_model_uri
+        values["model_metadata_uri"] = uris.model_metadata_uri
+        values["sample_data_uri"] = uris.sample_data_uri
+        values["modelcard_uri"] = uris.modelcard_uri
+
+        return values
 
 
 class RunRegistryRecord(BaseModel):
@@ -188,15 +199,12 @@ class LoadedDataRecord(LoadRecord):
 
 
 class LoadedModelRecord(LoadRecord):
-    modelcard_uri: str
     datacard_uid: str
-    trained_model_uri: str
-    model_metadata_uri: Optional[str] = None
-    sample_data_uri: str
     sample_data_type: str
     model_type: str
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
+    uris: ModelCardUris
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
@@ -206,13 +214,15 @@ class LoadedModelRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        modelcard_definition["modelcard_uri"] = values.get("modelcard_uri")
-        modelcard_definition["trained_model_uri"] = values.get("trained_model_uri")
-        modelcard_definition["model_metadata_uri"] = values.get("model_metadata_uri")
-        modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["model_type"] = values.get("model_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
+        modelcard_definition["uris"] = ModelCardUris(
+            model_metadata_uri=values.get("model_metadata_uri"),
+            trained_model_uri=values.get("trained_model_uri"),
+            modelcard_uri=values.get("modelcard_uri"),
+            sample_data_uri=values.get("sample_data_uri"),
+        )
 
         return modelcard_definition
 

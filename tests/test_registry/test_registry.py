@@ -218,7 +218,7 @@ def test_runcard(linear_regression, db_registries):
     assert loaded_card.runcard_uri == run.runcard_uri
 
 
-def test_local_model_registry_no_onnx(db_registries, sklearn_pipeline):
+def test_local_model_registry_to_onnx(db_registries, sklearn_pipeline):
     # create data card
     data_registry: CardRegistry = db_registries["data"]
     model, data = sklearn_pipeline
@@ -237,14 +237,14 @@ def test_local_model_registry_no_onnx(db_registries, sklearn_pipeline):
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
-        no_onnx=True,
+        to_onnx=True,
     )
 
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.model_metadata_uri is not None
+    assert loaded_card.uris.model_metadata_uri is not None
 
 
 def test_local_model_registry(db_registries, sklearn_pipeline):
@@ -283,9 +283,9 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(model_card)
 
-    assert path.exists(model_card.model_metadata_uri)
-    assert path.exists(model_card.trained_model_uri)
-    assert path.exists(model_card.sample_data_uri)
+    assert path.exists(model_card.uris.model_metadata_uri)
+    assert path.exists(model_card.uris.trained_model_uri)
+    assert path.exists(model_card.uris.sample_data_uri)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
 
@@ -350,7 +350,7 @@ def test_register_model(db_registries, sklearn_pipeline):
     )
 
     model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
-    assert "steven-test/models" in model_card_custom.trained_model_uri
+    assert "steven-test/models" in model_card_custom.uris.trained_model_uri
 
     model_card2 = ModelCard(
         trained_model=model,
