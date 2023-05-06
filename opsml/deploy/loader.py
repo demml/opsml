@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import ApiSigCreatorGetter
-from opsml.model.types import Base, Feature, ModelApiDef
+from opsml.model.types import Base, Feature, ModelMetadata
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -25,7 +25,7 @@ class Model:
         Returns:
             Instantiated Model to be used with API app
         """
-        self.model = ModelApiDef.parse_file(model_path)
+        self.model = ModelMetadata.parse_file(model_path)
 
         self.sig_creator = ApiSigCreatorGetter.get_sig_creator(
             model_type=self.model.model_type,

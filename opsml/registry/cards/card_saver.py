@@ -3,7 +3,7 @@ from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
 
-from opsml.model.types import ModelApiDef
+from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards.cards import (
     ArtifactCard,
     DataCard,
@@ -24,7 +24,7 @@ class SaveName(str, Enum):
     RUNCARD = "runcard"
     MODELCARD = "modelcard"
     PIPLELINECARD = "pipelinecard"
-    ONNX_API_DEF = "api-def"
+    MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DRIFT_REPORT = "drift_report"
@@ -198,53 +198,60 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(ModelCard, self._card)
 
-    def _get_onnx_model_def(self, onnx_uri: str) -> ModelApiDef:
+    def _get_model_metadata(self, onnx_attr: OnnxAttr) -> ModelMetadata:
         """Create Onnx Model from trained model"""
 
-        return ModelApiDef(
+        print(self.card)
+
+        return ModelMetadata(
             model_name=self.card.name,
             model_type=self.card.model_type,
-            onnx_uri=onnx_uri,
-            onnx_version=self.card.onnx_model_def.onnx_version,
+            onnx_uri=onnx_attr.onnx_path,
+            onnx_version=onnx_attr.onnx_version,
+            model_uri=self.card.trained_model_uri,
             model_version=self.card.version,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.data_schema,
         )
 
-    def _save_onnx_model(self) -> StoragePath:
+    def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
             filename=f"{self.card.name}-v{self.card.version.replace('.', '-')}",
-            uri=self.card.onnx_model_uri,
+            uri=self.card.model_metadata_uri,
         )
-
         # creates an onnx model
-        self.card.onnx_model(start_onnx_runtime=False)
+        self.card._create_and_set_model_attr(no_onnx=self.card.no_onnx)
 
-        storage_path = save_record_artifact_to_storage(
-            artifact=self.card.onnx_model_def.model_bytes,
-            artifact_type=ArtifactStorageType.ONNX.value,
-            storage_client=self.storage_client,
-        )
+        if not self.card.no_onnx:
+            storage_path = save_record_artifact_to_storage(
+                artifact=self.card.onnx_model_def.model_bytes,
+                artifact_type=ArtifactStorageType.ONNX.value,
+                storage_client=self.storage_client,
+            )
 
-        return storage_path
+            return OnnxAttr(
+                onnx_path=storage_path.uri,
+                onnx_version=self.card.onnx_model_def.onnx_version,
+            )
+        return OnnxAttr()
 
-    def _save_api_definition(self):
-        onnx_path = self._save_onnx_model()
+    def _save_model_metadata(self):
+        onnx_attr = self._save_onnx_model()
 
         self._set_storage_spec(
-            filename=SaveName.ONNX_API_DEF,
-            uri=self.card.onnx_model_uri,
+            filename=SaveName.MODEL_METADATA,
+            uri=self.card.model_metadata_uri,
         )
 
-        api_def = self._get_onnx_model_def(onnx_uri=onnx_path.uri)
+        model_metadata = self._get_model_metadata(onnx_attr=onnx_attr)
 
-        storage_path = save_record_artifact_to_storage(
-            artifact=api_def.json(),
+        metadata_path = save_record_artifact_to_storage(
+            artifact=model_metadata.json(),
             artifact_type=ArtifactStorageType.JSON.value,
             storage_client=self.storage_client,
         )
 
-        self.card.onnx_model_uri = storage_path.uri
+        self.card.model_metadata_uri = metadata_path.uri
 
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
@@ -304,11 +311,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def save_artifacts(self):
         """Save model artifacts associated with ModelCard"""
-        if not self.card.no_onnx:
-            self._save_api_definition()
-        self._save_modelcard()
         self._save_trained_model()
         self._save_sample_data()
+        self._save_model_metadata()
+        self._save_modelcard()
 
         return self.card
 
