@@ -18,7 +18,6 @@ from pydantic import ValidationError
     ],
 )
 def test_register_data(db_registries, test_data, data_splits):
-
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
@@ -45,7 +44,6 @@ def test_register_data(db_registries, test_data, data_splits):
 
 
 def test_datacard_sql(db_registries, test_array):
-
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
@@ -91,7 +89,6 @@ def test_datacard_sql(db_registries, test_array):
 
 
 def test_semver_registry_list(db_registries, test_array):
-
     # create data card
     registry = db_registries["data"]
 
@@ -175,7 +172,6 @@ def test_semver_registry_list(db_registries, test_array):
 
 
 def test_runcard(linear_regression, db_registries):
-
     registry: CardRegistry = db_registries["run"]
     run = RunCard(
         name="test_df",
@@ -223,7 +219,6 @@ def test_runcard(linear_regression, db_registries):
 
 
 def test_local_model_registry_no_onnx(db_registries, sklearn_pipeline):
-
     # create data card
     data_registry: CardRegistry = db_registries["data"]
     model, data = sklearn_pipeline
@@ -249,11 +244,10 @@ def test_local_model_registry_no_onnx(db_registries, sklearn_pipeline):
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.onnx_model_uri is None
+    assert loaded_card.model_metadata_uri is not None
 
 
 def test_local_model_registry(db_registries, sklearn_pipeline):
-
     # create data card
     data_registry: CardRegistry = db_registries["data"]
     model, data = sklearn_pipeline
@@ -289,7 +283,7 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(model_card)
 
-    assert path.exists(model_card.onnx_model_uri)
+    assert path.exists(model_card.model_metadata_uri)
     assert path.exists(model_card.trained_model_uri)
     assert path.exists(model_card.sample_data_uri)
 
@@ -312,7 +306,6 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
 
 
 def test_register_model(db_registries, sklearn_pipeline):
-
     model, data = sklearn_pipeline
 
     # create data card
@@ -511,7 +504,6 @@ def test_pipeline_registry(db_registries):
 
 
 def test_full_pipeline_with_loading(db_registries, linear_regression):
-
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
@@ -574,7 +566,6 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
 
 
 def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
-
     model, data = load_transformer_example
 
     registry = db_registries["data"]

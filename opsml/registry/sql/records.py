@@ -38,7 +38,7 @@ class ModelRegistryRecord(BaseModel):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: Optional[str] = None
+    model_metadata_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -191,7 +191,7 @@ class LoadedModelRecord(LoadRecord):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: Optional[str] = None
+    model_metadata_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
@@ -208,7 +208,7 @@ class LoadedModelRecord(LoadRecord):
 
         modelcard_definition["modelcard_uri"] = values.get("modelcard_uri")
         modelcard_definition["trained_model_uri"] = values.get("trained_model_uri")
-        modelcard_definition["onnx_model_uri"] = values.get("onnx_model_uri")
+        modelcard_definition["model_metadata_uri"] = values.get("model_metadata_uri")
         modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["model_type"] = values.get("model_type")

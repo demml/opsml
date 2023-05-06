@@ -28,7 +28,7 @@ from opsml.app.routes.models import (
     VersionResponse,
 )
 from opsml.app.routes.utils import (
-    MODEL_FILE,
+    MODEL_METADATA_FILE,
     ExternalFileTarget,
     MaxBodySizeException,
     MaxBodySizeValidator,
@@ -176,8 +176,8 @@ def update_record(
     return UpdateRecordResponse(updated=True)
 
 
-@router.post("/download_model", name="download_model")
-def download_model(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
+@router.post("/download_model_metadata", name="download_model_metadata")
+def download_model_metadata(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
     """
     Downloads a Model API definition
 
@@ -198,7 +198,7 @@ def download_model(request: Request, payload: DownloadModelRequest) -> Streaming
     registry: CardRegistry = getattr(request.app.state.registries, "model")
     storage_client = request.app.state.storage_client
 
-    cards: List[Dict[str, Any]] = registry.list_cards(
+    records: List[Dict[str, Any]] = registry.list_cards(
         name=payload.name,
         team=payload.team,
         version=payload.version,
@@ -206,20 +206,28 @@ def download_model(request: Request, payload: DownloadModelRequest) -> Streaming
         as_dataframe=False,
     )
 
-    if len(cards) > 1:
+    if len(records) > 1:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="More than one model found",
         )
 
-    if not bool(cards):
+    if not bool(records):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No model found",
         )
 
-    headers = {"Content-Disposition": f'attachment; filename="{MODEL_FILE}"'}
-    record = cards[0].get("onnx_model_uri")
+    # swap mlflow proxy root if needed
+    if config.is_proxy:
+        record = replace_proxy_root(
+            record=records[0],
+            storage_root=config.STORAGE_URI,
+            proxy_root=config.proxy_root,
+        )
+
+    headers = {"Content-Disposition": f'attachment; filename="{MODEL_METADATA_FILE}"'}
+    record = record.get("model_metadata_uri")
 
     try:
         return StreamingResponse(
