@@ -276,18 +276,21 @@ class TorchOnnxArgs:
         return asdict(self)
 
 
-class ModelApiDef(BaseModel):
+@dataclass
+class OnnxAttr:
+    onnx_path: Optional[str] = None
+    onnx_version: Optional[str] = None
+
+
+class ModelMetadata(BaseModel):
     model_name: str
     model_type: str
-    onnx_uri: str
-    onnx_version: str
+    onnx_uri: Optional[str] = None
+    onnx_version: Optional[str] = None
+    model_uri: str
     model_version: str
     sample_data: dict
     data_schema: ApiDataSchemas
-
-    class Config:
-        json_encoders = {bytes: lambda bs: bs.hex()}
-        allow_extra = True
 
 
 class ModelDownloadInfo(BaseModel):

@@ -13,7 +13,7 @@ from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
-    ModelApiDef,
+    ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
     TorchOnnxArgs,
@@ -358,8 +358,8 @@ class ModelCard(ArtifactCard):
             Pydantic model containing OnnxModel definition
         trained_model_uri:
             URI where model is stored
-        onnx_model_uri:
-            URI where onnx model json is stored
+        model_metadata_uri:
+            URI where model metadata is stored
         model_type:
             Type of model
         data_schema:
@@ -379,7 +379,7 @@ class ModelCard(ArtifactCard):
     onnx_model_def: Optional[OnnxModelDefinition]
     modelcard_uri: Optional[str]
     trained_model_uri: Optional[str]
-    onnx_model_uri: Optional[str]
+    model_metadata_uri: Optional[str]
     sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
     model_type: Optional[str]
@@ -461,20 +461,20 @@ class ModelCard(ArtifactCard):
 
             setattr(self, "trained_model", trained_model)
 
-    def _load_metadata(self, storage_client: StorageClientType) -> ModelApiDef:
+    def _load_metadata(self, storage_client: StorageClientType) -> ModelMetadata:
         """Loads onnx metadata"""
 
         # get metadata
-        storage_spec = ArtifactStorageSpecs(save_path=self.onnx_model_uri)
+        storage_spec = ArtifactStorageSpecs(save_path=self.model_metadata_uri)
         storage_client.storage_spec = storage_spec
-        onnx_model_metadata = load_record_artifact_from_storage(
+        model_metadata = load_record_artifact_from_storage(
             storage_client=storage_client,
             artifact_type=ArtifactStorageType.JSON.value,
         )
 
-        return ModelApiDef.parse_obj(onnx_model_metadata)
+        return ModelMetadata.parse_obj(model_metadata)
 
-    def _load_onnx_model(self, metadata: ModelApiDef, storage_client: StorageClientType) -> Any:
+    def _load_onnx_model(self, metadata: ModelMetadata, storage_client: StorageClientType) -> Any:
         """Loads the actuall onnx file"""
         # get onnx model
 
@@ -489,8 +489,8 @@ class ModelCard(ArtifactCard):
     def load_onnx_model_definition(self):
         """Loads the onnx model definition"""
 
-        if self.onnx_model_uri is None:
-            raise ValueError("No onnx model uri exists. Please check the registry or register a new model")
+        if self.model_metadata_uri is None:
+            raise ValueError("No model metadata exists. Please check the registry or register a new model")
 
         if self.storage_client is not None:
             metadata = self._load_metadata(storage_client=self.storage_client)

@@ -4,7 +4,7 @@ from typing import Optional, cast
 import click
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import ModelApiDef, ModelDownloadInfo
+from opsml.model.types import ModelMetadata, ModelDownloadInfo
 from opsml.registry import CardRegistry, ModelCard
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -46,7 +46,7 @@ class ModelLoader:
         path.mkdir(parents=True, exist_ok=True)
         self.dir_path = path
 
-    def _write_api_json(self, api_def: ModelApiDef) -> None:
+    def _write_api_json(self, api_def: ModelMetadata) -> None:
         save_path = self.dir_path / MODEL_FILE
 
         with save_path.open("w", encoding="utf-8") as file_:
@@ -56,7 +56,7 @@ class ModelLoader:
             save_path.absolute().as_posix(),
         )
 
-    def _save_api_def(self, api_def: ModelApiDef):
+    def _save_api_def(self, api_def: ModelMetadata):
         if self.model_info.name is None:
             self.model_info.name = api_def.model_name
 
@@ -84,7 +84,7 @@ class ModelLoader:
 
         return save_path.absolute().as_posix()
 
-    def _get_model_api_def(self, model_card: ModelCard) -> ModelApiDef:
+    def _get_model_api_def(self, model_card: ModelCard) -> ModelMetadata:
         """Gets Onnx model api definition"""
 
         onnx_model = model_card.onnx_model()
@@ -93,10 +93,11 @@ class ModelLoader:
         onnx_proto_path = self._save_onnx(model_definition=onnx_model.model_definition)
 
         if model_card.onnx_model_def is not None:
-            return ModelApiDef(
+            return ModelMetadata(
                 model_name=model_card.name,
                 model_type=model_card.model_type,
                 onnx_uri=onnx_proto_path,
+                model_uri=model_card.trained_model_uri,
                 onnx_version=model_card.onnx_model_def.onnx_version,
                 model_version=model_card.version,
                 sample_data=model_card._get_sample_data_for_api(),  # pylint: disable=protected-access
