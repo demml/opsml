@@ -220,7 +220,7 @@ def test_register_model(api_registries, sklearn_pipeline):
     )
 
     model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
-    assert "steven-test/models" in model_card_custom.trained_model_uri
+    assert "steven-test/models" in model_card_custom.uris.trained_model_uri
 
     model_card2 = ModelCard(
         trained_model=model,
@@ -437,7 +437,7 @@ def test_download_model(test_app, api_registries, linear_regression):
     model_registry.register_card(model_card)
 
     result = ""
-    with test_app.stream(method="POST", url="opsml/download_model", json={"uid": model_card.uid}) as response:
+    with test_app.stream(method="POST", url="opsml/download_model_metadata", json={"uid": model_card.uid}) as response:
 
         for data in response.iter_bytes():
             result += data.decode("utf-8")
@@ -494,7 +494,7 @@ def test_download_multiple_model_failure(test_app, api_registries, linear_regres
     result = ""
     with test_app.stream(
         method="POST",
-        url="opsml/download_model",
+        url="opsml/download_model_metadata",
         json={
             "model_name": model_card1.name,
             "team": model_card1.team,
@@ -510,7 +510,7 @@ def test_download_multiple_model_failure(test_app, api_registries, linear_regres
 
 def test_download_model_failure(test_app):
 
-    response = test_app.post(url="opsml/download_model", json={"name": "pip"})
+    response = test_app.post(url="opsml/download_model_metadata", json={"name": "pip"})
 
     # should fail
     assert response.status_code == 500

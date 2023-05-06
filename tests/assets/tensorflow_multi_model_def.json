@@ -2,6 +2,7 @@
     "model_name": "test-tensorflow",
     "model_type": "keras",
     "onnx_uri": "tensorflow_multi_model-v1-0-0.onnx",
+    "model_uri": "placeholder",
     "onnx_version": "1.13.1",
     "model_version": "1.0.0",
     "sample_data": {
