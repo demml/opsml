@@ -81,7 +81,7 @@ class ModelCreator:
         raise NotImplementedError
 
     @staticmethod
-    def validate(no_onnx: bool) -> bool:
+    def validate(to_onnx: bool) -> bool:
         raise NotImplementedError
 
 
@@ -126,8 +126,8 @@ class TrainedModelMetadataCreator(ModelCreator):
         return ModelReturn(api_data_schema=api_schema, model_type=self.model_type)
 
     @staticmethod
-    def validate(no_onnx: bool) -> bool:
-        if no_onnx:
+    def validate(to_onnx: bool) -> bool:
+        if not to_onnx:
             return True
         return False
 
@@ -210,16 +210,16 @@ class OnnxModelCreator(ModelCreator):
         return onnx_model_return
 
     @staticmethod
-    def validate(no_onnx: bool) -> bool:
-        if no_onnx:
-            return False
-        return True
+    def validate(to_onnx: bool) -> bool:
+        if to_onnx:
+            return True
+        return False
 
 
 def create_model(
     model: Any,
     input_data: InputData,
-    no_onnx: bool,
+    to_onnx: bool,
     additional_onnx_args: Optional[TorchOnnxArgs] = None,
 ) -> ModelReturn:
 
@@ -233,7 +233,7 @@ def create_model(
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
             additional_onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
-            no_onnx:
+            to_onnx:
                 Whether to use Onnx creator or not
 
     """
@@ -242,7 +242,7 @@ def create_model(
         creator
         for creator in ModelCreator.__subclasses__()
         if creator.validate(
-            no_onnx=no_onnx,
+            to_onnx=to_onnx,
         )
     )
 

@@ -201,14 +201,12 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _get_model_metadata(self, onnx_attr: OnnxAttr) -> ModelMetadata:
         """Create Onnx Model from trained model"""
 
-        print(self.card)
-
         return ModelMetadata(
             model_name=self.card.name,
             model_type=self.card.model_type,
             onnx_uri=onnx_attr.onnx_path,
             onnx_version=onnx_attr.onnx_version,
-            model_uri=self.card.trained_model_uri,
+            model_uri=self.card.uris.trained_model_uri,
             model_version=self.card.version,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.data_schema,
@@ -217,12 +215,12 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
             filename=f"{self.card.name}-v{self.card.version.replace('.', '-')}",
-            uri=self.card.model_metadata_uri,
+            uri=self.card.uris.model_metadata_uri,
         )
         # creates an onnx model
-        self.card._create_and_set_model_attr(no_onnx=self.card.no_onnx)
+        self.card._create_and_set_model_attr(to_onnx=self.card.to_onnx)
 
-        if not self.card.no_onnx:
+        if self.card.to_onnx:
             storage_path = save_record_artifact_to_storage(
                 artifact=self.card.onnx_model_def.model_bytes,
                 artifact_type=ArtifactStorageType.ONNX.value,
@@ -240,7 +238,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self._set_storage_spec(
             filename=SaveName.MODEL_METADATA,
-            uri=self.card.model_metadata_uri,
+            uri=self.card.uris.model_metadata_uri,
         )
 
         model_metadata = self._get_model_metadata(onnx_attr=onnx_attr)
@@ -251,14 +249,14 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             storage_client=self.storage_client,
         )
 
-        self.card.model_metadata_uri = metadata_path.uri
+        self.card.uris.model_metadata_uri = metadata_path.uri
 
     def _save_modelcard(self):
         """Saves a modelcard to file system"""
 
         self._set_storage_spec(
             filename=SaveName.MODELCARD,
-            uri=self.card.modelcard_uri,
+            uri=self.card.uris.modelcard_uri,
         )
 
         storage_path = save_record_artifact_to_storage(
@@ -273,14 +271,14 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             storage_client=self.storage_client,
         )
 
-        self.card.modelcard_uri = storage_path.uri
+        self.card.uris.modelcard_uri = storage_path.uri
 
     def _save_trained_model(self):
         """Saves trained model associated with ModelCard to filesystem"""
 
         self._set_storage_spec(
             filename=SaveName.TRAINED_MODEL,
-            uri=self.card.trained_model_uri,
+            uri=self.card.uris.trained_model_uri,
         )
 
         self.storage_spec.sample_data = self.card.sample_input_data
@@ -290,14 +288,14 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             artifact_type=self.card.model_type,
             storage_client=self.storage_client,
         )
-        self.card.trained_model_uri = storage_path.uri
+        self.card.uris.trained_model_uri = storage_path.uri
 
     def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
 
         self._set_storage_spec(
             filename=SaveName.SAMPLE_MODEL_DATA,
-            uri=self.card.sample_data_uri,
+            uri=self.card.uris.sample_data_uri,
         )
 
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
@@ -306,7 +304,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             storage_client=self.storage_client,
         )
 
-        self.card.sample_data_uri = storage_path.uri
+        self.card.uris.sample_data_uri = storage_path.uri
         self.card.sample_data_type = arrow_table.table_type
 
     def save_artifacts(self):
