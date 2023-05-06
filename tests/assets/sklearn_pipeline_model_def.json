@@ -2,6 +2,7 @@
     "model_name": "test-sklearn-pipeline",
     "model_type": "sklearn_pipeline",
     "onnx_uri": "sklearn_pipeline-v1-0-0.onnx",
+    "model_uri": "placeholder",
     "onnx_version": "1.13.1",
     "model_version": "1.0.0",
     "sample_data": {
