@@ -18,14 +18,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TorchOnnxArgs,
 )
-from opsml.registry.cards.types import (
-    METRICS,
-    PARAMS,
-    CardInfo,
-    CardType,
-    Metric,
-    Param,
-)
+from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType, Metric, Param, ModelCardUris
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
@@ -377,17 +370,14 @@ class ModelCard(ArtifactCard):
     datacard_uid: Optional[str]
     onnx_model_data: Optional[DataDict]
     onnx_model_def: Optional[OnnxModelDefinition]
-    modelcard_uri: Optional[str]
-    trained_model_uri: Optional[str]
-    model_metadata_uri: Optional[str]
-    sample_data_uri: Optional[str]
     sample_data_type: Optional[str]
     model_type: Optional[str]
     additional_onnx_args: Optional[TorchOnnxArgs]
     data_schema: Optional[ApiDataSchemas]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    no_onnx: bool = False
+    to_onnx: bool = True
+    uris: ModelCardUris = ModelCardUris()
 
     class Config:
         arbitrary_types_allowed = True
@@ -432,7 +422,7 @@ class ModelCard(ArtifactCard):
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.sample_data_uri)
+        storage_spec = ArtifactStorageSpecs(save_path=self.uris.sample_data_uri)
 
         self.storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
@@ -445,14 +435,14 @@ class ModelCard(ArtifactCard):
     def load_trained_model(self):
         """Loads original trained model"""
 
-        if not all([bool(self.trained_model_uri), bool(self.sample_data_uri)]):
+        if not all([bool(self.uris.trained_model_uri), bool(self.uris.sample_data_uri)]):
             raise ValueError(
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
         if self.storage_client is not None:
             self.load_sample_data()
-            storage_spec = ArtifactStorageSpecs(save_path=self.trained_model_uri)
+            storage_spec = ArtifactStorageSpecs(save_path=self.uris.trained_model_uri)
             self.storage_client.storage_spec = storage_spec
             trained_model = load_record_artifact_from_storage(
                 storage_client=self.storage_client,
@@ -465,7 +455,7 @@ class ModelCard(ArtifactCard):
         """Loads onnx metadata"""
 
         # get metadata
-        storage_spec = ArtifactStorageSpecs(save_path=self.model_metadata_uri)
+        storage_spec = ArtifactStorageSpecs(save_path=self.uris.model_metadata_uri)
         storage_client.storage_spec = storage_spec
         model_metadata = load_record_artifact_from_storage(
             storage_client=storage_client,
@@ -489,7 +479,7 @@ class ModelCard(ArtifactCard):
     def load_onnx_model_definition(self):
         """Loads the onnx model definition"""
 
-        if self.model_metadata_uri is None:
+        if self.uris.model_metadata_uri is None:
             raise ValueError("No model metadata exists. Please check the registry or register a new model")
 
         if self.storage_client is not None:
@@ -527,7 +517,7 @@ class ModelCard(ArtifactCard):
         }
 
         if not bool(self.onnx_model_def):
-            self._create_and_set_model_attr(no_onnx=self.no_onnx)
+            self._create_and_set_model_attr(to_onnx=self.to_onnx)
 
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
@@ -549,13 +539,13 @@ class ModelCard(ArtifactCard):
         setattr(self, "data_schema", model_return.api_data_schema)
         setattr(self, "model_type", model_return.model_type)
 
-    def _create_and_set_model_attr(self, no_onnx: bool) -> None:
+    def _create_and_set_model_attr(self, to_onnx: bool) -> None:
         """
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
 
         Args:
-            no_onnx:
+            to_onnx:
                 Whether to convert to onnx or not
         """
         from opsml.model.creator import (  # pylint: disable=import-outside-toplevel
@@ -566,7 +556,7 @@ class ModelCard(ArtifactCard):
             model=self.trained_model,
             input_data=self.sample_input_data,
             additional_onnx_args=self.additional_onnx_args,
-            no_onnx=self.no_onnx,
+            to_onnx=self.to_onnx,
         )
 
         self._set_model_attributes(model_return=model_return)
@@ -616,7 +606,7 @@ class ModelCard(ArtifactCard):
         """
         # todo: clean this up
         if not bool(self.onnx_model_def):
-            self._create_and_set_model_attr(no_onnx=False)
+            self._create_and_set_model_attr(to_onnx=False)
 
         version = self._set_version_for_predictor()
 
