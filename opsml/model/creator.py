@@ -88,12 +88,37 @@ class ModelCreator:
 class TrainedModelMetadataCreator(ModelCreator):
     """Creates metadata to deploy a trained model"""
 
+    def _get_input_schema(self) -> Dict[str, Feature]:
+
+        model_data = get_model_data(
+            data_type=self.input_data_type,
+            input_data=self.input_data,
+        )
+
+        return model_data.feaure_dict
+
+    def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
+        model_data = get_model_data(
+            input_data=predictions,
+            data_type=type(predictions),
+        )
+
+        return model_data.feaure_dict
+
+    def _get_output_schema(self) -> Dict[str, Feature]:
+        if hasattr(self.model, "predict"):
+            predictions = self.model.predict(self.input_data)
+            return self._get_prediction_type(predictions=predictions)
+
     def create_model(self) -> ModelReturn:
+
+        input_features = self._get_input_schema()
+        output_features = self._get_output_schema()
 
         api_schema = ApiDataSchemas(
             model_data_schema=DataDict(
-                input_features={"placeholder": Feature(feature_type="str", shape=[1])},
-                output_features={"placeholder": Feature(feature_type="str", shape=[1])},
+                input_features=input_features,
+                output_features=output_features,
                 data_type=InputDataType(type(self.input_data)).name,
             )
         )
