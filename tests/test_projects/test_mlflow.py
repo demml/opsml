@@ -15,6 +15,10 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 logger = ArtifactLogger.get_logger(__name__)
 
 
@@ -234,7 +238,7 @@ def test_lgb_model(
     loaded_card.load_trained_model()
 
 
-def _test_pytorch_model(
+def test_pytorch_model(
     mlflow_project: MlflowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
