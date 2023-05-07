@@ -97,7 +97,7 @@ class ModelLoader:
                 model_name=model_card.name,
                 model_type=model_card.model_type,
                 onnx_uri=onnx_proto_path,
-                model_uri=model_card.trained_model_uri,
+                model_uri=model_card.uris.trained_model_uri,
                 onnx_version=model_card.onnx_model_def.onnx_version,
                 model_version=model_card.version,
                 sample_data=model_card._get_sample_data_for_api(),  # pylint: disable=protected-access

@@ -109,7 +109,6 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
 
 def test_metrics(mlflow_project: MlflowProject) -> None:
-
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
     with proj.run() as run:
@@ -122,7 +121,6 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
 
 
 def test_params(mlflow_project: MlflowProject) -> None:
-
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_parameter(key="m1", value="apple")
@@ -271,7 +269,7 @@ def test_pytorch_model(
     loaded_card.load_trained_model()
 
 
-def _test_tf_model(
+def test_tf_model(
     mlflow_project: MlflowProject,
     load_transformer_example: tuple[Any, NDArray],
 ):
