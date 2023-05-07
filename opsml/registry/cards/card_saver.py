@@ -217,7 +217,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             filename=f"{self.card.name}-v{self.card.version.replace('.', '-')}",
             uri=self.card.uris.model_metadata_uri,
         )
-        # creates an onnx model
+        # creates model metadata and onnx model (if to_onnx = True)
         self.card._create_and_set_model_attr(to_onnx=self.card.to_onnx)
 
         if self.card.to_onnx:
@@ -235,6 +235,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_model_metadata(self):
         onnx_attr = self._save_onnx_model()
+
+        self._save_trained_model()
+        self._save_sample_data()
 
         self._set_storage_spec(
             filename=SaveName.MODEL_METADATA,
@@ -309,8 +312,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def save_artifacts(self):
         """Save model artifacts associated with ModelCard"""
-        self._save_trained_model()
-        self._save_sample_data()
         self._save_model_metadata()
         self._save_modelcard()
 
