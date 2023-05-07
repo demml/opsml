@@ -218,7 +218,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             uri=self.card.uris.model_metadata_uri,
         )
         # creates model metadata and onnx model (if to_onnx = True)
-        self.card._create_and_set_model_attr(to_onnx=self.card.to_onnx)
+        self.card._create_and_set_model_attr(to_onnx=self.card.to_onnx)  # pylint: disable=protected-access
 
         if self.card.to_onnx:
             storage_path = save_record_artifact_to_storage(
