@@ -108,6 +108,8 @@ class TrainedModelMetadataCreator(ModelCreator):
         if hasattr(self.model, "predict"):
             predictions = self.model.predict(self.input_data)
             return self._get_prediction_type(predictions=predictions)
+        # placeholder for now
+        return {"placeholder": Feature(feature_type=str, shape=[1])}
 
     def create_model(self) -> ModelReturn:
         input_features = self._get_input_schema()

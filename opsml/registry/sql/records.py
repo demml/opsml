@@ -47,8 +47,7 @@ class ModelRegistryRecord(BaseModel):
     pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)
-    def set_uris(cls, values):
-
+    def set_uris(cls, values):  # pylint: disable=no-self-argument
         uris = values.get("uris")
         values["trained_model_uri"] = uris.trained_model_uri
         values["model_metadata_uri"] = uris.model_metadata_uri
