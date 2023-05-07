@@ -18,7 +18,15 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TorchOnnxArgs,
 )
-from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType, Metric, Param, ModelCardUris
+from opsml.registry.cards.types import (
+    METRICS,
+    PARAMS,
+    CardInfo,
+    CardType,
+    Metric,
+    ModelCardUris,
+    Param,
+)
 from opsml.registry.data.splitter import DataHolder, DataSplitter
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
