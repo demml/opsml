@@ -89,7 +89,6 @@ class TrainedModelMetadataCreator(ModelCreator):
     """Creates metadata to deploy a trained model"""
 
     def _get_input_schema(self) -> Dict[str, Feature]:
-
         model_data = get_model_data(
             data_type=self.input_data_type,
             input_data=self.input_data,
@@ -111,7 +110,6 @@ class TrainedModelMetadataCreator(ModelCreator):
             return self._get_prediction_type(predictions=predictions)
 
     def create_model(self) -> ModelReturn:
-
         input_features = self._get_input_schema()
         output_features = self._get_output_schema()
 
@@ -222,7 +220,6 @@ def create_model(
     to_onnx: bool,
     additional_onnx_args: Optional[TorchOnnxArgs] = None,
 ) -> ModelReturn:
-
     """
     Validates and selects s `ModeCreator` subclass and creates a `ModelReturn`
 
