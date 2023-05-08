@@ -227,12 +227,12 @@ def download_model_metadata(request: Request, payload: DownloadModelRequest) -> 
         )
 
     headers = {"Content-Disposition": f'attachment; filename="{MODEL_METADATA_FILE}"'}
-    record = record.get("model_metadata_uri")
+    meta_data_uri = record.get("model_metadata_uri")
 
     try:
         return StreamingResponse(
             storage_client.iterfile(
-                file_path=record,
+                file_path=meta_data_uri,
                 chunk_size=CHUNK_SIZE,
             ),
             headers=headers,

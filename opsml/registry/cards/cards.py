@@ -473,16 +473,19 @@ class ModelCard(ArtifactCard):
         return ModelMetadata.parse_obj(model_metadata)
 
     def _load_onnx_model(self, metadata: ModelMetadata, storage_client: StorageClientType) -> Any:
-        """Loads the actuall onnx file"""
+        """Loads the actual onnx file"""
         # get onnx model
 
-        storage_client.storage_spec.save_path = metadata.onnx_uri
-        onnx_model = load_record_artifact_from_storage(
-            storage_client=storage_client,
-            artifact_type=ArtifactStorageType.ONNX.value,
-        )
+        if metadata.onnx_uri is not None:
+            storage_client.storage_spec.save_path = metadata.onnx_uri
+            onnx_model = load_record_artifact_from_storage(
+                storage_client=storage_client,
+                artifact_type=ArtifactStorageType.ONNX.value,
+            )
 
-        return onnx_model
+            return onnx_model
+
+        raise ValueError("Onnx uri is not specified")
 
     def load_onnx_model_definition(self):
         """Loads the onnx model definition"""
