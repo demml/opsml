@@ -72,8 +72,11 @@ class Model:
 
     @property
     def proto_path(self) -> str:
-        proto_file = self.model.onnx_uri.split("/")[-1]
-        return glob.glob(f"**/**/{proto_file}", recursive=True)[0]
+        if self.model.onnx_uri is not None:
+            proto_file = self.model.onnx_uri.split("/")[-1]
+            return glob.glob(f"**/**/{proto_file}", recursive=True)[0]
+
+        raise ValueError("Onnx uri does not exist for this model")
 
     def start_onnx_session(self):
         self.sess = cast(rt.InferenceSession, rt.InferenceSession(self.proto_path))
