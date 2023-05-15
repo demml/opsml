@@ -357,10 +357,6 @@ class ModelCard(ArtifactCard):
             Pydantic model containing onnx data schema
         onnx_model_def:
             Pydantic model containing OnnxModel definition
-        trained_model_uri:
-            URI where model is stored
-        model_metadata_uri:
-            URI where model metadata is stored
         model_type:
             Type of model
         data_schema:
@@ -371,6 +367,15 @@ class ModelCard(ArtifactCard):
             RunCard associated with the ModelCard
         pipelinecard_uid:
             Associated PipelineCard
+        uris:
+            modelcard_uri:
+                URI of modelcard
+            trained_model_uri:
+                URI where model is stored
+            sample_data_uri:
+                URI of trained model sample data
+            model_metadata_uri:
+                URI where model metadata is stored
     """
 
     trained_model: Optional[Any]
