@@ -183,7 +183,8 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
 
-        self._save_data()
+        if self.card.data is not None:
+            self._save_data()
         self._save_datacard()
         # drift not implemented yet
         return self.card
