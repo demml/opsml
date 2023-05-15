@@ -143,7 +143,7 @@ class DataCard(ArtifactCard):
             Associated PipelineCard
 
         sql_logic:
-            Dictionary of strings containing sql logic used to create the data
+            Dictionary of strings containing sql logic or sql files used to create the data
 
         The following are non-required args and are set after registering a DataCard
 
@@ -165,16 +165,16 @@ class DataCard(ArtifactCard):
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table]]
     data_splits: Optional[List[Dict[str, Any]]]
-    data_uri: Optional[str]
     feature_map: Optional[Dict[str, Union[str, None]]]
     data_type: Optional[str]
     dependent_vars: Optional[List[Union[int, str]]]
     feature_descriptions: Optional[Dict[str, str]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
+    sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
+    data_uri: Optional[str]
     datacard_uri: Optional[str] = None
-    sql_logic: Dict[Optional[str], Optional[str]] = {}
 
     @property
     def has_data_splits(self):
@@ -182,8 +182,9 @@ class DataCard(ArtifactCard):
 
     @validator("data_uri", pre=True, always=True)
     def check_data(cls, data_uri, values):  # pylint: disable=no-self-argument
-        if data_uri is None and values["data"] is None:
-            raise ValueError("Data must be supplied when no data_uri is present")
+        if data_uri is None:
+            if values["data"] is None and not bool(values["sql_logic"]):
+                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
         return data_uri
 

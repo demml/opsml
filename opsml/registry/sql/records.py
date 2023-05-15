@@ -13,9 +13,9 @@ ARBITRARY_ARTIFACT_TYPE = "dict"
 
 
 class DataRegistryRecord(BaseModel):
-    data_uri: str
+    data_uri: Optional[str]
     version: str
-    data_type: str
+    data_type: Optional[str]
     name: str
     team: str
     user_email: str
@@ -124,10 +124,10 @@ class LoadRecord(BaseModel):
 
 
 class LoadedDataRecord(LoadRecord):
-    data_uri: str
+    data_uri: Optional[str]
     data_splits: Optional[List[Dict[str, Any]]]
-    data_type: str
-    feature_map: Dict[str, str]
+    data_type: Optional[str]
+    feature_map: Optional[Dict[str, str]]
     feature_descriptions: Optional[Dict[str, str]]
     dependent_vars: Optional[List[Union[int, str]]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]

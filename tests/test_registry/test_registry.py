@@ -43,6 +43,36 @@ def test_register_data(db_registries, test_data, data_splits):
     assert df.shape[0] == 1
 
 
+def test_datacard_sql_register(db_registries):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card)
+    loaded_card = registry.load_card(uid=data_card.uid)
+    assert loaded_card.sql_logic.get("test") is not None
+
+
+def test_datacard_sql_register_file(db_registries):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "test_sql.sql"},
+    )
+
+    registry.register_card(card=data_card)
+    loaded_card = registry.load_card(uid=data_card.uid)
+    assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+
+
 def test_datacard_sql(db_registries, test_array):
     # create data card
     registry = db_registries["data"]
