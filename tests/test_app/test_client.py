@@ -43,7 +43,6 @@ def test_error(test_app):
     ],
 )
 def test_register_data(api_registries, test_data, data_splits):
-
     # create data card
     registry = api_registries.data
 
@@ -72,7 +71,6 @@ def test_register_data(api_registries, test_data, data_splits):
 
 
 def test_semver_registry_list(api_registries, test_array):
-
     # create data card
     registry = api_registries.data
 
@@ -127,7 +125,6 @@ def test_semver_registry_list(api_registries, test_array):
 
 
 def test_register_large_data(api_registries):
-
     import numpy as np
 
     # create a numpy 1d-array
@@ -153,7 +150,6 @@ def test_register_large_data(api_registries):
 
 
 def test_run_card(linear_regression, api_registries):
-
     registry = api_registries.run
 
     run = RunCard(
@@ -177,7 +173,6 @@ def test_run_card(linear_regression, api_registries):
 
 
 def test_register_model(api_registries, sklearn_pipeline):
-
     model, data = sklearn_pipeline
     # create data card
     data_registry = api_registries.data
@@ -406,7 +401,6 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
 
 
 def test_download_model(test_app, api_registries, linear_regression):
-
     team = "mlops"
     user_email = "mlops.com"
 
@@ -438,7 +432,6 @@ def test_download_model(test_app, api_registries, linear_regression):
 
     result = ""
     with test_app.stream(method="POST", url="opsml/download_model_metadata", json={"uid": model_card.uid}) as response:
-
         for data in response.iter_bytes():
             result += data.decode("utf-8")
 
@@ -450,7 +443,6 @@ def test_download_model(test_app, api_registries, linear_regression):
 
 
 def test_download_multiple_model_failure(test_app, api_registries, linear_regression):
-
     team = "mlops"
     user_email = "mlops.com"
 
@@ -500,7 +492,6 @@ def test_download_multiple_model_failure(test_app, api_registries, linear_regres
             "team": model_card1.team,
         },
     ) as response:
-
         for data in response.iter_bytes():
             result += data.decode("utf-8")
 
@@ -509,7 +500,6 @@ def test_download_multiple_model_failure(test_app, api_registries, linear_regres
 
 
 def test_download_model_failure(test_app):
-
     response = test_app.post(url="opsml/download_model_metadata", json={"name": "pip"})
 
     # should fail
