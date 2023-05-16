@@ -14,7 +14,7 @@ altair = "^4.2.0"
 cryptography = "^39.0.1"
 httpx ="^0.23.3"
 numpy = ">=1.21.6,<=1.24.1"
-onnx = "^1.12.0"
+onnx = "<1.14.0"
 onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
 pandas = ">=1.4.0,<=1.5.3"
@@ -56,6 +56,7 @@ pymysql = {version="^1.0.2", optional = true}
 # optional dep for visualization
 #fn-graph = {version="^0.14.3", optional = true}
 graphviz = {version="^0.20.1", optional = true}
+pylatex = "^1.4.1"
 
 [tool.poetry.extras]
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
