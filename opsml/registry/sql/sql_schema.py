@@ -71,7 +71,7 @@ class ModelMixin:
     modelcard_uri = Column("modelcard_uri", String(2048))
     datacard_uid = Column("datacard_uid", String(2048))
     trained_model_uri = Column("trained_model_uri", String(2048))
-    onnx_model_uri = Column("onnx_model_uri", String(2048))
+    model_metadata_uri = Column("model_metadata_uri", String(2048))
     sample_data_uri = Column("sample_data_uri", String(2048))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))

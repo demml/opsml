@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import pandas as pd
 from pytest_lazyfixture import lazy_fixture
-from opsml.model.types import ModelApiDef
+from opsml.model.types import ModelMetadata
 
 
 @pytest.mark.parametrize(

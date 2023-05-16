@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator
 
-from opsml.registry.cards.types import METRICS, PARAMS
+from opsml.registry.cards.types import METRICS, PARAMS, ModelCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -13,9 +13,9 @@ ARBITRARY_ARTIFACT_TYPE = "dict"
 
 
 class DataRegistryRecord(BaseModel):
-    data_uri: str
+    data_uri: Optional[str]
     version: str
-    data_type: str
+    data_type: Optional[str]
     name: str
     team: str
     user_email: str
@@ -38,13 +38,23 @@ class ModelRegistryRecord(BaseModel):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
-    onnx_model_uri: Optional[str] = None
+    model_metadata_uri: Optional[str] = None
     sample_data_uri: str
     sample_data_type: str
     model_type: str
     timestamp: int = int(round(time.time() * 1_000_000))
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
+
+    @root_validator(pre=True)
+    def set_uris(cls, values):  # pylint: disable=no-self-argument
+        uris = values.get("uris")
+        values["trained_model_uri"] = uris.trained_model_uri
+        values["model_metadata_uri"] = uris.model_metadata_uri
+        values["sample_data_uri"] = uris.sample_data_uri
+        values["modelcard_uri"] = uris.modelcard_uri
+
+        return values
 
 
 class RunRegistryRecord(BaseModel):
@@ -114,10 +124,10 @@ class LoadRecord(BaseModel):
 
 
 class LoadedDataRecord(LoadRecord):
-    data_uri: str
+    data_uri: Optional[str]
     data_splits: Optional[List[Dict[str, Any]]]
-    data_type: str
-    feature_map: Dict[str, str]
+    data_type: Optional[str]
+    feature_map: Optional[Dict[str, str]]
     feature_descriptions: Optional[Dict[str, str]]
     dependent_vars: Optional[List[Union[int, str]]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
@@ -188,15 +198,12 @@ class LoadedDataRecord(LoadRecord):
 
 
 class LoadedModelRecord(LoadRecord):
-    modelcard_uri: str
     datacard_uid: str
-    trained_model_uri: str
-    onnx_model_uri: Optional[str] = None
-    sample_data_uri: str
     sample_data_type: str
     model_type: str
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
+    uris: ModelCardUris
 
     @root_validator(pre=True)
     def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
@@ -206,13 +213,15 @@ class LoadedModelRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        modelcard_definition["modelcard_uri"] = values.get("modelcard_uri")
-        modelcard_definition["trained_model_uri"] = values.get("trained_model_uri")
-        modelcard_definition["onnx_model_uri"] = values.get("onnx_model_uri")
-        modelcard_definition["sample_data_uri"] = values.get("sample_data_uri")
         modelcard_definition["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["model_type"] = values.get("model_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
+        modelcard_definition["uris"] = ModelCardUris(
+            model_metadata_uri=values.get("model_metadata_uri"),
+            trained_model_uri=values.get("trained_model_uri"),
+            modelcard_uri=values.get("modelcard_uri"),
+            sample_data_uri=values.get("sample_data_uri"),
+        )
 
         return modelcard_definition
 

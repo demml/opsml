@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import ApiSigCreatorGetter
-from opsml.model.types import Base, Feature, ModelApiDef
+from opsml.model.types import Base, Feature, ModelMetadata
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -25,7 +25,7 @@ class Model:
         Returns:
             Instantiated Model to be used with API app
         """
-        self.model = ModelApiDef.parse_file(model_path)
+        self.model = ModelMetadata.parse_file(model_path)
 
         self.sig_creator = ApiSigCreatorGetter.get_sig_creator(
             model_type=self.model.model_type,
@@ -72,8 +72,17 @@ class Model:
 
     @property
     def proto_path(self) -> str:
-        proto_file = self.model.onnx_uri.split("/")[-1]
-        return glob.glob(f"**/**/{proto_file}", recursive=True)[0]
+        """
+        Returns proto path for onnx model. It is expected that the onnx_uri file is downloaded
+        to local in order to run the model. glob will recursively search for the onnx file up
+        to 2 directories down. This is primarily done for instances where multiple models are downloaded
+        to different directories (e.g. "lgb_reg/v1.2.0/model.onnx", "lgb_reg/v1.3.0/model.onnx")
+        """
+        if self.model.onnx_uri is not None:
+            proto_file = self.model.onnx_uri.split("/")[-1]
+            return glob.glob(f"**/**/{proto_file}", recursive=True)[0]
+
+        raise ValueError("Onnx uri does not exist for this model")
 
     def start_onnx_session(self):
         self.sess = cast(rt.InferenceSession, rt.InferenceSession(self.proto_path))
@@ -139,7 +148,7 @@ class Model:
 
 class ModelLoader:
     def __init__(self):
-        self.model_path = os.getenv("OPSML_MODELAPI_JSON", "*model_def.json")
+        self.model_path = os.getenv("OPSML_MODEL_METADATA_JSON", "*model-metadata.json")
         self.model_files = self._get_model_files()
 
     def _get_model_files(self) -> List[str]:
