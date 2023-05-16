@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "0.3.0"
+version = "0.3.1"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -54,9 +54,7 @@ pg8000 = {version="^1.29.4", optional = true}
 pymysql = {version="^1.0.2", optional = true}
 
 # optional dep for visualization
-#fn-graph = {version="^0.14.3", optional = true}
 graphviz = {version="^0.20.1", optional = true}
-pylatex = "^1.4.1"
 
 [tool.poetry.extras]
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
