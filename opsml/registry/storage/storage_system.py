@@ -65,7 +65,7 @@ class DataArtifactNames(str, Enum):
 class ModelArtifactNames(str, Enum):
     MODELCARD = "modelcard"
     TRAINED_MODEL = "trained-model"
-    API_DEF = "api-def"
+    MODEL_METADATA = "model-metadata"
     ONNX = ".onnx"
 
 
@@ -609,10 +609,11 @@ class MlflowStorageClient(StorageClient):
     def swap_mlflow_root(self, rpath: str) -> str:
         """Swaps mlflow path with storage path (used for onnx proto path)"""
 
-        path_to_file = "/".join(rpath.split("mlflow-artifacts:/")[1:])
-        mlflow_path = os.path.join(self.base_path_prefix, path_to_file)
+        if "mlflow-artifacts:/" in rpath:
+            path_to_file = "/".join(rpath.split("mlflow-artifacts:/")[1:])
+            rpath = os.path.join(self.base_path_prefix, path_to_file)
 
-        return mlflow_path
+        return rpath
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         import mlflow
@@ -625,6 +626,7 @@ class MlflowStorageClient(StorageClient):
         download_path = self.swap_proxy_root(rpath=rpath)
 
         abs_temp_path = temp_path
+
         file_path = mlflow.artifacts.download_artifacts(
             artifact_uri=download_path,
             dst_path=abs_temp_path,
@@ -701,7 +703,7 @@ class MlflowStorageClient(StorageClient):
         # need to re-write storage path for saving to ArtifactCard
         storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
 
-        if ModelArtifactNames.ONNX in storage_uri:
+        if ModelArtifactNames.ONNX or ModelArtifactNames.TRAINED_MODEL in storage_uri:
             storage_uri = self.swap_mlflow_root(rpath=storage_uri)
 
         return storage_uri
