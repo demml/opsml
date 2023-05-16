@@ -81,19 +81,44 @@ class ModelCreator:
         raise NotImplementedError
 
     @staticmethod
-    def validate(no_onnx: bool) -> bool:
+    def validate(to_onnx: bool) -> bool:
         raise NotImplementedError
 
 
 class TrainedModelMetadataCreator(ModelCreator):
     """Creates metadata to deploy a trained model"""
 
+    def _get_input_schema(self) -> Dict[str, Feature]:
+        model_data = get_model_data(
+            data_type=self.input_data_type,
+            input_data=self.input_data,
+        )
+
+        return model_data.feaure_dict
+
+    def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
+        model_data = get_model_data(
+            input_data=predictions,
+            data_type=type(predictions),
+        )
+
+        return model_data.feaure_dict
+
+    def _get_output_schema(self) -> Dict[str, Feature]:
+        if hasattr(self.model, "predict"):
+            predictions = self.model.predict(self.input_data)
+            return self._get_prediction_type(predictions=predictions)
+        # placeholder for now
+        return {"placeholder": Feature(feature_type=str, shape=[1])}
+
     def create_model(self) -> ModelReturn:
+        input_features = self._get_input_schema()
+        output_features = self._get_output_schema()
 
         api_schema = ApiDataSchemas(
             model_data_schema=DataDict(
-                input_features={"placeholder": Feature(feature_type="str", shape=[1])},
-                output_features={"placeholder": Feature(feature_type="str", shape=[1])},
+                input_features=input_features,
+                output_features=output_features,
                 data_type=InputDataType(type(self.input_data)).name,
             )
         )
@@ -101,8 +126,8 @@ class TrainedModelMetadataCreator(ModelCreator):
         return ModelReturn(api_data_schema=api_schema, model_type=self.model_type)
 
     @staticmethod
-    def validate(no_onnx: bool) -> bool:
-        if no_onnx:
+    def validate(to_onnx: bool) -> bool:
+        if not to_onnx:
             return True
         return False
 
@@ -185,19 +210,18 @@ class OnnxModelCreator(ModelCreator):
         return onnx_model_return
 
     @staticmethod
-    def validate(no_onnx: bool) -> bool:
-        if no_onnx:
-            return False
-        return True
+    def validate(to_onnx: bool) -> bool:
+        if to_onnx:
+            return True
+        return False
 
 
 def create_model(
     model: Any,
     input_data: InputData,
-    no_onnx: bool,
+    to_onnx: bool,
     additional_onnx_args: Optional[TorchOnnxArgs] = None,
 ) -> ModelReturn:
-
     """
     Validates and selects s `ModeCreator` subclass and creates a `ModelReturn`
 
@@ -208,7 +232,7 @@ def create_model(
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
             additional_onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
-            no_onnx:
+            to_onnx:
                 Whether to use Onnx creator or not
 
     """
@@ -217,7 +241,7 @@ def create_model(
         creator
         for creator in ModelCreator.__subclasses__()
         if creator.validate(
-            no_onnx=no_onnx,
+            to_onnx=to_onnx,
         )
     )
 

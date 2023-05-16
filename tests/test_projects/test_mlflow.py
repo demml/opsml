@@ -15,6 +15,10 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 logger = ArtifactLogger.get_logger(__name__)
 
 
@@ -105,7 +109,6 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
 
 def test_metrics(mlflow_project: MlflowProject) -> None:
-
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
     with proj.run() as run:
@@ -118,7 +121,6 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
 
 
 def test_params(mlflow_project: MlflowProject) -> None:
-
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_parameter(key="m1", value="apple")

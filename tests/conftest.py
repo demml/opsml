@@ -47,6 +47,7 @@ import lightgbm as lgb
 
 
 # opsml
+from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
 from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
@@ -417,7 +418,7 @@ def mock_model_cli_loader(db_registries):
     model_registry = db_registries["model"]
     from pathlib import Path
     from opsml.scripts.load_model_card import ModelLoader
-    from opsml.model.types import ModelApiDef
+    from opsml.model.types import ModelMetadata
 
     class MockModelLoader(ModelLoader):
         @property
@@ -745,6 +746,7 @@ def test_model_card(sklearn_pipeline):
         team="mlops",
         user_email="mlops.com",
         version="1.0.0",
+        uris=ModelCardUris(trained_model_uri="test"),
     )
     return model_card
 

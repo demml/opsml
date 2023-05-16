@@ -4,6 +4,14 @@ from typing import Dict, List, Optional, Union
 
 
 @dataclass
+class ModelCardUris:
+    modelcard_uri: Optional[str] = None
+    trained_model_uri: Optional[str] = None
+    model_metadata_uri: Optional[str] = None
+    sample_data_uri: Optional[str] = None
+
+
+@dataclass
 class Metric:
     name: str
     value: Union[float, int]
