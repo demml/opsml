@@ -6,12 +6,12 @@ import pytest
 @pytest.mark.parametrize(
     "model_api_path",
     [
-        "linear_reg_model_def.json",
-        "random_forest_classifier_model_def.json",
+        "linear-reg-model-metadata.json",
+        "random-forest-classifier-model-metadata.json",
     ],
 )
 def test_model(model_api_path):
-    os.environ["OPSML_MODELAPI_JSON"] = model_api_path
+    os.environ["OPSML_MODEL_METADATA_JSON"] = model_api_path
     models = ModelLoader().model_files
     loader = Model(model_path=models[0])
 
@@ -19,6 +19,6 @@ def test_model(model_api_path):
 
 
 def test_models():
-    os.environ.pop("OPSML_MODELAPI_JSON")
+    os.environ.pop("OPSML_MODEL_METADATA_JSON")
     models = ModelLoader().model_files
     assert len(models) == 4
