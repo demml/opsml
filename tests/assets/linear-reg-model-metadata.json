@@ -1,6 +1,7 @@
 {
     "model_name": "test-lin-reg",
     "model_type": "model",
+    "model_uri": "placeholder",
     "onnx_uri": "linear_reg-v1-0-0.onnx",
     "onnx_version": "1.13.1",
     "model_version": "1.0.0",
