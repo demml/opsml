@@ -37,6 +37,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
+from sklearn.datasets import load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
@@ -605,6 +606,16 @@ def load_pytorch_resnet():
     data = torch.randn(1, 3, 224, 224).numpy()
 
     return loaded_model, data
+
+
+@pytest.fixture(scope="session")
+def iris_data():
+    iris = load_iris()
+    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
+    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
+    x["target"] = iris["target"]
+
+    return x
 
 
 @pytest.fixture(scope="function")

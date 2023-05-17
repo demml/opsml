@@ -100,6 +100,9 @@ trigger:
 steps:
 
   - name: setup
+    when:
+      event:
+        - push
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make setup.project
@@ -141,8 +144,8 @@ steps:
 
   - name: code-analysis
     when:
-      event:
-        - push
+        event:
+          - push
     image: plugins/sonarqube-drone-plugin
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:

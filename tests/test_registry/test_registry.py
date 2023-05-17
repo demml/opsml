@@ -1,10 +1,12 @@
 import pandas as pd
+import numpy as np
 from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
+from sklearn.model_selection import train_test_split
 import uuid
 from pydantic import ValidationError
 
@@ -448,6 +450,75 @@ def test_data_card_splits(test_data):
 
     assert data_card.data_splits[0]["start"] == 0
     assert data_card.data_splits[0]["stop"] == 2
+
+
+def test_data_splits(db_registries, iris_data):
+    train_idx, test_idx = train_test_split(np.arange(iris_data.shape[0]), test_size=0.2)
+
+    data_name = "test_df"
+    team = "mlops"
+    user_email = "mlops.com"
+    registry: CardRegistry = db_registries["data"]
+
+    data_card_1 = DataCard(
+        data=iris_data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        dependent_vars=["target"],
+        data_splits=[
+            {"label": "train", "indices": train_idx},
+            {"label": "test", "indices": test_idx},
+        ],
+    )
+
+    data_splits = data_card_1.split_data()
+    assert data_splits.train.X is not None
+    assert data_splits.train.y is not None
+    assert data_splits.test.X is not None
+    assert data_splits.test.y is not None
+
+    data_card_2 = DataCard(
+        data=iris_data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        data_splits=[
+            {"label": "train", "indices": train_idx},
+            {"label": "test", "indices": test_idx},
+        ],
+    )
+
+    data_splits = data_card_2.split_data()
+    assert data_splits.train.X is not None
+    assert data_splits.train.y is None
+    assert data_splits.test.X is not None
+    assert data_splits.test.y is None
+
+
+def test_data_splits_column_value(db_registries, iris_data):
+    data_name = "test_df"
+    team = "mlops"
+    user_email = "mlops.com"
+    registry: CardRegistry = db_registries["data"]
+
+    data_card = DataCard(
+        data=iris_data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        dependent_vars=["target"],
+        data_splits=[
+            {"label": "train", "column": "sepal_width_cm", "column_value": 3.0},
+            {"label": "test", "column": "sepal_width_cm", "column_value": 3.0},
+        ],
+    )
+
+    data_splits = data_card.split_data()
+    assert data_splits.train.X is not None
+    assert data_splits.train.y is not None
+    assert data_splits.test.X is not None
+    assert data_splits.test.y is not None
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
