@@ -90,7 +90,6 @@ class ModelConverter:
     def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
         for sig in signature:
-
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
             dim_shape = [dim.dim_value for dim in shape_dims]
@@ -207,13 +206,12 @@ class SklearnOnnxModel(ModelConverter):
         return self.update_onnx_registries()
 
     def _convert_data_for_onnx(self) -> None:
-        """Converts float64 or all data to float32 depending on Sklearn estimator type
+        """
+        Converts float64 or all data to float32 depending on Sklearn estimator type
         Because Stacking and Pipeline estimators have intermediate output nodes, Onnx will
-        typically inject Float32 for these outputs (it infers these at creation).
-
-        Args:
-            updated_registries (boolean): Boolean indicating if the registries were updated with a 3rd-party
-            model converter (lightgbm, xgboost)
+        typically inject Float32 for these outputs (it infers these at creation). In addition,
+        skl2onnx does not handle Float64 for some model types (some classifiers). Because of this,
+        all Float64 types are converted to Float32 for all models.
         """
 
         if self.model_info.model_data.all_features_float32:
@@ -227,14 +225,10 @@ class SklearnOnnxModel(ModelConverter):
         return self.data_converter.converter.convert_to_float(convert_all=False)
 
     def prepare_registries_and_data(self):
-        """Updates sklearn onnx registries and convert data to float if needed"""
+        """Updates sklearn onnx registries and convert data to float32"""
 
-        updated = self.update_sklearn_onnx_registries()
-
-        if updated or self._is_pipeline or self._is_stacking_estimator:
-            return self._convert_data_for_onnx()
-
-        return None
+        self.update_sklearn_onnx_registries()
+        self._convert_data_for_onnx()
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
         """Converts sklearn model to ONNX ModelProto"""
@@ -244,10 +238,7 @@ class SklearnOnnxModel(ModelConverter):
         self.prepare_registries_and_data()
         initial_types, data_schema = self.get_data_types()
 
-        onnx_model = convert_sklearn(
-            model=self.model_info.model,
-            initial_types=initial_types,
-        )
+        onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types, target_opset=12)
 
         self.validate_model(onnx_model=onnx_model)
 
