@@ -11,7 +11,6 @@ authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 python = ">=3.9,<=3.11"
 alembic = "^1.10.3"
 altair = "^4.2.0"
-cryptography = "^39.0.1"
 httpx ="^0.23.3"
 numpy = ">=1.21.6,<=1.24.1"
 onnx = "^1.14.0"
