@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
-from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import pyarrow as pa
