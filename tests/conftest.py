@@ -33,7 +33,7 @@ import pandas as pd
 
 # ml model packages and classes
 from sklearn.datasets import fetch_openml
-from sklearn import linear_model
+from sklearn import linear_model, tree, naive_bayes, gaussian_process
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -991,4 +991,112 @@ def bagging_classifier(classification_data):
 def bagging_regression(regression_data):
     X, y = regression_data
     reg = ensemble.BaggingRegressor(n_estimators=5).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def bayesian_ridge_regression(regression_data):
+    X, y = regression_data
+    reg = linear_model.BayesianRidge(n_iter=10).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def bernoulli_nb(regression_data):
+    X, y = regression_data
+    reg = naive_bayes.BernoulliNB(force_alpha=True).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def categorical_nb(regression_data):
+    X, y = regression_data
+    reg = naive_bayes.CategoricalNB(force_alpha=True).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def complement_nb(regression_data):
+    X, y = regression_data
+    reg = naive_bayes.ComplementNB(force_alpha=True).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def decision_tree_regressor(regression_data):
+    X, y = regression_data
+    reg = tree.DecisionTreeRegressor(max_depth=5).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def decision_tree_classifier(classification_data):
+    X, y = classification_data
+    clf = tree.DecisionTreeClassifier(max_depth=5).fit(X, y)
+    clf.fit(X, y)
+    return clf, X
+
+
+@pytest.fixture(scope="module")
+def elastic_net(regression_data):
+    X, y = regression_data
+    reg = linear_model.ElasticNet(max_iter=10).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def elastic_net_cv(regression_data):
+    X, y = regression_data
+    reg = linear_model.ElasticNetCV(max_iter=10, cv=2).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def extra_tree_regressor(regression_data):
+    X, y = regression_data
+    reg = tree.ExtraTreeRegressor(max_depth=5).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def extra_trees_regressor(regression_data):
+    X, y = regression_data
+    reg = ensemble.ExtraTreesRegressor(n_estimators=5).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def extra_tree_classifier(classification_data):
+    X, y = classification_data
+    clf = tree.ExtraTreeClassifier(max_depth=5).fit(X, y)
+    clf.fit(X, y)
+    return clf, X
+
+
+@pytest.fixture(scope="module")
+def extra_trees_classifier(classification_data):
+    X, y = classification_data
+    clf = ensemble.ExtraTreesClassifier(n_estimators=5).fit(X, y)
+    clf.fit(X, y)
+    return clf, X
+
+
+@pytest.fixture(scope="module")
+def gamma_regressor(regression_data):
+    X, y = regression_data
+    reg = linear_model.GammaRegressor(max_iter=5).fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def gaussian_nb(regression_data):
+    X, y = regression_data
+    reg = naive_bayes.GaussianNB().fit(X, y)
+    return reg, X
+
+
+@pytest.fixture(scope="module")
+def gaussian_process_regressor(regression_data):
+    X, y = regression_data
+    reg = gaussian_process.GaussianProcessRegressor().fit(X, y)
     return reg, X
