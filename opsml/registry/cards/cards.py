@@ -176,10 +176,6 @@ class DataCard(ArtifactCard):
     data_uri: Optional[str]
     datacard_uri: Optional[str] = None
 
-    @property
-    def has_data_splits(self):
-        return bool(self.data_splits)
-
     @validator("data_uri", pre=True, always=True)
     def check_data(cls, data_uri, values):  # pylint: disable=no-self-argument
         if data_uri is None:
@@ -242,20 +238,18 @@ class DataCard(ArtifactCard):
             Class containing data splits
         """
 
-        if not self.has_data_splits:
-            return None
+        if self.data_splits is not None:
+            data_holder = DataHolder()
+            for split in self.data_splits:
+                label, data = DataSplitter(
+                    split_attributes=split,
+                    dependent_vars=self.dependent_vars,
+                ).split(data=self.data)
 
-        data_splits: DataHolder = self._parse_data_splits()
-        return data_splits
+                setattr(data_holder, label, data)
 
-    def _parse_data_splits(self) -> DataHolder:
-        data_holder = DataHolder()
-        self.data_splits = cast(List[Dict[str, Any]], self.data_splits)
-        for split in self.data_splits:
-            label, data = DataSplitter(split_attributes=split).split(data=self.data)
-            setattr(data_holder, label, data)
-
-        return data_holder
+            return data_holder
+        raise ValueError("No data splits provided")
 
     def load_data(self):
         """Loads data"""
