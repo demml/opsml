@@ -1,5 +1,6 @@
+# pylint: disable=invalid-name
 from typing import Any, Dict, List, Optional, Tuple, Union
-
+from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -12,6 +13,12 @@ class DataHolder(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         extra = Extra.allow
+
+
+@dataclass
+class Data:
+    X: Union[pd.DataFrame, pa.Table, np.ndarray]
+    y: Optional[Union[pd.DataFrame, pa.Table, np.ndarray]] = None
 
 
 class SplitModel(BaseModel):
@@ -36,20 +43,31 @@ class SplitModel(BaseModel):
 
 
 class Splitter:
-    def __init__(self, split_attributes: Dict[str, Any]):
+    def __init__(
+        self,
+        split_attributes: Dict[str, Any],
+        dependent_vars: Optional[List[Union[int, str]]] = None,
+    ):
         self.split_attributes = SplitModel(**split_attributes)
+        self.dependent_vars = dependent_vars
 
     def split(self, data):
-        """Splits data"""
+        raise NotImplementedError
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
-        """Validates data type"""
+        raise NotImplementedError
 
 
 class PandasIndexSplitter(Splitter):
-    def split(self, data: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
-        return self.split_attributes.label, data.iloc[self.split_attributes.indices]
+    def split(self, data: pd.DataFrame) -> Tuple[str, Data]:
+        if self.dependent_vars is not None:
+            x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
+            y = data[data.columns[data.columns.isin(self.dependent_vars)]]
+
+            return self.split_attributes.label, Data(X=x, y=y)
+
+        return self.split_attributes.label, Data(X=data.iloc[self.split_attributes.indices])
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
@@ -58,7 +76,16 @@ class PandasIndexSplitter(Splitter):
 
 class PandasRowSplitter(Splitter):
     def split(self, data: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
-        return self.split_attributes.label, data[self.split_attributes.start : self.split_attributes.stop]
+        if self.dependent_vars is not None:
+            x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
+            y = data[data.columns[data.columns.isin(self.dependent_vars)]]
+
+            return self.split_attributes.label, Data(
+                X=x[self.split_attributes.start : self.split_attributes.stop],
+                y=y[self.split_attributes.start : self.split_attributes.stop],
+            )
+
+        return self.split_attributes.label, Data(X=data[self.split_attributes.start : self.split_attributes.stop])
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
@@ -66,8 +93,17 @@ class PandasRowSplitter(Splitter):
 
 
 class PandasColumnSplitter(Splitter):
-    def split(self, data: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
-        data_split = data.loc[data[self.split_attributes.column] == self.split_attributes.column_value]
+    def split(self, data: pd.DataFrame) -> Tuple[str, Data]:
+        if self.dependent_vars is not None:
+            x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
+            y = data[data.columns[data.columns.isin(self.dependent_vars)]]
+
+            return self.split_attributes.label, Data(
+                X=x.loc[data[self.split_attributes.column] == self.split_attributes.column_value],
+                y=y.loc[data[self.split_attributes.column] == self.split_attributes.column_value],
+            )
+
+        data_split = Data(X=data.loc[data[self.split_attributes.column] == self.split_attributes.column_value])
         return self.split_attributes.label, data_split
 
     @staticmethod
@@ -76,8 +112,8 @@ class PandasColumnSplitter(Splitter):
 
 
 class PyArrowIndexSplitter(Splitter):
-    def split(self, data: pa.Table) -> Tuple[str, pa.Table]:
-        return self.split_attributes.label, data.take(self.split_attributes.indices)
+    def split(self, data: pa.Table) -> Tuple[str, Data]:
+        return self.split_attributes.label, Data(X=data.take(self.split_attributes.indices))
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
@@ -85,8 +121,8 @@ class PyArrowIndexSplitter(Splitter):
 
 
 class NumpyIndexSplitter(Splitter):
-    def split(self, data: np.ndarray) -> Tuple[str, np.ndarray]:
-        return self.split_attributes.label, data[self.split_attributes.indices]
+    def split(self, data: np.ndarray) -> Tuple[str, Data]:
+        return self.split_attributes.label, Data(X=data[self.split_attributes.indices])
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
@@ -94,9 +130,9 @@ class NumpyIndexSplitter(Splitter):
 
 
 class NumpyRowSplitter(Splitter):
-    def split(self, data: np.ndarray) -> Tuple[str, np.ndarray]:
+    def split(self, data: np.ndarray) -> Tuple[str, Data]:
         data_split = data[self.split_attributes.start : self.split_attributes.stop]
-        return self.split_attributes.label, data_split
+        return self.split_attributes.label, Data(X=data_split)
 
     @staticmethod
     def validate(data_type: type, split_dict: Dict[str, Any]):
@@ -107,8 +143,10 @@ class DataSplitter:
     def __init__(
         self,
         split_attributes: Dict[str, Any],
+        dependent_vars: Optional[List[Union[int, str]]] = None,
     ):
         self.split_attributes = split_attributes
+        self.dependent_vars = dependent_vars
 
     def split(self, data: Union[pd.DataFrame, np.ndarray]):
         splitter = next(
@@ -122,5 +160,8 @@ class DataSplitter:
             )
         )
 
-        data_splitter = splitter(split_attributes=self.split_attributes)
+        data_splitter = splitter(
+            split_attributes=self.split_attributes,
+            dependent_vars=self.dependent_vars,
+        )
         return data_splitter.split(data=data)
