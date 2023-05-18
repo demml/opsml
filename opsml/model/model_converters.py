@@ -238,7 +238,7 @@ class SklearnOnnxModel(ModelConverter):
         self.prepare_registries_and_data()
         initial_types, data_schema = self.get_data_types()
 
-        onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types, target_opset=12)
+        onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types)
 
         self.validate_model(onnx_model=onnx_model)
 
