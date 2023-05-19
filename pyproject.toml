@@ -26,6 +26,7 @@ skl2onnx = "1.14.1"
 sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
 tf2onnx ="^1.13.0"
+typer = "^0.9.0"
 zarr = ">2.12.0"
 
 # optional dependencies for sql
@@ -111,6 +112,7 @@ load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file
 install_integration = "opsml.scripts.install_integration:install_extra_packages"
 opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
 opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
+download-model = "opsml.scripts.download_model:app"
 
 [tool.isort]
 profile = "black"
