@@ -1,5 +1,5 @@
 from typer.testing import CliRunner
-from opsml.scripts.download_model import app
+from opsml.scripts.api_cli import app
 
 runner = CliRunner()
 
