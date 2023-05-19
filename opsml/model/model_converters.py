@@ -1,6 +1,10 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
 """Code for generating Onnx Models"""
+import warnings
+
+warnings.filterwarnings("ignore")  # hiding warnings from skl2onnx
+
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -232,7 +236,9 @@ class SklearnOnnxModel(ModelConverter):
 
     def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
         """Converts sklearn model to ONNX ModelProto"""
-        from skl2onnx import convert_sklearn
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx import convert_sklearn
 
         # update registries with 3rd party converter and convert to float if needed
         self.prepare_registries_and_data()

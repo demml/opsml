@@ -1,6 +1,8 @@
 # pylint: disable=no-member
 
 """Base code for Onnx model conversion"""
+
+import warnings
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -9,14 +11,18 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
-from skl2onnx.common.data_types import (
-    DoubleTensorType,
-    FloatTensorType,
-    Int32TensorType,
-    Int64TensorType,
-    StringTensorType,
-    TensorType,
-)
+
+# skl2onnx has an annoying warning < 1.16
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from skl2onnx.common.data_types import (
+        DoubleTensorType,
+        FloatTensorType,
+        Int32TensorType,
+        Int64TensorType,
+        StringTensorType,
+        TensorType,
+    )
 
 InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
