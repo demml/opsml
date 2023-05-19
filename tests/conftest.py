@@ -70,7 +70,6 @@ from opsml.projects.mlflow import MlflowProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.projects import OpsmlProject
-from opsml.deploy.fastapi.api import ModelApi
 
 
 # testing
@@ -938,15 +937,6 @@ def sklearn_pipeline_api_example():
     record = {"CAT1": "a", "CAT2": "c", "num1": 0.5, "num2": 0.6, "num3": 0}
 
     return 0.5, record
-
-
-@pytest.fixture(scope="module")
-def fastapi_model_app():
-    model_api = ModelApi(port=8000)
-    model_api.build_api()
-    app = model_api.app
-
-    return app
 
 
 @pytest.fixture(scope="module")
