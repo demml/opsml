@@ -33,7 +33,7 @@ def replace_proxy_root(
 
         if isinstance(value, dict):
             replace_proxy_root(
-                record=value,
+                card=value,
                 storage_root=storage_root,
                 proxy_root=proxy_root,
             )

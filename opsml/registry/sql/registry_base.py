@@ -528,7 +528,7 @@ class ClientRegistry(SQLRegistryBase):
                 Unique identifier for DataCard. If present, the uid takes precedence.
 
         Returns:
-            Dictionary of records
+            Dictionary of card records
         """
         data = self._session.post_request(
             route=api_routes.LIST_CARDS,
@@ -542,7 +542,7 @@ class ClientRegistry(SQLRegistryBase):
             },
         )
 
-        return data["records"]
+        return data["cards"]
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:

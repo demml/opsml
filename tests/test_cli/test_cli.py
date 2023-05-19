@@ -5,7 +5,7 @@ from opsml.registry import DataCard, ModelCard
 runner = CliRunner()
 
 
-def test_app(test_app, api_registries, linear_regression):
+def test_download_model(test_app, api_registries, linear_regression):
     team = "mlops"
     user_email = "mlops.com"
 

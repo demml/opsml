@@ -93,9 +93,9 @@ def log_card_change(func):
 
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:
-        record, state = func(self, *args, **kwargs)
-        name = str(record.get("name"))
-        version = str(record.get("version"))
+        card, state = func(self, *args, **kwargs)
+        name = str(card.get("name"))
+        version = str(card.get("version"))
         logger.info(
             "%s: %s, version:%s %s", self._table.__tablename__, name, version, state  # pylint: disable=protected-access
         )
