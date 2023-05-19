@@ -35,5 +35,28 @@ def test_download_model(test_app, api_registries, linear_regression):
 
     model_registry.register_card(model_card)
 
-    result = runner.invoke(app, ["--name", "test_model", "--team", team])
+    result = runner.invoke(app, ["download-model", "--name", "test_model", "--team", team])
+    assert result.exit_code == 0
+
+
+def test_list_cards(test_app, api_registries, linear_regression):
+    team = "mlops"
+    user_email = "mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    #### Create DataCard
+    data_card = DataCard(
+        data=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+    )
+
+    data_registry.register_card(card=data_card)
+
+    result = runner.invoke(app, ["list-cards", "--registry", "data", "--name", "test_model", "--team", team])
     assert result.exit_code == 0
