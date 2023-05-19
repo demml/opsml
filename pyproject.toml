@@ -46,9 +46,6 @@ uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
 streaming-form-data = {version="^1.11.0", optional = true}
 
-# optional dependency for seldon
-seldon-core = {version="^1.16.0", optional = true}
-
 # optional dependencies for cloud-sql
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
 pg8000 = {version="^1.29.4", optional = true}
@@ -64,7 +61,6 @@ graphviz = ["graphviz"]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000"]
 postgres = ["psycopg2"]
-seldon = ["seldon-core"]
 
 [tool.poetry.group.dev]
 optional = true
@@ -83,7 +79,7 @@ xgboost = "^1.7.1"
 functiontrace = "^0.3.7"
 transformers = "^4.27.3"
 snakeviz = "^2.1.1"
-tensorflow = "2.9.0"
+tensorflow = "^2.12.0"
 
 [tool.poetry.group.dev-lints]
 optional = true
