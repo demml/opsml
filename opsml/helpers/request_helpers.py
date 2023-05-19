@@ -104,7 +104,7 @@ class ApiClient:
         route: str,
         local_dir: str,
         filename: str,
-        read_dir: Optional[str] = None,
+        read_dir: str,
     ) -> Dict[str, Any]:
         Path(local_dir).mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
 
