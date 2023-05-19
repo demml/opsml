@@ -60,3 +60,8 @@ def test_list_cards(test_app, api_registries, linear_regression):
 
     result = runner.invoke(app, ["list-cards", "--registry", "data", "--name", "test_model", "--team", team])
     assert result.exit_code == 0
+
+
+def test_launch_server(test_app, api_registries, linear_regression):
+    result = runner.invoke(app, ["launch-server"])
+    assert result.exit_code == 0
