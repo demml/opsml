@@ -165,5 +165,10 @@ def list_cards(
         )
 
 
+@app.command()
+def launch_server():
+    typer.launch(settings.opsml_tracking_uri)
+
+
 if __name__ == "__main__":
     app()
