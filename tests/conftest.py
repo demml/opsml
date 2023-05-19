@@ -252,7 +252,7 @@ def test_app() -> Iterator[TestClient]:
     opsml_app = OpsmlApp(run_mlflow=True)
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
-    cleanup()
+    # cleanup()
 
 
 def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
