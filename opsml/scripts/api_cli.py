@@ -47,6 +47,27 @@ def download_model(
     uid: Annotated[str, typer.Option()] = None,
     onnx: Annotated[bool, typer.Option()] = True,
 ):
+    """
+    Downloads a model (onnx or original model) associated with a model card
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Version to search
+        uid:
+            Uid of Card
+        onnx:
+            Whether to return onnx model or original model (no-onnx)
+
+    Example:
+        opsml-api download-model --name "linear-reg" --team "mlops" --no-onnx # original model
+        opsml-api download-model --name "linear-reg" --team "mlops" --onnx # onnx model
+
+    """
+
     if settings.request_client is not None:
         metadata = _download_metadata(
             request_client=settings.request_client,
@@ -81,6 +102,25 @@ def list_cards(
     version: Annotated[str, typer.Option()] = None,
     uid: Annotated[str, typer.Option()] = None,
 ):
+    """
+    Lists cards from a specific registry in table format
+
+    Args:
+        registry:
+            Name of Card registry to search. Accepted values are 'model', 'data', 'pipeline', and 'run'
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Version to search
+        uid:
+            Uid of Card
+
+    Example:
+        opsml-api list-card --name "linear-reg" --team "mlops"
+
+    """
     registry_name = getattr(RegistryTableNames, registry.upper())
 
     if registry_name is None:
