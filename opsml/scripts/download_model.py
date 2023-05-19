@@ -2,6 +2,7 @@ import typer
 from typing import Annotated, Dict
 from opsml.helpers.request_helpers import ApiRoutes, ApiClient
 from opsml.registry.sql.settings import settings
+from opsml.registry import CardRegistry
 
 app = typer.Typer()
 
@@ -14,10 +15,15 @@ def _download_metadata(request_client: ApiClient, payload: Dict[str, str]):
 
 
 def _download_model(request_client: ApiClient, filepath: str):
+    filepath_split = filepath.split("/")
+    filename = filepath_split[-1]
+    read_dir = "/".join(filepath_split[:-1])
+
     request_client.stream_download_file_request(
         route=ApiRoutes.DOWNLOAD_FILE,
         local_dir="models",
-        filename=filepath,
+        filename=filename,
+        read_dir=read_dir,
     )
 
 
@@ -36,11 +42,18 @@ def download_model(
         )
 
         if onnx:
-            onnx_path = metadata.get("onnx_uri")
-            _download_model(
-                request_client=settings.request_client,
-                filepath=onnx_path,
-            )
+            model_path = metadata.get("onnx_uri")
+        else:
+            model_path = metadata.get("model_uri")
+
+        return _download_model(
+            request_client=settings.request_client,
+            filepath=model_path,
+        )
+    else:
+        raise ValueError(
+            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
+        )
 
 
 if __name__ == "__main__":
