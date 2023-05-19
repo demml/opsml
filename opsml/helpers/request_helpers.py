@@ -108,11 +108,7 @@ class ApiClient:
     ) -> Dict[str, Any]:
         Path(local_dir).mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
 
-        if read_dir is not None:
-            read_path = os.path.join(read_dir, filename)
-        else:
-            read_path = filename
-
+        read_path = os.path.join(read_dir, filename)
         with open(os.path.join(local_dir, filename), "wb") as local_file:
             with self.client.stream(
                 method="POST",

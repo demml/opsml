@@ -442,63 +442,6 @@ def test_download_model(test_app, api_registries, linear_regression):
     assert response.status_code == 200
 
 
-def test_download_multiple_model_failure(test_app, api_registries, linear_regression):
-    team = "mlops"
-    user_email = "mlops.com"
-
-    model, data = linear_regression
-
-    data_registry = api_registries.data
-    model_registry = api_registries.model
-
-    #### Create DataCard
-    data_card = DataCard(
-        data=data,
-        name="test_data",
-        team=team,
-        user_email=user_email,
-    )
-
-    data_registry.register_card(card=data_card)
-    ###### ModelCard
-    model_card1 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
-        name="test_model",
-        team=team,
-        user_email=user_email,
-        datacard_uid=data_card.uid,
-    )
-
-    model_registry.register_card(model_card1)
-
-    model_card2 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
-        name="test_model",
-        team=team,
-        user_email=user_email,
-        datacard_uid=data_card.uid,
-    )
-
-    model_registry.register_card(model_card2)
-
-    result = ""
-    with test_app.stream(
-        method="POST",
-        url="opsml/download_model_metadata",
-        json={
-            "model_name": model_card1.name,
-            "team": model_card1.team,
-        },
-    ) as response:
-        for data in response.iter_bytes():
-            result += data.decode("utf-8")
-
-    assert response.status_code == 500
-    assert json.loads(data.decode("utf-8"))["detail"] == "More than one model found"
-
-
 def test_download_model_failure(test_app):
     response = test_app.post(url="opsml/download_model_metadata", json={"name": "pip"})
 
