@@ -1,9 +1,10 @@
+from typing import Dict
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from typing import Annotated, Dict
-from opsml.helpers.request_helpers import ApiRoutes, ApiClient
+from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import RegistryTableNames
 
@@ -41,11 +42,11 @@ def _list_cards(request_client: ApiClient, payload: Dict[str, str]):
 
 @app.command()
 def download_model(
-    name: Annotated[str, typer.Option()] = None,
-    team: Annotated[str, typer.Option()] = None,
-    version: Annotated[str, typer.Option()] = None,
-    uid: Annotated[str, typer.Option()] = None,
-    onnx: Annotated[bool, typer.Option()] = True,
+    name: str = typer.Option(default=None),
+    team: str = typer.Option(default=None),
+    version: str = typer.Option(default=None),
+    uid: str = typer.Option(default=None),
+    onnx: str = typer.Option(default=None),
 ):
     """
     Downloads a model (onnx or original model) associated with a model card
@@ -83,10 +84,9 @@ def download_model(
             request_client=settings.request_client,
             filepath=model_path,
         )
-    else:
-        raise ValueError(
-            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
-        )
+    raise ValueError(
+        """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
+    )
 
 
 console = Console()
@@ -94,13 +94,13 @@ console = Console()
 
 @app.command()
 def list_cards(
-    registry: Annotated[
-        str, typer.Option(help="Registry to search. Accepted values are 'model', 'data', 'pipeline', and 'run'")
-    ],
-    name: Annotated[str, typer.Option()] = None,
-    team: Annotated[str, typer.Option()] = None,
-    version: Annotated[str, typer.Option()] = None,
-    uid: Annotated[str, typer.Option()] = None,
+    registry: str = typer.Option(
+        ..., help="Registry to search. Accepted values are 'model', 'data', 'pipeline', and 'run'"
+    ),
+    name: str = typer.Option(default=None),
+    team: str = typer.Option(default=None),
+    version: str = typer.Option(default=None),
+    uid: str = typer.Option(default=None),
 ):
     """
     Lists cards from a specific registry in table format
@@ -125,7 +125,7 @@ def list_cards(
 
     if registry_name is None:
         raise ValueError(
-            "No registry found. Accepted values are 'model', 'data', 'pipeline', and 'run'. Found %s",
+            f"No registry found. Accepted values are 'model', 'data', 'pipeline', and 'run'. Found {registry}",
             registry,
         )
     if settings.request_client is not None:
