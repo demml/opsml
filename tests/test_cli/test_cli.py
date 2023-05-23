@@ -37,7 +37,9 @@ def test_download_model(test_app, api_registries, linear_regression):
     model_registry.register_card(model_card)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        result = runner.invoke(app, ["download-model", "--name", "test_model", "--team", team, "--dir", tmpdirname])
+        result = runner.invoke(
+            app, ["download-model", "--name", "test_model", "--team", team, "--write-dir", tmpdirname]
+        )
         assert result.exit_code == 0
 
 

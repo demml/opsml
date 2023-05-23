@@ -109,9 +109,9 @@ def download_model(
             Director to write to
 
     Example:
-        opsml-api download-model --name "linear-reg" --team "mlops" --write_dir ".models" --no-onnx # original model
-        opsml-api download-model --name "linear-reg" --team "mlops" --write_dir ".models" --onnx # onnx model
-        opsml-api download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write_dir ".models"
+        opsml-api download-model --name "linear-reg" --team "mlops" --write-dir ".models" --no-onnx # original model
+        opsml-api download-model --name "linear-reg" --team "mlops" --write-dir ".models" --onnx # onnx model
+        opsml-api download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
 
     """
 
