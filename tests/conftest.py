@@ -375,7 +375,7 @@ def experiment_table_to_migrate():
         project_id = Column("project_id", String(512))
         artifact_uris = Column("artifact_uris", JSON)
         metrics = Column("metrics", JSON)
-        params = Column("params", JSON)
+        parameters = Column("parameters", JSON)
         tags = Column("tags", JSON)
 
     class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
@@ -1032,8 +1032,12 @@ def decision_tree_regressor(regression_data):
 
 
 @pytest.fixture(scope="module")
-def decision_tree_classifier(classification_data):
-    X, y = classification_data
+def decision_tree_classifier():
+    data = pd.read_csv("tests/assets/titanic.csv", index_col=False)
+
+    X = data
+    y = data.pop("SURVIVED")
+
     clf = tree.DecisionTreeClassifier(max_depth=5).fit(X, y)
     clf.fit(X, y)
     return clf, X
