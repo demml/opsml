@@ -426,9 +426,7 @@ def db_registries():
 @pytest.fixture(scope="function")
 def mock_model_cli_loader(db_registries):
     model_registry = db_registries["model"]
-    from pathlib import Path
     from opsml.scripts.load_model_card import ModelLoader
-    from opsml.model.types import ModelMetadata
 
     class MockModelLoader(ModelLoader):
         @property
