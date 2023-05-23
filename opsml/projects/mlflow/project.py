@@ -31,6 +31,7 @@ class MlflowProject(OpsmlProject):
 
         Example:
 
+            ```python
             project: MlFlowProject = get_project(
                 ProjectInfo(
                     name="test-project",
@@ -48,6 +49,7 @@ class MlflowProject(OpsmlProject):
                 # Now that the run context is entered, it's in read/write mode
                 # You can write cards, params, and metrics to the project.
                 run.log_parameter(key="my_param", value="12.34")
+            ```
 
         Args:
             info:
@@ -60,6 +62,7 @@ class MlflowProject(OpsmlProject):
 
     @property
     def run_data(self) -> RunData:
+        """Returns all `RunData` associated with a Run"""
         return self._run_mgr.mlflow_client.get_run(self.run_id).data  # type: ignore
 
     @contextmanager
@@ -111,6 +114,23 @@ class MlflowProject(OpsmlProject):
 
     @property
     def metrics(self) -> METRICS:
+        """Returns a Run's metrics
+
+        Example:
+            ```python
+            info = ProjectInfo(name="opsml", team="devops",user_email="test_email",run_id=run.run_id)
+            project = MlflowProject(info=info)
+            project.metrics
+
+            {
+                'test': [Metric(name='test', value=99.0, step=None, timestamp=None)],
+                'r2': [Metric(name='r2', value=0.006525740117159562, step=None, timestamp=None)],
+                'mae': [Metric(name='mae', value=2.225978693518221, step=None, timestamp=None)]
+            }
+
+            ```
+        """
+
         metrics: METRICS = {}
         for key, value in self.run_data.metrics.items():
             metrics[key] = [Metric(name=key, value=value)]  # keep consistency with RunCard type
@@ -136,6 +156,7 @@ class MlflowProject(OpsmlProject):
 
     @property
     def params(self) -> PARAMS:
+        """Returns a Run's parameters"""
         params: PARAMS = {}
         for key, value in self.run_data.params.items():
             params[key] = [Param(name=key, value=value)]
@@ -160,4 +181,5 @@ class MlflowProject(OpsmlProject):
 
     @property
     def tags(self) -> dict[str, str]:
+        """Returns a Run's tags"""
         return self.run_data.tags
