@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -233,6 +235,33 @@ class DataCard(ArtifactCard):
         """
         Loops through data splits and splits data either by indexing or
         column values
+
+        Example:
+
+            ```python
+            card_info = CardInfo(name="linnerrud", team="tutorial", user_email="user@email.com")
+            data_card = DataCard(
+                info=card_info,
+                data=data,
+                dependent_vars=["Pulse"],
+                # define splits
+                data_splits=[
+                    {"label": "train", "indices": train_idx},
+                    {"label": "test", "indices": test_idx},
+                ],
+
+            )
+
+            splits = data_card.split_data()
+            print(splits.train.X.head())
+
+               Chins  Situps  Jumps
+            0    5.0   162.0   60.0
+            1    2.0   110.0   60.0
+            2   12.0   101.0  101.0
+            3   12.0   105.0   37.0
+            4   13.0   155.0   58.0
+            ```
 
         Returns
             Class containing data splits

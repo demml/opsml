@@ -51,11 +51,11 @@ modelcard = ModelCard(
 onnx_predictor = modelcard.onnx_model()
 record = list(modelcard.sample_input_data[0:1].T.to_dict().values())[0]
 
-pred_onnx = onnx_predictor.predict(record)[0].ravel()
-pred_orig = onnx_predictor.predict_with_model(linreg, record)
+pred_onnx = onnx_predictor.predict(record)["variable"]
+pred_orig = onnx_predictor.predict_with_model(linreg, record)[0][0]
 
 print(f"Original: {pred_orig}, Onnx: {pred_onnx}")
-# > Original: [54.4616866], Onnx: [54.4616866]
+# > Original: 54.4616866, Onnx: 54.4616866
 
 print(onnx_predictor.input_sig.schema_json())
 print(onnx_predictor.output_sig.schema_json())
@@ -110,6 +110,12 @@ Outputs
 
 `datacard_uid`
 : uid of DataCard that contains training data. This is not required to instantiate a ModelCard, but it is required to register a ModelCard
+
+`datacard_uid`
+: uid of DataCard that contains training data. This is not required to instantiate a ModelCard, but it is required to register a ModelCard
+
+`to_onnx`
+: Whether to convert model to onnx or not. Default is True
 
 ## Docs
 

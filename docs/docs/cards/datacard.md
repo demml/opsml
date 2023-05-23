@@ -45,15 +45,15 @@ data_card = DataCard(
 
 # splits look good
 splits = data_card.split_data()
-print(splits.train.head())
+print(splits.train.X.head())
 
 """   
-    Chins  Situps  Jumps  Pulse
-15   12.0   210.0  120.0   62.0
-17   11.0   230.0   80.0   52.0
-16    4.0    60.0   25.0   54.0
-8    15.0   200.0   40.0   74.0
-5     4.0   101.0   42.0   56.0
+    Chins  Situps  Jumps
+0    5.0   162.0   60.0
+1    2.0   110.0   60.0
+2   12.0   101.0  101.0
+3   12.0   105.0   37.0
+4   13.0   155.0   58.0
 """
 
 data_registry = CardRegistry(registry_name="data")
@@ -106,8 +106,13 @@ Output:
 `user_email`
 : Email to associate with data (Required)
 
+`sql_logic`
+: SQL query or path to sql file containing logic to build data. Required if `data` is not provided.
+
 `data_splits`
 : Split logic for your data. Optional list containing split logic. Defaults to None.
+
+    If a dependent variables is specified. Data splits will return X and y data.
 
     Logic for data splits can be defined in the following three ways:
 
@@ -135,8 +140,11 @@ Output:
             {"label": "test", "indices": [5,6,7,8]},
             ]
 
-- **feature_descriptions**: Dictionary contain feature descriptions (key -> feature name, value -> Description)
-- **additional_info**: Dictionary used as storage object for extra information you'd like to provide.
+`feature_descriptions`
+: Dictionary contain feature descriptions (key -> feature name, value -> Description)
+
+`additional_info`
+: Dictionary used as storage object for extra information you'd like to provide.
 
 
 ## Docs
