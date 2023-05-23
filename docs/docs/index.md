@@ -75,7 +75,7 @@
 
 ## Why?
 
-`Opsml` is not re-inventing the wheel nor is it creating anything that already isn't out there. However, what it does do is stitch different ideas/tooling together and standardize machine learning workflows with a focus on developer and data scientist experience, speed-to-deployment, reproducibility, and auditability.
+The main goal of `Opsml` is to provide an intuitive interface for DSs to create standardized, resuable and auditable machine learning workflows.
 
 ### Two sides of the same coin (dev as prod)
 
@@ -142,27 +142,27 @@ Types of extras that can be installed:
 
 - **Postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
   ```bash
-  poetry add opsml[postgres]
+  poetry add "opsml[postgres]"
   ```
 
 - **Server**: Installs necessary packages for setting up an `Fastapi`/`Mlflow` based `Opsml` server
   ```bash
-  poetry add opsml[server]
+  poetry add "opsml[server]"
   ```
 
 - **Mlflow**: Installs Mlflow for client-side interaction with an `Opsml` server
   ```bash
-  poetry add opsml[mlflow]
+  poetry add "opsml[mlflow]"
   ```
 
 - **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
-  poetry add opsml[gcp_mysql]
+  poetry add "opsml[gcp_mysql]"
   ```
 
 - **GCP-postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
-  poetry add opsml[gcp_postgres]
+  poetry add "opsml[gcp_postgres]"
   ```
 
 
@@ -172,7 +172,7 @@ Types of extras that can be installed:
 - **OPSML_TRACKING_URI**: This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
 
 - **OPSML_STORAGE_URI**: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file systems and google cloud storage.
-If running `Opsml` as an all-in-one interfact, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
+If running `Opsml` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
 
 ## Example
 
