@@ -48,14 +48,8 @@ def test_challenger_no_previous_version(
         run.log_metric("mape", 100)
         run.register_card(card=model_card)
 
-    challenger = ModelChallenger(
-        challenger=model_card,
-        metric_name="mape",
-        metric_value=100,
-        lower_is_better=True,
-    )
-
-    battle_result = challenger.challenge_champion()
+    challenger = ModelChallenger(challenger=model_card)
+    battle_result = challenger.challenge_champion(metric_name="mape", metric_value=100, lower_is_better=True)
     assert battle_result.challenger_win
     assert battle_result.champion_name == "No model"
 
@@ -79,14 +73,13 @@ def test_challenger(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipelin
         run.log_metric("mape", 50)
         run.register_card(card=model_card)
 
-    challenger = ModelChallenger(
-        challenger=model_card,
+    challenger = ModelChallenger(challenger=model_card)
+
+    battle_result = challenger.challenge_champion(
         metric_name="mape",
-        metric_value=50,
+        metric_value=90,
         lower_is_better=True,
     )
-
-    battle_result = challenger.challenge_champion()
     assert battle_result.challenger_win
     assert battle_result.champion_version == "1.0.0"
 
@@ -97,16 +90,16 @@ def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
     modelcard = opsml_project._run_mgr.registries.model.load_card(name="pipeline_model", version="1.1.0")
     runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.runcard_uid)
 
-    challenger = ModelChallenger(
-        challenger=modelcard,
-        metric_name="mape",
-        metric_value=runcard.get_metric("mape").value,
-        lower_is_better=True,
-    )
+    challenger = ModelChallenger(challenger=modelcard)
 
     model_info.version = "1.0.0"
     champion_info = model_info
-    battle_result = challenger.challenge_champion(champions=[champion_info])
+    battle_result = challenger.challenge_champion(
+        champions=[champion_info],
+        metric_name="mape",
+        lower_is_better=True,
+        metric_value=40,
+    )
 
     assert battle_result.challenger_win
     assert battle_result.champion_version == "1.0.0"
@@ -115,7 +108,16 @@ def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
     with pytest.raises(ValueError):
         model_info.version = "2.0.0"
         champion_info = model_info
-        battle_result = challenger.challenge_champion(champions=[champion_info])
+        battle_result = challenger.challenge_champion(
+            champions=[champion_info],
+            metric_name="mape",
+            lower_is_better=True,
+            metric_value=40,
+        )
+
+    with pytest.raises(ValueError):
+        challenger = ModelChallenger(challenger=modelcard)
+        challenger.challenger_metric
 
 
 def test_challenger_fail_no_runcard(
@@ -147,13 +149,13 @@ def test_challenger_fail_no_runcard(
     modelcard = opsml_project._run_mgr.registries.model.load_card(name="pipeline_model", version="1.1.0")
     runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.runcard_uid)
 
-    challenger = ModelChallenger(
-        challenger=modelcard,
-        metric_name="mape",
-        metric_value=runcard.get_metric("mape").value,
-        lower_is_better=True,
-    )
+    challenger = ModelChallenger(challenger=modelcard)
 
     # should fail (runcard does not exist)
     with pytest.raises(ValueError):
-        battle_result = challenger.challenge_champion(champions=[champion_info])
+        battle_result = challenger.challenge_champion(
+            champions=[champion_info],
+            metric_name="mape",
+            lower_is_better=True,
+            metric_value=100,
+        )
