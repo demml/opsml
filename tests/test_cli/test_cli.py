@@ -1,12 +1,20 @@
+from typing import Dict, Tuple
 from typer.testing import CliRunner
+from sklearn import linear_model
+import pandas as pd
 from opsml.scripts.api_cli import app
-from opsml.registry import DataCard, ModelCard
+from opsml.registry import DataCard, ModelCard, CardRegistry
 import tempfile
+from starlette.testclient import TestClient
 
 runner = CliRunner()
 
 
-def test_download_model(test_app, api_registries, linear_regression):
+def test_download_model(
+    test_app: TestClient,
+    api_registries: Dict[str, CardRegistry],
+    linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
+):
     team = "mlops"
     user_email = "mlops.com"
 
@@ -43,7 +51,11 @@ def test_download_model(test_app, api_registries, linear_regression):
         assert result.exit_code == 0
 
 
-def test_list_cards(test_app, api_registries, linear_regression):
+def test_list_cards(
+    test_app: TestClient,
+    api_registries: Dict[str, CardRegistry],
+    linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
+):
     team = "mlops"
     user_email = "mlops.com"
 
