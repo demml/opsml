@@ -1,0 +1,1005 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="cards/overview/">
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+    
+    
+      
+        <title>OpsML</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.85bb2934.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.a6bdf11c.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="css/custom.css">
+    
+      <link rel="stylesheet" href="stylesheets/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="stylesheets/extra.css" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#what-is-it" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="OpsML" class="md-header__button md-logo" aria-label="OpsML" data-md-component="logo">
+      
+  <img src="images/opsml-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OpsML
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              OpsML Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="stylesheets/extra.css" data-md-color-accent="indigo"  aria-label="dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="stylesheets/extra.css" data-md-color-accent="indigo"  aria-label="light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/shipt/opsml" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    opsml
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="OpsML" class="md-nav__button md-logo" aria-label="OpsML" data-md-component="logo">
+      
+  <img src="images/opsml-logo.png" alt="logo">
+
+    </a>
+    OpsML
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/shipt/opsml" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    opsml
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          OpsML Overview
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        OpsML Overview
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="Page contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-it" class="md-nav__link">
+    What is it?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    Features
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    Why?
+  </a>
+  
+    <nav class="md-nav" aria-label="Why?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-sides-of-the-same-coin-dev-as-prod" class="md-nav__link">
+    Two sides of the same coin (dev as prod)
+  </a>
+  
+    <nav class="md-nav" aria-label="Two sides of the same coin (dev as prod)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dev-themes" class="md-nav__link">
+    Dev Themes:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-themes" class="md-nav__link">
+    Deployment Themes:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resulting-pain-points" class="md-nav__link">
+    Resulting Pain Points
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-dependencies" class="md-nav__link">
+    Optional Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    Environment Variables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Cards
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Cards
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cards/overview/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cards/datacard/" class="md-nav__link">
+        DataCard
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cards/modelcard/" class="md-nav__link">
+        ModelCard
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cards/runcard/" class="md-nav__link">
+        RunCard
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Server
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Server
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="server/overview/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="server/example_toml/" class="md-nav__link">
+        Example TOML
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="Page contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-it" class="md-nav__link">
+    What is it?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    Features
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    Why?
+  </a>
+  
+    <nav class="md-nav" aria-label="Why?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-sides-of-the-same-coin-dev-as-prod" class="md-nav__link">
+    Two sides of the same coin (dev as prod)
+  </a>
+  
+    <nav class="md-nav" aria-label="Two sides of the same coin (dev as prod)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dev-themes" class="md-nav__link">
+    Dev Themes:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-themes" class="md-nav__link">
+    Deployment Themes:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resulting-pain-points" class="md-nav__link">
+    Resulting Pain Points
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-dependencies" class="md-nav__link">
+    Optional Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    Environment Variables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>OpsML Overview</h1>
+
+<p align="center">
+  <img src="images/opsml-logo.png"  width="400" height="400" alt="opsml logo"/>
+</p>
+
+<h4 align="center">Tooling for machine learning workflows</h4>
+
+<hr />
+<p align="center">
+  <a href="https://drone.shipt.com/shipt/opsml">
+  <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml/status.svg"/>
+  </a>
+
+  <a href="https://www.python.org/downloads/release/python-390/">
+  <img alt="Python" src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Blue_Python_3.9_Shield_Badge.svg" />
+  </a>
+
+  <img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" />
+
+  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
+  <img alt="quality gate" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=alert_status&token=squ_06f8921843044242e5975ed012023f7b09066e9c"/>
+  </a>
+
+  <a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
+  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=coverage&token=squ_06f8921843044242e5975ed012023f7b09066e9c"/>
+  </a>
+</p>
+
+<h4 align="left">Supported Model Types</h4>
+
+<p align="center">
+
+<a href="https://www.tensorflow.org/">
+  <img alt="tensorflow" src="https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white"/>
+</a>
+
+<a href="https://keras.io/">
+  <img alt="keras"" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
+</a>
+
+<a href="https://pytorch.org/">
+  <img alt="pytorch" src="https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch"/>
+</a>
+
+<a href="https://scikit-learn.org/stable/">
+  <img alt="scikit-learn" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
+</a>
+
+<a href="https://xgboost.readthedocs.io/en/stable/">
+  <img alt="xgboost" src=https://img.shields.io/badge/Package-XGBoost-blueviolet"/>
+</a>
+
+<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
+  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success">
+</a>
+</p>
+
+<p><strong>Source Code</strong>: <a href="https://github.com/shipt/opsml">Code</a></p>
+<h2 id="what-is-it">What is it?<a class="headerlink" href="#what-is-it" title="Permanent link">&para;</a></h2>
+<p><code>OpsML</code> is a tooling library that simplifies the machine learning project lifecycle.</p>
+<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><code>Shareable</code>: Share cards and workflows across teams</p>
+</li>
+<li>
+<p><code>Simple Design</code>: Standardized design that can easily be incorporated into existing workflows.</p>
+</li>
+<li>
+<p><code>Cards</code>: Track, version, and store a variety of ML artifacts via cards (data, models, runs, pipelines) and a SQL-based card registry system. Think "trading cards for machine learning".</p>
+</li>
+<li>
+<p><code>Automation</code>: Automated processes including Onnx model conversion, api generation from Onnx model, data schema inference, code conversion and packaging for production.</p>
+</li>
+<li>
+<p><code>Pipelines</code>: Coming soon. Auto-pipeline creation</p>
+</li>
+</ul>
+<h2 id="why">Why?<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>The main goal of <code>Opsml</code> is to provide an intuitive interface for DSs to create standardized, resuable and auditable machine learning workflows.</p>
+<h3 id="two-sides-of-the-same-coin-dev-as-prod">Two sides of the same coin (dev as prod)<a class="headerlink" href="#two-sides-of-the-same-coin-dev-as-prod" title="Permanent link">&para;</a></h3>
+<p>Taking a data science project from ideation <img alt="💡" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/1f4a1.svg" title=":bulb:" /> to deployment <img alt="🚀" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/1f680.svg" title=":rocket:" /> often involves a <code>dev</code> side and a <code>deployment</code> side. </p>
+<h4 id="dev-themes">Dev Themes:<a class="headerlink" href="#dev-themes" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Experimentation and iteration in order to generate many potential solutions</li>
+<li>Feature/Data engineering</li>
+<li>Algorithm development</li>
+<li>Felxible work environment (often <strong>Jupyter Notebooks</strong>)</li>
+<li>Many other things</li>
+</ul>
+<h4 id="deployment-themes">Deployment Themes:<a class="headerlink" href="#deployment-themes" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Compute infrastructure for hosting</li>
+<li>Conversion of data science code to production code (including creating dags/pipelines)</li>
+<li>CI/CD</li>
+<li>Versioning</li>
+<li>Monitoring</li>
+<li>Security</li>
+</ul>
+<h4 id="resulting-pain-points">Resulting Pain Points<a class="headerlink" href="#resulting-pain-points" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><img alt="😠" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/1f620.svg" title=":angry:" /> Overhead in packaging data science code into production code. This results in duplicating data science code just to run in another environment (necessary, but can this be simplified?). </p>
+</li>
+<li>
+<p><img alt="⌚" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/231a.svg" title=":watch:" /> Time lag in deployment due to different teams having different priorities (especially true if developers/ML engineers are needed to help data scientists deploy their code)</p>
+</li>
+<li>
+<p><img alt="😡" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/1f621.svg" title=":rage:" /> Inflexible prod code that is not easily updatable</p>
+</li>
+<li>
+<p><img alt="😭" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/1f62d.svg" title=":sob:" /> Often no linking of metadata across the entire workflow (data, runs/experiments, models, pipelines)</p>
+</li>
+</ul>
+<p>What <code>Opsml</code> aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from <code>dev</code> and <code>deployment</code> processes and help teams go from ideation to deployment quicker <img alt="😄" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/svg/1f604.svg" title=":smile:" /> with the added benefits of reproducibility and auditability.</p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<p>Before installing, you'll need to set up your Artifactory credentials.</p>
+<p><strong>Request credentials for <a href="https://techhub.shipt.com/engineering/infrastructure/devops/artifactory/">Artifactory</a> in Slack <code>#ask-info-sec</code></strong></p>
+<p>Once you have your credentials, set the following variables.
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME</span><span class="o">=</span>your_username
+<span class="nb">export</span><span class="w"> </span><span class="nv">POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD</span><span class="o">=</span>your_password
+</code></pre></div></p>
+<p>If using poetry, you must also add the following in your <code>pyproject.toml</code>
+<div class="highlight"><pre><span></span><code><span class="k">[[tool.poetry.source]]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;shipt-resolve&quot;</span>
+<span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://artifactory.shipt.com/artifactory/api/pypi/pypi-virtual/simple&quot;</span>
+<span class="n">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div></p>
+<p>Next, add opsml to your environment
+<div class="highlight"><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span>opsml
+</code></pre></div></p>
+<h2 id="optional-dependencies">Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permanent link">&para;</a></h2>
+<p><code>Opsml</code> is designed to work with a variety of 3rd-party integrations depending on your use-case.</p>
+<p>Types of extras that can be installed:</p>
+<ul>
+<li>
+<p><strong>Postgres</strong>: Installs postgres pyscopg2 dependency to be used with <code>Opsml</code>
+  <div class="highlight"><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span><span class="s2">&quot;opsml[postgres]&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Server</strong>: Installs necessary packages for setting up an <code>Fastapi</code>/<code>Mlflow</code> based <code>Opsml</code> server
+  <div class="highlight"><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span><span class="s2">&quot;opsml[server]&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Mlflow</strong>: Installs Mlflow for client-side interaction with an <code>Opsml</code> server
+  <div class="highlight"><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span><span class="s2">&quot;opsml[mlflow]&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>GCP-mysql</strong>: Installs mysql and cloud-sql gcp dependencies to be used with <code>Opsml</code>
+  <div class="highlight"><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span><span class="s2">&quot;opsml[gcp_mysql]&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>GCP-postgres</strong>: Installs postgres and cloud-sql gcp dependencies to be used with <code>Opsml</code>
+  <div class="highlight"><pre><span></span><code>poetry<span class="w"> </span>add<span class="w"> </span><span class="s2">&quot;opsml[gcp_postgres]&quot;</span>
+</code></pre></div></p>
+</li>
+</ul>
+<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
+<p><code>Opsml</code> requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an <code>Opsml</code> server (details on how to set up an <code>Opsml</code> server are below (TODO))</p>
+<ul>
+<li>
+<p><strong>OPSML_TRACKING_URI</strong>: This is the sql tracking uri to your card registry database. If interacting with an <code>Opsml</code> server, this will be the http address of the server. If this variable is not set, it will default to a local <code>SQLite</code> connection.</p>
+</li>
+<li>
+<p><strong>OPSML_STORAGE_URI</strong>: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). <code>Opsml</code> currently supports local file systems and google cloud storage.
+If running <code>Opsml</code> as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an <code>Opsml</code> server, this variable does not need to be set.</p>
+</li>
+</ul>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<p>The primary interface for <code>Opsml</code> is an <code>ArtifactCard</code> (see <a href="cards/overview/">here</a> for detailed information). All Cards within <code>Opsml</code> follow the same design with a few specific required arguments for each card type. The following example shows how to create a DataCard and a ModelCard.</p>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># Data and Model</span>
+<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_linnerud</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Opsml</span>
+<span class="kn">from</span> <span class="nn">opsml.registry</span> <span class="kn">import</span> <span class="n">CardInfo</span><span class="p">,</span> <span class="n">DataCard</span><span class="p">,</span> <span class="n">CardRegistry</span><span class="p">,</span> <span class="n">ModelCard</span>
+
+<span class="c1"># set up registries</span>
+<span class="n">data_registry</span> <span class="o">=</span> <span class="n">CardRegistry</span><span class="p">(</span><span class="n">registry_name</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+<span class="n">model_registry</span> <span class="o">=</span> <span class="n">CardRegistry</span><span class="p">(</span><span class="n">registry_name</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
+
+<span class="c1"># card info (optional, but is used to simplify required args a bit)</span>
+<span class="n">card_info</span> <span class="o">=</span> <span class="n">CardInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;linnerrud&quot;</span><span class="p">,</span> <span class="n">team</span><span class="o">=</span><span class="s2">&quot;opsml&quot;</span><span class="p">,</span> <span class="n">user_email</span><span class="o">=</span><span class="s2">&quot;user@email.com&quot;</span><span class="p">)</span>
+
+<span class="c1"># get X, y</span>
+<span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">load_linnerud</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="s2">&quot;Pulse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">Pulse</span>
+
+<span class="c1"># Split indices</span>
+<span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># usual train-test split</span>
+<span class="n">train_idx</span><span class="p">,</span> <span class="n">test_idx</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="n">datacard</span> <span class="o">=</span> <span class="n">DataCard</span><span class="p">(</span>
+    <span class="n">info</span><span class="o">=</span><span class="n">card_info</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">dependent_vars</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Pulse&quot;</span><span class="p">],</span>
+    <span class="c1"># define splits</span>
+    <span class="n">data_splits</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;indices&quot;</span><span class="p">:</span> <span class="n">train_idx</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;indices&quot;</span><span class="p">:</span> <span class="n">test_idx</span><span class="p">},</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># register card</span>
+<span class="n">data_registry</span><span class="o">.</span><span class="n">register_card</span><span class="p">(</span><span class="n">datacard</span><span class="p">)</span>
+
+<span class="c1"># split data</span>
+<span class="n">data_splits</span> <span class="o">=</span> <span class="n">datacard</span><span class="o">.</span><span class="n">split_data</span><span class="p">()</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data_splits</span><span class="o">.</span><span class="n">train</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data_splits</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">datacard</span><span class="o">.</span><span class="n">dependent_vars</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># fit model</span>
+<span class="n">linreg</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span>
+<span class="n">linreg</span> <span class="o">=</span> <span class="n">linreg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_train</span><span class="p">)</span>
+
+<span class="c1"># Create ModelCard</span>
+<span class="n">modelcard</span> <span class="o">=</span> <span class="n">ModelCard</span><span class="p">(</span>
+    <span class="n">info</span><span class="o">=</span><span class="n">card_info</span><span class="p">,</span>
+    <span class="n">trained_model</span><span class="o">=</span><span class="n">linreg</span><span class="p">,</span>
+    <span class="n">sample_input_data</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span>
+    <span class="n">datacard_uid</span><span class="o">=</span><span class="n">datacard</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">model_registry</span><span class="o">.</span><span class="n">register_card</span><span class="p">(</span><span class="n">card</span><span class="o">=</span><span class="n">modelcard</span><span class="p">)</span>
+
+<span class="c1"># &gt;{&quot;level&quot;: &quot;INFO&quot;, &quot;message&quot;: &quot;OPSML_DATA_REGISTRY: linnerrud, version:1.0.0 registered&quot;, &quot;timestamp&quot;: &quot;2023-04-27T19:12:30&quot;, &quot;app_env&quot;: &quot;development&quot;}</span>
+<span class="c1"># &gt;{&quot;level&quot;: &quot;INFO&quot;, &quot;message&quot;: &quot;Validating converted onnx model&quot;, &quot;timestamp&quot;: &quot;2023-04-27T19:12:30&quot;, &quot;app_env&quot;: &quot;development&quot;}</span>
+<span class="c1"># &gt;{&quot;level&quot;: &quot;INFO&quot;, &quot;message&quot;: &quot;Onnx model validated&quot;, &quot;timestamp&quot;: &quot;2023-04-27T19:12:30&quot;, &quot;app_env&quot;: &quot;development&quot;}</span>
+<span class="c1"># &gt;{&quot;level&quot;: &quot;INFO&quot;, &quot;message&quot;: &quot;OPSML_MODEL_REGISTRY: linnerrud, version:1.0.0 registered&quot;, &quot;timestamp&quot;: &quot;2023-04-27T19:12:30&quot;, &quot;app_env&quot;: &quot;development&quot;}</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">data_registry</span><span class="o">.</span><span class="n">list_cards</span><span class="p">(</span><span class="n">info</span><span class="o">=</span><span class="n">card_info</span><span class="p">,</span> <span class="n">as_dataframe</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model_registry</span><span class="o">.</span><span class="n">list_cards</span><span class="p">(</span><span class="n">info</span><span class="o">=</span><span class="n">card_info</span><span class="p">,</span> <span class="n">as_dataframe</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
+<em>(Code will run as-is)</em></p>
+<p>Outputs:</p>
+<div class="highlight"><pre><span></span><code><span class="err">#</span><span class="w"> </span><span class="err">da</span><span class="kc">ta</span><span class="w"> </span><span class="err">regis</span><span class="kc">tr</span><span class="err">y</span><span class="w"> </span><span class="err">ou</span><span class="kc">t</span><span class="err">pu</span><span class="kc">t</span>
+<span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3fa6f762c5b74d4289b1e52bfd66f158&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;app_env&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;development&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;team&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;opsml&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;user_email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@email.com&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;datacard_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;873978bf4c3a49be819b9813f8d02ae8&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;onnx_model_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sample_data_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DataFrame&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;runcard_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">No</span><span class="kc">ne</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1682622948628464</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023-04-27&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;linnerrud&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;modelcard_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/modelcard.joblib&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;trained_model_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/trained-model.joblib&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sample_data_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/sample-model-data.parquet&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;model_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sklearn_estimator&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;pipelinecard_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">No</span><span class="kc">ne</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="err">#</span><span class="w"> </span><span class="err">model</span><span class="w"> </span><span class="err">regis</span><span class="kc">tr</span><span class="err">y</span><span class="w"> </span><span class="err">ou</span><span class="kc">t</span><span class="err">pu</span><span class="kc">t</span>
+<span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3fa6f762c5b74d4289b1e52bfd66f158&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;app_env&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;development&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;team&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;opsml&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;user_email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@email.com&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;datacard_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;873978bf4c3a49be819b9813f8d02ae8&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;onnx_model_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sample_data_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DataFrame&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;runcard_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">No</span><span class="kc">ne</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1682622948628464</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023-04-27&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;linnerrud&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;modelcard_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/modelcard.joblib&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;trained_model_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/trained-model.joblib&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sample_data_uri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/sample-model-data.parquet&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;model_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sklearn_estimator&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;pipelinecard_uid&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">No</span><span class="kc">ne</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.sections"], "search": "assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="js/termynal.js"></script>
+      
+        <script src="js/custom.js"></script>
+      
+    
+  </body>
+</html>
