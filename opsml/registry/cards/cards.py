@@ -757,6 +757,8 @@ class RunCard(ArtifactCard):
         metrics:
             Optional dictionary of key (str), value (int, float) metric paris.
             Metrics can also be added via class methods.
+        parameters:
+            Parameters associated with a RunCard
         artifacts:
             Optional dictionary of artifacts (i.e. plots, reports) to associate with
             the current run.
@@ -773,7 +775,7 @@ class RunCard(ArtifactCard):
     modelcard_uids: List[str] = []
     pipelinecard_uid: Optional[str]
     metrics: METRICS = {}
-    params: PARAMS = {}
+    parameters: PARAMS = {}
     artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
@@ -829,11 +831,11 @@ class RunCard(ArtifactCard):
         TypeChecker.check_param_type(param=value)
         param = Param(name=key, value=value)
 
-        if self.params.get(key) is not None:
-            self.params[key].append(param)
+        if self.parameters.get(key) is not None:
+            self.parameters[key].append(param)
 
         else:
-            self.params[key] = [param]
+            self.parameters[key] = [param]
 
     def log_metric(
         self,
@@ -966,7 +968,7 @@ class RunCard(ArtifactCard):
             List of dictionaries or dictionary containing value
 
         """
-        param = self.params.get(name)
+        param = self.parameters.get(name)
         if param is not None:
             if len(param) > 1:
                 return param

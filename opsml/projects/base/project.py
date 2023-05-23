@@ -135,8 +135,8 @@ class OpsmlProject:
         return self.run_data.get_metric(name=name)
 
     @property
-    def params(self) -> PARAMS:
-        return self.run_data.params
+    def parameters(self) -> PARAMS:
+        return self.run_data.parameters
 
     def get_parameter(self, name: str) -> Union[List[Param], Param]:  # type this later
         """

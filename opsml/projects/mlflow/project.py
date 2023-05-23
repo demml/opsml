@@ -155,7 +155,7 @@ class MlflowProject(OpsmlProject):
         raise ValueError(f"Metric {name} not found")
 
     @property
-    def params(self) -> PARAMS:
+    def parameters(self) -> PARAMS:
         """Returns a Run's parameters"""
         params: PARAMS = {}
         for key, value in self.run_data.params.items():
@@ -173,7 +173,7 @@ class MlflowProject(OpsmlProject):
             `Param`
 
         """
-        param = self.params.get(name)
+        param = self.parameters.get(name)
         if param is not None:
             return param[0]
 
