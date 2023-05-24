@@ -30,10 +30,8 @@ Registry = ClientRegistry
 
 
 class DataCardRegistry(Registry):
-
     # specific update logic
     def update_card(self, card: DataCard) -> None:
-
         """Updates an existing data card in the data registry
 
         Args:
@@ -44,7 +42,7 @@ class DataCardRegistry(Registry):
         """
 
         record = DataRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
+        self.update_card_record(card=record.dict())
 
     @staticmethod
     def validate(registry_name: str):
@@ -53,7 +51,6 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     def update_card(self, card: ModelCard) -> None:
-
         """Updates an existing model card
 
         Args:
@@ -64,7 +61,7 @@ class ModelCardRegistry(Registry):
         """
 
         record = ModelRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
+        self.update_card_record(card=record.dict())
 
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
@@ -121,33 +118,19 @@ class ModelCardRegistry(Registry):
         return registry_name in RegistryTableNames.MODEL
 
 
-class RunCardRegistry(Registry):
+class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.RUN
 
 
-class PipelineCardRegistry(Registry):
-    def update_card(self, card: PipelineCard) -> None:
-
-        """Updates an existing pipeline card in the pipeline registry
-
-        Args:
-            card (PipelineCard): Existing pipeline card
-
-        Returns:
-            None
-        """
-
-        record = PipelineRegistryRecord(**card.dict())
-        self.update_record(record=record.dict())
-
+class PipelineCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PIPELINE
 
 
-class ProjectCardRegistry(Registry):
+class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PROJECT
@@ -156,7 +139,6 @@ class ProjectCardRegistry(Registry):
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
-
         """Interface for connecting to any of the ArtifactCard registries
 
         Args:
@@ -181,7 +163,6 @@ class CardRegistry:
         self.table_name = self._registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
-
         """Returns a SQL registry to be used to register Cards
 
         Args:
@@ -246,7 +227,6 @@ class CardRegistry:
         uid: Optional[str] = None,
         version: Optional[str] = None,
     ) -> ArtifactCard:
-
         """Loads a specific card
 
         Args:

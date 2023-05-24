@@ -6,6 +6,8 @@
 
 <h4 align="center">Tooling for machine learning workflows</h4>
 
+Docs: https://shipt.github.io/opsml/
+
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
   <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml-artifacts/status.svg"/>

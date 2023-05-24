@@ -129,10 +129,10 @@ class SQLRegistryBase:
         """Sets a unique id to be applied to a card"""
         return uuid.uuid4().hex
 
-    def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
-    def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
     def _validate_card_type(self, card: ArtifactCard):
@@ -203,7 +203,7 @@ class SQLRegistryBase:
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
 
-        self.add_and_commit(record=record.dict())
+        self.add_and_commit(card=record.dict())
 
     def register_card(
         self,
@@ -241,7 +241,7 @@ class SQLRegistryBase:
         """
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
-        self.update_record(record=record.dict())
+        self.update_card_record(card=record.dict())
 
     def list_cards(
         self,
@@ -353,25 +353,25 @@ class ServerRegistry(SQLRegistryBase):
         return "1.0.0"
 
     @log_card_change
-    def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        sql_record = self._table(**record)
+    def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        sql_record = self._table(**card)
 
         with self._session() as sess:
             sess.add(sql_record)
             sess.commit()
 
-        return record, "registered"
+        return card, "registered"
 
     @log_card_change
-    def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        record_uid = cast(str, record.get("uid"))
+    def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        record_uid = cast(str, card.get("uid"))
 
         with self._session() as sess:
             query = sess.query(self._table).filter(self._table.uid == record_uid)
-            query.update(record)
+            query.update(card)
             sess.commit()
 
-        return record, "updated"
+        return card, "updated"
 
     def _parse_sql_results(self, results: Any) -> List[Dict[str, Any]]:
         """
@@ -528,10 +528,10 @@ class ClientRegistry(SQLRegistryBase):
                 Unique identifier for DataCard. If present, the uid takes precedence.
 
         Returns:
-            Dictionary of records
+            Dictionary of card records
         """
         data = self._session.post_request(
-            route=api_routes.LIST,
+            route=api_routes.LIST_CARDS,
             json={
                 "name": name,
                 "team": team,
@@ -542,34 +542,34 @@ class ClientRegistry(SQLRegistryBase):
             },
         )
 
-        return data["records"]
+        return data["cards"]
 
     @log_card_change
-    def add_and_commit(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
-            route=api_routes.CREATE,
+            route=api_routes.CREATE_CARD,
             json={
-                "record": record,
+                "card": card,
                 "table_name": self.table_name,
             },
         )
 
         if bool(data.get("registered")):
-            return record, "registered"
+            return card, "registered"
         raise ValueError("Failed to register card")
 
     @log_card_change
-    def update_record(self, record: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
-            route=api_routes.UPDATE,
+            route=api_routes.UPDATE_CARD,
             json={
-                "record": record,
+                "card": card,
                 "table_name": self.table_name,
             },
         )
 
         if bool(data.get("updated")):
-            return record, "updated"
+            return card, "updated"
         raise ValueError("Failed to update card")
 
     @staticmethod

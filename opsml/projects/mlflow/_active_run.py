@@ -118,8 +118,8 @@ class MlflowActiveRun(ActiveRun):
         return self.run_data.metrics
 
     @property
-    def params(self) -> PARAMS:
-        return self.run_data.params
+    def parameterss(self) -> PARAMS:
+        return self.run_data.parameters
 
     @property
     def tags(self) -> dict[str, str]:
