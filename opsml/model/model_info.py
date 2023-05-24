@@ -69,7 +69,7 @@ class ModelData:
 
     @property
     def num_dtypes(self) -> int:
-        return NotImplementedError
+        raise NotImplementedError
 
     @property
     def feaure_dict(self) -> Dict[str, Feature]:
