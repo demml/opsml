@@ -260,7 +260,7 @@ class LoadedRunRecord(LoadRecord):
     artifacts: Dict[str, Any] = {}
     metrics: METRICS
     project_id: Optional[str]
-    params: PARAMS
+    parameters: PARAMS
     tags: Dict[str, str]
     runcard_uri: str
 
