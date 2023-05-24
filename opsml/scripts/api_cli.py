@@ -111,9 +111,9 @@ def download_model(
     Example:
 
         ```bash
-        opsml-api download-model --name "linear-reg" --team "mlops" --write-dir ".models" --no-onnx # original model
-        opsml-api download-model --name "linear-reg" --team "mlops" --write-dir ".models" --onnx # onnx model
-        opsml-api download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
+        opsml-cli download-model --name "linear-reg" --team "mlops" --write-dir ".models" --no-onnx # original model
+        opsml-cli download-model --name "linear-reg" --team "mlops" --write-dir ".models" --onnx # onnx model
+        opsml-cli download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
         ```
 
     """
@@ -170,8 +170,8 @@ def download_model_metadata(
     Example:
 
         ```bash
-        opsml-api download-model-metadata --name "linear-reg" --team "mlops" --write-dir ".models"
-        opsml-api download-model-metadata --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
+        opsml-cli download-model-metadata --name "linear-reg" --team "mlops" --write-dir ".models"
+        opsml-cli download-model-metadata --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
         ```
 
     """
@@ -223,7 +223,7 @@ def list_cards(
     Example:
 
         ```bash
-        opsml-api list-card --name "linear-reg" --team "mlops"
+        opsml-cli list-card --name "linear-reg" --team "mlops"
         ```
 
     """
