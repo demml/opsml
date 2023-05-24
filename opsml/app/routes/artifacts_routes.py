@@ -75,7 +75,7 @@ def get_storage_settings() -> StorageSettingsResponse:
     )
 
 
-@router.post("/check_uid", response_model=UidExistsResponse, name="check_uid")
+@router.post("/cards/uid", response_model=UidExistsResponse, name="check_uid")
 def check_uid(
     request: Request,
     payload: UidExistsRequest = Body(...),
@@ -92,7 +92,7 @@ def check_uid(
     return UidExistsResponse(uid_exists=False)
 
 
-@router.post("/version", response_model=Union[VersionResponse, UidExistsResponse], name="version")
+@router.post("/cards/version", response_model=Union[VersionResponse, UidExistsResponse], name="version")
 def set_version(
     request: Request,
     payload: VersionRequest = Body(...),
@@ -110,7 +110,7 @@ def set_version(
     return VersionResponse(version=version)
 
 
-@router.post("/list_cards", response_model=ListResponse, name="list_cards")
+@router.post("/cards/list", response_model=ListResponse, name="list_cards")
 def list_cards(
     request: Request,
     payload: ListRequest = Body(...),
@@ -149,7 +149,7 @@ def list_cards(
         ) from error
 
 
-@router.post("/create_card", response_model=AddCardResponse, name="create_card")
+@router.post("/cards/create", response_model=AddCardResponse, name="create_card")
 def add_card(
     request: Request,
     payload: AddCardRequest = Body(...),
@@ -162,7 +162,7 @@ def add_card(
     return AddCardResponse(registered=True)
 
 
-@router.post("/update_card", response_model=UpdateCardResponse, name="update_card")
+@router.post("/cards/update", response_model=UpdateCardResponse, name="update_card")
 def update_card(
     request: Request,
     payload: UpdateCardRequest = Body(...),
@@ -176,7 +176,7 @@ def update_card(
     return UpdateCardResponse(updated=True)
 
 
-@router.post("/download_model_metadata", name="download_model_metadata")
+@router.post("/models/metadata", name="download_model_metadata")
 def download_model_metadata(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
     """
     Downloads a Model API definition
@@ -310,7 +310,7 @@ async def upload_file(request: Request):
     }
 
 
-@router.post("/download_file", name="download_file")
+@router.post("/files/download", name="download_file")
 def download_file(
     request: Request,
     payload: DownloadFileRequest,
@@ -342,7 +342,7 @@ def download_file(
         ) from error
 
 
-@router.post("/list_files", name="list_files")
+@router.post("/files/list", name="list_files")
 def list_files(
     request: Request,
     payload: ListFileRequest,

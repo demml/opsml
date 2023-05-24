@@ -10,16 +10,16 @@ PATH_PREFIX = "opsml"
 
 
 class ApiRoutes:
-    CHECK_UID = "check_uid"
-    VERSION = "version"
-    LIST_CARDS = "list_cards"
+    CHECK_UID = "cards/uid"
+    VERSION = "cards/version"
+    LIST_CARDS = "cards/list"
     SETTINGS = "settings"
-    CREATE_CARD = "create_card"
-    UPDATE_CARD = "update_card"
+    CREATE_CARD = "cards/create"
+    UPDATE_CARD = "cards/update"
     UPLOAD = "upload"
-    DOWNLOAD_MODEL_METADATA = "download_model_metadata"
-    DOWNLOAD_FILE = "download_file"
-    LIST_FILES = "list_files"
+    DOWNLOAD_MODEL_METADATA = "models/metadata"
+    DOWNLOAD_FILE = "files/download"
+    LIST_FILES = "files/list"
 
 
 api_routes = ApiRoutes()
