@@ -7,6 +7,7 @@ import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ValidationError
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry
+from opsml.helpers.request_helpers import ApiRoutes
 import uuid
 import tenacity
 import json
@@ -15,7 +16,7 @@ import json
 def test_client(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get("/opsml/settings")
+    response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
 
     assert response.status_code == 200
     assert response.json()["proxy"] == True
@@ -451,7 +452,9 @@ def test_download_model(
     model_registry.register_card(model_card)
 
     result = ""
-    with test_app.stream(method="POST", url="opsml/download_model_metadata", json={"uid": model_card.uid}) as response:
+    with test_app.stream(
+        method="POST", url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"uid": model_card.uid}
+    ) as response:
         for data in response.iter_bytes():
             result += data.decode("utf-8")
 
@@ -463,7 +466,7 @@ def test_download_model(
 
 
 def test_download_model_failure(test_app: TestClient):
-    response = test_app.post(url="opsml/download_model_metadata", json={"name": "pip"})
+    response = test_app.post(url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
     assert response.status_code == 500
