@@ -222,6 +222,9 @@ class SklearnOnnxModel(ModelConverter):
             logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
             return self.data_converter.converter.convert_to_float(convert_all=True)
 
+        if not self._is_pipeline and self.model_info.model_data.num_dtypes > 1:
+            return self.data_converter.converter.convert_to_float(convert_all=True)
+
         logger.warning("Converting all float64 data to float32")
         return self.data_converter.converter.convert_to_float(convert_all=False)
 

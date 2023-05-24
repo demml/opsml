@@ -1034,6 +1034,7 @@ def decision_tree_regressor(regression_data):
 @pytest.fixture(scope="module")
 def decision_tree_classifier():
     data = pd.read_csv("tests/assets/titanic.csv", index_col=False)
+    data["AGE"] = data["AGE"].astype("float64")
 
     X = data
     y = data.pop("SURVIVED")
