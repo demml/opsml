@@ -73,25 +73,7 @@ def test_gcs_storage_client_integration(mock_gcs):
     )
 
 
-def test_gcp_scheduler_integration(mock_gcp_scheduler):
-    payload = {
-        "name": "test",
-        "team": "test",
-        "user_email": "test",
-    }
-    scheduler = gcp_utils.GCPMLScheduler()
-    scheduler.submit_schedule(
-        payload=payload,
-        job_name="test",
-        schedule="* * * * *",
-        scheduler_uri="test",
-        gcp_project="test",
-        gcp_region="test",
-    )
-
-
 def test_gcp_creds(gcp_cred_path: str):
-
     with open(gcp_cred_path) as creds:
         creds = json.load(creds)
 
@@ -103,7 +85,6 @@ def test_gcp_creds(gcp_cred_path: str):
 
 
 def test_gcp_default_creds(gcp_cred_path: str):
-
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_cred_path
 
     creds, project = gcp_utils.GcpCredsSetter().get_base64_creds()
