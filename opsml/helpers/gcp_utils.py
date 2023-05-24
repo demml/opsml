@@ -1,13 +1,12 @@
 import base64
 import json
 import os
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Optional, Tuple, Union, cast
 
 import google.auth
 from google.auth.credentials import Credentials
 from google.cloud import storage  # type: ignore
 from google.oauth2 import service_account
-from google.protobuf import duration_pb2
 from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
