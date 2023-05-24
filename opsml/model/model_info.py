@@ -68,6 +68,10 @@ class ModelData:
         raise NotImplementedError
 
     @property
+    def num_dtypes(self) -> int:
+        return NotImplementedError
+
+    @property
     def feaure_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_, shape in zip(self.features, self.dtypes, self.shape):
@@ -110,6 +114,10 @@ class NumpyData(ModelData):
         return [str(self.data.dtype).lower()]
 
     @property
+    def num_dtypes(self) -> int:
+        return len(self.data.dtype)
+
+    @property
     def shape(self) -> Tuple[int, ...]:
         return self.data.shape
 
@@ -142,6 +150,10 @@ class PandasDataFrame(ModelData):
     @property
     def dtypes(self) -> List[str]:
         return [str(type_).lower() for type_ in self.data.dtypes.to_list()]
+
+    @property
+    def num_dtypes(self) -> int:
+        return len(set(self.dtypes))
 
     @property
     def features(self) -> List[str]:
@@ -181,6 +193,10 @@ class DataDictionary(ModelData):
     @property
     def dtypes(self) -> List[str]:
         return [str(value.dtype).lower() for _, value in self.data.items()]
+
+    @property
+    def num_dtypes(self) -> int:
+        return len(set(self.dtypes))
 
     @property
     def shape(self) -> List[Tuple[int, ...]]:
