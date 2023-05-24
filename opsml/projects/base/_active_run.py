@@ -257,8 +257,8 @@ class ActiveRun:
         return self.runcard.metrics
 
     @property
-    def params(self) -> PARAMS:
-        return self.runcard.params
+    def parameters(self) -> PARAMS:
+        return self.runcard.parameters
 
     @property
     def tags(self) -> dict[str, str]:

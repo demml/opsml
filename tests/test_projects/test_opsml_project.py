@@ -49,7 +49,6 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
         # save and artifact
         array = np.random.random((10, 10))
         run.log_artifact(name="array", artifact=array)
-
         info.run_id = run.run_id
 
         assert data_card.runcard_uid == run.run_id
@@ -63,7 +62,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
 
     assert len(proj.metrics) == 1
     assert proj.get_metric("m1").value == 1.1
-    assert len(proj.params) == 1
+    assert len(proj.parameters) == 1
     assert proj.get_parameter("m1").value == "apple"
 
     # Load model card
@@ -88,9 +87,14 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     loaded_data_card.load_data()
     assert loaded_data_card.data is not None
 
+    assert run.metrics["m1"][0].value == 1.1
+    assert run.parameters["m1"][0].value == "apple"
+
     # Attempt to write register cards / log params / log metrics w/o the run being active
     with pytest.raises(ValueError):
         run.register_card(data_card)
+    with pytest.raises(NotImplementedError):
+        run.run_data
     with pytest.raises(ValueError):
         run.log_parameter(key="param1", value="value1")
     with pytest.raises(ValueError):
@@ -115,6 +119,8 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
         run.log_parameter(key="m1", value="apple")
         info.run_id = run.run_id
 
+        assert run.run_name == "test"
+
     new_proj = conftest.mock_opsml_project(info)
 
     with new_proj.run() as run:
@@ -127,7 +133,7 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
     assert len(read_project.metrics) == 2
     assert read_project.get_metric("m1").value == 1.1
     assert read_project.get_metric("m2").value == 1.2
-    assert len(read_project.params) == 2
+    assert len(read_project.parameters) == 2
     assert read_project.get_parameter("m1").value == "apple"
     assert read_project.get_parameter("m2").value == "banana"
 

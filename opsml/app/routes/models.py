@@ -57,28 +57,28 @@ class ListRequest(BaseModel):
 
 
 class ListResponse(BaseModel):
-    records: Optional[List[Dict[str, Any]]]
+    cards: Optional[List[Dict[str, Any]]]
 
 
-class AddRecordRequest(BaseModel):
-    record: Dict[str, Any]
+class AddCardRequest(BaseModel):
+    card: Dict[str, Any]
     table_name: str
 
 
-class AddRecordResponse(BaseModel):
+class AddCardResponse(BaseModel):
     registered: bool
 
 
-class UpdateRecordRequest(BaseModel):
-    record: Dict[str, Any]
+class UpdateCardRequest(BaseModel):
+    card: Dict[str, Any]
     table_name: str
 
 
-class UpdateRecordResponse(BaseModel):
+class UpdateCardResponse(BaseModel):
     updated: bool
 
 
-class QueryRecordRequest(BaseModel):
+class QuerycardRequest(BaseModel):
     name: Optional[str]
     team: Optional[str]
     version: Optional[str]
@@ -86,8 +86,8 @@ class QueryRecordRequest(BaseModel):
     table_name: str
 
 
-class QueryRecordResponse(BaseModel):
-    record: Dict[str, Any]
+class QuerycardResponse(BaseModel):
+    card: Dict[str, Any]
 
 
 class DownloadModelRequest(BaseModel):

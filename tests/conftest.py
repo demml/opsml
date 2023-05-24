@@ -70,7 +70,6 @@ from opsml.projects.mlflow import MlflowProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.projects import OpsmlProject
-from opsml.deploy.fastapi.api import ModelApi
 
 
 # testing
@@ -376,7 +375,7 @@ def experiment_table_to_migrate():
         project_id = Column("project_id", String(512))
         artifact_uris = Column("artifact_uris", JSON)
         metrics = Column("metrics", JSON)
-        params = Column("params", JSON)
+        parameters = Column("parameters", JSON)
         tags = Column("tags", JSON)
 
     class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
@@ -427,9 +426,7 @@ def db_registries():
 @pytest.fixture(scope="function")
 def mock_model_cli_loader(db_registries):
     model_registry = db_registries["model"]
-    from pathlib import Path
     from opsml.scripts.load_model_card import ModelLoader
-    from opsml.model.types import ModelMetadata
 
     class MockModelLoader(ModelLoader):
         @property
@@ -941,15 +938,6 @@ def sklearn_pipeline_api_example():
 
 
 @pytest.fixture(scope="module")
-def fastapi_model_app():
-    model_api = ModelApi(port=8000)
-    model_api.build_api()
-    app = model_api.app
-
-    return app
-
-
-@pytest.fixture(scope="module")
 def test_fastapi_client(fastapi_model_app):
     with TestClient(fastapi_model_app) as test_client:
         yield test_client
@@ -1044,8 +1032,12 @@ def decision_tree_regressor(regression_data):
 
 
 @pytest.fixture(scope="module")
-def decision_tree_classifier(classification_data):
-    X, y = classification_data
+def decision_tree_classifier():
+    data = pd.read_csv("tests/assets/titanic.csv", index_col=False)
+
+    X = data
+    y = data.pop("SURVIVED")
+
     clf = tree.DecisionTreeClassifier(max_depth=5).fit(X, y)
     clf.fit(X, y)
     return clf, X

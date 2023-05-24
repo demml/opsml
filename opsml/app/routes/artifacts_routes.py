@@ -11,8 +11,8 @@ from streaming_form_data.validators import MaxSizeValidator
 
 from opsml.app.core.config import config
 from opsml.app.routes.models import (
-    AddRecordRequest,
-    AddRecordResponse,
+    AddCardRequest,
+    AddCardResponse,
     DownloadFileRequest,
     DownloadModelRequest,
     ListFileRequest,
@@ -22,8 +22,8 @@ from opsml.app.routes.models import (
     StorageSettingsResponse,
     UidExistsRequest,
     UidExistsResponse,
-    UpdateRecordRequest,
-    UpdateRecordResponse,
+    UpdateCardRequest,
+    UpdateCardResponse,
     VersionRequest,
     VersionResponse,
 )
@@ -75,7 +75,7 @@ def get_storage_settings() -> StorageSettingsResponse:
     )
 
 
-@router.post("/check_uid", response_model=UidExistsResponse, name="check_uid")
+@router.post("/cards/uid", response_model=UidExistsResponse, name="check_uid")
 def check_uid(
     request: Request,
     payload: UidExistsRequest = Body(...),
@@ -92,7 +92,7 @@ def check_uid(
     return UidExistsResponse(uid_exists=False)
 
 
-@router.post("/version", response_model=Union[VersionResponse, UidExistsResponse], name="version")
+@router.post("/cards/version", response_model=Union[VersionResponse, UidExistsResponse], name="version")
 def set_version(
     request: Request,
     payload: VersionRequest = Body(...),
@@ -110,7 +110,7 @@ def set_version(
     return VersionResponse(version=version)
 
 
-@router.post("/list", response_model=ListResponse, name="list")
+@router.post("/cards/list", response_model=ListResponse, name="list_cards")
 def list_cards(
     request: Request,
     payload: ListRequest = Body(...),
@@ -121,7 +121,7 @@ def list_cards(
         table_for_registry = payload.table_name.split("_")[1].lower()
         registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-        records = registry.list_cards(
+        cards = registry.list_cards(
             uid=payload.uid,
             name=payload.name,
             team=payload.team,
@@ -131,16 +131,16 @@ def list_cards(
         )
 
         if config.is_proxy:
-            records = [
+            cards = [
                 replace_proxy_root(
-                    record=record,
+                    card=card,
                     storage_root=config.STORAGE_URI,
                     proxy_root=config.proxy_root,
                 )
-                for record in records
+                for card in cards
             ]
 
-        return ListResponse(records=records)
+        return ListResponse(cards=cards)
 
     except Exception as error:
         raise HTTPException(
@@ -149,34 +149,34 @@ def list_cards(
         ) from error
 
 
-@router.post("/create", response_model=AddRecordResponse, name="create")
-def add_record(
+@router.post("/cards/create", response_model=AddCardResponse, name="create_card")
+def add_card(
     request: Request,
-    payload: AddRecordRequest = Body(...),
-) -> AddRecordResponse:
+    payload: AddCardRequest = Body(...),
+) -> AddCardResponse:
     """Adds Card record to a registry"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    registry._registry.add_and_commit(record=payload.record)
-    return AddRecordResponse(registered=True)
+    registry._registry.add_and_commit(card=payload.card)
+    return AddCardResponse(registered=True)
 
 
-@router.post("/update", response_model=UpdateRecordResponse, name="update")
-def update_record(
+@router.post("/cards/update", response_model=UpdateCardResponse, name="update_card")
+def update_card(
     request: Request,
-    payload: UpdateRecordRequest = Body(...),
-) -> UpdateRecordResponse:
+    payload: UpdateCardRequest = Body(...),
+) -> UpdateCardResponse:
     """Updates a specific artifact card"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    registry._registry.update_record(record=payload.record)
+    registry._registry.update_card_record(card=payload.card)
 
-    return UpdateRecordResponse(updated=True)
+    return UpdateCardResponse(updated=True)
 
 
-@router.post("/download_model_metadata", name="download_model_metadata")
+@router.post("/models/metadata", name="download_model_metadata")
 def download_model_metadata(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
     """
     Downloads a Model API definition
@@ -198,7 +198,7 @@ def download_model_metadata(request: Request, payload: DownloadModelRequest) -> 
     registry: CardRegistry = getattr(request.app.state.registries, "model")
     storage_client = request.app.state.storage_client
 
-    records: List[Dict[str, Any]] = registry.list_cards(
+    cards: List[Dict[str, Any]] = registry.list_cards(
         name=payload.name,
         team=payload.team,
         version=payload.version,
@@ -206,13 +206,10 @@ def download_model_metadata(request: Request, payload: DownloadModelRequest) -> 
         as_dataframe=False,
     )
 
-    if len(records) > 1:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="More than one model found",
-        )
+    if len(cards) > 1:
+        logger.warning("More than one model found. Returning latest")
 
-    if not bool(records):
+    if not bool(cards):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No model found",
@@ -220,14 +217,14 @@ def download_model_metadata(request: Request, payload: DownloadModelRequest) -> 
 
     # swap mlflow proxy root if needed
     if config.is_proxy:
-        record = replace_proxy_root(
-            record=records[0],
+        card = replace_proxy_root(
+            card=cards[0],
             storage_root=config.STORAGE_URI,
             proxy_root=config.proxy_root,
         )
 
     headers = {"Content-Disposition": f'attachment; filename="{MODEL_METADATA_FILE}"'}
-    meta_data_uri = record.get("model_metadata_uri")
+    meta_data_uri = card.get("model_metadata_uri")
 
     try:
         return StreamingResponse(
@@ -313,7 +310,7 @@ async def upload_file(request: Request):
     }
 
 
-@router.post("/download_file", name="download_file")
+@router.post("/files/download", name="download_file")
 def download_file(
     request: Request,
     payload: DownloadFileRequest,
@@ -345,7 +342,7 @@ def download_file(
         ) from error
 
 
-@router.post("/list_files", name="list_files")
+@router.post("/files/list", name="list_files")
 def list_files(
     request: Request,
     payload: ListFileRequest,

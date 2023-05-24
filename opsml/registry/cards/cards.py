@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -233,6 +235,33 @@ class DataCard(ArtifactCard):
         """
         Loops through data splits and splits data either by indexing or
         column values
+
+        Example:
+
+            ```python
+            card_info = CardInfo(name="linnerrud", team="tutorial", user_email="user@email.com")
+            data_card = DataCard(
+                info=card_info,
+                data=data,
+                dependent_vars=["Pulse"],
+                # define splits
+                data_splits=[
+                    {"label": "train", "indices": train_idx},
+                    {"label": "test", "indices": test_idx},
+                ],
+
+            )
+
+            splits = data_card.split_data()
+            print(splits.train.X.head())
+
+               Chins  Situps  Jumps
+            0    5.0   162.0   60.0
+            1    2.0   110.0   60.0
+            2   12.0   101.0  101.0
+            3   12.0   105.0   37.0
+            4   13.0   155.0   58.0
+            ```
 
         Returns
             Class containing data splits
@@ -728,6 +757,8 @@ class RunCard(ArtifactCard):
         metrics:
             Optional dictionary of key (str), value (int, float) metric paris.
             Metrics can also be added via class methods.
+        parameters:
+            Parameters associated with a RunCard
         artifacts:
             Optional dictionary of artifacts (i.e. plots, reports) to associate with
             the current run.
@@ -744,7 +775,7 @@ class RunCard(ArtifactCard):
     modelcard_uids: List[str] = []
     pipelinecard_uid: Optional[str]
     metrics: METRICS = {}
-    params: PARAMS = {}
+    parameters: PARAMS = {}
     artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
@@ -800,11 +831,11 @@ class RunCard(ArtifactCard):
         TypeChecker.check_param_type(param=value)
         param = Param(name=key, value=value)
 
-        if self.params.get(key) is not None:
-            self.params[key].append(param)
+        if self.parameters.get(key) is not None:
+            self.parameters[key].append(param)
 
         else:
-            self.params[key] = [param]
+            self.parameters[key] = [param]
 
     def log_metric(
         self,
@@ -937,7 +968,7 @@ class RunCard(ArtifactCard):
             List of dictionaries or dictionary containing value
 
         """
-        param = self.params.get(name)
+        param = self.parameters.get(name)
         if param is not None:
             if len(param) > 1:
                 return param

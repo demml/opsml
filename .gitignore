@@ -2,6 +2,9 @@
 mlruns/
 opsml/api/
 
+# vscode
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -116,3 +119,4 @@ test_scripts*
 tmp.db
 opsml_artifacts
 opsml/deploy/seldon/api_test.txt
+docs/site/

@@ -228,9 +228,9 @@ class FloatTypeConverter:
         for feature, feature_type in zip(data.columns, data.dtypes):
             if not self.convert_all:
                 if DataDtypes.FLOAT64 in str(feature_type):
-                    data[feature] = data[feature].astype(np.float32)
+                    data[feature] = data.loc[:, [feature]].astype(np.float32)
             else:
-                data[feature] = data[feature].astype(np.float32)
+                data[feature] = data.loc[:, [feature]].astype(np.float32)
         return data
 
     def _convert_array(self, data: NDArray) -> NDArray:

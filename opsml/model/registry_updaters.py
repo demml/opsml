@@ -1,5 +1,6 @@
 # pylint: disable=import-outside-toplevel
 """Code for generating Onnx Models"""
+import warnings
 
 # Get logger
 from opsml.helpers.logging import ArtifactLogger
@@ -44,7 +45,10 @@ class LightGBMRegistryUpdater(RegistryUpdater):
         from onnxmltools.convert.lightgbm.operator_converters.LightGbm import (
             convert_lightgbm,
         )
-        from skl2onnx import update_registered_converter
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx import update_registered_converter
 
         alias = self.determine_estimator()
         output_calculator, options = self.get_output_conversion_tools()
@@ -69,10 +73,13 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
         return "XGBClassifier"
 
     def get_output_conversion_tools(self):
-        from skl2onnx.common.shape_calculator import (
-            calculate_linear_classifier_output_shapes,
-            calculate_linear_regressor_output_shapes,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+
+            from skl2onnx.common.shape_calculator import (
+                calculate_linear_classifier_output_shapes,
+                calculate_linear_regressor_output_shapes,
+            )
 
         if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
             return calculate_linear_regressor_output_shapes
@@ -85,7 +92,10 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
         from onnxmltools.convert.xgboost.operator_converters.XGBoost import (
             convert_xgboost,
         )
-        from skl2onnx import update_registered_converter
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx import update_registered_converter
 
         alias = self.determine_estimator()
         output_calculator = self.get_output_conversion_tools()

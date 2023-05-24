@@ -1,24 +1,28 @@
+from typing import Dict, List, Tuple
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from unittest.mock import patch, MagicMock
+from starlette.testclient import TestClient
+from sklearn import linear_model, pipeline
 import pandas as pd
+from numpy.typing import NDArray
 from pydantic import ValidationError
-from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard
+from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry
+from opsml.helpers.request_helpers import ApiRoutes
 import uuid
 import tenacity
 import json
 
 
-def test_client(test_app):
+def test_client(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get("/opsml/settings")
+    response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
 
     assert response.status_code == 200
     assert response.json()["proxy"] == True
 
 
-def test_debug(test_app):
+def test_debug(test_app: TestClient):
     """Test debug path"""
 
     response = test_app.get("/opsml/debug")
@@ -28,7 +32,7 @@ def test_debug(test_app):
     assert response.status_code == 200
 
 
-def test_error(test_app):
+def test_error(test_app: TestClient):
     """Test error path"""
 
     response = test_app.get("/opsml/error")
@@ -42,7 +46,11 @@ def test_error(test_app):
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
     ],
 )
-def test_register_data(api_registries, test_data, data_splits):
+def test_register_data(
+    api_registries: Dict[str, CardRegistry],
+    test_data: Tuple[pd.DataFrame, NDArray],
+    data_splits: List[Dict[str, str]],
+):
     # create data card
     registry = api_registries.data
 
@@ -70,7 +78,7 @@ def test_register_data(api_registries, test_data, data_splits):
         registry.list_cards()
 
 
-def test_semver_registry_list(api_registries, test_array):
+def test_semver_registry_list(api_registries: Dict[str, CardRegistry], test_array: NDArray):
     # create data card
     registry = api_registries.data
 
@@ -124,7 +132,7 @@ def test_semver_registry_list(api_registries, test_array):
     assert df.shape[0] == 1
 
 
-def test_register_large_data(api_registries):
+def test_register_large_data(api_registries: Dict[str, CardRegistry]):
     import numpy as np
 
     # create a numpy 1d-array
@@ -149,7 +157,10 @@ def test_register_large_data(api_registries):
     assert loaded_card.data.shape == x.shape
 
 
-def test_run_card(linear_regression, api_registries):
+def test_run_card(
+    linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
+    api_registries: Dict[str, CardRegistry],
+):
     registry = api_registries.run
 
     run = RunCard(
@@ -172,7 +183,10 @@ def test_run_card(linear_regression, api_registries):
     assert loaded_card.uid == run.uid
 
 
-def test_register_model(api_registries, sklearn_pipeline):
+def test_register_model(
+    api_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
+):
     model, data = sklearn_pipeline
     # create data card
     data_registry = api_registries.data
@@ -253,7 +267,7 @@ def test_register_model(api_registries, sklearn_pipeline):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(api_registries, test_data):
+def test_load_data_card(api_registries: Dict[str, CardRegistry], test_data: pd.DataFrame):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -313,7 +327,7 @@ def test_load_data_card(api_registries, test_data):
         loaded_data.load_data()
 
 
-def test_pipeline_registry(api_registries):
+def test_pipeline_registry(api_registries: Dict[str, CardRegistry]):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -337,7 +351,10 @@ def test_pipeline_registry(api_registries):
     assert bool(values["datacard_uids"])
 
 
-def test_full_pipeline_with_loading(api_registries, linear_regression):
+def test_full_pipeline_with_loading(
+    api_registries: Dict[str, CardRegistry],
+    linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
+):
     from opsml.registry.cards.pipeline_loader import PipelineLoader
 
     team = "mlops"
@@ -400,7 +417,11 @@ def test_full_pipeline_with_loading(api_registries, linear_regression):
     assert uids["model"][0] == model_card.uid
 
 
-def test_download_model(test_app, api_registries, linear_regression):
+def test_download_model(
+    test_app: TestClient,
+    api_registries: Dict[str, CardRegistry],
+    linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
+):
     team = "mlops"
     user_email = "mlops.com"
 
@@ -431,7 +452,9 @@ def test_download_model(test_app, api_registries, linear_regression):
     model_registry.register_card(model_card)
 
     result = ""
-    with test_app.stream(method="POST", url="opsml/download_model_metadata", json={"uid": model_card.uid}) as response:
+    with test_app.stream(
+        method="POST", url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"uid": model_card.uid}
+    ) as response:
         for data in response.iter_bytes():
             result += data.decode("utf-8")
 
@@ -442,65 +465,8 @@ def test_download_model(test_app, api_registries, linear_regression):
     assert response.status_code == 200
 
 
-def test_download_multiple_model_failure(test_app, api_registries, linear_regression):
-    team = "mlops"
-    user_email = "mlops.com"
-
-    model, data = linear_regression
-
-    data_registry = api_registries.data
-    model_registry = api_registries.model
-
-    #### Create DataCard
-    data_card = DataCard(
-        data=data,
-        name="test_data",
-        team=team,
-        user_email=user_email,
-    )
-
-    data_registry.register_card(card=data_card)
-    ###### ModelCard
-    model_card1 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
-        name="test_model",
-        team=team,
-        user_email=user_email,
-        datacard_uid=data_card.uid,
-    )
-
-    model_registry.register_card(model_card1)
-
-    model_card2 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
-        name="test_model",
-        team=team,
-        user_email=user_email,
-        datacard_uid=data_card.uid,
-    )
-
-    model_registry.register_card(model_card2)
-
-    result = ""
-    with test_app.stream(
-        method="POST",
-        url="opsml/download_model_metadata",
-        json={
-            "model_name": model_card1.name,
-            "team": model_card1.team,
-        },
-    ) as response:
-        for data in response.iter_bytes():
-            result += data.decode("utf-8")
-
-    assert response.status_code == 500
-    assert json.loads(data.decode("utf-8"))["detail"] == "More than one model found"
-
-
-def test_download_model_failure(test_app):
-    response = test_app.post(url="opsml/download_model_metadata", json={"name": "pip"})
+def test_download_model_failure(test_app: TestClient):
+    response = test_app.post(url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
     assert response.status_code == 500

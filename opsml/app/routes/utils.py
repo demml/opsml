@@ -17,11 +17,11 @@ def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
 
 
 def replace_proxy_root(
-    record: Dict[str, Any],
+    card: Dict[str, Any],
     storage_root: str,
     proxy_root: str,
 ) -> Dict[str, Any]:
-    for name, value in record.items():
+    for name, value in card.items():
         if "uri" in name:
             if isinstance(value, str):
                 real_path = get_real_path(
@@ -29,16 +29,16 @@ def replace_proxy_root(
                     proxy_root=proxy_root,
                     storage_root=storage_root,
                 )
-                record[name] = real_path
+                card[name] = real_path
 
         if isinstance(value, dict):
             replace_proxy_root(
-                record=value,
+                card=value,
                 storage_root=storage_root,
                 proxy_root=proxy_root,
             )
 
-    return record
+    return card
 
 
 class MaxBodySizeException(Exception):
