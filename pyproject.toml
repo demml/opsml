@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "0.3.4"
+version = "0.3.5"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -109,7 +109,6 @@ mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 
 [tool.poetry.scripts]
 load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file"
-install_integration = "opsml.scripts.install_integration:install_extra_packages"
 opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
 opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
 opsml-cli = "opsml.scripts.api_cli:app"
