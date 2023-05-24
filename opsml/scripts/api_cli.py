@@ -89,7 +89,7 @@ def download_model(
     version: str = typer.Option(default=None),
     uid: str = typer.Option(default=None),
     onnx: bool = typer.Option(default=True),
-    write_dir: str = typer.Option(default=None),
+    write_dir: str = typer.Option(default=...),
 ):
     """
     Downloads a model (onnx or original model) associated with a model card
@@ -106,7 +106,7 @@ def download_model(
         onnx:
             Whether to return onnx model or original model (no-onnx)
         write_dir:
-            Director to write to
+            Directory to write to (required)
 
     Example:
 
@@ -150,7 +150,7 @@ def download_model_metadata(
     team: str = typer.Option(default=None),
     version: str = typer.Option(default=None),
     uid: str = typer.Option(default=None),
-    write_dir: str = typer.Option(default=None),
+    write_dir: str = typer.Option(),
 ):
     """
     Downloads model metadata associated with a model card
