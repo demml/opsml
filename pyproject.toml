@@ -46,6 +46,9 @@ uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
 streaming-form-data = {version="^1.11.0", optional = true}
 
+# optional dependencies for gcp
+gcsfs = {version="^2023.5.0", optional = true}
+
 # optional dependencies for cloud-sql
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
 pg8000 = {version="^1.29.4", optional = true}
@@ -58,8 +61,8 @@ graphviz = {version="^0.20.1", optional = true}
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
 mlflow = ["mlflow", "libclang", "llvmlite", "numba"]
 graphviz = ["graphviz"]
-gcp_mysql = ["cloud-sql-python-connector", "pymysql"]
-gcp_postgres = ["cloud-sql-python-connector", "pg8000"]
+gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
+gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]
 postgres = ["psycopg2"]
 
 [tool.poetry.group.dev]

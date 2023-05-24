@@ -471,3 +471,6 @@ def test_download_model_failure(test_app: TestClient):
     # should fail
     assert response.status_code == 500
     assert response.json()["detail"] == "No model found"
+
+def test_app_with_login(test_app_login:TestClient):
+    
