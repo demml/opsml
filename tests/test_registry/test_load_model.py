@@ -1,11 +1,17 @@
+from typing import Dict, Any
 from click.testing import CliRunner
 from opsml.scripts.load_model_card import load_model_card_to_file
 from opsml.model.types import ModelDownloadInfo
+from opsml.registry import CardRegistry, ModelCard
 from unittest.mock import patch, MagicMock
 from tests.conftest import cleanup
 
 
-def test_cli_class(db_registries, mock_model_cli_loader, test_model_card):
+def test_cli_class(
+    db_registries: Dict[str, CardRegistry],
+    mock_model_cli_loader: Any,
+    test_model_card: ModelCard,
+):
     with patch.multiple(
         "opsml.registry.sql.registry.CardRegistry",
         load_card=MagicMock(return_value=test_model_card),
@@ -28,7 +34,10 @@ def test_cli_class(db_registries, mock_model_cli_loader, test_model_card):
     cleanup()
 
 
-def test_load_model_card_version(mock_model_cli_loader, test_model_card):
+def test_load_model_card_version(
+    mock_model_cli_loader: Any,
+    test_model_card: ModelCard,
+):
     with patch.multiple(
         "opsml.registry.sql.registry.CardRegistry",
         load_card=MagicMock(return_value=test_model_card),

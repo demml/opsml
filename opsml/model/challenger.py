@@ -20,32 +20,36 @@ class BattleReport:
 # eventually find a way to tell if a model has been deployed and use that for comparison as well
 class ModelChallenger:
     @experimental_feature
-    def __init__(
-        self,
-        metric_name: str,
-        metric_value: Union[int, float],
-        challenger: ModelCard,
-        lower_is_better: bool = True,
-    ):
+    def __init__(self, challenger: ModelCard):
         """
         Instantiates ModelChallenger class
 
         Args:
-            metric_name:
-                Name of metric to evaluate
-            metrice_value:
-                Challenger metric value
             challenger:
                 ModelCard of challenger
-            lower_is_better:
-                Whether a lower metric value is better or not
-
 
         """
-        self._metric_name = metric_name
-        self._challenger_result = metric_value
         self._challenger = challenger
         self._registries = CardRegistries()
+        self._challenger_metric: Optional[Metric] = None
+        self._lower_is_better = True
+
+    @property
+    def challenger_metric(self) -> Metric:
+        if self._challenger_metric is not None:
+            return self._challenger_metric
+        raise ValueError("Challenger metric not set")
+
+    @challenger_metric.setter
+    def challenger_metric(self, metric: Metric):
+        self._challenger_metric = metric
+
+    @property
+    def lower_is_better(self) -> bool:
+        return self._lower_is_better
+
+    @lower_is_better.setter
+    def lower_is_better(self, lower_is_better: bool) -> None:
         self._lower_is_better = lower_is_better
 
     def _get_last_champion_record(self) -> Optional[Dict[str, Any]]:
@@ -80,13 +84,10 @@ class ModelChallenger:
             runcard_uid:
                 RunCard uid
 
-            name:
-                Unique name of ModelCard that was loaded
-
         """
         runcard: RunCard = self._registries.run.load_card(uid=runcard_uid)
 
-        return cast(Metric, runcard.get_metric(name=self._metric_name))
+        return cast(Metric, runcard.get_metric(name=self.challenger_metric.name))
 
     def battle(self, champion: CardInfo, champion_metric: Metric) -> BattleReport:
         """
@@ -97,16 +98,18 @@ class ModelChallenger:
                 Champion record
             champion_metric:
                 Champion metric from a runcard
+            lower_is_better:
+                Whether lower metric is preferred
 
         Returns:
             `BattleReport`
 
         """
 
-        if self._lower_is_better:
-            challenger_win = self._challenger_result < champion_metric.value
+        if self.lower_is_better:
+            challenger_win = self.challenger_metric.value < champion_metric.value
         else:
-            challenger_win = self._challenger_result > champion_metric.value
+            challenger_win = self.challenger_metric.value > champion_metric.value
 
         return BattleReport(
             champion_name=str(champion.name),
@@ -145,7 +148,6 @@ class ModelChallenger:
     def _challenge_champions(self, champions: List[CardInfo]) -> List[BattleReport]:
         battle_reports = []
         for champion in champions:
-
             champion_record = self._registries.model.list_cards(info=champion, as_dataframe=False)
 
             if not bool(champion_record):
@@ -166,7 +168,13 @@ class ModelChallenger:
             )
         return battle_reports
 
-    def challenge_champion(self, champions: Optional[List[CardInfo]] = None) -> Union[BattleReport, List[BattleReport]]:
+    def challenge_champion(
+        self,
+        metric_name: str,
+        metric_value: Union[int, float],
+        lower_is_better: bool,
+        champions: Optional[List[CardInfo]] = None,
+    ) -> Union[BattleReport, List[BattleReport]]:
         """
         Challenges n champion models against the challenger model. If no champion is provided,
         the latest model version is used as a champion.
@@ -174,12 +182,21 @@ class ModelChallenger:
         Args:
             champions:
                 Optional list of champion CardInfo
+            metric_name:
+                Name of metric to evaluate
+            metric_value:
+                Challenger metric value
             lower_is_better:
-                Winning criteria when comparing a metric
+                Whether a lower metric value is better or not
 
         Returns
             `BattleReport`
         """
+        # set lower is better
+        self.lower_is_better = lower_is_better
+
+        # get challenger metric
+        self.challenger_metric = Metric(name=metric_name, value=metric_value)
 
         if champions is None:
             return self._challenge_last_model_version()
