@@ -109,7 +109,7 @@ load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file
 install_integration = "opsml.scripts.install_integration:install_extra_packages"
 opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
 opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
-opsml-api = "opsml.scripts.api_cli:app"
+opsml-cli = "opsml.scripts.api_cli:app"
 
 [tool.isort]
 profile = "black"
