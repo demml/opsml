@@ -109,9 +109,12 @@ def download_model(
             Director to write to
 
     Example:
+
+        ```bash
         opsml-api download-model --name "linear-reg" --team "mlops" --write-dir ".models" --no-onnx # original model
         opsml-api download-model --name "linear-reg" --team "mlops" --write-dir ".models" --onnx # onnx model
         opsml-api download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
+        ```
 
     """
 
@@ -130,14 +133,63 @@ def download_model(
         else:
             model_path = str(metadata.get("model_uri"))
 
-        return _download_model(
+        _download_model(
             request_client=settings.request_client,
             filepath=model_path,
             write_path=path,
         )
-    raise ValueError(
-        """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
-    )
+    else:
+        raise ValueError(
+            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
+        )
+
+
+@app.command()
+def download_model_metadata(
+    name: str = typer.Option(default=None),
+    team: str = typer.Option(default=None),
+    version: str = typer.Option(default=None),
+    uid: str = typer.Option(default=None),
+    write_dir: str = typer.Option(default=None),
+):
+    """
+    Downloads model metadata associated with a model card
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Version to search
+        uid:
+            Uid of Card
+        write_dir:
+            Director to write to
+
+    Example:
+
+        ```bash
+        opsml-api download-model-metadata --name "linear-reg" --team "mlops" --write-dir ".models"
+        opsml-api download-model-metadata --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
+        ```
+
+    """
+
+    if settings.request_client is not None:
+        path = pathlib.Path(write_dir)
+        path.mkdir(parents=True, exist_ok=True)
+
+        _download_metadata(
+            request_client=settings.request_client,
+            payload={"name": name, "version": version, "team": team, "uid": uid},
+            path=path,
+        )
+
+    else:
+        raise ValueError(
+            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
+        )
 
 
 console = Console()
@@ -169,7 +221,10 @@ def list_cards(
             Uid of Card
 
     Example:
+
+        ```bash
         opsml-api list-card --name "linear-reg" --team "mlops"
+        ```
 
     """
     registry_name = getattr(RegistryTableNames, registry.upper())
