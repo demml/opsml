@@ -102,27 +102,27 @@ Types of extras that can be installed:
 
 - **Postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
   ```bash
-  poetry add opsml[postgres]
+  poetry add "opsml[postgres]"
   ```
 
 - **Server**: Installs necessary packages for setting up an `Fastapi`/`Mlflow` based `Opsml` server
   ```bash
-  poetry add opsml[server]
+  poetry add "opsml[server]"
   ```
 
 - **Mlflow**: Installs Mlflow for client-side interaction with an `Opsml` server
   ```bash
-  poetry add opsml[mlflow]
+  poetry add "opsml[mlflow]"
   ```
 
 - **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
-  poetry add opsml[gcp_mysql]
+  poetry add "opsml[gcp_mysql]"
   ```
 
 - **GCP-postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
-  poetry add opsml[gcp_postgres]
+  poetry add "opsml[gcp_postgres]"
   ```
 
 
