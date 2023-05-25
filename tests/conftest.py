@@ -81,7 +81,9 @@ from tests.mock_api_registries import CardRegistry as ClientCardRegistry
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
-fourteen_days_ago_ts = int(round(fourteen_days_ago.timestamp() * 1_000_000))
+FOURTEEN_DAYS_TS = int(round(fourteen_days_ago.timestamp() * 1_000_000))
+FOURTEEN_DAYS_STR = datetime.datetime.fromtimestamp(FOURTEEN_DAYS_TS / 1_000_000).strftime("%Y-%m-%d")
+TODAY_YMD = datetime.date.today().strftime("%Y-%m-%d")
 
 
 def cleanup() -> None:

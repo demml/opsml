@@ -1,7 +1,6 @@
+import datetime
 from functools import wraps
 from typing import Any, Iterable, Optional, Type, Union, cast
-import time
-import datetime
 
 from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
@@ -9,8 +8,7 @@ from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
-from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
-
+from opsml.registry.sql.sql_schema import REGISTRY_TABLES, YEAR_MONTH_DATE, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -43,7 +41,7 @@ class QueryCreator:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-        days_ago: Optional[int] = None,
+        max_date: Optional[str] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -59,8 +57,8 @@ class QueryCreator:
                 Optional team name
             version:
                 Optional version of Card
-            days_ago:
-                Optional integer indicating how many days in the past to search
+            max_date:
+                Optional max date to search
 
         Returns
             Sqlalchemy Select statement
@@ -80,9 +78,9 @@ class QueryCreator:
                 else:
                     filters.append(getattr(table, field) == value)
 
-        if days_ago is not None:
-            days_ago_ts = self._get_epoch_time_to_search(days_ago=days_ago)
-            filters.append(getattr(table, "timestamp") <= days_ago_ts)
+        if max_date is not None:
+            max_date_ts = self._get_epoch_time_to_search(max_date=max_date)
+            filters.append(getattr(table, "timestamp") <= max_date_ts)
 
         if bool(filters):
             query = query.filter(*filters)
@@ -91,22 +89,22 @@ class QueryCreator:
 
         return query
 
-    def _get_epoch_time_to_search(self, days_ago: int):
+    def _get_epoch_time_to_search(self, max_date: str):
         """
         Creates timestamp that represents the max epoch time to limit records to
 
         Args:
-            days_ago:
-                Number of days ago to search
+            max_date:
+                max date to search
 
         Returns:
-            time stamp as integer from `days_ago`
+            time stamp as integer related to `max_date`
         """
-        current_time = datetime.datetime.fromtimestamp(time.time())
-        max_date = current_time - datetime.timedelta(days=days_ago)
+        converted_date = datetime.datetime.strptime(max_date, YEAR_MONTH_DATE)
+        max_date = converted_date.replace(hour=23, minute=59, second=59)  # provide max values for a date
 
         # opsml timestamp records are stored as BigInts
-        return round(max_date.timestamp() * 1_000_000)
+        return int(round(max_date.timestamp() * 1_000_000))
 
     def _get_base_select_query(self, table: Type[REGISTRY_TABLES]) -> Select:
         sql_table = cast(SqlTableType, table)
