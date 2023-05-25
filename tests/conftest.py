@@ -11,6 +11,8 @@ STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 
 os.environ["OPSML_TRACKING_URI"] = SQL_PATH
 os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
+os.environ["OPSML_USERNAME"] = "test-user"
+os.environ["OPSML_PASSWORD"] = "test-pass"
 os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = STORAGE_PATH
 os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = "mlflow-artifacts:/"
 os.environ["_MLFLOW_SERVER_FILE_STORE"] = SQL_PATH
@@ -60,7 +62,7 @@ import lightgbm as lgb
 # opsml
 from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
-from opsml.helpers.gcp_utils import GcpCreds, GCPMLScheduler, GCSStorageClient
+from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml.registry.sql.sql_schema import BaseMixin, Base, DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
@@ -249,6 +251,17 @@ def test_app() -> Iterator[TestClient]:
     from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp(run_mlflow=True)
+    with TestClient(opsml_app.get_app()) as tc:
+        yield tc
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def test_app_login() -> Iterator[TestClient]:
+    cleanup()
+    from opsml.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp(run_mlflow=True, login=True)
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
     cleanup()
@@ -459,34 +472,6 @@ def mock_gcs_storage_response():
 
     with patch("httpx.Client", MockHTTPX) as mock_requests:
         yield mock_requests
-
-
-@pytest.fixture(scope="function")
-def mock_gcp_scheduler():
-    class ScheduleClient:
-        def common_location_path(self, project: str, location: str):
-            return f"{project}-{location}"
-
-        def list_jobs(self, parent: str):
-            return [Blob(name="test")]
-
-        def delete_job(self, job_name: str):
-            return True
-
-        def create_job(self, parent: str, job: str):
-            return "test_job"
-
-    class MockScheduler(GCPMLScheduler):
-        def __init__(self):
-            self.schedule_client = ScheduleClient()
-            self.oidc_token = "test"
-            self.parent_path = "test"
-
-        def _create_job_class(self, job: dict):
-            return "job"
-
-    with patch("opsml.helpers.gcp_utils.GCPMLScheduler", MockScheduler) as mock_scheduler:
-        yield mock_scheduler
 
 
 @pytest.fixture(scope="function")
@@ -1034,6 +1019,7 @@ def decision_tree_regressor(regression_data):
 @pytest.fixture(scope="module")
 def decision_tree_classifier():
     data = pd.read_csv("tests/assets/titanic.csv", index_col=False)
+    data["AGE"] = data["AGE"].astype("float64")
 
     X = data
     y = data.pop("SURVIVED")
