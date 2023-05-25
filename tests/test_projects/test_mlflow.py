@@ -119,6 +119,24 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
     assert proj.get_metric("m1").value == 1.1
 
 
+def test_metrics(mlflow_project: MlflowProject) -> None:
+    info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
+    proj = conftest.mock_mlflow_project(info)
+
+    with proj.run() as run:
+        run.log_metric(key="m1", value=1.1)
+        info.run_id = run.run_id
+
+    with proj.run() as run:
+        run.log_metric(key="m1", value=1.1)
+        assert info.run_id != run.run_id
+
+    # open the project in read only mode (don't activate w/ context)
+    proj = conftest.mock_mlflow_project(info)
+    assert len(proj.metrics) == 1
+    assert proj.get_metric("m1").value == 1.1
+
+
 def test_run_fail(mlflow_project: MlflowProject) -> None:
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
