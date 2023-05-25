@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "0.3.4"
+version = "0.3.5"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -46,6 +46,9 @@ uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
 streaming-form-data = {version="^1.11.0", optional = true}
 
+# optional dependencies for gcp
+gcsfs = {version="^2023.5.0", optional = true}
+
 # optional dependencies for cloud-sql
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
 pg8000 = {version="^1.29.4", optional = true}
@@ -58,8 +61,8 @@ graphviz = {version="^0.20.1", optional = true}
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
 mlflow = ["mlflow", "libclang", "llvmlite", "numba"]
 graphviz = ["graphviz"]
-gcp_mysql = ["cloud-sql-python-connector", "pymysql"]
-gcp_postgres = ["cloud-sql-python-connector", "pg8000"]
+gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
+gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]
 postgres = ["psycopg2"]
 
 [tool.poetry.group.dev]
@@ -106,7 +109,6 @@ mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 
 [tool.poetry.scripts]
 load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file"
-install_integration = "opsml.scripts.install_integration:install_extra_packages"
 opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
 opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
 opsml-cli = "opsml.scripts.api_cli:app"
