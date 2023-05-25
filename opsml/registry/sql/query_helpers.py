@@ -1,3 +1,4 @@
+import datetime
 from functools import wraps
 from typing import Any, Iterable, Optional, Type, Union, cast
 
@@ -7,7 +8,7 @@ from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
-from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
+from opsml.registry.sql.sql_schema import REGISTRY_TABLES, YEAR_MONTH_DATE, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -40,16 +41,24 @@ class QueryCreator:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
-        limit: Optional[int] = None,
+        max_date: Optional[str] = None,
     ) -> Select:
-        """Creates a sql query based on table, uid, name, team and version
+        """
+        Creates a sql query based on table, uid, name, team and version
 
         Args:
-            table (Schema): Registry table to query
-            uid (str): Optional unique id of Card
-            name (str): Optional name of Card
-            team (str): Optional team name
-            version (str): Optional version of Card
+            table:
+                Registry table to query
+            uid:
+                Optional unique id of Card
+            name:
+                Optional name of Card
+            team:
+                Optional team name
+            version:
+                Optional version of Card
+            max_date:
+                Optional max date to search
 
         Returns
             Sqlalchemy Select statement
@@ -69,12 +78,33 @@ class QueryCreator:
                 else:
                     filters.append(getattr(table, field) == value)
 
+        if max_date is not None:
+            max_date_ts = self._get_epoch_time_to_search(max_date=max_date)
+            filters.append(getattr(table, "timestamp") <= max_date_ts)
+
         if bool(filters):
             query = query.filter(*filters)
 
         query = query.order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
 
         return query
+
+    def _get_epoch_time_to_search(self, max_date: str):
+        """
+        Creates timestamp that represents the max epoch time to limit records to
+
+        Args:
+            max_date:
+                max date to search
+
+        Returns:
+            time stamp as integer related to `max_date`
+        """
+        converted_date = datetime.datetime.strptime(max_date, YEAR_MONTH_DATE)
+        max_date = converted_date.replace(hour=23, minute=59, second=59)  # provide max values for a date
+
+        # opsml timestamp records are stored as BigInts
+        return int(round(max_date.timestamp() * 1_000_000))
 
     def _get_base_select_query(self, table: Type[REGISTRY_TABLES]) -> Select:
         sql_table = cast(SqlTableType, table)

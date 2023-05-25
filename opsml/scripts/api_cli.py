@@ -1,6 +1,6 @@
 import json
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import typer
 from rich.console import Console
@@ -73,7 +73,7 @@ def _download_model(request_client: ApiClient, filepath: str, write_path: pathli
     )
 
 
-def _list_cards(request_client: ApiClient, payload: Dict[str, str]):
+def _list_cards(request_client: ApiClient, payload: Dict[str, Union[str, int]]):
     response = request_client.post_request(
         route=ApiRoutes.LIST_CARDS,
         json=payload,
@@ -204,6 +204,8 @@ def list_cards(
     team: str = typer.Option(default=None),
     version: str = typer.Option(default=None),
     uid: str = typer.Option(default=None),
+    max_date: str = typer.Option(default=None),
+    limit: int = typer.Option(default=None),
 ):
     """
     Lists cards from a specific registry in table format
@@ -219,11 +221,15 @@ def list_cards(
             Version to search
         uid:
             Uid of Card
+        max_date:
+            Max date to search
+        limit:
+            Max number of records to return
 
     Example:
 
         ```bash
-        opsml-cli list-card --name "linear-reg" --team "mlops"
+        opsml-cli list-cards --name "linear-reg" --team "mlops" --max-date "2023-05-01"
         ```
 
     """
@@ -235,16 +241,16 @@ def list_cards(
             registry,
         )
     if settings.request_client is not None:
-        cards = _list_cards(
-            request_client=settings.request_client,
-            payload={
-                "name": name,
-                "version": version,
-                "team": team,
-                "uid": uid,
-                "table_name": registry_name,
-            },
-        )
+        payload: Dict[str, Union[str, int]] = {
+            "name": name,
+            "version": version,
+            "team": team,
+            "uid": uid,
+            "limit": limit,
+            "max_date": max_date,
+            "table_name": registry_name,
+        }
+        cards = _list_cards(request_client=settings.request_client, payload=payload)
 
         table = Table(title=f"{registry_name} cards")
         table.add_column("Name", no_wrap=True)

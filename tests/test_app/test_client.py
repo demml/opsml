@@ -6,12 +6,13 @@ from sklearn import linear_model, pipeline
 import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ValidationError
-from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry
+from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries
 from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
 import tenacity
 import json
+from tests.conftest import TODAY_YMD
 
 
 def test_client(test_app: TestClient):
@@ -48,7 +49,7 @@ def test_error(test_app: TestClient):
     ],
 )
 def test_register_data(
-    api_registries: Dict[str, CardRegistry],
+    api_registries: CardRegistries,
     test_data: Tuple[pd.DataFrame, NDArray],
     data_splits: List[Dict[str, str]],
 ):
@@ -65,7 +66,7 @@ def test_register_data(
 
     registry.register_card(card=data_card)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team)
+    df = registry.list_cards(name=data_card.name, team=data_card.team, max_date=TODAY_YMD)
     assert isinstance(df, pd.DataFrame)
 
     df = registry.list_cards(name=data_card.name)

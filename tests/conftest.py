@@ -25,6 +25,8 @@ import httpx
 from google.auth import load_credentials_from_file
 from unittest.mock import patch, MagicMock
 from starlette.testclient import TestClient
+import time
+import datetime
 
 import pyarrow as pa
 from pydantic import BaseModel
@@ -78,6 +80,10 @@ from opsml.projects import OpsmlProject
 from tests.mock_api_registries import CardRegistry as ClientCardRegistry
 
 CWD = os.getcwd()
+fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
+FOURTEEN_DAYS_TS = int(round(fourteen_days_ago.timestamp() * 1_000_000))
+FOURTEEN_DAYS_STR = datetime.datetime.fromtimestamp(FOURTEEN_DAYS_TS / 1_000_000).strftime("%Y-%m-%d")
+TODAY_YMD = datetime.date.today().strftime("%Y-%m-%d")
 
 
 def cleanup() -> None:

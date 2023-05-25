@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "0.3.5"
+version = "0.40.0"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -147,7 +147,7 @@ extension-pkg-whitelist = [
 max-complexity = 10
 format = "pylint"
 statistics = "True"
-max-line-length = 120
+max-line-length = 125
 # ignore non-PEP8 lints
 ignore = ["E203", "W503", "W0511"]
 
