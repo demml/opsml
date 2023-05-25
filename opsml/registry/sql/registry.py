@@ -157,7 +157,7 @@ class CardRegistry:
         team: Optional[str] = None,
         version: Optional[str] = None,
         info: Optional[CardInfo] = None,
-        days_ago: Optional[int] = None,
+        max_date: Optional[str] = None,
         limit: Optional[int] = None,
         as_dataframe: bool = True,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
@@ -173,8 +173,8 @@ class CardRegistry:
                 most recent version will be used
             uid:
                 Unique identifier for Card. If present, the uid takes precedence.
-            days_ago:
-                Integer indicating the max timeframe to search (e.g. Find most recent modelcard as of 10 days ago)
+            max_date:
+                Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
 
@@ -199,7 +199,7 @@ class CardRegistry:
             name=name,
             team=team,
             version=version,
-            days_ago=days_ago,
+            max_date=max_date,
             limit=limit,
         )
 
