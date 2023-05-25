@@ -6,7 +6,7 @@
 
 <h4 align="center">Tooling for machine learning workflows</h4>
 
-Docs: https://shipt.github.io/opsml/
+[Documentation Website](https://didactic-bassoon-l5emw7m.pages.github.io/)
 
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
