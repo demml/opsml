@@ -44,7 +44,6 @@ class QueryCreator:
         team: Optional[str] = None,
         version: Optional[str] = None,
         days_ago: Optional[int] = None,
-        limit: Optional[int] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -62,8 +61,6 @@ class QueryCreator:
                 Optional version of Card
             days_ago:
                 Optional integer indicating how many days in the past to search
-            limit:
-                Number of records to limit
 
         Returns
             Sqlalchemy Select statement
@@ -74,17 +71,18 @@ class QueryCreator:
             return query.filter(table.uid == uid)
 
         filters = []
-        for field, value in zip(["name", "team", "version", "days_ago"], [name, team, version, days_ago]):
+        for field, value in zip(["name", "team", "version"], [name, team, version]):
             if value is not None:
                 if field == "version":
                     version = get_version_to_search(version=version)
                     filters.append(getattr(table, field).like(f"{version}%"))
-                if field == "days_ago":
-                    days_ago_ts = self._get_epoch_time_to_search(days_ago=days_ago)
-                    filters.append(getattr(table, field) <= days_ago_ts)
 
                 else:
                     filters.append(getattr(table, field) == value)
+
+        if days_ago is not None:
+            days_ago_ts = self._get_epoch_time_to_search(days_ago=days_ago)
+            filters.append(getattr(table, "timestamp") <= days_ago_ts)
 
         if bool(filters):
             query = query.filter(*filters)

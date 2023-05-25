@@ -12,6 +12,10 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
 
+def get_timestamp():
+    return int(round(time.time() * 1_000_000))
+
+
 class DataRegistryRecord(BaseModel):
     data_uri: Optional[str]
     version: str
@@ -20,7 +24,7 @@ class DataRegistryRecord(BaseModel):
     team: str
     user_email: str
     uid: Optional[str]
-    timestamp: int = int(round(time.time() * 1_000_000))
+    timestamp: int = get_timestamp()
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
     datacard_uri: str
@@ -42,7 +46,7 @@ class ModelRegistryRecord(BaseModel):
     sample_data_uri: str
     sample_data_type: str
     model_type: str
-    timestamp: int = int(round(time.time() * 1_000_000))
+    timestamp: int = get_timestamp()
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
 
@@ -69,7 +73,7 @@ class RunRegistryRecord(BaseModel):
     project_id: Optional[str]
     artifact_uris: Optional[Dict[str, str]]
     tags: Dict[str, str]
-    timestamp: int = int(round(time.time() * 1_000_000))
+    timestamp: int = get_timestamp()
     runcard_uri: str
 
 
@@ -83,7 +87,7 @@ class PipelineRegistryRecord(BaseModel):
     datacard_uids: List[str]
     modelcard_uids: List[str]
     runcard_uids: List[str]
-    timestamp: int = int(round(time.time() * 1_000_000))
+    timestamp: int = get_timestamp()
 
 
 class ProjectRegistryRecord(BaseModel):
@@ -93,7 +97,7 @@ class ProjectRegistryRecord(BaseModel):
     project_id: str
     version: Optional[str]
     description: Optional[str]
-    timestamp: int = int(round(time.time() * 1_000_000))
+    timestamp: int = get_timestamp()
 
 
 RegistryRecord = Union[
