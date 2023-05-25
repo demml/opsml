@@ -15,7 +15,7 @@ from sklearn import linear_model
 from sklearn.pipeline import Pipeline
 import uuid
 from pydantic import ValidationError
-from tests.conftest import fourteen_days_ago_ts
+from tests.conftest import FOURTEEN_DAYS_TS, FOURTEEN_DAYS_STR
 
 
 @pytest.mark.parametrize(
@@ -85,13 +85,13 @@ def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
     record = data_card.create_registry_record()
 
     # add card with a timestamp from 14 days ago
-    record.timestamp = fourteen_days_ago_ts
+    record.timestamp = FOURTEEN_DAYS_TS
     registry._registry.update_card_record(record.dict())
 
     cards = registry.list_cards(as_dataframe=False)
     assert len(cards) >= 1
 
-    cards = registry.list_cards(days_ago=10, as_dataframe=False)
+    cards = registry.list_cards(max_date=FOURTEEN_DAYS_STR, as_dataframe=False)
     assert len(cards) == 1
 
 

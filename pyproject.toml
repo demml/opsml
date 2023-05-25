@@ -147,7 +147,7 @@ extension-pkg-whitelist = [
 max-complexity = 10
 format = "pylint"
 statistics = "True"
-max-line-length = 120
+max-line-length = 125
 # ignore non-PEP8 lints
 ignore = ["E203", "W503", "W0511"]
 
