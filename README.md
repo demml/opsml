@@ -47,7 +47,6 @@ Docs: https://shipt.github.io/opsml/
   <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
 
 </p>
-
 <p align="center">
   <a href="#what-is-it">What is it?</a> •
   <a href="#features">Features</a> •

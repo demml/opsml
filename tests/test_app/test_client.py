@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from pydantic import ValidationError
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry
 from opsml.helpers.request_helpers import ApiRoutes
+from requests.auth import HTTPBasicAuth
 import uuid
 import tenacity
 import json
@@ -471,3 +472,14 @@ def test_download_model_failure(test_app: TestClient):
     # should fail
     assert response.status_code == 500
     assert response.json()["detail"] == "No model found"
+
+
+def test_app_with_login(test_app_login: TestClient):
+    """Test healthcheck with login"""
+
+    response = test_app_login.get(
+        "/opsml/healthcheck",
+        auth=HTTPBasicAuth("test-user", "test-pass"),
+    )
+
+    assert response.status_code == 200
