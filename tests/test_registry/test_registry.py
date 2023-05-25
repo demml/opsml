@@ -1,14 +1,21 @@
+from typing import Dict, List
 import pandas as pd
 import numpy as np
+from numpy.typing import NDArray
+import pyarrow as pa
 from os import path
+from unittest.mock import patch
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 from sklearn.model_selection import train_test_split
+from sklearn import linear_model
+from sklearn.pipeline import Pipeline
 import uuid
 from pydantic import ValidationError
+from tests.conftest import FOURTEEN_DAYS_TS, FOURTEEN_DAYS_STR
 
 
 @pytest.mark.parametrize(
@@ -19,7 +26,11 @@ from pydantic import ValidationError
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
     ],
 )
-def test_register_data(db_registries, test_data, data_splits):
+def test_register_data(
+    db_registries: Dict[str, CardRegistry],
+    test_data: tuple[pd.DataFrame, NDArray, pa.Table],
+    data_splits: List[Dict[str, str]],
+):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
@@ -45,7 +56,7 @@ def test_register_data(db_registries, test_data, data_splits):
     assert df.shape[0] == 1
 
 
-def test_datacard_sql_register(db_registries):
+def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
@@ -60,7 +71,31 @@ def test_datacard_sql_register(db_registries):
     assert loaded_card.sql_logic.get("test") is not None
 
 
-def test_datacard_sql_register_file(db_registries):
+def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
+    # create data card at current time
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card)
+    record = data_card.create_registry_record()
+
+    # add card with a timestamp from 14 days ago
+    record.timestamp = FOURTEEN_DAYS_TS
+    registry._registry.update_card_record(record.dict())
+
+    cards = registry.list_cards(as_dataframe=False)
+    assert len(cards) >= 1
+
+    cards = registry.list_cards(max_date=FOURTEEN_DAYS_STR, as_dataframe=False)
+    assert len(cards) == 1
+
+
+def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
@@ -75,7 +110,7 @@ def test_datacard_sql_register_file(db_registries):
     assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
 
-def test_datacard_sql(db_registries, test_array):
+def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArray):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
@@ -120,7 +155,7 @@ def test_datacard_sql(db_registries, test_array):
         )
 
 
-def test_semver_registry_list(db_registries, test_array):
+def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array: NDArray):
     # create data card
     registry = db_registries["data"]
 
@@ -203,7 +238,10 @@ def test_semver_registry_list(db_registries, test_array):
     assert record[0].get("version") == "2.12.0"
 
 
-def test_runcard(linear_regression, db_registries):
+def test_runcard(
+    linear_regression: linear_model.LinearRegression,
+    db_registries: Dict[str, CardRegistry],
+):
     registry: CardRegistry = db_registries["run"]
     run = RunCard(
         name="test_df",
@@ -250,7 +288,10 @@ def test_runcard(linear_regression, db_registries):
     assert loaded_card.runcard_uri == run.runcard_uri
 
 
-def test_local_model_registry_to_onnx(db_registries, sklearn_pipeline):
+def test_local_model_registry_to_onnx(
+    db_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Pipeline,
+):
     # create data card
     data_registry: CardRegistry = db_registries["data"]
     model, data = sklearn_pipeline
@@ -279,7 +320,10 @@ def test_local_model_registry_to_onnx(db_registries, sklearn_pipeline):
     assert loaded_card.uris.model_metadata_uri is not None
 
 
-def test_local_model_registry(db_registries, sklearn_pipeline):
+def test_local_model_registry(
+    db_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Pipeline,
+):
     # create data card
     data_registry: CardRegistry = db_registries["data"]
     model, data = sklearn_pipeline
@@ -337,7 +381,10 @@ def test_local_model_registry(db_registries, sklearn_pipeline):
         model_registry.update_card(loaded_card)
 
 
-def test_register_model(db_registries, sklearn_pipeline):
+def test_register_model(
+    db_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Pipeline,
+):
     model, data = sklearn_pipeline
 
     # create data card
@@ -420,7 +467,7 @@ def test_register_model(db_registries, sklearn_pipeline):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits(test_data):
+def test_data_card_splits(test_data: pd.DataFrame):
     data_split = [
         {"label": "train", "column": "year", "column_value": 2020},
         {"label": "test", "column": "year", "column_value": 2021},
@@ -452,7 +499,7 @@ def test_data_card_splits(test_data):
     assert data_card.data_splits[0]["stop"] == 2
 
 
-def test_data_splits(db_registries, iris_data):
+def test_data_splits(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
     train_idx, test_idx = train_test_split(np.arange(iris_data.shape[0]), test_size=0.2)
 
     data_name = "test_df"
@@ -496,7 +543,7 @@ def test_data_splits(db_registries, iris_data):
     assert data_splits.test.y is None
 
 
-def test_data_splits_column_value(db_registries, iris_data):
+def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -522,7 +569,7 @@ def test_data_splits_column_value(db_registries, iris_data):
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(db_registries, test_data):
+def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.DataFrame):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -580,7 +627,7 @@ def test_load_data_card(db_registries, test_data):
         )
 
 
-def test_pipeline_registry(db_registries):
+def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -604,7 +651,10 @@ def test_pipeline_registry(db_registries):
     assert bool(values["datacard_uids"])
 
 
-def test_full_pipeline_with_loading(db_registries, linear_regression):
+def test_full_pipeline_with_loading(
+    db_registries: Dict[str, CardRegistry],
+    linear_regression: linear_model.LinearRegression,
+):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
@@ -666,7 +716,7 @@ def test_full_pipeline_with_loading(db_registries, linear_regression):
     assert uids["model"][0] == model_card.uid
 
 
-def _test_tensorflow(db_registries, load_transformer_example, mock_pathlib):
+def _test_tensorflow(db_registries: Dict[str, CardRegistry], load_transformer_example, mock_pathlib):
     model, data = load_transformer_example
 
     registry = db_registries["data"]

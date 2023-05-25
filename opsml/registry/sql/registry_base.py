@@ -249,6 +249,7 @@ class SQLRegistryBase:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        max_date: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
@@ -419,6 +420,7 @@ class ServerRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        max_date: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
@@ -434,6 +436,8 @@ class ServerRegistry(SQLRegistryBase):
                 the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
             uid:
                 Unique identifier for DataCard. If present, the uid takes precedence.
+            max_date:
+                Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
 
@@ -451,6 +455,7 @@ class ServerRegistry(SQLRegistryBase):
             team=cleaned_team,
             version=version,
             uid=uid,
+            max_date=max_date,
         )
 
         sorted_records = self._get_sql_records(query=query)
@@ -512,6 +517,7 @@ class ClientRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        max_date: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
@@ -526,6 +532,10 @@ class ClientRegistry(SQLRegistryBase):
                 Optional version number of existing data. If not specified, the most recent version will be used.
             uid:
                 Unique identifier for DataCard. If present, the uid takes precedence.
+            max_date:
+                Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
+            limit:
+                Places a limit on result list. Results are sorted by SemVer
 
         Returns:
             Dictionary of card records
@@ -537,6 +547,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version,
                 "uid": uid,
+                "max_date": max_date,
                 "limit": limit,
                 "table_name": self.table_name,
             },
