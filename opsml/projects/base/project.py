@@ -90,7 +90,7 @@ class OpsmlProject:
             yield cast(ActiveRun, self._run_mgr.active_run)
 
         except Exception as error:
-            logger.error("Error encountered. Ending run")
+            logger.exception("Error encountered. Ending run", exc_info=error)
             self._run_mgr.end_run()
             raise error
 
