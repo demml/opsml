@@ -121,6 +121,16 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
 
         assert run.run_name == "test"
 
+    # create new run without re-instantiating opsml project
+    with opsml_project.run(run_name="test") as run:
+        # Create metrics / params / cards
+        run = cast(ActiveRun, run)
+        run.log_metric(key="m1", value=1.1)
+        run.log_parameter(key="m1", value="apple")
+        assert info.run_id != run.run_id
+
+        assert run.run_name == "test"
+
     new_proj = conftest.mock_opsml_project(info)
 
     with new_proj.run() as run:
