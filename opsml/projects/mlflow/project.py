@@ -77,7 +77,12 @@ class MlflowProject(OpsmlProject):
 
         self._run_mgr.start_run(run_name=run_name)
 
-        yield cast(MlflowActiveRun, self._run_mgr.active_run)
+        try:
+            yield cast(MlflowActiveRun, self._run_mgr.active_run)
+        except Exception as error:
+            logger.error("Error encountered. Ending run")
+            self._run_mgr.end_run()
+            raise error
 
         self._run_mgr.end_run()
 
