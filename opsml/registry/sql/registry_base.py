@@ -419,6 +419,7 @@ class ServerRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        days_ago: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
@@ -434,6 +435,8 @@ class ServerRegistry(SQLRegistryBase):
                 the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
             uid:
                 Unique identifier for DataCard. If present, the uid takes precedence.
+            days_ago:
+                Integer indicating the max timeframe to search (e.g. Find most recent modelcard as of 10 days ago)
             limit:
                 Places a limit on result list. Results are sorted by SemVer
 
@@ -451,6 +454,7 @@ class ServerRegistry(SQLRegistryBase):
             team=cleaned_team,
             version=version,
             uid=uid,
+            days_ago=days_ago,
         )
 
         sorted_records = self._get_sql_records(query=query)

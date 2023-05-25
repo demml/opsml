@@ -1,5 +1,7 @@
 from functools import wraps
 from typing import Any, Iterable, Optional, Type, Union, cast
+import time
+import datetime
 
 from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
@@ -8,6 +10,7 @@ from sqlalchemy.sql.expression import ColumnElement
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
 from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -40,16 +43,27 @@ class QueryCreator:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        days_ago: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Select:
-        """Creates a sql query based on table, uid, name, team and version
+        """
+        Creates a sql query based on table, uid, name, team and version
 
         Args:
-            table (Schema): Registry table to query
-            uid (str): Optional unique id of Card
-            name (str): Optional name of Card
-            team (str): Optional team name
-            version (str): Optional version of Card
+            table:
+                Registry table to query
+            uid:
+                Optional unique id of Card
+            name:
+                Optional name of Card
+            team:
+                Optional team name
+            version:
+                Optional version of Card
+            days_ago:
+                Optional integer indicating how many days in the past to search
+            limit:
+                Number of records to limit
 
         Returns
             Sqlalchemy Select statement
@@ -60,11 +74,14 @@ class QueryCreator:
             return query.filter(table.uid == uid)
 
         filters = []
-        for field, value in zip(["name", "team", "version"], [name, team, version]):
+        for field, value in zip(["name", "team", "version", "days_ago"], [name, team, version, days_ago]):
             if value is not None:
                 if field == "version":
                     version = get_version_to_search(version=version)
                     filters.append(getattr(table, field).like(f"{version}%"))
+                if field == "days_ago":
+                    days_ago_ts = self._get_epoch_time_to_search(days_ago=days_ago)
+                    filters.append(getattr(table, field) <= days_ago_ts)
 
                 else:
                     filters.append(getattr(table, field) == value)
@@ -75,6 +92,23 @@ class QueryCreator:
         query = query.order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
 
         return query
+
+    def _get_epoch_time_to_search(self, days_ago: int):
+        """
+        Creates timestamp that represents the max epoch time to limit records to
+
+        Args:
+            days_ago:
+                Number of days ago to search
+
+        Returns:
+            time stamp as integer from `days_ago`
+        """
+        current_time = datetime.datetime.fromtimestamp(time.time())
+        max_date = current_time - datetime.timedelta(days=days_ago)
+
+        # opsml timestamp records are stored as BigInts
+        return round(max_date.timestamp() * 1_000_000)
 
     def _get_base_select_query(self, table: Type[REGISTRY_TABLES]) -> Select:
         sql_table = cast(SqlTableType, table)
