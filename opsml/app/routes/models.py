@@ -52,6 +52,7 @@ class ListRequest(BaseModel):
     team: Optional[str]
     version: Optional[str]
     uid: Optional[str]
+    max_date: Optional[str]
     limit: Optional[int]
     table_name: str
 
