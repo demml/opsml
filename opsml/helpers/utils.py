@@ -68,7 +68,7 @@ def validate_name_team_pattern(name: str, team: str) -> None:
         raise ValueError(f"Name and team failed to match the required pattern. Pattern: {NAME_TEAM_PATTERN}")
 
     if len(name_team) > 53:
-        raise ValueError("Name and team name combination must be 53 characters or less")
+        raise ValueError("Name and team combination must be 53 characters or less")
 
 
 class TypeChecker:
