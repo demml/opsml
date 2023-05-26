@@ -15,6 +15,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 PUNCTUATION = string.punctuation.replace("_", "").replace("-", "")
 REMOVE_CHARS = re.escape(PUNCTUATION)
+NAME_TEAM_PATTERN = r"^[a-z0-9]+([-a-z0-9]+)*:[-a-z0-9]+$"
 
 
 def experimental_feature(func):
@@ -39,6 +40,17 @@ def clean_string(name: Optional[str] = None) -> Optional[str]:
 
         return _name
     return None
+
+
+def validate_name_team_length(name: str, team: str):
+    name_team = f"{name}:{team}"
+    pattern_match = bool(re.match(NAME_TEAM_PATTERN, name_team))
+
+    if not pattern_match:
+        raise ValueError(f"Name and team failed to match the required pattern. Pattern: {NAME_TEAM_PATTERN}")
+
+    if len(name_team) > 53:
+        raise ValueError("Name and team name combination must be less than 53 characters")
 
 
 class TypeChecker:
