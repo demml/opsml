@@ -32,6 +32,14 @@ def experimental_feature(func):
 
 
 def clean_string(name: Optional[str] = None) -> Optional[str]:
+    """
+    Cleans a given string
+
+    Args:
+        name:
+            String to clean
+
+    """
     if name is not None:
         _name = name.strip()
         _name = _name.lower()
@@ -42,7 +50,17 @@ def clean_string(name: Optional[str] = None) -> Optional[str]:
     return None
 
 
-def validate_name_team_length(name: str, team: str):
+def validate_name_team_pattern(name: str, team: str) -> None:
+    """
+    Validates name and team combination
+
+    Args:
+        name:
+            Card name
+        team:
+            Team associated with card
+
+    """
     name_team = f"{name}:{team}"
     pattern_match = bool(re.match(NAME_TEAM_PATTERN, name_team))
 
