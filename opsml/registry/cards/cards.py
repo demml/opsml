@@ -9,7 +9,12 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath, TypeChecker, clean_string, validate_name_team_pattern
+from opsml.helpers.utils import (
+    FindPath,
+    TypeChecker,
+    clean_string,
+    validate_name_team_pattern,
+)
 from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
