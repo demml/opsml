@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from click.testing import CliRunner
-from opsml.scripts.load_model_card import load_model_card_to_file
+from opsml.cli.load_model_card import load_model_card_to_file
 from opsml.model.types import ModelDownloadInfo
 from opsml.registry import CardRegistry, ModelCard
 from unittest.mock import patch, MagicMock
