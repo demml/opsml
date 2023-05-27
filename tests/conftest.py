@@ -23,7 +23,7 @@ import pytest
 import shutil
 import httpx
 from google.auth import load_credentials_from_file
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 from starlette.testclient import TestClient
 import time
 import datetime
@@ -330,6 +330,15 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistr
 
 
 @pytest.fixture(scope="function")
+def mock_cli_property(api_registries):
+    with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
+        from opsml.registry.sql.settings import settings
+
+        client_mock.return_value = settings.request_client
+        yield client_mock
+
+
+@pytest.fixture(scope="function")
 def api_storage_client(api_registries):
     return api_registries.data._registry.storage_client
 
@@ -445,7 +454,7 @@ def db_registries():
 @pytest.fixture(scope="function")
 def mock_model_cli_loader(db_registries):
     model_registry = db_registries["model"]
-    from opsml.scripts.load_model_card import ModelLoader
+    from opsml.cli.load_model_card import ModelLoader
 
     class MockModelLoader(ModelLoader):
         @property
@@ -455,7 +464,7 @@ def mock_model_cli_loader(db_registries):
         def _set_registry(self) -> Any:
             return model_registry
 
-    with patch("opsml.scripts.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
+    with patch("opsml.cli.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
         yield mock_cli_loader
 
 

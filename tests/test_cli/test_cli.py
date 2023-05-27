@@ -4,17 +4,17 @@ from sklearn import linear_model
 import pandas as pd
 from opsml.registry import DataCard, ModelCard, CardRegistries
 import tempfile
-from opsml.scripts.api_cli import app
+from opsml.cli.api_cli import app
 from starlette.testclient import TestClient
 import os
-from unittest.mock import patch
+
 
 runner = CliRunner()
 
 
-def _test_download_model(
-    opsml_cli_app,
+def test_download_model(
     api_registries: CardRegistries,
+    mock_cli_property,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
     team = "mlops"
@@ -49,13 +49,14 @@ def _test_download_model(
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         result = runner.invoke(
-            opsml_cli_app, ["download-model", "--name", "test_model", "--team", team, "--write-dir", tmpdirname]
+            app, ["download-model", "--name", "test_model", "--team", team, "--write-dir", tmpdirname]
         )
         assert result.exit_code == 0
 
 
-def _test_download_model_metadata(
+def test_download_model_metadata(
     api_registries: CardRegistries,
+    mock_cli_property,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
     team = "mlops"
@@ -97,6 +98,7 @@ def _test_download_model_metadata(
 
 def test_list_cards(
     api_registries: CardRegistries,
+    mock_cli_property,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
     team = "mlops"

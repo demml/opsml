@@ -108,10 +108,10 @@ mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 
 
 [tool.poetry.scripts]
-load_model_card_to_file = "opsml.scripts.load_model_card:load_model_card_to_file"
+load_model_card_to_file = "opsml.cli.load_model_card:load_model_card_to_file"
 opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
 opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
-opsml-cli = "opsml.scripts.api_cli:app"
+opsml-cli = "opsml.cli.api_cli:app"
 
 [tool.isort]
 profile = "black"
