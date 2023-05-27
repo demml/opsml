@@ -1,24 +1,28 @@
 import json
 import pathlib
 from typing import Any, Dict, Union
-
+import os
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, ApiRoutes
+from opsml.scripts.utils import RegistryTableNames
 from opsml.registry.sql.settings import settings
-from opsml.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger(__name__)
 
-app = typer.Typer()
 
 _METADATA_FILENAME = "metadata.json"
+TRACKING_URI = os.environ.get("OPSML_TRACKING_URI")
+# api_client = ApiClient(base_url=TRACKING_URI)
+api_client = settings.request_client
+
+app = typer.Typer()
 
 
-def _download_metadata(request_client: ApiClient, payload: Dict[str, str], path: pathlib.Path) -> Dict[str, Any]:
+def _download_metadata(payload: Dict[str, str], path: pathlib.Path) -> Dict[str, Any]:
     """
     Loads and saves model metadata
 
@@ -34,7 +38,7 @@ def _download_metadata(request_client: ApiClient, payload: Dict[str, str], path:
         Dictionary of metadata
     """
 
-    metadata = request_client.stream_post_request(
+    metadata = api_client.stream_post_request(
         route=ApiRoutes.DOWNLOAD_MODEL_METADATA,
         json=payload,
     )
@@ -46,7 +50,7 @@ def _download_metadata(request_client: ApiClient, payload: Dict[str, str], path:
     return metadata
 
 
-def _download_model(request_client: ApiClient, filepath: str, write_path: pathlib.Path) -> None:
+def _download_model(filepath: str, write_path: pathlib.Path) -> None:
     """
     Downloads model file to directory
 
@@ -65,7 +69,7 @@ def _download_model(request_client: ApiClient, filepath: str, write_path: pathli
     read_dir = "/".join(filepath_split[:-1])
 
     logger.info("saving model to %s", str(write_path))
-    request_client.stream_download_file_request(
+    api_client.stream_download_file_request(
         route=ApiRoutes.DOWNLOAD_FILE,
         local_dir=str(write_path),
         filename=filename,
@@ -73,8 +77,8 @@ def _download_model(request_client: ApiClient, filepath: str, write_path: pathli
     )
 
 
-def _list_cards(request_client: ApiClient, payload: Dict[str, Union[str, int]]):
-    response = request_client.post_request(
+def _list_cards(payload: Dict[str, Union[str, int]]):
+    response = api_client.post_request(
         route=ApiRoutes.LIST_CARDS,
         json=payload,
     )
@@ -118,30 +122,20 @@ def download_model(
 
     """
 
-    if settings.request_client is not None:
-        path = pathlib.Path(write_dir)
-        path.mkdir(parents=True, exist_ok=True)
+    path = pathlib.Path(write_dir)
+    path.mkdir(parents=True, exist_ok=True)
 
-        metadata = _download_metadata(
-            request_client=settings.request_client,
-            payload={"name": name, "version": version, "team": team, "uid": uid},
-            path=path,
-        )
+    metadata = _download_metadata(
+        payload={"name": name, "version": version, "team": team, "uid": uid},
+        path=path,
+    )
 
-        if onnx:
-            model_path = str(metadata.get("onnx_uri"))
-        else:
-            model_path = str(metadata.get("model_uri"))
-
-        _download_model(
-            request_client=settings.request_client,
-            filepath=model_path,
-            write_path=path,
-        )
+    if onnx:
+        model_path = str(metadata.get("onnx_uri"))
     else:
-        raise ValueError(
-            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
-        )
+        model_path = str(metadata.get("model_uri"))
+
+    _download_model(filepath=model_path, write_path=path)
 
 
 @app.command()
@@ -176,20 +170,13 @@ def download_model_metadata(
 
     """
 
-    if settings.request_client is not None:
-        path = pathlib.Path(write_dir)
-        path.mkdir(parents=True, exist_ok=True)
+    path = pathlib.Path(write_dir)
+    path.mkdir(parents=True, exist_ok=True)
 
-        _download_metadata(
-            request_client=settings.request_client,
-            payload={"name": name, "version": version, "team": team, "uid": uid},
-            path=path,
-        )
-
-    else:
-        raise ValueError(
-            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
-        )
+    _download_metadata(
+        payload={"name": name, "version": version, "team": team, "uid": uid},
+        path=path,
+    )
 
 
 console = Console()
@@ -240,46 +227,42 @@ def list_cards(
             f"No registry found. Accepted values are 'model', 'data', 'pipeline', and 'run'. Found {registry}",
             registry,
         )
-    if settings.request_client is not None:
-        payload: Dict[str, Union[str, int]] = {
-            "name": name,
-            "version": version,
-            "team": team,
-            "uid": uid,
-            "limit": limit,
-            "max_date": max_date,
-            "table_name": registry_name,
-        }
-        cards = _list_cards(request_client=settings.request_client, payload=payload)
 
-        table = Table(title=f"{registry_name} cards")
-        table.add_column("Name", no_wrap=True)
-        table.add_column("Team")
-        table.add_column("Date")
-        table.add_column("User Email")
-        table.add_column("Version")
-        table.add_column("Uid", justify="right")
+    payload: Dict[str, Union[str, int]] = {
+        "name": name,
+        "version": version,
+        "team": team,
+        "uid": uid,
+        "limit": limit,
+        "max_date": max_date,
+        "table_name": registry_name,
+    }
 
-        for card in cards:
-            table.add_row(
-                card.get("name"),
-                card.get("team"),
-                card.get("date"),
-                card.get("user_email"),
-                card.get("version"),
-                card.get("uid"),
-            )
-        console.print(table)
+    cards = _list_cards(payload=payload)
 
-    else:
-        raise ValueError(
-            """No HTTP URI detected. Command line client is intended to work directly with HTTP""",
+    table = Table(title=f"{registry_name} cards")
+    table.add_column("Name", no_wrap=True)
+    table.add_column("Team")
+    table.add_column("Date")
+    table.add_column("User Email")
+    table.add_column("Version")
+    table.add_column("Uid", justify="right")
+
+    for card in cards:
+        table.add_row(
+            card.get("name"),
+            card.get("team"),
+            card.get("date"),
+            card.get("user_email"),
+            card.get("version"),
+            card.get("uid"),
         )
+    console.print(table)
 
 
 @app.command()
 def launch_server():
-    typer.launch(settings.opsml_tracking_uri)
+    typer.launch(TRACKING_URI)
 
 
 if __name__ == "__main__":
