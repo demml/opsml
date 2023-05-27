@@ -44,7 +44,7 @@ Will list available models in a registry
 
 ## Docs
 
-::: opsml.scripts.api_cli
+::: opsml.cli.api_cli
     options:
         members:
             - download_model
