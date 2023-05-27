@@ -1,89 +1,17 @@
-import json
 import pathlib
-from typing import Any, Dict, Union
-import os
+from typing import Dict, Union
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
+from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import ApiClient, ApiRoutes
-from opsml.scripts.utils import RegistryTableNames
-from opsml.registry.sql.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
 
-
-_METADATA_FILENAME = "metadata.json"
-TRACKING_URI = os.environ.get("OPSML_TRACKING_URI")
-# api_client = ApiClient(base_url=TRACKING_URI)
-api_client = settings.request_client
-
 app = typer.Typer()
-
-
-def _download_metadata(payload: Dict[str, str], path: pathlib.Path) -> Dict[str, Any]:
-    """
-    Loads and saves model metadata
-
-    Args:
-        request_client:
-            `ApiClient`
-        payload:
-            Payload to pass to request client
-        path:
-            Pathlib path to save response to
-
-    Returns:
-        Dictionary of metadata
-    """
-
-    metadata = api_client.stream_post_request(
-        route=ApiRoutes.DOWNLOAD_MODEL_METADATA,
-        json=payload,
-    )
-
-    metadata_path = path / _METADATA_FILENAME
-    logger.info("saving metadata to %s", str(metadata_path))
-    metadata_path.write_text(json.dumps(metadata, indent=4))
-
-    return metadata
-
-
-def _download_model(filepath: str, write_path: pathlib.Path) -> None:
-    """
-    Downloads model file to directory
-
-    Args:
-        request_client:
-            `ApiClient`
-        filepath:
-            External model filepath
-        write_path:
-            Path to write file to
-
-    """
-
-    filepath_split = filepath.split("/")
-    filename = filepath_split[-1]
-    read_dir = "/".join(filepath_split[:-1])
-
-    logger.info("saving model to %s", str(write_path))
-    api_client.stream_download_file_request(
-        route=ApiRoutes.DOWNLOAD_FILE,
-        local_dir=str(write_path),
-        filename=filename,
-        read_dir=read_dir,
-    )
-
-
-def _list_cards(payload: Dict[str, Union[str, int]]):
-    response = api_client.post_request(
-        route=ApiRoutes.LIST_CARDS,
-        json=payload,
-    )
-
-    return response.get("cards")
+api_client = CliApiClient()
 
 
 @app.command()
@@ -125,7 +53,7 @@ def download_model(
     path = pathlib.Path(write_dir)
     path.mkdir(parents=True, exist_ok=True)
 
-    metadata = _download_metadata(
+    metadata = api_client.download_metadata(
         payload={"name": name, "version": version, "team": team, "uid": uid},
         path=path,
     )
@@ -135,7 +63,10 @@ def download_model(
     else:
         model_path = str(metadata.get("model_uri"))
 
-    _download_model(filepath=model_path, write_path=path)
+    api_client.download_model(
+        filepath=model_path,
+        write_path=path,
+    )
 
 
 @app.command()
@@ -173,7 +104,7 @@ def download_model_metadata(
     path = pathlib.Path(write_dir)
     path.mkdir(parents=True, exist_ok=True)
 
-    _download_metadata(
+    api_client.download_metadata(
         payload={"name": name, "version": version, "team": team, "uid": uid},
         path=path,
     )
@@ -220,6 +151,7 @@ def list_cards(
         ```
 
     """
+
     registry_name = getattr(RegistryTableNames, registry.upper())
 
     if registry_name is None:
@@ -237,8 +169,7 @@ def list_cards(
         "max_date": max_date,
         "table_name": registry_name,
     }
-
-    cards = _list_cards(payload=payload)
+    cards = api_client.list_cards(payload=payload)
 
     table = Table(title=f"{registry_name} cards")
     table.add_column("Name", no_wrap=True)
