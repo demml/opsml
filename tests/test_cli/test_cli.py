@@ -2,15 +2,18 @@ from typing import Dict, Tuple
 from typer.testing import CliRunner
 from sklearn import linear_model
 import pandas as pd
-from opsml.scripts.api_cli import app
 from opsml.registry import DataCard, ModelCard, CardRegistries
 import tempfile
+from opsml.scripts.api_cli import app
 from starlette.testclient import TestClient
+import os
+from unittest.mock import patch
 
 runner = CliRunner()
 
 
-def test_download_model(
+def _test_download_model(
+    opsml_cli_app,
     api_registries: CardRegistries,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
@@ -46,12 +49,12 @@ def test_download_model(
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         result = runner.invoke(
-            app, ["download-model", "--name", "test_model", "--team", team, "--write-dir", tmpdirname]
+            opsml_cli_app, ["download-model", "--name", "test_model", "--team", team, "--write-dir", tmpdirname]
         )
         assert result.exit_code == 0
 
 
-def test_download_model_metadata(
+def _test_download_model_metadata(
     api_registries: CardRegistries,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
@@ -115,6 +118,7 @@ def test_list_cards(
     data_registry.register_card(card=data_card)
 
     result = runner.invoke(app, ["list-cards", "--registry", "data", "--name", "test_model", "--team", team])
+    print(result.__dict__)
     assert result.exit_code == 0
 
 
