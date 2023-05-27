@@ -52,6 +52,7 @@ class ApiClient:
             url=f"{self._base_url}/{route}",
             json=json,
         )
+
         if response.status_code == 200:
             return response.json()
 
