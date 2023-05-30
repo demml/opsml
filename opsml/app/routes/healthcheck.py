@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from opsml.app.core.config import config
-from opsml.app.routes.models import DebugResponse, HealthCheckResult
+from opsml.app.routes.pydantic_models import DebugResponse, HealthCheckResult
 
 router = APIRouter()
 
