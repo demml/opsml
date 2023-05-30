@@ -26,10 +26,28 @@ class DataProfiler:
             return ProfileReport(
                 df=data.sample(frac=sample_perc, replace=False),
                 config_file=os.path.join(DIR_PATH, "profile_config.yml"),
+                lazy=False,
                 **kwargs,
             )
+
         return ProfileReport(
             df=data,
             config_file=os.path.join(DIR_PATH, "profile_config.yml"),
+            lazy=False,
             **kwargs,
         )
+
+    @staticmethod
+    def load_profile(data: bytes) -> ProfileReport:
+        """Loads a `ProfileReport` from data bytes
+
+        Args:
+            data:
+                `ProfileReport` in bytes
+
+        Returns:
+            `ProfileReport`
+        """
+        profile = ProfileReport()
+        profile.loads(data)
+        return profile

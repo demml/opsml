@@ -120,7 +120,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         )
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(exclude={"data", "storage_client"}),
+            artifact=self.card.dict(exclude={"data", "storage_client", "data_profile"}),
             storage_client=self.storage_client,
         )
 
@@ -174,8 +174,12 @@ class DataCardArtifactSaver(CardArtifactSaver):
             uri=self.card.uris.data_uri,
         )
 
+        # profile report needs to be dumped to bytes and saved in joblib/pickle format
+        # This is a requirement for loading with ydata-profiling
+        profile_bytes = self.card.data_profile.dumps()
+
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.data_profile,
+            artifact=profile_bytes,
             storage_client=self.storage_client,
         )
         self.card.uris.profile_uri = storage_path.uri
