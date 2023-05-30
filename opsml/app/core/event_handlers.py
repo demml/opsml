@@ -26,7 +26,6 @@ def _init_rollbar():
 
 
 def _init_registries(app: FastAPI):
-
     app.state.registries = CardRegistries()
     app.state.storage_client = settings.storage_client
 

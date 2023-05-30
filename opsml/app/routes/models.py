@@ -1,110 +1,123 @@
-from typing import Any, Dict, List, Optional
+# pylint: disable=protected-access
+from typing import Any, Dict, List
 
-from pydantic import BaseModel
+from fastapi import APIRouter, Body, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 
-from opsml.registry.sql.registry_base import VersionType
+from opsml.app.core.config import config
+from opsml.app.routes.pydantic_models import (
+    DownloadModelRequest,
+    MetricRequest,
+    MetricResponse,
+)
+from opsml.app.routes.utils import MODEL_METADATA_FILE, replace_proxy_root
+from opsml.helpers.logging import ArtifactLogger
+from opsml.registry import CardRegistries, CardRegistry, RunCard
 
+logger = ArtifactLogger.get_logger(__name__)
 
-class StorageUri(BaseModel):
-    storage_uri: str
-
-
-class HealthCheckResult(BaseModel):
-    is_alive: bool
-
-
-class DebugResponse(BaseModel):
-    url: str
-    storage: str
-    app_env: str
-    proxy_root: Optional[str]
-    is_proxy: Optional[bool]
-
-
-class StorageSettingsResponse(BaseModel):
-    storage_type: str
-    storage_uri: str
-    proxy: bool = False
+router = APIRouter()
+CHUNK_SIZE = 31457280
 
 
-class VersionRequest(BaseModel):
-    name: str
-    team: str
-    version_type: VersionType
-    table_name: str
+registries = CardRegistries()
 
 
-class VersionResponse(BaseModel):
-    version: str
+@router.post("/models/metadata", name="download_model_metadata")
+def download_model_metadata(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
+    """
+    Downloads a Model API definition
+
+    Args:
+        name:
+            Optional name of model
+        version:
+            Optional semVar version of model
+        team:
+            Optional team name
+        uid:
+            Optional uid of ModelCard
+
+    Returns:
+        FileResponse object containing model definition json
+    """
+
+    registry: CardRegistry = getattr(request.app.state.registries, "model")
+    storage_client = request.app.state.storage_client
+
+    cards: List[Dict[str, Any]] = registry.list_cards(
+        name=payload.name,
+        team=payload.team,
+        version=payload.version,
+        uid=payload.uid,
+        as_dataframe=False,
+    )
+
+    if len(cards) > 1:
+        logger.warning("More than one model found. Returning latest")
+
+    if not bool(cards):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No model found",
+        )
+
+    # swap mlflow proxy root if needed
+    if config.is_proxy:
+        card = replace_proxy_root(
+            card=cards[0],
+            storage_root=config.STORAGE_URI,
+            proxy_root=config.proxy_root,
+        )
+
+    headers = {"Content-Disposition": f'attachment; filename="{MODEL_METADATA_FILE}"'}
+    meta_data_uri = card.get("model_metadata_uri")
+
+    try:
+        return StreamingResponse(
+            storage_client.iterfile(
+                file_path=meta_data_uri,
+                chunk_size=CHUNK_SIZE,
+            ),
+            headers=headers,
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error downloading model. {error}",
+        ) from error
 
 
-class UidExistsRequest(BaseModel):
-    uid: str
-    table_name: str
+@router.post("/models/metrics", response_model=MetricResponse, name="model_metrics")
+def get_metrics(
+    request: Request,
+    payload: MetricRequest = Body(...),
+) -> MetricResponse:
+    """Gets metrics associated with a ModelCard"""
 
+    # Get model runcard id
+    cards: List[Dict[str, Any]] = registries.model.list_cards(
+        uid=payload.uid,
+        name=payload.name,
+        team=payload.team,
+        version=payload.version,
+        as_dataframe=False,
+    )
 
-class UidExistsResponse(BaseModel):
-    uid_exists: bool
+    if len(cards) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="More than one card found",
+        )
 
+    card = cards[0]
+    if card.get("runcard_uid") is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Model is not associated with a run",
+        )
 
-class ListRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
-    max_date: Optional[str]
-    limit: Optional[int]
-    table_name: str
+    runcard: RunCard = registries.run.load_card(uid=card.get("runcard_uid"))
 
-
-class ListResponse(BaseModel):
-    cards: Optional[List[Dict[str, Any]]]
-
-
-class AddCardRequest(BaseModel):
-    card: Dict[str, Any]
-    table_name: str
-
-
-class AddCardResponse(BaseModel):
-    registered: bool
-
-
-class UpdateCardRequest(BaseModel):
-    card: Dict[str, Any]
-    table_name: str
-
-
-class UpdateCardResponse(BaseModel):
-    updated: bool
-
-
-class QuerycardRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
-    table_name: str
-
-
-class QuerycardResponse(BaseModel):
-    card: Dict[str, Any]
-
-
-class DownloadModelRequest(BaseModel):
-    name: Optional[str] = None
-    version: Optional[str] = None
-    team: Optional[str] = None
-    uid: Optional[str] = None
-
-
-class DownloadFileRequest(BaseModel):
-    read_path: Optional[str] = None
-
-
-class ListFileRequest(BaseModel):
-    read_path: Optional[str] = None
-
-
-class ListFileResponse(BaseModel):
-    files: List[str]
+    return MetricResponse(metrics=runcard.metrics)
