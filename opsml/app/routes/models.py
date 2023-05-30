@@ -96,7 +96,6 @@ def get_metrics(
     """Gets metrics associated with a ModelCard"""
 
     # Get model runcard id
-
     cards: List[Dict[str, Any]] = registries.model.list_cards(
         uid=payload.uid,
         name=payload.name,
@@ -120,6 +119,4 @@ def get_metrics(
 
     runcard: RunCard = registries.run.load_card(uid=card.get("runcard_uid"))
 
-    print()
-    print(runcard.metrics)
     return MetricResponse(metrics=runcard.metrics)
