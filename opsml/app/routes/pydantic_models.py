@@ -1,9 +1,9 @@
-from typing import Any, Dict, List, Optional, cast
-from dataclasses import asdict
-from pydantic import BaseModel, validator
+from typing import Any, Dict, List, Optional
 
-from opsml.registry.sql.registry_base import VersionType
+from pydantic import BaseModel
+
 from opsml.registry.cards.types import METRICS
+from opsml.registry.sql.registry_base import VersionType
 
 
 class StorageUri(BaseModel):

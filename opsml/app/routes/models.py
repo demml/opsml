@@ -1,17 +1,18 @@
 # pylint: disable=protected-access
-import os
 from typing import Any, Dict, List
-from fastapi import APIRouter, HTTPException, Request, status, Body
+
+from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from opsml.app.core.config import config
-from opsml.app.routes.pydantic_models import DownloadModelRequest, MetricRequest, MetricResponse
-from opsml.app.routes.utils import (
-    MODEL_METADATA_FILE,
-    replace_proxy_root,
+from opsml.app.routes.pydantic_models import (
+    DownloadModelRequest,
+    MetricRequest,
+    MetricResponse,
 )
+from opsml.app.routes.utils import MODEL_METADATA_FILE, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistry, CardRegistries, ModelCard, RunCard
+from opsml.registry import CardRegistries, CardRegistry, RunCard
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -107,14 +108,14 @@ def get_metrics(
     if len(cards) > 1:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"More than one card found",
+            detail="More than one card found",
         )
 
     card = cards[0]
     if card.get("runcard_uid") is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Model is not associated with a run",
+            detail="Model is not associated with a run",
         )
 
     runcard: RunCard = registries.run.load_card(uid=card.get("runcard_uid"))
