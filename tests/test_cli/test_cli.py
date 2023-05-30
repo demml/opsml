@@ -1,11 +1,10 @@
-from typing import Tuple, cast
+from typing import Tuple
 from typer.testing import CliRunner
 from sklearn import linear_model
 import pandas as pd
-from opsml.registry import DataCard, ModelCard, CardRegistries
+from opsml.registry import DataCard, ModelCard, CardRegistries, RunCard, CardInfo
 import tempfile
 from opsml.cli.api_cli import app
-from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
 from sklearn import pipeline
 
 
@@ -129,40 +128,42 @@ def _test_launch_server(test_app, api_registries, linear_regression):
     assert result.exit_code == 0
 
 
-def _test_model_metrics(
-    mlflow_project: MlflowProject, mock_cli_property, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+def test_model_metrics(
+    api_registries: CardRegistries,
+    mock_cli_property,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    model, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
 
-    with mlflow_project.run() as run:
-        # Create metrics / params / cards
-        run = cast(MlflowActiveRun, run)
-        run.log_metric(key="m1", value=1.1)
-        run.log_metric(key="mape", value=2, step=1)
-        run.log_metric(key="mape", value=2, step=2)
-        run.log_parameter(key="m1", value="apple")
-        model, data = sklearn_pipeline
-        data_card = DataCard(
-            data=data,
-            name="pipeline_data",
-            team="mlops",
-            user_email="mlops.com",
-        )
-        run.register_card(card=data_card, version_type="major")
-        model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            datacard_uid=data_card.uid,
-        )
-        run.register_card(card=model_card)
-        info.run_id = run.run_id
+    runcard = RunCard(info=card_info)
 
-    result = runner.invoke(app, ["get-model-metrics", "--uid", model_card.uid])
-    print(result.__dict__)
+    runcard.log_metric(key="m1", value=1.1)
+    runcard.log_metric(key="mape", value=2, step=1)
+    runcard.log_metric(key="mape", value=2, step=2)
+    runcard.log_parameter(key="m1", value="apple")
+    api_registries.run.register_card(runcard)
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+        runcard_uid=runcard.uid,
+    )
+    api_registries.model.register_card(modelcard)
+
+    result = runner.invoke(app, ["get-model-metrics", "--uid", modelcard.uid])
     assert result.exit_code == 0
