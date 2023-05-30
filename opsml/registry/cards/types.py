@@ -13,6 +13,12 @@ class ModelCardUris:
     sample_data_uri: Optional[str] = None
 
 
+@dataclass
+class DataCardUris:
+    data_uri: Optional[str] = None
+    datacard_uri: Optional[str] = None
+
+
 class Metric(BaseModel):
     name: str
     value: Union[float, int]
