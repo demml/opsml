@@ -3,8 +3,8 @@ import os
 import pathlib
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, Union, Optional, List
-from dataclasses import dataclass
+from typing import Any, Dict, List, Union, cast
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 
@@ -14,26 +14,10 @@ TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI"))
 _METADATA_FILENAME = "metadata.json"
 
 
-# these are duplicate data holders and enums
+# Duplicate enum
 # This is done in order to avoid instantiating DefaultSettings when using CLI (saves time)
 
-
-@dataclass
-class Metric:
-    name: str
-    value: Union[float, int]
-    step: Optional[int] = None
-    timestamp: Optional[int] = None
-
-
-@dataclass
-class Param:
-    name: str
-    value: Union[float, int, str]
-
-
-METRICS = Dict[str, List[Metric]]
-PARAMS = Dict[str, List[Param]]
+Metrics = Dict[str, List[Dict[str, Union[float, int, str]]]]
 
 
 class RegistryTableNames(str, Enum):
@@ -110,13 +94,11 @@ class CliApiClient:
 
         return response.get("cards")
 
-    def get_metrics(self, payload: Dict[str, Union[str, int]]):
+    def get_metrics(self, payload: Dict[str, Union[str, int]]) -> Dict[str, List[Dict[str, Union[float, int, str]]]]:
         response = self.client.post_request(
             route=ApiRoutes.MODEL_METRICS,
             json=payload,
         )
 
-        print(response)
-        A
-
-        return response.get("metrics")
+        metrics = cast(Metrics, response.get("metrics"))
+        return metrics
