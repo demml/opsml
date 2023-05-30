@@ -271,7 +271,6 @@ class LoadedRunRecord(LoadRecord):
     @root_validator(pre=True)
     def load_run_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
         storage_client = cast(StorageClientType, values["storage_client"])
-
         runcard_definition = cls.load_runcard_definition(
             runcard_uri=values.get("runcard_uri"),
             storage_client=storage_client,
