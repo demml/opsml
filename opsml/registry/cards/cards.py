@@ -9,7 +9,12 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath, TypeChecker, clean_string
+from opsml.helpers.utils import (
+    FindPath,
+    TypeChecker,
+    clean_string,
+    validate_name_team_pattern,
+)
 from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
@@ -78,6 +83,12 @@ class ArtifactCard(BaseModel):
                 val = clean_string(val)
 
             env_vars[key] = val
+
+        # validate name and team for pattern
+        validate_name_team_pattern(
+            name=env_vars["name"],
+            team=env_vars["team"],
+        )
 
         return env_vars
 
