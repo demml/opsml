@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
-
-from pydantic import BaseModel
+from typing import Any, Dict, List, Optional, cast
+from dataclasses import asdict
+from pydantic import BaseModel, validator
 
 from opsml.registry.sql.registry_base import VersionType
 from opsml.registry.cards.types import METRICS

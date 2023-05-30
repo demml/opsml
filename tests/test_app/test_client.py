@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from pydantic import ValidationError
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries
 from opsml.helpers.request_helpers import ApiRoutes
+from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
 from requests.auth import HTTPBasicAuth
 import uuid
 import tenacity
@@ -484,3 +485,44 @@ def test_app_with_login(test_app_login: TestClient):
     )
 
     assert response.status_code == 200
+
+
+def test_model_metrics(
+    mlflow_project: MlflowProject, test_app: TestClient, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+) -> None:
+    """ify that we can read artifacts / metrics / cards without making a run
+    active."""
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
+    with mlflow_project.run() as run:
+        # Create metrics / params / cards
+        run = cast(MlflowActiveRun, run)
+        run.log_metric(key="m1", value=1.1)
+        run.log_metric(key="mape", value=2, step=1)
+        run.log_metric(key="mape", value=2, step=2)
+        run.log_parameter(key="m1", value="apple")
+        model, data = sklearn_pipeline
+        data_card = DataCard(
+            data=data,
+            name="pipeline_data",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        run.register_card(card=data_card, version_type="major")
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data=data[0:1],
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            datacard_uid=data_card.uid,
+        )
+        run.register_card(card=model_card)
+        info.run_id = run.run_id
+
+    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
+
+    metrics = response.json()
+
+    assert metrics["metrics"]["m1"][0]["value"] == 1.1
