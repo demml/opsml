@@ -92,7 +92,7 @@ class QuerycardResponse(BaseModel):
     card: Dict[str, Any]
 
 
-class DownloadModelRequest(BaseModel):
+class CardRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
     team: Optional[str] = None
