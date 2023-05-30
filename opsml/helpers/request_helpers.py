@@ -18,6 +18,7 @@ class ApiRoutes:
     UPDATE_CARD = "cards/update"
     UPLOAD = "upload"
     DOWNLOAD_MODEL_METADATA = "models/metadata"
+    MODEL_METRICS = "models/metrics"
     DOWNLOAD_FILE = "files/download"
     LIST_FILES = "files/list"
 

@@ -3,8 +3,8 @@ import os
 import pathlib
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, Union
-
+from typing import Any, Dict, Union, Optional, List
+from dataclasses import dataclass
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 
@@ -14,8 +14,28 @@ TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI"))
 _METADATA_FILENAME = "metadata.json"
 
 
-# this is a duplicate of opsml/registry/sql/sql_schema
+# these are duplicate data holders and enums
 # This is done in order to avoid instantiating DefaultSettings when using CLI (saves time)
+
+
+@dataclass
+class Metric:
+    name: str
+    value: Union[float, int]
+    step: Optional[int] = None
+    timestamp: Optional[int] = None
+
+
+@dataclass
+class Param:
+    name: str
+    value: Union[float, int, str]
+
+
+METRICS = Dict[str, List[Metric]]
+PARAMS = Dict[str, List[Param]]
+
+
 class RegistryTableNames(str, Enum):
     DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
@@ -89,3 +109,14 @@ class CliApiClient:
         )
 
         return response.get("cards")
+
+    def get_metrics(self, payload: Dict[str, Union[str, int]]):
+        response = self.client.post_request(
+            route=ApiRoutes.MODEL_METRICS,
+            json=payload,
+        )
+
+        print(response)
+        A
+
+        return response.get("metrics")

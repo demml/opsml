@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 from opsml.registry.sql.registry_base import VersionType
+from opsml.registry.cards.types import METRICS
 
 
 class StorageUri(BaseModel):
@@ -108,3 +109,14 @@ class ListFileRequest(BaseModel):
 
 class ListFileResponse(BaseModel):
     files: List[str]
+
+
+class MetricRequest(BaseModel):
+    name: Optional[str]
+    team: Optional[str]
+    version: Optional[str]
+    uid: Optional[str]
+
+
+class MetricResponse(BaseModel):
+    metrics: METRICS

@@ -1,12 +1,12 @@
-from typing import Dict, Tuple
+from typing import Tuple, cast
 from typer.testing import CliRunner
 from sklearn import linear_model
 import pandas as pd
 from opsml.registry import DataCard, ModelCard, CardRegistries
 import tempfile
 from opsml.cli.api_cli import app
-from starlette.testclient import TestClient
-import os
+from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
+from sklearn import pipeline
 
 
 runner = CliRunner()
@@ -126,4 +126,43 @@ def test_list_cards(
 
 def _test_launch_server(test_app, api_registries, linear_regression):
     result = runner.invoke(app, ["launch-server"])
+    assert result.exit_code == 0
+
+
+def test_model_metrics(
+    mlflow_project: MlflowProject, mock_cli_property, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+) -> None:
+    """ify that we can read artifacts / metrics / cards without making a run
+    active."""
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
+    with mlflow_project.run() as run:
+        # Create metrics / params / cards
+        run = cast(MlflowActiveRun, run)
+        run.log_metric(key="m1", value=1.1)
+        run.log_metric(key="mape", value=2, step=1)
+        run.log_metric(key="mape", value=2, step=2)
+        run.log_parameter(key="m1", value="apple")
+        model, data = sklearn_pipeline
+        data_card = DataCard(
+            data=data,
+            name="pipeline_data",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        run.register_card(card=data_card, version_type="major")
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data=data[0:1],
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            datacard_uid=data_card.uid,
+        )
+        run.register_card(card=model_card)
+        info.run_id = run.run_id
+
+    result = runner.invoke(app, ["get-model-metrics", "--uid", model_card.uid])
+    print(result.__dict__)
     assert result.exit_code == 0
