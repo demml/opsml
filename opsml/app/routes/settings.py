@@ -2,10 +2,7 @@
 from fastapi import APIRouter
 
 from opsml.app.core.config import config
-from opsml.app.routes.pydantic_models import (
-    StorageSettingsResponse,
-)
-
+from opsml.app.routes.pydantic_models import StorageSettingsResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.storage.storage_system import StorageSystem
 
