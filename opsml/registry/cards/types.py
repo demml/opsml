@@ -17,6 +17,7 @@ class ModelCardUris:
 class DataCardUris:
     data_uri: Optional[str] = None
     datacard_uri: Optional[str] = None
+    profile_uri: Optional[str] = None
 
 
 class Metric(BaseModel):

@@ -27,7 +27,7 @@ class SaveName(str, Enum):
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
     SAMPLE_MODEL_DATA = "sample-model-data"
-    DRIFT_REPORT = "drift_report"
+    DATA_PROFILE = "data_profile"
 
 
 class CardArtifactSaver:
@@ -166,25 +166,29 @@ class DataCardArtifactSaver(CardArtifactSaver):
         arrow_table.storage_uri = storage_path.uri
         self._set_arrow_card_attributes(arrow_table=arrow_table)
 
-    def _save_drift(self):
+    def _save_profile(self):
         """Saves a drift report to file system"""
 
         self._set_storage_spec(
-            filename=SaveName.DRIFT_REPORT,
+            filename=SaveName.DATA_PROFILE,
             uri=self.card.uris.data_uri,
         )
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.drift_report,
+            artifact=self.card.data_profile,
             storage_client=self.storage_client,
         )
-        self.card.drift_uri = storage_path.uri
+        self.card.uris.profile_uri = storage_path.uri
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
 
         if self.card.data is not None:
             self._save_data()
+
+        if self.card.data_profile is not None:
+            self._save_profile()
+
         self._save_datacard()
         # drift not implemented yet
         return self.card
