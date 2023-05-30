@@ -6,9 +6,8 @@ from sklearn import linear_model, pipeline
 import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ValidationError
-from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries
+from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries, CardInfo
 from opsml.helpers.request_helpers import ApiRoutes
-from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
 from requests.auth import HTTPBasicAuth
 import uuid
 import tenacity
@@ -488,51 +487,54 @@ def test_app_with_login(test_app_login: TestClient):
 
 
 def test_model_metrics(
-    mlflow_project: MlflowProject,
     test_app: TestClient,
+    api_registries: CardRegistries,
     sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    model, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
 
-    with mlflow_project.run() as run:
-        # Create metrics / params / cards
-        run = cast(MlflowActiveRun, run)
-        run.log_metric(key="m1", value=1.1)
-        run.log_metric(key="mape", value=2, step=1)
-        run.log_metric(key="mape", value=2, step=2)
-        run.log_parameter(key="m1", value="apple")
-        model, data = sklearn_pipeline
-        data_card = DataCard(
-            data=data,
-            name="pipeline_data",
-            team="mlops",
-            user_email="mlops.com",
-        )
-        run.register_card(card=data_card, version_type="major")
-        model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            datacard_uid=data_card.uid,
-        )
-        run.register_card(card=model_card)
+    runcard = RunCard(info=card_info)
 
-        model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            datacard_uid=data_card.uid,
-        )
-        run.register_card(card=model_card)
+    runcard.log_metric(key="m1", value=1.1)
+    runcard.log_metric(key="mape", value=2, step=1)
+    runcard.log_metric(key="mape", value=2, step=2)
+    runcard.log_parameter(key="m1", value="apple")
+    api_registries.run.register_card(runcard)
 
-    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+        runcard_uid=runcard.uid,
+    )
+    api_registries.model.register_card(modelcard)
+
+    ### create second ModelCard
+    #### Create ModelCard
+    modelcard_2 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+        runcard_uid=runcard.uid,
+    )
+    api_registries.model.register_card(modelcard_2)
+
+    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
 
     metrics = response.json()
 
@@ -541,8 +543,8 @@ def test_model_metrics(
     response = test_app.post(
         url=f"/opsml/{ApiRoutes.MODEL_METRICS}",
         json={
-            "name": model_card.name,
-            "team": model_card.team,
+            "name": modelcard.name,
+            "team": modelcard.team,
         },
     )
 
@@ -555,28 +557,24 @@ def test_model_metric_failure(
     sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
 ):
     model, data = sklearn_pipeline
-    # create data card
-    data_registry = api_registries.data
-
-    data_card = DataCard(
-        data=data,
-        name="pipeline_data",
+    card_info = CardInfo(
+        name="test_run",
         team="mlops",
         user_email="mlops.com",
     )
-    data_registry.register_card(card=data_card)
 
-    model_card = ModelCard(
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    modelcard = ModelCard(
         trained_model=model,
         sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uid=data_card.uid,
+        info=card_info,
+        datacard_uid=datacard.uid,
     )
+    api_registries.model.register_card(modelcard)
 
-    model_registry = api_registries.model
-    model_registry.register_card(model_card)
-
-    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
+    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
     assert response.status_code == 500
