@@ -121,6 +121,16 @@ def test_opsml_continue_run(opsml_project: OpsmlProject) -> None:
 
         assert run.run_name == "test"
 
+    # create new run without re-instantiating opsml project
+    with opsml_project.run(run_name="test") as run:
+        # Create metrics / params / cards
+        run = cast(ActiveRun, run)
+        run.log_metric(key="m1", value=1.1)
+        run.log_parameter(key="m1", value="apple")
+        assert info.run_id != run.run_id
+
+        assert run.run_name == "test"
+
     new_proj = conftest.mock_opsml_project(info)
 
     with new_proj.run() as run:
@@ -148,3 +158,22 @@ def test_opsml_fail_active_run(opsml_project: OpsmlProject) -> None:
         with pytest.raises(ValueError):
             with opsml_project.run() as run:
                 print("fail")
+
+
+def test_run_fail(opsml_project: OpsmlProject) -> None:
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
+    with pytest.raises(AttributeError):
+        with opsml_project.run(run_name="test") as run:
+            run.log_metric(key="m1", value=1.1)
+            info.run_id = run.run_id
+            opsml_project.fit()  # ATTR doesnt exist
+
+    # open the project in read only mode (don't activate w/ context)
+    proj = conftest.mock_opsml_project(info)
+    assert len(proj.metrics) == 1
+    assert proj.get_metric("m1").value == 1.1
+
+    # Failed run should still exist
+    cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
+    assert len(cards) == 1
