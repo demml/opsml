@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
+from ydata_profiling import ProfileReport
+from opsml.profile.profile_data import DataProfiler
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -188,7 +190,7 @@ class DataCard(ArtifactCard):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     uris: DataCardUris = DataCardUris()
-    profile: bool = True
+    data_profile: Optional[ProfileReport] = None
 
     @validator("uris", pre=True, always=True)
     def check_data(cls, uris: DataCardUris, values):  # pylint: disable=no-self-argument
@@ -362,6 +364,39 @@ class DataCard(ArtifactCard):
 
         else:
             raise ValueError("SQL Query or Filename must be provided")
+
+    def _profile_dataframe(self, sample_perc: float, name: str):
+        if sample_perc < 1:
+            self.data_profile = DataProfiler.profile(
+                self.data.sample(frac=sample_perc, replace=False),
+                name=name,
+            )
+            return None
+        self.data_profile = DataProfiler.profile(data=self.data, name=name)
+
+    def create_data_profile(self, sample_perc: float = 1):
+        """Creates a data profile report
+
+        Args:
+            sample_perc:
+                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
+                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
+
+        """
+
+        if isinstance(self.data, pd.DataFrame):
+            if self.data_profile is None:
+                self.data_profile = DataProfiler.profile(
+                    data=self.data,
+                    name=self.name,
+                    sample_perc=min(sample_perc, 1),  # max of 1
+                )
+
+            else:
+                logger.info("Data profile already exists")
+
+        else:
+            raise ValueError("A pandas dataframe type is required to create a data profile")
 
     @property
     def card_type(self) -> str:

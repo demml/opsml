@@ -1,0 +1,35 @@
+import pandas as pd
+from ydata_profiling import ProfileReport, compare
+import os
+
+DIR_PATH = os.path.dirname(__file__)
+
+
+class DataProfiler:
+    @staticmethod
+    def profile(data: pd.DataFrame, name: str, sample_perc: float) -> ProfileReport:
+        """
+        Creates a `ydata-profiling` report
+
+        Args:
+            data:
+                Pandas dataframe
+            sample_perc:
+                Percentage to use for sampling
+
+        Returns:
+            `ProfileReport`
+        """
+        kwargs = {"title": f"Profile report for {name}"}
+
+        if sample_perc < 1:
+            return ProfileReport(
+                df=data.sample(frac=sample_perc, replace=False),
+                config_file=os.path.join(DIR_PATH, "profile_config.yml"),
+                **kwargs,
+            )
+        return ProfileReport(
+            df=data,
+            config_file=os.path.join(DIR_PATH, "profile_config.yml"),
+            **kwargs,
+        )
