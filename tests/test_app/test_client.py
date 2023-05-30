@@ -323,7 +323,7 @@ def test_load_data_card(api_registries: Dict[str, CardRegistry], test_data: pd.D
 
     # load card again
     loaded_data: DataCard = registry.load_card(name=data_name, team=team, version="1.2.0")
-    loaded_data.data_uri = "fail"
+    loaded_data.uris.data_uri = "fail"
 
     with pytest.raises(tenacity.RetryError):
         loaded_data.load_data()

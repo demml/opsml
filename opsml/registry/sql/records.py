@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator
 
-from opsml.registry.cards.types import METRICS, PARAMS, ModelCardUris
+from opsml.registry.cards.types import METRICS, PARAMS, ModelCardUris, DataCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -31,6 +31,14 @@ class DataRegistryRecord(BaseModel):
 
     class Config:
         smart_union = True
+
+    @root_validator(pre=True)
+    def set_uris(cls, values):  # pylint: disable=no-self-argument
+        uris = values.get("uris")
+        values["data_uri"] = uris.data_uri
+        values["datacard_uri"] = uris.datacard_uri
+
+        return values
 
 
 class ModelRegistryRecord(BaseModel):
@@ -128,8 +136,7 @@ class LoadRecord(BaseModel):
 
 
 class LoadedDataRecord(LoadRecord):
-    data_uri: Optional[str]
-    data_splits: Optional[List[Dict[str, Any]]]
+    uris: DataCardUris
     data_type: Optional[str]
     feature_map: Optional[Dict[str, str]]
     feature_descriptions: Optional[Dict[str, str]]
@@ -150,6 +157,10 @@ class LoadedDataRecord(LoadRecord):
         # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
         datacard_definition["datacard_uri"] = values.get("datacard_uri")
         datacard_definition["storage_client"] = values.get("storage_client")
+        datacard_definition["uris"] = DataCardUris(
+            data_uri=values.get("data_uri"),
+            datacard_uri=values.get("datacard_uri"),
+        )
 
         return datacard_definition
 

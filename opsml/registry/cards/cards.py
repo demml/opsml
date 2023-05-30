@@ -32,6 +32,7 @@ from opsml.registry.cards.types import (
     CardType,
     Metric,
     ModelCardUris,
+    DataCardUris,
     Param,
 )
 from opsml.registry.data.splitter import DataHolder, DataSplitter
@@ -186,16 +187,16 @@ class DataCard(ArtifactCard):
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    data_uri: Optional[str]
-    datacard_uri: Optional[str] = None
+    uris: DataCardUris = DataCardUris()
+    profile: bool = True
 
-    @validator("data_uri", pre=True, always=True)
-    def check_data(cls, data_uri, values):  # pylint: disable=no-self-argument
-        if data_uri is None:
+    @validator("uris", pre=True, always=True)
+    def check_data(cls, uris: DataCardUris, values):  # pylint: disable=no-self-argument
+        if uris.data_uri is None:
             if values["data"] is None and not bool(values["sql_logic"]):
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
-        return data_uri
+        return uris
 
     @validator("data_splits", pre=True, always=True)
     def check_splits(cls, splits):  # pylint: disable=no-self-argument
@@ -295,7 +296,7 @@ class DataCard(ArtifactCard):
         """Loads data"""
 
         if not bool(self.data) and self.storage_client is not None:
-            storage_spec = ArtifactStorageSpecs(save_path=self.data_uri)
+            storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
 
             self.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(

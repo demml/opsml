@@ -116,7 +116,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         self._set_storage_spec(
             filename=SaveName.DATACARD,
-            uri=self.card.datacard_uri,
+            uri=self.card.uris.datacard_uri,
         )
 
         storage_path = save_record_artifact_to_storage(
@@ -124,7 +124,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             storage_client=self.storage_client,
         )
 
-        self.card.datacard_uri = storage_path.uri
+        self.card.uris.datacard_uri = storage_path.uri
 
     def _convert_data_to_arrow(self) -> ArrowTable:
         """Converts data to arrow table
@@ -143,7 +143,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         Args:
             arrow_table (ArrowTable): Pyarrow table
         """
-        self._set_storage_spec(filename=self.card.name, uri=self.card.data_uri)
+        self._set_storage_spec(filename=self.card.name, uri=self.card.uris.data_uri)
 
         storage_path = save_record_artifact_to_storage(
             artifact=arrow_table.table,
@@ -154,7 +154,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
     def _set_arrow_card_attributes(self, arrow_table: ArrowTable):
         """Sets additional card attributes associated with arrow table"""
-        self.card.data_uri = arrow_table.storage_uri
+        self.card.uris.data_uri = arrow_table.storage_uri
         self.card.feature_map = arrow_table.feature_map
         self.card.data_type = arrow_table.table_type
 
@@ -171,7 +171,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         self._set_storage_spec(
             filename=SaveName.DRIFT_REPORT,
-            uri=self.card.data_uri,
+            uri=self.card.uris.data_uri,
         )
 
         storage_path = save_record_artifact_to_storage(
