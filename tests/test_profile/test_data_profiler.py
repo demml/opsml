@@ -23,6 +23,9 @@ def test_datacard_create_data_profile(
     )
 
     data_card.create_data_profile()
+    registry.register_card(data_card)
+
+    assert data_card.uris.profile_uri is not None
 
 
 def test_feed_data_profile(
