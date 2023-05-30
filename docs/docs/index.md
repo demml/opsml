@@ -221,8 +221,8 @@ data_registry.register_card(datacard)
 
 # split data
 data_splits = datacard.split_data()
-X_train = data_splits.train
-y_train = data_splits.train.pop(datacard.dependent_vars[0])
+X_train = data_splits.train.X
+y_train = data_splits.train.y
 
 # fit model
 linreg = LinearRegression()
