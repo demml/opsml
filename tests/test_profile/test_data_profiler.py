@@ -27,6 +27,10 @@ def test_datacard_create_data_profile(
 
     assert data_card.uris.profile_uri is not None
 
+    data_card = registry.load_card(uid=data_card.uid)
+
+    assert data_card.data_profile is not None
+
 
 def test_feed_data_profile(
     db_registries: Dict[str, CardRegistry],
@@ -43,3 +47,14 @@ def test_feed_data_profile(
         user_email="mlops.com",
         data_profile=profile,
     )
+
+    # test profiling with sample
+    data_card = DataCard(
+        data=iris_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    data_card.create_data_profile(sample_perc=0.50)
+    assert data_card.data_profile is not None

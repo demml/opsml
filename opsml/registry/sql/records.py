@@ -2,12 +2,13 @@ import time
 from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator
-
+from ydata_profiling import ProfileReport
 from opsml.registry.cards.types import METRICS, PARAMS, ModelCardUris, DataCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.profile.profile_data import DataProfiler
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
@@ -144,7 +145,6 @@ class LoadedDataRecord(LoadRecord):
     additional_info: Optional[Dict[str, Union[float, int, str]]]
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
-    datacard_uri: str
 
     @root_validator(pre=True)
     def load_attributes(cls, values):  # pylint: disable=no-self-argument
@@ -154,13 +154,18 @@ class LoadedDataRecord(LoadRecord):
             save_path=values["datacard_uri"],
             storage_client=storage_client,
         )
+
         # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
-        datacard_definition["datacard_uri"] = values.get("datacard_uri")
-        datacard_definition["storage_client"] = values.get("storage_client")
-        datacard_definition["uris"] = DataCardUris(
-            data_uri=values.get("data_uri"),
-            datacard_uri=values.get("datacard_uri"),
-        )
+        datacard_definition["storage_client"] = storage_client
+        datacard_definition["uris"].datacard_uri = values.get("datacard_uri")
+
+        if datacard_definition["uris"].profile_uri is not None:
+            profile_uri = datacard_definition["uris"].profile_uri
+
+            datacard_definition["data_profile"] = LoadedDataRecord.load_data_profile(
+                data_profile_uri=profile_uri,
+                storage_client=storage_client,
+            )
 
         return datacard_definition
 
@@ -171,19 +176,19 @@ class LoadedDataRecord(LoadRecord):
         return None
 
     @staticmethod
-    def load_drift_report(values):
-        storage_client = cast(StorageClientType, values["storage_client"])
+    def load_data_profile(data_profile_uri: str, storage_client: StorageClientType) -> ProfileReport:
+        # storage_client = cast(StorageClientType, values["storage_client"])
 
-        if bool(values.get("drift_uri")):
-            storage_spec = ArtifactStorageSpecs(save_path=values["drift_uri"])
+        storage_spec = ArtifactStorageSpecs(save_path=data_profile_uri)
 
-            storage_client.storage_spec = storage_spec
-            return load_record_artifact_from_storage(
-                storage_client=storage_client,
-                artifact_type=ARBITRARY_ARTIFACT_TYPE,
-            )
+        storage_client.storage_spec = storage_spec
+        profile_bytes = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+        )
 
-        return None
+        profile = DataProfiler.load_profile(data=profile_bytes)
+        return profile
 
     @classmethod
     def load_datacard_definition(
