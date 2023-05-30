@@ -1,3 +1,4 @@
+from typing import List
 import pandas as pd
 from ydata_profiling import ProfileReport, compare
 import os
@@ -51,3 +52,16 @@ class DataProfiler:
         profile = ProfileReport()
         profile.loads(data)
         return profile
+
+    @staticmethod
+    def compare_reports(reports: List[ProfileReport]) -> ProfileReport:
+        """Compares ProfileReports
+
+        Args:
+            reports:
+                List of `ProfileReport`
+
+        Returns:
+            `ProfileReport`
+        """
+        return compare(reports=reports)
