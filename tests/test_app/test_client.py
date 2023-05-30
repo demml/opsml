@@ -488,7 +488,9 @@ def test_app_with_login(test_app_login: TestClient):
 
 
 def test_model_metrics(
-    mlflow_project: MlflowProject, test_app: TestClient, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+    mlflow_project: MlflowProject,
+    test_app: TestClient,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
@@ -519,10 +521,62 @@ def test_model_metrics(
             datacard_uid=data_card.uid,
         )
         run.register_card(card=model_card)
-        info.run_id = run.run_id
+
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data=data[0:1],
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            datacard_uid=data_card.uid,
+        )
+        run.register_card(card=model_card)
 
     response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
 
     metrics = response.json()
 
     assert metrics["metrics"]["m1"][0]["value"] == 1.1
+
+    response = test_app.post(
+        url=f"/opsml/{ApiRoutes.MODEL_METRICS}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+        },
+    )
+
+    assert response.status_code == 500
+
+
+def test_model_metric_failure(
+    test_app: TestClient,
+    api_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
+):
+    model, data = sklearn_pipeline
+    # create data card
+    data_registry = api_registries.data
+
+    data_card = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry = api_registries.model
+    model_registry.register_card(model_card)
+
+    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
+    assert response.status_code == 500

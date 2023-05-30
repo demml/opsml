@@ -5,7 +5,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames, METRICS
+from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -208,21 +208,21 @@ def get_model_metrics(
         "uid": uid,
     }
 
-    metrics: METRICS = api_client.get_metrics(payload=payload)
+    metrics = api_client.get_metrics(payload=payload)
 
-    table = Table(title=f"Model Metrics")
+    table = Table(title="Model Metrics")
     table.add_column("Metric", no_wrap=True)
     table.add_column("Value")
     table.add_column("Step")
     table.add_column("Timestamp", justify="right")
 
-    for name, metric_list in metrics.items():
+    for _, metric_list in metrics.items():
         for metric in metric_list:
             table.add_row(
-                metric.name,
-                metric.value,
-                metric.step,
-                metric.timestamp,
+                str(metric.get("name")),
+                str(metric.get("value")),
+                str(metric.get("step", "None")),
+                str(metric.get("timestamp", "None")),
             )
     console.print(table)
 
