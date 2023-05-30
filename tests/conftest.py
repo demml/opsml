@@ -273,7 +273,7 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> dict[str, ClientCardRegistry]:
+def mock_registries(test_client: TestClient) -> CardRegistries:
     def callable_api():
         return test_client
 
