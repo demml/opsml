@@ -230,6 +230,14 @@ class GCSFSStorageClient(StorageClient):
 
         return gcsfs.GCSMap(storage_uri, gcs=self.client, check=False)
 
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+        loadable_path = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
+
+        if loadable_path is None:
+            file_ = os.path.basename(rpath)
+            return os.path.join(lpath, file_)
+        return loadable_path
+
     @staticmethod
     def validate(storage_backend: str) -> bool:
         return storage_backend == StorageSystem.GCS

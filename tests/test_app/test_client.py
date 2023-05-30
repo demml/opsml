@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
@@ -6,7 +6,7 @@ from sklearn import linear_model, pipeline
 import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ValidationError
-from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries
+from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries, CardInfo
 from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
@@ -484,3 +484,97 @@ def test_app_with_login(test_app_login: TestClient):
     )
 
     assert response.status_code == 200
+
+
+def test_model_metrics(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+) -> None:
+    """ify that we can read artifacts / metrics / cards without making a run
+    active."""
+
+    model, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    runcard = RunCard(info=card_info)
+
+    runcard.log_metric(key="m1", value=1.1)
+    runcard.log_metric(key="mape", value=2, step=1)
+    runcard.log_metric(key="mape", value=2, step=2)
+    runcard.log_parameter(key="m1", value="apple")
+    api_registries.run.register_card(runcard)
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+        runcard_uid=runcard.uid,
+    )
+    api_registries.model.register_card(modelcard)
+
+    ### create second ModelCard
+    #### Create ModelCard
+    modelcard_2 = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+        runcard_uid=runcard.uid,
+    )
+    api_registries.model.register_card(modelcard_2)
+
+    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
+
+    metrics = response.json()
+
+    assert metrics["metrics"]["m1"][0]["value"] == 1.1
+
+    response = test_app.post(
+        url=f"/opsml/{ApiRoutes.MODEL_METRICS}",
+        json={
+            "name": modelcard.name,
+            "team": modelcard.team,
+        },
+    )
+
+    assert response.status_code == 500
+
+
+def test_model_metric_failure(
+    test_app: TestClient,
+    api_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
+):
+    model, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+    )
+    api_registries.model.register_card(modelcard)
+
+    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
+    assert response.status_code == 500

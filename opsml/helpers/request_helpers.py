@@ -18,6 +18,7 @@ class ApiRoutes:
     UPDATE_CARD = "cards/update"
     UPLOAD = "upload"
     DOWNLOAD_MODEL_METADATA = "models/metadata"
+    MODEL_METRICS = "models/metrics"
     DOWNLOAD_FILE = "files/download"
     LIST_FILES = "files/list"
 
@@ -52,6 +53,7 @@ class ApiClient:
             url=f"{self._base_url}/{route}",
             json=json,
         )
+
         if response.status_code == 200:
             return response.json()
 
