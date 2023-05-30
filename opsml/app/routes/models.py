@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from opsml.app.core.config import config
 from opsml.app.routes.pydantic_models import (
-    DownloadModelRequest,
+    CardRequest,
     MetricRequest,
     MetricResponse,
 )
@@ -20,11 +20,8 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-registries = CardRegistries()
-
-
 @router.post("/models/metadata", name="download_model_metadata")
-def download_model_metadata(request: Request, payload: DownloadModelRequest) -> StreamingResponse:
+def download_model_metadata(request: Request, payload: CardRequest) -> StreamingResponse:
     """
     Downloads a Model API definition
 
@@ -42,7 +39,7 @@ def download_model_metadata(request: Request, payload: DownloadModelRequest) -> 
         FileResponse object containing model definition json
     """
 
-    registry: CardRegistry = getattr(request.app.state.registries, "model")
+    registry: CardRegistry = request.app.state.registries.model
     storage_client = request.app.state.storage_client
 
     cards: List[Dict[str, Any]] = registry.list_cards(
@@ -97,6 +94,7 @@ def get_metrics(
     """Gets metrics associated with a ModelCard"""
 
     # Get model runcard id
+    registries: CardRegistries = request.app.state.registries
     cards: List[Dict[str, Any]] = registries.model.list_cards(
         uid=payload.uid,
         name=payload.name,

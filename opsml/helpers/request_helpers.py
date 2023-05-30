@@ -16,6 +16,7 @@ class ApiRoutes:
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
+    DATA_PROFILE = "data/profile"
     UPLOAD = "upload"
     DOWNLOAD_MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
