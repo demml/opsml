@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
+from pydantic import BaseModel
+
 
 @dataclass
 class ModelCardUris:
@@ -11,16 +13,14 @@ class ModelCardUris:
     sample_data_uri: Optional[str] = None
 
 
-@dataclass
-class Metric:
+class Metric(BaseModel):
     name: str
     value: Union[float, int]
     step: Optional[int] = None
     timestamp: Optional[int] = None
 
 
-@dataclass
-class Param:
+class Param(BaseModel):
     name: str
     value: Union[float, int, str]
 
