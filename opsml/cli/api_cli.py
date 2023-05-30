@@ -5,7 +5,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames
+from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames, METRICS
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -188,6 +188,42 @@ def list_cards(
             card.get("version"),
             card.get("uid"),
         )
+    console.print(table)
+
+
+@app.command()
+def get_model_metrics(
+    name: str = typer.Option(default=None, help="Model name"),
+    team: str = typer.Option(default=None, help="Team associated with model"),
+    version: str = typer.Option(default=None, help="Model Version"),
+    uid: str = typer.Option(default=None, help="Model uid"),
+):
+    if all(bool(val) for val in [name, team, version, uid]):
+        raise ValueError("A combination of name, team, version and uid must be supplied")
+
+    payload: Dict[str, Union[str, int]] = {
+        "name": name,
+        "version": version,
+        "team": team,
+        "uid": uid,
+    }
+
+    metrics: METRICS = api_client.get_metrics(payload=payload)
+
+    table = Table(title=f"Model Metrics")
+    table.add_column("Metric", no_wrap=True)
+    table.add_column("Value")
+    table.add_column("Step")
+    table.add_column("Timestamp", justify="right")
+
+    for name, metric_list in metrics.items():
+        for metric in metric_list:
+            table.add_row(
+                metric.name,
+                metric.value,
+                metric.step,
+                metric.timestamp,
+            )
     console.print(table)
 
 
