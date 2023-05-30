@@ -1,24 +1,25 @@
 # pylint: disable=protected-access
 import os
 from typing import Any, Dict, List
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status, Body
 from fastapi.responses import StreamingResponse
 
 from opsml.app.core.config import config
-from opsml.app.routes.pydantic_models import (
-    DownloadModelRequest,
-)
+from opsml.app.routes.pydantic_models import DownloadModelRequest, MetricRequest, MetricResponse
 from opsml.app.routes.utils import (
     MODEL_METADATA_FILE,
     replace_proxy_root,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistry
+from opsml.registry import CardRegistry, CardRegistries, ModelCard, RunCard
 
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
 CHUNK_SIZE = 31457280
+
+
+registries = CardRegistries()
 
 
 @router.post("/models/metadata", name="download_model_metadata")
@@ -85,3 +86,40 @@ def download_model_metadata(request: Request, payload: DownloadModelRequest) -> 
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading model. {error}",
         ) from error
+
+
+@router.post("/models/metrics", response_model=MetricResponse, name="model_metrics")
+def get_metrics(
+    request: Request,
+    payload: MetricRequest = Body(...),
+) -> MetricResponse:
+    """Gets metrics associated with a ModelCard"""
+
+    # Get model runcard id
+
+    cards: List[Dict[str, Any]] = registries.model.list_cards(
+        uid=payload.uid,
+        name=payload.name,
+        team=payload.team,
+        version=payload.version,
+        as_dataframe=False,
+    )
+
+    if len(cards) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"More than one card found",
+        )
+
+    card = cards[0]
+    if card.get("runcard_uid") is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Model is not associated with a run",
+        )
+
+    runcard: RunCard = registries.run.load_card(uid=card.get("runcard_uid"))
+
+    print()
+    print(runcard.metrics)
+    return MetricResponse(metrics=runcard.metrics)
