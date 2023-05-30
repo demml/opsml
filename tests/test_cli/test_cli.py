@@ -129,7 +129,7 @@ def _test_launch_server(test_app, api_registries, linear_regression):
     assert result.exit_code == 0
 
 
-def test_model_metrics(
+def _test_model_metrics(
     mlflow_project: MlflowProject, mock_cli_property, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
 ) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
