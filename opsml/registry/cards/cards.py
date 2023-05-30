@@ -365,15 +365,6 @@ class DataCard(ArtifactCard):
         else:
             raise ValueError("SQL Query or Filename must be provided")
 
-    def _profile_dataframe(self, sample_perc: float, name: str):
-        if sample_perc < 1:
-            self.data_profile = DataProfiler.profile(
-                self.data.sample(frac=sample_perc, replace=False),
-                name=name,
-            )
-            return None
-        self.data_profile = DataProfiler.profile(data=self.data, name=name)
-
     def create_data_profile(self, sample_perc: float = 1):
         """Creates a data profile report
 
@@ -386,7 +377,7 @@ class DataCard(ArtifactCard):
 
         if isinstance(self.data, pd.DataFrame):
             if self.data_profile is None:
-                self.data_profile = DataProfiler.profile(
+                self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
                     name=self.name,
                     sample_perc=min(sample_perc, 1),  # max of 1

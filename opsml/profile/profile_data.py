@@ -8,7 +8,7 @@ DIR_PATH = os.path.dirname(__file__)
 
 class DataProfiler:
     @staticmethod
-    def profile(data: pd.DataFrame, name: str, sample_perc: float) -> ProfileReport:
+    def create_profile_report(data: pd.DataFrame, name: str, sample_perc: float = 1) -> ProfileReport:
         """
         Creates a `ydata-profiling` report
 
