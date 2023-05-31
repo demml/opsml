@@ -16,6 +16,8 @@ class ApiRoutes:
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
+    DATA_PROFILE = "data/profile"
+    COMPARE_DATA = "data/compare"
     UPLOAD = "upload"
     DOWNLOAD_MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
@@ -24,6 +26,7 @@ class ApiRoutes:
 
 
 api_routes = ApiRoutes()
+TIMEOUT_CONFIG = httpx.Timeout(10, read=120, write=120)
 
 
 class ApiClient:
@@ -33,11 +36,21 @@ class ApiClient:
         path_prefix: str = PATH_PREFIX,
     ):
         self.client = httpx.Client()
+        self.client.timeout = TIMEOUT_CONFIG
 
         self._base_url = self._get_base_url(
             base_url=base_url,
             path_prefix=path_prefix,
         )
+
+    # @cached_property
+    # def client(self) -> httpx.Client:
+    #    return httpx.Client(timeout=TIMEOUT_CONFIG)
+
+    @property
+    def base_url(self) -> str:
+        """Base url for api client"""
+        return self._base_url
 
     def _get_base_url(self, base_url: str, path_prefix: str) -> str:
         """Gets the base url to use with all requests"""

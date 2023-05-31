@@ -1,11 +1,11 @@
 import pathlib
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames
+from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -16,12 +16,12 @@ api_client = CliApiClient()
 
 @app.command()
 def download_model(
-    name: str = typer.Option(default=None),
-    team: str = typer.Option(default=None),
-    version: str = typer.Option(default=None),
-    uid: str = typer.Option(default=None),
-    onnx: bool = typer.Option(default=True),
-    write_dir: str = typer.Option(default=...),
+    name: str = typer.Option(default=None, help="Name of ModelCard"),
+    team: str = typer.Option(default=None, help="Team associated with ModelCard"),
+    version: str = typer.Option(default=None, help="Version of ModelCard"),
+    uid: str = typer.Option(default=None, help="Uid of ModelCard"),
+    onnx: bool = typer.Option(default=True, help="Whether to download onnx model or original model"),
+    write_dir: str = typer.Option(default="./models"),
 ):
     """
     Downloads a model (onnx or original model) associated with a model card
@@ -45,7 +45,7 @@ def download_model(
         ```bash
         opsml-cli download-model --name "linear-reg" --team "mlops" --write-dir ".models" --no-onnx # original model
         opsml-cli download-model --name "linear-reg" --team "mlops" --write-dir ".models" --onnx # onnx model
-        opsml-cli download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
+        opsml-cli download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir "./models"
         ```
 
     """
@@ -75,7 +75,7 @@ def download_model_metadata(
     team: str = typer.Option(default=None),
     version: str = typer.Option(default=None),
     uid: str = typer.Option(default=None),
-    write_dir: str = typer.Option(),
+    write_dir: str = typer.Option(default="./model"),
 ):
     """
     Downloads model metadata associated with a model card
@@ -198,8 +198,22 @@ def get_model_metrics(
     version: str = typer.Option(default=None, help="Model Version"),
     uid: str = typer.Option(default=None, help="Model uid"),
 ):
-    if all(bool(val) for val in [name, team, version, uid]):
-        raise ValueError("A combination of name, team, version and uid must be supplied")
+    """
+    Prints metrics associated with a ModelCard
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Version to search
+        uid:
+            Uid of Card
+
+    """
+    if uid is None and not all(bool(val) for val in [name, team, version]):
+        raise ValueError("A combination of (name, team, version) and uid must be supplied")
 
     payload: Dict[str, Union[str, int]] = {
         "name": name,
@@ -225,6 +239,95 @@ def get_model_metrics(
                 str(metric.get("timestamp", "None")),
             )
     console.print(table)
+
+
+@app.command()
+def download_data_profile(
+    name: str = typer.Option(default=None, help="Data name"),
+    team: str = typer.Option(default=None, help="Team associated with data"),
+    version: str = typer.Option(default=None, help="Data Version"),
+    uid: str = typer.Option(default=None, help="Data uid"),
+    write_dir: str = typer.Option(default="./data_profile", help="Directory to write data profile to"),
+):
+    """
+    Downloads a data profile from a DataCard
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Card version
+        uid:
+            Card uid
+
+    Returns
+        HTML file
+    """
+
+    if uid is None and not all(bool(val) for val in [name, team, version]):
+        raise ValueError("A combination of name, team, version and uid must be supplied")
+
+    payload: Dict[str, Union[str, int, List[str]]] = {
+        "name": name,
+        "version": version,
+        "team": team,
+        "uid": uid,
+    }
+
+    path = pathlib.Path(write_dir)
+    path.mkdir(parents=True, exist_ok=True)
+
+    api_client.stream_data_file(
+        path=ApiRoutes.DATA_PROFILE,
+        write_path=path,
+        payload=payload,
+    )
+
+
+@app.command()
+def compare_data_profiles(
+    name: str = typer.Option(default=None, help="Data name"),
+    team: str = typer.Option(default=None, help="Team associated with data"),
+    version: List[str] = typer.Option(default=None, help="List of data versions"),
+    uid: List[str] = typer.Option(default=None, help="Data uid"),
+    write_dir: str = typer.Option(default="./data_profile", help="Directory to write data profile to"),
+):
+    """
+    Takes a list of version or uids and runs data profile comparisons
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            List of versions to compare
+        uid:
+            List of Uids to compare
+
+    Returns
+        HTML file
+    """
+    if uid is None and not all(bool(val) for val in [name, team, version]):
+        raise ValueError("A list of versions (with name and team) or uids is required")
+
+    payload: Dict[str, Union[str, int, List[str]]] = {
+        "name": name,
+        "versions": version,
+        "team": team,
+        "uids": uid,
+    }
+
+    path = pathlib.Path(write_dir)
+    path.mkdir(parents=True, exist_ok=True)
+
+    api_client.stream_data_file(
+        path=ApiRoutes.COMPARE_DATA,
+        write_path=path,
+        payload=payload,
+    )
 
 
 @app.command()

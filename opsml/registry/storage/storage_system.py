@@ -233,7 +233,7 @@ class GCSFSStorageClient(StorageClient):
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         loadable_path = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
-        if loadable_path is None:
+        if all(path is None for path in loadable_path):
             file_ = os.path.basename(rpath)
             return os.path.join(lpath, file_)
         return loadable_path
@@ -255,6 +255,10 @@ class LocalStorageClient(StorageClient):
         self._make_path("/".join(save_path.split("/")[:-1]))
 
         return save_path, filename
+
+    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> str:
+        shutil.copy(local_path, write_path)
+        return write_path
 
     def list_files(self, storage_uri: str) -> FilePath:
         if os.path.isdir(storage_uri):

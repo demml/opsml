@@ -92,11 +92,18 @@ class QuerycardResponse(BaseModel):
     card: Dict[str, Any]
 
 
-class DownloadModelRequest(BaseModel):
+class CardRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
+
+
+class CompareCardRequest(BaseModel):
+    name: Optional[str] = None
+    team: Optional[str] = None
+    versions: Optional[List[str]] = None
+    uids: Optional[List[str]] = None
 
 
 class DownloadFileRequest(BaseModel):

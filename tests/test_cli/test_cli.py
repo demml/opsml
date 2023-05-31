@@ -167,3 +167,113 @@ def test_model_metrics(
 
     result = runner.invoke(app, ["get-model-metrics", "--uid", modelcard.uid])
     assert result.exit_code == 0
+
+    # test metric failure
+    result = runner.invoke(app, ["get-model-metrics", "--name", modelcard.name, "--team", modelcard.team])
+    assert result.exit_code == 1
+
+
+def test_download_data_profile(
+    api_registries: CardRegistries,
+    mock_cli_property,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+) -> None:
+    _, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    datacard.create_data_profile()
+    api_registries.data.register_card(datacard)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(app, ["download-data-profile", "--uid", datacard.uid, "--write-dir", tmpdirname])
+
+    assert result.exit_code == 0
+
+    # failure
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(
+            app, ["download-data-profile", "--name", datacard.name, "--team", datacard.team, "--write-dir", tmpdirname]
+        )
+
+    assert result.exit_code == 1
+
+
+def test_compare_data_profile(
+    api_registries: CardRegistries,
+    mock_cli_property,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+) -> None:
+    _, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    datacard.create_data_profile()
+    api_registries.data.register_card(datacard)
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(
+            app, ["compare-data-profiles", "--uid", datacard.uid, "--uid", datacard.uid, "--write-dir", tmpdirname]
+        )
+
+    assert result.exit_code == 0
+
+    # failure
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(
+            app, ["compare-data-profiles", "--name", datacard.name, "--team", datacard.team, "--write-dir", tmpdirname]
+        )
+
+    assert result.exit_code == 1
+
+    # Not data profile fail
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    # failure
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(
+            app,
+            [
+                "compare-data-profiles",
+                "--name",
+                datacard.name,
+                "--team",
+                datacard.team,
+                "--version",
+                datacard.version,
+                "--version",
+                datacard.version,
+                "--write-dir",
+                tmpdirname,
+            ],
+        )
+
+    assert result.exit_code == 1
+
+    # failure
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(
+            app,
+            [
+                "compare-data-profiles",
+                "--uid",
+                datacard.uid,
+                "--uid",
+                datacard.uid,
+                "--write-dir",
+                tmpdirname,
+            ],
+        )
+
+    assert result.exit_code == 1
