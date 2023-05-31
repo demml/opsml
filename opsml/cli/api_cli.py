@@ -16,12 +16,12 @@ api_client = CliApiClient()
 
 @app.command()
 def download_model(
-    name: str = typer.Option(default=None),
-    team: str = typer.Option(default=None),
-    version: str = typer.Option(default=None),
-    uid: str = typer.Option(default=None),
-    onnx: bool = typer.Option(default=True),
-    write_dir: str = typer.Option(default=...),
+    name: str = typer.Option(default=None, help="Name of ModelCard"),
+    team: str = typer.Option(default=None, help="Team associated with ModelCard"),
+    version: str = typer.Option(default=None, help="Version of ModelCard"),
+    uid: str = typer.Option(default=None, help="Uid of ModelCard"),
+    onnx: bool = typer.Option(default=True, help="Whether to download onnx model or original model"),
+    write_dir: str = typer.Option(default="./models"),
 ):
     """
     Downloads a model (onnx or original model) associated with a model card
@@ -45,7 +45,7 @@ def download_model(
         ```bash
         opsml-cli download-model --name "linear-reg" --team "mlops" --write-dir ".models" --no-onnx # original model
         opsml-cli download-model --name "linear-reg" --team "mlops" --write-dir ".models" --onnx # onnx model
-        opsml-cli download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir ".models"
+        opsml-cli download-model --name "linear-reg" --team "mlops" --version "1.0.0" --write-dir "./models"
         ```
 
     """
@@ -75,7 +75,7 @@ def download_model_metadata(
     team: str = typer.Option(default=None),
     version: str = typer.Option(default=None),
     uid: str = typer.Option(default=None),
-    write_dir: str = typer.Option(),
+    write_dir: str = typer.Option(default="./model"),
 ):
     """
     Downloads model metadata associated with a model card
@@ -225,6 +225,30 @@ def get_model_metrics(
                 str(metric.get("timestamp", "None")),
             )
     console.print(table)
+
+
+@app.command()
+def get_data_profile(
+    name: str = typer.Option(default=None, help="Model name"),
+    team: str = typer.Option(default=None, help="Team associated with model"),
+    version: str = typer.Option(default=None, help="Model Version"),
+    uid: str = typer.Option(default=None, help="Model uid"),
+    write_dir: str = typer.Option(default="./data_profile", help="Directory to write data profile to"),
+):
+    if all(bool(val) for val in [name, team, version, uid]):
+        raise ValueError("A combination of name, team, version and uid must be supplied")
+
+    payload: Dict[str, Union[str, int]] = {
+        "name": name,
+        "version": version,
+        "team": team,
+        "uid": uid,
+    }
+
+    path = pathlib.Path(write_dir)
+    path.mkdir(parents=True, exist_ok=True)
+
+    api_client.download_data_profile(write_path=path, payload=payload)
 
 
 @app.command()

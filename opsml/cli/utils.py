@@ -12,6 +12,7 @@ logger = ArtifactLogger.get_logger(__name__)
 
 TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI"))
 _METADATA_FILENAME = "metadata.json"
+_DATA_PROFILE_FILENAME = "data_profile.html"
 
 
 # Duplicate enum
@@ -102,3 +103,30 @@ class CliApiClient:
 
         metrics = cast(Metrics, response.get("metrics"))
         return metrics
+
+    def download_data_profile(
+        self,
+        payload: Dict[str, Union[str, int]],
+        write_path: pathlib.Path,
+    ) -> None:
+        """
+        Downloads model file to directory
+
+        Args:
+            request_client:
+                `ApiClient`
+            filepath:
+                External model filepath
+            write_path:
+                Path to write file to
+
+        """
+
+        with open(os.path.join(write_path, _DATA_PROFILE_FILENAME), "wb") as local_file:
+            with self.client.client.stream(
+                method="POST",
+                url=f"{self.client._base_url}/{ApiRoutes.DATA_PROFILE}",
+                json=payload,
+            ) as response:
+                for data in response.iter_bytes():
+                    local_file.write(data)
