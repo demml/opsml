@@ -1,4 +1,5 @@
 import os
+import tempfile
 from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
@@ -27,7 +28,7 @@ class SaveName(str, Enum):
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
     SAMPLE_MODEL_DATA = "sample-model-data"
-    DRIFT_REPORT = "drift_report"
+    DATA_PROFILE = "data_profile"
 
 
 class CardArtifactSaver:
@@ -116,15 +117,15 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         self._set_storage_spec(
             filename=SaveName.DATACARD,
-            uri=self.card.datacard_uri,
+            uri=self.card.uris.datacard_uri,
         )
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(exclude={"data", "storage_client"}),
+            artifact=self.card.dict(exclude={"data", "storage_client", "data_profile"}),
             storage_client=self.storage_client,
         )
 
-        self.card.datacard_uri = storage_path.uri
+        self.card.uris.datacard_uri = storage_path.uri
 
     def _convert_data_to_arrow(self) -> ArrowTable:
         """Converts data to arrow table
@@ -143,7 +144,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         Args:
             arrow_table (ArrowTable): Pyarrow table
         """
-        self._set_storage_spec(filename=self.card.name, uri=self.card.data_uri)
+        self._set_storage_spec(filename=self.card.name, uri=self.card.uris.data_uri)
 
         storage_path = save_record_artifact_to_storage(
             artifact=arrow_table.table,
@@ -154,7 +155,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
     def _set_arrow_card_attributes(self, arrow_table: ArrowTable):
         """Sets additional card attributes associated with arrow table"""
-        self.card.data_uri = arrow_table.storage_uri
+        self.card.uris.data_uri = arrow_table.storage_uri
         self.card.feature_map = arrow_table.feature_map
         self.card.data_type = arrow_table.table_type
 
@@ -166,27 +167,58 @@ class DataCardArtifactSaver(CardArtifactSaver):
         arrow_table.storage_uri = storage_path.uri
         self._set_arrow_card_attributes(arrow_table=arrow_table)
 
-    def _save_drift(self):
-        """Saves a drift report to file system"""
+    def _save_profile(self):
+        """Saves a datacard data profile"""
 
         self._set_storage_spec(
-            filename=SaveName.DRIFT_REPORT,
-            uri=self.card.data_uri,
+            filename=SaveName.DATA_PROFILE,
+            uri=self.card.uris.profile_uri,
         )
 
+        # profile report needs to be dumped to bytes and saved in joblib/pickle format
+        # This is a requirement for loading with ydata-profiling
+        profile_bytes = self.card.data_profile.dumps()
+
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.drift_report,
+            artifact=profile_bytes,
             storage_client=self.storage_client,
         )
-        self.card.drift_uri = storage_path.uri
+
+        self.card.uris.profile_uri = storage_path.uri
+
+    def _save_profile_html(self):
+        """Saves a profile report to file system"""
+
+        filename = f"{self.card.name}-{self.card.version}-profile.html"
+        self._set_storage_spec(
+            filename=filename,
+            uri=self.card.uris.profile_html_uri,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            filepath = f"{tmp_dir}/{filename}"
+
+            write_path = f"{self.storage_client.base_path_prefix}/{self.save_path}/{filename}"
+            self.card.data_profile.to_file(filepath)
+            storage_uri = self.storage_client.upload(
+                local_path=filepath,
+                write_path=write_path,
+            )
+
+        self.card.uris.profile_html_uri = storage_uri
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
 
         if self.card.data is not None:
             self._save_data()
+
+        if self.card.data_profile is not None:
+            self._save_profile()
+            self._save_profile_html()
+
         self._save_datacard()
-        # drift not implemented yet
+
         return self.card
 
     @staticmethod
