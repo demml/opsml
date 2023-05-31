@@ -185,7 +185,7 @@ def test_download_data_profile(
     datacard = DataCard(data=data, info=card_info)
     datacard.create_data_profile()
     api_registries.data.register_card(datacard)
-    result = runner.invoke(app, ["download-data-profile", "--uid", datacard.uid])
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        result = runner.invoke(app, ["download-data-profile", "--uid", datacard.uid, "--write-dir", tmpdirname])
 
-    print(result.__dict__)
     assert result.exit_code == 0
