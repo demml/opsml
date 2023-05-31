@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
+from ydata_profiling import ProfileReport
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -25,11 +26,13 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TorchOnnxArgs,
 )
+from opsml.profile.profile_data import DataProfiler
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
     CardInfo,
     CardType,
+    DataCardUris,
     Metric,
     ModelCardUris,
     Param,
@@ -186,16 +189,16 @@ class DataCard(ArtifactCard):
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    data_uri: Optional[str]
-    datacard_uri: Optional[str] = None
+    uris: DataCardUris = DataCardUris()
+    data_profile: Optional[ProfileReport] = None
 
-    @validator("data_uri", pre=True, always=True)
-    def check_data(cls, data_uri, values):  # pylint: disable=no-self-argument
-        if data_uri is None:
+    @validator("uris", pre=True, always=True)
+    def check_data(cls, uris: DataCardUris, values):  # pylint: disable=no-self-argument
+        if uris.data_uri is None:
             if values["data"] is None and not bool(values["sql_logic"]):
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
-        return data_uri
+        return uris
 
     @validator("data_splits", pre=True, always=True)
     def check_splits(cls, splits):  # pylint: disable=no-self-argument
@@ -295,7 +298,7 @@ class DataCard(ArtifactCard):
         """Loads data"""
 
         if not bool(self.data) and self.storage_client is not None:
-            storage_spec = ArtifactStorageSpecs(save_path=self.data_uri)
+            storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
 
             self.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
@@ -361,6 +364,30 @@ class DataCard(ArtifactCard):
 
         else:
             raise ValueError("SQL Query or Filename must be provided")
+
+    def create_data_profile(self, sample_perc: float = 1):
+        """Creates a data profile report
+
+        Args:
+            sample_perc:
+                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
+                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
+
+        """
+
+        if isinstance(self.data, pd.DataFrame):
+            if self.data_profile is None:
+                self.data_profile = DataProfiler.create_profile_report(
+                    data=self.data,
+                    name=self.name,
+                    sample_perc=min(sample_perc, 1),  # max of 1
+                )
+
+            else:
+                logger.info("Data profile already exists")
+
+        else:
+            raise ValueError("A pandas dataframe type is required to create a data profile")
 
     @property
     def card_type(self) -> str:
