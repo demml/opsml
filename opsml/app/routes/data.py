@@ -1,12 +1,13 @@
+import os
 from typing import cast
+
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
-from opsml.profile.profile_data import DataProfiler
 from opsml.helpers.logging import ArtifactLogger
+from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistry, DataCard
-import tempfile
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -58,6 +59,7 @@ def download_data_profile(
 def iterfile(file_path: str):
     with open(file_path, mode="rb") as file_like:  #
         yield from file_like
+    os.remove(file_path)
 
 
 @router.post("/data/compare", name="compare_data_profile")
@@ -79,7 +81,14 @@ def compare_data_profile(
                     uid=uid,
                 ),
             )
-            profiles.append(datacard.data_profile.get_description())
+
+            if datacard.data_profile is not None:
+                profiles.append(datacard.data_profile.get_description())
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"No data profile detected for {datacard.uid}",
+                )
 
     elif payload.versions is not None:
         for version in payload.versions:
@@ -91,16 +100,23 @@ def compare_data_profile(
                     version=version,
                 ),
             )
-            profiles.append(datacard.data_profile.get_description())
-
+            if datacard.data_profile is not None:
+                profiles.append(datacard.data_profile.get_description())
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"No data profile detected for {datacard.uid}",
+                )
     else:
-        raise ValueError("Either a list of uids or versions must be passed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="DataCard versions or uids must be lists",
+        )
 
     try:
         comparison = DataProfiler.compare_reports(reports=profiles)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            file_path = f"{tmpdir}/{datacard.name}-{datacard.team}-comparison.html"
-            comparison.to_file(file_path)
+        file_path = f"{datacard.name}-{datacard.team}-comparison.html"
+        comparison.to_file(file_path)
 
         return StreamingResponse(
             iterfile(file_path=file_path),
