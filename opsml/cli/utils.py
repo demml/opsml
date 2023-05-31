@@ -104,8 +104,9 @@ class CliApiClient:
         metrics = cast(Metrics, response.get("metrics"))
         return metrics
 
-    def download_data_profile(
+    def stream_data_file(
         self,
+        path: str,
         payload: Dict[str, Union[str, int]],
         write_path: pathlib.Path,
     ) -> None:
@@ -122,11 +123,24 @@ class CliApiClient:
 
         """
 
+        import httpx
+
+        self.client.client.timeout = httpx.Timeout(connect=None, read=None, write=None, pool=None)
+
         with open(os.path.join(write_path, _DATA_PROFILE_FILENAME), "wb") as local_file:
             with self.client.client.stream(
                 method="POST",
-                url=f"{self.client._base_url}/{ApiRoutes.DATA_PROFILE}",
+                url=f"{self.client.base_url}/{path}",
                 json=payload,
             ) as response:
                 for data in response.iter_bytes():
                     local_file.write(data)
+
+            if response.status_code != 200:
+                response_result = json.loads(data.decode("utf-8"))  # pylint: disable=undefined-loop-variable
+
+                raise ValueError(
+                    f"""Failed to to make server call for post request Url: {ApiRoutes.DATA_PROFILE}.
+                    {response_result.get("detail")}
+                    """
+                )

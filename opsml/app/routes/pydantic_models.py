@@ -99,6 +99,13 @@ class CardRequest(BaseModel):
     uid: Optional[str] = None
 
 
+class CompareCardRequest(BaseModel):
+    name: Optional[str] = None
+    team: Optional[str] = None
+    versions: Optional[List[str]] = None
+    uids: Optional[List[str]] = None
+
+
 class DownloadFileRequest(BaseModel):
     read_path: Optional[str] = None
 

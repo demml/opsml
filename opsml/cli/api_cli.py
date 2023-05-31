@@ -1,11 +1,11 @@
 import pathlib
-from typing import Dict, Union
+from typing import Dict, Union, List
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames
+from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames, ApiRoutes
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -198,6 +198,20 @@ def get_model_metrics(
     version: str = typer.Option(default=None, help="Model Version"),
     uid: str = typer.Option(default=None, help="Model uid"),
 ):
+    """
+    Prints metrics associated with a ModelCard
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Version to search
+        uid:
+            Uid of Card
+
+    """
     if all(bool(val) for val in [name, team, version, uid]):
         raise ValueError("A combination of name, team, version and uid must be supplied")
 
@@ -229,13 +243,30 @@ def get_model_metrics(
 
 @app.command()
 def download_data_profile(
-    name: str = typer.Option(default=None, help="Model name"),
-    team: str = typer.Option(default=None, help="Team associated with model"),
-    version: str = typer.Option(default=None, help="Model Version"),
-    uid: str = typer.Option(default=None, help="Model uid"),
+    name: str = typer.Option(default=None, help="Data name"),
+    team: str = typer.Option(default=None, help="Team associated with data"),
+    version: str = typer.Option(default=None, help="Data Version"),
+    uid: str = typer.Option(default=None, help="Data uid"),
     write_dir: str = typer.Option(default="./data_profile", help="Directory to write data profile to"),
 ):
-    if all(bool(val) for val in [name, team, version, uid]):
+    """
+    Downloads a data profile from a DataCard
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            Card version
+        uid:
+            Card uid
+
+    Returns
+        HTML file
+    """
+
+    if uid is None and not all(bool(val) for val in [name, team, version]):
         raise ValueError("A combination of name, team, version and uid must be supplied")
 
     payload: Dict[str, Union[str, int]] = {
@@ -248,7 +279,55 @@ def download_data_profile(
     path = pathlib.Path(write_dir)
     path.mkdir(parents=True, exist_ok=True)
 
-    api_client.download_data_profile(write_path=path, payload=payload)
+    api_client.stream_data_file(
+        path=ApiRoutes.DATA_PROFILE,
+        write_path=path,
+        payload=payload,
+    )
+
+
+@app.command()
+def compare_data_profiles(
+    name: str = typer.Option(default=None, help="Data name"),
+    team: str = typer.Option(default=None, help="Team associated with data"),
+    version: List[str] = typer.Option(default=None, help="List of data versions"),
+    uid: List[str] = typer.Option(default=None, help="Data uid"),
+    write_dir: str = typer.Option(default="./data_profile", help="Directory to write data profile to"),
+):
+    """
+    Takes a list of version or uids and runs data profile comparisons
+
+    Args:
+        name:
+            Card name
+        team:
+            Team name
+        version:
+            List of versions to compare
+        uid:
+            List of Uids to compare
+
+    Returns
+        HTML file
+    """
+    if uid is None and not all(bool(val) for val in [name, team, version]):
+        raise ValueError("A list of versions (with name and team) or uids is required")
+
+    payload: Dict[str, Union[str, int]] = {
+        "name": name,
+        "versions": version,
+        "team": team,
+        "uids": uid,
+    }
+
+    path = pathlib.Path(write_dir)
+    path.mkdir(parents=True, exist_ok=True)
+
+    api_client.stream_data_file(
+        path=ApiRoutes.COMPARE_DATA,
+        write_path=path,
+        payload=payload,
+    )
 
 
 @app.command()
