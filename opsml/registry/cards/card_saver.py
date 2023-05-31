@@ -197,16 +197,15 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             filepath = f"{tmp_dir}/{filename}"
-            write_path = f"{self.save_path}/{filename}"
 
+            write_path = f"{self.storage_client.base_path_prefix}/{self.save_path}/{filename}"
             self.card.data_profile.to_file(filepath)
-
-            self.storage_client.upload(
+            storage_uri = self.storage_client.upload(
                 local_path=filepath,
                 write_path=write_path,
             )
 
-        self.card.uris.profile_html_uri = write_path
+        self.card.uris.profile_html_uri = storage_uri
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
