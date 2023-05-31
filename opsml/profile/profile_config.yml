@@ -47,9 +47,11 @@ vars:
         # Set to zero to disable
         chi_squared_threshold: 0.0
         coerce_str_to_date: false
-        redact: false
+        redact: true
         histogram_largest: 10
         stop_words: []
+    text:
+      words: false #should get rid of word clouds that cause issues during comparisons
 
     bool:
         n_obs: 3

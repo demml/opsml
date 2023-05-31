@@ -35,12 +35,17 @@ class ApiClient:
         base_url: str,
         path_prefix: str = PATH_PREFIX,
     ):
-        self.client = httpx.Client(timeout=TIMEOUT_CONFIG)
+        self.client = httpx.Client()
+        self.client.timeout = TIMEOUT_CONFIG
 
         self._base_url = self._get_base_url(
             base_url=base_url,
             path_prefix=path_prefix,
         )
+
+    # @cached_property
+    # def client(self) -> httpx.Client:
+    #    return httpx.Client(timeout=TIMEOUT_CONFIG)
 
     @property
     def base_url(self) -> str:
