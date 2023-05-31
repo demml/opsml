@@ -228,7 +228,7 @@ def get_model_metrics(
 
 
 @app.command()
-def get_data_profile(
+def download_data_profile(
     name: str = typer.Option(default=None, help="Model name"),
     team: str = typer.Option(default=None, help="Team associated with model"),
     version: str = typer.Option(default=None, help="Model Version"),

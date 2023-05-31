@@ -1,14 +1,15 @@
+from tempfile import TemporaryDirectory
+
 from fastapi import APIRouter, Body, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 
 from opsml.app.core.config import config
 from opsml.app.routes.pydantic_models import CardRequest
 from opsml.app.routes.utils import replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistries, CardRegistry, DataCard
-from tempfile import TemporaryDirectory
-
-from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.responses import StreamingResponse
+from opsml.registry.storage.storage_system import LocalStorageClient
+from opsml.registry.storage.types import StorageClientSettings
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -38,18 +39,19 @@ def get_data_profile(
         )
 
     else:
+        filepath = f"{datacard.name}-{datacard.version}-profile.html"
         try:
-            storage_client = request.app.state.storage_client
-            with TemporaryDirectory() as tmp_dir:
-                filepath = f"{tmp_dir}/{payload.name}-{payload.version}-profile.html"
-                datacard.data_profile.to_file(filepath)
-                return StreamingResponse(
-                    storage_client.iterfile(
-                        file_path=filepath,
-                        chunk_size=CHUNK_SIZE,
-                    ),
-                    media_type="application/octet-stream",
-                )
+            settings = StorageClientSettings()
+            storage_client = LocalStorageClient(storage_settings=settings)
+            datacard.data_profile.to_file(filepath)
+
+            return StreamingResponse(
+                storage_client.iterfile(
+                    file_path=filepath,
+                    chunk_size=CHUNK_SIZE,
+                ),
+                media_type="application/octet-stream",
+            )
 
         except Exception as error:
             raise HTTPException(

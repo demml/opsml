@@ -167,3 +167,25 @@ def test_model_metrics(
 
     result = runner.invoke(app, ["get-model-metrics", "--uid", modelcard.uid])
     assert result.exit_code == 0
+
+
+def test_download_data_profile(
+    api_registries: CardRegistries,
+    mock_cli_property,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+) -> None:
+    _, data = sklearn_pipeline
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    datacard.create_data_profile()
+    api_registries.data.register_card(datacard)
+    result = runner.invoke(app, ["download-data-profile", "--uid", datacard.uid])
+
+    print(result.__dict__)
+    assert result.exit_code == 0
