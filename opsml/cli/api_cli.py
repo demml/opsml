@@ -1,11 +1,11 @@
 import pathlib
-from typing import Dict, Union, List
+from typing import Dict, List, Union
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cli.utils import TRACKING_URI, CliApiClient, RegistryTableNames, ApiRoutes
+from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -212,8 +212,8 @@ def get_model_metrics(
             Uid of Card
 
     """
-    if all(bool(val) for val in [name, team, version, uid]):
-        raise ValueError("A combination of name, team, version and uid must be supplied")
+    if uid is None and not all(bool(val) for val in [name, team, version]):
+        raise ValueError("A combination of (name, team, version) and uid must be supplied")
 
     payload: Dict[str, Union[str, int]] = {
         "name": name,
@@ -269,7 +269,7 @@ def download_data_profile(
     if uid is None and not all(bool(val) for val in [name, team, version]):
         raise ValueError("A combination of name, team, version and uid must be supplied")
 
-    payload: Dict[str, Union[str, int]] = {
+    payload: Dict[str, Union[str, int, List[str]]] = {
         "name": name,
         "version": version,
         "team": team,
@@ -313,7 +313,7 @@ def compare_data_profiles(
     if uid is None and not all(bool(val) for val in [name, team, version]):
         raise ValueError("A list of versions (with name and team) or uids is required")
 
-    payload: Dict[str, Union[str, int]] = {
+    payload: Dict[str, Union[str, int, List[str]]] = {
         "name": name,
         "versions": version,
         "team": team,

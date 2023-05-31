@@ -107,7 +107,7 @@ class CliApiClient:
     def stream_data_file(
         self,
         path: str,
-        payload: Dict[str, Union[str, int]],
+        payload: Dict[str, Union[str, int, List[str]]],
         write_path: pathlib.Path,
     ) -> None:
         """
@@ -122,11 +122,6 @@ class CliApiClient:
                 Path to write file to
 
         """
-
-        import httpx
-
-        self.client.client.timeout = httpx.Timeout(connect=None, read=None, write=None, pool=None)
-
         with open(os.path.join(write_path, _DATA_PROFILE_FILENAME), "wb") as local_file:
             with self.client.client.stream(
                 method="POST",
@@ -140,7 +135,7 @@ class CliApiClient:
                 response_result = json.loads(data.decode("utf-8"))  # pylint: disable=undefined-loop-variable
 
                 raise ValueError(
-                    f"""Failed to to make server call for post request Url: {ApiRoutes.DATA_PROFILE}.
+                    f"""Failed to to make server call for post request Url: {path}.
                     {response_result.get("detail")}
                     """
                 )
