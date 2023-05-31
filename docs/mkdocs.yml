@@ -36,6 +36,7 @@ nav:
       - DataCard: 'cards/datacard.md'
       - ModelCard: 'cards/modelcard.md'
       - RunCard: 'cards/runcard.md'
+      - Versioning: 'cards/versioning.md'
       #- RunCard: 'getting_started.md'
       #- ProjectCard: 'getting_started.md'
       #- PipelineCard: 'getting_started.md'
@@ -53,6 +54,7 @@ markdown_extensions:
   - admonition
   - pymdownx.highlight
   - pymdownx.extra
+  - pymdownx.snippets
 
   - pymdownx.superfences:
       custom_fences:
