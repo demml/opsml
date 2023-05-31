@@ -132,7 +132,7 @@ class DefaultAttrCreator:
         password = os.environ.get(OpsmlAuth.PASSWORD)
 
         if "http" in tracking_uri:
-            request_client = ApiClient(base_url=tracking_uri)
+            request_client = ApiClient(base_url=tracking_uri.strip("/"))
             if all(bool(cred) for cred in [username, password]):
                 request_client.client.auth = httpx.BasicAuth(
                     username=str(username),

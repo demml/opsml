@@ -211,6 +211,12 @@ def get_model_metrics(
         uid:
             Uid of Card
 
+    Example:
+
+        ```bash
+        opsml-cli get-model-metrics --name "linear-reg" --team "mlops" --version "1.0.0"
+        ```
+
     """
     if uid is None and not all(bool(val) for val in [name, team, version]):
         raise ValueError("A combination of (name, team, version) and uid must be supplied")
@@ -264,6 +270,12 @@ def download_data_profile(
 
     Returns
         HTML file
+
+    Example:
+
+        ```bash
+        opsml-cli download-data-profile --name "linear-reg" --team "mlops" --version "1.0.0"
+        ```
     """
 
     if uid is None and not all(bool(val) for val in [name, team, version]):
@@ -309,6 +321,13 @@ def compare_data_profiles(
 
     Returns
         HTML file
+
+    Example:
+
+        ```bash
+        opsml-cli compare-data-profiles --name "linear-reg" --team "mlops" --version "1.0.0" --version "1.1.0"
+        ```
+
     """
     if uid is None and not all(bool(val) for val in [name, team, version]):
         raise ValueError("A list of versions (with name and team) or uids is required")

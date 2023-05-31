@@ -10,7 +10,7 @@ from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 
 logger = ArtifactLogger.get_logger(__name__)
 
-TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI"))
+TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI")).strip("/")  # strip trailing slash if it has one
 _METADATA_FILENAME = "metadata.json"
 _DATA_PROFILE_FILENAME = "data_profile.html"
 
