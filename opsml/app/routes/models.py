@@ -5,11 +5,7 @@ from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from opsml.app.core.config import config
-from opsml.app.routes.pydantic_models import (
-    CardRequest,
-    MetricRequest,
-    MetricResponse,
-)
+from opsml.app.routes.pydantic_models import CardRequest, MetricRequest, MetricResponse
 from opsml.app.routes.utils import MODEL_METADATA_FILE, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistries, CardRegistry, RunCard
