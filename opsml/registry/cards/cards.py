@@ -8,7 +8,6 @@ import pandas as pd
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 from ydata_profiling import ProfileReport
-from opsml.profile.profile_data import DataProfiler
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -27,14 +26,15 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TorchOnnxArgs,
 )
+from opsml.profile.profile_data import DataProfiler
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
     CardInfo,
     CardType,
+    DataCardUris,
     Metric,
     ModelCardUris,
-    DataCardUris,
     Param,
 )
 from opsml.registry.data.splitter import DataHolder, DataSplitter
