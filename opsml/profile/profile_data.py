@@ -1,7 +1,8 @@
+import os
 from typing import List
+
 import pandas as pd
 from ydata_profiling import ProfileReport, compare
-import os
 
 DIR_PATH = os.path.dirname(__file__)
 

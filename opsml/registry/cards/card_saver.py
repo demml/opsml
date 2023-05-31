@@ -1,4 +1,5 @@
 import os
+import tempfile
 from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
@@ -167,11 +168,11 @@ class DataCardArtifactSaver(CardArtifactSaver):
         self._set_arrow_card_attributes(arrow_table=arrow_table)
 
     def _save_profile(self):
-        """Saves a drift report to file system"""
+        """Saves a datacard data profile"""
 
         self._set_storage_spec(
             filename=SaveName.DATA_PROFILE,
-            uri=self.card.uris.data_uri,
+            uri=self.card.uris.profile_uri,
         )
 
         # profile report needs to be dumped to bytes and saved in joblib/pickle format
@@ -182,7 +183,30 @@ class DataCardArtifactSaver(CardArtifactSaver):
             artifact=profile_bytes,
             storage_client=self.storage_client,
         )
+
         self.card.uris.profile_uri = storage_path.uri
+
+    def _save_profile_html(self):
+        """Saves a profile report to file system"""
+
+        filename = f"{self.card.name}-{self.card.version}-profile.html"
+        self._set_storage_spec(
+            filename=filename,
+            uri=self.card.uris.profile_html_uri,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            filepath = f"{tmp_dir}/{filename}"
+            write_path = f"{self.save_path}/{filename}"
+
+            self.card.data_profile.to_file(filepath)
+
+            self.storage_client.upload(
+                local_path=filepath,
+                write_path=write_path,
+            )
+
+        self.card.uris.profile_html_uri = write_path
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
@@ -192,9 +216,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         if self.card.data_profile is not None:
             self._save_profile()
+            self._save_profile_html()
 
         self._save_datacard()
-        # drift not implemented yet
+
         return self.card
 
     @staticmethod
