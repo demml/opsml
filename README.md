@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://drone.shipt.com/shipt/py-opsml">
-  <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml-artifacts/status.svg"/>
+  <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml/status.svg"/>
 
   <a href="https://www.python.org/downloads/release/python-390/">
   <img alt="Python" src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Blue_Python_3.9_Shield_Badge.svg" />

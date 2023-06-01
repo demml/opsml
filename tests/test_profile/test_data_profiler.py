@@ -6,6 +6,7 @@ from opsml.registry.sql.registry import CardRegistry
 from opsml.registry import DataCard
 from opsml.profile.profile_data import DataProfiler
 from sklearn.model_selection import train_test_split
+import pytest
 
 
 def test_datacard_create_data_profile(
@@ -22,6 +23,10 @@ def test_datacard_create_data_profile(
     )
 
     data_card.create_data_profile()
+
+    # should raise logging info if called again
+    data_card.create_data_profile()
+
     registry.register_card(data_card)
 
     assert data_card.uris.profile_uri is not None
@@ -91,3 +96,15 @@ def test_compare_data_profile(
     comparison = DataProfiler.compare_reports([train_profile, test_profile])
 
     assert isinstance(comparison, ProfileReport)
+
+
+def test_datacard_numpy_profile_fail(test_array: np.ndarray):
+    data_card = DataCard(
+        data=test_array,
+        name="test_array",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    with pytest.raises(ValueError):
+        data_card.create_data_profile()

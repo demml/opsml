@@ -180,7 +180,7 @@ class DataCard(ArtifactCard):
     """
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table]]
-    data_splits: Optional[List[Dict[str, Any]]]
+    data_splits: List[Dict[str, Any]] = []
     feature_map: Optional[Dict[str, Union[str, None]]]
     data_type: Optional[str]
     dependent_vars: Optional[List[Union[int, str]]]
@@ -202,13 +202,11 @@ class DataCard(ArtifactCard):
 
     @validator("data_splits", pre=True, always=True)
     def check_splits(cls, splits):  # pylint: disable=no-self-argument
-        if splits is None:
-            return []
-
-        for split in splits:
-            indices = split.get("indices")
-            if indices is not None and isinstance(indices, np.ndarray):
-                split["indices"] = indices.tolist()
+        if len(splits) > 0:
+            for split in splits:
+                indices = split.get("indices")
+                if indices is not None and isinstance(indices, np.ndarray):
+                    split["indices"] = indices.tolist()
 
         return splits
 
@@ -281,7 +279,7 @@ class DataCard(ArtifactCard):
             Class containing data splits
         """
 
-        if self.data_splits is not None:
+        if len(self.data_splits) > 0:
             data_holder = DataHolder()
             for split in self.data_splits:
                 label, data = DataSplitter(
@@ -297,7 +295,7 @@ class DataCard(ArtifactCard):
     def load_data(self):
         """Loads data"""
 
-        if not bool(self.data) and self.storage_client is not None:
+        if self.data is None and self.storage_client is not None:
             storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
 
             self.storage_client.storage_spec = storage_spec
@@ -307,6 +305,7 @@ class DataCard(ArtifactCard):
             )
 
             setattr(self, "data", data)
+
         else:
             logger.info("Data has already been loaded")
 

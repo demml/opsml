@@ -12,6 +12,7 @@ def test_dataframe(test_df: pd.DataFrame):
 
     assert isinstance(pd_data.shape, tuple)
     assert isinstance(pd_data.dtypes, list)
+    assert isinstance(pd_data.feature_dict, dict)
 
 
 def test_numpy(test_array: NDArray):
@@ -20,6 +21,8 @@ def test_numpy(test_array: NDArray):
         input_data=test_array,
         data_type=type(test_array),
     )
+
+    assert isinstance(numpy_data.feature_dict, dict)
 
     with pytest.raises(ValueError):
         numpy_data.to_numpy()
@@ -36,6 +39,10 @@ def test_dictionary(test_array: NDArray):
         input_data=data,
         data_type=type(data),
     )
+
+    assert isinstance(dict_data.feature_dict, dict)
+    assert isinstance(dict_data.num_dtypes, int)
+    assert isinstance(dict_data.features, list)
 
     with pytest.raises(ValueError):
         dict_data.to_numpy()

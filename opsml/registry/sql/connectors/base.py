@@ -54,7 +54,15 @@ class CloudSQLConnection(BaseSQLConnection):
     def _connection_name(self) -> str:
         """Gets connection name from connection parts"""
 
-        connection_name = self.connection_parts.normalized_query.get("host")[0]  # type: ignore
+        norm_query = self.connection_parts.normalized_query
+
+        if "host" in norm_query.keys():
+            connection_name = norm_query.get("host")[0]
+        elif "unix_socket" in norm_query.keys():
+            connection_name = norm_query.get("unix_socket")[0]
+        else:
+            raise ValueError("No unix_socket or host detected in uri")
+
         if "cloudsql" in connection_name:
             return connection_name.split("cloudsql/")[-1]
         return connection_name

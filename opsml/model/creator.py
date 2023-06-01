@@ -94,7 +94,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             input_data=self.input_data,
         )
 
-        return model_data.feaure_dict
+        return model_data.feature_dict
 
     def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
         model_data = get_model_data(
@@ -102,7 +102,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             data_type=type(predictions),
         )
 
-        return model_data.feaure_dict
+        return model_data.feature_dict
 
     def _get_output_schema(self) -> Dict[str, Feature]:
         if hasattr(self.model, "predict"):
