@@ -237,6 +237,70 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     assert len(record) == 1
     assert record[0].get("version") == "2.12.0"
 
+    # pre-release
+    data_card_pre = DataCard(
+        data=test_array,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.0.0-rc.1",
+    )
+    registry.register_card(card=data_card_pre)
+
+    records = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="3.*.*",
+        as_dataframe=False,
+    )
+
+    assert len(records) == 1
+
+    data_card_pre.version = "3.0.0"
+    registry.update_card(card=data_card_pre)
+
+    # check update works
+    records = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="3.*.*",
+        as_dataframe=False,
+    )
+
+    assert records[0]["version"] == "3.0.0"
+
+    with pytest.raises(ValueError):
+        # try registering card where version already exists
+        data_card = DataCard(
+            data=test_array,
+            name="test_df",
+            team="mlops",
+            user_email="mlops.com",
+            version="3.0.0-rc.1",  # cant create a release for a minor version that already exists
+        )
+        registry.register_card(card=data_card)
+
+    with pytest.raises(ValueError):
+        # try invalid semver
+        data_card = DataCard(
+            data=test_array,
+            name="test_df",
+            team="mlops",
+            user_email="mlops.com",
+            version="3.0.0blah",
+        )
+        registry.register_card(card=data_card)
+
+    # pre-release
+    data_card_pre = DataCard(
+        data=test_array,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.0.1-rc.1",
+    )
+    registry.register_card(card=data_card_pre)
+
 
 def test_runcard(
     linear_regression: linear_model.LinearRegression,
@@ -377,9 +441,6 @@ def test_local_model_registry(
     assert loaded_card.sample_input_data is not None
     assert loaded_card.onnx_model_def is not None
 
-    with pytest.raises(ValueError):
-        model_registry.update_card(loaded_card)
-
 
 def test_register_model(
     db_registries: Dict[str, CardRegistry],
@@ -464,6 +525,28 @@ def test_register_model(
             user_email="mlops.com",
             datacard_uid="test_uid",
         )
+
+    # test pre-release model
+    model_card_pre = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+        version="3.1.0-rc.1",
+    )
+
+    model_registry.register_card(card=model_card_pre)
+    cards = model_registry.list_cards(uid=model_card_pre.uid, as_dataframe=False)
+
+    assert cards[0]["version"] == "3.1.0-rc.1"
+
+    model_card_pre.version = "3.1.0"
+    model_registry.update_card(card=model_card_pre)
+    cards = model_registry.list_cards(uid=model_card_pre.uid, as_dataframe=False)
+
+    assert cards[0]["version"] == "3.1.0"
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
