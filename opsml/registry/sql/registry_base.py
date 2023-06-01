@@ -167,6 +167,22 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
+    def _check_and_validate_version(self, card: ArtifactCard):
+        """
+        Validates version if version is manually passed to Card
+
+        Args:
+            card:
+                `ArtifactCard`
+        """
+        if not semver.VersionInfo.isvalid(card.version):
+            raise ValueError("Version is not a valid Semver")
+
+        version = str(semver.VersionInfo.parse(card.version).finalize_version())
+        records = self.list_cards(name=card.name, team=card.team, version=version)
+        if len(records) > 0:
+            raise ValueError("Major, minor and patch version combination already exists")
+
     def _set_card_uid_version(self, card: ArtifactCard, version_type: VersionType):
         """Sets a given card's version and uid
 
@@ -179,13 +195,18 @@ class SQLRegistryBase:
 
         # need to find way to compare previous cards and automatically
         # determine if change is major or minor
-        version = self.set_version(
-            name=card.name,
-            team=card.team,
-            version_type=version_type,
-        )
 
-        card.version = version
+        if card.version is not None:
+            self._check_and_validate_version(card=card)
+
+        else:
+            version = self.set_version(
+                name=card.name,
+                team=card.team,
+                version_type=version_type,
+            )
+
+            card.version = version
 
         if card.uid is None:
             card.uid = self._get_uid()
@@ -259,10 +280,10 @@ class SQLRegistryBase:
 
     def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         versions = [record["version"] for record in records]
-        sort_semvers(versions)
+        sorted_versions = sort_semvers(versions)
 
         sorted_records = []
-        for version in versions:
+        for version in sorted_versions:
             for record in records:
                 if record["version"] == version:
                     sorted_records.append(record)
@@ -345,10 +366,10 @@ class ServerRegistry(SQLRegistryBase):
             results = sess.scalars(query).all()
         if bool(results):
             versions = [result.version for result in results]
-            sort_semvers(versions)
+            sorted_versions = sort_semvers(versions)
 
             return self._increment_version(
-                version=versions[0],
+                version=sorted_versions[0],
                 version_type=version_type,
             )
         return "1.0.0"
