@@ -64,10 +64,11 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
         team="mlops",
         user_email="mlops.com",
         sql_logic={"test": "select * from test_table"},
+        feature_descriptions={"test": "test_description"},
     )
 
     registry.register_card(card=data_card)
-    loaded_card = registry.load_card(uid=data_card.uid)
+    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
     assert loaded_card.sql_logic.get("test") is not None
 
 
@@ -384,6 +385,38 @@ def test_local_model_registry_to_onnx(
     assert loaded_card.uris.model_metadata_uri is not None
 
 
+def test_local_model_registry_no_onnx(
+    db_registries: Dict[str, CardRegistry],
+    sklearn_pipeline: Pipeline,
+):
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = sklearn_pipeline
+    data_card = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+        to_onnx=False,
+    )
+
+    model_registry: CardRegistry = db_registries["model"]
+    model_registry.register_card(card=model_card)
+
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    assert loaded_card.uris.model_metadata_uri is not None
+
+
 def test_local_model_registry(
     db_registries: Dict[str, CardRegistry],
     sklearn_pipeline: Pipeline,
@@ -649,6 +682,35 @@ def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_d
     assert data_splits.train.y is not None
     assert data_splits.test.X is not None
     assert data_splits.test.y is not None
+
+
+def test_datacard_split_fail(db_registries: Dict[str, CardRegistry], test_df: pd.DataFrame):
+    data_name = "test_df"
+    team = "mlops"
+    user_email = "mlops.com"
+
+    registry: CardRegistry = db_registries["data"]
+
+    data_card = DataCard(
+        data=test_df,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        feature_descriptions={"test": "test"},
+    )
+
+    registry.register_card(card=data_card)
+
+    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
+
+    # load data
+    loaded_card.load_data()
+
+    # should raise logging info
+    loaded_card.load_data()
+
+    with pytest.raises(ValueError):
+        data_card.split_data()
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
