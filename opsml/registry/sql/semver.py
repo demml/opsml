@@ -3,10 +3,13 @@ from enum import Enum
 from typing import List
 
 
-def sort_semvers(semvers: List[str]):
+def sort_semvers(semvers: List[str]) -> List[str]:
     """Sorts a list of semvers"""
-    semvers.sort(key=lambda x: [int(y) for y in x.split(".")])
-    semvers.reverse()
+    sorted_versions = sorted(
+        semvers, key=lambda x: [int(i) if i.isdigit() else i for i in x.replace("-", ".").split(".")]
+    )
+    sorted_versions.reverse()
+    return sorted_versions
 
 
 class SemVerSymbols(str, Enum):
