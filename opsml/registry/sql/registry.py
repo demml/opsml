@@ -29,9 +29,6 @@ class DataCardRegistry(Registry):
 
 
 class ModelCardRegistry(Registry):
-    def update_card(self, card: ArtifactCard) -> None:
-        raise ValueError("Updates are not available for ModelCards")
-
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
