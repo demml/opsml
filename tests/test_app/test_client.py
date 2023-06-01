@@ -152,7 +152,7 @@ def test_register_large_data(api_registries: Dict[str, CardRegistry]):
     )
     registry.register_card(card=data_card)
 
-    loaded_card = registry.load_card(uid=data_card.uid)
+    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
     loaded_card.load_data()
 
     assert (loaded_card.data == x).all()

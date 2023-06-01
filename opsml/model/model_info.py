@@ -72,7 +72,7 @@ class ModelData:
         raise NotImplementedError
 
     @property
-    def feaure_dict(self) -> Dict[str, Feature]:
+    def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_, shape in zip(self.features, self.dtypes, self.shape):
             if not isinstance(shape, list):
@@ -137,7 +137,7 @@ class PandasDataFrame(ModelData):
             self.convert_dataframe_column(column_type="category", convert_column_type=str)
 
     @property
-    def feaure_dict(self) -> Dict[str, Feature]:
+    def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_ in zip(self.features, self.dtypes):
             feature_dict[feature] = Feature(feature_type=type_, shape=[1])
@@ -184,7 +184,7 @@ class DataDictionary(ModelData):
         self.data = cast(Dict[str, NDArray], self.data)
 
     @property
-    def feaure_dict(self) -> Dict[str, Feature]:
+    def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_, shape in zip(self.features, self.dtypes, self.shape):
             feature_dict[feature] = Feature(feature_type=type_, shape=[shape[1]])
