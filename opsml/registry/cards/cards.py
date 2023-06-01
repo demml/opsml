@@ -594,9 +594,6 @@ class ModelCard(ArtifactCard):
             "storage_client",
         }
 
-        if not bool(self.onnx_model_def):
-            self._create_and_set_model_attr(to_onnx=self.to_onnx)
-
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
