@@ -87,7 +87,7 @@ class QueryCreator:
 
         if tags is not None:
             for key, value in tags.items():
-                filters.append(table.tags[key].contains(value))
+                filters.append(table.tags[key].as_string() == value)
 
         if bool(filters):
             query = query.filter(*filters)
