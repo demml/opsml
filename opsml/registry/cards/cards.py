@@ -387,12 +387,10 @@ class DataCard(ArtifactCard):
                 )
                 return self.data_profile
 
-            else:
-                logger.info("Data profile already exists")
-                return self.data_profile
+            logger.info("Data profile already exists")
+            return self.data_profile
 
-        else:
-            raise ValueError("A pandas dataframe type is required to create a data profile")
+        raise ValueError("A pandas dataframe type is required to create a data profile")
 
     @property
     def card_type(self) -> str:
