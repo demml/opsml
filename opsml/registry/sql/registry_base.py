@@ -546,6 +546,7 @@ class ClientRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
@@ -554,13 +555,15 @@ class ClientRegistry(SQLRegistryBase):
 
         Args:
             name:
-                Artifact record name
+                Card Name
             team:
-                Team data is assigned to
+                Team Card
             version:
-                Optional version number of existing data. If not specified, the most recent version will be used.
+                Version. If not specified, the most recent version will be used.
             uid:
-                Unique identifier for DataCard. If present, the uid takes precedence.
+                Unique identifier for an ArtifactCard. If present, the uid takes precedence.
+            tags:
+                Tags associated with a given ArtifactCard
             max_date:
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
@@ -578,6 +581,7 @@ class ClientRegistry(SQLRegistryBase):
                 "uid": uid,
                 "max_date": max_date,
                 "limit": limit,
+                "tags": tags,
                 "table_name": self.table_name,
             },
         )
