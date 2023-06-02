@@ -114,11 +114,32 @@ def test_list_cards(
         name="test_data",
         team=team,
         user_email=user_email,
+        tags={"test": "data"},
     )
 
     data_registry.register_card(card=data_card)
 
     result = runner.invoke(app, ["list-cards", "--registry", "data", "--name", "test_model", "--team", team])
+    assert result.exit_code == 0
+
+    # test tag
+    result = runner.invoke(
+        app,
+        [
+            "list-cards",
+            "--registry",
+            "data",
+            "--name",
+            "test_model",
+            "--team",
+            team,
+            "--tag-key",
+            "test",
+            "--tag-value",
+            "data",
+        ],
+    )
+
     print(result.__dict__)
     assert result.exit_code == 0
 
