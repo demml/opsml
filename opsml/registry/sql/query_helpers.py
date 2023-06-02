@@ -1,6 +1,6 @@
 import datetime
 from functools import wraps
-from typing import Any, Iterable, Optional, Type, Union, cast
+from typing import Any, Dict, Iterable, Optional, Type, Union, cast
 
 from sqlalchemy import select
 from sqlalchemy.sql import FromClause, Select
@@ -42,6 +42,7 @@ class QueryCreator:
         team: Optional[str] = None,
         version: Optional[str] = None,
         max_date: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -57,6 +58,8 @@ class QueryCreator:
                 Optional team name
             version:
                 Optional version of Card
+            tags:
+                Optional card tags
             max_date:
                 Optional max date to search
 
@@ -81,6 +84,10 @@ class QueryCreator:
         if max_date is not None:
             max_date_ts = self._get_epoch_time_to_search(max_date=max_date)
             filters.append(getattr(table, "timestamp") <= max_date_ts)
+
+        if tags is not None:
+            for key, value in tags.items():
+                filters.append(table.tags[key].contains(value))
 
         if bool(filters):
             query = query.filter(*filters)

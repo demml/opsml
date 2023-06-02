@@ -153,6 +153,7 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
         info: Optional[CardInfo] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
@@ -168,15 +169,17 @@ class CardRegistry:
             version:
                 Optional version number of existing data. If not specified, the
                 most recent version will be used
+            tags:
+                Dictionary of key, value tags to search for
             uid:
-                Unique identifier for Card. If present, the uid takes precedence.
+                Unique identifier for Card. If present, the uid takes precedence
             max_date:
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
 
         Returns:
-            pandas dataframe of records
+            pandas dataframe of records or list of dictionaries
         """
 
         if info is not None:
@@ -184,6 +187,7 @@ class CardRegistry:
             team = team or info.team
             uid = uid or info.uid
             version = version or info.version
+            tags = tags or info.tags
 
         if name is not None:
             name = name.lower()
@@ -198,6 +202,7 @@ class CardRegistry:
             version=version,
             max_date=max_date,
             limit=limit,
+            tags=tags,
         )
 
         if as_dataframe:
@@ -210,6 +215,7 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         uid: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
         version: Optional[str] = None,
         info: Optional[CardInfo] = None,
     ) -> ArtifactCard:
@@ -223,6 +229,8 @@ class CardRegistry:
             uid:
                 Unique identifier for card. If present, the uid takes
                 precedence.
+            tags:
+                Optional tags associated with model.
             version:
                 Optional version number of existing data. If not specified, the
                 most recent version will be used
@@ -237,8 +245,9 @@ class CardRegistry:
             team = team or info.team
             uid = uid or info.uid
             version = version or info.version
+            tags = tags or info.tags
 
-        return self._registry.load_card(uid=uid, name=name, team=team, version=version)
+        return self._registry.load_card(uid=uid, name=name, team=team, version=version, tags=tags)
 
     def register_card(
         self,
