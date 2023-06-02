@@ -270,9 +270,9 @@ class SQLRegistryBase:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
-        tags: Optional[Dict[str, str]] = None,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
@@ -435,7 +435,6 @@ class ServerRegistry(SQLRegistryBase):
         records = self._parse_sql_results(results=results)
 
         sorted_records = self._sort_by_version(records=records)
-        print(sorted_records)
 
         return sorted_records
 

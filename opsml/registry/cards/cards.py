@@ -368,7 +368,7 @@ class DataCard(ArtifactCard):
         else:
             raise ValueError("SQL Query or Filename must be provided")
 
-    def create_data_profile(self, sample_perc: float = 1):
+    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
         """Creates a data profile report
 
         Args:
@@ -385,9 +385,11 @@ class DataCard(ArtifactCard):
                     name=self.name,
                     sample_perc=min(sample_perc, 1),  # max of 1
                 )
+                return self.data_profile
 
             else:
                 logger.info("Data profile already exists")
+                return self.data_profile
 
         else:
             raise ValueError("A pandas dataframe type is required to create a data profile")

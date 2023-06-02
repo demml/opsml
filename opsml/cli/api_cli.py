@@ -122,6 +122,8 @@ def list_cards(
     team: str = typer.Option(default=None),
     version: str = typer.Option(default=None),
     uid: str = typer.Option(default=None),
+    tag_key: str = typer.Option(default=None),
+    tag_value: str = typer.Option(default=None),
     max_date: str = typer.Option(default=None),
     limit: int = typer.Option(default=None),
 ):
@@ -139,6 +141,10 @@ def list_cards(
             Version to search
         uid:
             Uid of Card
+        tag_key:
+            Tag key
+        tag_value:
+            Tag value
         max_date:
             Max date to search
         limit:
@@ -160,13 +166,19 @@ def list_cards(
             registry,
         )
 
-    payload: Dict[str, Union[str, int]] = {
+    if tag_key is not None:
+        tags = {tag_key: tag_value}
+    else:
+        tags = None
+
+    payload: Dict[str, Union[str, int, Dict[str, str]]] = {
         "name": name,
         "version": version,
         "team": team,
         "uid": uid,
         "limit": limit,
         "max_date": max_date,
+        "tags": tags,
         "table_name": registry_name,
     }
     cards = api_client.list_cards(payload=payload)
@@ -177,6 +189,7 @@ def list_cards(
     table.add_column("Date")
     table.add_column("User Email")
     table.add_column("Version")
+    table.add_column("Tags")
     table.add_column("Uid", justify="right")
 
     for card in cards:
@@ -186,6 +199,7 @@ def list_cards(
             card.get("date"),
             card.get("user_email"),
             card.get("version"),
+            str(card.get("tags")),
             card.get("uid"),
         )
     console.print(table)
