@@ -55,6 +55,7 @@ class ListRequest(BaseModel):
     uid: Optional[str]
     max_date: Optional[str]
     limit: Optional[int]
+    tags: Optional[Dict[str, str]]
     table_name: str
 
 

@@ -207,6 +207,7 @@ def test_register_model(
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
+        tags={"id": "model1"},
         datacard_uid=data_card.uid,
     )
 
@@ -266,6 +267,16 @@ def test_register_model(
             user_email="mlops.com",
             datacard_uid="test_uid",
         )
+
+    # test card tags
+    cards = model_registry.list_cards(
+        name=model_card1.name,
+        team=model_card1.team,
+        tags=model_card1.tags,
+        as_dataframe=False,
+    )
+
+    assert cards[0]["tags"] == {"id": "model1"}
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
