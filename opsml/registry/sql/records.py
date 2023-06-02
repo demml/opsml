@@ -18,21 +18,25 @@ def get_timestamp():
     return int(round(time.time() * 1_000_000))
 
 
-class DataRegistryRecord(BaseModel):
-    data_uri: Optional[str]
-    version: str
-    data_type: Optional[str]
+class SaveRecord(BaseModel):
     name: str
     team: str
     user_email: str
     uid: Optional[str]
+    version: str
+    tags: Dict[str, str]
+
+    class Config:
+        smart_union = True
+
+
+class DataRegistryRecord(SaveRecord):
+    data_uri: Optional[str]
+    data_type: Optional[str]
     timestamp: int = get_timestamp()
     runcard_uid: Optional[str]
     pipelinecard_uid: Optional[str]
     datacard_uri: str
-
-    class Config:
-        smart_union = True
 
     @root_validator(pre=True)
     def set_uris(cls, values):  # pylint: disable=no-self-argument
@@ -43,12 +47,7 @@ class DataRegistryRecord(BaseModel):
         return values
 
 
-class ModelRegistryRecord(BaseModel):
-    uid: str
-    version: str
-    team: str
-    user_email: str
-    name: str
+class ModelRegistryRecord(SaveRecord):
     modelcard_uri: str
     datacard_uid: str
     trained_model_uri: str
@@ -71,12 +70,7 @@ class ModelRegistryRecord(BaseModel):
         return values
 
 
-class RunRegistryRecord(BaseModel):
-    name: str
-    team: str
-    user_email: str
-    uid: Optional[str]
-    version: Optional[str]
+class RunRegistryRecord(SaveRecord):
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
     pipelinecard_uid: Optional[str]
@@ -87,12 +81,7 @@ class RunRegistryRecord(BaseModel):
     runcard_uri: str
 
 
-class PipelineRegistryRecord(BaseModel):
-    name: str
-    team: str
-    user_email: str
-    uid: Optional[str]
-    version: Optional[str]
+class PipelineRegistryRecord(SaveRecord):
     pipeline_code_uri: Optional[str]
     datacard_uids: List[str]
     modelcard_uids: List[str]
@@ -125,6 +114,7 @@ class LoadRecord(BaseModel):
     team: str
     uid: str
     user_email: str
+    tags: Dict[str, str]
     storage_client: Optional[StorageClientType]
 
     class Config:

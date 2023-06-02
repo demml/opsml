@@ -63,6 +63,7 @@ class ArtifactCard(BaseModel):
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
+    tags: Dict[str, str] = {}
     storage_client: Optional[StorageClientType]
 
     class Config:
@@ -98,6 +99,9 @@ class ArtifactCard(BaseModel):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from self attributes"""
         raise NotImplementedError
+
+    def add_tag(self, key: str, value: str):
+        self.tags[key] = str(value)
 
     @property
     def card_type(self) -> str:
@@ -364,7 +368,7 @@ class DataCard(ArtifactCard):
         else:
             raise ValueError("SQL Query or Filename must be provided")
 
-    def create_data_profile(self, sample_perc: float = 1):
+    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
         """Creates a data profile report
 
         Args:
@@ -381,12 +385,12 @@ class DataCard(ArtifactCard):
                     name=self.name,
                     sample_perc=min(sample_perc, 1),  # max of 1
                 )
+                return self.data_profile
 
-            else:
-                logger.info("Data profile already exists")
+            logger.info("Data profile already exists")
+            return self.data_profile
 
-        else:
-            raise ValueError("A pandas dataframe type is required to create a data profile")
+        raise ValueError("A pandas dataframe type is required to create a data profile")
 
     @property
     def card_type(self) -> str:

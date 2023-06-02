@@ -87,7 +87,7 @@ class CliApiClient:
             read_dir=read_dir,
         )
 
-    def list_cards(self, payload: Dict[str, Union[str, int]]):
+    def list_cards(self, payload: Dict[str, Union[str, int, Dict[str, str]]]):
         response = self.client.post_request(
             route=ApiRoutes.LIST_CARDS,
             json=payload,

@@ -72,6 +72,38 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     assert loaded_card.sql_logic.get("test") is not None
 
 
+def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        feature_descriptions={"test": "test_description"},
+        sql_logic={"test": "select * from test_table"},
+    )
+    data_card.add_tag("test", "hello")
+
+    registry.register_card(card=data_card)
+
+    cards = registry.list_cards(
+        name="test_df",
+        team="mlops",
+        tags={"test": "hello"},
+        as_dataframe=False,
+    )
+
+    assert cards[0]["tags"] == {"test": "hello"}
+
+    data_card = registry.load_card(
+        name="test_df",
+        team="mlops",
+        tags={"test": "hello"},
+    )
+
+    assert data_card.tags == {"test": "hello"}
+
+
 def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
     # create data card at current time
     registry = db_registries["data"]

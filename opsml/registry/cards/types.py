@@ -59,6 +59,8 @@ class CardInfo:
             Unique id of card
         version:
             Version of card
+        tags:
+            Tags associated with card
     """
 
     name: Optional[str] = None
@@ -66,6 +68,7 @@ class CardInfo:
     user_email: Optional[str] = None
     uid: Optional[str] = None
     version: Optional[str] = None
+    tags: Optional[Dict[str, str]] = None
 
 
 class CardType(str, Enum):
