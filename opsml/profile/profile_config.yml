@@ -209,7 +209,7 @@ html:
 
     # Styling options for the HTML report
     style:
-      theme: null
+      theme: 'cosmo'
       logo: ""
       primary_colors:
       - "#377eb8"

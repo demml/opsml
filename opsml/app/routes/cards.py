@@ -78,6 +78,7 @@ def list_cards(
             version=payload.version,
             max_date=payload.max_date,
             limit=payload.limit,
+            tags=payload.tags,
             as_dataframe=False,
         )
 

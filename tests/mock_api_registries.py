@@ -16,6 +16,7 @@ from opsml.registry.sql.records import (
     PipelineRegistryRecord,
     ModelRegistryRecord,
 )
+from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
 
@@ -50,19 +51,6 @@ class DataCardRegistry(Registry):
 
 
 class ModelCardRegistry(Registry):
-    def update_card(self, card: ModelCard) -> None:
-        """Updates an existing model card
-
-        Args:
-            model_card (ModelCard): Existing model card record
-
-        Returns:
-            None
-        """
-
-        record = ModelRegistryRecord(**card.dict())
-        self.update_card_record(card=record.dict())
-
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
@@ -189,6 +177,8 @@ class CardRegistry:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
+        info: Optional[CardInfo] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         as_dataframe: bool = True,
@@ -203,12 +193,25 @@ class CardRegistry:
             version:
                 Optional version number of existing data. If not specified, the
                 most recent version will be used
+            tags:
+                Dictionary of key, value tags to search for
             uid:
-                Unique identifier for Card. If present, the uid takes precedence.
+                Unique identifier for Card. If present, the uid takes precedence
+            max_date:
+                Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
+            limit:
+                Places a limit on result list. Results are sorted by SemVer
 
         Returns:
-            pandas dataframe of records
+            pandas dataframe of records or list of dictionaries
         """
+
+        if info is not None:
+            name = name or info.name
+            team = team or info.team
+            uid = uid or info.uid
+            version = version or info.version
+            tags = tags or info.tags
 
         if name is not None:
             name = name.lower()
@@ -223,10 +226,12 @@ class CardRegistry:
             version=version,
             max_date=max_date,
             limit=limit,
+            tags=tags,
         )
 
         if as_dataframe:
             return pd.DataFrame(card_list)
+
         return card_list
 
     def load_card(
