@@ -40,6 +40,7 @@ class BaseMixin:
     team = Column("team", String(512))
     version = Column("version", String(512), nullable=False)
     user_email = Column("user_email", String(512))
+    tags = Column("tags", JSON)
 
     @validates("team")
     def lower_team(self, key, team):
@@ -94,7 +95,6 @@ class RunMixin:
     project_id = Column("project_id", String(512))
     artifact_uris = Column("artifact_uris", JSON)
     runcard_uri = Column("runcard_uri", String(512))
-    tags = Column("tags", JSON)
 
 
 class RunSchema(Base, BaseMixin, RunMixin):  # type: ignore
