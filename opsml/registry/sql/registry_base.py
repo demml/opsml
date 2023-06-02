@@ -272,6 +272,7 @@ class SQLRegistryBase:
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
+        tags: Optional[Dict[str, str]] = None,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
@@ -295,6 +296,7 @@ class SQLRegistryBase:
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
         uid: Optional[str] = None,
     ) -> ArtifactCard:
         cleaned_name = clean_string(name)
@@ -306,6 +308,7 @@ class SQLRegistryBase:
             version=version,
             uid=uid,
             limit=1,
+            tags=tags,
         )
 
         loaded_record = load_record(
@@ -432,6 +435,7 @@ class ServerRegistry(SQLRegistryBase):
         records = self._parse_sql_results(results=results)
 
         sorted_records = self._sort_by_version(records=records)
+        print(sorted_records)
 
         return sorted_records
 
@@ -441,6 +445,7 @@ class ServerRegistry(SQLRegistryBase):
         name: Optional[str] = None,
         team: Optional[str] = None,
         version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
@@ -455,6 +460,8 @@ class ServerRegistry(SQLRegistryBase):
             version:
                 Optional version number of existing data. If not specified,
                 the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
+            tags:
+                Dictionary of key, value tags to search for
             uid:
                 Unique identifier for DataCard. If present, the uid takes precedence.
             max_date:
@@ -477,6 +484,7 @@ class ServerRegistry(SQLRegistryBase):
             version=version,
             uid=uid,
             max_date=max_date,
+            tags=tags,
         )
 
         sorted_records = self._get_sql_records(query=query)

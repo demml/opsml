@@ -63,6 +63,7 @@ class ArtifactCard(BaseModel):
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
+    tags: Dict[str, str] = {}
     storage_client: Optional[StorageClientType]
 
     class Config:
@@ -98,6 +99,9 @@ class ArtifactCard(BaseModel):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from self attributes"""
         raise NotImplementedError
+
+    def add_tag(self, key: str, value: str):
+        self.tags[key] = str(value)
 
     @property
     def card_type(self) -> str:
