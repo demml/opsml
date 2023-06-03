@@ -34,6 +34,7 @@ from pydantic import BaseModel
 import numpy as np
 import joblib
 import pandas as pd
+import polars as pl
 
 # ml model packages and classes
 from sklearn.datasets import fetch_openml
@@ -541,6 +542,11 @@ def test_arrow_table():
     names = ["n_legs", "animals"]
     table = pa.Table.from_arrays([n_legs, animals], names=names)
     return table
+
+@pytest.fixture(scope="session")
+def test_polars_dataframe():
+    df = pl.DataFrame({"foo": [1, 2, 3, 4, 5, 6], "bar": ["a", "b", "c", "d", "e", "f"]})
+    return df
 
 
 @pytest.fixture(scope="module")
