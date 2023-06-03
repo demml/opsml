@@ -24,6 +24,7 @@ from tests.conftest import FOURTEEN_DAYS_TS, FOURTEEN_DAYS_STR
         (lazy_fixture("test_split_array"), lazy_fixture("test_array")),
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_polars_dataframe")),
     ],
 )
 def test_register_data(
@@ -33,6 +34,7 @@ def test_register_data(
 ):
     # create data card
     registry = db_registries["data"]
+
     data_card = DataCard(
         data=test_data,
         name="test_df",
