@@ -1,18 +1,19 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Union, Any, cast
 
+import polars as pl
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 
-from .types import ArrowTable
+from .types import ArrowTable, AllowedTableTypes
 
 
 # changing input type to any to handle a variety of data types which may be optionally installed (polars)
 class ArrowFormatter(ABC):
     @staticmethod
     @abstractmethod
-    def convert(data: Any) -> ArrowTable:
+    def convert(data: Union[pa.Table, np.ndarray, pl.DataFrame, pd.DataFrame]) -> ArrowTable:
         """Converts data to pyarrow"""
         raise NotImplementedError
 
@@ -25,7 +26,7 @@ class ArrowFormatter(ABC):
 
 class PolarsFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: Any) -> ArrowTable:
+    def convert(data: pl.DataFrame) -> ArrowTable:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -35,23 +36,19 @@ class PolarsFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        import polars as pl
-
-        data = cast(pl.DataFrame, data)
-
         return ArrowTable(
             table=data.to_arrow(),
-            table_type="PolarsDataFrame",
+            table_type=AllowedTableTypes.POLARS_DATAFRAME,
         )
 
     @staticmethod
-    def validate_data(data: Any) -> bool:
-        return "polars" in str(data.__class__)
+    def validate_data(data: pl.DataFrame) -> bool:
+        return isinstance(data, pl.DataFrame)
 
 
 class PandasFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: Any) -> ArrowTable:
+    def convert(data: pd.DataFrame) -> ArrowTable:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -61,22 +58,21 @@ class PandasFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        data = cast(pd.DataFrame, data)
         pa_table = pa.Table.from_pandas(data, preserve_index=False)
 
         return ArrowTable(
             table=pa_table,
-            table_type=data.__class__.__name__,
+            table_type=AllowedTableTypes.PANDAS_DATAFRAME,
         )
 
     @staticmethod
-    def validate_data(data: Any) -> bool:
-        return "pandas" in str(data.__class__)
+    def validate_data(data: pd.DataFrame) -> bool:
+        return isinstance(data, pd.DataFrame)
 
 
 class NumpyFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: Any) -> ArrowTable:
+    def convert(data: np.ndarray) -> ArrowTable:
         """Convert numpy array to pyarrow table
 
         Args:
@@ -89,12 +85,12 @@ class NumpyFormatter(ArrowFormatter):
 
         return ArrowTable(
             table=data,
-            table_type=data.__class__.__name__,
+            table_type=AllowedTableTypes.NDARRAY,
         )
 
     @staticmethod
-    def validate_data(data: Any) -> bool:
-        return "numpy" in str(data.__class__)
+    def validate_data(data: np.ndarray) -> bool:
+        return isinstance(data, np.ndarray)
 
 
 class ArrowTableFormatter(ArrowFormatter):
@@ -111,18 +107,25 @@ class ArrowTableFormatter(ArrowFormatter):
 
         return ArrowTable(
             table=data,
-            table_type=data.__class__.__name__,
+            table_type=AllowedTableTypes.ARROW_TABLE,
         )
 
     @staticmethod
-    def validate_data(data: Any):
+    def validate_data(data: pa.Table):
         return isinstance(data, pa.Table)
 
 
 # Run tests for data formatter
 class DataFormatter:
     @staticmethod
-    def convert_data_to_arrow(data: Any) -> ArrowTable:
+    def convert_data_to_arrow(
+        data: Union[
+            pa.Table,
+            pl.DataFrame,
+            pd.DataFrame,
+            np.ndarray,
+        ]
+    ) -> ArrowTable:
         """
         Converts a pandas dataframe or numpy array into a py arrow table.
         Args:

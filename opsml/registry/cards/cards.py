@@ -3,6 +3,7 @@
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
+import polars as pl
 import numpy as np
 import pandas as pd
 from pyarrow import Table
@@ -113,7 +114,8 @@ class DataCard(ArtifactCard):
 
     Args:
         data:
-            Data to use for data card.
+            Data to use for data card. Can be a pyarrow table, pandas dataframe, polars dataframe
+            or numpy array
         name:
             What to name the data
         team:
@@ -183,7 +185,7 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[Union[np.ndarray, pd.DataFrame, Table]]
+    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]]
     data_splits: List[Dict[str, Any]] = []
     feature_map: Optional[Dict[str, Union[str, None]]]
     data_type: Optional[str]
