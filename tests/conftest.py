@@ -543,10 +543,22 @@ def test_arrow_table():
     table = pa.Table.from_arrays([n_legs, animals], names=names)
     return table
 
+
 @pytest.fixture(scope="session")
 def test_polars_dataframe():
-    df = pl.DataFrame({"foo": [1, 2, 3, 4, 5, 6], "bar": ["a", "b", "c", "d", "e", "f"]})
+    df = pl.DataFrame(
+        {
+            "foo": [1, 2, 3, 4, 5, 6],
+            "bar": ["a", "b", "c", "d", "e", "f"],
+            "y": [1, 2, 3, 4, 5, 6],
+        }
+    )
     return df
+
+
+@pytest.fixture(scope="session")
+def test_polars_split():
+    return [{"label": "train", "column": "foo", "column_value": 0}]
 
 
 @pytest.fixture(scope="module")
