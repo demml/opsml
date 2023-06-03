@@ -11,10 +11,10 @@ from opsml.registry.data.formatter import DataFormatter
         lazy_fixture("test_array"),
         lazy_fixture("test_df"),
         lazy_fixture("test_arrow_table"),
+        lazy_fixture("test_polars_dataframe"),
     ],
 )
 def test_convert_to_pyarrow(test_data):
-
     data = DataFormatter.convert_data_to_arrow(test_data)
 
     # test schema

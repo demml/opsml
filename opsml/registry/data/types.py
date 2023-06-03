@@ -10,6 +10,7 @@ class AllowedTableTypes(str, Enum):
     NDARRAY = "ndarray"
     TABLE = "Table"
     DATAFRAME = "DataFrame"
+    POLARS_DATAFRAME = "PolarsDataFrame"
 
 
 class ArrowTable(BaseModel):
