@@ -5,8 +5,9 @@ import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml.registry.cards.cards import DataCard, DataSplit
-from opsml.registry.sql.registry import CardRegistry
-from sklearn.model_selection import train_test_split
+from opsml.registry.sql.registry import CardRegistry, CardInfo
+
+card_info = CardInfo(name="test-data", team="opsml", user_email="@opsml.com")
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
@@ -16,13 +17,7 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
         {"label": "train", "column_name": "year", "column_value": 2020},
         {"label": "test", "column_name": "year", "column_value": 2021},
     ]
-    data_card = DataCard(
-        data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
-        data_splits=data_split,
-    )
+    data_card = DataCard(data=test_data, info=card_info, data_splits=data_split)
     assert data_card.data_splits[0].column_name == "year"
     assert data_card.data_splits[0].column_value == 2020
 
@@ -33,9 +28,7 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
 
     data_card = DataCard(
         data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
         dependent_vars=["n_legs"],
     )
@@ -50,17 +43,11 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
 
 def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
     data = iris_data
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-    registry: CardRegistry = db_registries["data"]
 
     # test ">= and <"
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[
             DataSplit(
@@ -87,9 +74,7 @@ def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry],
     # test "> and <="
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[
             DataSplit(
@@ -116,9 +101,7 @@ def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry],
     # test "=="
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[
             DataSplit(
@@ -150,9 +133,7 @@ def test_data_card_splits_row_pandas(test_data: pd.DataFrame):
 
     data_card = DataCard(
         data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
     )
 
@@ -165,9 +146,7 @@ def test_data_card_splits_row_pandas(test_data: pd.DataFrame):
 
     data_card = DataCard(
         data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
         dependent_vars=["n_legs"],
     )
@@ -185,9 +164,7 @@ def test_data_card_splits_index_pandas(test_data: pd.DataFrame):
 
     data_card = DataCard(
         data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
     )
     splits = data_card.split_data()
@@ -195,9 +172,7 @@ def test_data_card_splits_index_pandas(test_data: pd.DataFrame):
 
     data_card = DataCard(
         data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
         dependent_vars=["n_legs"],
     )
@@ -218,9 +193,7 @@ def test_numpy_splits_index(regression_data):
 
     data_card = DataCard(
         data=X,
-        name="test_array",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
     )
     splits = data_card.split_data()
@@ -236,9 +209,7 @@ def test_numpy_splits_row(regression_data):
 
     data_card = DataCard(
         data=X,
-        name="test_array",
-        team="mlops",
-        user_email="mlops.com",
+        info=card_info,
         data_splits=data_split,
     )
     splits = data_card.split_data()
@@ -248,16 +219,11 @@ def test_numpy_splits_row(regression_data):
 ########## Polars
 def test_data_splits_polars_column_value(iris_data_polars: pl.DataFrame):
     data = iris_data_polars
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
 
     # test ">= and <"
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[
             DataSplit(
@@ -285,9 +251,7 @@ def test_data_splits_polars_column_value(iris_data_polars: pl.DataFrame):
     # test "> and <="
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[
             DataSplit(
@@ -314,9 +278,7 @@ def test_data_splits_polars_column_value(iris_data_polars: pl.DataFrame):
     # test "=="
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         data_splits=[
             DataSplit(
                 label="train",
@@ -338,16 +300,11 @@ def test_data_splits_polars_column_value(iris_data_polars: pl.DataFrame):
 
 def test_data_splits_polars_index(iris_data_polars: pl.DataFrame):
     data = iris_data_polars
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
 
     # depen vars
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[DataSplit(label="train", start=0, stop=10)],
     )
@@ -359,9 +316,7 @@ def test_data_splits_polars_index(iris_data_polars: pl.DataFrame):
     # no depen vars
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         data_splits=[DataSplit(label="train", start=0, stop=10)],
     )
     data_splits = data_card.split_data()
@@ -374,16 +329,11 @@ def test_data_splits_polars_row(
     iris_data_polars: pl.DataFrame,
 ):
     data = iris_data_polars
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
 
     # depen vars
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         dependent_vars=["target"],
         data_splits=[DataSplit(label="train", indices=[0, 1, 2])],
     )
@@ -395,9 +345,7 @@ def test_data_splits_polars_row(
     # no depen vars
     data_card = DataCard(
         data=data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         data_splits=[DataSplit(label="train", indices=[0, 1, 2])],
     )
     data_splits = data_card.split_data()
@@ -406,17 +354,11 @@ def test_data_splits_polars_row(
 
 
 def test_datacard_split_fail(db_registries: Dict[str, CardRegistry], test_df: pd.DataFrame):
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-
     registry: CardRegistry = db_registries["data"]
 
     data_card = DataCard(
         data=test_df,
-        name=data_name,
-        team=team,
-        user_email=user_email,
+        info=card_info,
         feature_descriptions={"test": "test"},
     )
 
