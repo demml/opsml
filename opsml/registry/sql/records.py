@@ -161,15 +161,7 @@ class LoadedDataRecord(LoadRecord):
         return datacard_definition
 
     @staticmethod
-    def get_splits(splits):
-        if bool(splits):
-            return splits.get("splits")
-        return None
-
-    @staticmethod
     def load_data_profile(data_profile_uri: str, storage_client: StorageClientType) -> ProfileReport:
-        # storage_client = cast(StorageClientType, values["storage_client"])
-
         storage_spec = ArtifactStorageSpecs(save_path=data_profile_uri)
 
         storage_client.storage_spec = storage_spec
