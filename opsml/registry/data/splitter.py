@@ -23,9 +23,9 @@ class Data:
     y: Optional[Union[pd.DataFrame, pa.Table, np.ndarray]] = None
 
 
-class SplitModel(BaseModel):
+class DataSplit(BaseModel):
     label: str
-    column: Optional[str] = None
+    column_name: Optional[str] = None
     column_value: Optional[Any] = None
     inequality: Optional[str] = None
     start: Optional[int] = None
@@ -57,17 +57,17 @@ class SplitModel(BaseModel):
 class Splitter:
     def __init__(
         self,
-        split_attributes: Dict[str, Any],
+        split: DataSplit,
         dependent_vars: Optional[List[Union[int, str]]] = None,
     ):
-        self.split_attr = SplitModel(**split_attributes)
+        self.split = split
         self.dependent_vars = dependent_vars
 
     def split(self, data):
         raise NotImplementedError
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
+    def validate(data_type: type, split: DataSplit):
         raise NotImplementedError
 
 
@@ -75,36 +75,36 @@ class PolarsColumnSplitter(Splitter):
     """Column splitter for Polars dataframe"""
 
     def split(self, data: pl.DataFrame) -> Tuple[str, Data]:
-        if self.split_attr.inequality is None:
-            data = data.filter(pl.col(self.split_attr.column) == self.split_attr.column_value)
+        if self.split.inequality is None:
+            data = data.filter(pl.col(self.split.column) == self.split.column_value)
 
-        elif self.split_attr.inequality == ">=":
-            data = data.filter(pl.col(self.split_attr.column) >= self.split_attr.column_value)
+        elif self.split.inequality == ">=":
+            data = data.filter(pl.col(self.split.column) >= self.split.column_value)
 
-        elif self.split_attr.inequality == ">":
-            data = data.filter(pl.col(self.split_attr.column) > self.split_attr.column_value)
+        elif self.split.inequality == ">":
+            data = data.filter(pl.col(self.split.column) > self.split.column_value)
 
-        elif self.split_attr.inequality == "<=":
-            data = data.filter(pl.col(self.split_attr.column) < self.split_attr.column_value)
+        elif self.split.inequality == "<=":
+            data = data.filter(pl.col(self.split.column) < self.split.column_value)
 
         else:
-            data = data.filter(pl.col(self.split_attr.column) <= self.split_attr.column_value)
+            data = data.filter(pl.col(self.split.column) <= self.split.column_value)
 
         if self.dependent_vars is not None:
             x_cols = data.columns
             for var in self.dependent_vars:
                 x_cols.remove(var)
 
-            return self.split_attr.label, Data(
+            return self.split.label, Data(
                 X=data.select(x_cols),
                 y=data.select(self.dependent_vars),
             )
 
-        return self.split_attr.label, Data(X=data)
+        return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == pl.DataFrame and split_dict.get("column") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == pl.DataFrame and split.column_name is not None
 
 
 class PandasIndexSplitter(Splitter):
@@ -113,16 +113,16 @@ class PandasIndexSplitter(Splitter):
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
             y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
-            return self.split_attr.label, Data(
-                X=x.iloc[self.split_attr.indices],
-                y=y.iloc[self.split_attr.indices],
+            return self.split.label, Data(
+                X=x.iloc[self.split.indices],
+                y=y.iloc[self.split.indices],
             )
 
-        return self.split_attr.label, Data(X=data.iloc[self.split_attr.indices])
+        return self.split.label, Data(X=data.iloc[self.split.indices])
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == pd.DataFrame and split_dict.get("indices") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == pd.DataFrame and split.indices is not None
 
 
 class PandasRowSplitter(Splitter):
@@ -131,94 +131,91 @@ class PandasRowSplitter(Splitter):
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
             y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
-            return self.split_attr.label, Data(
-                X=x[self.split_attr.start : self.split_attr.stop],
-                y=y[self.split_attr.start : self.split_attr.stop],
+            return self.split.label, Data(
+                X=x[self.split.start : self.split.stop],
+                y=y[self.split.start : self.split.stop],
             )
 
-        return self.split_attr.label, Data(X=data[self.split_attr.start : self.split_attr.stop])
+        return self.split.label, Data(X=data[self.split.start : self.split.stop])
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == pd.DataFrame and split_dict.get("start") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == pd.DataFrame and split.start is not None
 
 
 class PandasColumnSplitter(Splitter):
     def split(self, data: pd.DataFrame) -> Tuple[str, Data]:
-        if self.split_attr.inequality is None:
-            data = data[data[self.split_attr.column] == self.split_attr.column_value]
+        if self.split.inequality is None:
+            data = data[data[self.split.column] == self.split.column_value]
 
-        elif self.split_attr.inequality == ">":
-            data = data[data[self.split_attr.column] > self.split_attr.column_value]
+        elif self.split.inequality == ">":
+            data = data[data[self.split.column] > self.split.column_value]
 
-        elif self.split_attr.inequality == ">=":
-            data = data[data[self.split_attr.column] >= self.split_attr.column_value]
+        elif self.split.inequality == ">=":
+            data = data[data[self.split.column] >= self.split.column_value]
 
-        elif self.split_attr.inequality == "<":
-            data = data[data[self.split_attr.column] < self.split_attr.column_value]
+        elif self.split.inequality == "<":
+            data = data[data[self.split.column] < self.split.column_value]
 
         else:
-            data = data[data[self.split_attr.column] <= self.split_attr.column_value]
+            data = data[data[self.split.column] <= self.split.column_value]
 
         if self.dependent_vars is not None:
-            return self.split_attr.label, Data(
-                x=data[data.columns[~data.columns.isin(self.dependent_vars)]],
+            return self.split.label, Data(
+                X=data[data.columns[~data.columns.isin(self.dependent_vars)]],
                 y=data[data.columns[data.columns.isin(self.dependent_vars)]],
             )
 
         data_split = Data(X=data)
-        return self.split_attr.label, data_split
+        return self.split.label, data_split
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == pd.DataFrame and split_dict.get("column") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == pd.DataFrame and split.column_name is not None
 
 
 class PyArrowIndexSplitter(Splitter):
     def split(self, data: pa.Table) -> Tuple[str, Data]:
-        return self.split_attr.label, Data(X=data.take(self.split_attr.indices))
+        return self.split.label, Data(X=data.take(self.split.indices))
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == pa.Table and split_dict.get("indices") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == pa.Table and split.indices is not None
 
 
 class NumpyIndexSplitter(Splitter):
     def split(self, data: np.ndarray) -> Tuple[str, Data]:
-        return self.split_attr.label, Data(X=data[self.split_attr.indices])
+        return self.split.label, Data(X=data[self.split.indices])
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == np.ndarray and split_dict.get("indices") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == np.ndarray and split.indices is not None
 
 
 class NumpyRowSplitter(Splitter):
     def split(self, data: np.ndarray) -> Tuple[str, Data]:
-        data_split = data[self.split_attr.start : self.split_attr.stop]
-        return self.split_attr.label, Data(X=data_split)
+        data_split = data[self.split.start : self.split.stop]
+        return self.split.label, Data(X=data_split)
 
     @staticmethod
-    def validate(data_type: type, split_dict: Dict[str, Any]):
-        return data_type == np.ndarray and split_dict.get("start") is not None
+    def validate(data_type: type, split: DataSplit):
+        return data_type == np.ndarray and split.start is not None
 
 
 class DataSplitter:
-    def __init__(
-        self,
-        split_attributes: Dict[str, Any],
+    @staticmethod
+    def split(
+        split: DataSplit,
+        data: Union[pd.DataFrame, np.ndarray, pl.DataFrame],
         dependent_vars: Optional[List[Union[int, str]]] = None,
     ):
-        self.split_attr = split_attributes
-        self.dependent_vars = dependent_vars
-
-    def split(self, data: Union[pd.DataFrame, np.ndarray]):
         splitter = next(
             (
                 splitter
                 for splitter in Splitter.__subclasses__()
                 if splitter.validate(
                     data_type=type(data),
-                    split_dict=self.split_attr,
+                    split=split,
                 )
             ),
             None,
@@ -227,8 +224,5 @@ class DataSplitter:
         if splitter is None:
             raise ValueError("Failed to find data supporter that supports provided logic")
 
-        data_splitter = splitter(
-            split_attributes=self.split_attr,
-            dependent_vars=self.dependent_vars,
-        )
+        data_splitter = splitter(split=split, dependent_vars=dependent_vars)
         return data_splitter.split(data=data)
