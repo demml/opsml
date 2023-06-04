@@ -255,9 +255,9 @@ class DataCard(ArtifactCard):
 
         if len(self.data_splits) > 0:
             data_holder = DataHolder()
-            for split in self.data_splits:
+            for data_split in self.data_splits:
                 label, data = DataSplitter.split(
-                    split=split,
+                    split=data_split,
                     dependent_vars=self.dependent_vars,
                     data=self.data,
                 )
