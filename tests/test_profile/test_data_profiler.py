@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 import pytest
 
 
-def test_datacard_create_data_profile(
+def test_datacard_create_data_profile_pandas(
     db_registries: Dict[str, CardRegistry],
     iris_data: pd.DataFrame,
 ):
@@ -23,6 +23,37 @@ def test_datacard_create_data_profile(
     )
 
     data_card.create_data_profile()
+
+    # should raise logging info if called again
+    data_card.create_data_profile()
+
+    registry.register_card(data_card)
+
+    assert data_card.uris.profile_uri is not None
+
+    data_card = registry.load_card(uid=data_card.uid)
+
+    assert data_card.data_profile is not None
+
+
+def test_datacard_create_data_profile_polars(
+    db_registries: Dict[str, CardRegistry],
+    iris_data_polars: pd.DataFrame,
+):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        data=iris_data_polars,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    # test non-sample path
+    data_card.create_data_profile()
+
+    # test sampling path
+    data_card.create_data_profile(sample_perc=0.5)
 
     # should raise logging info if called again
     data_card.create_data_profile()
