@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
 def test_data_card_splits(test_data: pd.DataFrame):
+    # list of dicts will automatically be converted to DataSplit
     data_split = [
         {"label": "train", "column_name": "year", "column_value": 2020},
         {"label": "test", "column_name": "year", "column_value": 2021},
