@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits(test_data: pd.DataFrame):
+def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
     # list of dicts will automatically be converted to DataSplit
     data_split = [
         {"label": "train", "column_name": "year", "column_value": 2020},
@@ -26,10 +26,10 @@ def test_data_card_splits(test_data: pd.DataFrame):
     assert data_card.data_splits[0].column_name == "year"
     assert data_card.data_splits[0].column_value == 2020
 
-    data_split = [
-        DataSplit(label="train", start=0, stop=2),
-        DataSplit(label="test", start=3, stop=4),
-    ]
+    splits = data_card.split_data()
+
+    assert splits.train.X.shape[0] == 1
+    assert splits.test.X.shape[0] == 1
 
     data_card = DataCard(
         data=test_data,
@@ -37,57 +37,18 @@ def test_data_card_splits(test_data: pd.DataFrame):
         team="mlops",
         user_email="mlops.com",
         data_splits=data_split,
+        dependent_vars=["n_legs"],
     )
+    assert data_card.data_splits[0].column_name == "year"
+    assert data_card.data_splits[0].column_value == 2020
 
-    assert data_card.data_splits[0].start == 0
-    assert data_card.data_splits[0].stop == 2
+    splits = data_card.split_data()
 
-
-def test_data_splits(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
-    train_idx, test_idx = train_test_split(np.arange(iris_data.shape[0]), test_size=0.2)
-
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-    registry: CardRegistry = db_registries["data"]
-
-    data_card_1 = DataCard(
-        data=iris_data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        dependent_vars=["target"],
-        data_splits=[
-            DataSplit(label="train", indices=train_idx),
-            DataSplit(label="test", indices=test_idx),
-        ],
-    )
-
-    data_splits = data_card_1.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is not None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is not None
-
-    data_card_2 = DataCard(
-        data=iris_data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        data_splits=[
-            DataSplit(label="train", indices=train_idx),
-            DataSplit(label="test", indices=test_idx),
-        ],
-    )
-
-    data_splits = data_card_2.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is None
+    assert splits.train.y.shape[0] == 1
+    assert splits.test.y.shape[0] == 1
 
 
-def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
+def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
     data = iris_data
     data_name = "test_df"
     team = "mlops"
@@ -180,15 +141,116 @@ def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_d
     assert data_splits.test.y is not None
 
 
-def test_data_splits_polars_column_value(
-    db_registries: Dict[str, CardRegistry],
-    iris_data_polars: pl.DataFrame,
-):
+@pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
+def test_data_card_splits_row_pandas(test_data: pd.DataFrame):
+    data_split = [
+        DataSplit(label="train", start=0, stop=2),
+        DataSplit(label="test", start=3, stop=4),
+    ]
+
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_split,
+    )
+
+    assert data_card.data_splits[0].start == 0
+    assert data_card.data_splits[0].stop == 2
+
+    splits = data_card.split_data()
+    assert splits.train.X.shape[0] == 2
+    assert splits.test.X.shape[0] == 1
+
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_split,
+        dependent_vars=["n_legs"],
+    )
+
+    splits = data_card.split_data()
+    assert splits.train.y.shape[0] == 2
+    assert splits.test.y.shape[0] == 1
+
+
+@pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
+def test_data_card_splits_index_pandas(test_data: pd.DataFrame):
+    data_split = [
+        DataSplit(label="train", indices=[0, 1, 2]),
+    ]
+
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_split,
+    )
+    splits = data_card.split_data()
+    assert splits.train.X.shape[0] == 3
+
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_split,
+        dependent_vars=["n_legs"],
+    )
+
+    splits = data_card.split_data()
+    assert splits.train.y.shape[0] == 3
+
+
+########## Numpy
+
+
+def test_numpy_splits_index(regression_data):
+    X, y = regression_data
+
+    data_split = [
+        DataSplit(label="train", indices=[0, 1, 2]),
+    ]
+
+    data_card = DataCard(
+        data=X,
+        name="test_array",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_split,
+    )
+    splits = data_card.split_data()
+    assert splits.train.X.shape[0] == 3
+
+
+def test_numpy_splits_row(regression_data):
+    X, y = regression_data
+
+    data_split = [
+        DataSplit(label="train", start=0, stop=3),
+    ]
+
+    data_card = DataCard(
+        data=X,
+        name="test_array",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_split,
+    )
+    splits = data_card.split_data()
+    assert splits.train.X.shape[0] == 3
+
+
+########## Polars
+def test_data_splits_polars_column_value(iris_data_polars: pl.DataFrame):
     data = iris_data_polars
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
-    registry: CardRegistry = db_registries["data"]
 
     # test ">= and <"
     data_card = DataCard(
@@ -255,7 +317,6 @@ def test_data_splits_polars_column_value(
         name=data_name,
         team=team,
         user_email=user_email,
-        dependent_vars=["target"],
         data_splits=[
             DataSplit(
                 label="train",
@@ -272,9 +333,76 @@ def test_data_splits_polars_column_value(
 
     data_splits = data_card.split_data()
     assert data_splits.train.X is not None
-    assert data_splits.train.y is not None
     assert data_splits.test.X is not None
-    assert data_splits.test.y is not None
+
+
+def test_data_splits_polars_index(iris_data_polars: pl.DataFrame):
+    data = iris_data_polars
+    data_name = "test_df"
+    team = "mlops"
+    user_email = "mlops.com"
+
+    # depen vars
+    data_card = DataCard(
+        data=data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        dependent_vars=["target"],
+        data_splits=[DataSplit(label="train", start=0, stop=10)],
+    )
+    data_splits = data_card.split_data()
+
+    assert data_splits.train.X.shape[0] == 10
+    assert data_splits.train.y.shape[0] == 10
+
+    # no depen vars
+    data_card = DataCard(
+        data=data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        data_splits=[DataSplit(label="train", start=0, stop=10)],
+    )
+    data_splits = data_card.split_data()
+
+    assert data_splits.train.X.shape[0] == 10
+
+
+def test_data_splits_polars_row(
+    db_registries: Dict[str, CardRegistry],
+    iris_data_polars: pl.DataFrame,
+):
+    data = iris_data_polars
+    data_name = "test_df"
+    team = "mlops"
+    user_email = "mlops.com"
+
+    # depen vars
+    data_card = DataCard(
+        data=data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        dependent_vars=["target"],
+        data_splits=[DataSplit(label="train", indices=[0, 1, 2])],
+    )
+    data_splits = data_card.split_data()
+
+    assert data_splits.train.X.shape[0] == 3
+    assert data_splits.train.y.shape[0] == 3
+
+    # no depen vars
+    data_card = DataCard(
+        data=data,
+        name=data_name,
+        team=team,
+        user_email=user_email,
+        data_splits=[DataSplit(label="train", indices=[0, 1, 2])],
+    )
+    data_splits = data_card.split_data()
+
+    assert data_splits.train.X.shape[0] == 3
 
 
 def test_datacard_split_fail(db_registries: Dict[str, CardRegistry], test_df: pd.DataFrame):
