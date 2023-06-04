@@ -38,7 +38,7 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     Param,
 )
-from opsml.registry.data.splitter import DataHolder, DataSplitter
+from opsml.registry.data.splitter import DataHolder, DataSplitter, DataSplit
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
@@ -134,29 +134,7 @@ class DataCard(ArtifactCard):
             Dictionary of additional info to associate with data
             (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})
         data_splits:
-            Optional list containing split logic. Defaults to None.
-            Logic for data splits can be defined in the following three ways:
-
-            You can specify as many splits as you'd like
-
-            (1) Split based on column value (works for pd.DataFrame)
-                splits = [
-                    {"label": "train", "column": "DF_COL", "column_value": 0}, -> "val" can also be a string
-                    {"label": "test",  "column": "DF_COL", "column_value": 1},
-                    {"label": "eval",  "column": "DF_COL", "column_value": 2},
-                    ]
-
-            (2) Index slicing by start and stop (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
-                splits = [
-                    {"label": "train", "start": 0, "stop": 10},
-                    {"label": "test", "start": 11, "stop": 15},
-                    ]
-
-            (3) Index slicing by list (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
-                splits = [
-                    {"label": "train", "indices": [1,2,3,4]},
-                    {"label": "test", "indices": [5,6,7,8]},
-                    ]
+            Optional list of `DataSplit`
 
         runcard_uid:
             Id of RunCard that created the DataCard
@@ -186,7 +164,7 @@ class DataCard(ArtifactCard):
     """
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]]
-    data_splits: List[Dict[str, Any]] = []
+    data_splits: List[DataSplit] = []
     feature_map: Optional[Dict[str, Union[str, None]]]
     data_type: Optional[str]
     dependent_vars: Optional[List[Union[int, str]]]
@@ -205,16 +183,6 @@ class DataCard(ArtifactCard):
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
         return uris
-
-    @validator("data_splits", pre=True, always=True)
-    def check_splits(cls, splits):  # pylint: disable=no-self-argument
-        if len(splits) > 0:
-            for split in splits:
-                indices = split.get("indices")
-                if indices is not None and isinstance(indices, np.ndarray):
-                    split["indices"] = indices.tolist()
-
-        return splits
 
     @validator("feature_descriptions", pre=True, always=True)
     def lower_descriptions(cls, feature_descriptions):  # pylint: disable=no-self-argument
@@ -288,11 +256,11 @@ class DataCard(ArtifactCard):
         if len(self.data_splits) > 0:
             data_holder = DataHolder()
             for split in self.data_splits:
-                label, data = DataSplitter(
-                    split_attributes=split,
+                label, data = DataSplitter.split(
+                    split=split,
                     dependent_vars=self.dependent_vars,
-                ).split(data=self.data)
-
+                    data=self.data,
+                )
                 setattr(data_holder, label, data)
 
             return data_holder
