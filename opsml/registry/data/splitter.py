@@ -1,10 +1,10 @@
 # pylint: disable=invalid-name
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
-import polars as pl
 import numpy as np
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, Extra, validator
 
@@ -63,6 +63,45 @@ class DataSplitterBase:
         self.split = split
         self.dependent_vars = dependent_vars
 
+    @property
+    def column_name(self) -> str:
+        if self.split.column_name is not None:
+            return self.split.column_name
+
+        raise ValueError("Column name was not provided")
+
+    @property
+    def column_value(self) -> Any:
+        if self.split.column_value is not None:
+            return self.split.column_value
+
+        raise ValueError("Column value was not provided")
+
+    @property
+    def indices(self) -> List[int]:
+        if self.split.indices is not None:
+            return self.split.indices
+        raise ValueError("List of indices was not provided")
+
+    @property
+    def start(self) -> int:
+        if self.split.start is not None:
+            return self.split.start
+        raise ValueError("Start index was not provided")
+
+    @property
+    def stop(self) -> int:
+        if self.split.stop is not None:
+            return self.split.stop
+        raise ValueError("Stop index was not provided")
+
+    def get_x_cols(self, columns: List[str], dependent_vars: List[Union[str, int]]) -> List[str]:
+        for var in dependent_vars:
+            if isinstance(var, str):
+                columns.remove(var)
+
+        return columns
+
     def create_split(self, data):
         raise NotImplementedError
 
@@ -76,24 +115,22 @@ class PolarsColumnSplitter(DataSplitterBase):
 
     def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         if self.split.inequality is None:
-            data = data.filter(pl.col(self.split.column_name) == self.split.column_value)
+            data = data.filter(pl.col(self.column_name) == self.column_value)
 
         elif self.split.inequality == ">":
-            data = data.filter(pl.col(self.split.column_name) > self.split.column_value)
+            data = data.filter(pl.col(self.column_name) > self.column_value)
 
         elif self.split.inequality == ">=":
-            data = data.filter(pl.col(self.split.column_name) >= self.split.column_value)
+            data = data.filter(pl.col(self.column_name) >= self.column_value)
 
         elif self.split.inequality == "<":
-            data = data.filter(pl.col(self.split.column_name) < self.split.column_value)
+            data = data.filter(pl.col(self.column_name) < self.column_value)
 
         else:
-            data = data.filter(pl.col(self.split.column_name) <= self.split.column_value)
+            data = data.filter(pl.col(self.column_name) <= self.column_value)
 
         if self.dependent_vars is not None:
-            x_cols = data.columns
-            for var in self.dependent_vars:
-                x_cols.remove(var)
+            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
                 X=data.select(x_cols),
@@ -112,12 +149,11 @@ class PolarsIndexSplitter(DataSplitterBase):
 
     def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         # slice
-        data = data[self.split.indices]
+
+        data = data[self.indices]
 
         if self.dependent_vars is not None:
-            x_cols = data.columns
-            for var in self.dependent_vars:
-                x_cols.remove(var)
+            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
                 X=data.select(x_cols),
@@ -136,12 +172,10 @@ class PolarsRowsSplitter(DataSplitterBase):
 
     def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         # slice
-        data = data[self.split.start : self.split.stop]
+        data = data[self.start : self.stop]
 
         if self.dependent_vars is not None:
-            x_cols = data.columns
-            for var in self.dependent_vars:
-                x_cols.remove(var)
+            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
                 X=data.select(x_cols),
@@ -158,7 +192,7 @@ class PolarsRowsSplitter(DataSplitterBase):
 class PandasIndexSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         # slice
-        data = data.iloc[self.split.indices]
+        data = data.iloc[self.indices]
 
         if self.dependent_vars is not None:
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
@@ -176,7 +210,7 @@ class PandasIndexSplitter(DataSplitterBase):
 class PandasRowSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
         # slice
-        data = data[self.split.start : self.split.stop]
+        data = data[self.start : self.stop]
 
         if self.dependent_vars is not None:
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
@@ -194,19 +228,19 @@ class PandasRowSplitter(DataSplitterBase):
 class PandasColumnSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         if self.split.inequality is None:
-            data = data[data[self.split.column_name] == self.split.column_value]
+            data = data[data[self.column_name] == self.column_value]
 
         elif self.split.inequality == ">":
-            data = data[data[self.split.column_name] > self.split.column_value]
+            data = data[data[self.column_name] > self.column_value]
 
         elif self.split.inequality == ">=":
-            data = data[data[self.split.column_name] >= self.split.column_value]
+            data = data[data[self.column_name] >= self.column_value]
 
         elif self.split.inequality == "<":
-            data = data[data[self.split.column_name] < self.split.column_value]
+            data = data[data[self.column_name] < self.column_value]
 
         else:
-            data = data[data[self.split.column_name] <= self.split.column_value]
+            data = data[data[self.column_name] <= self.column_value]
 
         if self.dependent_vars is not None:
             return self.split.label, Data(
@@ -224,7 +258,7 @@ class PandasColumnSplitter(DataSplitterBase):
 
 class PyArrowIndexSplitter(DataSplitterBase):
     def create_split(self, data: pa.Table) -> Tuple[str, Data]:
-        return self.split.label, Data(X=data.take(self.split.indices))
+        return self.split.label, Data(X=data.take(self.indices))
 
     @staticmethod
     def validate(data_type: type, split: DataSplit):
@@ -233,7 +267,7 @@ class PyArrowIndexSplitter(DataSplitterBase):
 
 class NumpyIndexSplitter(DataSplitterBase):
     def create_split(self, data: np.ndarray) -> Tuple[str, Data]:
-        return self.split.label, Data(X=data[self.split.indices])
+        return self.split.label, Data(X=data[self.indices])
 
     @staticmethod
     def validate(data_type: type, split: DataSplit):
@@ -242,7 +276,7 @@ class NumpyIndexSplitter(DataSplitterBase):
 
 class NumpyRowSplitter(DataSplitterBase):
     def create_split(self, data: np.ndarray) -> Tuple[str, Data]:
-        data_split = data[self.split.start : self.split.stop]
+        data_split = data[self.start : self.stop]
         return self.split.label, Data(X=data_split)
 
     @staticmethod
@@ -269,8 +303,10 @@ class DataSplitter:
             None,
         )
 
-        if data_splitter is None:
-            raise ValueError("Failed to find data supporter that supports provided logic")
+        if data_splitter is not None:
+            return data_splitter(
+                split=split,
+                dependent_vars=dependent_vars,
+            ).create_split(data=data)
 
-        data_splitter = data_splitter(split=split, dependent_vars=dependent_vars)
-        return data_splitter.create_split(data=data)
+        raise ValueError("Failed to find data supporter that supports provided logic")

@@ -1,19 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Union, Any, cast
+from typing import Any, Dict, Optional, Union
 
-import polars as pl
 import numpy as np
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 
-from .types import ArrowTable, AllowedTableTypes
+from .types import AllowedTableTypes, ArrowTable
 
 
 # changing input type to any to handle a variety of data types which may be optionally installed (polars)
 class ArrowFormatter(ABC):
     @staticmethod
     @abstractmethod
-    def convert(data: Union[pa.Table, np.ndarray, pl.DataFrame, pd.DataFrame]) -> ArrowTable:
+    def convert(data: Any) -> ArrowTable:
         """Converts data to pyarrow"""
         raise NotImplementedError
 

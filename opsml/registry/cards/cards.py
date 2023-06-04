@@ -3,9 +3,9 @@
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
 
-import polars as pl
 import numpy as np
 import pandas as pd
+import polars as pl
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 from ydata_profiling import ProfileReport
@@ -38,7 +38,7 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     Param,
 )
-from opsml.registry.data.splitter import DataHolder, DataSplitter, DataSplit
+from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
     DataRegistryRecord,
@@ -349,7 +349,7 @@ class DataCard(ArtifactCard):
 
         """
 
-        if isinstance(self.data, pd.DataFrame) or isinstance(self.data, pl.DataFrame):
+        if isinstance(self.data, (pd.DataFrame, pl.DataFrame)):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
