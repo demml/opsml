@@ -39,6 +39,7 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
 
     assert splits.train.y.shape[0] == 1
     assert splits.test.y.shape[0] == 1
+    assert isinstance(splits.train.X, pd.DataFrame)
 
 
 def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
@@ -198,6 +199,7 @@ def test_numpy_splits_index(regression_data):
     )
     splits = data_card.split_data()
     assert splits.train.X.shape[0] == 3
+    assert isinstance(splits.train.X, np.ndarray)
 
 
 def test_numpy_splits_row(regression_data):
@@ -293,9 +295,10 @@ def test_data_splits_polars_column_value(iris_data_polars: pl.DataFrame):
         ],
     )
 
-    data_splits = data_card.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.test.X is not None
+    splits = data_card.split_data()
+    assert splits.train.X is not None
+    assert splits.test.X is not None
+    assert isinstance(splits.train.X, pl.DataFrame)
 
 
 def test_data_splits_polars_index(iris_data_polars: pl.DataFrame):
