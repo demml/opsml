@@ -708,8 +708,8 @@ def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_d
         user_email=user_email,
         dependent_vars=["target"],
         data_splits=[
-            {"label": "train", "column": "sepal_width_cm", "column_value": 3.0},
-            {"label": "test", "column": "sepal_width_cm", "column_value": 3.0},
+            {"label": "train", "column": "sepal_width_cm", "greater_than": 3.0},
+            {"label": "test", "column": "sepal_width_cm", ">=": 3.0},
         ],
     )
 
