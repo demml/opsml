@@ -1,6 +1,7 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import pandas as pd
 import numpy as np
+import polars as pl
 from numpy.typing import NDArray
 import pyarrow as pa
 from os import path
@@ -677,7 +678,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
         )
 
 
-def _test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
+def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -701,7 +702,7 @@ def _test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     assert bool(values["datacard_uids"])
 
 
-def _test_full_pipeline_with_loading(
+def test_full_pipeline_with_loading(
     db_registries: Dict[str, CardRegistry],
     linear_regression: linear_model.LinearRegression,
 ):
@@ -766,28 +767,33 @@ def _test_full_pipeline_with_loading(
     assert uids["model"][0] == model_card.uid
 
 
-def _test_tensorflow(db_registries: Dict[str, CardRegistry], load_transformer_example, mock_pathlib):
-    model, data = load_transformer_example
-
-    registry = db_registries["data"]
+def test_model_registry_with_polars(
+    db_registries: Dict[str, CardRegistry],
+    linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
+):
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = linear_regression_polars
     data_card = DataCard(
         data=data,
-        name="test_df",
+        name="polars_data",
         team="mlops",
         user_email="mlops.com",
     )
+    data_registry.register_card(card=data_card)
 
-    registry.register_card(card=data_card)
-
-    model_registry = db_registries["model"]
     model_card = ModelCard(
         trained_model=model,
         sample_input_data=data[0:1],
-        name="test_model",
+        name="polars_model",
         team="mlops",
-        user_email="test_email",
+        user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
+    model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(card=model_card)
-    model_card.load_trained_model()
+
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    assert loaded_card.uris.model_metadata_uri is not None
