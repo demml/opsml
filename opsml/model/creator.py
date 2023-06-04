@@ -43,6 +43,9 @@ class ModelCreator:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
         if not isinstance(input_data, InputDataType.DICT.value):
+            if isinstance(input_data, InputDataType.POLARS_DATAFRAME.value):
+                input_data = input_data.to_pandas()
+
             return input_data[0:1]
 
         sample_dict = cast(Dict[str, np.ndarray], {})
