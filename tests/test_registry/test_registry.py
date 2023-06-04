@@ -7,7 +7,7 @@ from os import path
 from unittest.mock import patch
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
+from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 from sklearn.model_selection import train_test_split
@@ -631,12 +631,12 @@ def test_data_card_splits(test_data: pd.DataFrame):
         user_email="mlops.com",
         data_splits=data_split,
     )
-    assert data_card.data_splits[0]["column"] == "year"
-    assert data_card.data_splits[0]["column_value"] == 2020
+    assert data_card.data_splits[0].column_name == "year"
+    assert data_card.data_splits[0].column_value == 2020
 
     data_split = [
-        {"label": "train", "start": 0, "stop": 2},
-        {"label": "test", "start": 3, "stop": 4},
+        DataSplit(label="train", start=0, stop=2),
+        DataSplit(label="test", start=3, stop=4),
     ]
 
     data_card = DataCard(
@@ -647,8 +647,8 @@ def test_data_card_splits(test_data: pd.DataFrame):
         data_splits=data_split,
     )
 
-    assert data_card.data_splits[0]["start"] == 0
-    assert data_card.data_splits[0]["stop"] == 2
+    assert data_card.data_splits[0].start == 0
+    assert data_card.data_splits[0].stop == 2
 
 
 def test_data_splits(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
@@ -666,8 +666,8 @@ def test_data_splits(db_registries: Dict[str, CardRegistry], iris_data: pd.DataF
         user_email=user_email,
         dependent_vars=["target"],
         data_splits=[
-            {"label": "train", "indices": train_idx},
-            {"label": "test", "indices": test_idx},
+            DataSplit(label="train", indices=train_idx),
+            DataSplit(label="test", indices=test_idx),
         ],
     )
 
@@ -708,8 +708,8 @@ def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_d
         user_email=user_email,
         dependent_vars=["target"],
         data_splits=[
-            {"label": "train", "column": "sepal_width_cm", "greater_than": 3.0},
-            {"label": "test", "column": "sepal_width_cm", ">=": 3.0},
+            {"label": "train", "column": "sepal_width_cm", "column_value": 3.0, "inequality": ">="},
+            {"label": "test", "column": "sepal_width_cm", "column_value": 3.0, "inequality": "<"},
         ],
     )
 
