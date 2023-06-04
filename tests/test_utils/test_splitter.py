@@ -1,39 +1,9 @@
-from opsml.registry.data.splitter import DataSplitter, Data
-import pandas as pd
+from opsml.registry.data.splitter import DataSplitter, DataSplit
 import numpy as np
 import pyarrow as pa
 
 
-def test_pandas_splitter(test_df):
-    split = {"label": "train", "start": 0, "stop": 2}
-    label, data = DataSplitter(split_attributes=split).split(data=test_df)
-    assert isinstance(data.X, pd.DataFrame)
-
-    split = {"label": "train", "column": "year", "column_value": 2020}
-    label, data = DataSplitter(split_attributes=split).split(data=test_df)
-    assert isinstance(data.X, pd.DataFrame)
-
-    split = {"label": "train", "indices": [0, 1, 2]}
-    label, data = DataSplitter(split_attributes=split).split(data=test_df)
-    assert isinstance(data.X, pd.DataFrame)
-
-    # test array conversion
-    split = {"label": "train", "indices": np.array([0, 1, 2])}
-    label, data = DataSplitter(split_attributes=split).split(data=test_df)
-    assert isinstance(data.X, pd.DataFrame)
-
-
-def test_numpy_splitter(test_array):
-    split = {"label": "train", "start": 0, "stop": 2}
-    label, data = DataSplitter(split_attributes=split).split(data=test_array)
-    assert isinstance(data.X, np.ndarray)
-
-    split = {"label": "train", "indices": [0, 2, 3]}
-    label, data = DataSplitter(split_attributes=split).split(data=test_array)
-    assert isinstance(data.X, np.ndarray)
-
-
 def test_pyarrow_splitter(test_arrow_table):
-    split = {"label": "train", "indices": np.array([0, 2])}
-    label, data = DataSplitter(split_attributes=split).split(data=test_arrow_table)
+    split = DataSplit(label="train", indices=np.array([0, 2]))
+    label, data = DataSplitter.split(split=split, data=test_arrow_table)
     assert isinstance(data.X, pa.Table)
