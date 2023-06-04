@@ -63,6 +63,7 @@ import lightgbm as lgb
 
 
 # opsml
+from opsml.registry.data.splitter import DataSplit
 from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
@@ -520,7 +521,7 @@ def test_array():
 @pytest.fixture(scope="function")
 def test_split_array():
     indices = np.array([0, 1, 2])
-    return [{"label": "train", "indices": indices}]
+    return [DataSplit(label="train", indices=indices)]
 
 
 @pytest.fixture(scope="function")
@@ -558,7 +559,7 @@ def test_polars_dataframe():
 
 @pytest.fixture(scope="session")
 def test_polars_split():
-    return [{"label": "train", "column": "foo", "column_value": 0}]
+    return [DataSplit(label="train", column_name = "foo", column_value = 0)]
 
 
 @pytest.fixture(scope="module")
