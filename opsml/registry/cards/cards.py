@@ -414,7 +414,7 @@ class ModelCard(ArtifactCard):
     """
 
     trained_model: Optional[Any]
-    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]]]
+    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
     datacard_uid: Optional[str]
     onnx_model_data: Optional[DataDict]
     onnx_model_def: Optional[OnnxModelDefinition]
@@ -630,6 +630,10 @@ class ModelCard(ArtifactCard):
 
         if isinstance(sample_data, pd.DataFrame):
             record = list(sample_data[0:1].T.to_dict().values())[0]
+            return record
+
+        if isinstance(sample_data, pl.DataFrame):
+            record = list(sample_data.to_pandas()[0:1].T.to_dict().values())[0]
             return record
 
         record = {}

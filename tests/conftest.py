@@ -559,7 +559,7 @@ def test_polars_dataframe():
 
 @pytest.fixture(scope="session")
 def test_polars_split():
-    return [DataSplit(label="train", column_name = "foo", column_value = 0)]
+    return [DataSplit(label="train", column_name="foo", column_value=0)]
 
 
 @pytest.fixture(scope="module")
@@ -591,7 +591,17 @@ def drift_dataframe():
 def regression_data():
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
     y = np.dot(X, np.array([1, 2])) + 3
+
     return X, y
+
+
+@pytest.fixture(scope="session")
+def regression_data_polars(regression_data):
+    X, y = regression_data
+
+    data = pl.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
+
+    return data
 
 
 @pytest.fixture(scope="session")
@@ -650,13 +660,13 @@ def iris_data() -> pd.DataFrame:
 
     return x
 
+
 @pytest.fixture(scope="session")
 def iris_data_polars() -> pl.DataFrame:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
     x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
     x["target"] = iris["target"]
-    
 
     return pl.from_pandas(data=x)
 
@@ -789,6 +799,17 @@ def lgb_booster_dataframe(drift_dataframe):
     )
 
     return gbm, X_train[:100]
+
+
+@pytest.fixture(scope="module")
+def linear_regression_polars(regression_data_polars: pl.DataFrame):
+    data: pl.DataFrame = regression_data_polars
+
+    X = data.select(pl.col(["col_0", "col_1"]))
+    y = data.select(pl.col("y"))
+
+    reg = linear_model.LinearRegression().fit(X.to_numpy(), y.to_numpy(),)
+    return reg, X
 
 
 @pytest.fixture(scope="module")
