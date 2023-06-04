@@ -108,7 +108,7 @@ class PolarsColumnSplitter(DataSplitterBase):
 
 
 class PolarsIndexSplitter(DataSplitterBase):
-    """Column splitter for Polars dataframe"""
+    """Split Polars DataFrame by rows index"""
 
     def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         # slice
@@ -131,6 +131,30 @@ class PolarsIndexSplitter(DataSplitterBase):
         return data_type == pl.DataFrame and split.indices is not None
 
 
+class PolarsRowsSplitter(DataSplitterBase):
+    """Split Polars DataFrame by rows slice"""
+
+    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
+        # slice
+        data = data[self.split.start : self.split.stop]
+
+        if self.dependent_vars is not None:
+            x_cols = data.columns
+            for var in self.dependent_vars:
+                x_cols.remove(var)
+
+            return self.split.label, Data(
+                X=data.select(x_cols),
+                y=data.select(self.dependent_vars),
+            )
+
+        return self.split.label, Data(X=data)
+
+    @staticmethod
+    def validate(data_type: type, split: DataSplit):
+        return data_type == pl.DataFrame and split.start is not None
+
+
 class PandasIndexSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         # slice
@@ -151,16 +175,16 @@ class PandasIndexSplitter(DataSplitterBase):
 
 class PandasRowSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
+        # slice
+        data = data[self.split.start : self.split.stop]
+
         if self.dependent_vars is not None:
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
             y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
-            return self.split.label, Data(
-                X=x[self.split.start : self.split.stop],
-                y=y[self.split.start : self.split.stop],
-            )
+            return self.split.label, Data(X=x, y=y)
 
-        return self.split.label, Data(X=data[self.split.start : self.split.stop])
+        return self.split.label, Data(X=data)
 
     @staticmethod
     def validate(data_type: type, split: DataSplit):
