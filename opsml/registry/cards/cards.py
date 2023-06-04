@@ -348,7 +348,7 @@ class DataCard(ArtifactCard):
 
         """
 
-        if isinstance(self.data, pd.DataFrame):
+        if isinstance(self.data, pd.DataFrame) or isinstance(self.data, pl.DataFrame):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
