@@ -85,7 +85,8 @@ class ArtifactCard(BaseModel):
                 val = val or getattr(card_info, key)
 
             if key in ["name", "team"]:
-                val = clean_string(val)
+                if val is not None:
+                    val = clean_string(val)
 
             env_vars[key] = val
 
