@@ -642,13 +642,23 @@ def load_pytorch_resnet():
 
 
 @pytest.fixture(scope="session")
-def iris_data():
+def iris_data() -> pd.DataFrame:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
     x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
     x["target"] = iris["target"]
 
     return x
+
+@pytest.fixture(scope="session")
+def iris_data_polars() -> pl.DataFrame:
+    iris = load_iris()
+    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
+    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
+    x["target"] = iris["target"]
+    
+
+    return pl.from_pandas(data=x)
 
 
 @pytest.fixture(scope="function")
