@@ -25,7 +25,7 @@ with warnings.catch_warnings():
         TensorType,
     )
 
-InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray], pl.DataFrame]
+InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
 
 class DataDtypes(str, Enum):
