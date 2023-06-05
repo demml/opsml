@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from numpy.typing import NDArray
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
@@ -75,6 +76,7 @@ class InputDataType(Enum):
     PANDAS_DATAFRAME = pd.DataFrame
     NUMPY_ARRAY = np.ndarray
     DICT = dict
+    POLARS_DATAFRAME = pl.DataFrame
 
 
 class OnnxDataProto(Enum):
