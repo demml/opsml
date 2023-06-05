@@ -38,10 +38,15 @@ nav:
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'
-      - Types:
+      - DataCard:
         - 'cards/datacard.md'
+        - 'cards/data_profile.md'
+        - 'cards/data_splits.md'
+      - ModelCard:
         - 'cards/modelcard.md'
-        - 'cards/runcard.md'
+        - 'cards/challenger.md'
+        - 'cards/model_metadata.md'
+      - 'cards/runcard.md'
   - Server:
       - Overview: 'server/overview.md'
       - Example TOML: 'server/example_toml.md'

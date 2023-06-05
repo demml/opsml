@@ -5,22 +5,16 @@ To get a quick feel for `Opsml`, run the following code in a new terminal. The f
 <div class="termy">
 
 ```console
-$ export OPSML_TRACKING_URI="sqlite:///tmp.db"
-$ export _MLFLOW_SERVER_FILE_STORE="sqlite:///tmp.db"
-$ export OPSML_STORAGE_URI="./opsml"
-$ export _MLFLOW_SERVER_ARTIFACT_DESTINATION="./opsml"
-$ export _MLFLOW_SERVER_SERVE_ARTIFACTS="true"         # uses mlflow proxy
+$ opsml-cli launch-uvicorn-app
 
-gunicorn \
-      -k uvicorn.workers.UvicornWorker \
-      --bind=0.0.0.0:8888 \
-      "opsml.app.main:run_app(run_mlflow=True, login=False)"
+...
+<span style="color: green;">INFO</span>:     [INFO] Started server process
+<span style="color: green;">INFO</span>:     [INFO] Waiting for application startup
+<span style="color: green;">INFO</span>:     [INFO] Using worker: uvicorn.workers.
 
-<span style="color: green;">INFO</span>:     [INFO] Starting gunicorn 20.1.0
-<span style="color: green;">INFO</span>:     [INFO] Listening at: http://0.0.0.0:8889
-<span style="color: green;">INFO</span>:     [INFO] Using worker: uvicorn.workers.UvicornWorker
 ...
 <span style="color: green;">INFO</span>:     [INFO] Application startup complete
+<span style="color: green;">INFO</span>:     [INFO] Uvicorn running on http://0.0.0.0:8888
 ```
 
 </div>
