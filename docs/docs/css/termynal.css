@@ -13,7 +13,7 @@
 }
 
 [data-termynal] {
-    width: 750px;
+    width: 900px;
     max-width: 100%;
     background: var(--color-bg);
     color: var(--color-text);
@@ -61,7 +61,7 @@ a[data-terminal-control] {
 
 [data-ty] {
     display: block;
-    line-height: 2;
+    line-height: 1.5;
 }
 
 [data-ty]:before {
