@@ -4,7 +4,7 @@ import sys
 from mlflow.server.handlers import initialize_backend_stores
 from mlflow.utils.server_cli_utils import resolve_default_artifact_root
 
-from opsml.app.core.config import get_mlflow_config, MlFlowConfig
+from opsml.app.core.config import MlFlowConfig
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -16,7 +16,7 @@ def initialize_mlflow() -> MlFlowConfig:
     Raises:
         ValueError: One or more env vars is missing.
     """
-    config = get_mlflow_config()
+    config = MlFlowConfig()
     if config.MLFLOW_SERVER_FILE_STORE is None or len(config.MLFLOW_SERVER_FILE_STORE) == 0:
         raise ValueError("_MLFLOW_SERVER_FILE_STORE env var is invalid")
     if config.MLFLOW_SERVER_ARTIFACT_DESTINATION is None or len(config.MLFLOW_SERVER_ARTIFACT_DESTINATION) == 0:

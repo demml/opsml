@@ -12,15 +12,17 @@ class MlFlowConfig:
     MLFLOW_SERVER_FILE_STORE = os.getenv("_MLFLOW_SERVER_FILE_STORE", TRACKING_URI)
     MLFLOW_SERVER_SERVE_ARTIFACTS = bool(os.getenv("_MLFLOW_SERVER_SERVE_ARTIFACTS", "true"))
 
+    def __init__(self):
+        self._set_mlflow_vars()
 
-def get_mlflow_config():
-    os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = STORAGE_URI
-    os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = "mlflow-artifacts:/"
-    os.environ["_MLFLOW_SERVER_FILE_STORE"] = TRACKING_URI
-    os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = "true"
-    config = MlFlowConfig()
+    def _set_mlflow_vars(self):
+        """Sets MLFLOW var if not present"""
 
-    return config
+        # Sets vars (covers event where they may not exist)
+        os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = self.MLFLOW_SERVER_ARTIFACT_DESTINATION
+        os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = self.MLFLOW_SERVER_ARTIFACT_ROOT
+        os.environ["_MLFLOW_SERVER_FILE_STORE"] = self.MLFLOW_SERVER_FILE_STORE
+        os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = str(self.MLFLOW_SERVER_SERVE_ARTIFACTS).lower()
 
 
 class OpsmlConfig:
