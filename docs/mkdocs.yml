@@ -7,12 +7,14 @@ theme:
   palette:
     - scheme: default
       primary: stylesheets/extra.css
+      accent: teal
       toggle:
         icon: material/weather-night
         name: dark mode
         
     - scheme: slate
       primary: stylesheets/extra.css
+      accent: teal
       toggle:
         icon: material/weather-sunny
         name: light mode
