@@ -1,10 +1,12 @@
 kind: pipeline
-name: test-and-build
+name: test-and-quality
 type: docker
 
 trigger:
   event:
     - pull_request
+    - push
+    - tag
 
 steps:
   - name: setup
@@ -70,6 +72,22 @@ steps:
       - py310
       - quality-checks
 
+---
+name: publish-release-candidate
+kind: pipeline
+type: docker
+
+depends_on:
+  - test-and-quality
+
+trigger:
+  event:
+    - push
+    - pull_request
+  branch:
+    - main
+
+steps:
   - name: publish-release-candidate
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     environment:
@@ -80,11 +98,6 @@ steps:
     commands:
       - make prep.pre.patch
       - make publish
-    depends_on:
-      - py39
-      - py310
-      - quality-checks
-      - code-analysis
 
 
 ---
@@ -93,30 +106,15 @@ kind: pipeline
 type: docker
 
 depends_on:
-  - test-and-build
+  - test-and-quality
 
 trigger:
   event:
     - tag
-    - push
   branch:
     - main
 
 steps:
-
-  - name: publish-release-candidate
-    when:
-      event:
-        - push
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    commands:
-      - make prep.pre.patch
-      - make publish
 
   - name: artifactory-poetry-publish
     when:
@@ -150,8 +148,7 @@ trigger:
 
 steps:
   - name: publish-docs
-    image: python:3.10.2
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
-      - curl -sSL https://install.python-poetry.org | POETRY_HOME=/ POETRY_VERSION=1.4.2 python3 -
       - git diff $DRONE_COMMIT_BEFORE..$DRONE_COMMIT_AFTER --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
       - if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi
