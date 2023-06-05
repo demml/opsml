@@ -138,7 +138,7 @@ type: docker
 name: publish-docs
 
 depends_on:
-  - test-and-build
+  - test-and-quality
 
 trigger:
   event:
