@@ -73,3 +73,6 @@ prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
 publish:
 	poetry config repositories. 
 	poetry publish --repository  --build
+
+publish.docs: setup.project
+	cd docs && poetry run mkdocs gh-deploy --force
