@@ -42,7 +42,10 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
     assert isinstance(splits.train.X, pd.DataFrame)
 
 
-def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
+def test_data_splits_pandas_inequalities(
+    iris_data: pd.DataFrame,
+    pandas_timestamp_df: pd.DataFrame,
+):
     data = iris_data
 
     # test ">= and <"
@@ -123,6 +126,24 @@ def test_data_splits_pandas_inequalities(db_registries: Dict[str, CardRegistry],
     assert data_splits.train.y is not None
     assert data_splits.test.X is not None
     assert data_splits.test.y is not None
+
+    ### test timestamp
+    date_split = pd.to_datetime("2019-01-01").floor("D")
+    data_card = DataCard(
+        data=pandas_timestamp_df,
+        info=card_info,
+        data_splits=[
+            DataSplit(
+                label="train",
+                column_name="date",
+                column_value=date_split,
+                inequality=">",
+            ),
+        ],
+    )
+
+    data_splits = data_card.split_data()
+    assert data_splits.train.X.shape[0] == 1
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])

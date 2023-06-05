@@ -127,7 +127,7 @@ In most data science workflows, it's common to split data into different subsets
 
 ### Split types
 
-- **column name and value**: Split data based on a column value. Supports inequality signs. Works with `Pandas` and `Polars` `DataFrame`s.
+- **column name and value**: Split data based on a column value. Supports inequality signs as well. Works with `Pandas` and `Polars` `DataFrame`s.
 
     **Example**
 
