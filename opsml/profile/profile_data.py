@@ -1,7 +1,8 @@
 import os
-from typing import List
+from typing import List, Union
 
 import pandas as pd
+import polars as pl
 from ydata_profiling import ProfileReport, compare
 
 DIR_PATH = os.path.dirname(__file__)
@@ -9,7 +10,11 @@ DIR_PATH = os.path.dirname(__file__)
 
 class DataProfiler:
     @staticmethod
-    def create_profile_report(data: pd.DataFrame, name: str, sample_perc: float = 1) -> ProfileReport:
+    def create_profile_report(
+        data: Union[pl.DataFrame, pd.DataFrame],
+        name: str,
+        sample_perc: float = 1,
+    ) -> ProfileReport:
         """
         Creates a `ydata-profiling` report
 
@@ -23,6 +28,22 @@ class DataProfiler:
             `ProfileReport`
         """
         kwargs = {"title": f"Profile report for {name}"}
+
+        if isinstance(data, pl.DataFrame):
+            if sample_perc < 1:
+                return ProfileReport(
+                    df=data.sample(fraction=sample_perc, with_replacement=False, shuffle=True).to_pandas(),
+                    config_file=os.path.join(DIR_PATH, "profile_config.yml"),
+                    lazy=False,
+                    **kwargs,
+                )
+
+            return ProfileReport(
+                df=data.to_pandas(),
+                config_file=os.path.join(DIR_PATH, "profile_config.yml"),
+                lazy=False,
+                **kwargs,
+            )
 
         if sample_perc < 1:
             return ProfileReport(

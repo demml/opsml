@@ -3,11 +3,11 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 import joblib
 import numpy as np
-import pandas as pd
+import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
@@ -196,7 +196,7 @@ class OnnxStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """
-        Writes the artifact as a joblib file to a storage_uri
+        Writes the onnx artifact to onnx file
 
         Args:
             artifact:
@@ -336,7 +336,7 @@ class ParquetStorage(ArtifactStorage):
 
         return file_path
 
-    def _load_artifact(self, file_path: FilePath) -> Union[pa.Table, pd.DataFrame]:
+    def _load_artifact(self, file_path: FilePath) -> Any:
         """
         Loads pyarrow data to original saved type
 
@@ -345,7 +345,7 @@ class ParquetStorage(ArtifactStorage):
                 List of filenames that make up the parquet dataset
 
         Returns
-            Pandas DataFrame or Pyarrow table
+            Pandas DataFrame, Polars DataFrame or pyarrow table
         """
 
         pa_table: pa.Table = pq.ParquetDataset(
@@ -353,8 +353,11 @@ class ParquetStorage(ArtifactStorage):
             filesystem=self.storage_filesystem,
         ).read()
 
-        if self.artifact_type == ArtifactStorageType.DATAFRAME:
+        if self.artifact_type == ArtifactStorageType.PANDAS_DATAFRAME:
             return pa_table.to_pandas()
+
+        if self.artifact_type == ArtifactStorageType.POLARS_DATAFRAME:
+            return pl.from_arrow(data=pa_table)
 
         return pa_table
 
@@ -362,7 +365,8 @@ class ParquetStorage(ArtifactStorage):
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
             ArtifactStorageType.ARROW_TABLE,
-            ArtifactStorageType.DATAFRAME,
+            ArtifactStorageType.PANDAS_DATAFRAME,
+            ArtifactStorageType.POLARS_DATAFRAME,
         ]
 
 

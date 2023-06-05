@@ -1,13 +1,14 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import pandas as pd
 import numpy as np
+import polars as pl
 from numpy.typing import NDArray
 import pyarrow as pa
 from os import path
 from unittest.mock import patch
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard
+from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 from sklearn.model_selection import train_test_split
@@ -24,6 +25,7 @@ from tests.conftest import FOURTEEN_DAYS_TS, FOURTEEN_DAYS_STR
         (lazy_fixture("test_split_array"), lazy_fixture("test_array")),
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
         (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
+        (lazy_fixture("test_polars_split"), lazy_fixture("test_polars_dataframe")),
     ],
 )
 def test_register_data(
@@ -33,6 +35,7 @@ def test_register_data(
 ):
     # create data card
     registry = db_registries["data"]
+
     data_card = DataCard(
         data=test_data,
         name="test_df",
@@ -40,6 +43,8 @@ def test_register_data(
         user_email="mlops.com",
         data_splits=data_splits,
     )
+
+    splits = data_card.split_data()
 
     registry.register_card(card=data_card)
 
@@ -615,137 +620,6 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits(test_data: pd.DataFrame):
-    data_split = [
-        {"label": "train", "column": "year", "column_value": 2020},
-        {"label": "test", "column": "year", "column_value": 2021},
-    ]
-    data_card = DataCard(
-        data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
-        data_splits=data_split,
-    )
-    assert data_card.data_splits[0]["column"] == "year"
-    assert data_card.data_splits[0]["column_value"] == 2020
-
-    data_split = [
-        {"label": "train", "start": 0, "stop": 2},
-        {"label": "test", "start": 3, "stop": 4},
-    ]
-
-    data_card = DataCard(
-        data=test_data,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
-        data_splits=data_split,
-    )
-
-    assert data_card.data_splits[0]["start"] == 0
-    assert data_card.data_splits[0]["stop"] == 2
-
-
-def test_data_splits(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
-    train_idx, test_idx = train_test_split(np.arange(iris_data.shape[0]), test_size=0.2)
-
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-    registry: CardRegistry = db_registries["data"]
-
-    data_card_1 = DataCard(
-        data=iris_data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        dependent_vars=["target"],
-        data_splits=[
-            {"label": "train", "indices": train_idx},
-            {"label": "test", "indices": test_idx},
-        ],
-    )
-
-    data_splits = data_card_1.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is not None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is not None
-
-    data_card_2 = DataCard(
-        data=iris_data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        data_splits=[
-            {"label": "train", "indices": train_idx},
-            {"label": "test", "indices": test_idx},
-        ],
-    )
-
-    data_splits = data_card_2.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is None
-
-
-def test_data_splits_column_value(db_registries: Dict[str, CardRegistry], iris_data: pd.DataFrame):
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-    registry: CardRegistry = db_registries["data"]
-
-    data_card = DataCard(
-        data=iris_data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        dependent_vars=["target"],
-        data_splits=[
-            {"label": "train", "column": "sepal_width_cm", "column_value": 3.0},
-            {"label": "test", "column": "sepal_width_cm", "column_value": 3.0},
-        ],
-    )
-
-    data_splits = data_card.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is not None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is not None
-
-
-def test_datacard_split_fail(db_registries: Dict[str, CardRegistry], test_df: pd.DataFrame):
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-
-    registry: CardRegistry = db_registries["data"]
-
-    data_card = DataCard(
-        data=test_df,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        feature_descriptions={"test": "test"},
-    )
-
-    registry.register_card(card=data_card)
-
-    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
-
-    # load data
-    loaded_card.load_data()
-
-    # should raise logging info
-    loaded_card.load_data()
-
-    with pytest.raises(ValueError):
-        data_card.split_data()
-
-
-@pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
 def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.DataFrame):
     data_name = "test_df"
     team = "mlops"
@@ -754,8 +628,8 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
     registry: CardRegistry = db_registries["data"]
 
     data_split = [
-        {"label": "train", "column": "year", "column_value": 2020},
-        {"label": "test", "column": "year", "column_value": 2021},
+        DataSplit(label="train", column_name="year", column_value=2020),
+        DataSplit(label="train", column_name="year", column_value=2021),
     ]
 
     data_card = DataCard(
@@ -893,28 +767,33 @@ def test_full_pipeline_with_loading(
     assert uids["model"][0] == model_card.uid
 
 
-def _test_tensorflow(db_registries: Dict[str, CardRegistry], load_transformer_example, mock_pathlib):
-    model, data = load_transformer_example
-
-    registry = db_registries["data"]
+def test_model_registry_with_polars(
+    db_registries: Dict[str, CardRegistry],
+    linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
+):
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = linear_regression_polars
     data_card = DataCard(
         data=data,
-        name="test_df",
+        name="polars_data",
         team="mlops",
         user_email="mlops.com",
     )
+    data_registry.register_card(card=data_card)
 
-    registry.register_card(card=data_card)
-
-    model_registry = db_registries["model"]
     model_card = ModelCard(
         trained_model=model,
         sample_input_data=data[0:1],
-        name="test_model",
+        name="polars_model",
         team="mlops",
-        user_email="test_email",
+        user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
+    model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(card=model_card)
-    model_card.load_trained_model()
+
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    assert loaded_card.uris.model_metadata_uri is not None

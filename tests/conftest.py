@@ -34,6 +34,7 @@ from pydantic import BaseModel
 import numpy as np
 import joblib
 import pandas as pd
+import polars as pl
 
 # ml model packages and classes
 from sklearn.datasets import fetch_openml
@@ -62,6 +63,7 @@ import lightgbm as lgb
 
 
 # opsml
+from opsml.registry.data.splitter import DataSplit
 from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
@@ -519,7 +521,7 @@ def test_array():
 @pytest.fixture(scope="function")
 def test_split_array():
     indices = np.array([0, 1, 2])
-    return [{"label": "train", "indices": indices}]
+    return [DataSplit(label="train", indices=indices)]
 
 
 @pytest.fixture(scope="function")
@@ -541,6 +543,30 @@ def test_arrow_table():
     names = ["n_legs", "animals"]
     table = pa.Table.from_arrays([n_legs, animals], names=names)
     return table
+
+
+@pytest.fixture(scope="session")
+def test_polars_dataframe():
+    df = pl.DataFrame(
+        {
+            "foo": [1, 2, 3, 4, 5, 6],
+            "bar": ["a", "b", "c", "d", "e", "f"],
+            "y": [1, 2, 3, 4, 5, 6],
+        }
+    )
+    return df
+
+
+@pytest.fixture(scope="function")
+def pandas_timestamp_df():
+    df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
+    df["date"] = pd.to_datetime(df["date"])
+    return df
+
+
+@pytest.fixture(scope="session")
+def test_polars_split():
+    return [DataSplit(label="train", column_name="foo", column_value=0)]
 
 
 @pytest.fixture(scope="module")
@@ -572,7 +598,17 @@ def drift_dataframe():
 def regression_data():
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
     y = np.dot(X, np.array([1, 2])) + 3
+
     return X, y
+
+
+@pytest.fixture(scope="session")
+def regression_data_polars(regression_data):
+    X, y = regression_data
+
+    data = pl.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
+
+    return data
 
 
 @pytest.fixture(scope="session")
@@ -623,13 +659,23 @@ def load_pytorch_resnet():
 
 
 @pytest.fixture(scope="session")
-def iris_data():
+def iris_data() -> pd.DataFrame:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
     x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
     x["target"] = iris["target"]
 
     return x
+
+
+@pytest.fixture(scope="session")
+def iris_data_polars() -> pl.DataFrame:
+    iris = load_iris()
+    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
+    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
+    x["target"] = iris["target"]
+
+    return pl.from_pandas(data=x)
 
 
 @pytest.fixture(scope="function")
@@ -760,6 +806,20 @@ def lgb_booster_dataframe(drift_dataframe):
     )
 
     return gbm, X_train[:100]
+
+
+@pytest.fixture(scope="module")
+def linear_regression_polars(regression_data_polars: pl.DataFrame):
+    data: pl.DataFrame = regression_data_polars
+
+    X = data.select(pl.col(["col_0", "col_1"]))
+    y = data.select(pl.col("y"))
+
+    reg = linear_model.LinearRegression().fit(
+        X.to_numpy(),
+        y.to_numpy(),
+    )
+    return reg, X
 
 
 @pytest.fixture(scope="module")

@@ -7,12 +7,14 @@ theme:
   palette:
     - scheme: default
       primary: stylesheets/extra.css
+      accent: teal
       toggle:
         icon: material/weather-night
         name: dark mode
         
     - scheme: slate
       primary: stylesheets/extra.css
+      accent: teal
       toggle:
         icon: material/weather-sunny
         name: light mode
@@ -30,13 +32,15 @@ repo_url: https://github.com/shipt/opsml
 edit_uri: edit/main/docs/
 
 nav:
-  - OpsML Overview: 'index.md'
+  - Overview: 'index.md'
+  - Quickstart: 'quickstart.md'
   - Cards:
-      - Overview: 'cards/overview.md'
-      - DataCard: 'cards/datacard.md'
-      - ModelCard: 'cards/modelcard.md'
-      - RunCard: 'cards/runcard.md'
-      - Versioning: 'cards/versioning.md'
+      - 'cards/overview.md'
+      - 'cards/versioning.md'
+      - Types:
+        - 'cards/datacard.md'
+        - 'cards/modelcard.md'
+        - 'cards/runcard.md'
       #- RunCard: 'getting_started.md'
       #- ProjectCard: 'getting_started.md'
       #- PipelineCard: 'getting_started.md'
@@ -72,6 +76,7 @@ plugins:
 extra_css:
 - css/custom.css
 - stylesheets/extra.css
+- css/termynal.css
 extra_javascript:
 - js/termynal.js
 - js/custom.js

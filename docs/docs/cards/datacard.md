@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry
+from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
@@ -38,8 +38,8 @@ data_card = DataCard(
     dependent_vars=["Pulse"],
     # define splits
     data_splits=[
-        {"label": "train", "indices": train_idx},
-        {"label": "test", "indices": test_idx},
+        DataSplit(label="train", indcies=train_idx),
+        DataSplit(label="test", indcies=test_idx),
     ],
 )
 
@@ -110,35 +110,7 @@ Output:
 : SQL query or path to sql file containing logic to build data. Required if `data` is not provided.
 
 `data_splits`
-: Split logic for your data. Optional list containing split logic. Defaults to None.
-
-    If a dependent variables is specified. Data splits will return X and y data.
-
-    Logic for data splits can be defined in the following three ways:
-
-    You can specify as many splits as you'd like
-
-    (1) Split based on column value (works for pd.DataFrame)
-
-        splits = [
-            {"label": "train", "column": "DF_COL", "column_value": 0}, -> "val" can also be a string
-            {"label": "test",  "column": "DF_COL", "column_value": 1},
-            {"label": "eval",  "column": "DF_COL", "column_value": 2},
-            ]
-
-    (2) Index slicing by start and stop (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
-
-        splits = [
-            {"label": "train", "start": 0, "stop": 10},
-            {"label": "test", "start": 11, "stop": 15},
-            ]
-
-    (3) Index slicing by list (works for np.ndarray, pyarrow.Table, and pd.DataFrame)
-
-        splits = [
-            {"label": "train", "indices": [1,2,3,4]},
-            {"label": "test", "indices": [5,6,7,8]},
-            ]
+: Split logic for your data. Optional list of `DataSplit`.
 
 `data_profile`
 : `ydata-profiling` data profile. This can also be generated via `create_data_profile` method after instantiation.
@@ -148,6 +120,96 @@ Output:
 
 `additional_info`
 : Dictionary used as storage object for extra information you'd like to provide.
+
+## Data Splits
+
+In most data science workflows, it's common to split data into different subsets for analysis and comparison. In support of this, `DataCard`s allow you to specify and split your data based on specific logic that is provided to a `DataSplit`.
+
+### Split types
+
+- **column name and value**: Split data based on a column value. Supports inequality signs as well. Works with `Pandas` and `Polars` `DataFrames`.
+
+    **Example**
+
+    ```python
+
+    import polars as pl
+    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+
+    df = pl.DataFrame(
+        {
+            "foo": [1, 2, 3, 4, 5, 6],
+            "bar": ["a", "b", "c", "d", "e", "f"],
+            "y": [1, 2, 3, 4, 5, 6],
+        }
+    )
+
+    datacard = DataCard(
+        info=info,
+        data=df
+        data_splits = [
+            DataSplit(label="train", column_name="fool", column_value=6, inequality="<"),
+            DataSplit(label="test", column_name="foo", column_value=6)
+        ]
+
+    )
+
+    splits = datacard.split_data()
+    assert splits.train.X.shape[0] == 5
+    assert splits.test.X.shape[0] == 1
+    ```
+
+- **indices**: Split data based on pre-defined indices. Works with `NDArray`, `pyarrow.Table`, `pandas.DataFrame` and `polars.DataFrame`
+
+
+    ```python
+
+    import numpy as np
+    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+
+    data = np.random.rand(10, 10)
+
+    datacard = DataCard(
+        info=info,
+        data=data
+        data_splits = [
+            DataSplit(label="train", indices=[0,1,5])
+        ]
+
+    )
+
+    splits = datacard.split_data()
+    assert splits.train.X.shape[0] == 3
+    ```
+
+- **start and stop slicing**: Split data based on row slices with a start and stop index. Works with `NDArray`, `pyarrow.Table`, `pandas.DataFrame` and `polars.DataFrame`
+
+
+    ```python
+
+    import numpy as np
+    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+
+    data = np.random.rand(10, 10)
+
+    datacard = DataCard(
+        info=info,
+        data=data
+        data_splits = [
+            DataSplit(label="train", start=0, stop=3)
+        ]
+
+    )
+
+    splits = datacard.split_data()
+    assert splits.train.X.shape[0] == 3
+    ```
 
 
 ## Data Profile
