@@ -557,6 +557,13 @@ def test_polars_dataframe():
     return df
 
 
+@pytest.fixture(scope="function")
+def pandas_timestamp_df():
+    df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
+    df["date"] = pd.to_datetime(df["date"])
+    return df
+
+
 @pytest.fixture(scope="session")
 def test_polars_split():
     return [DataSplit(label="train", column_name="foo", column_value=0)]
@@ -808,7 +815,10 @@ def linear_regression_polars(regression_data_polars: pl.DataFrame):
     X = data.select(pl.col(["col_0", "col_1"]))
     y = data.select(pl.col("y"))
 
-    reg = linear_model.LinearRegression().fit(X.to_numpy(), y.to_numpy(),)
+    reg = linear_model.LinearRegression().fit(
+        X.to_numpy(),
+        y.to_numpy(),
+    )
     return reg, X
 
 
