@@ -12,7 +12,8 @@ FilePath = Union[List[str], str]
 
 
 class ArtifactStorageType(str, Enum):
-    DATAFRAME = "DataFrame"
+    PANDAS_DATAFRAME = "PandasDataFrame"
+    POLARS_DATAFRAME = "PolarsDataFrame"
     ARROW_TABLE = "Table"
     NDARRAY = "ndarray"
     TF_MODEL = "keras"

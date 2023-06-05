@@ -8,8 +8,9 @@ from pydantic import BaseModel
 
 class AllowedTableTypes(str, Enum):
     NDARRAY = "ndarray"
-    TABLE = "Table"
-    DATAFRAME = "DataFrame"
+    ARROW_TABLE = "Table"
+    PANDAS_DATAFRAME = "PandasDataFrame"
+    POLARS_DATAFRAME = "PolarsDataFrame"
 
 
 class ArrowTable(BaseModel):
