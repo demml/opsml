@@ -1,11 +1,13 @@
-:root {
-  --md-primary-fg-color: #038767;
-  --md-secondary-fg-color: #502D91;
+:root > * {
+  --md-primary-fg-color: #7b59b9;
+  --md-secondary-fg-color: #038767;
+  --md-accent-fg-color:                #038767;
+  --md-accent-fg-color--transparent:   #038767;
 }
-
 
 .md-typeset {
   font-size: 17px;
+
 }
 
 .md-sidebar--primary {
@@ -17,3 +19,17 @@
 }
 
 
+.termynal-comment {
+  color: #4a968f;
+  font-style: italic;
+  display: block;
+}
+
+.termy {
+  /* For right to left languages */
+  direction: ltr;
+}
+
+.termy [data-termynal] {
+  white-space: pre-wrap;
+}
