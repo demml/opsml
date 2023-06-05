@@ -186,7 +186,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry, ModelCard
+from opsml.registry import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
 
 # set up registries
 data_registry = CardRegistry(registry_name="data")
@@ -211,8 +211,8 @@ datacard = DataCard(
     dependent_vars=["Pulse"],
     # define splits
     data_splits=[
-        {"label": "train", "indices": train_idx},
-        {"label": "test", "indices": test_idx},
+        DataSplit(label="train", indices=train_idx),
+        DataSplit(label="test", indices=test_idx),
     ],
 )
 
