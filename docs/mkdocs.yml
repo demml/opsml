@@ -41,9 +41,6 @@ nav:
         - 'cards/datacard.md'
         - 'cards/modelcard.md'
         - 'cards/runcard.md'
-      #- RunCard: 'getting_started.md'
-      #- ProjectCard: 'getting_started.md'
-      #- PipelineCard: 'getting_started.md'
   - Server:
       - Overview: 'server/overview.md'
       - Example TOML: 'server/example_toml.md'
