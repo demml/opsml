@@ -81,7 +81,7 @@ The main goal of `Opsml` is to provide an intuitive interface for DSs to create 
 
 Taking a data science project from ideation :bulb: to deployment :rocket: often involves a `dev` side and a `deployment` side. 
 
-#### Dev Themes:
+#### Dev Themes
 
 - Experimentation and iteration in order to generate many potential solutions
 - Feature/Data engineering
@@ -89,7 +89,7 @@ Taking a data science project from ideation :bulb: to deployment :rocket: often 
 - Felxible work environment (often **Jupyter Notebooks**)
 - Many other things
 
-#### Deployment Themes:
+#### Deployment Themes
 
 - Compute infrastructure for hosting
 - Conversion of data science code to production code (including creating dags/pipelines)
