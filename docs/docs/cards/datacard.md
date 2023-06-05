@@ -127,7 +127,7 @@ In most data science workflows, it's common to split data into different subsets
 
 ### Split types
 
-- **column name and value**: Split data based on a column value. Supports inequality signs as well. Works with `Pandas` and `Polars` `DataFrame`s.
+- **column name and value**: Split data based on a column value. Supports inequality signs as well. Works with `Pandas` and `Polars` `DataFrames`.
 
     **Example**
 
@@ -161,7 +161,55 @@ In most data science workflows, it's common to split data into different subsets
     assert splits.test.X.shape[0] == 1
     ```
 
-- **indices**: Split data based on pre-defined indices.
+- **indices**: Split data based on pre-defined indices. Works with `NDArray`, `pyarrow.Table`, `pandas.DataFrame` and `polars.DataFrame`
+
+
+    ```python
+
+    import numpy as np
+    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+
+    data = np.random.rand(10, 10)
+
+    datacard = DataCard(
+        info=info,
+        data=data
+        data_splits = [
+            DataSplit(label="train", indices=[0,1,5])
+        ]
+
+    )
+
+    splits = datacard.split_data()
+    assert splits.train.X.shape[0] == 3
+    ```
+
+- **start and stop slicing**: Split data based on row slices with a start and stop index. Works with `NDArray`, `pyarrow.Table`, `pandas.DataFrame` and `polars.DataFrame`
+
+
+    ```python
+
+    import numpy as np
+    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+
+    data = np.random.rand(10, 10)
+
+    datacard = DataCard(
+        info=info,
+        data=data
+        data_splits = [
+            DataSplit(label="train", start=0, stop=3)
+        ]
+
+    )
+
+    splits = datacard.split_data()
+    assert splits.train.X.shape[0] == 3
+    ```
 
 
 ## Data Profile
