@@ -1,5 +1,5 @@
 :root > * {
-  --md-primary-fg-color: #502D91;
+  --md-primary-fg-color: #7b59b9;
   --md-secondary-fg-color: #038767;
   --md-accent-fg-color:                #038767;
   --md-accent-fg-color--transparent:   #038767;
@@ -18,3 +18,18 @@
   width: 10rem;
 }
 
+
+.termynal-comment {
+  color: #4a968f;
+  font-style: italic;
+  display: block;
+}
+
+.termy {
+  /* For right to left languages */
+  direction: ltr;
+}
+
+.termy [data-termynal] {
+  white-space: pre-wrap;
+}
