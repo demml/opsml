@@ -86,10 +86,14 @@ steps:
       - quality-checks
       - code-analysis
 
+
 ---
 name: publish-release
 kind: pipeline
 type: docker
+
+depends_on:
+  - test-and-build
 
 trigger:
   event:
@@ -97,69 +101,8 @@ trigger:
     - push
   branch:
     - main
+
 steps:
-
-  - name: setup
-    when:
-      event:
-        - push
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make setup.project
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-
-  - name: py39
-    when:
-      event:
-        - push
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make test.unit
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - setup
-
-  - name: quality-checks
-    when:
-      event:
-        - push
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make lints.ci
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - setup
-
-  - name: code-analysis
-    when:
-        event:
-          - push
-    image: plugins/sonarqube-drone-plugin
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-      SONAR_HOST:
-        from_secret: SONAR_HOST
-      SONAR_TOKEN:
-        from_secret: SONAR_TOKEN
-      SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
-    depends_on:
-      - py39
-      - quality-checks
 
   - name: publish-release-candidate
     when:
@@ -174,10 +117,6 @@ steps:
     commands:
       - make prep.pre.patch
       - make publish
-    depends_on:
-      - py39
-      - quality-checks
-      - code-analysis
 
   - name: artifactory-poetry-publish
     when:
@@ -195,3 +134,24 @@ steps:
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
       
+---
+kind: pipeline
+type: docker
+name: publish-docs
+
+depends_on:
+  - test-and-build
+
+trigger:
+  event:
+    - push
+  branch:
+    - main
+
+steps:
+  - name: publish-docs
+    image: python:3.10.2
+    commands:
+      - curl -sSL https://install.python-poetry.org | POETRY_HOME=/ POETRY_VERSION=1.4.2 python3 -
+      - git diff $DRONE_COMMIT_BEFORE..$DRONE_COMMIT_AFTER --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
+      - if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi

@@ -73,3 +73,6 @@ prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
 publish:
 	poetry config repositories.shipt-deploy https://artifactory.gcp.shipttech.com/artifactory/api/pypi/pypi-local
 	poetry publish --repository shipt-deploy --build
+
+publish.docs: setup.project
+	cd docs && poetry run mkdocs gh-deploy --force
