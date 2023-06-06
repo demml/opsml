@@ -606,6 +606,7 @@ class ModelCard(ArtifactCard):
             input_data=self.sample_input_data,
             additional_onnx_args=self.additional_onnx_args,
             to_onnx=self.to_onnx,
+            onnx_model_def=self.onnx_model_def,
         )
 
         self._set_model_attributes(model_return=model_return)
