@@ -251,7 +251,7 @@ class SklearnOnnxModel(ModelConverter):
         self.prepare_registries_and_data()
         return super().convert_data()
 
-    def convert_model(self, initial_types: List[Any]) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
