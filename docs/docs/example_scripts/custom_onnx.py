@@ -1,6 +1,7 @@
 # Some standard imports
-import io
-import numpy as np
+import os
+
+os.environ["OPSML_TRACKING_URI"] = "http://localhost:8888/"
 
 from torch import nn
 import torch.utils.model_zoo as model_zoo
