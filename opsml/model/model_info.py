@@ -6,13 +6,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import (
-    DataDtypes,
-    Feature,
-    InputData,
-    InputDataType,
-    TorchOnnxArgs,
-)
+from opsml.model.types import DataDtypes, Feature, InputData, InputDataType, TorchOnnxArgs, OnnxModelDefinition
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -280,11 +274,18 @@ class ModelInfo:
     Contains metadata needed for convertsion of trained model to onnx format.
 
     Args:
-        model (any): Trained model (sklean, tf, keras, pytorch)
-        input_data (ModelData): Sample data use to train model
-        model_type (str): Model type
-        data_type (type): Data type
-        additional_model_args (TorchOnnxArgs): Optional args to include with Torch model
+        model:
+            Trained model (sklean, tf, keras, pytorch)
+        input_data:
+            Sample data use to train model
+        model_type:
+            Model type
+        data_type:
+            Data type
+        additional_model_args:
+            Optional args to include with Torch model
+        onnx_model_def:
+            Optional `OnnxModelDefinition`
     """
 
     model: Any
@@ -292,3 +293,4 @@ class ModelInfo:
     model_type: str
     data_type: type
     additional_model_args: Optional[TorchOnnxArgs] = None
+    onnx_model_def: Optional[OnnxModelDefinition] = None
