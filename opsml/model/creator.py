@@ -12,8 +12,8 @@ from opsml.model.types import (
     InputData,
     InputDataType,
     ModelReturn,
-    TorchOnnxArgs,
     OnnxModelDefinition,
+    TorchOnnxArgs,
 )
 
 
