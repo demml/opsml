@@ -6,8 +6,6 @@ trigger:
   event:
     - pull_request
     - push
-  exclude:
-    - main
 
 steps:
   - name: setup
