@@ -83,7 +83,6 @@ depends_on:
 trigger:
   event:
     - push
-    - pull_request
   branch:
     - main
 
