@@ -42,13 +42,21 @@ class ModelConverter:
     def update_onnx_registries(self) -> bool:
         return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a model to onnx format
 
         Returns
-            Encrypted model definition and feature dictionary
+            Encrypted model definition
         """
         raise NotImplementedError
+
+    def convert_data(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+        """Converts data for onnx
+
+        Returns
+            Encrypted model definition
+        """
+        return self.data_converter.get_data_types()
 
     def _predictions_close(
         self,
@@ -82,14 +90,12 @@ class ModelConverter:
 
         logger.info("Onnx model validated")
 
-    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
-        return self.data_converter.get_data_types()
-
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
     def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
+
         for sig in signature:
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
@@ -128,8 +134,15 @@ class ModelConverter:
         Returns:
             Onnx ModelDefinition and Dictionary of Onnx features
         """
-        onnx_model, data_schema = self.convert_model()
-        model_def = self.create_model_def(onnx_model=onnx_model)
+        initial_types, data_schema = self.convert_data()
+
+        if self.model_info.onnx_model_def is None:
+            onnx_model = self.convert_model(initial_types=initial_types)
+            model_def = self.create_model_def(onnx_model=onnx_model)
+        else:
+            model_def = self.model_info.onnx_model_def
+            onnx_model = onnx.load_from_string(self.model_info.onnx_model_def.model_bytes)
+
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
         schema = ApiDataSchemas(
@@ -234,21 +247,21 @@ class SklearnOnnxModel(ModelConverter):
         self.update_sklearn_onnx_registries()
         self._convert_data_for_onnx()
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+    def convert_data(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+        """Converts data for sklearn onnx models"""
+        self.prepare_registries_and_data()
+        return super().convert_data()
+
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             from skl2onnx import convert_sklearn
 
-        # update registries with 3rd party converter and convert to float if needed
-        self.prepare_registries_and_data()
-        initial_types, data_schema = self.get_data_types()
+            onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types)
+            self.validate_model(onnx_model=onnx_model)
 
-        onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types)
-
-        self.validate_model(onnx_model=onnx_model)
-
-        return onnx_model, data_schema
+        return onnx_model
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -256,19 +269,14 @@ class SklearnOnnxModel(ModelConverter):
 
 
 class LighGBMBoosterOnnxModel(ModelConverter):
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
 
-        initial_types, data_schema = self.get_data_types()
-        onnx_model = convert_lightgbm(
-            model=self.model_info.model,
-            initial_types=initial_types,
-        )
-
+        onnx_model = convert_lightgbm(model=self.model_info.model, initial_types=initial_types)
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model, data_schema
+        return onnx_model
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -281,20 +289,15 @@ class TensorflowKerasOnnxModel(ModelConverter):
             return model[0]
         return model
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""
 
         import tf2onnx
 
-        initial_types, data_schema = self.get_data_types()
-        onnx_model, _ = tf2onnx.convert.from_keras(
-            self.model_info.model,
-            initial_types,
-            opset=13,
-        )
+        onnx_model, _ = tf2onnx.convert.from_keras(self.model_info.model, initial_types, opset=13)
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model, data_schema
+        return onnx_model
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -425,14 +428,13 @@ class PyTorchOnnxModel(ModelConverter):
             model = onnx.load(filename)
         return model
 
-    def convert_model(self) -> Tuple[ModelProto, Optional[Dict[str, Feature]]]:
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""
 
-        _, data_schema = self.get_data_types()
         onnx_model = self._get_onnx_model()
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model, data_schema
+        return onnx_model
 
     @staticmethod
     def validate(model_type: str) -> bool:

@@ -588,7 +588,7 @@ class ModelCard(ArtifactCard):
         setattr(self, "data_schema", model_return.api_data_schema)
         setattr(self, "model_type", model_return.model_type)
 
-    def _create_and_set_model_attr(self, to_onnx: bool) -> None:
+    def _create_and_set_model_attr(self) -> None:
         """
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
@@ -606,6 +606,7 @@ class ModelCard(ArtifactCard):
             input_data=self.sample_input_data,
             additional_onnx_args=self.additional_onnx_args,
             to_onnx=self.to_onnx,
+            onnx_model_def=self.onnx_model_def,
         )
 
         self._set_model_attributes(model_return=model_return)
@@ -658,8 +659,8 @@ class ModelCard(ArtifactCard):
 
         """
         # todo: clean this up
-        if not bool(self.onnx_model_def):
-            self._create_and_set_model_attr(to_onnx=False)
+        if self.onnx_model_def is None or self.data_schema is None:
+            self._create_and_set_model_attr()
 
         version = self._set_version_for_predictor()
 

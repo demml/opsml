@@ -131,6 +131,90 @@ def test_model_predict(model_and_data):
     pred_orig = predictor.predict_with_model(model, record)
 
 
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        lazy_fixture("linear_regression"),  # linear regress with numpy
+    ],
+)
+def test_byo_onnx(model_and_data):
+    model, data = model_and_data
+
+    if isinstance(data, dict):
+        sample_data = data
+    else:
+        sample_data = data[0:1]
+
+    # create model def first
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=sample_data,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uids=["test_uid"],
+    )
+    predictor = modelcard.onnx_model()
+    model_def = modelcard.onnx_model_def
+
+    # byo onnx model def
+    new_modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=sample_data,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uids=["test_uid"],
+        onnx_model_def=model_def,
+    )
+    predictor = new_modelcard.onnx_model()
+    assert new_modelcard.data_schema is not None
+
+    if isinstance(data, np.ndarray):
+        input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
+
+        record = {input_name: data[0, :].tolist()}
+
+    elif isinstance(data, pd.DataFrame):
+        record = list(sample_data[0:1].T.to_dict().values())[0]
+
+    else:
+        record = {}
+        for feat, val in sample_data.items():
+            record[feat] = np.ravel(val).tolist()
+
+    pred_onnx = predictor.predict(record)
+
+    out_sig = predictor.output_sig(**pred_onnx)
+    pred_orig = predictor.predict_with_model(model, record)
+
+
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        lazy_fixture("pytorch_onnx_byo"),  # linear regress with numpy
+    ],
+)
+def test_byo_pytorch_onnx(model_and_data):
+    model_def, model, sample_data = model_and_data
+
+    # create model def first
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=sample_data,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uids=["test_uid"],
+        onnx_model_def=model_def,
+    )
+    predictor = modelcard.onnx_model()
+    input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
+    record = {input_name: sample_data[0, :].tolist()}
+    pred_onnx = predictor.predict(record)
+    pred_orig = predictor.predict_with_model(model, record)
+
+
 # for random testing of definitions
 
 # filename = "sklearn_pipeline"
