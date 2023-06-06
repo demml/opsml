@@ -387,7 +387,7 @@ def launch_uvicorn_app(
             Default port to use with the opsml server
     """
 
-    from opsml.app.main import OpsmlApp
+    from opsml.app.main import OpsmlApp  # pylint: disable=import-outside-toplevel
 
     model_api = OpsmlApp(run_mlflow=run_mlflow, port=port, login=login)
     model_api.build_app()
