@@ -12,6 +12,7 @@ from opsml.model.types import (
     InputData,
     InputDataType,
     ModelReturn,
+    OnnxModelDefinition,
     TorchOnnxArgs,
 )
 
@@ -22,6 +23,7 @@ class ModelCreator:
         model: Any,
         input_data: InputData,
         additional_onnx_args: Optional[TorchOnnxArgs] = None,
+        onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
         """
         Args:
@@ -31,11 +33,14 @@ class ModelCreator:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
             additional_onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
+            onnx_model_def:
+                Optional `OnnxModelDefinition`
         """
         self.model = model
         self.input_data = self._get_one_sample(input_data)
         self.model_class = self._get_model_class_name()
         self.additional_model_args = additional_onnx_args
+        self.onnx_model_def = onnx_model_def
         self.input_data_type = type(self.input_data)
         self.model_type = self.get_model_type()
 
@@ -141,6 +146,7 @@ class OnnxModelCreator(ModelCreator):
         model: Any,
         input_data: InputData,
         additional_onnx_args: Optional[TorchOnnxArgs] = None,
+        onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
         """
         Instantiates OnnxModelCreator that is used for converting models to Onnx
@@ -150,12 +156,17 @@ class OnnxModelCreator(ModelCreator):
                 Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
             input_data:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
+            additional_onnx_args:
+                Specific args for Pytorch onnx conversion. The won't be passed for most models
+            onnx_model_def:
+                Optional `OnnxModelDefinition`
         """
 
         super().__init__(
             model=model,
             input_data=input_data,
             additional_onnx_args=additional_onnx_args,
+            onnx_model_def=onnx_model_def,
         )
         self.onnx_data_type = self.get_onnx_data_type(input_data=input_data)
 
@@ -203,6 +214,7 @@ class OnnxModelCreator(ModelCreator):
             model_type=self.model_type,
             data_type=self.input_data_type,
             additional_model_args=self.additional_model_args,
+            onnx_model_def=self.onnx_model_def,
         )
 
         onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
@@ -224,6 +236,7 @@ def create_model(
     input_data: InputData,
     to_onnx: bool,
     additional_onnx_args: Optional[TorchOnnxArgs] = None,
+    onnx_model_def: Optional[OnnxModelDefinition] = None,
 ) -> ModelReturn:
     """
     Validates and selects s `ModeCreator` subclass and creates a `ModelReturn`
@@ -237,6 +250,8 @@ def create_model(
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
             to_onnx:
                 Whether to use Onnx creator or not
+            onnx_model_def:
+                Optional onnx model def. This is primarily used for bring your own onnx models
 
     """
 
@@ -252,4 +267,5 @@ def create_model(
         model=model,
         input_data=input_data,
         additional_onnx_args=additional_onnx_args,
+        onnx_model_def=onnx_model_def,
     ).create_model()

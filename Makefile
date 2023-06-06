@@ -74,5 +74,5 @@ publish:
 	poetry config repositories. 
 	poetry publish --repository  --build
 
-publish.docs: setup.project
+publish.docs:
 	cd docs && poetry run mkdocs gh-deploy --force
