@@ -5,7 +5,7 @@ type: docker
 trigger:
   event:
     - pull_request
-    - push
+    - tag
 
 steps:
   - name: setup
@@ -71,76 +71,13 @@ steps:
       - py310
       - quality-checks
 
-
-kind: pipeline
-name: test-and-quality-main
-type: docker
-
-trigger:
-  event:
-    - push
-    - tag
-  branch:
-    - main
-
-steps:
-  - name: setup
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make setup.project
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-
-  - name: py39
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make test.unit
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - setup
-
-  - name: quality-checks
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make lints.ci
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - setup
-
-  - name: code-analysis
-    image: plugins/sonarqube-drone-plugin
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-      SONAR_HOST:
-        from_secret: SONAR_HOST
-      SONAR_TOKEN:
-        from_secret: SONAR_TOKEN
-      SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
-    depends_on:
-      - py39
-      - quality-checks
-
 ---
 name: publish-release-candidate
 kind: pipeline
 type: docker
 
 depends_on:
-  - test-and-quality-main
+  - test-and-quality
 
 trigger:
   event:
@@ -167,7 +104,7 @@ kind: pipeline
 type: docker
 
 depends_on:
-  - test-and-quality-main
+  - test-and-quality
 
 trigger:
   event:
@@ -199,7 +136,7 @@ type: docker
 name: publish-docs
 
 depends_on:
-  - test-and-quality-main
+  - test-and-quality
 
 trigger:
   event:
