@@ -38,7 +38,7 @@ class ModelChallenger:
         self._registries = CardRegistries()
         self._challenger_metric: Optional[Metric] = None
         self._lower_is_better = True
-        self._metric_name = None
+        self._metric_name: Optional[str] = None
 
     @property
     def challenger_metric(self) -> Metric:
@@ -54,6 +54,10 @@ class ModelChallenger:
     def lower_is_better(self) -> bool:
         return self._lower_is_better
 
+    @lower_is_better.setter
+    def lower_is_better(self, lower_is_better: bool) -> None:
+        self._lower_is_better = lower_is_better
+
     @property
     def metric_name(self) -> str:
         if self._metric_name is not None:
@@ -61,12 +65,8 @@ class ModelChallenger:
         raise ValueError("Metric name not set")
 
     @metric_name.setter
-    def metric_name(self, metric_name: str) -> str:
+    def metric_name(self, metric_name: str) -> None:
         self._metric_name = metric_name
-
-    @lower_is_better.setter
-    def lower_is_better(self, lower_is_better: bool) -> None:
-        self._lower_is_better = lower_is_better
 
     def _get_last_champion_record(self) -> Optional[Dict[str, Any]]:
         # probably a better way to do this using tilde, caret or star
@@ -211,7 +211,10 @@ class ModelChallenger:
 
         # get challenger metric
         if metric_value is None:
-            self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid)
+            if self._challenger.runcard_uid is not None:
+                self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid)
+            else:
+                raise ValueError("Challenger and champions must be associated with a registered RunCard")
         else:
             self.challenger_metric = Metric(name=metric_name, value=metric_value)
 
