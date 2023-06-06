@@ -659,8 +659,8 @@ class ModelCard(ArtifactCard):
 
         """
         # todo: clean this up
-        if not bool(self.onnx_model_def):
-            self._create_and_set_model_attr(to_onnx=False)
+        if self.onnx_model_def is None:
+            self._create_and_set_model_attr()
 
         version = self._set_version_for_predictor()
 
