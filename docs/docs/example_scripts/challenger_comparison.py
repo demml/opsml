@@ -130,7 +130,7 @@ linreg_card = model_registry.load_card(
 )
 
 challenger = ModelChallenger(challenger=linreg_card)
-report = challenger.challenge_champion(
+reports = challenger.challenge_champion(
     metric_name="mae",
     champions=[
         CardInfo(name="lasso_reg", team="mlops", version="1.0.0"),
@@ -138,5 +138,21 @@ report = challenger.challenge_champion(
     ],
 )
 
-print(report)
-# > BattleReport(champion_name='lasso_reg', champion_version='1.0.0', challenger_win=True)
+# can also access the battle report objects directly
+print([report.dict() for report in reports])
+# [
+#    {
+#        "champion_name": "lasso_reg",
+#        "champion_version": "1.0.0",
+#        "champion_metric": {"name": "mae", "value": 10.753896568020215, "step": None, "timestamp": None},
+#        "challenger_metric": {"name": "mae", "value": 5.778116866806702, "step": None, "timestamp": None},
+#        "challenger_win": True,
+#    },
+#    {
+#        "champion_name": "poisson_reg",
+#        "champion_version": "1.0.0",
+#        "champion_metric": {"name": "mae", "value": 6.2403608293470345, "step": None, "timestamp": None},
+#        "challenger_metric": {"name": "mae", "value": 5.778116866806702, "step": None, "timestamp": None},
+#        "challenger_win": True,
+#    },
+# ]
