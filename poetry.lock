@@ -5912,9 +5912,9 @@ gcp-postgres = ["cloud-sql-python-connector", "gcsfs", "pg8000"]
 graphviz = ["graphviz"]
 mlflow = ["libclang", "llvmlite", "mlflow", "numba"]
 postgres = ["psycopg2"]
-server = ["fastapi", "gunicorn", "libclang", "llvmlite", "mlflow", "numba", "prometheus-fastapi-instrumentator", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
+server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "fd55cf9c02d2962ccc10a8dfe8660a0a5713ae2ee5f80552286b91882aabf6e7"
+content-hash = "e2f0bd473c787b89476730535ed2f3bff65604241889e9f8697b8d2a9226d9dd"
