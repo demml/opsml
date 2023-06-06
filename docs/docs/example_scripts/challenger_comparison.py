@@ -136,6 +136,7 @@ reports = challenger.challenge_champion(
         CardInfo(name="lasso_reg", team="mlops", version="1.0.0"),
         CardInfo(name="poisson_reg", team="mlops", version="1.0.0"),
     ],
+    lower_is_better=True,
 )
 
 # can also access the battle report objects directly
