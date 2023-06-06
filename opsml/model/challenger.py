@@ -14,6 +14,8 @@ logger = ArtifactLogger.get_logger(__name__)
 class BattleReport:
     champion_name: str
     champion_version: str
+    champion_metric: Metric
+    challenger_metric: Metric
     challenger_win: bool
 
 
@@ -127,6 +129,8 @@ class ModelChallenger:
         return BattleReport(
             champion_name=str(champion.name),
             champion_version=str(champion.version),
+            champion_metric=champion_metric,
+            challenger_metric=self.challenger_metric.copy(),
             challenger_win=challenger_win,
         )
 
