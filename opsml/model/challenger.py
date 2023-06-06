@@ -13,8 +13,8 @@ logger = ArtifactLogger.get_logger(__name__)
 class BattleReport(BaseModel):
     champion_name: str
     champion_version: str
-    champion_metric: Metric
-    challenger_metric: Metric
+    champion_metric: Optional[Metric] = None
+    challenger_metric: Optional[Metric] = None
     challenger_win: bool
 
     class Config:
