@@ -715,12 +715,15 @@ class MlflowStorageClient(StorageClient):
 
     def _get_mlflow_dir(self, filename: str) -> str:
         "Sets individual directories for all mlflow artifacts"
-        file_splits = filename.split("/")
 
-        child_dir = file_splits[-3]
-        parent_dir = file_splits[-5].split("_")[1]
+        if "OPSML" in filename and "REGISTRY" in filename:
+            file_splits = filename.split("/")
+            child_dir = file_splits[-3]
+            parent_dir = file_splits[-5].split("_")[1]
 
-        return parent_dir + "/" + child_dir
+            return str(parent_dir + "/" + child_dir).lower()
+
+        return "misc"
 
     def list_files(self, storage_uri: str) -> FilePath:
         return [storage_uri]
