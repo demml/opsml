@@ -6,7 +6,14 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import DataDtypes, Feature, InputData, InputDataType, TorchOnnxArgs, OnnxModelDefinition
+from opsml.model.types import (
+    DataDtypes,
+    Feature,
+    InputData,
+    InputDataType,
+    OnnxModelDefinition,
+    TorchOnnxArgs,
+)
 
 logger = ArtifactLogger.get_logger(__name__)
 
