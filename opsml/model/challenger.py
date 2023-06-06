@@ -33,6 +33,7 @@ class ModelChallenger:
         self._registries = CardRegistries()
         self._challenger_metric: Optional[Metric] = None
         self._lower_is_better = True
+        self._metric_name = None
 
     @property
     def challenger_metric(self) -> Metric:
@@ -47,6 +48,16 @@ class ModelChallenger:
     @property
     def lower_is_better(self) -> bool:
         return self._lower_is_better
+
+    @property
+    def metric_name(self) -> str:
+        if self._metric_name is not None:
+            return self._metric_name
+        raise ValueError("Metric name not set")
+
+    @metric_name.setter
+    def metric_name(self, metric_name: str) -> str:
+        self._metric_name = metric_name
 
     @lower_is_better.setter
     def lower_is_better(self, lower_is_better: bool) -> None:
@@ -83,11 +94,13 @@ class ModelChallenger:
         Args:
             runcard_uid:
                 RunCard uid
+            metric_name:
+                Name of metric
 
         """
         runcard: RunCard = self._registries.run.load_card(uid=runcard_uid)
 
-        return cast(Metric, runcard.get_metric(name=self.challenger_metric.name))
+        return cast(Metric, runcard.get_metric(name=self.metric_name))
 
     def battle(self, champion: CardInfo, champion_metric: Metric) -> BattleReport:
         """
@@ -145,7 +158,7 @@ class ModelChallenger:
             champion_metric=champion_metric,
         )
 
-    def _challenge_champions(self, champions: List[CardInfo]) -> List[BattleReport]:
+    def _challenge_champions(self, champions: List[CardInfo], metric_name: str) -> List[BattleReport]:
         battle_reports = []
         for champion in champions:
             champion_record = self._registries.model.list_cards(info=champion, as_dataframe=False)
@@ -156,24 +169,17 @@ class ModelChallenger:
             if champion_record[0].get("runcard_uid") is None:
                 raise ValueError(f"No RunCard associated with champion: {champion}")
 
-            champion_metric = self._get_runcard_metric(
-                runcard_uid=champion_record[0].get("runcard_uid"),
-            )
+            champion_metric = self._get_runcard_metric(runcard_uid=champion_record[0].get("runcard_uid"))
 
-            battle_reports.append(
-                self.battle(
-                    champion=champion,
-                    champion_metric=champion_metric,
-                )
-            )
+            battle_reports.append(self.battle(champion=champion, champion_metric=champion_metric))
         return battle_reports
 
     def challenge_champion(
         self,
         metric_name: str,
-        metric_value: Union[int, float],
-        lower_is_better: bool,
+        metric_value: Optional[Union[int, float]] = None,
         champions: Optional[List[CardInfo]] = None,
+        lower_is_better: bool = True,
     ) -> Union[BattleReport, List[BattleReport]]:
         """
         Challenges n champion models against the challenger model. If no champion is provided,
@@ -194,9 +200,13 @@ class ModelChallenger:
         """
         # set lower is better
         self.lower_is_better = lower_is_better
+        self.metric_name = metric_name
 
         # get challenger metric
-        self.challenger_metric = Metric(name=metric_name, value=metric_value)
+        if metric_value is None:
+            self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid)
+        else:
+            self.challenger_metric = Metric(name=metric_name, value=metric_value)
 
         if champions is None:
             return self._challenge_last_model_version()
