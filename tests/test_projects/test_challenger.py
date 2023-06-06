@@ -27,7 +27,6 @@ model_info = CardInfo(
     user_email="mlops.com",
 )
 
-
 def test_challenger_no_previous_version(
     opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
 ) -> None:
