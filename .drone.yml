@@ -5,14 +5,13 @@ type: docker
 trigger:
   event:
     - pull_request
-    - push
-    - tag
 
 steps:
-  - name: setup
+  - name: py310
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make setup.project
+      - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
@@ -20,8 +19,9 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
 
   - name: py39
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.16_poetry_1.4.0
     commands:
+      - make setup.project
       - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
@@ -29,19 +29,7 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
-      - setup
-
-  - name: py310
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make test.unit
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - py39 
+      - py310
 
   - name: quality-checks
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
@@ -53,7 +41,7 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
-      - setup
+      - py310
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -73,47 +61,74 @@ steps:
       - quality-checks
 
 ---
-name: publish-release-candidate
+name: publish-release
 kind: pipeline
 type: docker
 
-depends_on:
-  - test-and-quality
-
 trigger:
-  event:
-    - push
   branch:
     - main
+  event:
+    - push
+    - tag
+
 
 steps:
+
+  - name: py310
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+    commands:
+      - make setup.project
+      - make test.unit
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+
+
+  - name: quality-checks
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+    commands:
+      - make lints.ci
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py310
+
+  - name: code-analysis
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+      SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
+    depends_on:
+      - py310
+      - quality-checks
+
   - name: publish-release-candidate
+    event:
+      - push
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - quality-checks
     commands:
       - make prep.pre.patch
       - make publish
-
-
----
-name: publish-release
-kind: pipeline
-type: docker
-
-depends_on:
-  - test-and-quality
-
-trigger:
-  event:
-    - tag
-  branch:
-    - main
-
-steps:
 
   - name: artifactory-poetry-publish
     when:
@@ -130,24 +145,12 @@ steps:
       # increment patch version for releases based on drone tag
       - test "v$(poetry version --short)" "=" "$DRONE_TAG"
       - make publish
-      
----
-kind: pipeline
-type: docker
-name: publish-docs
 
-depends_on:
-  - test-and-quality
-
-trigger:
-  event:
-    - push
-  branch:
-    - main
-
-steps:
   - name: publish-docs
+    event:
+      - push
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - git diff $DRONE_COMMIT_BEFORE..$DRONE_COMMIT_AFTER --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
       - if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi
+
