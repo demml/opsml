@@ -1,6 +1,6 @@
 import os
 
-os.environ["OPSML_TRACKING_URI"] = "http://localhost:8889/"
+os.environ["OPSML_TRACKING_URI"] = "http://localhost:8888/"
 
 # typing
 from typing import Optional
@@ -15,95 +15,115 @@ import numpy as np
 # Opsml
 from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
 from opsml.projects import ProjectInfo, MlflowProject
+from opsml.model.challenger import ModelChallenger
 
-"""
-The following will create 2 separate runs. Ideally you could also break this up so that you only 
-Create the data once and create models on 2 distinct runs
-"""
-
+###################### Create 1st model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
 project = MlflowProject(info=info)
+with project.run(run_name="challenger-lin-reg") as run:
+    data, target = load_linnerud(return_X_y=True, as_frame=True)
+    data["Pulse"] = target.Pulse
+
+    # Split indices
+    indices = np.arange(data.shape[0])
+
+    # usual train-val split
+    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
+    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+
+    # Create card
+    datacard = DataCard(
+        info=card_info,
+        data=data,
+        dependent_vars=["Pulse"],
+        data_splits=[
+            DataSplit(label="train", indices=train_idx),
+            DataSplit(label="test", indices=test_idx),
+        ],
+    )
+    run.register_card(card=datacard)
+    splits = datacard.split_data()
+
+    reg = LinearRegression().fit(splits.train.X.to_numpy(), splits.train.y)
+
+    reg_preds = reg.predict(splits.test.X.to_numpy())
+    mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+    run.log_metric("mae", value=mae)
+
+    model_card = ModelCard(
+        trained_model=reg,
+        sample_input_data=splits.train.X[0:1],
+        name="linear_reg",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=datacard.uid,
+        tags={"example": "challenger"},
+    )
+    run.register_card(card=model_card)
 
 
-def lin_reg_run():
-    with project.run(run_name="challenger-lin-reg") as run:
-        data, target = load_linnerud(return_X_y=True, as_frame=True)
-        data["Pulse"] = target.Pulse
+###################### Create 2nd model
+info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+project = MlflowProject(info=info)
+with project.run(run_name="challenger-lasso") as run:
+    data, target = load_linnerud(return_X_y=True, as_frame=True)
+    data["Pulse"] = target.Pulse
 
-        # Split indices
-        indices = np.arange(data.shape[0])
+    # Split indices
+    indices = np.arange(data.shape[0])
 
-        # usual train-val split
-        train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-        card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    # usual train-val split
+    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
+    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
 
-        # Create card
-        datacard = DataCard(
-            info=card_info,
-            data=data,
-            dependent_vars=["Pulse"],
-            data_splits=[
-                DataSplit(label="train", indices=train_idx),
-                DataSplit(label="test", indices=test_idx),
-            ],
-        )
-        run.register_card(card=datacard)
-        splits = datacard.split_data()
+    # Create card
+    datacard = DataCard(
+        info=card_info,
+        data=data,
+        dependent_vars=["Pulse"],
+        data_splits=[
+            DataSplit(label="train", indices=train_idx),
+            DataSplit(label="test", indices=test_idx),
+        ],
+    )
+    run.register_card(card=datacard)
+    splits = datacard.split_data()
 
-        reg = LinearRegression().fit(splits.train.X.to_numpy(), splits.train.y)
+    reg = Lasso().fit(splits.train.X.to_numpy(), splits.train.y)
 
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
-        run.log_metric("mae", value=mae)
+    reg_preds = reg.predict(splits.test.X.to_numpy())
+    mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+    run.log_metric("mae", value=mae)
 
-        model_card = ModelCard(
-            trained_model=reg,
-            sample_input_data=data[0:1],
-            name="linear_reg",
-            team="mlops",
-            user_email="mlops.com",
-            datacard_uid=datacard.uid,
-        )
-        run.register_card(card=model_card)
+    model_card = ModelCard(
+        trained_model=reg,
+        sample_input_data=splits.train.X[0:1],
+        name="lasso_reg",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=datacard.uid,
+        tags={"example": "challenger"},
+    )
+    run.register_card(card=model_card)
 
 
-def lasso_run():
-    with project.run(run_name="challenger-lin-reg") as run:
-        data, target = load_linnerud(return_X_y=True, as_frame=True)
-        data["Pulse"] = target.Pulse
+model_registry = CardRegistry(registry_name="model")
+linreg_card = model_registry.load_card(
+    name="linear_reg",
+    team="mlops",
+    tags={"example": "challenger"},
+)
 
-        # Split indices
-        indices = np.arange(data.shape[0])
-
-        # usual train-val split
-        train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-        card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
-
-        # Create card
-        datacard = DataCard(
-            info=card_info,
-            data=data,
-            dependent_vars=["Pulse"],
-            data_splits=[
-                DataSplit(label="train", indices=train_idx),
-                DataSplit(label="test", indices=test_idx),
-            ],
-        )
-        run.register_card(card=datacard)
-        splits = datacard.split_data()
-
-        reg = Lasso().fit(splits.train.X.to_numpy(), splits.train.y)
-
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
-        run.log_metric("mae", value=mae)
-
-        model_card = ModelCard(
-            trained_model=reg,
-            sample_input_data=data[0:1],
+challenger = ModelChallenger(challenger=linreg_card)
+report = challenger.challenge_champion(
+    metric_name="mae",
+    champions=[
+        CardInfo(
             name="lasso_reg",
             team="mlops",
-            user_email="mlops.com",
-            datacard_uid=datacard.uid,
+            version="1.0.0",
         )
-        run.register_card(card=model_card)
+    ],
+)
+
+print(report)
