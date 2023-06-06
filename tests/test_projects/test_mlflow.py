@@ -64,7 +64,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     #
     # Load model card
     loaded_card: ModelCard = proj.load_card(
-        card_type="model",
+        registry_name="model",
         info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
     )
 
@@ -74,7 +74,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
     # Load data card by uid
     loaded_data_card: DataCard = proj.load_card(
-        card_type="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+        registry_name="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
     )
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
@@ -219,7 +219,7 @@ def test_register_load(
         run.register_card(card=model_card)
         ## Load model card
         loaded_model_card: ModelCard = run.load_card(
-            card_type="model",
+            registry_name="model",
             info=CardInfo(name="linear_model", team="mlops", user_email="mlops.com"),
         )
         loaded_model_card.load_trained_model()
@@ -227,7 +227,7 @@ def test_register_load(
         assert loaded_model_card.trained_model is not None
         # Load data card by uid
         loaded_data_card: DataCard = run.load_card(
-            card_type="data", info=CardInfo(name="linear_data", team="mlops", uid=data_card.uid)
+            registry_name="data", info=CardInfo(name="linear_data", team="mlops", uid=data_card.uid)
         )
         assert loaded_data_card.uid is not None
         assert loaded_data_card.uid == data_card.uid
@@ -235,7 +235,7 @@ def test_register_load(
         model_uid = loaded_model_card.uid
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
-        card_type="model",
+        registry_name="model",
         info=CardInfo(uid=model_uid),
     )
     loaded_card.load_trained_model()
@@ -267,7 +267,7 @@ def test_lgb_model(
         info.run_id = run.run_id
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
-        card_type="model",
+        registry_name="model",
         info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()
@@ -300,7 +300,7 @@ def test_pytorch_model(
         info.run_id = run.run_id
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
-        card_type="model",
+        registry_name="model",
         info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()
@@ -333,7 +333,7 @@ def test_tf_model(
         info.run_id = run.run_id
     proj = conftest.mock_mlflow_project(info)
     loaded_card: ModelCard = proj.load_card(
-        card_type="model",
+        registry_name="model",
         info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()
