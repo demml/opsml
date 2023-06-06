@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import Any, Dict, List, Optional, Union, cast
+
+from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
