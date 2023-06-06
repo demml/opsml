@@ -221,3 +221,14 @@ The below output shows that our challenger beat both champion models. Results ca
     },
 ]
 ```
+
+### Docs
+
+::: opsml.model.challenger.ModelChallenger
+    options:
+        members:
+            - __init__
+            - challenge_champion
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
