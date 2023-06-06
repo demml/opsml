@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
@@ -10,13 +10,15 @@ from opsml.registry.sql.registry import CardRegistries
 logger = ArtifactLogger.get_logger(__name__)
 
 
-@dataclass
-class BattleReport:
+class BattleReport(BaseModel):
     champion_name: str
     champion_version: str
     champion_metric: Metric
     challenger_metric: Metric
     challenger_win: bool
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 # eventually find a way to tell if a model has been deployed and use that for comparison as well
@@ -126,7 +128,7 @@ class ModelChallenger:
         else:
             challenger_win = self.challenger_metric.value > champion_metric.value
 
-        return BattleReport(
+        return BattleReport.construct(
             champion_name=str(champion.name),
             champion_version=str(champion.version),
             champion_metric=champion_metric,
