@@ -1,4 +1,4 @@
-To get a quick feel for `Opsml`, run the following code in a new terminal. The following uses Mlflow as a ui interface
+To get a quick feel for `Opsml`, run the following code in a new terminal. The following uses Mlflow as a UI interface and local storage and sqlite.
 
 ### Start Local Server
 
@@ -95,7 +95,7 @@ with project.run(run_name="test-run") as run:
 
 ## Server UI
 
-Since we are using Mlflow as a ui, when you click the uri link, you should see something similar to the following.
+Since we are using Mlflow as a UI, when you click the uri link, you should see something similar to the following.
 
 ### Project UI
 

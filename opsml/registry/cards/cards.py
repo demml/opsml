@@ -590,15 +590,13 @@ class ModelCard(ArtifactCard):
         setattr(self, "data_schema", model_return.api_data_schema)
         setattr(self, "model_type", model_return.model_type)
 
-    def _create_and_set_model_attr(self, to_onnx: bool) -> None:
+    def _create_and_set_model_attr(self) -> None:
         """
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
 
-        Args:
-            to_onnx:
-                Whether to convert to onnx or not
         """
+
         from opsml.model.creator import (  # pylint: disable=import-outside-toplevel
             create_model,
         )
