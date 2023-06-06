@@ -253,6 +253,8 @@ class DataCard(ArtifactCard):
         Returns
             Class containing data splits
         """
+        if self.data is None:
+            self.load_data()
 
         if len(self.data_splits) > 0:
             data_holder = DataHolder()

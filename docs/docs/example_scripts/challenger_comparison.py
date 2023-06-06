@@ -17,31 +17,35 @@ from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCar
 from opsml.projects import ProjectInfo, MlflowProject
 from opsml.model.challenger import ModelChallenger
 
+###################### Create data
+data, target = load_linnerud(return_X_y=True, as_frame=True)
+data["Pulse"] = target.Pulse
+
+# Split indices
+indices = np.arange(data.shape[0])
+
+# usual train-val split
+train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
+card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+
+# Create card
+datacard = DataCard(
+    info=card_info,
+    data=data,
+    dependent_vars=["Pulse"],
+    data_splits=[
+        DataSplit(label="train", indices=train_idx),
+        DataSplit(label="test", indices=test_idx),
+    ],
+)
+data_reg = CardRegistry(registry_name="data")
+data_reg.register_card(card=datacard)
+
 ###################### Create 1st model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
 project = MlflowProject(info=info)
 with project.run(run_name="challenger-lin-reg") as run:
-    data, target = load_linnerud(return_X_y=True, as_frame=True)
-    data["Pulse"] = target.Pulse
-
-    # Split indices
-    indices = np.arange(data.shape[0])
-
-    # usual train-val split
-    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
-
-    # Create card
-    datacard = DataCard(
-        info=card_info,
-        data=data,
-        dependent_vars=["Pulse"],
-        data_splits=[
-            DataSplit(label="train", indices=train_idx),
-            DataSplit(label="test", indices=test_idx),
-        ],
-    )
-    run.register_card(card=datacard)
+    datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
 
     reg = LinearRegression().fit(splits.train.X.to_numpy(), splits.train.y)
@@ -107,6 +111,53 @@ with project.run(run_name="challenger-lasso") as run:
     run.register_card(card=model_card)
 
 
+###################### Create 3rd model
+info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+project = MlflowProject(info=info)
+with project.run(run_name="challenger-lasso") as run:
+    data, target = load_linnerud(return_X_y=True, as_frame=True)
+    data["Pulse"] = target.Pulse
+
+    # Split indices
+    indices = np.arange(data.shape[0])
+
+    # usual train-val split
+    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
+    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+
+    # Create card
+    datacard = DataCard(
+        info=card_info,
+        data=data,
+        dependent_vars=["Pulse"],
+        data_splits=[
+            DataSplit(label="train", indices=train_idx),
+            DataSplit(label="test", indices=test_idx),
+        ],
+    )
+    run.register_card(card=datacard)
+    splits = datacard.split_data()
+
+    reg = Lasso().fit(splits.train.X.to_numpy(), splits.train.y)
+
+    reg_preds = reg.predict(splits.test.X.to_numpy())
+    mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+    run.log_metric("mae", value=mae)
+
+    model_card = ModelCard(
+        trained_model=reg,
+        sample_input_data=splits.train.X[0:1],
+        name="lasso_reg",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uid=datacard.uid,
+        tags={"example": "challenger"},
+    )
+    run.register_card(card=model_card)
+
+
+######################### Challenger
+
 model_registry = CardRegistry(registry_name="model")
 linreg_card = model_registry.load_card(
     name="linear_reg",
@@ -117,13 +168,8 @@ linreg_card = model_registry.load_card(
 challenger = ModelChallenger(challenger=linreg_card)
 report = challenger.challenge_champion(
     metric_name="mae",
-    champions=[
-        CardInfo(
-            name="lasso_reg",
-            team="mlops",
-            version="1.0.0",
-        )
-    ],
+    champions=[CardInfo(name="lasso_reg", team="mlops", version="1.0.0")],
 )
 
 print(report)
+# > BattleReport(champion_name='lasso_reg', champion_version='1.0.0', challenger_win=True)
