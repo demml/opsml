@@ -83,6 +83,14 @@ def test_challenger(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipelin
     assert battle_result.challenger_win
     assert battle_result.champion_version == "1.0.0"
 
+    # this should load the runcard
+    battle_result = challenger.challenge_champion(
+        metric_name="mape",
+        lower_is_better=True,
+    )
+    assert battle_result.challenger_win
+    assert battle_result.champion_version == "1.0.0"
+
 
 def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
     """Test ModelChallenger using champion list"""
