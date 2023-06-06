@@ -69,13 +69,6 @@ class ModelArtifactNames(str, Enum):
     ONNX = ".onnx"
 
 
-class MlFlowDirs(str, Enum):
-    DATA_DIR = "data"
-    MODEL_DIR = "model"
-    ONNX_MODEL_DIR = "model"
-    ARTIFACT_DIR = "misc"
-
-
 def cleanup_files(func):
     """Decorator for deleting files if needed"""
 
@@ -722,13 +715,12 @@ class MlflowStorageClient(StorageClient):
 
     def _get_mlflow_dir(self, filename: str) -> str:
         "Sets individual directories for all mlflow artifacts"
-        if any(name in filename for name in DataArtifactNames):
-            return MlFlowDirs.DATA_DIR.value
+        file_splits = filename.split("/")
 
-        if any(name in filename for name in ModelArtifactNames):
-            return MlFlowDirs.MODEL_DIR.value
+        child_dir = file_splits[-3]
+        parent_dir = file_splits[-5].split("_")[1]
 
-        return MlFlowDirs.ARTIFACT_DIR.value
+        return parent_dir + "/" + child_dir
 
     def list_files(self, storage_uri: str) -> FilePath:
         return [storage_uri]
