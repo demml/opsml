@@ -8,7 +8,7 @@ from typing import Optional
 # Data
 from sklearn.datasets import load_linnerud
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.linear_model import LinearRegression, Lasso, PoissonRegressor
 from sklearn.metrics import mean_absolute_error
 import numpy as np
 
@@ -41,6 +41,7 @@ datacard = DataCard(
 data_reg = CardRegistry(registry_name="data")
 data_reg.register_card(card=datacard)
 
+
 ###################### Create 1st model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
 project = MlflowProject(info=info)
@@ -48,7 +49,8 @@ with project.run(run_name="challenger-lin-reg") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
 
-    reg = LinearRegression().fit(splits.train.X.to_numpy(), splits.train.y)
+    reg = LinearRegression()
+    reg.fit(splits.train.X.to_numpy(), splits.train.y)
 
     reg_preds = reg.predict(splits.test.X.to_numpy())
     mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
@@ -70,30 +72,11 @@ with project.run(run_name="challenger-lin-reg") as run:
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
 project = MlflowProject(info=info)
 with project.run(run_name="challenger-lasso") as run:
-    data, target = load_linnerud(return_X_y=True, as_frame=True)
-    data["Pulse"] = target.Pulse
-
-    # Split indices
-    indices = np.arange(data.shape[0])
-
-    # usual train-val split
-    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
-
-    # Create card
-    datacard = DataCard(
-        info=card_info,
-        data=data,
-        dependent_vars=["Pulse"],
-        data_splits=[
-            DataSplit(label="train", indices=train_idx),
-            DataSplit(label="test", indices=test_idx),
-        ],
-    )
-    run.register_card(card=datacard)
+    datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
 
-    reg = Lasso().fit(splits.train.X.to_numpy(), splits.train.y)
+    reg = Lasso()
+    reg.fit(splits.train.X.to_numpy(), splits.train.y)
 
     reg_preds = reg.predict(splits.test.X.to_numpy())
     mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
@@ -114,31 +97,12 @@ with project.run(run_name="challenger-lasso") as run:
 ###################### Create 3rd model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
 project = MlflowProject(info=info)
-with project.run(run_name="challenger-lasso") as run:
-    data, target = load_linnerud(return_X_y=True, as_frame=True)
-    data["Pulse"] = target.Pulse
-
-    # Split indices
-    indices = np.arange(data.shape[0])
-
-    # usual train-val split
-    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
-
-    # Create card
-    datacard = DataCard(
-        info=card_info,
-        data=data,
-        dependent_vars=["Pulse"],
-        data_splits=[
-            DataSplit(label="train", indices=train_idx),
-            DataSplit(label="test", indices=test_idx),
-        ],
-    )
-    run.register_card(card=datacard)
+with project.run(run_name="challenger-poisson") as run:
+    datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
 
-    reg = Lasso().fit(splits.train.X.to_numpy(), splits.train.y)
+    reg = PoissonRegressor()
+    reg.fit(splits.train.X.to_numpy(), splits.train.y)
 
     reg_preds = reg.predict(splits.test.X.to_numpy())
     mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
@@ -147,7 +111,7 @@ with project.run(run_name="challenger-lasso") as run:
     model_card = ModelCard(
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
-        name="lasso_reg",
+        name="poisson_reg",
         team="mlops",
         user_email="mlops.com",
         datacard_uid=datacard.uid,
@@ -168,7 +132,10 @@ linreg_card = model_registry.load_card(
 challenger = ModelChallenger(challenger=linreg_card)
 report = challenger.challenge_champion(
     metric_name="mae",
-    champions=[CardInfo(name="lasso_reg", team="mlops", version="1.0.0")],
+    champions=[
+        CardInfo(name="lasso_reg", team="mlops", version="1.0.0"),
+        CardInfo(name="poisson_reg", team="mlops", version="1.0.0"),
+    ],
 )
 
 print(report)
