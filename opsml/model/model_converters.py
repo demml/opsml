@@ -95,6 +95,7 @@ class ModelConverter:
 
     def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
+
         for sig in signature:
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim

@@ -659,7 +659,7 @@ class ModelCard(ArtifactCard):
 
         """
         # todo: clean this up
-        if self.onnx_model_def is None:
+        if self.onnx_model_def is None or self.data_schema is None:
             self._create_and_set_model_attr()
 
         version = self._set_version_for_predictor()

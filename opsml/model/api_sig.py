@@ -64,6 +64,9 @@ class PydanticFeatureGenerator:
         if len(feature.shape) > 1 and feature.shape[1] > 1:
             return True
 
+        if len(feature.shape) > 2:
+            return True
+
         return False
 
     def _get_feature_shape(self, feature: Feature) -> Optional[Union[List[int], int]]:
@@ -163,14 +166,12 @@ class ApiSigCreator:
     def input_sig(self) -> Base:
         input_sig = self._get_input_sig(features=self.input_features)
         input_sig.feature_map = self.input_features  # type: ignore
-
         return input_sig
 
     @cached_property
     def output_sig(self) -> Base:
         output_sig = self._get_output_sig(features=self.output_features)
         output_sig.feature_map = self.output_features  # type: ignore
-
         return output_sig
 
     def _get_pydantic_sig(self, features: Dict[str, Feature], is_input: bool) -> PydanticFields:
