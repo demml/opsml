@@ -15,16 +15,10 @@ from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, Modelcar
 from opsml.projects import ProjectInfo, MlflowProject
 
 
-def create_data_card(run_id: Optional[str] = None) -> str:
+def create_data_card() -> str:
     """Creates a datacard used by both models"""
 
-    info = ProjectInfo(
-        name="opsml",
-        team="devops",
-        user_email="test_email",
-        run_id=run_id,
-    )
-
+    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
     project = MlflowProject(info=info)
 
     with project.run(run_name="challenger-comparison") as run:
@@ -49,6 +43,26 @@ def create_data_card(run_id: Optional[str] = None) -> str:
                 DataSplit(label="test", indices=test_idx),
             ],
         )
-
         run.register_card(card=datacard)
+        run.add_tag("id", "challenger-comparison")
+
     return run.info.run_id
+
+
+def create_first_model_card() -> str:
+    """Creates first model card"""
+
+    run_registry = CardRegistry(registry_name="run")
+    run = run_registry.list_cards(name="opsml", team="devops", tags={"id": "challenger-comparison"}, as_dataframe=False)
+
+    info = ProjectInfo(
+        name="opsml",
+        team="devops",
+        user_email="test_email",
+        run_id=run[0]["uid"],
+    )
+    project = MlflowProject(info=info)
+
+    with project.run(run_name="challenger-comparison") as run:
+        data_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+        datacard = run.load_card(registry_name="data", info=data_info)
