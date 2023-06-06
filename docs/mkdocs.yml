@@ -46,6 +46,7 @@ nav:
         - 'cards/modelcard.md'
         - 'cards/challenger.md'
         - 'cards/model_metadata.md'
+        - 'cards/onnx.md'
       - 'cards/runcard.md'
   - Server:
       - Overview: 'server/overview.md'
