@@ -158,7 +158,7 @@ class ModelChallenger:
             champion_metric=champion_metric,
         )
 
-    def _challenge_champions(self, champions: List[CardInfo], metric_name: str) -> List[BattleReport]:
+    def _challenge_champions(self, champions: List[CardInfo]) -> List[BattleReport]:
         battle_reports = []
         for champion in champions:
             champion_record = self._registries.model.list_cards(info=champion, as_dataframe=False)
