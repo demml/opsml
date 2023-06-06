@@ -140,12 +140,15 @@ def test_list_cards(
         ],
     )
 
-    print(result.__dict__)
     assert result.exit_code == 0
 
 
-def _test_launch_server(test_app, api_registries, linear_regression):
+def test_launch_server(mock_typer):
     result = runner.invoke(app, ["launch-server"])
+
+
+def test_launch_uvicorn(mock_opsml_app_run):
+    result = runner.invoke(app, ["launch-uvicorn-app"])
     assert result.exit_code == 0
 
 

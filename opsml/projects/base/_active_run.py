@@ -184,7 +184,7 @@ class ActiveRun:
             artifact:
                 Artifact
         """
-        spec = ArtifactStorageSpecs(save_path="misc", filename=name)
+        spec = ArtifactStorageSpecs(save_path="MISC", filename=name)
         self._info.storage_client.storage_spec = spec
 
         storage_path = save_record_artifact_to_storage(
