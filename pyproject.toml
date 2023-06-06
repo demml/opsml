@@ -58,7 +58,7 @@ pymysql = {version="^1.0.2", optional = true}
 graphviz = {version="^0.20.1", optional = true}
 
 [tool.poetry.extras]
-server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "mlflow", "libclang", "llvmlite", "numba"]
+server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
 mlflow = ["mlflow", "libclang", "llvmlite", "numba"]
 graphviz = ["graphviz"]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]

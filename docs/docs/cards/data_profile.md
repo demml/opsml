@@ -82,3 +82,14 @@ comparison = DataProfiler.compare_reports(reports=[data_card.data_profile, data_
 comparison.to_file("comparison_report.html")
 ```
 *(Code will run as-is)*
+
+### Docs
+
+::: opsml.profile.DataProfiler
+    options:
+        members:
+            - create_profile_report
+            - compare_reports
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
