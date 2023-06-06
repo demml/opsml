@@ -5,7 +5,6 @@ type: docker
 trigger:
   event:
     - pull_request
-    - push
     - tag
 
 steps:
@@ -83,7 +82,6 @@ depends_on:
 trigger:
   event:
     - push
-    - pull_request
   branch:
     - main
 
