@@ -717,6 +717,8 @@ class MlflowStorageClient(StorageClient):
         "Sets individual directories for all mlflow artifacts"
 
         if "OPSML" in filename and "REGISTRY" in filename:
+            # OPSML save paths always follow table/team/name/version/file save format
+
             file_splits = filename.split("/")
             child_dir = file_splits[-3]
             parent_dir = file_splits[-5].split("_")[1]
