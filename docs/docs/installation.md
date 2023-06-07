@@ -55,7 +55,7 @@ Types of extras that can be installed:
 ### Example setup for gcp-backed postgres with opsml mlflow server
 
 ```bash
-  poetry add "opsml[gcp_postgres, server]"
+  poetry add "opsml[gcp_postgres, server, mlflow]"
 ```
 
 ## Environment Variables

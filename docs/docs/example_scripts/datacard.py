@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry
+from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
@@ -19,7 +19,6 @@ indices = np.arange(data.shape[0])
 
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-
 card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
 data_card = DataCard(
     info=card_info,
@@ -27,8 +26,8 @@ data_card = DataCard(
     dependent_vars=["Pulse"],
     # define splits
     data_splits=[
-        {"label": "train", "indices": train_idx},
-        {"label": "test", "indices": test_idx},
+        DataSplit(label="train", indices=train_idx),
+        DataSplit(label="test", indices=test_idx),
     ],
 )
 

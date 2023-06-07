@@ -1,9 +1,28 @@
-# Some standard imports
-import os
-
-os.environ["OPSML_TRACKING_URI"] = "http://localhost:8888/"
+# Onnx Conversion
 
 
+#### Disable Onnx Conversion
+
+As mention in above, registering a `ModelCard` will convert your original model to onnx format by default while also retaining your original model. If you wish to disable this feature, set `to_onnx` to false when creating a `ModelCard`
+
+```python
+modelcard = ModelCard(
+    name="pytorch-model",
+    team="opmsl",
+    user_email="user@opsml.com",
+    trained_model=torch_model,
+    sample_input_data=datacard.data[0:1],
+    datacard_uid=datacard.uid,
+    to_onnx=False,
+)
+```
+#### Providing a Custom Onnx Definition
+
+`Opsml` also provides the flexibility of providing your own onnx definition so long as it's packaged into an `OnnxModelDefinition` `pydantic` model. The example below is taken directly from [pytorch](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html) but with `Opsml` added to the end.
+
+**Example**
+
+```python
 import tempfile
 
 from torch import nn
@@ -115,3 +134,6 @@ modelcard = ModelCard(
     datacard_uid=datacard.uid,
 )
 registries.model.register_card(modelcard)
+
+```
+*(Code will run as-is)*

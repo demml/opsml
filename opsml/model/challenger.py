@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union, cast
+
+from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
@@ -10,11 +11,15 @@ from opsml.registry.sql.registry import CardRegistries
 logger = ArtifactLogger.get_logger(__name__)
 
 
-@dataclass
-class BattleReport:
+class BattleReport(BaseModel):
     champion_name: str
     champion_version: str
+    champion_metric: Optional[Metric] = None
+    challenger_metric: Optional[Metric] = None
     challenger_win: bool
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 # eventually find a way to tell if a model has been deployed and use that for comparison as well
@@ -33,6 +38,7 @@ class ModelChallenger:
         self._registries = CardRegistries()
         self._challenger_metric: Optional[Metric] = None
         self._lower_is_better = True
+        self._metric_name: Optional[str] = None
 
     @property
     def challenger_metric(self) -> Metric:
@@ -51,6 +57,16 @@ class ModelChallenger:
     @lower_is_better.setter
     def lower_is_better(self, lower_is_better: bool) -> None:
         self._lower_is_better = lower_is_better
+
+    @property
+    def metric_name(self) -> str:
+        if self._metric_name is not None:
+            return self._metric_name
+        raise ValueError("Metric name not set")
+
+    @metric_name.setter
+    def metric_name(self, metric_name: str) -> None:
+        self._metric_name = metric_name
 
     def _get_last_champion_record(self) -> Optional[Dict[str, Any]]:
         # probably a better way to do this using tilde, caret or star
@@ -83,11 +99,13 @@ class ModelChallenger:
         Args:
             runcard_uid:
                 RunCard uid
+            metric_name:
+                Name of metric
 
         """
         runcard: RunCard = self._registries.run.load_card(uid=runcard_uid)
 
-        return cast(Metric, runcard.get_metric(name=self.challenger_metric.name))
+        return cast(Metric, runcard.get_metric(name=self.metric_name))
 
     def battle(self, champion: CardInfo, champion_metric: Metric) -> BattleReport:
         """
@@ -111,9 +129,11 @@ class ModelChallenger:
         else:
             challenger_win = self.challenger_metric.value > champion_metric.value
 
-        return BattleReport(
+        return BattleReport.construct(
             champion_name=str(champion.name),
             champion_version=str(champion.version),
+            champion_metric=champion_metric,
+            challenger_metric=self.challenger_metric.copy(),
             challenger_win=challenger_win,
         )
 
@@ -156,24 +176,17 @@ class ModelChallenger:
             if champion_record[0].get("runcard_uid") is None:
                 raise ValueError(f"No RunCard associated with champion: {champion}")
 
-            champion_metric = self._get_runcard_metric(
-                runcard_uid=champion_record[0].get("runcard_uid"),
-            )
+            champion_metric = self._get_runcard_metric(runcard_uid=champion_record[0].get("runcard_uid"))
 
-            battle_reports.append(
-                self.battle(
-                    champion=champion,
-                    champion_metric=champion_metric,
-                )
-            )
+            battle_reports.append(self.battle(champion=champion, champion_metric=champion_metric))
         return battle_reports
 
     def challenge_champion(
         self,
         metric_name: str,
-        metric_value: Union[int, float],
-        lower_is_better: bool,
+        metric_value: Optional[Union[int, float]] = None,
         champions: Optional[List[CardInfo]] = None,
+        lower_is_better: bool = True,
     ) -> Union[BattleReport, List[BattleReport]]:
         """
         Challenges n champion models against the challenger model. If no champion is provided,
@@ -194,9 +207,16 @@ class ModelChallenger:
         """
         # set lower is better
         self.lower_is_better = lower_is_better
+        self.metric_name = metric_name
 
         # get challenger metric
-        self.challenger_metric = Metric(name=metric_name, value=metric_value)
+        if metric_value is None:
+            if self._challenger.runcard_uid is not None:
+                self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid)
+            else:
+                raise ValueError("Challenger and champions must be associated with a registered RunCard")
+        else:
+            self.challenger_metric = Metric(name=metric_name, value=metric_value)
 
         if champions is None:
             return self._challenge_last_model_version()

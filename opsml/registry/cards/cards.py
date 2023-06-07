@@ -253,6 +253,8 @@ class DataCard(ArtifactCard):
         Returns
             Class containing data splits
         """
+        if self.data is None:
+            self.load_data()
 
         if len(self.data_splits) > 0:
             data_holder = DataHolder()
@@ -593,10 +595,8 @@ class ModelCard(ArtifactCard):
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
 
-        Args:
-            to_onnx:
-                Whether to convert to onnx or not
         """
+
         from opsml.model.creator import (  # pylint: disable=import-outside-toplevel
             create_model,
         )
