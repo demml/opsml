@@ -27,6 +27,7 @@ import pandas as pd
 from numpy.typing import NDArray
 from pyarrow.fs import LocalFileSystem
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.helpers.utils import all_subclasses
 from opsml.model.types import (
@@ -43,6 +44,8 @@ from opsml.registry.storage.types import (
     MlflowInfo,
     StorageSettings,
 )
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class StorageSystem(str, Enum):
@@ -70,7 +73,7 @@ class ModelArtifactNames(str, Enum):
     ONNX = ".onnx"
 
 
-OPSML_PATTERN = "OPSML_+(\S+)+_REGISTRY"
+OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"
 
 
 def cleanup_files(func):
@@ -104,7 +107,7 @@ def extract_registry_name(string: str) -> Optional[str]:
     reg = re.compile(OPSML_PATTERN)
     match = reg.match(string)
 
-    if bool(match):
+    if match is not None:
         return match.group(1)
     return None
 
@@ -688,14 +691,14 @@ class MlflowStorageClient(StorageClient):
                 f"Failed to find appropriate mlflow model type saver for {mlflow_info.model_type}",
             )
 
-        logger = model_logger(
+        _logger = model_logger(
             model=mlflow_info.model,
             model_type=model_type,
             sample_data=self.storage_spec.sample_data,  # type: ignore
             artifact_path=mlflow_info.artifact_path,
         )
 
-        return logger.log_model()
+        return _logger.log_model()
 
     def log_artifact(self, mlflow_info: MlflowInfo) -> str:
         if mlflow_info.model is not None:
@@ -742,10 +745,27 @@ class MlflowStorageClient(StorageClient):
 
             file_splits = filename.split("/")
 
-            print(len(file_splits))
-            child_dir = file_splits[-3]
-            parent_dir = file_splits[-5].split("_")[1]
-            a
+            try:
+                # attempt to get parent and child directories
+                for idx, split in enumerate(file_splits):
+                    registry_name = extract_registry_name(split)
+
+                    if registry_name is not None:
+                        parent_dir = registry_name.lower()
+                        parent_idx = idx
+
+                if len(file_splits[parent_idx:]) > 1:
+                    # attempt to get the card name
+                    child_dir = file_splits[parent_idx + 2]
+                else:
+                    # default to unique id
+                    child_dir = uuid.uuid4().hex
+
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                logger.error("Failed to retrieve parent and child save paths. Defaulting to random. %s", error)
+                parent_dir = "misc"
+                child_dir = uuid.uuid4().hex
+
             return str(parent_dir + "/" + child_dir).lower()
 
         return "misc"
