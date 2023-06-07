@@ -3447,18 +3447,18 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polars"
-version = "0.18.0"
+version = "0.18.1"
 description = "Blazingly fast DataFrame library"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "polars-0.18.0-cp37-abi3-macosx_10_7_x86_64.whl", hash = "sha256:71595092f7a37f3a9ff45b28f07a08ef67e3bc984a581e87909e528aa6ffa663"},
-    {file = "polars-0.18.0-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:11e9058c23e64cfcd629fa07fff9e81efa445e7692a52afb24b240907e3f5c14"},
-    {file = "polars-0.18.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0460f19d6e6f71bc1d65bd25916e4f9234bf250f8c0e868028e81fe15dd7bf55"},
-    {file = "polars-0.18.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:68340c3a34c1555e1bfd72e4d2bbb40d116379de009e3196d616de9a67057ae1"},
-    {file = "polars-0.18.0-cp37-abi3-win_amd64.whl", hash = "sha256:be29aad699b636451bee013038464d5094254f196c3f93386eaeba79e2d844d7"},
-    {file = "polars-0.18.0.tar.gz", hash = "sha256:b8b5e149c53f44a3ba46cdf41b4e0ff74c8d75e4f2725ce6e277d4d7f2fea869"},
+    {file = "polars-0.18.1-cp37-abi3-macosx_10_7_x86_64.whl", hash = "sha256:1b9bb3a7711f7a4d805e8a4327c643983f5a55dfe727f27faff17c458100f4d3"},
+    {file = "polars-0.18.1-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:18d9c1b7d9d287bead14010cf91882ff5ab139867fe0411fb72600fabc60553a"},
+    {file = "polars-0.18.1-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ab8c4f7a031cd38e33d653d1efee0f4f1aa2ae14a935c7d817559a8d4718778a"},
+    {file = "polars-0.18.1-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:592b9df3e3ddee0a6f78ff27138d62a1c7b962304dedada409babb1823face7d"},
+    {file = "polars-0.18.1-cp37-abi3-win_amd64.whl", hash = "sha256:27cf52a673935ecbc6085808c81780bd439b226d34d1b61fee1e8b8ad5c6f9a7"},
+    {file = "polars-0.18.1.tar.gz", hash = "sha256:0022e594569a57c17776f1e5b39bf45f43462398a10697879800e25289812379"},
 ]
 
 [package.extras]
@@ -5522,14 +5522,14 @@ test = ["websockets"]
 
 [[package]]
 name = "werkzeug"
-version = "2.3.4"
+version = "2.3.5"
 description = "The comprehensive WSGI web application library."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Werkzeug-2.3.4-py3-none-any.whl", hash = "sha256:48e5e61472fee0ddee27ebad085614ebedb7af41e88f687aaf881afb723a162f"},
-    {file = "Werkzeug-2.3.4.tar.gz", hash = "sha256:1d5a58e0377d1fe39d061a5de4469e414e78ccb1e1e59c0f5ad6fa1c36c52b76"},
+    {file = "Werkzeug-2.3.5-py3-none-any.whl", hash = "sha256:26c6a6a63a8a8d10a8d4e13e7f10821772ff5f138909262e89e946717c72b857"},
+    {file = "Werkzeug-2.3.5.tar.gz", hash = "sha256:f6426f626540009131f06482c73f10c536efd47125afc63c850cc950db9ae585"},
 ]
 
 [package.dependencies]
@@ -5917,4 +5917,4 @@ server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar",
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<=3.11"
-content-hash = "e2f0bd473c787b89476730535ed2f3bff65604241889e9f8697b8d2a9226d9dd"
+content-hash = "31308e7bb35450e4facd24475cf2b5140806648c85f4eb2f26d3a8bcb2b2d85a"
