@@ -16,6 +16,7 @@ onnx = "^1.14.0"
 onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
 pandas = ">=1.4.0,<=1.5.3"
+polars = "^0.18.0"
 pyarrow = ">=8.0.0"
 pydantic = ">=1.10.0, <=1.10.4"
 python-json-logger = "^2.0.6"
@@ -82,7 +83,6 @@ functiontrace = "^0.3.7"
 transformers = "^4.27.3"
 snakeviz = "^2.1.1"
 tensorflow = "^2.12.0"
-polars = "^0.18.0"
 
 [tool.poetry.group.dev-lints]
 optional = true
