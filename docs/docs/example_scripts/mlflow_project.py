@@ -28,7 +28,6 @@ info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
 project = MlflowProject(info=info)
 
 with project.run(run_name="test-run") as run:
-
     X, y = fake_data()
     reg = LinearRegression().fit(X.to_numpy(), y)
 

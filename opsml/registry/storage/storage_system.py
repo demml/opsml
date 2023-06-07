@@ -2,6 +2,7 @@
 
 
 import os
+import re
 import shutil
 import tempfile
 import uuid
@@ -26,6 +27,7 @@ import pandas as pd
 from numpy.typing import NDArray
 from pyarrow.fs import LocalFileSystem
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.helpers.utils import all_subclasses
 from opsml.model.types import (
@@ -42,6 +44,8 @@ from opsml.registry.storage.types import (
     MlflowInfo,
     StorageSettings,
 )
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class StorageSystem(str, Enum):
@@ -69,11 +73,7 @@ class ModelArtifactNames(str, Enum):
     ONNX = ".onnx"
 
 
-class MlFlowDirs(str, Enum):
-    DATA_DIR = "data"
-    MODEL_DIR = "model"
-    ONNX_MODEL_DIR = "model"
-    ARTIFACT_DIR = "misc"
+OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"
 
 
 def cleanup_files(func):
@@ -93,6 +93,23 @@ def cleanup_files(func):
         return artifact
 
     return wrapper
+
+
+def extract_registry_name(string: str) -> Optional[str]:
+    """Extracts registry name from string
+
+    Args:
+        string:
+            String
+    Returns:
+        Registry name
+    """
+    reg = re.compile(OPSML_PATTERN)
+    match = reg.match(string)
+
+    if match is not None:
+        return match.group(1)
+    return None
 
 
 class StorageClient:
@@ -674,14 +691,14 @@ class MlflowStorageClient(StorageClient):
                 f"Failed to find appropriate mlflow model type saver for {mlflow_info.model_type}",
             )
 
-        logger = model_logger(
+        _logger = model_logger(
             model=mlflow_info.model,
             model_type=model_type,
             sample_data=self.storage_spec.sample_data,  # type: ignore
             artifact_path=mlflow_info.artifact_path,
         )
 
-        return logger.log_model()
+        return _logger.log_model()
 
     def log_artifact(self, mlflow_info: MlflowInfo) -> str:
         if mlflow_info.model is not None:
@@ -722,13 +739,36 @@ class MlflowStorageClient(StorageClient):
 
     def _get_mlflow_dir(self, filename: str) -> str:
         "Sets individual directories for all mlflow artifacts"
-        if any(name in filename for name in DataArtifactNames):
-            return MlFlowDirs.DATA_DIR.value
 
-        if any(name in filename for name in ModelArtifactNames):
-            return MlFlowDirs.MODEL_DIR.value
+        if "OPSML" in filename and "REGISTRY" in filename:
+            # OPSML save paths always follow table/team/name/version/file save format
 
-        return MlFlowDirs.ARTIFACT_DIR.value
+            file_splits = filename.split("/")
+
+            try:
+                # attempt to get parent and child directories
+                for idx, split in enumerate(file_splits):
+                    registry_name = extract_registry_name(split)
+
+                    if registry_name is not None:
+                        parent_dir = registry_name.lower()
+                        parent_idx = idx
+
+                if len(file_splits[parent_idx:]) > 1:
+                    # attempt to get the card name
+                    child_dir = file_splits[parent_idx + 2]
+                else:
+                    # default to unique id
+                    child_dir = uuid.uuid4().hex
+
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                logger.error("Failed to retrieve parent and child save paths. Defaulting to random. %s", error)
+                parent_dir = "misc"
+                child_dir = uuid.uuid4().hex
+
+            return str(parent_dir + "/" + child_dir).lower()
+
+        return "misc"
 
     def list_files(self, storage_uri: str) -> FilePath:
         return [storage_uri]

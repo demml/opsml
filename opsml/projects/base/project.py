@@ -96,13 +96,13 @@ class OpsmlProject:
 
         self._run_mgr.end_run()
 
-    def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
+    def load_card(self, registry_name: str, info: CardInfo) -> ArtifactCard:
         """
         Loads an ArtifactCard.
 
         Args:
-            card_type:
-                datacard or modelcard
+            registry_name:
+                Name of registry to load card from
             info:
                 Card information to retrieve. `uid` takes precedence if it
                 exists. If the optional `version` is specified, that version
@@ -112,10 +112,10 @@ class OpsmlProject:
         Returns
             `ArtifactCard`
         """
-        card_type = CardType(card_type.lower()).value
+        card_type = CardType(registry_name.lower()).value
         return CardHandler.load_card(
             registries=self._run_mgr.registries,
-            card_type=card_type,
+            registry_name=card_type,
             info=info,
         )
 

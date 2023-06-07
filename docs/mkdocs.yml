@@ -3,33 +3,36 @@ site_name: OpsML
 theme:
   name: material
   icon:
-    repo: fontawesome/brands/git-alt
+    repo: fontawesome/brands/github
   palette:
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
       primary: stylesheets/extra.css
-      accent: teal
+      accent: stylesheets/extra.css
       toggle:
         icon: material/weather-night
         name: dark mode
-        
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: stylesheets/extra.css
-      accent: teal
+      accent: stylesheets/extra.css
       toggle:
         icon: material/weather-sunny
         name: light mode
 
-
   features:
-        - navigation.sections
+    - navigation.sections
+    - toc.follow
+    - navigation.top
   font:
     text: Roboto
     code: Roboto Mono
-  logo: 'images/opsml-logo.png'
+  logo: 'images/gear.png'
 
 repo_name: opsml
 repo_url: https://github.com/shipt/opsml
 edit_uri: edit/main/docs/
+
+
 
 nav:
   - Overview: 'index.md'
@@ -38,15 +41,24 @@ nav:
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'
-      - Types:
+      - DataCard:
         - 'cards/datacard.md'
+        - 'cards/data_profile.md'
+        - 'cards/data_splits.md'
+      - ModelCard:
         - 'cards/modelcard.md'
-        - 'cards/runcard.md'
+        - 'cards/challenger.md'
+        - 'cards/model_metadata.md'
+        - 'cards/onnx.md'
+      - 'cards/runcard.md'
   - Server:
-      - Overview: 'server/overview.md'
-      - Example TOML: 'server/example_toml.md'
+      - Setup: 'server/overview.md'
   - CLI:
       - Overview: 'cli/overview.md'
+  - FAQ:
+      - Common Questons: 'faq/common_questions.md'
+  - Engineering:
+      - Ownership: 'engineering/ownership.md'
  
 markdown_extensions:
   - tables
