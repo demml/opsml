@@ -29,3 +29,7 @@ If you'd like to create your onnx model yourself and associate that with the Mod
 ### What's with using name, team, and user_email or `CardInfo` in the examples?
 
 Every `ArtifactCard` requires a name, team and user email. For convenience, you can instead provide a `CardInfo` instance instead.
+
+### How is `Opsml` different than other products out there?
+
+A key difference between `Opsml` and other products out there is that `Opsml` was not designed to be a platform or lock you in to any specific way of doing things. Instead, the goal and intial idea behind `Opsml` was to provide tooling and an interface that stitches, standardizes and automates some of the key building blocks (storage, tracking, versioning, pipelining, api generation) to any machine learning workflow or paltform. Thus, `Opsml` is capable of being used with other platforms or machine learning workflow systems. Or you can build your own!
