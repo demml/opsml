@@ -391,6 +391,18 @@ def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
     return opsml_run
 
 
+@pytest.fixture(scope="function")
+def mock_typer():
+    with patch.multiple("typer", launch=MagicMock(return_value=0)) as mock_typer:
+        yield mock_typer
+
+
+@pytest.fixture(scope="function")
+def mock_opsml_app_run():
+    with patch.multiple("opsml.app.main.OpsmlApp", run=MagicMock(return_value=0)) as mock_opsml_app_run:
+        yield mock_opsml_app_run
+
+
 ######## local clients
 
 

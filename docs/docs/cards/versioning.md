@@ -1,6 +1,6 @@
 # Versioning
 
-All `ArtifactCard`s follow a Semver version format (major.minor.path). By default, a `minor` increment is used whenver a card is registered. 
+All `ArtifactCard`s follow a Semver version format (major.minor.patch). By default, a `minor` increment is used whenver a card is registered. 
 
 ```python
 registry.register_card(card=card, version_type="patch") # patch increment 1.0.0 -> 1.0.1

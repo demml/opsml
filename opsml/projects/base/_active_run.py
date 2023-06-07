@@ -51,10 +51,10 @@ class CardHandler:
         registry.register_card(card=card, version_type=version_type)
 
     @staticmethod
-    def load_card(registries: CardRegistries, card_type: str, info: CardInfo) -> ArtifactCard:
+    def load_card(registries: CardRegistries, registry_name: str, info: CardInfo) -> ArtifactCard:
         """Loads an ArtifactCard"""
 
-        registry: CardRegistry = getattr(registries, card_type)
+        registry: CardRegistry = getattr(registries, registry_name)
         return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
 
     @staticmethod
@@ -148,12 +148,12 @@ class ActiveRun:
         # add uid to RunCard
         self.runcard.add_card_uid(card_type=card.card_type, uid=str(card.uid))
 
-    def load_card(self, card_type: str, info: CardInfo) -> ArtifactCard:
+    def load_card(self, registry_name: str, info: CardInfo) -> ArtifactCard:
         """
         Loads an ArtifactCard.
 
         Args:
-            card_type:
+            registry_name:
                 Type of card to load (data, model, run, pipeline)
             info:
                 Card information to retrieve. `uid` takes precedence if it
@@ -164,11 +164,11 @@ class ActiveRun:
         Returns
             `ArtifactCard`
         """
-        card_type = CardType(card_type.lower()).value
+        card_type = CardType(registry_name.lower()).value
 
         return CardHandler.load_card(
             registries=self._info.registries,
-            card_type=card_type,
+            registry_name=card_type,
             info=info,
         )
 
@@ -184,7 +184,7 @@ class ActiveRun:
             artifact:
                 Artifact
         """
-        spec = ArtifactStorageSpecs(save_path="misc", filename=name)
+        spec = ArtifactStorageSpecs(save_path="MISC", filename=name)
         self._info.storage_client.storage_spec = spec
 
         storage_path = save_record_artifact_to_storage(
