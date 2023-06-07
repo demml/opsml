@@ -2,6 +2,7 @@
 
 
 import os
+import re
 import shutil
 import tempfile
 import uuid
@@ -69,6 +70,9 @@ class ModelArtifactNames(str, Enum):
     ONNX = ".onnx"
 
 
+OPSML_PATTERN = "OPSML_+(\S+)+_REGISTRY"
+
+
 def cleanup_files(func):
     """Decorator for deleting files if needed"""
 
@@ -86,6 +90,23 @@ def cleanup_files(func):
         return artifact
 
     return wrapper
+
+
+def extract_registry_name(string: str) -> Optional[str]:
+    """Extracts registry name from string
+
+    Args:
+        string:
+            String
+    Returns:
+        Registry name
+    """
+    reg = re.compile(OPSML_PATTERN)
+    match = reg.match(string)
+
+    if bool(match):
+        return match.group(1)
+    return None
 
 
 class StorageClient:
@@ -720,9 +741,11 @@ class MlflowStorageClient(StorageClient):
             # OPSML save paths always follow table/team/name/version/file save format
 
             file_splits = filename.split("/")
+
+            print(len(file_splits))
             child_dir = file_splits[-3]
             parent_dir = file_splits[-5].split("_")[1]
-
+            a
             return str(parent_dir + "/" + child_dir).lower()
 
         return "misc"
