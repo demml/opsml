@@ -24,4 +24,8 @@ Auto onnx conversion can be turned off via the `to_onnx` arg when creating a Mod
 
 ### How do I supply my own onnx definition?
 
-If you'd like to create your onnx model yourself and associate that with the ModelCard, you will need to provide your own implementation of the `onnx_model_def` arg. An example of this can be seen here.
+If you'd like to create your onnx model yourself and associate that with the ModelCard, you will need to provide your own implementation of the `onnx_model_def` arg. An example of this can be seen [here](../cards/onnx.md).
+
+### What's with using name, team, and user_email or `CardInfo` in the examples?
+
+Every `ArtifactCard` requires a name, team and user email. For convenience, you can instead provide a `CardInfo` instance instead.

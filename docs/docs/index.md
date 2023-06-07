@@ -3,9 +3,7 @@
 </p>
 
 <h4 align="center">Tooling for machine learning workflows</h4>
-
 ---
-
 <p align="center">
   <a href="https://drone.shipt.com/shipt/opsml">
   <img alt="Build Status" src="https://drone.shipt.com/api/badges/shipt/opsml/status.svg"/>
@@ -53,12 +51,18 @@
 <a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
   <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success">
 </a>
+
+<a href="https://sonarqube.shipt.com/dashboard?id=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq">
+  <img alt="coverage" src="https://sonarqube.shipt.com/api/project_badges/measure?project=shipt_opsml-artifacts_AYWcv6FFE00GGQFT3YPq&metric=coverage&token=squ_06f8921843044242e5975ed012023f7b09066e9c">
+
+</a>
 </p>
 
 
 **Source Code**: [Code](https://github.com/shipt/opsml)
 
 ## What is it?
+
 `OpsML` is a tooling library that simplifies the machine learning project lifecycle.
 
 ## Features
