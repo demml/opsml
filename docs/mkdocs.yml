@@ -52,8 +52,7 @@ nav:
         - 'cards/onnx.md'
       - 'cards/runcard.md'
   - Server:
-      - Overview: 'server/overview.md'
-      - Example TOML: 'server/example_toml.md'
+      - Setup: 'server/overview.md'
   - CLI:
       - Overview: 'cli/overview.md'
   - FAQ:
