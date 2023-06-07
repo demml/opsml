@@ -1,14 +1,16 @@
 :root > * {
-  --md-primary-fg-color: #7b59b9;
-  --md-secondary-fg-color: #038767;
-  --md-accent-fg-color:                #038767;
-  --md-accent-fg-color--transparent:   #038767;
+  --md-primary-fg-color: #502D91;
+  --md-secondary-color: #038767;
+  --md-accent-fg-color:                #02af84;
+  --md-accent-fg-color--transparent:   #02af84;
+  --md-typeset-a-color: #02af84;
 }
 
 .md-typeset {
   font-size: 17px;
 
 }
+
 
 .md-sidebar--primary {
   width: 8rem;
