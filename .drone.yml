@@ -37,6 +37,19 @@ steps:
     depends_on:
       - setup_310
 
+  - name: py39
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.16_poetry_1.4.0
+    commands:
+      - make setup.project
+      - make test.unit
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py310
+
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
     environment:
@@ -50,6 +63,7 @@ steps:
         from_secret: SONAR_TOKEN
       SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
     depends_on:
+      - py39
       - py310
       - quality-checks
 
