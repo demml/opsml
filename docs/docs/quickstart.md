@@ -19,7 +19,6 @@ $ opsml-cli launch-uvicorn-app
 
 </div>
 
-
 Next, open a new terminal and run the following python script. Make sure to set the `OPSML_TRACKING_URI` as well
 
 
