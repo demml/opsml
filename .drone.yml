@@ -9,13 +9,13 @@ trigger:
 steps:
   - name: setup_py310
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-      commands:
-        - make setup.project
-      environment:
-        POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
-          from_secret: ARTIFACTORY_PYPI_USERNAME
-        POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
-          from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      - make setup.project
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
 
   - name: setup_py39
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.16_poetry_1.4.0
