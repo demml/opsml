@@ -606,6 +606,6 @@ def test_token_fail(
 
     with pytest.raises(
         ValueError,
-        match="Cannot perform write operation on prod resource from non-prod",
+        match="Cannot perform write operation on prod resource without token",
     ):
         registry.register_card(card=run)

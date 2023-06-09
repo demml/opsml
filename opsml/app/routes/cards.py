@@ -1,9 +1,10 @@
 # pylint: disable=protected-access
 from typing import Union
 
-from fastapi import APIRouter, Body, HTTPException, Request, status, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
 from opsml.app.core.config import config
+from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     AddCardRequest,
     AddCardResponse,
@@ -17,7 +18,6 @@ from opsml.app.routes.pydantic_models import (
     VersionResponse,
 )
 from opsml.app.routes.utils import replace_proxy_root
-from opsml.app.core.dependencies import verify_token
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 
