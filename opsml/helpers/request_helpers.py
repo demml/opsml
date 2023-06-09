@@ -63,7 +63,7 @@ class ApiClient:
         """Gets the base url to use with all requests"""
         return f"{base_url}/{path_prefix}"
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def post_request(
         self,
         route: str,
@@ -80,7 +80,7 @@ class ApiClient:
         detail = response.json().get("detail")
         raise ValueError(f"""Failed to to make server call for post request Url: {route}, {detail}""")
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def get_request(self, route: str) -> Dict[str, Any]:
         response = self.client.get(url=f"{self._base_url}/{route}")
 
@@ -89,7 +89,7 @@ class ApiClient:
 
         raise ValueError(f"""Failed to to make server call for get request Url: {route}""")
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(
         self,
         route: str,
@@ -120,7 +120,7 @@ class ApiClient:
             """
         )
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_download_file_request(
         self,
         route: str,

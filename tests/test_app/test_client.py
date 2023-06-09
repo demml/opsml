@@ -75,7 +75,7 @@ def test_register_data(
     df = registry.list_cards()
     assert isinstance(df, pd.DataFrame)
 
-    with pytest.raises(tenacity.RetryError):
+    with pytest.raises(ValueError):
         registry._registry.table_name = "no_table"
         registry.list_cards()
 
@@ -336,7 +336,7 @@ def test_load_data_card(api_registries: Dict[str, CardRegistry], test_data: pd.D
     loaded_data: DataCard = registry.load_card(name=data_name, team=team, version="1.2.0")
     loaded_data.uris.data_uri = "fail"
 
-    with pytest.raises(tenacity.RetryError):
+    with pytest.raises(FileNotFoundError):
         loaded_data.load_data()
 
 
@@ -589,3 +589,23 @@ def test_model_metric_failure(
 
     response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
     assert response.status_code == 500
+
+
+def test_token_fail(
+    api_registries: Dict[str, CardRegistry],
+    mock_app_config_token: str,
+):
+    registry = api_registries.run
+
+    run = RunCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uids=["test_uid"],
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Cannot perform write operation on prod resource from non-prod",
+    ):
+        registry.register_card(card=run)
