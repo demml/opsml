@@ -27,6 +27,7 @@ class ApiRoutes:
 
 api_routes = ApiRoutes()
 TIMEOUT_CONFIG = httpx.Timeout(10, read=120, write=120)
+OPSML_PROD_TOKEN = os.environ.get("OPSML_PROD_TOKEN", "staging")
 
 
 class ApiClient:
@@ -35,11 +36,18 @@ class ApiClient:
         base_url: str,
         path_prefix: str = PATH_PREFIX,
     ):
+        """Instantiates Api client for interacting with opsml server
+
+        Args:
+            base_url:
+                Base url of server
+            path_prefix:
+                Prefix for opsml server path
+
+        """
         self.client = httpx.Client()
         self.client.timeout = TIMEOUT_CONFIG
-        self.client.headers = {
-            "X-Prod-Token": os.environ.get("OPSML_PROD_TOKEN", "staging"),
-        }
+        self.client.headers = {"X-Prod-Token": OPSML_PROD_TOKEN}
 
         self._base_url = self._get_base_url(
             base_url=base_url,
