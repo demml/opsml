@@ -367,7 +367,7 @@ def compare_data_profiles(
 @app.command()
 def compare_model_metrics(
     challenger_uid: str = typer.Option(default=None, help="Challenger uid"),
-    champion_uids: List[str] = typer.Option(default=None, help="List of data versions"),
+    champion_uid: List[str] = typer.Option(default=None, help="List of champion one or more model uids"),
     metric_name: str = typer.Option(
         default=None,
         help="Name of metric to compare. This metric must already exist for a challenger and champion models",
@@ -375,13 +375,13 @@ def compare_model_metrics(
     lower_is_better: bool = typer.Option(default=True, help="Whether a lower metric is better"),
 ):
     """
-    Takes a list of version or uids and runs data profile comparisons
+    Compare model metrics via `ModelChallenger`
 
     Args:
         challenger_uid:
             Challenger uid
-        champion_uids:
-            List of data versions
+        champion_uid:
+            List of champion model uids
         metric_name:
             Name of metric to compare. This metric must already exist for a challenger and champion models
         lower_is_better:
@@ -391,8 +391,8 @@ def compare_model_metrics(
         ```bash
         opsml-cli compare-model-metrics \
             --challenger-uid "challenger-uid" \
-            --champion-uids "1st-champion-uid" \
-            --champion-uids "2nd-champion-uid" \
+            --champion-uid "1st-champion-uid" \
+            --champion-uid "2nd-champion-uid" \
             --metric-name "mae"
         ```
 
@@ -402,7 +402,7 @@ def compare_model_metrics(
         "metric_name": metric_name,
         "lower_is_better": lower_is_better,
         "challenger_uid": challenger_uid,
-        "champion_uids": champion_uids,
+        "champion_uid": champion_uid,
     }
 
     challenger_name, challenger_version, battle_reports = api_client.compare_metrics(payload=payload)
