@@ -37,15 +37,14 @@ class ApiClient:
     ):
         self.client = httpx.Client()
         self.client.timeout = TIMEOUT_CONFIG
+        self.client.headers = {
+            "X-Authentication": os.environ.get("OPSML_PROD_AUTHENTICATION"),
+        }
 
         self._base_url = self._get_base_url(
             base_url=base_url,
             path_prefix=path_prefix,
         )
-
-    # @cached_property
-    # def client(self) -> httpx.Client:
-    #    return httpx.Client(timeout=TIMEOUT_CONFIG)
 
     @property
     def base_url(self) -> str:
