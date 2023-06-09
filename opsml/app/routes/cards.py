@@ -1,7 +1,7 @@
 # pylint: disable=protected-access
 from typing import Union
 
-from fastapi import APIRouter, Body, HTTPException, Request, status
+from fastapi import APIRouter, Body, HTTPException, Request, status, Depends
 
 from opsml.app.core.config import config
 from opsml.app.routes.pydantic_models import (
@@ -17,6 +17,7 @@ from opsml.app.routes.pydantic_models import (
     VersionResponse,
 )
 from opsml.app.routes.utils import replace_proxy_root
+from opsml.app.core.dependencies import verify_token
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 
@@ -101,7 +102,12 @@ def list_cards(
         ) from error
 
 
-@router.post("/cards/create", response_model=AddCardResponse, name="create_card")
+@router.post(
+    "/cards/create",
+    response_model=AddCardResponse,
+    name="create_card",
+    dependencies=Depends(verify_token),
+)
 def add_card(
     request: Request,
     payload: AddCardRequest = Body(...),
@@ -114,7 +120,12 @@ def add_card(
     return AddCardResponse(registered=True)
 
 
-@router.post("/cards/update", response_model=UpdateCardResponse, name="update_card")
+@router.post(
+    "/cards/update",
+    response_model=UpdateCardResponse,
+    name="update_card",
+    dependencies=Depends(verify_token),
+)
 def update_card(
     request: Request,
     payload: UpdateCardRequest = Body(...),
