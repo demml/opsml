@@ -12,8 +12,8 @@ def verify_token(request: Request):
 
     if config.APP_ENV == "production":
         if prod_token != config.PROD_TOKEN:
-            logger.error("Attempt to write prod from non-prod")
+            logger.error("Attempt to write prod without token")
             raise HTTPException(
                 status_code=400,
-                detail="Cannot perform write operation on prod resource from non-prod",
+                detail="Cannot perform write operation on prod resource without token",
             )
