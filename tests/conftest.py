@@ -9,6 +9,8 @@ DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
 SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
 STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 
+os.environ["APP_ENV"] = "production"
+os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = SQL_PATH
 os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
 os.environ["OPSML_USERNAME"] = "test-user"
@@ -345,6 +347,14 @@ def mock_cli_property(api_registries):
 @pytest.fixture(scope="function")
 def api_storage_client(api_registries):
     return api_registries.data._registry.storage_client
+
+
+@pytest.fixture(scope="function")
+def mock_app_config_token(api_registries):
+    with patch("opsml.app.core.config.OpsmlConfig.PROD_TOKEN", new_callable=PropertyMock) as attr_mock:
+        attr_mock.return_value = "fail"
+
+        yield attr_mock
 
 
 @pytest.fixture(scope="function")

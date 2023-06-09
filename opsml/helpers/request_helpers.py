@@ -27,6 +27,8 @@ class ApiRoutes:
 
 api_routes = ApiRoutes()
 TIMEOUT_CONFIG = httpx.Timeout(10, read=120, write=120)
+OPSML_PROD_TOKEN = os.environ.get("OPSML_PROD_TOKEN", "staging")
+default_headers = httpx.Headers({"X-Prod-Token": OPSML_PROD_TOKEN})
 
 
 class ApiClient:
@@ -35,17 +37,23 @@ class ApiClient:
         base_url: str,
         path_prefix: str = PATH_PREFIX,
     ):
+        """Instantiates Api client for interacting with opsml server
+
+        Args:
+            base_url:
+                Base url of server
+            path_prefix:
+                Prefix for opsml server path
+
+        """
         self.client = httpx.Client()
         self.client.timeout = TIMEOUT_CONFIG
+        self.client.headers = default_headers
 
         self._base_url = self._get_base_url(
             base_url=base_url,
             path_prefix=path_prefix,
         )
-
-    # @cached_property
-    # def client(self) -> httpx.Client:
-    #    return httpx.Client(timeout=TIMEOUT_CONFIG)
 
     @property
     def base_url(self) -> str:
@@ -56,7 +64,7 @@ class ApiClient:
         """Gets the base url to use with all requests"""
         return f"{base_url}/{path_prefix}"
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def post_request(
         self,
         route: str,
@@ -73,7 +81,7 @@ class ApiClient:
         detail = response.json().get("detail")
         raise ValueError(f"""Failed to to make server call for post request Url: {route}, {detail}""")
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def get_request(self, route: str) -> Dict[str, Any]:
         response = self.client.get(url=f"{self._base_url}/{route}")
 
@@ -82,7 +90,7 @@ class ApiClient:
 
         raise ValueError(f"""Failed to to make server call for get request Url: {route}""")
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(
         self,
         route: str,
@@ -113,7 +121,7 @@ class ApiClient:
             """
         )
 
-    @retry(stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_download_file_request(
         self,
         route: str,
