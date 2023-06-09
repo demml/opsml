@@ -136,7 +136,7 @@ class CompareMetricRequest(BaseModel):
     metric_name: str
     lower_is_better: bool
     challenger_uid: str
-    champion_uids: List[str]
+    champion_uid: List[str]
 
 
 class CompareMetricResponse(BaseModel):
