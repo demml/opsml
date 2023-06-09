@@ -21,6 +21,7 @@ class ApiRoutes:
     UPLOAD = "upload"
     DOWNLOAD_MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
+    COMPARE_MODEL_METRICS = "models/compare_metrics"
     DOWNLOAD_FILE = "files/download"
     LIST_FILES = "files/list"
 
