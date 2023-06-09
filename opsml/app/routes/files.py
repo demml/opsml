@@ -2,12 +2,13 @@
 import os
 
 import streaming_form_data
-from fastapi import APIRouter, HTTPException, Request, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
+from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     DownloadFileRequest,
     ListFileRequest,
@@ -18,7 +19,6 @@ from opsml.app.routes.utils import (
     MaxBodySizeException,
     MaxBodySizeValidator,
 )
-from opsml.app.core.dependencies import verify_token
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
