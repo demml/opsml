@@ -114,7 +114,6 @@ def add_card(
 ) -> AddCardResponse:
     """Adds Card record to a registry"""
 
-    logger.info(request.headers)
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
