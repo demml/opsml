@@ -38,7 +38,7 @@ class ApiClient:
         self.client = httpx.Client()
         self.client.timeout = TIMEOUT_CONFIG
         self.client.headers = {
-            "X-Token": os.environ.get("OPSML_PROD_TOKEN"),
+            "X-Prod-Token": os.environ.get("OPSML_PROD_TOKEN", "staging"),
         }
 
         self._base_url = self._get_base_url(
