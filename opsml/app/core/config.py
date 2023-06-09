@@ -30,6 +30,7 @@ class OpsmlConfig:
     APP_ENV = os.environ.get("APP_ENV", "development")
     STORAGE_URI = STORAGE_URI
     TRACKING_URI = TRACKING_URI
+    PROD_AUTHENITCATION = os.environ.get("OPSML_PROD_AUTHENITCATION")
 
     def __init__(self):
         self._proxy_root = os.environ.get("PROXY_ROOT")
