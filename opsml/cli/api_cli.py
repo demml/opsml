@@ -7,6 +7,7 @@ from rich.table import Table
 
 from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.challenger import ModelChallenger
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -361,6 +362,71 @@ def compare_data_profiles(
         write_path=path,
         payload=payload,
     )
+
+
+@app.command()
+def compare_model_metrics(
+    challenger_uid: str = typer.Option(default=None, help="Challenger uid"),
+    champion_uids: List[str] = typer.Option(default=None, help="List of data versions"),
+    metric_name: str = typer.Option(
+        default=None,
+        help="Name of metric to compare. This metric must already exist for a challenger and champion models",
+    ),
+    lower_is_better: bool = typer.Option(default=True, help="Whether a lower metric is better"),
+):
+    """
+    Takes a list of version or uids and runs data profile comparisons
+
+    Args:
+        challenger_uid:
+            Challenger uid
+        champion_uids:
+            List of data versions
+        metric_name:
+            Name of metric to compare. This metric must already exist for a challenger and champion models
+        lower_is_better:
+            Whether a lower metric is better
+    Example:
+
+        ```bash
+        opsml-cli compare-model-metrics \
+            --challenger-uid "challenger-uid" \
+            --champion-uids "1st-champion-uid" \
+            --champion-uids "2nd-champion-uid" \
+            --metric-name "mae"
+        ```
+
+    """
+
+    payload: Dict[str, Union[str, int, List[str]]] = {
+        "metric_name": metric_name,
+        "lower_is_better": lower_is_better,
+        "challenger_uid": challenger_uid,
+        "champion_uids": champion_uids,
+    }
+
+    challenger_name, challenger_version, battle_reports = api_client.compare_metrics(payload=payload)
+
+    table = Table(title=f"Model Challenger Results for {challenger_name} v{challenger_version}")
+    table.add_column("Champion Name", no_wrap=True)
+    table.add_column("Champion Version")
+    table.add_column("metric")
+    table.add_column("Champion Value")
+    table.add_column("Challenger Value")
+    table.add_column("Challenger Win", justify="right")
+
+    for report in battle_reports:
+        champion_metric = report.get("champion_metric")
+        challenger_metric = report.get("challenger_metric")
+
+        table.add_row(
+            str(report.get("champion_name", "None")),
+            str(report.get("champion_version", "None")),
+            str(champion_metric.get("name", "None")),
+            str(champion_metric.get("value", "None")),
+            str(challenger_metric.get("value", "None")),
+            str(report.get("challenger_win", "None")),
+        )
 
 
 @app.command()

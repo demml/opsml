@@ -19,6 +19,7 @@ _DATA_PROFILE_FILENAME = "data_profile.html"
 # This is done in order to avoid instantiating DefaultSettings when using CLI (saves time)
 
 Metrics = Dict[str, List[Dict[str, Union[float, int, str]]]]
+BattleReport = List[Dict[str, Any]]
 
 
 class RegistryTableNames(str, Enum):
@@ -95,7 +96,7 @@ class CliApiClient:
 
         return response.get("cards")
 
-    def get_metrics(self, payload: Dict[str, Union[str, int]]) -> Dict[str, List[Dict[str, Union[float, int, str]]]]:
+    def get_metrics(self, payload: Dict[str, Union[str, int]]) -> Metrics:
         response = self.client.post_request(
             route=ApiRoutes.MODEL_METRICS,
             json=payload,
@@ -103,6 +104,18 @@ class CliApiClient:
 
         metrics = cast(Metrics, response.get("metrics"))
         return metrics
+
+    def compare_metrics(self, payload: Dict[str, Union[str, int, bool, List[str]]]) -> Union[str, str, BattleReport]:
+        response = self.client.post_request(
+            route=ApiRoutes.COMPARE_MODEL_METRICS,
+            json=payload,
+        )
+
+        battle_report = cast(BattleReport, response.get("battle_report"))
+        challenger_name = response.get("challenger_name")
+        challenger_version = response.get("challenger_version")
+
+        return challenger_name, challenger_version, battle_report
 
     def stream_data_file(
         self,
