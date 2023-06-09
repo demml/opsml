@@ -137,7 +137,7 @@ def compare_metrics(
 
     model_challenger = ModelChallenger(challenger=challenger_card)
 
-    champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uids]
+    champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]
     battle_report = model_challenger.challenge_champion(
         metric_name=payload.metric_name,
         champions=champions,
