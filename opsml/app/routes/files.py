@@ -2,7 +2,7 @@
 import os
 
 import streaming_form_data
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status, Depends
 from fastapi.responses import StreamingResponse
 from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
@@ -18,6 +18,7 @@ from opsml.app.routes.utils import (
     MaxBodySizeException,
     MaxBodySizeValidator,
 )
+from opsml.app.core.dependencies import verify_token
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -31,7 +32,7 @@ MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 
 
 # upload uses the request object directly which affects OpenAPI docs
-@router.post("/upload", name="upload")
+@router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
 async def upload_file(request: Request):
     """Uploads files in chunks to storage destination"""
 
