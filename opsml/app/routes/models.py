@@ -147,4 +147,7 @@ def compare_metrics(
     if not isinstance(battle_report, list):
         battle_report = [battle_report]
 
+    print(battle_report)
+    a
+
     return CompareMetricResponse(battle_report=battle_report)
