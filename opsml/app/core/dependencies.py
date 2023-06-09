@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Request
 
 from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
@@ -7,11 +7,13 @@ from opsml.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def verify_token(x_token: Annotated[str, Header()]):
-    logger.info(x_token)
+def verify_token(request: Request):
+    """Verifies production token if APP_ENV is production"""
+    prod_token = request.headers.get("X-Prod-Token")
     if config.APP_ENV == "production":
-        if x_token != config.PROD_TOKEN:
+        if prod_token != config.PROD_TOKEN:
+            logger.error("Attempt to write prod from non-prod")
             raise HTTPException(
                 status_code=400,
-                detail="Cannot perform write operation on Prod from non-prod",
+                detail="Cannot perform write operation on prod resource from non-prod",
             )
