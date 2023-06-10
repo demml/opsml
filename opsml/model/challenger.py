@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast, Tuple
 
 from pydantic import BaseModel
 
@@ -20,6 +20,10 @@ class BattleReport(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+MetricName = Union[str, List[str]]
+MetricValue = Union[int, float, List[Union[int, float]]]
 
 
 # eventually find a way to tell if a model has been deployed and use that for comparison as well
@@ -107,7 +111,7 @@ class ModelChallenger:
 
         return cast(Metric, runcard.get_metric(name=self.metric_name))
 
-    def battle(self, champion: CardInfo, champion_metric: Metric) -> BattleReport:
+    def _battle(self, champion: CardInfo, champion_metric: Metric) -> BattleReport:
         """
         Runs a battle between champion and current challenger
 
@@ -187,12 +191,35 @@ class ModelChallenger:
             battle_reports.append(self.battle(champion=champion, champion_metric=champion_metric))
         return battle_reports
 
+    def _validate_input_args(
+        self,
+        metric_name: MetricName,
+        metric_value: Optional[MetricValue] = None,
+        lower_is_better: Union[bool, List[bool]] = True,
+    ) -> Tuple[List[str], List[Optional[Union[int, float]]], List[bool]]:
+        if not isinstance(metric_name, list):
+            metric_names = [metric_name]
+
+        if not isinstance(lower_is_better, list):
+            lower_is_better = [lower_is_better] * len(metric_name)
+
+        if metric_value is not None:
+            if not isinstance(metric_value, list):
+                metric_values = [metric_value]
+        else:
+            metric_values = [None] * len(metric_name)
+
+        if not all(len(metric_names) == len(list_) for list_ in [metric_names, metric_values, lower_is_better]):
+            raise ValueError("Metric name, value and lower is better should all match in length")
+
+        return metric_name, metric_value, lower_is_better
+
     def challenge_champion(
         self,
-        metric_name: str,
-        metric_value: Optional[Union[int, float]] = None,
+        metric_name: MetricName,
+        metric_value: Optional[MetricValue] = None,
         champions: Optional[List[CardInfo]] = None,
-        lower_is_better: bool = True,
+        lower_is_better: Union[bool, List[bool]] = True,
     ) -> Union[BattleReport, List[BattleReport]]:
         """
         Challenges n champion models against the challenger model. If no champion is provided,
@@ -211,24 +238,31 @@ class ModelChallenger:
         Returns
             `BattleReport`
         """
-        # set lower is better
-        self.lower_is_better = lower_is_better
-        self.metric_name = metric_name
 
-        # get challenger metric
-        if metric_value is None:
-            if self._challenger.runcard_uid is not None:
-                self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid)
+        metric_names, metric_values, lower_is_better = self._validate_input_args(
+            metric_name=metric_name,
+            metric_value=metric_value,
+            lower_is_better=lower_is_better,
+        )
+
+        report_dict = {}
+        for name, value, score_threshold in zip(metric_names, metric_values, lower_is_better):
+            # set lower is better
+            self.lower_is_better = score_threshold
+            self.metric_name = name
+
+            # get challenger metric
+            if value is None:
+                if self._challenger.runcard_uid is not None:
+                    self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid)
+                else:
+                    raise ValueError("Challenger and champions must be associated with a registered RunCard")
             else:
-                raise ValueError("Challenger and champions must be associated with a registered RunCard")
-        else:
-            self.challenger_metric = Metric(name=metric_name, value=metric_value)
+                self.challenger_metric = Metric(name=name, value=value)
 
-        if champions is None:
-            return self._challenge_last_model_version()
+            if champions is None:
+                return self._challenge_last_model_version()
 
-        battle_reports = self._challenge_champions(champions=champions)
+            report_dict[name] = self._challenge_champions(champions=champions)
 
-        if len(battle_reports) > 1:
-            return battle_reports
-        return battle_reports[0]
+        return report_dict
