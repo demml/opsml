@@ -124,30 +124,37 @@ def get_metrics(
     return MetricResponse(metrics=runcard.metrics)
 
 
-@router.post("/models/compare_metrics", response_model=MetricResponse, name="compare_model_metrics")
+@router.post("/models/compare_metrics", response_model=CompareMetricResponse, name="compare_model_metrics")
 def compare_metrics(
     request: Request,
     payload: CompareMetricRequest = Body(...),
 ) -> CompareMetricResponse:
     """Compare model metrics using `ModelChallenger`"""
 
-    # Get challenger
-    registries: CardRegistries = request.app.state.registries
-    challenger_card: ModelCard = registries.model.load_card(uid=payload.challenger_uid)
+    try:
+        # Get challenger
+        registries: CardRegistries = request.app.state.registries
+        challenger_card: ModelCard = registries.model.load_card(uid=payload.challenger_uid)
 
-    model_challenger = ModelChallenger(challenger=challenger_card)
+        model_challenger = ModelChallenger(challenger=challenger_card)
 
-    champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]
-    battle_report = model_challenger.challenge_champion(
-        metric_name=payload.metric_name,
-        champions=champions,
-        lower_is_better=payload.lower_is_better,
-    )
+        champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]
+        battle_report = model_challenger.challenge_champion(
+            metric_name=payload.metric_name,
+            champions=champions,
+            lower_is_better=payload.lower_is_better,
+        )
 
-    if not isinstance(battle_report, list):
-        battle_report = [battle_report]
+        if not isinstance(battle_report, list):
+            battle_report = [battle_report]
 
-    print(battle_report)
-    a
-
-    return CompareMetricResponse(battle_report=battle_report)
+        return CompareMetricResponse(
+            challenger_name=challenger_card.name,
+            challenger_version=challenger_card.version,
+            battle_report=battle_report,
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to compare model metrics. {error}",
+        )
