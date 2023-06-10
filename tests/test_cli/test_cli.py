@@ -222,6 +222,7 @@ def test_model_metrics(
     result = runner.invoke(
         app, ["compare-model-metrics", "--challenger_uid", challenger.uid, "--champion_uid", modelcard.uid]
     )
+
     assert result.exit_code == 1
 
 

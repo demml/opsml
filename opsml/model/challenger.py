@@ -173,10 +173,16 @@ class ModelChallenger:
             if not bool(champion_record):
                 raise ValueError(f"Champion model does not exist. {champion}")
 
-            if champion_record[0].get("runcard_uid") is None:
+            champion_card = champion_record[0]
+            if champion_card.get("runcard_uid") is None:
                 raise ValueError(f"No RunCard associated with champion: {champion}")
 
-            champion_metric = self._get_runcard_metric(runcard_uid=champion_record[0].get("runcard_uid"))
+            champion_metric = self._get_runcard_metric(runcard_uid=champion_card.get("runcard_uid"))
+
+            # update name, team and version in case of None
+            champion.name = champion.name or champion_card.get("name")
+            champion.team = champion.team or champion_card.get("team")
+            champion.version = champion.version or champion_card.get("version")
 
             battle_reports.append(self.battle(champion=champion, champion_metric=champion_metric))
         return battle_reports

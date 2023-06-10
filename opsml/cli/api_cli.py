@@ -7,7 +7,6 @@ from rich.table import Table
 
 from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.challenger import ModelChallenger
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -427,6 +426,7 @@ def compare_model_metrics(
             str(challenger_metric.get("value", "None")),
             str(report.get("challenger_win", "None")),
         )
+    console.print(table)
 
 
 @app.command()
