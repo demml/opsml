@@ -64,6 +64,8 @@ class ChallengeInputs(BaseModel):
         ):
             raise ValueError("Metric name, value and lower_is_better should all match in length")
 
+        return values
+
 
 class ModelChallenger:
     @experimental_feature
@@ -77,6 +79,7 @@ class ModelChallenger:
 
         """
         self._challenger = challenger
+        self._challenger_metric: Optional[Metric] = None
         self._registries = CardRegistries()
 
     @property
@@ -215,7 +218,7 @@ class ModelChallenger:
             champion.version = champion.version or champion_card.get("version")
 
             battle_reports.append(
-                self.battle(
+                self._battle(
                     champion=champion,
                     champion_metric=champion_metric,
                     lower_is_better=lower_is_better,
@@ -229,7 +232,7 @@ class ModelChallenger:
         metric_value: Optional[MetricValue] = None,
         champions: Optional[List[CardInfo]] = None,
         lower_is_better: Union[bool, List[bool]] = True,
-    ) -> Union[BattleReport, List[BattleReport]]:
+    ) -> Dict[str, List[BattleReport]]:
         """
         Challenges n champion models against the challenger model. If no champion is provided,
         the latest model version is used as a champion.
