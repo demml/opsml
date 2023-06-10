@@ -89,26 +89,7 @@ class ModelChallenger:
     def challenger_metric(self, metric: Metric):
         self._challenger_metric = metric
 
-    @property
-    def lower_is_better(self) -> bool:
-        return self._lower_is_better
-
-    @lower_is_better.setter
-    def lower_is_better(self, lower_is_better: bool) -> None:
-        self._lower_is_better = lower_is_better
-
-    @property
-    def metric_name(self) -> str:
-        if self._metric_name is not None:
-            return self._metric_name
-        raise ValueError("Metric name not set")
-
-    @metric_name.setter
-    def metric_name(self, metric_name: str) -> None:
-        self._metric_name = metric_name
-
     def _get_last_champion_record(self) -> Optional[Dict[str, Any]]:
-        # probably a better way to do this using tilde, caret or star
         """Gets the previous champion record"""
 
         champion_records = self._registries.model.list_cards(
@@ -176,7 +157,7 @@ class ModelChallenger:
             challenger_win=challenger_win,
         )
 
-    def _challenge_last_model_version(self, metric_name: str, lower_is_better: bool) -> BattleReport:
+    def _battle_last_model_version(self, metric_name: str, lower_is_better: bool) -> BattleReport:
         """Compares the last champion model to the current challenger"""
 
         champion_record = self._get_last_champion_record()
@@ -205,7 +186,7 @@ class ModelChallenger:
             lower_is_better=lower_is_better,
         )
 
-    def _challenge_champions(
+    def _battle_champions(
         self,
         champions: List[CardInfo],
         metric_name: str,
@@ -291,14 +272,14 @@ class ModelChallenger:
 
             if champions is None:
                 report_dict[name] = [
-                    self._challenge_last_model_version(
+                    self._battle_last_model_version(
                         metric_name=name,
                         lower_is_better=_lower_is_better,
                     )
                 ]
 
             else:
-                report_dict[name] = self._challenge_champions(
+                report_dict[name] = self._battle_champions(
                     champions=champions,
                     metric_name=name,
                     lower_is_better=_lower_is_better,
