@@ -2,6 +2,8 @@ import pathlib
 from typing import Dict, List, Union
 
 import typer
+from rich.text import Text
+from rich.style import Style
 from rich.console import Console
 from rich.table import Table
 
@@ -367,11 +369,11 @@ def compare_data_profiles(
 def compare_model_metrics(
     challenger_uid: str = typer.Option(default=None, help="Challenger uid"),
     champion_uid: List[str] = typer.Option(default=None, help="List of champion one or more model uids"),
-    metric_name: str = typer.Option(
+    metric_name: List[str] = typer.Option(
         default=None,
         help="Name of metric to compare. This metric must already exist for a challenger and champion models",
     ),
-    lower_is_better: bool = typer.Option(default=True, help="Whether a lower metric is better"),
+    lower_is_better: List[str] = typer.Option(default=["True"], help="Whether a lower metric is better"),
 ):
     """
     Compare model metrics via `ModelChallenger`
@@ -396,6 +398,11 @@ def compare_model_metrics(
         ```
 
     """
+    lower_is_better = [True if threshold.lower() == "true" else False for threshold in lower_is_better]
+
+    # api assumes list is only for multiple values
+    if len(lower_is_better) == 1:
+        lower_is_better = lower_is_better[0]
 
     payload: Dict[str, Union[str, int, List[str]]] = {
         "metric_name": metric_name,
@@ -407,25 +414,35 @@ def compare_model_metrics(
     challenger_name, challenger_version, battle_reports = api_client.compare_metrics(payload=payload)
 
     table = Table(title=f"Model Challenger Results for {challenger_name} v{challenger_version}")
-    table.add_column("Champion Name", no_wrap=True)
-    table.add_column("Champion Version")
-    table.add_column("metric")
-    table.add_column("Champion Value")
-    table.add_column("Challenger Value")
-    table.add_column("Challenger Win", justify="right")
+    table.add_column("Champion \nName", justify="center")
+    table.add_column("Champion \nVersion", justify="center")
+    table.add_column("Metric", justify="center")
+    table.add_column("Champion \nValue", justify="center")
+    table.add_column("Challenger \nValue", justify="center")
+    table.add_column("Challenger \nWin", justify="center")
 
-    for report in battle_reports:
-        champion_metric = report.get("champion_metric")
-        challenger_metric = report.get("challenger_metric")
+    # print(Text(report.get("challenger_win", "None")))
+    for _, reports in battle_reports.items():
+        for report in reports:
+            champion_metric = report.get("champion_metric")
+            challenger_metric = report.get("challenger_metric")
+            challenger_win = report.get("challenger_win", "None")
 
-        table.add_row(
-            str(report.get("champion_name", "None")),
-            str(report.get("champion_version", "None")),
-            str(champion_metric.get("name", "None")),
-            str(champion_metric.get("value", "None")),
-            str(challenger_metric.get("value", "None")),
-            str(report.get("challenger_win", "None")),
-        )
+            if challenger_win:
+                challenger_win = Text(str(challenger_win), style="green")
+            else:
+                challenger_win = Text(str(challenger_win), style="red")
+
+            table.add_row(
+                str(report.get("champion_name", "None")),
+                str(report.get("champion_version", "None")),
+                str(champion_metric.get("name", "None")),
+                str(champion_metric.get("value", "None")),
+                str(challenger_metric.get("value", "None")),
+                challenger_win,
+            )
+        table.add_section()
+
     console.print(table)
 
 
