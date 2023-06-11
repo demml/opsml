@@ -29,7 +29,7 @@ Non-breaking changes that typically add functionality
     * Features and output remain the same
 
 ---
-## `patch`
+## `Patch`
 Indicates a non-breaking change
 
 - **Examples**:
@@ -37,7 +37,7 @@ Indicates a non-breaking change
     * data re-freshes
 
 ---
-## `pre`
+## `Pre`
 Indicates a release candidate
 
 - **Examples**:
