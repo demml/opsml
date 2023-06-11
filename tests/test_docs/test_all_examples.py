@@ -514,7 +514,7 @@ def test_overview_list(
     registry.list_cards(uid=uid, as_dataframe=False)
 
 
-def test_runcard_opsml_example(opsml_project):
+def test_runcard_opsml_example(opsml_project: OpsmlProject):
     import numpy as np
     import pandas as pd
     from sklearn.linear_model import Lasso
@@ -528,7 +528,7 @@ def test_runcard_opsml_example(opsml_project):
     # to use runs, you must create and use a project
     project_info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
     # project = OpsmlProject(info=project_info)
-    project: OpsmlProject = opsml_project
+    project = opsml_project
 
     def create_fake_data():
         X_train = np.random.normal(-4, 2.0, size=(1000, 10))
@@ -574,3 +574,58 @@ def test_runcard_opsml_example(opsml_project):
 
     print(run.runcard.get_parameter("alpha"))
     # > Param(name='alpha', value=0.5)
+
+
+def test_runcard_mlflow_example(mlflow_project: MlflowProject):
+    from sklearn.linear_model import LinearRegression
+    import numpy as np
+    import pandas as pd
+
+    from opsml.projects import ProjectInfo
+
+    from opsml.projects.mlflow import MlflowProject
+
+    from opsml.registry.cards import CardInfo
+    from opsml.registry import DataCard, ModelCard, CardRegistry
+
+    def fake_data():
+        X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+
+        col_names = []
+        for i in range(0, X_train.shape[1]):
+            col_names.append(f"col_{i}")
+
+        X = pd.DataFrame(X_train, columns=col_names)
+        y = np.random.randint(1, 10, size=(1000, 1))
+        return X, y
+
+    info = ProjectInfo(
+        name="opsml",
+        team="devops",
+        user_email="test_email",
+    )
+    # project = MlflowProject(info=info)
+    project = mlflow_project
+    with project.run(run_name="mlflow-test") as run:
+        X, y = fake_data()
+        reg = LinearRegression().fit(X.to_numpy(), y)
+
+        data_card = DataCard(
+            data=X,
+            name="pipeline-data",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        run.register_card(card=data_card)
+
+        model_card = ModelCard(
+            trained_model=reg,
+            sample_input_data=X[0:1],
+            name="linear_reg",
+            team="mlops",
+            user_email="mlops.com",
+            datacard_uid=data_card.uid,
+        )
+        run.register_card(card=model_card)
+        for i in range(0, 10):
+            run.log_metric("test", i)
