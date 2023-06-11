@@ -38,8 +38,8 @@ data_card = DataCard(
     dependent_vars=["Pulse"],
     # define splits
     data_splits=[
-        DataSplit(label="train", indcies=train_idx),
-        DataSplit(label="test", indcies=test_idx),
+        DataSplit(label="train", indices=train_idx),
+        DataSplit(label="test", indices=test_idx),
     ],
 )
 
