@@ -290,3 +290,54 @@ def test_data_profile(db_registries):
 
     comparison = DataProfiler.compare_reports(reports=[data_card.data_profile, data_card2.data_profile])
     # comparison.to_file("comparison_report.html")
+
+
+def test_modelcard(db_registries):
+    # load data card from earlier
+    from sklearn.linear_model import LinearRegression
+
+    # Opsml
+    from opsml.registry import CardRegistry, ModelCard, CardInfo
+
+    # set up registries
+    data_registry = db_registries["data"]
+    model_registry = db_registries["model"]
+
+    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+
+    # load datacard
+    datacard = data_registry.load_card(name=card_info.name, team=card_info.team, version="1.0.0")
+
+    # data is not loaded by default (helps when sharing cards with large data)
+    datacard.load_data()
+    data_splits = datacard.split_data()
+
+    X_train = data_splits.train.X
+    y_train = data_splits.train.y
+
+    # fit model
+    linreg = LinearRegression()
+    linreg = linreg.fit(X=X_train, y=y_train)
+
+    # lets test the onnx model before registering
+    modelcard = ModelCard(
+        info=card_info,
+        trained_model=linreg,
+        sample_input_data=X_train,
+        datacard_uid=datacard.uid,
+    )
+
+    onnx_predictor = modelcard.onnx_model()
+    record = list(modelcard.sample_input_data[0:1].T.to_dict().values())[0]
+
+    pred_onnx = onnx_predictor.predict(record)["variable"]
+    pred_orig = onnx_predictor.predict_with_model(linreg, record)[0][0]
+
+    print(f"Original: {pred_orig}, Onnx: {pred_onnx}")
+    # > Original: 54.4616866, Onnx: 54.4616866
+
+    print(onnx_predictor.input_sig.schema_json())
+    print(onnx_predictor.output_sig.schema_json())
+
+    # everything looks good
+    model_registry.register_card(modelcard)
