@@ -220,10 +220,19 @@ def test_model_metrics(
 
     # test compare metrics
     result = runner.invoke(
-        app, ["compare-model-metrics", "--challenger_uid", challenger.uid, "--champion_uid", modelcard.uid]
+        app,
+        [
+            "compare-model-metrics",
+            "--challenger-uid",
+            challenger.uid,
+            "--champion-uid",
+            modelcard.uid,
+            "--metric-name",
+            "mae",
+        ],
     )
 
-    assert result.exit_code == 1
+    assert result.exit_code == 0
 
 
 def test_download_data_profile(
