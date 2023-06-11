@@ -2,10 +2,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-
+from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.registry_base import VersionType
-from opsml.model.challenger import BattleReport
 
 
 class StorageUri(BaseModel):

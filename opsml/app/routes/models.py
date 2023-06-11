@@ -7,15 +7,15 @@ from fastapi.responses import StreamingResponse
 from opsml.app.core.config import config
 from opsml.app.routes.pydantic_models import (
     CardRequest,
-    MetricRequest,
-    MetricResponse,
     CompareMetricRequest,
     CompareMetricResponse,
+    MetricRequest,
+    MetricResponse,
 )
 from opsml.app.routes.utils import MODEL_METADATA_FILE, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, CardRegistry, RunCard, ModelCard, CardInfo
 from opsml.model.challenger import ModelChallenger
+from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 
 logger = ArtifactLogger.get_logger(__name__)
 
