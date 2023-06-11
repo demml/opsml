@@ -179,5 +179,17 @@ def test_challenger_fail_no_runcard(
             metric_value=100,
         )
 
-def test_challenger_input_validation(self):
-    
+
+def test_challenger_input_validation():
+    inputs = ChallengeInputs(
+        metric_name=["mae"],
+        metric_value=[10],
+        lower_is_better=[True],
+    )
+
+    with pytest.raises(ValueError):
+        ChallengeInputs(
+            metric_name=["mae"],
+            metric_value=[10],
+            lower_is_better=[True, False],
+        )
