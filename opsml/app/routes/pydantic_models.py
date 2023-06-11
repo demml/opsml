@@ -133,8 +133,8 @@ class MetricResponse(BaseModel):
 
 
 class CompareMetricRequest(BaseModel):
-    metric_name: str
-    lower_is_better: bool
+    metric_name: List[str]
+    lower_is_better: Union[bool, List[bool]]
     challenger_uid: str
     champion_uid: List[str]
 
@@ -142,4 +142,4 @@ class CompareMetricRequest(BaseModel):
 class CompareMetricResponse(BaseModel):
     challenger_name: str
     challenger_version: str
-    battle_report: List[BattleReport]
+    battle_report: Dict[str, List[BattleReport]]
