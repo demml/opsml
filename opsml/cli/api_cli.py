@@ -2,10 +2,10 @@ import pathlib
 from typing import Dict, List, Union
 
 import typer
-from rich.text import Text
-from rich.style import Style
 from rich.console import Console
+from rich.style import Style
 from rich.table import Table
+from rich.text import Text
 
 from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
