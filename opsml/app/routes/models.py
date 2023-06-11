@@ -145,9 +145,6 @@ def compare_metrics(
             lower_is_better=payload.lower_is_better,
         )
 
-        if not isinstance(battle_report, list):
-            battle_report = [battle_report]
-
         return CompareMetricResponse(
             challenger_name=challenger_card.name,
             challenger_version=challenger_card.version,

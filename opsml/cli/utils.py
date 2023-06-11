@@ -111,7 +111,7 @@ class CliApiClient:
             json=payload,
         )
 
-        battle_report = cast(BattleReport, response.get("battle_report"))
+        battle_report = cast(Dict[str, List[BattleReport]], response.get("battle_report"))
         challenger_name = response.get("challenger_name")
         challenger_version = response.get("challenger_version")
 
