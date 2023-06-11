@@ -107,9 +107,16 @@ Register a card to a registry
 
   model_registry = CardRegistry(registry_name="model")
 
-  example_record = model_registry.list_cards(name="linnerrud", as_dataframe=False)[0]
+  model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="linear-reg",
+        team="opsml",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+    )
 
-  model_card = model_registry.load_card(uid=example_record.get("uid"))
+  example_record = model_registry.register_card(card=model_card)
   print(model_card.version)
   #> 1.0.0
   

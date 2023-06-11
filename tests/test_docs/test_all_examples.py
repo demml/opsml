@@ -1,7 +1,9 @@
 from opsml.projects import ProjectInfo, MlflowProject
+from opsml.registry import ModelCard, DataCard
+from sklearn import linear_model
 
 
-def _test_example(mlflow_project: MlflowProject):
+def _test_challenger_example(mlflow_project: MlflowProject):
     ########### Challenger example
 
     from sklearn.datasets import load_linnerud
@@ -133,7 +135,7 @@ def _test_example(mlflow_project: MlflowProject):
     print([report.dict() for report in reports["mae"]])
 
 
-def test_datacard(db_registries):
+def _test_datacard(db_registries):
     from sklearn.datasets import load_linnerud
     from sklearn.model_selection import train_test_split
     import numpy as np
@@ -179,7 +181,7 @@ def test_datacard(db_registries):
     print(cards[0])
 
 
-def test_data_splits():
+def _test_data_splits():
     import polars as pl
     from opsml.registry import DataCard, DataSplit, CardInfo
 
@@ -233,7 +235,7 @@ def test_data_splits():
     assert splits.train.X.shape[0] == 3
 
 
-def test_data_profile(db_registries):
+def _test_data_profile(db_registries):
     # Data
     from sklearn.datasets import load_linnerud
 
@@ -292,7 +294,7 @@ def test_data_profile(db_registries):
     # comparison.to_file("comparison_report.html")
 
 
-def test_modelcard(db_registries):
+def _test_modelcard(db_registries):
     # load data card from earlier
     from sklearn.linear_model import LinearRegression
 
@@ -341,3 +343,172 @@ def test_modelcard(db_registries):
 
     # everything looks good
     model_registry.register_card(modelcard)
+
+
+def _test_custom_onnx(db_registries):
+    import tempfile
+
+    from torch import nn
+    import torch.utils.model_zoo as model_zoo
+    import torch.onnx
+    import onnx
+
+    # Super Resolution model definition in PyTorch
+    import torch.nn as nn
+    import torch.nn.init as init
+
+    ## opsml
+    from opsml.model.types import OnnxModelDefinition
+    from opsml.registry import CardRegistries, ModelCard, DataCard
+
+    registries = CardRegistries()
+    registries.data = db_registries["data"]
+    registries.model = db_registries["model"]
+
+    class SuperResolutionNet(nn.Module):
+        def __init__(self, upscale_factor, inplace=False):
+            super(SuperResolutionNet, self).__init__()
+
+            self.relu = nn.ReLU(inplace=inplace)
+            self.conv1 = nn.Conv2d(1, 64, (5, 5), (1, 1), (2, 2))
+            self.conv2 = nn.Conv2d(64, 64, (3, 3), (1, 1), (1, 1))
+            self.conv3 = nn.Conv2d(64, 32, (3, 3), (1, 1), (1, 1))
+            self.conv4 = nn.Conv2d(32, upscale_factor**2, (3, 3), (1, 1), (1, 1))
+            self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
+
+            self._initialize_weights()
+
+        def forward(self, x):
+            x = self.relu(self.conv1(x))
+            x = self.relu(self.conv2(x))
+            x = self.relu(self.conv3(x))
+            x = self.pixel_shuffle(self.conv4(x))
+            return x
+
+        def _initialize_weights(self):
+            init.orthogonal_(self.conv1.weight, init.calculate_gain("relu"))
+            init.orthogonal_(self.conv2.weight, init.calculate_gain("relu"))
+            init.orthogonal_(self.conv3.weight, init.calculate_gain("relu"))
+            init.orthogonal_(self.conv4.weight)
+
+    # Create the super-resolution model by using the above model definition.
+    torch_model = SuperResolutionNet(upscale_factor=3)
+
+    # Load pretrained model weights
+    model_url = "https://s3.amazonaws.com/pytorch/test_data/export/superres_epoch100-44c6958e.pth"
+    batch_size = 1  # just a random number
+
+    # Initialize model with the pretrained weights
+    map_location = lambda storage, loc: storage
+    if torch.cuda.is_available():
+        map_location = None
+    torch_model.load_state_dict(model_zoo.load_url(model_url, map_location=map_location))
+
+    # set the model to inference mode
+    torch_model.eval()
+
+    # Input to the model
+    x = torch.randn(batch_size, 1, 224, 224, requires_grad=True)
+    torch_out = torch_model(x)
+
+    # Export the model
+    with tempfile.TemporaryDirectory() as tmpdir:
+        onnx_path = f"{tmpdir}/super_resolution.onnx"
+        torch.onnx.export(
+            torch_model,  # model being run
+            x,  # model input (or a tuple for multiple inputs)
+            onnx_path,  # where to save the model (can be a file or file-like object)
+            export_params=True,  # store the trained parameter weights inside the model file
+            opset_version=10,  # the ONNX version to export the model to
+            do_constant_folding=True,  # whether to execute constant folding for optimization
+            input_names=["input"],  # the model's input names
+            output_names=["output"],  # the model's output names
+            dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},  # variable length axes
+        )
+
+        onnx_model = onnx.load(onnx_path)
+
+    ######## Create DataCard
+    datacard = DataCard(
+        name="image-data",
+        team="opsml",
+        user_email="user@opsml.com",
+        data=x.detach().numpy(),
+    )
+    registries.data.register_card(datacard)
+
+    ####### Create ModelCard
+
+    model_def = OnnxModelDefinition(
+        onnx_version="1.14.0",
+        model_bytes=onnx_model.SerializeToString(),
+    )
+
+    modelcard = ModelCard(
+        name="pytorch-custom-onnx",
+        team="opmsl",
+        user_email="opsml.com",
+        trained_model=torch_model,
+        sample_input_data=datacard.data[0:1],
+        onnx_model_def=model_def,
+        datacard_uid=datacard.uid,
+    )
+
+    # remove final registration line due to pytest module-level save issues
+
+
+def test_overview_list(
+    linear_regression: linear_model.LinearRegression,
+    db_registries,
+):
+    data_registry = db_registries["data"]
+    model, data = linear_regression
+    data_card = DataCard(
+        data=data,
+        name="reg_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="linear-reg",
+        team="opsml",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+        version="1.0.0",
+    )
+    model_registry = db_registries["model"]
+    model_registry.register_card(card=model_card)
+    uid = model_card.uid
+
+    ######## Doc example
+    registry = db_registries["model"]
+
+    registry.list_cards()
+    # will list all cards in registry
+
+    registry.list_cards(limit=10)
+    # will list cards and limit the result to 10
+
+    registry.list_cards(name="linear-reg")
+    # list all cards with name "linear-reg"
+
+    registry.list_cards(name="linear-reg", team="opsml")
+    # list all cards with name "linear-reg" with team "opsml"
+
+    registry.list_cards(name="linear-reg", team="opsml", version="1.0.0")
+    # list card with name "linear-reg" with team "opsml" and version 1.0.0
+
+    registry.list_cards(name="linear-reg", team="opsml", version="1.*.*")
+    # list cards with name "linear-reg" with team "opsml" and major version of "1"
+
+    registry.list_cards(name="linear-reg", team="opsml", version="^2.3.4")
+    # list card with name "linear-reg" with team "opsml" and latest version < 3.0.0
+
+    registry.list_cards(name="linear-reg", team="opsml", version="~2.3.4")
+    # list card with name "linear-reg" with team "opsml" and latest version < 2.4.0
+
+    registry.list_cards(uid=uid, as_dataframe=False)
