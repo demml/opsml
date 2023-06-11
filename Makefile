@@ -59,7 +59,7 @@ test.unit:
 		--cov-report term \
 		--junitxml=./results.xml
 
-test.example:
+test.doc_examples:
 	poetry run pytest tests/test_docs
 
 poetry.pre.patch:
