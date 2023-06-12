@@ -62,7 +62,7 @@ class ProjectInfo(BaseModel):
         return self.name
 
     @validator("name", "team", pre=True)
-    def identifier_validator(cls, value: Optional[str]) -> Optional[str]:  # pylint: disable=no-self-argument
+    def identifier_validator(cls, value: Optional[str]) -> Optional[str]:
         """Lowers and strips an identifier.
 
         This ensures we don't have any potentially duplicate (by case alone)

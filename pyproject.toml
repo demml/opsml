@@ -99,7 +99,7 @@ isort = "^5.10.1"
 sqlalchemy2-stubs = "0.0.2a32"
 mypy = "1.0.0"
 types-protobuf = "^4.21.0.3"
-
+pylint-pydantic = "^0.1.8"
 
 
 [tool.poetry.group.docs.dependencies]
@@ -123,6 +123,7 @@ include = '\.pyi?$'
 
 [tool.pylint.MASTER]
 ignore-paths = [ "opsml/.local_tests/*","opsml/registry/sql/migration/*"]
+load-plugins = "pylint_pydantic"
 
 [tool.pylint.messages_control]
 max-line-length = 120
