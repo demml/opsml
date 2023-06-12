@@ -21,7 +21,7 @@ ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dic
 
 
 # lgb and xgb need to be converted to float32
-# skearn pipeline needs to be converted to float32 (some features)
+# sklearn pipeline needs to be converted to float32 (some features)
 # stacking regressor needs to be converted to float32 (all features)
 class DataConverter:
     def __init__(self, model_info: ModelInfo):
@@ -34,7 +34,7 @@ class DataConverter:
 
         """
         self.model_info = model_info
-        self.input_name = "inputs"
+        self.input_name = "predict"
 
     @property
     def model_data(self) -> ModelData:
