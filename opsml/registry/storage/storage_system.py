@@ -712,7 +712,7 @@ class MlflowStorageClient(StorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-        """Uploads local artifact to mflow
+        """Uploads local artifact to mlflow
         Args:
             storage_uri: Path where current artifact has been saved to
         """

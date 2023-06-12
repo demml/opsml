@@ -8,7 +8,7 @@ As mention in above, registering a `ModelCard` will convert your original model 
 ```python
 modelcard = ModelCard(
     name="pytorch-model",
-    team="opmsl",
+    team="opsml",
     user_email="user@opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],
@@ -126,7 +126,7 @@ model_def = OnnxModelDefinition(
 
 modelcard = ModelCard(
     name="pytorch-custom-onnx",
-    team="opmsl",
+    team="opsml",
     user_email="opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],
