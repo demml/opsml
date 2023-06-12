@@ -169,7 +169,7 @@ def test_model_metrics(
 
     runcard = RunCard(info=card_info)
 
-    runcard.log_metric(key="m1", value=1.1)
+    runcard.log_metric(key="mae", value=2)
     runcard.log_metric(key="mape", value=2, step=1)
     runcard.log_metric(key="mape", value=2, step=2)
     runcard.log_parameter(key="m1", value="apple")
@@ -195,6 +195,44 @@ def test_model_metrics(
     # test metric failure
     result = runner.invoke(app, ["get-model-metrics", "--name", modelcard.name, "--team", modelcard.team])
     assert result.exit_code == 1
+
+    ### Create 2nd batch
+    runcard = RunCard(info=card_info)
+    runcard.log_metric(key="mae", value=10)
+    runcard.log_metric(key="mape", value=2, step=1)
+    runcard.log_metric(key="mape", value=2, step=2)
+    runcard.log_parameter(key="m1", value="apple")
+    api_registries.run.register_card(runcard)
+
+    #### Create DataCard
+    datacard = DataCard(data=data, info=card_info)
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    challenger = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        info=card_info,
+        datacard_uid=datacard.uid,
+        runcard_uid=runcard.uid,
+    )
+    api_registries.model.register_card(challenger)
+
+    # test compare metrics
+    result = runner.invoke(
+        app,
+        [
+            "compare-model-metrics",
+            "--challenger-uid",
+            challenger.uid,
+            "--champion-uid",
+            modelcard.uid,
+            "--metric-name",
+            "mae",
+        ],
+    )
+
+    assert result.exit_code == 0
 
 
 def test_download_data_profile(

@@ -59,6 +59,9 @@ test.unit:
 		--cov-report term \
 		--junitxml=./results.xml
 
+test.doc_examples:
+	poetry run pytest tests/test_docs
+
 poetry.pre.patch:
 	poetry version prepatch
 

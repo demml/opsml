@@ -21,6 +21,7 @@ class ApiRoutes:
     UPLOAD = "upload"
     DOWNLOAD_MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
+    COMPARE_MODEL_METRICS = "models/compare_metrics"
     DOWNLOAD_FILE = "files/download"
     LIST_FILES = "files/list"
 
@@ -64,7 +65,7 @@ class ApiClient:
         """Gets the base url to use with all requests"""
         return f"{base_url}/{path_prefix}"
 
-    @retry(reraise=True, stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(1))
     def post_request(
         self,
         route: str,

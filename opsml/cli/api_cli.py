@@ -1,9 +1,10 @@
 import pathlib
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
@@ -361,6 +362,83 @@ def compare_data_profiles(
         write_path=path,
         payload=payload,
     )
+
+
+@app.command()
+def compare_model_metrics(
+    challenger_uid: str = typer.Option(default=None, help="Challenger uid"),
+    champion_uid: List[str] = typer.Option(default=None, help="List of champion one or more model uids"),
+    metric_name: List[str] = typer.Option(
+        default=None,
+        help="Name of metric to compare. This metric must already exist for a challenger and champion models",
+    ),
+    lower_is_better: List[str] = typer.Option(default=["True"], help="Whether a lower metric is better"),
+):
+    """
+    Compare model metrics via `ModelChallenger`
+
+    Args:
+        challenger_uid:
+            Challenger uid
+        champion_uid:
+            List of champion model uids
+        metric_name:
+            Name of metric to compare. This metric must already exist for a challenger and champion models
+        lower_is_better:
+            Whether a lower metric is better
+    Example:
+
+        ```bash
+        opsml-cli compare-model-metrics \
+            --challenger-uid "challenger-uid" \
+            --champion-uid "1st-champion-uid" \
+            --champion-uid "2nd-champion-uid" \
+            --metric-name "mae"
+        ```
+
+    """
+    lower_is_better_bool = [threshold.lower() == "true" for threshold in lower_is_better]
+
+    payload: Dict[str, Union[str, Any]] = {
+        "metric_name": metric_name,
+        "lower_is_better": lower_is_better_bool,
+        "challenger_uid": challenger_uid,
+        "champion_uid": champion_uid,
+    }
+
+    challenger_name, challenger_version, battle_reports = api_client.compare_metrics(payload=payload)
+
+    table = Table(title=f"Model Challenger Results for {challenger_name} v{challenger_version}")
+    table.add_column("Champion \nName", justify="center")
+    table.add_column("Champion \nVersion", justify="center")
+    table.add_column("Metric", justify="center")
+    table.add_column("Champion \nValue", justify="center")
+    table.add_column("Challenger \nValue", justify="center")
+    table.add_column("Challenger \nWin", justify="center")
+
+    # print(Text(report.get("challenger_win", "None")))
+    for _, reports in battle_reports.items():
+        for report in reports:
+            champion_metric = report.get("champion_metric")
+            challenger_metric = report.get("challenger_metric")
+            challenger_win = report.get("challenger_win", "None")
+
+            if challenger_win:
+                challenger_win = Text(str(challenger_win), style="green")
+            else:
+                challenger_win = Text(str(challenger_win), style="red")
+
+            table.add_row(
+                str(report.get("champion_name", "None")),
+                str(report.get("champion_version", "None")),
+                str(champion_metric.get("name", "None")),
+                str(champion_metric.get("value", "None")),
+                str(challenger_metric.get("value", "None")),
+                challenger_win,
+            )
+        table.add_section()
+
+    console.print(table)
 
 
 @app.command()
