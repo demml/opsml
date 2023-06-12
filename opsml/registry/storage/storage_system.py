@@ -744,7 +744,6 @@ class MlflowStorageClient(StorageClient):
             # OPSML save paths always follow table/team/name/version/file save format
 
             file_splits = filename.split("/")
-
             try:
                 # attempt to get parent and child directories
                 for idx, split in enumerate(file_splits):
@@ -756,7 +755,7 @@ class MlflowStorageClient(StorageClient):
 
                 if len(file_splits[parent_idx:]) > 1:
                     # attempt to get the card name
-                    child_dir = file_splits[parent_idx + 2]
+                    child_dir = "/".join(file_splits[parent_idx + 2 : -1])
                 else:
                     # default to unique id
                     child_dir = uuid.uuid4().hex
