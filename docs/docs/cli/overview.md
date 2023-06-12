@@ -53,6 +53,16 @@ Takes a list of version or uids and runs data profile comparisons
 - **version**: List of versions to compare
 - **uid**: List of uids to compare
 
+
+### `compare-model-metrics`
+
+Runs a comparison between a model challenger and *n* model champions
+
+- **challenger_uid**: UID of challenger model
+- **champion_uid**: Champion UIDs
+- **metric_name**: Metrics to compare
+- **lower_is_better**: Whether a lower metric is better
+
 #### Docs
 
 ::: opsml.cli.api_cli
@@ -64,6 +74,7 @@ Takes a list of version or uids and runs data profile comparisons
             - get_model_metrics
             - download_data_profile
             - compare_data_profiles
+            - compare_model_metrics
         show_root_heading: true
         show_source: true
         heading_level: 3
