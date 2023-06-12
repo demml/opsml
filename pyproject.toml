@@ -156,7 +156,7 @@ ignore = ["E203", "W503", "W0511"]
 log_cli = true
 log_cli_level = "INFO"
 testpaths = ["tests"]
-addopts = "--ignore=tests/test_docs"
+#addopts = "--ignore=tests/test_docs"
 
 
 [tool.mypy]
