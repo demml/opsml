@@ -73,7 +73,7 @@ class ArtifactCard(BaseModel):
         smart_union = True
 
     @root_validator(pre=True)
-    def validate(cls, env_vars):  # pylint: disable=no-self-argument)
+    def validate(cls, env_vars):
         """Validate base args and Lowercase name and team"""
 
         card_info = env_vars.get("info")
@@ -178,7 +178,7 @@ class DataCard(ArtifactCard):
     data_profile: Optional[ProfileReport] = None
 
     @validator("uris", pre=True, always=True)
-    def check_data(cls, uris: DataCardUris, values):  # pylint: disable=no-self-argument
+    def check_data(cls, uris: DataCardUris, values):
         if uris.data_uri is None:
             if values["data"] is None and not bool(values["sql_logic"]):
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
@@ -186,7 +186,7 @@ class DataCard(ArtifactCard):
         return uris
 
     @validator("feature_descriptions", pre=True, always=True)
-    def lower_descriptions(cls, feature_descriptions):  # pylint: disable=no-self-argument
+    def lower_descriptions(cls, feature_descriptions):
         if feature_descriptions is None:
             return feature_descriptions
 
@@ -197,11 +197,11 @@ class DataCard(ArtifactCard):
         return feat_dict
 
     @validator("additional_info", pre=True, always=True)
-    def check_info(cls, value):  # pylint: disable=no-self-argument
+    def check_info(cls, value):
         return value or {}
 
     @validator("sql_logic", pre=True, always=True)
-    def load_sql(cls, sql_logic, values):  # pylint: disable=no-self-argument
+    def load_sql(cls, sql_logic, values):
         if not bool(sql_logic):
             return sql_logic
 
@@ -435,7 +435,7 @@ class ModelCard(ArtifactCard):
         keep_untouched = (cached_property,)
 
     @root_validator(pre=True)
-    def check_args(cls, values: Dict[str, Any]):  # pylint: disable=no-self-argument
+    def check_args(cls, values: Dict[str, Any]):
         """Converts trained model to modelcard"""
 
         if all([values.get("uid"), values.get("version")]):
@@ -1019,7 +1019,7 @@ class ProjectCard(ArtifactCard):
     project_id: Optional[str] = None
 
     @validator("project_id", pre=True, always=True)
-    def create_project_id(cls, value, values, **kwargs):  # pylint: disable=no-self-argument
+    def create_project_id(cls, value, values, **kwargs):
         return f'{values["name"]}:{values["team"]}'
 
     def create_registry_record(self) -> RegistryRecord:

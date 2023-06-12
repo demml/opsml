@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
@@ -36,35 +36,54 @@ class ChallengeInputs(BaseModel):
     class Config:
         underscore_attrs_are_private = True
 
-    @root_validator(pre=False)
-    def convert_to_list(cls, values):
-        metric_name = values["metric_name"]
-        metric_value = values["metric_value"]
-        lower_is_better = values["lower_is_better"]
+    @property
+    def metric_names(self) -> List[str]:
+        return cast(List[str], self.metric_name)
 
-        if not isinstance(metric_name, list):
-            values["metric_name"] = [metric_name]
+    @property
+    def metric_values(self) -> List[Optional[Union[int, float]]]:
+        return cast(List[Optional[Union[int, float]]], self.metric_value)
 
-        if not isinstance(lower_is_better, list):
-            values["lower_is_better"] = [lower_is_better] * len(values["metric_name"])
+    @property
+    def threhsolds(self) -> List[bool]:
+        return cast(List[bool], self.lower_is_better)
 
-        if metric_value is not None:
-            if not isinstance(metric_value, list):
-                values["metric_value"] = [metric_value]
+    @validator("metric_name")
+    def convert_name(cls, name) -> List[str]:
+        if not isinstance(name, list):
+            return [name]
+        return name
+
+    @validator("metric_value")
+    def convert_value(cls, value, values) -> List[str]:
+        nbr_metrics = len(values["metric_name"])
+
+        if value is not None:
+            if not isinstance(value, list):
+                metric_value = [value]
+            else:
+                metric_value = value
         else:
-            values["metric_value"] = [None] * len(values["metric_name"])
+            metric_value = [None] * nbr_metrics
 
-        if not all(
-            len(values["metric_name"]) == len(list_)
-            for list_ in [
-                values["metric_name"],
-                values["metric_value"],
-                values["lower_is_better"],
-            ]
-        ):
-            raise ValueError("Metric name, value and lower_is_better should all match in length")
+        if len(metric_value) != nbr_metrics:
+            raise ValueError("List of metric values must be the same length as metric names")
 
-        return values
+        return metric_value
+
+    @validator("lower_is_better")
+    def convert_threshold(cls, threshold, values) -> List[bool]:
+        nbr_metrics = len(values["metric_name"])
+
+        if not isinstance(threshold, list):
+            _threshold = [threshold] * nbr_metrics
+        else:
+            _threshold = threshold
+
+        if len(_threshold) != nbr_metrics:
+            raise ValueError("Length of lower_is_better must be the same length as number of metrics")
+
+        return _threshold
 
 
 class ModelChallenger:
@@ -259,10 +278,11 @@ class ModelChallenger:
         )
 
         report_dict = {}
+
         for name, value, _lower_is_better in zip(
-            inputs.metric_name,
-            inputs.metric_value,
-            inputs.lower_is_better,
+            inputs.metric_names,
+            inputs.metric_values,
+            inputs.threhsolds,
         ):
             # get challenger metric
             if value is None:
