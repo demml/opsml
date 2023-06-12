@@ -56,9 +56,11 @@ nav:
   - CLI:
       - Overview: 'cli/overview.md'
   - FAQ:
-      - Common Questons: 'faq/common_questions.md'
+      - Common Questions: 'faq/common_questions.md'
   - Engineering:
       - Ownership: 'engineering/ownership.md'
+  - RoadMap:
+      - RoadMap: 'roadmap/roadmap.md'
  
 markdown_extensions:
   - tables
@@ -69,6 +71,9 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.extra
   - pymdownx.snippets
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
 
   - pymdownx.superfences:
       custom_fences:
