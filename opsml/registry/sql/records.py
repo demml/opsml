@@ -39,7 +39,7 @@ class DataRegistryRecord(SaveRecord):
     datacard_uri: str
 
     @root_validator(pre=True)
-    def set_uris(cls, values):  # pylint: disable=no-self-argument
+    def set_uris(cls, values):
         uris = values.get("uris")
         values["data_uri"] = uris.data_uri
         values["datacard_uri"] = uris.datacard_uri
@@ -60,7 +60,7 @@ class ModelRegistryRecord(SaveRecord):
     pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)
-    def set_uris(cls, values):  # pylint: disable=no-self-argument
+    def set_uris(cls, values):
         uris = values.get("uris")
         values["trained_model_uri"] = uris.trained_model_uri
         values["model_metadata_uri"] = uris.model_metadata_uri
@@ -138,7 +138,7 @@ class LoadedDataRecord(LoadRecord):
     pipelinecard_uid: Optional[str]
 
     @root_validator(pre=True)
-    def load_attributes(cls, values):  # pylint: disable=no-self-argument
+    def load_attributes(cls, values):
         storage_client = cast(StorageClientType, values["storage_client"])
 
         datacard_definition = cls.load_datacard_definition(
@@ -209,7 +209,7 @@ class LoadedModelRecord(LoadRecord):
     uris: ModelCardUris
 
     @root_validator(pre=True)
-    def load_model_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+    def load_model_attr(cls, values) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
@@ -268,7 +268,7 @@ class LoadedRunRecord(LoadRecord):
     runcard_uri: str
 
     @root_validator(pre=True)
-    def load_run_attr(cls, values) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+    def load_run_attr(cls, values) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
         runcard_definition = cls.load_runcard_definition(
             runcard_uri=values.get("runcard_uri"),

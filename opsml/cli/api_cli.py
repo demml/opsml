@@ -1,9 +1,8 @@
 import pathlib
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import typer
 from rich.console import Console
-from rich.style import Style
 from rich.table import Table
 from rich.text import Text
 
@@ -398,15 +397,11 @@ def compare_model_metrics(
         ```
 
     """
-    lower_is_better = [True if threshold.lower() == "true" else False for threshold in lower_is_better]
+    lower_is_better_bool = [threshold.lower() == "true" for threshold in lower_is_better]
 
-    # api assumes list is only for multiple values
-    if len(lower_is_better) == 1:
-        lower_is_better = lower_is_better[0]
-
-    payload: Dict[str, Union[str, int, List[str]]] = {
+    payload: Dict[str, Union[str, Any]] = {
         "metric_name": metric_name,
-        "lower_is_better": lower_is_better,
+        "lower_is_better": lower_is_better_bool,
         "challenger_uid": challenger_uid,
         "champion_uid": champion_uid,
     }

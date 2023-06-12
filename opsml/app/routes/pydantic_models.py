@@ -141,4 +141,4 @@ class CompareMetricRequest(BaseModel):
 class CompareMetricResponse(BaseModel):
     challenger_name: str
     challenger_version: str
-    battle_report: Dict[str, List[BattleReport]]
+    report: Dict[str, List[BattleReport]]
