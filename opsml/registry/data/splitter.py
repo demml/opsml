@@ -36,7 +36,7 @@ class DataSplit(BaseModel):
         arbitrary_types_allowed = True
 
     @validator("indices", pre=True)
-    def convert_to_list(cls, value):  # pylint: disable=no-self-argument
+    def convert_to_list(cls, value):
         """Pre to convert indices to list if not None"""
 
         if value is not None and not isinstance(value, list):
@@ -45,7 +45,7 @@ class DataSplit(BaseModel):
         return value
 
     @validator("inequality", pre=True)
-    def trim_whitespace(cls, value):  # pylint: disable=no-self-argument
+    def trim_whitespace(cls, value):
         """Trims whitespace from inequality signs"""
 
         if value is not None:

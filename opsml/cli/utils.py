@@ -3,7 +3,7 @@ import os
 import pathlib
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List, Tuple, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, ApiRoutes
@@ -19,7 +19,8 @@ _DATA_PROFILE_FILENAME = "data_profile.html"
 # This is done in order to avoid instantiating DefaultSettings when using CLI (saves time)
 
 Metrics = Dict[str, List[Dict[str, Union[float, int, str]]]]
-BattleReport = List[Dict[str, Any]]
+BattleReports = List[Any]
+MetricReport = Dict[str, BattleReports]
 
 
 class RegistryTableNames(str, Enum):
@@ -105,17 +106,17 @@ class CliApiClient:
         metrics = cast(Metrics, response.get("metrics"))
         return metrics
 
-    def compare_metrics(self, payload: Dict[str, Union[str, int, bool, List[str]]]) -> Union[str, str, BattleReport]:
+    def compare_metrics(self, payload: Dict[str, Union[str, int, bool, List[str]]]) -> Tuple[str, str, MetricReport]:
         response = self.client.post_request(
             route=ApiRoutes.COMPARE_MODEL_METRICS,
             json=payload,
         )
 
-        battle_report = cast(Dict[str, List[BattleReport]], response.get("battle_report"))
-        challenger_name = response.get("challenger_name")
-        challenger_version = response.get("challenger_version")
+        metric_report = cast(MetricReport, response.get("report"))
+        challenger_name = str(response.get("challenger_name"))
+        challenger_version = str(response.get("challenger_version"))
 
-        return challenger_name, challenger_version, battle_report
+        return challenger_name, challenger_version, metric_report
 
     def stream_data_file(
         self,

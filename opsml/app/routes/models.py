@@ -148,10 +148,10 @@ def compare_metrics(
         return CompareMetricResponse(
             challenger_name=challenger_card.name,
             challenger_version=challenger_card.version,
-            battle_report=battle_report,
+            report=battle_report,
         )
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to compare model metrics. {error}",
-        )
+        ) from error
