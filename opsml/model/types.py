@@ -173,7 +173,7 @@ class NumpyBase(Base):
                 type_=feature.feature_type,
                 values=values,
             )
-            return {"inputs": array.reshape(1, -1)}
+            return {"predict": array.reshape(1, -1)}
 
     def to_dataframe(self):
         raise NotImplementedError
