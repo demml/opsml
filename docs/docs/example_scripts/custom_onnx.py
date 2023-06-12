@@ -3,7 +3,6 @@ import os
 
 os.environ["OPSML_TRACKING_URI"] = "http://localhost:8888/"
 
-
 import tempfile
 
 from torch import nn
@@ -102,7 +101,7 @@ registries.data.register_card(datacard)
 
 model_def = OnnxModelDefinition(
     onnx_version="1.14.0",
-    model_bytes=onnx_model.SerializeToString(),
+    model_bytes=onnx_model.SerializeToString(),  #
 )
 
 modelcard = ModelCard(

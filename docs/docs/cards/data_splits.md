@@ -29,9 +29,9 @@ df = pl.DataFrame(
 
 datacard = DataCard(
     info=info,
-    data=df
+    data=df,
     data_splits = [
-        DataSplit(label="train", column_name="fool", column_value=6, inequality="<"),
+        DataSplit(label="train", column_name="foo", column_value=6, inequality="<"),
         DataSplit(label="test", column_name="foo", column_value=6)
     ]
 
@@ -59,7 +59,7 @@ data = np.random.rand(10, 10)
 
 datacard = DataCard(
     info=info,
-    data=data
+    data=data,
     data_splits = [
         DataSplit(label="train", indices=[0,1,5])
     ]
@@ -87,7 +87,7 @@ data = np.random.rand(10, 10)
 
 datacard = DataCard(
     info=info,
-    data=data
+    data=data,
     data_splits = [
         DataSplit(label="train", start=0, stop=3)
     ]
