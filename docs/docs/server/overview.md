@@ -38,7 +38,7 @@ Example:
 
 `gunicorn -k uvicorn.workers.UvicornWorker --config=./app/gunicorn_conf.py --bind=0.0.0.0:3000 "opsml.app.main:run_app(run_mlflow=True, login=False)"`
 
-- To use Mlflow with the `Opsml` server, you will also need to install the `Mlflow` extras (see below).
+- `Opsml` comes pre-installed with `mlflow`.
 
 ### Example pyproject.toml for an Opsml Server
 
@@ -51,5 +51,5 @@ authors = ["devops-ml"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.11"
-opsml = {version = "^0.41.0", extras = ["gcp-postgres", "server", "mlflow"]}
+opsml = {version = "^0.41.0", extras = ["gcp-postgres", "server"]}
 ```
