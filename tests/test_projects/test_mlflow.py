@@ -145,7 +145,7 @@ def test_run_fail(mlflow_project: MlflowProject) -> None:
         with proj.run() as run:
             run.log_metric(key="m1", value=1.1)
             info.run_id = run.run_id
-            proj.fit()  # ATTR doesnt exist
+            proj.fit()  # ATTR doesn't exist
 
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)

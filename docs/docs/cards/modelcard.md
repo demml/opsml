@@ -4,7 +4,7 @@ ModelCards are cards for storing, versioning, and tracking model objects.
 
 ## Features
 - **shareable**: All cards including ModelCards are shareable and searchable.
-- **auto-onnx**: Automatic conversion of trained model into onnx model format and associated onnx-model api definition. Currenlty supports `lightgbm`, `xgboost`, `sklearn` and most flavors of `Tensorflow`, `Pytorch` and `HuggingFace`.
+- **auto-onnx**: Automatic conversion of trained model into onnx model format and associated onnx-model api definition. Currently supports `lightgbm`, `xgboost`, `sklearn` and most flavors of `Tensorflow`, `Pytorch` and `HuggingFace`.
 - **auto-schema**: Auto-infer data schema and input and output signature.
 - **versioning**: SemVer for your model.
 
