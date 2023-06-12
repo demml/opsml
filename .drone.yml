@@ -27,6 +27,7 @@ steps:
   - name: docs_examples_test
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
+      - make setup.project
       - make test.doc_examples
     depends_on:
       - py310
