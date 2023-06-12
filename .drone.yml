@@ -24,7 +24,6 @@ steps:
     depends_on:
       - setup_310
 
-
   - name: quality-checks
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:

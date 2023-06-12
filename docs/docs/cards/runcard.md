@@ -79,6 +79,7 @@ If an `Opsml` server has been setup to use `Mlflow`, you can also associate an `
 
 from sklearn.linear_model import LinearRegression
 import numpy as np
+import pandas as pd
 
 from opsml.projects import ProjectInfo
 
@@ -124,7 +125,7 @@ with project.run(run_name="mlflow-test") as run:
         datacard_uid=data_card.uid,
     )
     run.register_card(card=model_card)
-    for i in range(0, 100):
+    for i in range(0, 10):
         run.log_metric("test", i)
 ```
 

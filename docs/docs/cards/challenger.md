@@ -179,10 +179,9 @@ reports = challenger.challenge_champion(
 )
 
 # can also access the battle report objects directly
-print([report.dict() for report in reports])
+print([report.dict() for report in reports["mae"]])
 ```
 
-The below output shows that our challenger beat both champion models. Results can also be accessed directly in the object via `report.challenger_win`
 ```json
 [
     {
@@ -190,34 +189,34 @@ The below output shows that our challenger beat both champion models. Results ca
         "champion_version": "1.0.0",
         "champion_metric": {
             "name": "mae",
-            "value": 10.753896568020215,
+            "value": 13.986761128923671,
             "step": None,
             "timestamp": None,
         },
         "challenger_metric": {
             "name": "mae",
-            "value": 5.778116866806702,
+            "value": 14.923992178323557,
             "step": None,
             "timestamp": None,
         },
-        "challenger_win": True,
+        "challenger_win": False,
     },
     {
         "champion_name": "poisson_reg",
         "champion_version": "1.0.0",
         "champion_metric": {
             "name": "mae",
-            "value": 6.2403608293470345,
+            "value": 13.471315607483495,
             "step": None,
             "timestamp": None,
         },
         "challenger_metric": {
             "name": "mae",
-            "value": 5.778116866806702,
+            "value": 14.923992178323557,
             "step": None,
             "timestamp": None,
         },
-        "challenger_win": True,
+        "challenger_win": False,
     },
 ]
 ```

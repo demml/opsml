@@ -265,7 +265,7 @@ class DefaultSettings(BaseSettings):
         validate_assignment = True
 
     @root_validator(pre=True)
-    def set_base_settings(cls, env_vars) -> Dict[str, Any]:  # pylint: disable=no-self-argument
+    def set_base_settings(cls, env_vars) -> Dict[str, Any]:
         """Sets tracking url if it doesnt exist and sets storage
         client-related vars
         """

@@ -11,7 +11,7 @@ from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects import OpsmlProject
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.challenger import ModelChallenger
+from opsml.model.challenger import ModelChallenger, ChallengeInputs
 
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -50,8 +50,9 @@ def test_challenger_no_previous_version(
 
     challenger = ModelChallenger(challenger=model_card)
     battle_result = challenger.challenge_champion(metric_name="mape", metric_value=100, lower_is_better=True)
-    assert battle_result.challenger_win
-    assert battle_result.champion_name == "No model"
+
+    assert battle_result["mape"][0].challenger_win
+    assert battle_result["mape"][0].champion_name == "No model"
 
 
 def test_challenger(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
@@ -80,16 +81,16 @@ def test_challenger(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipelin
         metric_value=90,
         lower_is_better=True,
     )
-    assert battle_result.challenger_win
-    assert battle_result.champion_version == "1.0.0"
+    assert battle_result["mape"][0].challenger_win
+    assert battle_result["mape"][0].champion_version == "1.0.0"
 
     # this should load the runcard
     battle_result = challenger.challenge_champion(
         metric_name="mape",
         lower_is_better=True,
     )
-    assert battle_result.challenger_win
-    assert battle_result.champion_version == "1.0.0"
+    assert battle_result["mape"][0].challenger_win
+    assert battle_result["mape"][0].champion_version == "1.0.0"
 
 
 def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
@@ -109,8 +110,8 @@ def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
         metric_value=40,
     )
 
-    assert battle_result.challenger_win
-    assert battle_result.champion_version == "1.0.0"
+    assert battle_result["mape"][0].challenger_win
+    assert battle_result["mape"][0].champion_version == "1.0.0"
 
     # should fail (model version does not exist)
     with pytest.raises(ValueError):
@@ -176,4 +177,19 @@ def test_challenger_fail_no_runcard(
             metric_name="mape",
             lower_is_better=True,
             metric_value=100,
+        )
+
+
+def test_challenger_input_validation():
+    inputs = ChallengeInputs(
+        metric_name=["mae"],
+        metric_value=[10],
+        lower_is_better=[True],
+    )
+
+    with pytest.raises(ValueError):
+        ChallengeInputs(
+            metric_name=["mae"],
+            metric_value=[10],
+            lower_is_better=[True, False],
         )

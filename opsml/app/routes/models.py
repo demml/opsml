@@ -5,10 +5,17 @@ from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from opsml.app.core.config import config
-from opsml.app.routes.pydantic_models import CardRequest, MetricRequest, MetricResponse
+from opsml.app.routes.pydantic_models import (
+    CardRequest,
+    CompareMetricRequest,
+    CompareMetricResponse,
+    MetricRequest,
+    MetricResponse,
+)
 from opsml.app.routes.utils import MODEL_METADATA_FILE, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, CardRegistry, RunCard
+from opsml.model.challenger import ModelChallenger
+from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -115,3 +122,36 @@ def get_metrics(
     runcard: RunCard = registries.run.load_card(uid=card.get("runcard_uid"))
 
     return MetricResponse(metrics=runcard.metrics)
+
+
+@router.post("/models/compare_metrics", response_model=CompareMetricResponse, name="compare_model_metrics")
+def compare_metrics(
+    request: Request,
+    payload: CompareMetricRequest = Body(...),
+) -> CompareMetricResponse:
+    """Compare model metrics using `ModelChallenger`"""
+
+    try:
+        # Get challenger
+        registries: CardRegistries = request.app.state.registries
+        challenger_card: ModelCard = registries.model.load_card(uid=payload.challenger_uid)
+
+        model_challenger = ModelChallenger(challenger=challenger_card)
+
+        champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]
+        battle_report = model_challenger.challenge_champion(
+            metric_name=payload.metric_name,
+            champions=champions,
+            lower_is_better=payload.lower_is_better,
+        )
+
+        return CompareMetricResponse(
+            challenger_name=challenger_card.name,
+            challenger_version=challenger_card.version,
+            report=battle_report,
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to compare model metrics. {error}",
+        ) from error

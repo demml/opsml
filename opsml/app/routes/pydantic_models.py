@@ -1,7 +1,8 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
+from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.registry_base import VersionType
 
@@ -128,3 +129,16 @@ class MetricRequest(BaseModel):
 
 class MetricResponse(BaseModel):
     metrics: METRICS
+
+
+class CompareMetricRequest(BaseModel):
+    metric_name: List[str]
+    lower_is_better: Union[bool, List[bool]]
+    challenger_uid: str
+    champion_uid: List[str]
+
+
+class CompareMetricResponse(BaseModel):
+    challenger_name: str
+    challenger_version: str
+    report: Dict[str, List[BattleReport]]
