@@ -81,7 +81,10 @@ class ChallengeInputs(BaseModel):
             _threshold = threshold
 
         if len(_threshold) != nbr_metrics:
-            raise ValueError("Length of lower_is_better must be the same length as number of metrics")
+            if len(_threshold) == 1:
+                _threshold = _threshold * nbr_metrics
+            else:
+                raise ValueError("Length of lower_is_better must be the same length as number of metrics")
 
         return _threshold
 
