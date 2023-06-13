@@ -778,7 +778,7 @@ class MlflowStorageClient(StorageClient):
 
                 if len(file_splits[parent_idx:]) > 1:
                     # attempt to get the card name
-                    write_dir = f"{parent_dir}/" + "/".join(file_splits[parent_idx + 1 : -1])
+                    write_dir = os.path.normpath(f"{parent_dir}/" + "/".join(file_splits[parent_idx + 1 : -1]))
 
                 else:
                     # default to unique id
