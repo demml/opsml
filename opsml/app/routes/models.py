@@ -1,5 +1,4 @@
 # pylint: disable=protected-access
-import os
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
@@ -22,16 +21,34 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/onnx/uri", name="model_uri")
-def post_model_onnx_uri(request: Request, payload: CardRequest) -> str:
-    """
-    Retrieves the onnx model URI.
+@router.post("/models/onnx_uri", name="model_uri")
+def post_onnx_model_uri(request: Request, payload: CardRequest) -> str:
+    """Retrieves parent directory of converted onnx model"""
 
-    This URI is meant to be called *only* from our hosting infrastructure. It
-    returns the directory of the onnx URI, not the actual URI, as that is what's
-    needed for our hosting infrastructure.
-    """
-    return os.path.dirname(post_model_metadata(request, payload).onnx_uri)
+    onnx_uri = post_model_metadata(request, payload).onnx_uri
+
+    if onnx_uri is not None:
+        return "/".join(onnx_uri.split("/")[:-1])
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Onnx uri not found",
+    )
+
+
+@router.post("/models/model_uri", name="model_uri")
+def post_model_uri(request: Request, payload: CardRequest) -> str:
+    """Retrieves parent directory of original trained model"""
+
+    model_uri = post_model_metadata(request, payload).model_uri
+
+    if model_uri is not None:
+        return "/".join(model_uri.split("/")[:-1])
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Model uri not found",
+    )
 
 
 @router.post("/models/metadata", name="model_metadata")
@@ -54,21 +71,19 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     """
     registry: CardRegistry = request.app.state.registries.model
 
-    # load model card
-    model_card: ModelCard = None
     try:
-        # BUG: Requesting ^1.0.1 will return 1.0.0
-        model_card: ModelCard = registry.load_card(
+        model_card: ModelCard = registry.load_card(  # type:ignore
             name=payload.name,
             team=payload.team,
             uid=payload.uid,
             version=payload.version,
         )
-    except IndexError:
+
+    except IndexError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Model not found",
-        )
+        ) from exc
 
     return model_card.model_metadata
 

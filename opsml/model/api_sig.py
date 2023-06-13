@@ -29,7 +29,7 @@ class PydanticFeatureGenerator:
         is_input: bool,
     ):
         """
-        Generates pydanitc field for api cretion
+        Generates pydantic field for api creation
 
         Args:
             features:
@@ -130,7 +130,7 @@ class ApiSigCreator:
         """
         Creates an API signature from model metadata
 
-        Arga:
+        Args:
             data_dict:
                 Data dict of data_type, input features, and outputs from model
             model_type:

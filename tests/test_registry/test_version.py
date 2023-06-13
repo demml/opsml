@@ -4,7 +4,7 @@ from opsml.registry.sql.semver import get_version_to_search
 from pytest_lazyfixture import lazy_fixture
 
 
-def test_semvar(db_registries):
+def test_semver(db_registries):
     model_registry = db_registries["model"]
 
     for i in range(0, 10):

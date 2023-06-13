@@ -46,7 +46,7 @@ class ArtifactStorage:
         """
 
         self.file_suffix = None
-        self.additional_path = None
+        self.additional_path: Optional[str] = None
         self.artifact_type = artifact_type
         self.storage_client = storage_client
         self.artifact_class = artifact_class

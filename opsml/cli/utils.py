@@ -52,7 +52,7 @@ class CliApiClient:
             Dictionary of metadata
         """
 
-        metadata = self.client.stream_post_request(
+        metadata = self.client.post_request(
             route=ApiRoutes.MODEL_METADATA,
             json=payload,
         )
