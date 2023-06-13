@@ -8,8 +8,8 @@ from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     AddCardRequest,
     AddCardResponse,
-    ListRequest,
-    ListResponse,
+    ListCardRequest,
+    ListCardResponse,
     UidExistsRequest,
     UidExistsResponse,
     UpdateCardRequest,
@@ -61,11 +61,11 @@ def set_version(
     return VersionResponse(version=version)
 
 
-@router.post("/cards/list", response_model=ListResponse, name="list_cards")
+@router.post("/cards/list", response_model=ListCardResponse, name="list_cards")
 def list_cards(
     request: Request,
-    payload: ListRequest = Body(...),
-) -> ListResponse:
+    payload: ListCardRequest = Body(...),
+) -> ListCardResponse:
     """Lists a Card"""
 
     try:
@@ -93,7 +93,7 @@ def list_cards(
                 for card in cards
             ]
 
-        return ListResponse(cards=cards)
+        return ListCardResponse(cards=cards)
 
     except Exception as error:
         raise HTTPException(
