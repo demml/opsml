@@ -466,14 +466,8 @@ def test_download_model_metadata(
 
     model_registry.register_card(model_card)
 
-    result = ""
-    with test_app.stream(
-        method="POST", url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"uid": model_card.uid}
-    ) as response:
-        for data in response.iter_bytes():
-            result += data.decode("utf-8")
-
-    model_def = json.loads(result)
+    response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"uid": model_card.uid})
+    model_def = response.json()
 
     assert model_def["model_name"] == model_card.name
     assert model_def["model_version"] == model_card.version
@@ -484,7 +478,7 @@ def test_download_model_metadata(
     assert j == os.path.dirname(model_def["onnx_uri"])
 
 
-def test_download_model_failure(test_app: TestClient):
+def test_download_model_metadata_failure(test_app: TestClient):
     response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
