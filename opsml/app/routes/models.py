@@ -70,7 +70,10 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
             version=payload.version,
         )
     except IndexError:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model not found",
+        )
 
     return model_card.model_metadata
 
