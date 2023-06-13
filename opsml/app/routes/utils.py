@@ -7,9 +7,6 @@ from opsml.registry.storage.storage_system import LocalStorageClient, StorageCli
 
 logger = ArtifactLogger.get_logger(__name__)
 
-BASE_SAVE_PATH = "app"
-MODEL_METADATA_FILE = "model-metadata.json"
-
 
 def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
     new_path = current_path.replace(proxy_root, f"{storage_root}/")
