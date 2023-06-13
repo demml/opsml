@@ -20,8 +20,8 @@ instrumentator = Instrumentator()
 class OpsmlApp:
     def __init__(
         self,
-        run_mlflow: bool = False,
-        port: int = 8080,
+        run_mlflow: bool = True,
+        port: int = 8888,
         login: bool = False,
     ):
         self.port = port
@@ -101,17 +101,14 @@ class OpsmlApp:
         return self.app
 
 
-def run_app(run_mlflow: bool, login: bool):
-    app = OpsmlApp(
-        run_mlflow=run_mlflow,
-        login=login,
-    ).get_app()
+def run_app(run_mlflow: bool = True, login: bool = False):
+    app = OpsmlApp(run_mlflow=run_mlflow, login=login).get_app()
 
     return app
 
 
 if __name__ == "__main__":
-    uvicorn.run(run_app(True, False))
+    app = run_app()
 
 # TODO (steven) - figure out cli stuff later.
 # Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )
