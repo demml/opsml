@@ -10,9 +10,7 @@ from opsml.app.routes.pydantic_models import (
     CompareMetricResponse,
     MetricRequest,
     MetricResponse,
-    ListCardRequest,
 )
-from opsml.app.routes.cards import list_cards
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
