@@ -2,9 +2,7 @@
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import StreamingResponse
 
-from opsml.app.core.config import config
 from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
@@ -12,10 +10,10 @@ from opsml.app.routes.pydantic_models import (
     MetricRequest,
     MetricResponse,
 )
-from opsml.app.routes.utils import MODEL_METADATA_FILE, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
+from opsml.registry.cards.cards import ModelMetadata
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -23,8 +21,38 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/metadata", name="download_model_metadata")
-def download_model_metadata(request: Request, payload: CardRequest) -> StreamingResponse:
+@router.post("/models/onnx_uri", name="model_uri")
+def post_onnx_model_uri(request: Request, payload: CardRequest) -> str:
+    """Retrieves parent directory of converted onnx model"""
+
+    onnx_uri = post_model_metadata(request, payload).onnx_uri
+
+    if onnx_uri is not None:
+        return "/".join(onnx_uri.split("/")[:-1])
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Onnx uri not found",
+    )
+
+
+@router.post("/models/model_uri", name="model_uri")
+def post_model_uri(request: Request, payload: CardRequest) -> str:
+    """Retrieves parent directory of original trained model"""
+
+    model_uri = post_model_metadata(request, payload).model_uri
+
+    if model_uri is not None:
+        return "/".join(model_uri.split("/")[:-1])
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Model uri not found",
+    )
+
+
+@router.post("/models/metadata", name="model_metadata")
+def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata:
     """
     Downloads a Model API definition
 
@@ -39,58 +67,29 @@ def download_model_metadata(request: Request, payload: CardRequest) -> Streaming
             Optional uid of ModelCard
 
     Returns:
-        FileResponse object containing model definition json
+        ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
     """
-
     registry: CardRegistry = request.app.state.registries.model
-    storage_client = request.app.state.storage_client
-
-    cards: List[Dict[str, Any]] = registry.list_cards(
-        name=payload.name,
-        team=payload.team,
-        version=payload.version,
-        uid=payload.uid,
-        as_dataframe=False,
-    )
-
-    if len(cards) > 1:
-        logger.warning("More than one model found. Returning latest")
-
-    if not bool(cards):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No model found",
-        )
-
-    # swap mlflow proxy root if needed
-    if config.is_proxy:
-        card = replace_proxy_root(
-            card=cards[0],
-            storage_root=config.STORAGE_URI,
-            proxy_root=config.proxy_root,
-        )
-
-    headers = {"Content-Disposition": f'attachment; filename="{MODEL_METADATA_FILE}"'}
-    meta_data_uri = card.get("model_metadata_uri")
 
     try:
-        return StreamingResponse(
-            storage_client.iterfile(
-                file_path=meta_data_uri,
-                chunk_size=CHUNK_SIZE,
-            ),
-            headers=headers,
+        model_card: ModelCard = registry.load_card(  # type:ignore
+            name=payload.name,
+            team=payload.team,
+            uid=payload.uid,
+            version=payload.version,
         )
 
-    except Exception as error:
+    except IndexError as exc:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error downloading model. {error}",
-        ) from error
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model not found",
+        ) from exc
+
+    return model_card.model_metadata
 
 
 @router.post("/models/metrics", response_model=MetricResponse, name="model_metrics")
-def get_metrics(
+def post_model_metrics(
     request: Request,
     payload: MetricRequest = Body(...),
 ) -> MetricResponse:
