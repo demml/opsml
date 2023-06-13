@@ -153,7 +153,7 @@ class DataCard(ArtifactCard):
         version:
             DataCard version
         feature_map:
-            Map of features in data (inferred when converting to pyrarrow table)
+            Map of features in data (inferred when converting to pyarrow table)
         data_type:
             Data type inferred from supplied data
         uid:
@@ -292,7 +292,7 @@ class DataCard(ArtifactCard):
         Implemented with a DataRegistry object.
 
         Returns:
-            Regsitry metadata
+            Registry metadata
 
         """
         exclude_attr = {"data", "storage_client"}
@@ -300,7 +300,7 @@ class DataCard(ArtifactCard):
 
     def add_info(self, info: Dict[str, Union[float, int, str]]):
         """
-        Adds metadata to the existing DataCard metadatda dictionary
+        Adds metadata to the existing DataCard metadata dictionary
 
         Args:
             Metadata:
@@ -895,7 +895,7 @@ class RunCard(ArtifactCard):
     def log_artifact(self, name: str, artifact: Any) -> None:
         """
         Append any artifact associated with your run to
-        the RunCard. The aritfact will be saved and the uri
+        the RunCard. The artifact will be saved and the uri
         will be appended to the RunCard. Artifact must be pickleable
         (saved with joblib)
 
@@ -933,7 +933,7 @@ class RunCard(ArtifactCard):
 
     def add_card_uid(self, card_type: str, uid: str) -> None:
         """
-        Adds a card uid to the appropriact card uid list for tracking
+        Adds a card uid to the appropriate card uid list for tracking
 
         Args:
             card_type:
@@ -1012,7 +1012,7 @@ class RunCard(ArtifactCard):
 
 class ProjectCard(ArtifactCard):
     """
-    Card containg project information
+    Card containing project information
     """
 
     project_id: Optional[str] = None
