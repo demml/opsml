@@ -1,9 +1,8 @@
 # pylint: disable=protected-access
-from typing import Any, Dict, List
 import os
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import Response
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -66,7 +65,10 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
             version=payload.version,
         )
     except IndexError:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model not found",
+        )
 
     return model_card.model_metadata
 
