@@ -53,7 +53,7 @@ class CliApiClient:
         """
 
         metadata = self.client.stream_post_request(
-            route=ApiRoutes.DOWNLOAD_MODEL_METADATA,
+            route=ApiRoutes.MODEL_METADATA,
             json=payload,
         )
 
