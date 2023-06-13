@@ -110,6 +110,11 @@ def run_app(run_mlflow: bool, login: bool):
     return app
 
 
+# import uvicorn
+
+# if __name__ == "__main__":
+#     uvicorn.run(run_app(True, False))
+
 # TODO (steven) - figure out cli stuff later.
 # Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )
 # @click.command()

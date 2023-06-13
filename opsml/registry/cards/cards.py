@@ -502,14 +502,13 @@ class ModelCard(ArtifactCard):
 
             setattr(self, "trained_model", trained_model)
 
-    def _load_metadata(self, storage_client: StorageClientType) -> ModelMetadata:
-        """Loads onnx metadata"""
-
-        # get metadata
+    @property
+    def model_metadata(self) -> ModelMetadata:
+        assert self.storage_client is not None
         storage_spec = ArtifactStorageSpecs(save_path=self.uris.model_metadata_uri)
-        storage_client.storage_spec = storage_spec
+        self.storage_client.storage_spec = storage_spec
         model_metadata = load_record_artifact_from_storage(
-            storage_client=storage_client,
+            storage_client=self.storage_client,
             artifact_type=ArtifactStorageType.JSON.value,
         )
 
@@ -537,8 +536,7 @@ class ModelCard(ArtifactCard):
             raise ValueError("No model metadata exists. Please check the registry or register a new model")
 
         if self.storage_client is not None:
-            metadata = self._load_metadata(storage_client=self.storage_client)
-
+            metadata = self.model_metadata
             onnx_model = self._load_onnx_model(
                 metadata=metadata,
                 storage_client=self.storage_client,
@@ -752,8 +750,9 @@ class RunCard(ArtifactCard):
 
     """
     Create a RunCard from specified arguments.
-    Apart from required args, an Experiment card must be associated with one of datacard_uid,
-    modelcard_uids or pipelinecard_uid
+
+    Apart from required args, a RunCard must be associated with one of
+    datacard_uid, modelcard_uids or pipelinecard_uid
 
     Args:
         name:
@@ -774,8 +773,8 @@ class RunCard(ArtifactCard):
         parameters:
             Parameters associated with a RunCard
         artifacts:
-            Optional dictionary of artifacts (i.e. plots, reports) to associate with
-            the current run.
+            Optional dictionary of artifacts (i.e. plots, reports) to associate
+            with the current run.
         artifact_uris:
             Optional dictionary of artifact uris associated with artifacts.
         uid:
