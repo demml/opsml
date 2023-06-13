@@ -1,5 +1,6 @@
 # pylint: disable=protected-access
 from typing import Any, Dict, List
+import os
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import Response
@@ -22,10 +23,16 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/uri", name="model_uri")
-def post_model_uri(request: Request, payload: CardRequest) -> str:
-    """Retrieves the onnx model URI"""
-    return post_model_metadata(request, payload).onnx_uri
+@router.post("/models/onnx/uri", name="model_uri")
+def post_model_onnx_uri(request: Request, payload: CardRequest) -> str:
+    """
+    Retrieves the onnx model URI.
+
+    This URI is meant to be called *only* from our hosting infrastructure. It
+    returns the directory of the onnx URI, not the actual URI, as that is what's
+    needed for our hosting infrastructure.
+    """
+    return os.path.dirname(post_model_metadata(request, payload).onnx_uri)
 
 
 @router.post("/models/metadata", name="model_metadata")
@@ -61,7 +68,6 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     except IndexError:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
-    assert isinstance(model_card.card_type, ModelCard)
     return model_card.model_metadata
 
 

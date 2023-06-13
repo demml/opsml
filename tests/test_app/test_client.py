@@ -1,4 +1,9 @@
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, Tuple
+
+import json
+import os
+import uuid
+
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
@@ -9,9 +14,6 @@ from pydantic import ValidationError
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries, CardInfo
 from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
-import uuid
-import tenacity
-import json
 from tests.conftest import TODAY_YMD
 
 
@@ -430,7 +432,7 @@ def test_full_pipeline_with_loading(
     assert uids["model"][0] == model_card.uid
 
 
-def test_download_model(
+def test_download_model_metadata(
     test_app: TestClient,
     api_registries: Dict[str, CardRegistry],
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
@@ -466,7 +468,7 @@ def test_download_model(
 
     result = ""
     with test_app.stream(
-        method="POST", url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"uid": model_card.uid}
+        method="POST", url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"uid": model_card.uid}
     ) as response:
         for data in response.iter_bytes():
             result += data.decode("utf-8")
@@ -477,13 +479,16 @@ def test_download_model(
     assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
 
+    response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_ONNX_URI}", json={"uid": model_card.uid})
+    j = response.json()
+    assert j == os.path.dirname(model_def["onnx_uri"])
+
 
 def test_download_model_failure(test_app: TestClient):
-    response = test_app.post(url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"name": "pip"})
+    response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
-    assert response.status_code == 500
-    assert response.json()["detail"] == "No model found"
+    assert response.status_code == 404
 
 
 def test_app_with_login(test_app_login: TestClient):
