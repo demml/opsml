@@ -36,7 +36,7 @@ class ModelCardRegistry(Registry):
         table_to_check = self._get_data_table_name()
         exists = self.check_uid(uid=uid, table_to_check=table_to_check)
         if not exists:
-            raise ValueError("ModelCard must be assoicated with a valid DataCard uid")
+            raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
     def _has_datacard_uid(self, uid: Optional[str]) -> bool:
         return bool(uid)
@@ -307,7 +307,7 @@ class CardRegistry:
 
 class CardRegistries:
     def __init__(self):
-        """Instantiates class that contains all registeries"""
+        """Instantiates class that contains all registries"""
         self.data = CardRegistry(registry_name=CardType.DATACARD.value)
         self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
         self.run = CardRegistry(registry_name=CardType.RUNCARD.value)

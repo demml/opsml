@@ -464,26 +464,42 @@ def test_download_model(
 
     model_registry.register_card(model_card)
 
-    result = ""
-    with test_app.stream(
-        method="POST", url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"uid": model_card.uid}
-    ) as response:
-        for data in response.iter_bytes():
-            result += data.decode("utf-8")
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.MODEL_METADATA}",
+        json={"uid": model_card.uid},
+    )
 
-    model_def = json.loads(result)
+    model_def = response.json()
 
     assert model_def["model_name"] == model_card.name
     assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
 
+    # test onnx parent dir
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.MODEL_ONNX_URI}",
+        json={"uid": model_card.uid},
+    )
 
-def test_download_model_failure(test_app: TestClient):
-    response = test_app.post(url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"name": "pip"})
+    onnx_uri = response.json()
+    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model" in onnx_uri
+
+    # test model parent dir
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.MODEL_URI}",
+        json={"uid": model_card.uid},
+    )
+
+    model_uri = response.json()
+    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model" in model_uri
+
+
+def test_download_model_metadata_failure(test_app: TestClient):
+    response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
-    assert response.status_code == 500
-    assert response.json()["detail"] == "No model found"
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Model not found"
 
 
 def test_app_with_login(test_app_login: TestClient):

@@ -46,6 +46,7 @@ class ArtifactStorage:
         """
 
         self.file_suffix = None
+        self.additional_path: Optional[str] = None
         self.artifact_type = artifact_type
         self.storage_client = storage_client
         self.artifact_class = artifact_class
@@ -127,7 +128,7 @@ class ArtifactStorage:
         raise NotImplementedError
 
     def save_artifact(self, artifact: Any) -> StoragePath:
-        with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
+        with self.storage_client.create_temp_save_path(self.file_suffix, self.additional_path) as temp_output:
             storage_uri, tmp_uri = temp_output
             storage_uri = self._save_artifact(
                 artifact=artifact,
@@ -189,6 +190,8 @@ class OnnxStorage(ArtifactStorage):
             file_suffix="onnx",
             artifact_class=ArtifactClass.OTHER.value,
         )
+
+        self.additional_path = "onnx"
 
     def _write_onnx(self, artifact: Any, file_path: FilePath) -> None:
         with open(str(file_path), "wb") as file_:
