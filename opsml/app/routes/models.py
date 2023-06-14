@@ -1,6 +1,8 @@
 # pylint: disable=protected-access
 from typing import Any, Dict, List
 
+import os
+
 from fastapi import APIRouter, Body, HTTPException, Request, status
 
 from opsml.app.routes.pydantic_models import (
@@ -28,7 +30,7 @@ def post_onnx_model_uri(request: Request, payload: CardRequest) -> str:
     onnx_uri = post_model_metadata(request, payload).onnx_uri
 
     if onnx_uri is not None:
-        return "/".join(onnx_uri.split("/")[:-1])
+        return os.path.dirname(onnx_uri)
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -43,7 +45,7 @@ def post_model_uri(request: Request, payload: CardRequest) -> str:
     model_uri = post_model_metadata(request, payload).model_uri
 
     if model_uri is not None:
-        return "/".join(model_uri.split("/")[:-1])
+        return os.path.dirname(model_uri)
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
