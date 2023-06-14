@@ -249,7 +249,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
             filename=SaveName.ONNX_MODEL,
-            uri=self.card.uris.model_metadata_uri,
+            uri=self.card.uris.onnx_model_uri,
         )
 
         self.card._create_and_set_model_attr()  # pylint: disable=protected-access
@@ -260,6 +260,8 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 artifact_type=ArtifactStorageType.ONNX.value,
                 storage_client=self.storage_client,
             )
+
+            self.card.uris.onnx_model_uri = storage_path.uri
 
             return OnnxAttr(
                 onnx_path=storage_path.uri,

@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pyarrow as pa
 import pytest
@@ -93,6 +94,7 @@ def test_api_pytorch_model(storage_client, load_pytorch_resnet):
     assert model == model
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
 def test_api_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
@@ -148,6 +150,7 @@ def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
         assert isinstance(array, np.ndarray)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib):
     model, data = load_transformer_example
@@ -172,6 +175,7 @@ def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib
         model = model_storage.load_artifact(storage_uri=metadata.uri)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
     model, data = load_pytorch_resnet

@@ -2,7 +2,7 @@ from opsml.app.routes.utils import replace_proxy_root
 
 
 def test_replace_proxy():
-    fake_url = "mlflow-artifacts:/1/ljkflsdkjf/"
+    fake_url = "mlflow-artifacts:/1/blah/"
     storage_root = "gs://bucket"
     proxy_root = "mlflow-artifacts:/"
 
