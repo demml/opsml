@@ -10,8 +10,6 @@ from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegis
 from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
-import tenacity
-import json
 from tests.conftest import TODAY_YMD
 
 
@@ -482,7 +480,7 @@ def test_download_model(
     )
 
     onnx_uri = response.json()
-    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model" in onnx_uri
+    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model/v1.1.0/onnx" in onnx_uri
 
     # test model parent dir
     response = test_app.post(
@@ -491,7 +489,7 @@ def test_download_model(
     )
 
     model_uri = response.json()
-    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model" in model_uri
+    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model/v1.1.0/model" in model_uri
 
 
 def test_download_model_metadata_failure(test_app: TestClient):
