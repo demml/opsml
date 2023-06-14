@@ -766,7 +766,6 @@ class MlflowStorageClient(StorageClient):
             # OPSML save paths always follow table/team/name/version/file save format
 
             file_splits = filename.split("/")
-
             try:
                 # attempt to get parent and child directories
                 for idx, split in enumerate(file_splits):

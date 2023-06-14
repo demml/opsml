@@ -21,7 +21,7 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/onnx_uri", name="model_uri")
+@router.post("/models/onnx_uri", name="onnx_uri")
 def post_onnx_model_uri(request: Request, payload: CardRequest) -> str:
     """Retrieves parent directory of converted onnx model"""
 
