@@ -6,4 +6,4 @@ authors = ["devops-ml"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.11"
-opsml = {version = "^0.41.0", extras = ["gcp-postgres", "server", "mlflow"]}
+opsml = {version = "^0.41.0", extras = ["gcp-postgres", "server"]}
