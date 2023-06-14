@@ -16,11 +16,54 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.cards import ModelMetadata
+from opsml.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
 CHUNK_SIZE = 31457280
+
+
+@router.post("/models/transport_onnx", name="transport_onnx")
+def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
+    """Copies model to new destination
+
+    Args:
+        name:
+            Optional name of model
+        version:
+            Optional semVar version of model
+        team:
+            Optional team name
+        uid:
+            Optional uid of ModelCard
+
+    Returns:
+        model uri or HTTP_404_NOT_FOUND if the model is not found.
+    """
+    storage_client: StorageClientType = request.app.state.storage_client
+    metadata = post_model_metadata(request, payload)
+
+    if metadata.onnx_uri is not None:
+        read_path = os.path.dirname(metadata.onnx_uri)
+        write_path = (
+            f"{storage_client.base_path_prefix}"
+            f"/model_registry/{metadata.model_name}/{metadata.model_team}/v{payload.version}"
+        )
+        storage_client.copy(read_path, write_path, recursive=True)
+
+        if len(storage_client.list_files(write_path)) > 0:
+            return write_path
+
+        raise HTTPException(
+            status_code=status.status.HTTP_404_NOT_FOUND,
+            detail="Failed to copy onnx model files",
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Onnx uri not found",
+    )
 
 
 @router.post("/models/onnx_uri", name="onnx_uri")
