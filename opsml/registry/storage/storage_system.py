@@ -214,6 +214,19 @@ class StorageClient:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
 
+    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
+        """Copies object from path1 to path2
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+            recursive:
+                Recursively copy contents (for when path is a directory)
+        """
+        self.client.copy(read_path, write_path, recursive)
+
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
 
@@ -465,6 +478,9 @@ class ApiStorageClient(LocalStorageClient):
     def store(self, storage_uri: str, **kwargs):
         """Wrapper method needed for working with data artifacts (zarr)"""
         return storage_uri
+
+    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
+        raise ValueError("Api client does not support copying")
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -756,6 +772,9 @@ class MlflowStorageClient(StorageClient):
             storage_uri = self.swap_mlflow_root(rpath=storage_uri)
 
         return storage_uri
+
+    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
+        raise ValueError("Mlflow storage does not support copying")
 
     def _get_mlflow_dir(self, filename: str) -> str:
         "Sets individual directories for all mlflow artifacts"

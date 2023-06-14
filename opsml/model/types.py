@@ -297,6 +297,7 @@ class ModelMetadata(BaseModel):
     onnx_version: Optional[str] = None
     model_uri: str
     model_version: str
+    model_team: str
     sample_data: dict
     data_schema: ApiDataSchemas
 

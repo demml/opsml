@@ -242,6 +242,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             onnx_version=onnx_attr.onnx_version,
             model_uri=self.card.uris.trained_model_uri,
             model_version=self.card.version,
+            model_team=self.card.team,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.data_schema,
         )

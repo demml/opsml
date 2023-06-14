@@ -60,6 +60,23 @@ def test_register_data(
     df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
     assert df.shape[0] == 1
 
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_splits,
+    )
+    registry.register_card(card=data_card)
+
+    cards = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^1",
+        as_dataframe=False,
+    )
+    assert len(cards) == 1
+
 
 def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     # create data card
@@ -215,7 +232,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     )
 
     assert len(cards) == 1
-    assert cards[0]["version"] == "1.7.5"
+    assert cards[0]["version"] == "1.11.5"
 
     # version 2
     data_card = DataCard(
