@@ -27,6 +27,7 @@ class SaveName(str, Enum):
     PIPLELINECARD = "pipelinecard"
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
+    ONNX_MODEL = "model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DATA_PROFILE = "data_profile"
 
@@ -247,7 +248,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
-            filename=f"{self.card.name}-v{self.card.version.replace('.', '-')}",
+            filename=SaveName.ONNX_MODEL,
             uri=self.card.uris.onnx_model_uri,
         )
 
