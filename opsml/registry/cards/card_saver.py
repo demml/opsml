@@ -259,6 +259,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 artifact=self.card.onnx_model_def.model_bytes,
                 artifact_type=ArtifactStorageType.ONNX.value,
                 storage_client=self.storage_client,
+                extra_path="onnx",
             )
 
             self.card.uris.onnx_model_uri = storage_path.uri
@@ -325,6 +326,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             artifact=self.card.trained_model,
             artifact_type=self.card.model_type,
             storage_client=self.storage_client,
+            extra_path="model",
         )
         self.card.uris.trained_model_uri = storage_path.uri
 
