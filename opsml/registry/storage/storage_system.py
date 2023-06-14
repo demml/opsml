@@ -135,15 +135,15 @@ class StorageClient:
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        if additional_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{additional_path}"
+        if extra_path is not None:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
 
         else:
             base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
@@ -153,12 +153,12 @@ class StorageClient:
     def create_tmp_path(
         self,
         tmp_dir: str,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
         file_suffix: Optional[str] = None,
     ):
         base_path, filename = self.create_save_path(
             file_suffix=file_suffix,
-            additional_path=additional_path,
+            extra_path=extra_path,
         )
         local_path = f"{tmp_dir}/{filename}"
 
@@ -168,12 +168,12 @@ class StorageClient:
     def create_temp_save_path(
         self,
         file_suffix: Optional[str],
-        additional_path: Optional[str],
+        extra_path: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
-                additional_path=additional_path,
+                extra_path=extra_path,
                 tmp_dir=tmpdirname,
             )
             yield storage_uri, local_path
@@ -275,11 +275,11 @@ class LocalStorageClient(StorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
-            additional_path=additional_path,
+            extra_path=extra_path,
         )
 
         self._make_path("/".join(save_path.split("/")[:-1]))
@@ -324,15 +324,15 @@ class ApiStorageClient(LocalStorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        if additional_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{additional_path}"
+        if extra_path is not None:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
 
         else:
             base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
@@ -629,11 +629,11 @@ class MlflowStorageClient(StorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
-            additional_path=additional_path,
+            extra_path=extra_path,
         )
 
         return save_path, filename
@@ -722,8 +722,6 @@ class MlflowStorageClient(StorageClient):
 
     def log_artifact(self, mlflow_info: MlflowInfo) -> str:
         if mlflow_info.model is not None:
-            mlflow_info.artifact_path = f"{mlflow_info.artifact_path}/model"
-
             return self._log_model(mlflow_info=mlflow_info)
         return self._log_artifact(mlflow_info=mlflow_info)
 
