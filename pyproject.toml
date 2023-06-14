@@ -10,7 +10,6 @@ authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 python = ">=3.9,<=3.11"
 alembic = "^1.10.3"
 httpx ="^0.23.3"
-numpy = ">=1.21.6,<=1.24.1"
 onnx = "^1.14.0"
 onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
