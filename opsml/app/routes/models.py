@@ -50,6 +50,7 @@ def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
             f"{storage_client.base_path_prefix}"
             f"/model_registry/{metadata.model_name}/{metadata.model_team}/v{payload.version}"
         )
+
         storage_client.copy(read_path, write_path, recursive=True)
 
         if len(storage_client.list_files(write_path)) > 0:
