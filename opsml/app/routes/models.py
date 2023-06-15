@@ -23,7 +23,7 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/register_onnx", name="transport_onnx")
+@router.post("/models/register", name="register")
 def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
     """Copies model to new destination
 
@@ -36,6 +36,8 @@ def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
             Optional team name
         uid:
             Optional uid of ModelCard
+        onnx:
+            Whether to copy the onnx model or model in it's native format. Defaults to True
 
     Returns:
         model uri or HTTP_404_NOT_FOUND if the model is not found.
@@ -43,14 +45,19 @@ def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
     storage_client: StorageClientType = request.app.state.storage_client
     metadata = post_model_metadata(request, payload)
 
-    if metadata.onnx_uri is not None:
-        read_path = os.path.dirname(metadata.onnx_uri)
+    if payload.onnx:
+        model_uri = metadata.onnx_uri
+    else:
+        model_uri = metadata.model_uri
+
+    if model_uri is not None:
+        read_path = os.path.dirname(model_uri)
         write_path = (
             f"{storage_client.base_path_prefix}"
             f"/model_registry/{metadata.model_team}/{metadata.model_name}/v{payload.version}"
         )
 
-        storage_client.copy(read_path, write_path, recursive=True)
+        storage_client.copy(read_path=read_path, write_path=write_path)
 
         if len(storage_client.list_files(write_path)) > 0:
             return write_path
