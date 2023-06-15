@@ -491,6 +491,33 @@ def test_download_model(
     model_uri = response.json()
     assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model/v1.1.0/model" in model_uri
 
+    # test onnx transport path
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.TRANSPORT_ONNX_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": model_card.version,
+        },
+    )
+
+    copied_dir = response.json()
+    assert "/model_registry/test-model/mlops/v1.1.0" in copied_dir
+
+    # test onnx transport path
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.TRANSPORT_ONNX_MODEL}",
+        json={
+            "name": "non-exist",
+            "team": model_card.team,
+            "version": model_card.version,
+        },
+    )
+
+    msg = response.json()["detail"]
+    assert response.status_code == 404
+    assert "Model not found" == msg
+
 
 def test_download_model_metadata_failure(test_app: TestClient):
     response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})

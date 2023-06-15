@@ -20,6 +20,7 @@ class ApiRoutes:
     COMPARE_DATA = "data/compare"
     UPLOAD = "upload"
     MODEL_ONNX_URI = "models/onnx_uri"
+    TRANSPORT_ONNX_MODEL = "models/transport_onnx"
     MODEL_URI = "models/model_uri"
     MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"

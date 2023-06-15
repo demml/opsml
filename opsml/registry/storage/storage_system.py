@@ -25,7 +25,7 @@ from typing import (
 
 import pandas as pd
 from numpy.typing import NDArray
-from pyarrow.fs import LocalFileSystem
+from pyarrow.fs import LocalFileSystem, copy_files
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiRoutes
@@ -318,6 +318,12 @@ class LocalStorageClient(StorageClient):
 
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
+
+    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
+        if os.path.isdir(read_path):
+            shutil.copytree(read_path, write_path)
+        else:
+            shutil.copyfile(read_path, write_path)
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
