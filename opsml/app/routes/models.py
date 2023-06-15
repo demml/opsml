@@ -23,7 +23,7 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/transport_onnx", name="transport_onnx")
+@router.post("/models/register_onnx", name="transport_onnx")
 def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
     """Copies model to new destination
 
@@ -47,7 +47,7 @@ def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
         read_path = os.path.dirname(metadata.onnx_uri)
         write_path = (
             f"{storage_client.base_path_prefix}"
-            f"/model_registry/{metadata.model_name}/{metadata.model_team}/v{payload.version}"
+            f"/model_registry/{metadata.model_team}/{metadata.model_name}/v{payload.version}"
         )
 
         storage_client.copy(read_path, write_path, recursive=True)
@@ -55,44 +55,9 @@ def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
         if len(storage_client.list_files(write_path)) > 0:
             return write_path
 
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Failed to copy onnx model files",
-        )
-
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail="Onnx uri not found",
-    )
-
-
-@router.post("/models/onnx_uri", name="onnx_uri")
-def post_onnx_model_uri(request: Request, payload: CardRequest) -> str:
-    """Retrieves parent directory of converted onnx model"""
-
-    onnx_uri = post_model_metadata(request, payload).onnx_uri
-
-    if onnx_uri is not None:
-        return os.path.dirname(onnx_uri)
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Onnx uri not found",
-    )
-
-
-@router.post("/models/model_uri", name="model_uri")
-def post_model_uri(request: Request, payload: CardRequest) -> str:
-    """Retrieves parent directory of original trained model"""
-
-    model_uri = post_model_metadata(request, payload).model_uri
-
-    if model_uri is not None:
-        return os.path.dirname(model_uri)
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Model uri not found",
+        detail="Failed to find model",
     )
 
 
