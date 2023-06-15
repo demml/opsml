@@ -25,7 +25,7 @@ from typing import (
 
 import pandas as pd
 from numpy.typing import NDArray
-from pyarrow.fs import LocalFileSystem, copy_files
+from pyarrow.fs import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiRoutes
