@@ -24,8 +24,9 @@ CHUNK_SIZE = 31457280
 
 
 @router.post("/models/register", name="register")
-def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
-    """Copies model to new destination
+def post_register_model(request: Request, payload: CardRequest) -> str:
+    """Promotes a model from Opsml storage to the default model registry used for
+    Seldon model hosting.
 
     Args:
         name:
