@@ -473,27 +473,9 @@ def test_download_model(
     assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
 
-    # test onnx parent dir
+    # test register model (onnx)
     response = test_app.post(
-        url=f"opsml/{ApiRoutes.MODEL_ONNX_URI}",
-        json={"uid": model_card.uid},
-    )
-
-    onnx_uri = response.json()
-    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model/v1.1.0/onnx" in onnx_uri
-
-    # test model parent dir
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.MODEL_URI}",
-        json={"uid": model_card.uid},
-    )
-
-    model_uri = response.json()
-    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model/v1.1.0/model" in model_uri
-
-    # test onnx transport path
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.TRANSPORT_ONNX_MODEL}",
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
             "team": model_card.team,
@@ -502,11 +484,25 @@ def test_download_model(
     )
 
     copied_dir = response.json()
-    assert "/model_registry/test-model/mlops/v1.1.0" in copied_dir
+    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
 
-    # test onnx transport path
+    # test register model (native)
     response = test_app.post(
-        url=f"opsml/{ApiRoutes.TRANSPORT_ONNX_MODEL}",
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": model_card.version,
+            "onnx": "False",
+        },
+    )
+
+    copied_dir = response.json()
+    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
+
+    # test register model path fail
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": "non-exist",
             "team": model_card.team,

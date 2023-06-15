@@ -214,18 +214,8 @@ class StorageClient:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
 
-    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
-        """Copies object from path1 to path2
-
-        Args:
-            read_path:
-                Path to read from
-            write_path:
-                Path to write to
-            recursive:
-                Recursively copy contents (for when path is a directory)
-        """
-        self.client.copy(read_path, write_path, recursive)
+    def copy(self, read_path: str, write_path: str) -> None:
+        raise ValueError("Storage class does not implement a copy method")
 
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
@@ -257,6 +247,17 @@ class GCSFSStorageClient(StorageClient):
             client=client,
             backend=StorageSystem.GCS.value,
         )
+
+    def copy(self, read_path: str, write_path: str) -> None:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+        self.client.copy(read_path, write_path, recursive=True)
 
     def open(self, filename: str, mode: str) -> IO:
         return self.client.open(filename, mode)
@@ -319,9 +320,18 @@ class LocalStorageClient(StorageClient):
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
 
-    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
+    def copy(self, read_path: str, write_path: str) -> None:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+
         if os.path.isdir(read_path):
-            shutil.copytree(read_path, write_path)
+            shutil.copytree(read_path, write_path, dirs_exist_ok=True)
         else:
             shutil.copyfile(read_path, write_path)
 
@@ -484,9 +494,6 @@ class ApiStorageClient(LocalStorageClient):
     def store(self, storage_uri: str, **kwargs):
         """Wrapper method needed for working with data artifacts (zarr)"""
         return storage_uri
-
-    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
-        raise ValueError("Api client does not support copying")
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -778,9 +785,6 @@ class MlflowStorageClient(StorageClient):
             storage_uri = self.swap_mlflow_root(rpath=storage_uri)
 
         return storage_uri
-
-    def copy(self, read_path: str, write_path: str, recursive: bool = False) -> None:
-        raise ValueError("Mlflow storage does not support copying")
 
     def _get_mlflow_dir(self, filename: str) -> str:
         "Sets individual directories for all mlflow artifacts"
