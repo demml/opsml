@@ -1,7 +1,6 @@
 # pylint: disable=protected-access
-from typing import Any, Dict, List
-
 import os
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 
@@ -57,7 +56,7 @@ def post_transport_onnx_model(request: Request, payload: CardRequest) -> str:
             return write_path
 
         raise HTTPException(
-            status_code=status.status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Failed to copy onnx model files",
         )
 
