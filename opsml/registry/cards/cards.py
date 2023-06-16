@@ -52,6 +52,9 @@ from opsml.registry.storage.artifact_storage import load_record_artifact_from_st
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
+# TODO: research a different way to import ydata. ydata adds ~2 sec to opsml import time
+
+
 logger = ArtifactLogger.get_logger(__name__)
 
 

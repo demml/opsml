@@ -117,6 +117,11 @@ Outputs
 `to_onnx`
 : Whether to convert model to onnx or not. Default is True
 
+
+## Supported Models
+
+Out of the box, `Opsml` supports a variety of common model libraries and types including [sklearn](https://scikit-learn.org/stable/index.html), [tensorflow](https://www.tensorflow.org/), [lightgbm](https://lightgbm.readthedocs.io/en/v3.3.5/), [xgboost](https://xgboost.readthedocs.io/en/stable/), [pytorch](https://pytorch.org/) and [huggingface](https://huggingface.co/).
+
 ## Docs
 
 ::: opsml.registry.ModelCard
