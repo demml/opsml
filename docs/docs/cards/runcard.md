@@ -3,7 +3,7 @@
 `RunCards` are use to store metrics and artifacts related to `DataCards`, `ModelCards` and `PipelineCards`. While a RunCard can be used as a object itself, it's best when used as part of a `Project` run.
 
 ### Creating A Run
-Runs are unqiue context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `RunCard`.
+Runs are unique context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `RunCard`.
 
 The following example shows how to create a simple run as well as use `CardInfo` to store helper info
 
@@ -135,7 +135,7 @@ You can now log into the `Opsml` server and see your recent run and associated m
     options:
         members:
             - add_tag
-            - ladd_tags
+            - add_tags
             - log_parameter
             - log_parameters
             - log_metric

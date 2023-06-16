@@ -173,7 +173,7 @@ class NumpyBase(Base):
                 type_=feature.feature_type,
                 values=values,
             )
-            return {"inputs": array.reshape(1, -1)}
+            return {"predict": array.reshape(1, -1)}
 
     def to_dataframe(self):
         raise NotImplementedError
@@ -297,6 +297,7 @@ class ModelMetadata(BaseModel):
     onnx_version: Optional[str] = None
     model_uri: str
     model_version: str
+    model_team: str
     sample_data: dict
     data_schema: ApiDataSchemas
 

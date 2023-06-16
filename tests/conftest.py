@@ -4,7 +4,7 @@ import os
 import pathlib
 
 # setting initial env vars to override default sql db
-# these must be set prior to importing opsml sicne they establish their
+# these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
 SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
 STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
@@ -614,7 +614,7 @@ def drift_dataframe():
 
 
 ###############################################################################
-# Moodels
+# Models
 ################################################################################
 
 
@@ -640,8 +640,8 @@ def load_pytorch_language():
     import torch
     from transformers import AutoTokenizer
 
-    model_name = "sshleifer/tiny-distilbert-base-cased"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    # model_name = "sshleifer/tiny-distilbert-base-cased"
+    tokenizer = AutoTokenizer.from_pretrained("./tests/tokenizer/")
     data = tokenizer(
         "this is a test",
         padding="max_length",
