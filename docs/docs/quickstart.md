@@ -71,7 +71,7 @@ with project.run(run_name="test-run") as run:
     X, y = fake_data()
     reg = LinearRegression().fit(X.to_numpy(), y)
 
-    # Create and registery DataCard with data profile
+    # Create and registry DataCard with data profile
     data_card = DataCard(
         data=X,
         name="pipeline-data",

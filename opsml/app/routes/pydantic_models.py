@@ -49,7 +49,7 @@ class UidExistsResponse(BaseModel):
     uid_exists: bool
 
 
-class ListRequest(BaseModel):
+class ListCardRequest(BaseModel):
     name: Optional[str]
     team: Optional[str]
     version: Optional[str]
@@ -60,7 +60,7 @@ class ListRequest(BaseModel):
     table_name: str
 
 
-class ListResponse(BaseModel):
+class ListCardResponse(BaseModel):
     cards: Optional[List[Dict[str, Any]]]
 
 
@@ -99,6 +99,7 @@ class CardRequest(BaseModel):
     version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
+    onnx: bool = True
 
 
 class CompareCardRequest(BaseModel):

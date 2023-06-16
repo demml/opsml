@@ -79,7 +79,7 @@
 
 ## Why?
 
-The main goal of `Opsml` is to provide an intuitive interface for DSs to create standardized, resuable and auditable machine learning workflows.
+The main goal of `Opsml` is to provide an intuitive interface for DSs to create standardized, reusable and auditable machine learning workflows.
 
 ### Two sides of the same coin (dev as prod)
 
@@ -90,7 +90,7 @@ Taking a data science project from ideation :bulb: to deployment :rocket: often 
 - Experimentation and iteration in order to generate many potential solutions
 - Feature/Data engineering
 - Algorithm development
-- Felxible work environment (often **Jupyter Notebooks**)
+- Flexible work environment (often **Jupyter Notebooks**)
 - Many other things
 
 #### Deployment Themes

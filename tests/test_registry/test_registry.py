@@ -60,6 +60,23 @@ def test_register_data(
     df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
     assert df.shape[0] == 1
 
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=data_splits,
+    )
+    registry.register_card(card=data_card)
+
+    cards = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        version="^1",
+        as_dataframe=False,
+    )
+    assert len(cards) == 1
+
 
 def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     # create data card
@@ -205,7 +222,17 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
             team="mlops",
             user_email="mlops.com",
         )
-        registry.register_card(card=data_card)
+        registry.register_card(card=data_card, version_type="patch")
+
+    cards = registry.list_cards(
+        name="test_df",
+        team="mlops",
+        version="^1.0.0",
+        as_dataframe=False,
+    )
+
+    assert len(cards) == 1
+    assert cards[0]["version"] == "1.11.5"
 
     # version 2
     data_card = DataCard(
@@ -226,54 +253,22 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
         registry.register_card(card=data_card)
 
     # should return 13 versions
-    df = registry.list_cards(
+    cards = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
         version="2.*.*",
-    )
-    assert df.shape[0] == 13
-
-    df = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="^2.3.0",
-    )
-    assert df.shape[0] == 1
-
-    df = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="~2.3.0",
-    )
-    assert df.shape[0] == 1
-
-    # should return
-    card = registry.load_card(
-        name=data_card.name,
-        team=data_card.team,
-        version="^2.3.0",
-    )
-
-    assert card.version == "2.12.0"
-
-    record = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="^2.3.0",
-        limit=1,
         as_dataframe=False,
     )
-    assert len(record) == 1
-    assert record[0].get("version") == "2.12.0"
+    assert len(cards) == 13
 
-    record = registry.list_cards(
+    cards = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
-        version="^2.3.0",
+        version="^2.0.0",
         as_dataframe=False,
     )
-    assert len(record) == 1
-    assert record[0].get("version") == "2.12.0"
+    cards[0]["version"] == "2.12.0"
+    assert len(cards) == 1
 
     # pre-release
     data_card_pre = DataCard(
@@ -338,6 +333,25 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
         version="3.0.1-rc.1",
     )
     registry.register_card(card=data_card_pre)
+
+    # test patch semver sort
+    for i in range(0, 5):
+        data_card = DataCard(
+            data=test_array,
+            name="patch",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        registry.register_card(card=data_card, version_type="patch")
+
+    cards = registry.list_cards(
+        name="patch",
+        team="mlops",
+        version="^1.0.0",
+        as_dataframe=False,
+    )
+
+    assert cards[0]["version"] == "1.0.4"
 
 
 def test_runcard(

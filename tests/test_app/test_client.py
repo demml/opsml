@@ -10,8 +10,6 @@ from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegis
 from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
-import tenacity
-import json
 from tests.conftest import TODAY_YMD
 
 
@@ -464,26 +462,65 @@ def test_download_model(
 
     model_registry.register_card(model_card)
 
-    result = ""
-    with test_app.stream(
-        method="POST", url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"uid": model_card.uid}
-    ) as response:
-        for data in response.iter_bytes():
-            result += data.decode("utf-8")
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.MODEL_METADATA}",
+        json={"uid": model_card.uid},
+    )
 
-    model_def = json.loads(result)
+    model_def = response.json()
 
     assert model_def["model_name"] == model_card.name
     assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
 
+    # test register model (onnx)
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": model_card.version,
+        },
+    )
 
-def test_download_model_failure(test_app: TestClient):
-    response = test_app.post(url=f"opsml/{ApiRoutes.DOWNLOAD_MODEL_METADATA}", json={"name": "pip"})
+    copied_dir = response.json()
+    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
+
+    # test register model (native)
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": model_card.version,
+            "onnx": "False",
+        },
+    )
+
+    copied_dir = response.json()
+    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
+
+    # test register model path fail
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": "non-exist",
+            "team": model_card.team,
+            "version": model_card.version,
+        },
+    )
+
+    msg = response.json()["detail"]
+    assert response.status_code == 404
+    assert "Model not found" == msg
+
+
+def test_download_model_metadata_failure(test_app: TestClient):
+    response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
-    assert response.status_code == 500
-    assert response.json()["detail"] == "No model found"
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Model not found"
 
 
 def test_app_with_login(test_app_login: TestClient):

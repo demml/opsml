@@ -106,7 +106,7 @@ model_def = OnnxModelDefinition(
 
 modelcard = ModelCard(
     name="pytorch-custom-onnx",
-    team="opmsl",
+    team="opsml",
     user_email="opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],

@@ -1,6 +1,6 @@
 # Versioning
 
-All `ArtifactCard`s follow a Semver version format (major.minor.patch). By default, a `minor` increment is used whenver a card is registered. If a version is provided, it overrides the default version type.
+All `ArtifactCard`s follow a Semver version format (major.minor.patch). By default, a `minor` increment is used whenever a card is registered. If a version is provided, it overrides the default version type.
 
 Cards can also be versioned as a release candidate with the format `major.minor.patch-rc.#` (e.g. "1.0.0-rc.2). To create a release candidate, the version must be manually specified before registering the card.
 

@@ -18,7 +18,7 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 
 def _init_rollbar():
-    logger.info("Initialzing rollbar")
+    logger.info("Initializing rollbar")
     rollbar.init(
         os.getenv("ROLLBAR_TOKEN"),
         os.getenv("APP_ENV", "development"),

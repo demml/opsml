@@ -139,14 +139,14 @@ class SQLRegistryBase:
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
-                f"""Card of type {card.__class__.__name__} is not supported by registery
+                f"""Card of type {card.__class__.__name__} is not supported by registry
                 {self._table.__tablename__}"""
             )
 
         if self.check_uid(uid=str(card.uid), table_to_check=self.table_name):
             raise ValueError(
                 """This Card has already been registered.
-            If the card has been modified try upating the Card in the registry.
+            If the card has been modified try updating the Card in the registry.
             If registering a new Card, create a new Card of the correct type.
             """
             )
@@ -155,7 +155,7 @@ class SQLRegistryBase:
         """Creates artifact storage info to associate with artifacts"""
 
         if save_path is None:
-            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{card.version}"
+            save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
 
         artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
 

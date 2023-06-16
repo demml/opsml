@@ -27,6 +27,7 @@ class SaveName(str, Enum):
     PIPLELINECARD = "pipelinecard"
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
+    ONNX_MODEL = "model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DATA_PROFILE = "data_profile"
 
@@ -241,14 +242,15 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             onnx_version=onnx_attr.onnx_version,
             model_uri=self.card.uris.trained_model_uri,
             model_version=self.card.version,
+            model_team=self.card.team,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.data_schema,
         )
 
     def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
-            filename=f"{self.card.name}-v{self.card.version.replace('.', '-')}",
-            uri=self.card.uris.model_metadata_uri,
+            filename=SaveName.ONNX_MODEL,
+            uri=self.card.uris.onnx_model_uri,
         )
 
         self.card._create_and_set_model_attr()  # pylint: disable=protected-access
@@ -258,7 +260,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 artifact=self.card.onnx_model_def.model_bytes,
                 artifact_type=ArtifactStorageType.ONNX.value,
                 storage_client=self.storage_client,
+                extra_path="onnx",
             )
+
+            self.card.uris.onnx_model_uri = storage_path.uri
 
             return OnnxAttr(
                 onnx_path=storage_path.uri,
@@ -322,6 +327,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             artifact=self.card.trained_model,
             artifact_type=self.card.model_type,
             storage_client=self.storage_client,
+            extra_path="model",
         )
         self.card.uris.trained_model_uri = storage_path.uri
 

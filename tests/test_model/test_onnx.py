@@ -1,3 +1,5 @@
+import sys
+
 from opsml.registry.cards.cards import ModelCard
 import numpy as np
 import pytest
@@ -17,10 +19,6 @@ from opsml.model.types import ModelMetadata
         lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         lazy_fixture("sklearn_pipeline_advanced"),
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-        lazy_fixture("load_transformer_example"),  # keras transformer example
-        lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
-        lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
-        lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
         # test all supported sklearn estimators
         lazy_fixture("ard_regression"),
         lazy_fixture("ada_boost_classifier"),
@@ -131,6 +129,21 @@ def test_model_predict(model_and_data):
     pred_orig = predictor.predict_with_model(model, record)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        # Not supportd on apple silicon
+        lazy_fixture("load_transformer_example"),  # keras transformer example
+        lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
+        lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
+        lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
+    ],
+)
+def test_model_predict_linux_only(model_and_data):
+    test_model_predict(model_and_data)
+
+
 @pytest.mark.parametrize(
     "model_and_data",
     [
@@ -189,6 +202,7 @@ def test_byo_onnx(model_and_data):
     pred_orig = predictor.predict_with_model(model, record)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "model_and_data",
     [
