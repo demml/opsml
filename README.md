@@ -93,7 +93,7 @@ default = true
 Next, add opsml to your project's poetry environment.
 
 ```bash
-poetry add opsml --extras=mlflow
+poetry add opsml
 ```
 
 Setup your local environment:
