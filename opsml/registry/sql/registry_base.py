@@ -155,7 +155,7 @@ class SQLRegistryBase:
         """Creates artifact storage info to associate with artifacts"""
 
         if save_path is None:
-            save_path = f"{self.table_name}/{card.team}/{card.name}/v-{card.version}"
+            save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
 
         artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
 

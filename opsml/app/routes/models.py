@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+import os
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
@@ -14,6 +15,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.cards import ModelMetadata
+from opsml.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -21,33 +23,49 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-@router.post("/models/onnx_uri", name="onnx_uri")
-def post_onnx_model_uri(request: Request, payload: CardRequest) -> str:
-    """Retrieves parent directory of converted onnx model"""
+@router.post("/models/register", name="register")
+def post_register_model(request: Request, payload: CardRequest) -> str:
+    """Promotes a model from Opsml storage to the default model registry storage used for
+    Seldon model hosting.
 
-    onnx_uri = post_model_metadata(request, payload).onnx_uri
+    Args:
+        name:
+            Optional name of model
+        version:
+            Optional semVar version of model
+        team:
+            Optional team name
+        uid:
+            Optional uid of ModelCard
+        onnx:
+            Whether to copy the onnx model or model in it's native format. Defaults to True
 
-    if onnx_uri is not None:
-        return "/".join(onnx_uri.split("/")[:-1])
+    Returns:
+        model uri or HTTP_404_NOT_FOUND if the model is not found.
+    """
+    storage_client: StorageClientType = request.app.state.storage_client
+    metadata = post_model_metadata(request, payload)
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Onnx uri not found",
-    )
-
-
-@router.post("/models/model_uri", name="model_uri")
-def post_model_uri(request: Request, payload: CardRequest) -> str:
-    """Retrieves parent directory of original trained model"""
-
-    model_uri = post_model_metadata(request, payload).model_uri
+    if payload.onnx:
+        model_uri = metadata.onnx_uri
+    else:
+        model_uri = metadata.model_uri
 
     if model_uri is not None:
-        return "/".join(model_uri.split("/")[:-1])
+        read_path = os.path.dirname(model_uri)
+        write_path = (
+            f"{storage_client.base_path_prefix}"
+            f"/model_registry/{metadata.model_team}/{metadata.model_name}/v{payload.version}"
+        )
+
+        storage_client.copy(read_path=read_path, write_path=write_path)
+
+        if len(storage_client.list_files(write_path)) > 0:
+            return write_path
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail="Model uri not found",
+        detail="Failed to find model",
     )
 
 

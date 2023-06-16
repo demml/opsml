@@ -10,8 +10,6 @@ from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegis
 from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
-import tenacity
-import json
 from tests.conftest import TODAY_YMD
 
 
@@ -475,23 +473,46 @@ def test_download_model(
     assert model_def["model_version"] == model_card.version
     assert response.status_code == 200
 
-    # test onnx parent dir
+    # test register model (onnx)
     response = test_app.post(
-        url=f"opsml/{ApiRoutes.MODEL_ONNX_URI}",
-        json={"uid": model_card.uid},
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": model_card.version,
+        },
     )
 
-    onnx_uri = response.json()
-    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model" in onnx_uri
+    copied_dir = response.json()
+    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
 
-    # test model parent dir
+    # test register model (native)
     response = test_app.post(
-        url=f"opsml/{ApiRoutes.MODEL_URI}",
-        json={"uid": model_card.uid},
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": model_card.version,
+            "onnx": "False",
+        },
     )
 
-    model_uri = response.json()
-    assert "mlruns/OPSML_MODEL_REGISTRY/mlops/test-model" in model_uri
+    copied_dir = response.json()
+    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
+
+    # test register model path fail
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": "non-exist",
+            "team": model_card.team,
+            "version": model_card.version,
+        },
+    )
+
+    msg = response.json()["detail"]
+    assert response.status_code == 404
+    assert "Model not found" == msg
 
 
 def test_download_model_metadata_failure(test_app: TestClient):

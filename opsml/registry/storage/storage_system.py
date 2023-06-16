@@ -135,15 +135,15 @@ class StorageClient:
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        if additional_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{additional_path}"
+        if extra_path is not None:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
 
         else:
             base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
@@ -153,12 +153,12 @@ class StorageClient:
     def create_tmp_path(
         self,
         tmp_dir: str,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
         file_suffix: Optional[str] = None,
     ):
         base_path, filename = self.create_save_path(
             file_suffix=file_suffix,
-            additional_path=additional_path,
+            extra_path=extra_path,
         )
         local_path = f"{tmp_dir}/{filename}"
 
@@ -168,12 +168,12 @@ class StorageClient:
     def create_temp_save_path(
         self,
         file_suffix: Optional[str],
-        additional_path: Optional[str],
+        extra_path: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
-                additional_path=additional_path,
+                extra_path=extra_path,
                 tmp_dir=tmpdirname,
             )
             yield storage_uri, local_path
@@ -214,6 +214,9 @@ class StorageClient:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
 
+    def copy(self, read_path: str, write_path: str) -> None:
+        raise ValueError("Storage class does not implement a copy method")
+
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
 
@@ -245,6 +248,17 @@ class GCSFSStorageClient(StorageClient):
             backend=StorageSystem.GCS.value,
         )
 
+    def copy(self, read_path: str, write_path: str) -> None:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+        self.client.copy(read_path, write_path, recursive=True)
+
     def open(self, filename: str, mode: str) -> IO:
         return self.client.open(filename, mode)
 
@@ -275,11 +289,11 @@ class LocalStorageClient(StorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
-            additional_path=additional_path,
+            extra_path=extra_path,
         )
 
         self._make_path("/".join(save_path.split("/")[:-1]))
@@ -306,6 +320,21 @@ class LocalStorageClient(StorageClient):
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
 
+    def copy(self, read_path: str, write_path: str) -> None:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+
+        if os.path.isdir(read_path):
+            shutil.copytree(read_path, write_path, dirs_exist_ok=True)
+        else:
+            shutil.copyfile(read_path, write_path)
+
     @staticmethod
     def validate(storage_backend: str) -> bool:
         return storage_backend == StorageSystem.LOCAL
@@ -324,15 +353,15 @@ class ApiStorageClient(LocalStorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        if additional_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{additional_path}"
+        if extra_path is not None:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
 
         else:
             base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
@@ -629,11 +658,11 @@ class MlflowStorageClient(StorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
-        additional_path: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
-            additional_path=additional_path,
+            extra_path=extra_path,
         )
 
         return save_path, filename
@@ -722,8 +751,6 @@ class MlflowStorageClient(StorageClient):
 
     def log_artifact(self, mlflow_info: MlflowInfo) -> str:
         if mlflow_info.model is not None:
-            mlflow_info.artifact_path = f"{mlflow_info.artifact_path}/model"
-
             return self._log_model(mlflow_info=mlflow_info)
         return self._log_artifact(mlflow_info=mlflow_info)
 
