@@ -34,6 +34,7 @@ class QueryCreator:
             .limit(20)  # type: ignore
         )
 
+    # TODO: refactor
     def record_from_table_query(
         self,
         table: Type[REGISTRY_TABLES],
