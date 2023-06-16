@@ -98,7 +98,7 @@ poetry add opsml --extras=mlflow
 
 Setup your local environment:
 
-By default, `opsml` will log artifacts and experiments locally. To configure your machine to use the staging environment by setting the `OPSML_TRACKING_URI` environment variable:
+By default, `opsml` will log artifacts and experiments locally. Configure your machine to use the staging environment by setting the `OPSML_TRACKING_URI` environment variable:
 
 ```shell
 OPSML_TRACKING_URI=https://opsml-api.ml.us-central1.staging.shipt.com
@@ -128,11 +128,6 @@ Types of extras that can be installed:
   poetry add "opsml[server]"
   ```
 
-- **Mlflow**: Installs Mlflow for client-side interaction with an `Opsml` server
-  ```bash
-  poetry add "opsml[mlflow]"
-  ```
-
 - **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add "opsml[gcp_mysql]"
@@ -145,4 +140,4 @@ Types of extras that can be installed:
 
 
 ## Contributing
-- If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `to_dos` directory readme and get started :smiley:
+- If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
