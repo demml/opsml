@@ -19,13 +19,19 @@ $ opsml-cli launch-uvicorn-app
 
 </div>
 
-Next, open a new terminal and run the following python script. Make sure to set the `OPSML_TRACKING_URI` as well
+Next, open a new terminal and run the following python script. Make sure to set the `OPSML_TRACKING_URI` which tells `opsml` where to log experiments.
 
+Shipt has staging and production environments. Staging is read/write. Production is read only outside of Airflow in production. Production can only be written to from Airflow.
+
+| Environment | URL                                                |
+|-------------|----------------------------------------------------|
+| staging     |  |
+| production  |          |
 
 ## Run Initial Python Script
 
 ```bash
-export OPSML_TRACKING_URI=http://0.0.0.0:8888
+export OPSML_TRACKING_URI=
 ```
 
 ```python
