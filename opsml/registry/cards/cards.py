@@ -10,6 +10,8 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 from ydata_profiling import ProfileReport
 
+# TODO: research a different way to import ydata. ydata adds ~2 sec to opsml import time
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
     FindPath,
