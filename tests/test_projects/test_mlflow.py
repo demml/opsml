@@ -1,5 +1,8 @@
-import os
 from typing import Any, cast
+
+import os
+import sys
+
 import pandas as pd
 from numpy.typing import NDArray
 import pytest
@@ -145,7 +148,7 @@ def test_run_fail(mlflow_project: MlflowProject) -> None:
         with proj.run() as run:
             run.log_metric(key="m1", value=1.1)
             info.run_id = run.run_id
-            proj.fit()  # ATTR doesnt exist
+            proj.fit()  # ATTR doesn't exist
 
     # open the project in read only mode (don't activate w/ context)
     proj = conftest.mock_mlflow_project(info)
@@ -273,6 +276,7 @@ def test_lgb_model(
     loaded_card.load_trained_model()
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 def test_pytorch_model(
     mlflow_project: MlflowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
@@ -306,6 +310,7 @@ def test_pytorch_model(
     loaded_card.load_trained_model()
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 def test_tf_model(
     mlflow_project: MlflowProject,
     load_transformer_example: tuple[Any, NDArray],

@@ -135,22 +135,31 @@ class StorageClient:
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
+        if extra_path is not None:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
+
+        else:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
 
         return base_path + f"/{filename}", filename
 
     def create_tmp_path(
         self,
         tmp_dir: str,
+        extra_path: Optional[str] = None,
         file_suffix: Optional[str] = None,
     ):
-        base_path, filename = self.create_save_path(file_suffix=file_suffix)
+        base_path, filename = self.create_save_path(
+            file_suffix=file_suffix,
+            extra_path=extra_path,
+        )
         local_path = f"{tmp_dir}/{filename}"
 
         return base_path, local_path
@@ -159,10 +168,12 @@ class StorageClient:
     def create_temp_save_path(
         self,
         file_suffix: Optional[str],
+        extra_path: Optional[str],
     ) -> Generator[Tuple[Any, Any], None, None]:
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
             storage_uri, local_path = self.create_tmp_path(
                 file_suffix=file_suffix,
+                extra_path=extra_path,
                 tmp_dir=tmpdirname,
             )
             yield storage_uri, local_path
@@ -203,6 +214,9 @@ class StorageClient:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
 
+    def copy(self, read_path: str, write_path: str) -> None:
+        raise ValueError("Storage class does not implement a copy method")
+
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
 
@@ -234,6 +248,17 @@ class GCSFSStorageClient(StorageClient):
             backend=StorageSystem.GCS.value,
         )
 
+    def copy(self, read_path: str, write_path: str) -> None:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+        self.client.copy(read_path, write_path, recursive=True)
+
     def open(self, filename: str, mode: str) -> IO:
         return self.client.open(filename, mode)
 
@@ -264,9 +289,11 @@ class LocalStorageClient(StorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
+            extra_path=extra_path,
         )
 
         self._make_path("/".join(save_path.split("/")[:-1]))
@@ -293,6 +320,21 @@ class LocalStorageClient(StorageClient):
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
 
+    def copy(self, read_path: str, write_path: str) -> None:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+
+        if os.path.isdir(read_path):
+            shutil.copytree(read_path, write_path, dirs_exist_ok=True)
+        else:
+            shutil.copyfile(read_path, write_path)
+
     @staticmethod
     def validate(storage_backend: str) -> bool:
         return storage_backend == StorageSystem.LOCAL
@@ -311,13 +353,18 @@ class ApiStorageClient(LocalStorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         filename = self.storage_spec.filename or uuid.uuid4().hex
 
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
+        if extra_path is not None:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
+
+        else:
+            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
 
         return base_path + f"/{filename}", filename
 
@@ -611,9 +658,11 @@ class MlflowStorageClient(StorageClient):
     def create_save_path(
         self,
         file_suffix: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
         save_path, filename = super().create_save_path(
             file_suffix=file_suffix,
+            extra_path=extra_path,
         )
 
         return save_path, filename
@@ -712,7 +761,7 @@ class MlflowStorageClient(StorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-        """Uploads local artifact to mflow
+        """Uploads local artifact to mlflow
         Args:
             storage_uri: Path where current artifact has been saved to
         """
@@ -730,7 +779,7 @@ class MlflowStorageClient(StorageClient):
         filename = self.log_artifact(mlflow_info=mlflow_info)
 
         # need to re-write storage path for saving to ArtifactCard
-        storage_uri = f"{self.artifact_path}/{mlflow_write_dir}/{filename}"
+        storage_uri = f"{self.artifact_path}/{mlflow_info.artifact_path}/{filename}"
 
         if ModelArtifactNames.ONNX or ModelArtifactNames.TRAINED_MODEL in storage_uri:
             storage_uri = self.swap_mlflow_root(rpath=storage_uri)
@@ -744,7 +793,6 @@ class MlflowStorageClient(StorageClient):
             # OPSML save paths always follow table/team/name/version/file save format
 
             file_splits = filename.split("/")
-
             try:
                 # attempt to get parent and child directories
                 for idx, split in enumerate(file_splits):
@@ -756,17 +804,17 @@ class MlflowStorageClient(StorageClient):
 
                 if len(file_splits[parent_idx:]) > 1:
                     # attempt to get the card name
-                    child_dir = file_splits[parent_idx + 2]
+                    write_dir = os.path.normpath(f"{parent_dir}/" + "/".join(file_splits[parent_idx + 1 : -1]))
+
                 else:
                     # default to unique id
-                    child_dir = uuid.uuid4().hex
+                    write_dir = f"{parent_dir}/{uuid.uuid4().hex}"
 
             except Exception as error:  # pylint: disable=broad-exception-caught
                 logger.error("Failed to retrieve parent and child save paths. Defaulting to random. %s", error)
-                parent_dir = "misc"
-                child_dir = uuid.uuid4().hex
+                write_dir = f"misc/{uuid.uuid4().hex}"
 
-            return str(parent_dir + "/" + child_dir).lower()
+            return write_dir.lower()
 
         return "misc"
 
