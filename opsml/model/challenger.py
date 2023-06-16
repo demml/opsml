@@ -45,7 +45,7 @@ class ChallengeInputs(BaseModel):
         return cast(List[Optional[Union[int, float]]], self.metric_value)
 
     @property
-    def threhsolds(self) -> List[bool]:
+    def thresholds(self) -> List[bool]:
         return cast(List[bool], self.lower_is_better)
 
     @validator("metric_name")
@@ -285,7 +285,7 @@ class ModelChallenger:
         for name, value, _lower_is_better in zip(
             inputs.metric_names,
             inputs.metric_values,
-            inputs.threhsolds,
+            inputs.thresholds,
         ):
             # get challenger metric
             if value is None:

@@ -129,7 +129,7 @@ One of the benefits to the model registration process (especially when auto-conv
 : Name of saved model
 
 #### `model_type`
-: Type of estimator (sklearn_estimator, sklearning_pipeline, pytorch, keras, etc.)
+: Type of estimator (sklearn_estimator, sklearn_pipeline, pytorch, keras, etc.)
 
 #### `onnx_uri`
 : Storage location of onnx model

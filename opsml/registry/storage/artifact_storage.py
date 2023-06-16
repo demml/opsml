@@ -34,6 +34,7 @@ class ArtifactStorage:
         storage_client: StorageClientType,
         file_suffix: Optional[str] = None,
         artifact_class: Optional[str] = None,
+        extra_path: Optional[str] = None,
     ):
         """Instantiates base ArtifactStorage class
 
@@ -46,6 +47,7 @@ class ArtifactStorage:
         """
 
         self.file_suffix = None
+        self.extra_path = extra_path
         self.artifact_type = artifact_type
         self.storage_client = storage_client
         self.artifact_class = artifact_class
@@ -127,7 +129,7 @@ class ArtifactStorage:
         raise NotImplementedError
 
     def save_artifact(self, artifact: Any) -> StoragePath:
-        with self.storage_client.create_temp_save_path(self.file_suffix) as temp_output:
+        with self.storage_client.create_temp_save_path(self.file_suffix, self.extra_path) as temp_output:
             storage_uri, tmp_uri = temp_output
             storage_uri = self._save_artifact(
                 artifact=artifact,
@@ -182,12 +184,14 @@ class OnnxStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="onnx",
             artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
         )
 
     def _write_onnx(self, artifact: Any, file_path: FilePath) -> None:
@@ -235,12 +239,14 @@ class JoblibStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="joblib",
             artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
         )
 
     def _write_joblib(self, artifact: Any, file_path: FilePath):
@@ -294,12 +300,14 @@ class ParquetStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="parquet",
             artifact_class=ArtifactClass.DATA.value,
+            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -377,11 +385,13 @@ class NumpyStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             artifact_class=ArtifactClass.DATA.value,
+            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -433,12 +443,14 @@ class JSONStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="json",
             artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
         )
 
     def _write_json(self, artifact: Any, file_path: FilePath):
@@ -485,12 +497,14 @@ class TensorflowModelStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix=None,
             artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -542,12 +556,14 @@ class PyTorchModelStorage(ArtifactStorage):
         self,
         artifact_type: str,
         storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="pt",
             artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -610,6 +626,7 @@ def save_record_artifact_to_storage(
     artifact: Any,
     storage_client: StorageClientType,
     artifact_type: Optional[str] = None,
+    extra_path: Optional[str] = None,
 ) -> StoragePath:
     _artifact_type: str = artifact_type or artifact.__class__.__name__
 
@@ -627,6 +644,7 @@ def save_record_artifact_to_storage(
     return storage_type(
         storage_client=storage_client,
         artifact_type=_artifact_type,
+        extra_path=extra_path,
     ).save_artifact(artifact=artifact)
 
 

@@ -25,6 +25,8 @@ poetry add opsml
 ## Optional Dependencies
 `Opsml` is designed to work with a variety of 3rd-party integrations depending on your use-case.
 
+**Notes**: `Opsml` is packaged with and provides `mlflow` support out of the box.
+
 Types of extras that can be installed:
 
 - **Postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
@@ -35,11 +37,6 @@ Types of extras that can be installed:
 - **Server**: Installs necessary packages for setting up an `Fastapi`/`Mlflow` based `Opsml` server
   ```bash
   poetry add "opsml[server]"
-  ```
-
-- **Mlflow**: Installs Mlflow for client-side interaction with an `Opsml` server
-  ```bash
-  poetry add "opsml[mlflow]"
   ```
 
 - **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
@@ -55,7 +52,7 @@ Types of extras that can be installed:
 ### Example setup for gcp-backed postgres with opsml mlflow server
 
 ```bash
-  poetry add "opsml[gcp_postgres, server, mlflow]"
+  poetry add "opsml[gcp_postgres, server]"
 ```
 
 ## Environment Variables
