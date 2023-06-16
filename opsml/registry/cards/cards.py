@@ -10,8 +10,6 @@ from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
 from ydata_profiling import ProfileReport
 
-# TODO: research a different way to import ydata. ydata adds ~2 sec to opsml import time
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
     FindPath,
@@ -53,6 +51,9 @@ from opsml.registry.sql.records import (
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
+
+# TODO: research a different way to import ydata. ydata adds ~2 sec to opsml import time
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
