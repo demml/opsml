@@ -23,55 +23,108 @@ router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
-def get_correct_model_uri(onnx: bool, metadata: ModelMetadata) -> str:
-    """Gets correct model uri based on onnx flag
+class ModelRegistrar:
+    """Class used to register a model to a hardcoded uri"""
 
-    Args:
-        onnx:
-            Bool indicating if onnx uri is requested
-        metadata:
-            `ModelMetadata`
-    """
-    if onnx:
-        return metadata.onnx_uri
-    return metadata.model_uri
+    def __init__(self, payload: CardRequest, storage_client: StorageClientType):
+        self.name = payload.name
+        self.team = payload.team
+        self.version = payload.version
+        self.onnx = payload.onnx
+        self.storage_client = storage_client
 
+    @property
+    def registry_path(self) -> str:
+        return f"{self.storage_client.base_path_prefix}/model_registry/{self.team}/{self.name}/v{self.version}"
 
-def copy_model_to_registry(
-    model_uri: str,
-    storage_client: StorageClientType,
-    name: str,
-    team: str,
-    version: str,
-):
-    """Copies a model from it's original storage path to a hardcoded model registry path
+    @property
+    def registry_not_empty(self) -> bool:
+        """Verifies model has been copied to hardcoded path"""
+        if len(self.storage_client.list_files(self.registry_path)) > 0:
+            return True
+        return False
 
-    Args:
-        model_uri:
-            Model uri path
-        storage_client:
-            Storage client to use to copy
-        name:
-            Model name
-        team:
-            Team name
+    def _validate_version(self) -> None:
+        """Checks whether a version given follows semver/integer format
 
-    Returns:
-        New model path
+        Args:
+            version:
+                Version to check
+        """
+        try:
+            for element in self.version.split("."):
+                int(element)  # force check element is an integer
 
-    """
-    read_path = os.path.dirname(model_uri)
-    write_path = f"{storage_client.base_path_prefix}/model_registry/{team}/{name}/v{version}"
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model not found. Model semver invalid",
+            )
 
-    storage_client.copy(read_path=read_path, write_path=write_path)
+    def _get_correct_model_uri(self, metadata: ModelMetadata) -> str:
+        """Gets correct model uri based on onnx flag
 
-    if len(storage_client.list_files(write_path)) > 0:
-        return write_path
+        Args:
+            onnx:
+                Bool indicating if onnx uri is requested
+            metadata:
+                `ModelMetadata`
+        """
+        if self.onnx:
+            return metadata.onnx_uri
+        return metadata.model_uri
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Failed to find model",
-    )
+    def _copy_model_to_registry(self, model_uri: str):
+        """Copies a model from it's original storage path to a hardcoded model registry path
+
+        Args:
+            model_uri:
+                Model uri path
+            storage_client:
+                Storage client to use to copy
+            name:
+                Model name
+            team:
+                Team name
+
+        Returns:
+            New model path
+
+        """
+        read_path = os.path.dirname(model_uri)
+
+        self.storage_client.copy(read_path=read_path, write_path=self.registry_path)
+
+        if self.registry_not_empty:
+            return self.registry_path
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model not found in registry path",
+        )
+
+    def register_model(self, metadata: ModelMetadata) -> str:
+        """Registers a model to a hardcoded storage path
+
+        Args:
+            metadata:
+                `ModelMetadata`
+
+        Returns:
+            model uri
+
+        """
+
+        self._validate_version()
+        model_uri = self._get_correct_model_uri(metadata=metadata)
+
+        if model_uri is not None:
+            return self._copy_model_to_registry(model_uri=model_uri)
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model not found. Check if model exists in Opsml registry",
+        )
 
 
 @router.post("/models/register", name="register")
@@ -96,17 +149,11 @@ def post_register_model(request: Request, payload: CardRequest) -> str:
     """
 
     metadata = post_model_metadata(request, payload)
-
-    validate_version(version=payload.version)
-    model_uri = get_correct_model_uri(onnx=payload.onnx, metadata=metadata)
-
-    return copy_model_to_registry(
-        model_uri=model_uri,
+    registrar = ModelRegistrar(
+        payload=payload,
         storage_client=request.app.state.storage_client,
-        name=metadata.model_name,
-        team=metadata.model_team,
-        version=payload.version,
     )
+    return registrar.register_model(metadata=metadata)
 
 
 @router.post("/models/metadata", name="model_metadata")
