@@ -1,7 +1,6 @@
 # pylint: disable=protected-access
 import os
 from typing import Any, Dict, List
-
 from fastapi import APIRouter, Body, HTTPException, Request, status
 
 from opsml.app.routes.pydantic_models import (
@@ -11,6 +10,7 @@ from opsml.app.routes.pydantic_models import (
     MetricRequest,
     MetricResponse,
 )
+from opsml.app.routes.utils import validate_version
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
@@ -21,6 +21,57 @@ logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
 CHUNK_SIZE = 31457280
+
+
+def get_correct_model_uri(onnx: bool, metadata: ModelMetadata) -> str:
+    """Gets correct model uri based on onnx flag
+
+    Args:
+        onnx:
+            Bool indicating if onnx uri is requested
+        metadata:
+            `ModelMetadata`
+    """
+    if onnx:
+        return metadata.onnx_uri
+    return metadata.model_uri
+
+
+def copy_model_to_registry(
+    model_uri: str,
+    storage_client: StorageClientType,
+    name: str,
+    team: str,
+    version: str,
+):
+    """Copies a model from it's original storage path to a hardcoded model registry path
+
+    Args:
+        model_uri:
+            Model uri path
+        storage_client:
+            Storage client to use to copy
+        name:
+            Model name
+        team:
+            Team name
+
+    Returns:
+        New model path
+
+    """
+    read_path = os.path.dirname(model_uri)
+    write_path = f"{storage_client.base_path_prefix}/model_registry/{team}/{name}/v{version}"
+
+    storage_client.copy(read_path=read_path, write_path=write_path)
+
+    if len(storage_client.list_files(write_path)) > 0:
+        return write_path
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Failed to find model",
+    )
 
 
 @router.post("/models/register", name="register")
@@ -43,29 +94,18 @@ def post_register_model(request: Request, payload: CardRequest) -> str:
     Returns:
         model uri or HTTP_404_NOT_FOUND if the model is not found.
     """
-    storage_client: StorageClientType = request.app.state.storage_client
+
     metadata = post_model_metadata(request, payload)
 
-    if payload.onnx:
-        model_uri = metadata.onnx_uri
-    else:
-        model_uri = metadata.model_uri
+    validate_version(version=payload.version)
+    model_uri = get_correct_model_uri(onnx=payload.onnx, metadata=metadata)
 
-    if model_uri is not None:
-        read_path = os.path.dirname(model_uri)
-        write_path = (
-            f"{storage_client.base_path_prefix}"
-            f"/model_registry/{metadata.model_team}/{metadata.model_name}/v{payload.version}"
-        )
-
-        storage_client.copy(read_path=read_path, write_path=write_path)
-
-        if len(storage_client.list_files(write_path)) > 0:
-            return write_path
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Failed to find model",
+    return copy_model_to_registry(
+        model_uri=model_uri,
+        storage_client=request.app.state.storage_client,
+        name=metadata.model_name,
+        team=metadata.model_team,
+        version=payload.version,
     )
 
 
