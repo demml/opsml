@@ -11,6 +11,7 @@ from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
 from tests.conftest import TODAY_YMD
+from unittest.mock import patch, PropertyMock
 
 
 def test_client(test_app: TestClient):
@@ -513,6 +514,39 @@ def test_download_model(
     msg = response.json()["detail"]
     assert response.status_code == 404
     assert "Model not found" == msg
+
+    # test version fail
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": "non-exist",
+            "team": model_card.team,
+            "version": "blah",
+        },
+    )
+
+    msg = response.json()["detail"]
+    assert response.status_code == 404
+    assert "Model not found. Model semver invalid" == msg
+
+    # test model copy failure
+    with patch(
+        "opsml.app.routes.models.ModelRegistrar.registry_not_empty",
+        new_callable=PropertyMock,
+    ) as mock_registrar:
+        mock_registrar.return_value = False
+        response = test_app.post(
+            url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+            json={
+                "name": model_card.name,
+                "team": model_card.team,
+                "version": model_card.version,
+            },
+        )
+
+        msg = response.json()["detail"]
+        assert response.status_code == 404
+        assert "Model not found in registry path" == msg
 
 
 def test_download_model_metadata_failure(test_app: TestClient):
