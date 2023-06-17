@@ -1,6 +1,7 @@
 # pylint: disable=protected-access
 import os
 from typing import Any, Dict, List
+
 from fastapi import APIRouter, Body, HTTPException, Request, status
 
 from opsml.app.routes.pydantic_models import (
@@ -10,7 +11,6 @@ from opsml.app.routes.pydantic_models import (
     MetricRequest,
     MetricResponse,
 )
-from opsml.app.routes.utils import validate_version
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
