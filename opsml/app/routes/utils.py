@@ -1,5 +1,6 @@
 from typing import Any, Dict
-
+from fastapi.exceptions import HTTPException
+from fastapi import status
 from streaming_form_data.targets import FileTarget
 
 from opsml.helpers.logging import ArtifactLogger
@@ -77,3 +78,21 @@ class ExternalFileTarget(FileTarget):
 
     def on_start(self):
         self._fd = self.storage_client.open(self.filepath, self._mode)
+
+
+def validate_version(version: str) -> None:
+    """Checks whether a version given follows semver/integer format
+
+    Args:
+        version:
+            Version to check
+    """
+
+    try:
+        for element in version.split("."):
+            int(element)  # force check element is an integer
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Failed to find model",
+        )
