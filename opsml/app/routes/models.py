@@ -27,14 +27,24 @@ class ModelRegistrar:
     """Class used to register a model to a hardcoded uri"""
 
     def __init__(self, payload: CardRequest, storage_client: StorageClientType):
+        """Instantiates Registrar class
+
+        Args:
+            payload:
+                `CardRequest`
+            storage_client:
+                `StorageClientType`
+        """
         self.name = payload.name
         self.team = payload.team
         self.version = payload.version
         self.onnx = payload.onnx
         self.storage_client = storage_client
+        self._validate_version()
 
     @property
     def registry_path(self) -> str:
+        """Returns hardcoded uri"""
         return f"{self.storage_client.base_path_prefix}/model_registry/{self.team}/{self.name}/v{self.version}"
 
     @property
@@ -114,8 +124,6 @@ class ModelRegistrar:
             model uri
 
         """
-
-        self._validate_version()
         model_uri = self._get_correct_model_uri(metadata=metadata)
 
         if model_uri is not None:
@@ -148,11 +156,16 @@ def post_register_model(request: Request, payload: CardRequest) -> str:
         model uri or HTTP_404_NOT_FOUND if the model is not found.
     """
 
-    metadata = post_model_metadata(request, payload)
+    # instantiate registrar first (we want to validate version before loading metadata)
     registrar = ModelRegistrar(
         payload=payload,
         storage_client=request.app.state.storage_client,
     )
+
+    # get model metadata
+    metadata = post_model_metadata(request, payload)
+
+    # register/copy to new location
     return registrar.register_model(metadata=metadata)
 
 
