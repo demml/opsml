@@ -1,6 +1,6 @@
 # pylint: disable=protected-access
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 
@@ -10,6 +10,7 @@ from opsml.app.routes.pydantic_models import (
     CompareMetricResponse,
     MetricRequest,
     MetricResponse,
+    RegisterModelRequest,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
@@ -26,7 +27,11 @@ CHUNK_SIZE = 31457280
 class ModelRegistrar:
     """Class used to register a model to a hardcoded uri"""
 
-    def __init__(self, payload: CardRequest, storage_client: StorageClientType):
+    def __init__(
+        self,
+        payload: RegisterModelRequest,
+        storage_client: StorageClientType,
+    ):
         """Instantiates Registrar class
 
         Args:
@@ -65,13 +70,13 @@ class ModelRegistrar:
             for element in self.version.split("."):
                 int(element)  # force check element is an integer
 
-        except ValueError:
+        except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Model not found. Model semver invalid",
-            )
+            ) from exc
 
-    def _get_correct_model_uri(self, metadata: ModelMetadata) -> str:
+    def _get_correct_model_uri(self, metadata: ModelMetadata) -> Optional[str]:
         """Gets correct model uri based on onnx flag
 
         Args:
@@ -136,7 +141,7 @@ class ModelRegistrar:
 
 
 @router.post("/models/register", name="register")
-def post_register_model(request: Request, payload: CardRequest) -> str:
+def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
     """Promotes a model from Opsml storage to the default model registry storage used for
     Seldon model hosting.
 
@@ -170,7 +175,10 @@ def post_register_model(request: Request, payload: CardRequest) -> str:
 
 
 @router.post("/models/metadata", name="model_metadata")
-def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata:
+def post_model_metadata(
+    request: Request,
+    payload: Union[CardRequest, RegisterModelRequest],
+) -> ModelMetadata:
     """
     Downloads a Model API definition
 
