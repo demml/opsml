@@ -21,7 +21,7 @@ rich = "^13.3.5"
 scikit-learn = ">=1.0"
 semver = "^2.13.0"
 skl2onnx = "1.14.1"
-sqlalchemy = "^2.0.0"
+sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
 tf2onnx ="^1.13.0"
 typer = "^0.9.0"

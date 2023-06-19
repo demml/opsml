@@ -1,11 +1,11 @@
 import uuid
-from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Iterator
 from contextlib import contextmanager
+from enum import Enum
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 import semver
-from sqlalchemy.orm import sessionmaker, Session, SessionTransaction
+from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
 
 from opsml.helpers.logging import ArtifactLogger
@@ -89,9 +89,6 @@ class SQLRegistryBase:
         self.storage_client = settings.storage_client
 
         self._table = TableSchema.get_table(table_name=table_name)
-
-    def _get_session(self):
-        raise NotImplementedError
 
     def _increment_version(self, version: str, version_type: VersionType) -> str:
         """
@@ -327,25 +324,16 @@ class SQLRegistryBase:
 class ServerRegistry(SQLRegistryBase):
     def __init__(self, table_name: str):
         super().__init__(table_name)
-
-        self._engine = self._get_engine()
-        self._session = self._get_session()
-        # self._create_table_if_not_exists()
         self.table_name = self._table.__tablename__
 
     def _get_engine(self):
         return settings.connection_client.get_engine()
 
-    def _get_session(self) -> Session:
-        """Sets the sqlalchemy session to be used for all queries"""
-        session = sessionmaker(self._engine)
-        return session
-
     @contextmanager
-    def session(self) -> Iterator[Session]:
+    def session(self) -> Any:
         engine = self._get_engine()
 
-        with Session(engine) as sess:
+        with Session(engine) as sess:  # type: ignore
             yield sess
 
     def _create_table_if_not_exists(self):
