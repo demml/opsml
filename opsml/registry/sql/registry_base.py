@@ -1,10 +1,11 @@
 import uuid
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Iterator
+from contextlib import contextmanager
 
 import pandas as pd
 import semver
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session, SessionTransaction
 from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
 
 from opsml.helpers.logging import ArtifactLogger
@@ -335,10 +336,17 @@ class ServerRegistry(SQLRegistryBase):
     def _get_engine(self):
         return settings.connection_client.get_engine()
 
-    def _get_session(self):
+    def _get_session(self) -> Session:
         """Sets the sqlalchemy session to be used for all queries"""
-        session = sessionmaker(bind=self._engine)
+        session = sessionmaker(self._engine)
         return session
+
+    @contextmanager
+    def session(self) -> Iterator[Session]:
+        engine = self._get_engine()
+
+        with Session(engine) as sess:
+            yield sess
 
     def _create_table_if_not_exists(self):
         self._table.__table__.create(bind=self._engine, checkfirst=True)
@@ -365,9 +373,9 @@ class ServerRegistry(SQLRegistryBase):
             team=team,
         )
 
-        with self._session() as sess:
-            self._engine.dispose()
+        with self.session() as sess:
             results = sess.scalars(query).all()
+
         if bool(results):
             versions = [result.version for result in results]
             sorted_versions = sort_semvers(versions)
@@ -382,7 +390,7 @@ class ServerRegistry(SQLRegistryBase):
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         sql_record = self._table(**card)
 
-        with self._session() as sess:
+        with self.session() as sess:
             sess.add(sql_record)
             sess.commit()
 
@@ -392,7 +400,7 @@ class ServerRegistry(SQLRegistryBase):
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         record_uid = cast(str, card.get("uid"))
 
-        with self._session() as sess:
+        with self.session() as sess:
             query = sess.query(self._table).filter(self._table.uid == record_uid)
             query.update(card)
             sess.commit()
@@ -430,7 +438,7 @@ class ServerRegistry(SQLRegistryBase):
             List of records
         """
 
-        with self._session() as sess:
+        with self.session() as sess:
             results = sess.execute(query).all()
 
         records = self._parse_sql_results(results=results)
@@ -501,7 +509,7 @@ class ServerRegistry(SQLRegistryBase):
             uid=uid,
             table_to_check=table_to_check,
         )
-        with self._session() as sess:
+        with self.session() as sess:
             result = sess.scalars(query).first()
         return bool(result)
 
