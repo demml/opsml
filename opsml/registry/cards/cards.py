@@ -158,6 +158,8 @@ class DataCard(ArtifactCard):
             Data type inferred from supplied data
         uid:
             Unique id assigned to the DataCard
+        data_profile:
+            Optional ydata-profiling `ProfileReport`
 
     Returns:
         DataCard
