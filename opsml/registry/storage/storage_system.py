@@ -627,6 +627,7 @@ class MlflowStorageClient(StorageClient):
         self._run_id: Optional[str] = None
         self._artifact_path: str = "mlflow-artifacts:/"
         self._mlflow_client: Optional[MlFlowClientProto] = None
+        self._storage_spec = ArtifactStorageSpecs(save_path=self.base_path_prefix)
 
     def open(self, filename: str, mode: str):
         """not used"""
