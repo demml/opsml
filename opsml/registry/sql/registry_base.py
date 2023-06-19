@@ -366,6 +366,7 @@ class ServerRegistry(SQLRegistryBase):
         )
 
         with self._session() as sess:
+            self._engine.dispose()
             results = sess.scalars(query).all()
         if bool(results):
             versions = [result.version for result in results]
@@ -382,6 +383,7 @@ class ServerRegistry(SQLRegistryBase):
         sql_record = self._table(**card)
 
         with self._session() as sess:
+            self._engine.dispose()
             sess.add(sql_record)
             sess.commit()
 
@@ -392,6 +394,7 @@ class ServerRegistry(SQLRegistryBase):
         record_uid = cast(str, card.get("uid"))
 
         with self._session() as sess:
+            self._engine.dispose()
             query = sess.query(self._table).filter(self._table.uid == record_uid)
             query.update(card)
             sess.commit()
@@ -430,6 +433,7 @@ class ServerRegistry(SQLRegistryBase):
         """
 
         with self._session() as sess:
+            self._engine.dispose()
             results = sess.execute(query).all()
 
         records = self._parse_sql_results(results=results)

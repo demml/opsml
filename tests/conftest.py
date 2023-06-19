@@ -289,6 +289,10 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
 
+        engine = registries.model._registry._engine
+        initializer = DBInitializer(engine=engine)
+        initializer.initialize()
+
         registries.data = ClientCardRegistry(registry_name="data")
         registries.model = ClientCardRegistry(registry_name="model")
         registries.pipeline = ClientCardRegistry(registry_name="pipeline")
