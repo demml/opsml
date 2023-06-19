@@ -12,7 +12,6 @@ import polars as pl
 from numpy.typing import NDArray
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
-
 InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
 
