@@ -1,37 +1,13 @@
 # pylint: disable=redefined-outer-name,import-outside-toplevel
 
 import os
-from pathlib import Path
-from typing import Any, List, Protocol, Union
+from typing import Any, List, Union
 
 import pandas as pd
 import polars as pl
 
 DIR_PATH = os.path.dirname(__file__)
-
-
-class Root(Protocol):
-    ...
-
-
-class ProfileReport(Protocol):
-    @property
-    def report(self) -> Root:
-        ...
-
-    @property
-    def html(self) -> str:
-        ...
-
-    @property
-    def json(self) -> str:
-        ...
-
-    def get_description(self) -> Any:
-        ...
-
-    def to_file(self, output_file: Union[str, Path], silent: bool = True) -> None:
-        ...
+ProfileReport = Any  # custom runtime check in DataCard
 
 
 class DataProfiler:
