@@ -337,7 +337,8 @@ class ServerRegistry(SQLRegistryBase):
             yield sess
 
     def _create_table_if_not_exists(self):
-        self._table.__table__.create(bind=self._engine, checkfirst=True)
+        engine = self._get_engine()
+        self._table.__table__.create(bind=engine, checkfirst=True)
 
     def set_version(self, name: str, team: str, version_type: VersionType) -> str:
         """

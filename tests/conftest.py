@@ -313,7 +313,6 @@ def mlflow_storage_client():
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
-
     info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
 
