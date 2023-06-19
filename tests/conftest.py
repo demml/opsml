@@ -289,7 +289,7 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
 
-        engine = registries.model._registry._engine
+        engine = registries.model._registry._get_engine()
         initializer = DBInitializer(engine=engine)
         initializer.initialize()
 
@@ -313,10 +313,16 @@ def mlflow_storage_client():
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
+
     info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
 
     api_card_registries = CardRegistries()
+
+    engine = api_card_registries.model._registry._get_engine()
+    initializer = DBInitializer(engine=engine)
+    initializer.initialize()
+
     api_card_registries.data = ClientCardRegistry(registry_name="data")
     api_card_registries.model = ClientCardRegistry(registry_name="model")
     api_card_registries.run = ClientCardRegistry(registry_name="run")
@@ -462,7 +468,7 @@ def db_registries():
     run_registry = CardRegistry(registry_name="run")
     pipeline_registry = CardRegistry(registry_name="pipeline")
 
-    engine = model_registry._registry._engine
+    engine = model_registry._registry._get_engine()
 
     initializer = DBInitializer(engine=engine)
     # tables are created when settings are called.
