@@ -17,7 +17,6 @@ from opsml.helpers.utils import (
     validate_name_team_pattern,
 )
 
-# from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -357,7 +356,7 @@ class DataCard(ArtifactCard):
         Args:
             sample_perc:
                 Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
-                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
+                Percentage is expressedOnnxModelPredictor as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
 
@@ -651,10 +650,7 @@ class ModelCard(ArtifactCard):
             record[feat] = np.ravel(val).tolist()
         return record
 
-    def onnx_model(
-        self,
-        start_onnx_runtime: bool = True,
-    ) -> Any:  # OnnxModelPredictor:
+    def onnx_model(self, start_onnx_runtime: bool = True) -> Any:
         """
         Loads an onnx model from string or creates an onnx model from trained model
 
