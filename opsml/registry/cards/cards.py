@@ -356,7 +356,7 @@ class DataCard(ArtifactCard):
         Args:
             sample_perc:
                 Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
-                Percentage is expressedOnnxModelPredictor as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
+                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
 
