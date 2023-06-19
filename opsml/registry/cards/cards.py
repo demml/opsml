@@ -8,7 +8,6 @@ import pandas as pd
 import polars as pl
 from pyarrow import Table
 from pydantic import BaseModel, root_validator, validator
-from ydata_profiling import ProfileReport
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -17,7 +16,8 @@ from opsml.helpers.utils import (
     clean_string,
     validate_name_team_pattern,
 )
-from opsml.model.predictor import OnnxModelPredictor
+
+# from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -27,7 +27,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TorchOnnxArgs,
 )
-from opsml.profile.profile_data import DataProfiler
+from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
@@ -51,9 +51,6 @@ from opsml.registry.sql.records import (
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
-
-# TODO: research a different way to import ydata. ydata adds ~2 sec to opsml import time
-
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -647,7 +644,7 @@ class ModelCard(ArtifactCard):
     def onnx_model(
         self,
         start_onnx_runtime: bool = True,
-    ) -> OnnxModelPredictor:
+    ) -> Any:  # OnnxModelPredictor:
         """
         Loads an onnx model from string or creates an onnx model from trained model
 
@@ -659,6 +656,8 @@ class ModelCard(ArtifactCard):
             `OnnxModelPredictor`
 
         """
+        from opsml.model.predictor import OnnxModelPredictor
+
         # todo: clean this up
         if self.onnx_model_def is None or self.data_schema is None:
             self._create_and_set_model_attr()
