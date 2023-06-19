@@ -9,7 +9,7 @@ from opsml.projects.base.utils import (
     get_project_id_from_registry,
     verify_runcard_project_match,
 )
-from opsml.registry import CardRegistries, RunCard
+from opsml.registry import CardRegistries, CardRegistry, RunCard
 from opsml.registry.sql.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -152,7 +152,11 @@ class _RunManager:
         """Loads a RunCard or creates a new RunCard"""
 
         if self.run_id is not None and self._card_exists(run_id=self.run_id):
-            return self.registries.run.load_card(uid=self.run_id)
+            # need run registry with API client
+            run_registry = CardRegistry(registry_name="run")
+            runcard = run_registry.load_card(uid=self.run_id)
+
+            return cast(RunCard, runcard)
 
         return RunCard(
             name=self._project_info.name,

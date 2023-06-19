@@ -266,7 +266,7 @@ class DefaultSettings(BaseSettings):
 
     @root_validator(pre=True)
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:
-        """Sets tracking url if it doesnt exist and sets storage
+        """Sets tracking url if it doesn't exist and sets storage
         client-related vars
         """
         return DefaultAttrCreator(env_vars=env_vars).env_vars

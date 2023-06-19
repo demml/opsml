@@ -158,7 +158,7 @@ class ActiveRun:
             info:
                 Card information to retrieve. `uid` takes precedence if it
                 exists. If the optional `version` is specified, that version
-                will be loaded. If it doesn't exist, the most recent ersion will
+                will be loaded. If it doesn't exist, the most recent version will
                 be loaded.
 
         Returns
