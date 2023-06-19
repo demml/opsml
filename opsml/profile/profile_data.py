@@ -1,11 +1,37 @@
+# pylint: disable=redefined-outer-name,import-outside-toplevel
+
 import os
-from typing import List, Union
+from pathlib import Path
+from typing import Any, List, Protocol, Union
 
 import pandas as pd
 import polars as pl
-from ydata_profiling import ProfileReport, compare
 
 DIR_PATH = os.path.dirname(__file__)
+
+
+class Root(Protocol):
+    ...
+
+
+class ProfileReport(Protocol):
+    @property
+    def report(self) -> Root:
+        ...
+
+    @property
+    def html(self) -> str:
+        ...
+
+    @property
+    def json(self) -> str:
+        ...
+
+    def get_description(self) -> Any:
+        ...
+
+    def to_file(self, output_file: Union[str, Path], silent: bool = True) -> None:
+        ...
 
 
 class DataProfiler:
@@ -27,6 +53,8 @@ class DataProfiler:
         Returns:
             `ProfileReport`
         """
+        from ydata_profiling import ProfileReport
+
         kwargs = {"title": f"Profile report for {name}"}
 
         if isinstance(data, pl.DataFrame):
@@ -71,6 +99,8 @@ class DataProfiler:
         Returns:
             `ProfileReport`
         """
+        from ydata_profiling import ProfileReport
+
         profile = ProfileReport()
         profile.loads(data)
         return profile
@@ -86,4 +116,6 @@ class DataProfiler:
         Returns:
             `ProfileReport`
         """
+        from ydata_profiling import compare
+
         return compare(reports=reports)
