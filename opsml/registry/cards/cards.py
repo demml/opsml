@@ -185,6 +185,14 @@ class DataCard(ArtifactCard):
 
         return uris
 
+    @validator("data_profile", pre=True, always=True)
+    def check_profile(cls, profile):
+        if profile is not None:
+            from ydata_profiling import ProfileReport as ydata_profile
+
+            assert isinstance(profile, ydata_profile)
+        return profile
+
     @validator("feature_descriptions", pre=True, always=True)
     def lower_descriptions(cls, feature_descriptions):
         if feature_descriptions is None:
