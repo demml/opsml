@@ -71,7 +71,8 @@ from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml.registry.sql.sql_schema import BaseMixin, Base, DBInitializer
+from opsml.registry.sql.sql_schema import BaseMixin, Base
+from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem
 from opsml.projects import get_project
