@@ -370,7 +370,6 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     def _save_runcard(self):
         """Saves a runcard"""
-
         self._set_storage_spec(
             filename=SaveName.RUNCARD,
             uri=self.card.runcard_uri,

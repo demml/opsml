@@ -1,10 +1,11 @@
 import uuid
+from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 import semver
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
 
 from opsml.helpers.logging import ArtifactLogger
@@ -22,7 +23,7 @@ from opsml.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import SemVerSymbols, sort_semvers
 from opsml.registry.sql.settings import settings
-from opsml.registry.sql.sql_schema import DBInitializer, RegistryTableNames, TableSchema
+from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -32,7 +33,12 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 # initialize tables
 if settings.request_client is None:
-    initializer = DBInitializer(engine=settings.connection_client.get_engine())
+    from opsml.registry.sql.db_initializer import DBInitializer
+
+    initializer = DBInitializer(
+        engine=settings.connection_client.get_engine(),
+        registry_tables=list(RegistryTableNames),
+    )
     initializer.initialize()
 
 
@@ -88,9 +94,6 @@ class SQLRegistryBase:
         self.storage_client = settings.storage_client
 
         self._table = TableSchema.get_table(table_name=table_name)
-
-    def _get_session(self):
-        raise NotImplementedError
 
     def _increment_version(self, version: str, version_type: VersionType) -> str:
         """
@@ -158,9 +161,6 @@ class SQLRegistryBase:
             save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
 
         artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
-
-        card.storage_client = self.storage_client
-
         self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
 
     def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):
@@ -326,22 +326,21 @@ class SQLRegistryBase:
 class ServerRegistry(SQLRegistryBase):
     def __init__(self, table_name: str):
         super().__init__(table_name)
-
-        self._engine = self._get_engine()
-        self._session = self._get_session()
-        # self._create_table_if_not_exists()
         self.table_name = self._table.__tablename__
 
     def _get_engine(self):
         return settings.connection_client.get_engine()
 
-    def _get_session(self):
-        """Sets the sqlalchemy session to be used for all queries"""
-        session = sessionmaker(bind=self._engine)
-        return session
+    @contextmanager
+    def session(self) -> Any:
+        engine = self._get_engine()
+
+        with Session(engine) as sess:  # type: ignore
+            yield sess
 
     def _create_table_if_not_exists(self):
-        self._table.__table__.create(bind=self._engine, checkfirst=True)
+        engine = self._get_engine()
+        self._table.__table__.create(bind=engine, checkfirst=True)
 
     def set_version(self, name: str, team: str, version_type: VersionType) -> str:
         """
@@ -365,8 +364,9 @@ class ServerRegistry(SQLRegistryBase):
             team=team,
         )
 
-        with self._session() as sess:
+        with self.session() as sess:
             results = sess.scalars(query).all()
+
         if bool(results):
             versions = [result.version for result in results]
             sorted_versions = sort_semvers(versions)
@@ -381,7 +381,7 @@ class ServerRegistry(SQLRegistryBase):
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         sql_record = self._table(**card)
 
-        with self._session() as sess:
+        with self.session() as sess:
             sess.add(sql_record)
             sess.commit()
 
@@ -391,7 +391,7 @@ class ServerRegistry(SQLRegistryBase):
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         record_uid = cast(str, card.get("uid"))
 
-        with self._session() as sess:
+        with self.session() as sess:
             query = sess.query(self._table).filter(self._table.uid == record_uid)
             query.update(card)
             sess.commit()
@@ -429,7 +429,7 @@ class ServerRegistry(SQLRegistryBase):
             List of records
         """
 
-        with self._session() as sess:
+        with self.session() as sess:
             results = sess.execute(query).all()
 
         records = self._parse_sql_results(results=results)
@@ -500,7 +500,7 @@ class ServerRegistry(SQLRegistryBase):
             uid=uid,
             table_to_check=table_to_check,
         )
-        with self._session() as sess:
+        with self.session() as sess:
             result = sess.scalars(query).first()
         return bool(result)
 
