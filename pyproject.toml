@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.0.1"
+version = "1.0.2"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -132,6 +132,7 @@ disable = [
     "too-many-nested-blocks",
     "unused-argument",
     "fixme",
+    "import-outside-toplevel"
 ]
 extension-pkg-whitelist = [
     "pydantic"
