@@ -71,7 +71,7 @@ from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
-from opsml.registry.sql.sql_schema import BaseMixin, Base
+from opsml.registry.sql.sql_schema import BaseMixin, Base, RegistryTableNames
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem
@@ -291,7 +291,7 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         registries = CardRegistries()
 
         engine = registries.model._registry._get_engine()
-        initializer = DBInitializer(engine=engine)
+        initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
         initializer.initialize()
 
         registries.data = ClientCardRegistry(registry_name="data")
@@ -320,7 +320,7 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
     api_card_registries = CardRegistries()
 
     engine = api_card_registries.model._registry._get_engine()
-    initializer = DBInitializer(engine=engine)
+    initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
     initializer.initialize()
 
     api_card_registries.data = ClientCardRegistry(registry_name="data")
@@ -470,7 +470,7 @@ def db_registries():
 
     engine = model_registry._registry._get_engine()
 
-    initializer = DBInitializer(engine=engine)
+    initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
     # tables are created when settings are called.
     # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
     # need to do it manually
