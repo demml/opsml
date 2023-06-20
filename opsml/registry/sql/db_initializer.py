@@ -4,12 +4,11 @@ from typing import Any, List
 from alembic import command
 from alembic.config import Config
 from sqlalchemy.engine.reflection import Inspector
-from sqlalchemy.ext.declarative import declarative_base
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.sql.sql_schema import Base
 
 logger = ArtifactLogger.get_logger(__name__)
-Base = declarative_base()
 
 DIR_PATH = os.path.dirname(__file__)
 
