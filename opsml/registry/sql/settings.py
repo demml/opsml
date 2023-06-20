@@ -79,7 +79,7 @@ class StorageSettingsGetter:
 
 class DefaultAttrCreator:
     def __init__(self, env_vars: Dict[str, Any]):
-        """Class for setting default attributes for DefaulSettings
+        """Class for setting default attributes for Settings
 
         Args:
             env_vars (dict): Dictionary of key value pairs
