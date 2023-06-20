@@ -23,7 +23,7 @@ from opsml.registry.sql.query_helpers import QueryCreator, log_card_change
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import SemVerSymbols, sort_semvers
 from opsml.registry.sql.settings import settings
-from opsml.registry.sql.sql_schema import DBInitializer, RegistryTableNames, TableSchema
+from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -33,7 +33,12 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 # initialize tables
 if settings.request_client is None:
-    initializer = DBInitializer(engine=settings.connection_client.get_engine())
+    from opsml.registry.sql.db_initializer import DBInitializer
+
+    initializer = DBInitializer(
+        engine=settings.connection_client.get_engine(),
+        registry_tables=list(RegistryTableNames),
+    )
     initializer.initialize()
 
 
