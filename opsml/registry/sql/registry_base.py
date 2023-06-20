@@ -156,9 +156,6 @@ class SQLRegistryBase:
             save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
 
         artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
-
-        card.storage_client = self.storage_client
-
         self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
 
     def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):

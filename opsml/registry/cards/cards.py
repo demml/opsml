@@ -16,6 +16,7 @@ from opsml.helpers.utils import (
     clean_string,
     validate_name_team_pattern,
 )
+from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -46,11 +47,12 @@ from opsml.registry.sql.records import (
     RegistryRecord,
     RunRegistryRecord,
 )
+from opsml.registry.sql.settings import settings
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
-from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
 logger = ArtifactLogger.get_logger(__name__)
+storage_client = settings.storage_client
 
 
 class ArtifactCard(BaseModel):
@@ -63,7 +65,6 @@ class ArtifactCard(BaseModel):
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
     tags: Dict[str, str] = {}
-    storage_client: Optional[StorageClientType]
 
     class Config:
         arbitrary_types_allowed = True
@@ -123,8 +124,6 @@ class DataCard(ArtifactCard):
             Email to associate with data card
         dependent_vars:
             Optional list of dependent variables in data
-        feature_descriptions:
-            Optional dictionary of feature names and their descriptions
         dependent_vars:
             List of dependent variables. Can be string or index if using numpy
         feature_descriptions:
@@ -280,12 +279,12 @@ class DataCard(ArtifactCard):
     def load_data(self):
         """Loads data"""
 
-        if self.data is None and self.storage_client is not None:
+        if self.data is None:
             storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
 
-            self.storage_client.storage_spec = storage_spec
+            settings.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
-                storage_client=self.storage_client,
+                storage_client=settings.storage_client,
                 artifact_type=self.data_type,
             )
 
@@ -303,7 +302,7 @@ class DataCard(ArtifactCard):
             Registry metadata
 
         """
-        exclude_attr = {"data", "storage_client"}
+        exclude_attr = {"data"}
         return DataRegistryRecord(**self.dict(exclude=exclude_attr))
 
     def add_info(self, info: Dict[str, Union[float, int, str]]):
@@ -483,9 +482,9 @@ class ModelCard(ArtifactCard):
 
         storage_spec = ArtifactStorageSpecs(save_path=self.uris.sample_data_uri)
 
-        self.storage_client.storage_spec = storage_spec
+        storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
+            storage_client=storage_client,
             artifact_type=self.sample_data_type,
         )
 
@@ -499,12 +498,13 @@ class ModelCard(ArtifactCard):
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
-        if self.storage_client is not None:
+        if self.trained_model is None:
             self.load_sample_data()
             storage_spec = ArtifactStorageSpecs(save_path=self.uris.trained_model_uri)
-            self.storage_client.storage_spec = storage_spec
+            storage_client.storage_spec = storage_spec
+
             trained_model = load_record_artifact_from_storage(
-                storage_client=self.storage_client,
+                storage_client=storage_client,
                 artifact_type=self.model_type,
             )
 
@@ -512,20 +512,23 @@ class ModelCard(ArtifactCard):
 
     @property
     def model_metadata(self) -> ModelMetadata:
-        assert self.storage_client is not None
+        """Loads `ModelMetadata` class"""
         storage_spec = ArtifactStorageSpecs(save_path=self.uris.model_metadata_uri)
-        self.storage_client.storage_spec = storage_spec
+        storage_client.storage_spec = storage_spec
         model_metadata = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
+            storage_client=storage_client,
             artifact_type=ArtifactStorageType.JSON.value,
         )
 
         return ModelMetadata.parse_obj(model_metadata)
 
-    def _load_onnx_model(self, metadata: ModelMetadata, storage_client: StorageClientType) -> Any:
-        """Loads the actual onnx file"""
-        # get onnx model
+    def _load_onnx_model(self, metadata: ModelMetadata) -> Any:
+        """Loads the actual onnx file
 
+        Args:
+            metadata:
+                `ModelMetadata`
+        """
         if metadata.onnx_uri is not None:
             storage_client.storage_spec.save_path = metadata.onnx_uri
             onnx_model = load_record_artifact_from_storage(
@@ -537,25 +540,21 @@ class ModelCard(ArtifactCard):
 
         raise ValueError("Onnx uri is not specified")
 
-    def load_onnx_model_definition(self):
+    def load_onnx_model_definition(self) -> None:
         """Loads the onnx model definition"""
 
         if self.uris.model_metadata_uri is None:
             raise ValueError("No model metadata exists. Please check the registry or register a new model")
 
-        if self.storage_client is not None:
-            metadata = self.model_metadata
-            onnx_model = self._load_onnx_model(
-                metadata=metadata,
-                storage_client=self.storage_client,
-            )
+        metadata = self.model_metadata
+        onnx_model = self._load_onnx_model(metadata=metadata)
 
-            model_def = OnnxModelDefinition(
-                onnx_version=metadata.onnx_version,
-                model_bytes=onnx_model.SerializeToString(),
-            )
+        model_def = OnnxModelDefinition(
+            onnx_version=metadata.onnx_version,
+            model_bytes=onnx_model.SerializeToString(),
+        )
 
-            setattr(self, "onnx_model_def", model_def)
+        setattr(self, "onnx_model_def", model_def)
 
     def create_registry_record(self) -> RegistryRecord:
         """
@@ -569,13 +568,7 @@ class ModelCard(ArtifactCard):
 
         """
 
-        exclude_vars = {
-            "trained_model",
-            "sample_input_data",
-            "onnx_model_def",
-            "storage_client",
-        }
-
+        exclude_vars = {"trained_model", "sample_input_data", "onnx_model_def"}
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
@@ -649,7 +642,7 @@ class ModelCard(ArtifactCard):
             record[feat] = np.ravel(val).tolist()
         return record
 
-    def onnx_model(self, start_onnx_runtime: bool = True) -> Any:
+    def onnx_model(self, start_onnx_runtime: bool = True) -> OnnxModelPredictor:
         """
         Loads an onnx model from string or creates an onnx model from trained model
 
@@ -661,7 +654,6 @@ class ModelCard(ArtifactCard):
             `OnnxModelPredictor`
 
         """
-        from opsml.model.predictor import OnnxModelPredictor
 
         # todo: clean this up
         if self.onnx_model_def is None or self.data_schema is None:
@@ -921,7 +913,7 @@ class RunCard(ArtifactCard):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current RunCard"""
 
-        exclude_attr = {"artifacts", "storage_client", "params", "metrics"}
+        exclude_attr = {"artifacts", "params", "metrics"}
 
         return RunRegistryRecord(**self.dict(exclude=exclude_attr))
 
@@ -999,12 +991,12 @@ class RunCard(ArtifactCard):
         raise ValueError(f"Param {param} is not defined")
 
     def load_artifacts(self) -> None:
-        if bool(self.artifact_uris) and self.storage_client is not None:
+        if bool(self.artifact_uris):
             for name, uri in self.artifact_uris.items():
                 storage_spec = ArtifactStorageSpecs(save_path=uri)
-                self.storage_client.storage_spec = storage_spec
+                storage_client.storage_spec = storage_spec
                 self.artifacts[name] = load_record_artifact_from_storage(
-                    storage_client=self.storage_client,
+                    storage_client=storage_client,
                     artifact_type=ARBITRARY_ARTIFACT_TYPE,
                 )
             return None
