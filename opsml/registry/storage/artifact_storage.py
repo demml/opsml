@@ -610,12 +610,9 @@ class LightGBMBooster(JoblibStorage):
     """Helper class only to be used with MLFLow"""
 
     def _load_artifact(self, file_path: FilePath) -> Any:
-        if isinstance(self.storage_client, MlflowStorageClient):
-            import lightgbm as lgb
+        import lightgbm as lgb
 
-            return lgb.Booster(model_file=file_path)
-
-        return joblib.load(file_path)
+        return lgb.Booster(model_file=file_path)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
