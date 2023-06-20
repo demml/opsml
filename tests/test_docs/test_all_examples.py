@@ -446,7 +446,7 @@ def test_custom_onnx(db_registries):
 
     modelcard = ModelCard(
         name="pytorch-custom-onnx",
-        team="opmsl",
+        team="opsml",
         user_email="opsml.com",
         trained_model=torch_model,
         sample_input_data=datacard.data[0:1],
@@ -729,7 +729,7 @@ def test_quickstart(mlflow_project: MlflowProject):
         X, y = fake_data()
         reg = LinearRegression().fit(X.to_numpy(), y)
 
-        # Create and registery DataCard with data profile
+        # Create and registry DataCard with data profile
         data_card = DataCard(
             data=X,
             name="pipeline-data",

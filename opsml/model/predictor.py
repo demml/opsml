@@ -123,7 +123,7 @@ class OnnxModelPredictor:
             data (dictionary of data): Dictionary containing data for prediction
 
         Returns
-            Predicition (float)
+            Prediction (float)
         """
 
         pred_data = self.sig_creator.input_sig(**data)

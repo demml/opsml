@@ -2,9 +2,8 @@ import time
 from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Extra, root_validator
-from ydata_profiling import ProfileReport
 
-from opsml.profile.profile_data import DataProfiler
+from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris, ModelCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -270,6 +269,7 @@ class LoadedRunRecord(LoadRecord):
     @root_validator(pre=True)
     def load_run_attr(cls, values) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
+
         runcard_definition = cls.load_runcard_definition(
             runcard_uri=values.get("runcard_uri"),
             storage_client=storage_client,

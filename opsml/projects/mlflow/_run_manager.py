@@ -17,7 +17,7 @@ from opsml.registry.storage.storage_system import MlflowStorageClient
 
 logger = ArtifactLogger.get_logger(__name__)
 
-mflow_storage = MlflowStorageClient(storage_settings=settings.storage_settings)
+mlflow_storage = MlflowStorageClient(storage_settings=settings.storage_settings)
 
 
 class _MlflowRunManager(_RunManager):
@@ -41,8 +41,8 @@ class _MlflowRunManager(_RunManager):
         # set mlflow client for storage client to use (use same mlflow client that run uses)
         # Reminder: Once routes for uploading objects are written for the opsml server,
         # we can remove MlflowStorageClient class
-        self.registries.set_storage_client(storage_client=mflow_storage)
-        self._storage_client = mflow_storage
+        self.registries.set_storage_client(storage_client=mlflow_storage)
+        self._storage_client = mlflow_storage
         self._storage_client.mlflow_client = self.mlflow_client
 
     def _verify_run_id(self, run_id: str) -> None:
@@ -129,6 +129,8 @@ class _MlflowRunManager(_RunManager):
         self.storage_client.artifact_path = mlflow_active_run.info.artifact_uri
 
     def _end_run(self) -> None:
+        # need to switch back to original storage client in order to save/update runcard
+        self.registries.set_storage_client(storage_client=settings.storage_client)
         super()._end_run()
         self.mlflow_client.set_tag(run_id=self.run_id, key=Tags.MLFLOW_VERSION, value=self.version)
 
@@ -143,7 +145,7 @@ class _MlflowRunManager(_RunManager):
     def _get_project_id(self) -> str:
         """
         Finds the project_id from mlflow for the given project. If an
-        existing proejct does not exist, a new one is created.
+        existing project does not exist, a new one is created.
 
         Args:
             project_id:
