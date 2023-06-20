@@ -1,11 +1,13 @@
+# pylint: disable=redefined-outer-name,import-outside-toplevel
+
 import os
-from typing import List, Union
+from typing import Any, List, Union
 
 import pandas as pd
 import polars as pl
-from ydata_profiling import ProfileReport, compare
 
 DIR_PATH = os.path.dirname(__file__)
+ProfileReport = Any  # custom runtime check in DataCard
 
 
 class DataProfiler:
@@ -27,6 +29,8 @@ class DataProfiler:
         Returns:
             `ProfileReport`
         """
+        from ydata_profiling import ProfileReport
+
         kwargs = {"title": f"Profile report for {name}"}
 
         if isinstance(data, pl.DataFrame):
@@ -71,6 +75,8 @@ class DataProfiler:
         Returns:
             `ProfileReport`
         """
+        from ydata_profiling import ProfileReport
+
         profile = ProfileReport()
         profile.loads(data)
         return profile
@@ -86,4 +92,6 @@ class DataProfiler:
         Returns:
             `ProfileReport`
         """
+        from ydata_profiling import compare
+
         return compare(reports=reports)
