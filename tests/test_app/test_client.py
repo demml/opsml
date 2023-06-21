@@ -11,6 +11,7 @@ from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
 from tests.conftest import TODAY_YMD
+from unittest.mock import patch, PropertyMock
 
 
 def test_client(test_app: TestClient):
@@ -331,11 +332,11 @@ def test_load_data_card(api_registries: Dict[str, CardRegistry], test_data: pd.D
         )
 
     # load card again
-    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version="1.2.0")
-    loaded_data.uris.data_uri = "fail"
+    datacardv12: DataCard = registry.load_card(name=data_name, team=team, version="1.2.0")
+    datacardv12.uris.data_uri = "fail"
 
     with pytest.raises(FileNotFoundError):
-        loaded_data.load_data()
+        datacardv12.load_data()
 
 
 def test_pipeline_registry(api_registries: Dict[str, CardRegistry]):
@@ -513,6 +514,71 @@ def test_download_model(
     msg = response.json()["detail"]
     assert response.status_code == 404
     assert "Model not found" == msg
+
+    # test version fail
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": "non-exist",
+            "team": model_card.team,
+            "version": "blah",
+        },
+    )
+
+    msg = response.json()["detail"]
+    assert response.status_code == 404
+    assert "Model not found" == msg
+
+    # test model copy failure
+    with patch(
+        "opsml.app.routes.models.ModelRegistrar.registry_empty",
+        new_callable=PropertyMock,
+    ) as mock_registrar:
+        mock_registrar.return_value = True
+        response = test_app.post(
+            url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+            json={
+                "name": model_card.name,
+                "team": model_card.team,
+                "version": model_card.version,
+            },
+        )
+
+        msg = response.json()["detail"]
+        assert response.status_code == 404
+        assert "Model not found in registry path" == msg
+
+    # register with caret
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": "^1",
+        },
+    )
+
+    ###### ModelCard
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data[:1],
+        name="test_model",
+        team=team,
+        user_email=user_email,
+        datacard_uid=data_card.uid,
+    )
+
+    model_registry.register_card(model_card)
+
+    # register: should delete file contents
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": "^1",
+        },
+    )
 
 
 def test_download_model_metadata_failure(test_app: TestClient):
