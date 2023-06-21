@@ -66,7 +66,7 @@ class ApiClient:
         """Gets the base url to use with all requests"""
         return f"{base_url}/{path_prefix}"
 
-    @retry(reraise=True, stop=stop_after_attempt(1))
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def post_request(
         self,
         route: str,

@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
+from tenacity import retry, stop_after_attempt
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -45,7 +46,6 @@ class ModelRegistrar:
         self.version = payload.version
         self.onnx = payload.onnx
         self.storage_client = storage_client
-        self._validate_version()
 
     @property
     def registry_path(self) -> str:
@@ -53,28 +53,16 @@ class ModelRegistrar:
         return f"{self.storage_client.base_path_prefix}/model_registry/{self.team}/{self.name}/v{self.version}"
 
     @property
-    def registry_not_empty(self) -> bool:
+    def registry_empty(self) -> bool:
         """Verifies model has been copied to hardcoded path"""
-        if len(self.storage_client.list_files(self.registry_path)) > 0:
+        files = self.storage_client.list_files(self.registry_path)
+        if len(files) == 0:
             return True
+        if len(files) == 1:
+            # check if file is directory path
+            if files[0] == self.registry_path:
+                return True
         return False
-
-    def _validate_version(self) -> None:
-        """Checks whether a version given follows semver/integer format
-
-        Args:
-            version:
-                Version to check
-        """
-        try:
-            for element in self.version.split("."):
-                int(element)  # force check element is an integer
-
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Model not found. Model semver invalid",
-            ) from exc
 
     def _get_correct_model_uri(self, metadata: ModelMetadata) -> Optional[str]:
         """Gets correct model uri based on onnx flag
@@ -89,6 +77,7 @@ class ModelRegistrar:
             return metadata.onnx_uri
         return metadata.model_uri
 
+    @retry(reraise=True, stop=stop_after_attempt(3))
     def _copy_model_to_registry(self, model_uri: str):
         """Copies a model from it's original storage path to a hardcoded model registry path
 
@@ -108,9 +97,15 @@ class ModelRegistrar:
         """
         read_path = os.path.dirname(model_uri)
 
+        # check if path already has contents
+        if not self.registry_empty:
+            # delete files in existing dir
+            self.storage_client.delete(read_path=self.registry_path)
+            assert self.registry_empty
+
         self.storage_client.copy(read_path=read_path, write_path=self.registry_path)
 
-        if self.registry_not_empty:
+        if not self.registry_empty:
             return self.registry_path
 
         raise HTTPException(
@@ -161,14 +156,11 @@ def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
         model uri or HTTP_404_NOT_FOUND if the model is not found.
     """
 
-    # instantiate registrar first (we want to validate version before loading metadata)
-    registrar = ModelRegistrar(
-        payload=payload,
-        storage_client=request.app.state.storage_client,
-    )
-
     # get model metadata
     metadata = post_model_metadata(request, payload)
+
+    # instantiate registrar
+    registrar = ModelRegistrar(payload=payload, storage_client=request.app.state.storage_client)
 
     # register/copy to new location
     return registrar.register_model(metadata=metadata)
