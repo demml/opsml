@@ -217,6 +217,9 @@ class StorageClient:
     def copy(self, read_path: str, write_path: str) -> None:
         raise ValueError("Storage class does not implement a copy method")
 
+    def delete(self, read_path: str):
+        raise ValueError("Storage class does not implement a delete method")
+
     def _make_path(self, folder_path: str):
         Path(folder_path).mkdir(parents=True, exist_ok=True)
 
@@ -258,6 +261,15 @@ class GCSFSStorageClient(StorageClient):
                 Path to write to
         """
         self.client.copy(read_path, write_path, recursive=True)
+
+    def delete(self, read_path: str) -> None:
+        """Deletes files from a read path
+
+        Args:
+            read_path:
+                Path to delete
+        """
+        return self.client.rm(path=read_path, recursive=True)
 
     def open(self, filename: str, mode: str) -> IO:
         return self.client.open(filename, mode)
@@ -334,6 +346,15 @@ class LocalStorageClient(StorageClient):
             shutil.copytree(read_path, write_path, dirs_exist_ok=True)
         else:
             shutil.copyfile(read_path, write_path)
+
+    def delete(self, read_path: str) -> None:
+        """Deletes files from a read path
+
+        Args:
+            read_path:
+                Path to delete
+        """
+        return self.client.delete_dir(read_path)
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
