@@ -113,7 +113,7 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
     assert model == model
 
 
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client")])
+@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
 def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     storage_spec = ArtifactStorageSpecs(save_path="blob")
 
@@ -123,25 +123,7 @@ def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_writ
         artifact_type="Table",
     )
     metadata = pq_writer.save_artifact(artifact=test_arrow_table)
-    assert isinstance(metadata.uri, str)
 
-    table = pq_writer.load_artifact(storage_uri=metadata.uri)
-    assert isinstance(table, pa.Table)
-
-    storage_client.list_files(metadata.uri)
-    storage_client.delete(metadata.uri)
-
-
-@pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
-def test_parquet_local(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
-    storage_spec = ArtifactStorageSpecs(save_path="blob")
-
-    storage_client.storage_spec = storage_spec
-    pq_writer = ParquetStorage(
-        storage_client=storage_client,
-        artifact_type="Table",
-    )
-    metadata = pq_writer.save_artifact(artifact=test_arrow_table)
     assert isinstance(metadata.uri, str)
 
     table = pq_writer.load_artifact(storage_uri=metadata.uri)
