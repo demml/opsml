@@ -53,21 +53,16 @@ class ModelRegistrar:
         return f"{self.storage_client.base_path_prefix}/model_registry/{self.team}/{self.name}/v{self.version}"
 
     @property
-    def is_registered(self) -> bool:
-        """Checks if registry path is empty"""
-
-        try:
-            files = self.storage_client.list_files(self.registry_path)
-            if len(files) == 0:
-                return False
-            if len(files) == 1:
-                # check if file is directory path
-                if files[0] == self.registry_path:
-                    return False
+    def registry_empty(self) -> bool:
+        """Verifies model has been copied to hardcoded path"""
+        files = self.storage_client.list_files(self.registry_path)
+        if len(files) == 0:
             return True
-
-        except FileNotFoundError:
-            return False
+        if len(files) == 1:
+            # check if file is directory path
+            if files[0] == self.registry_path:
+                return True
+        return False
 
     def _get_correct_model_uri(self, metadata: ModelMetadata) -> Optional[str]:
         """Gets correct model uri based on onnx flag
@@ -103,16 +98,14 @@ class ModelRegistrar:
         read_path = os.path.dirname(model_uri)
 
         # check if path already has contents
-        if self.is_registered:
-            logger.info("Model detected in registry path. Deleting...")
+        if not self.registry_empty:
             # delete files in existing dir
             self.storage_client.delete(read_path=self.registry_path)
-            assert self.is_registered
+            assert self.registry_empty
 
         self.storage_client.copy(read_path=read_path, write_path=self.registry_path)
 
-        if self.is_registered:
-            logger.info("Model registered to %s", self.registry_path)
+        if not self.registry_empty:
             return self.registry_path
 
         raise HTTPException(
