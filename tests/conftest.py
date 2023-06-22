@@ -199,6 +199,7 @@ def mock_gcsfs():
         ls=MagicMock(return_value=["test"]),
         upload=MagicMock(return_value=True),
         download=MagicMock(return_value="gs://test"),
+        rm=MagicMock(return_value=None),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
 
