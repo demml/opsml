@@ -531,10 +531,10 @@ def test_download_model(
 
     # test model copy failure
     with patch(
-        "opsml.app.routes.models.ModelRegistrar.registry_empty",
+        "opsml.app.routes.models.ModelRegistrar.is_registered",
         new_callable=PropertyMock,
     ) as mock_registrar:
-        mock_registrar.return_value = True
+        mock_registrar.return_value = False
         response = test_app.post(
             url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
             json={
