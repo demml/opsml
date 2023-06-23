@@ -8,6 +8,7 @@ import tempfile
 import uuid
 from contextlib import contextmanager
 from enum import Enum
+from functools import cached_property
 from functools import wraps
 from pathlib import Path
 from typing import (
@@ -649,6 +650,17 @@ class MlflowStorageClient(StorageClient):
         self._artifact_path: str = "mlflow-artifacts:/"
         self._mlflow_client: Optional[MlFlowClientProto] = None
         self._storage_spec = ArtifactStorageSpecs(save_path=self.base_path_prefix)
+        self._opsml_storage_client: Optional[StorageClient] = None
+
+    @property
+    def opsml_storage_client(self) -> StorageClient:
+        if self._opsml_storage_client is not None:
+            return self._opsml_storage_client
+        raise ValueError("No storage client found")
+
+    @opsml_storage_client.setter
+    def opsml_storage_client(self, storage_client: StorageClient) -> None:
+        self._opsml_storage_client = storage_client
 
     def open(self, filename: str, mode: str):
         """not used"""
