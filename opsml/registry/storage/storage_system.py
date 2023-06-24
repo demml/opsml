@@ -356,7 +356,7 @@ class LocalStorageClient(StorageClient):
                 lpath = os.path.join(lpath, filename)
 
             return self.copy(read_path=files[0], write_path=lpath)
-        return self.copy(rpath=rpath, lpath=lpath)
+        return self.copy(read_path=rpath, write_path=lpath)
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
