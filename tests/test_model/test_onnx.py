@@ -6,6 +6,15 @@ import pytest
 import pandas as pd
 from pytest_lazyfixture import lazy_fixture
 from opsml.model.types import ModelMetadata
+import warnings
+
+
+# this is done to filter all the convergence and user warnings during testing
+def warn(*args, **kwargs):
+    pass
+
+
+warnings.warn = warn
 
 
 @pytest.mark.parametrize(
