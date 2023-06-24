@@ -1,4 +1,4 @@
-from typing import Optional, cast, Dict, Union
+from typing import Dict, Optional, Union, cast
 
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo
