@@ -82,7 +82,6 @@ from opsml.registry import CardRegistries
 from opsml.projects import OpsmlProject
 from opsml.model.types import OnnxModelDefinition
 
-
 # testing
 from tests.mock_api_registries import CardRegistry as ClientCardRegistry
 
