@@ -728,36 +728,24 @@ class MlflowStorageClient(StorageClient):
         return rpath
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
-        import mlflow
-
         temp_path = lpath
         if not recursive:
-            filename = os.path.basename(lpath)
+            filename = os.path.basename(rpath)
             temp_path = f"{temp_path}/{filename}"
 
-        download_path = self.swap_proxy_root(rpath=rpath)
-
         abs_temp_path = temp_path
-
-        file_path = mlflow.artifacts.download_artifacts(
-            artifact_uri=download_path,
-            dst_path=abs_temp_path,
-            tracking_uri=self.mlflow_client.tracking_uri,
-        )
+        file_path = self.opsml_storage_client.download(rpath, abs_temp_path, recursive, **kwargs)
 
         return file_path
 
     def _log_artifact(self, mlflow_info: MlflowInfo) -> str:
-        
-        print(mlflow_info.local_path)
-        print(mlflow_info.artifact_path)
-        a
-        self.mlflow_client.log_artifact(
-            run_id=self.run_id,
-            local_path=mlflow_info.local_path,
-            artifact_path=mlflow_info.artifact_path,
-        )
+        write_path = f"{self.artifact_path}/{mlflow_info.artifact_path}/{mlflow_info.filename}"
+        write_path = self.swap_mlflow_root(rpath=write_path)
 
+        self.opsml_storage_client.upload(
+            local_path=mlflow_info.local_path,
+            write_path=write_path,
+        )
         return mlflow_info.filename
 
     def _log_model(self, mlflow_info: MlflowInfo) -> str:
@@ -857,7 +845,8 @@ class MlflowStorageClient(StorageClient):
         return "misc"
 
     def list_files(self, storage_uri: str) -> FilePath:
-        return [storage_uri]
+        return self.opsml_storage_client.list_files(storage_uri)
+        # return [storage_uri]
 
     def store(self, storage_uri: str, **kwargs):
         """Wrapper method needed for working with data artifacts and mlflow"""

@@ -332,6 +332,7 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
 
     # set storage client
     mlflow_storage = mlflow_storage_client()
+    mlflow_storage.opsml_storage_client = api_card_registries.data._registry.storage_client
 
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
@@ -374,6 +375,7 @@ def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
     mlflow_exp: MlflowProject = get_project(info=info)
 
     mlflow_storage = mlflow_storage_client()
+    mlflow_storage.opsml_storage_client = api_registries.data._registry.storage_client
     api_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_registries
 
