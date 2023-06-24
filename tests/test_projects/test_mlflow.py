@@ -37,6 +37,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         run.log_metric(key="m1", value=1.1)
         run.log_metric(key="mape", value=2, step=1)
         run.log_metric(key="mape", value=2, step=2)
+        run.log_metrics({"mse": 10, "rmse": 20}, step=10)
         run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline
         data_card = DataCard(
@@ -59,7 +60,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
     # Retrieve the run and load projects without making the run active (read only mode)
     proj = conftest.mock_mlflow_project(info)
-    assert len(proj.metrics) == 2
+    assert len(proj.metrics) == 4
 
     assert proj.get_metric("m1").value == 1.1
     assert len(proj.parameters) == 1
