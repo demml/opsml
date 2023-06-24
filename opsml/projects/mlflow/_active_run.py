@@ -78,7 +78,8 @@ class MlflowActiveRun(ActiveRun):
 
         """
         super().log_metrics(metrics, step)
-        self.info.mlflow_client.log_metrics(metrics, step)
+        for key, value in metrics.items():
+            self.info.mlflow_client.log_metric(run_id=self.run_id, key=key, value=value, step=step)
 
     def log_parameter(self, key: str, value: str) -> None:
         """

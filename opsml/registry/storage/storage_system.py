@@ -342,11 +342,22 @@ class LocalStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-
         if os.path.isdir(read_path):
-            shutil.copytree(read_path, write_path, dirs_exist_ok=True)
+            return shutil.copytree(read_path, write_path, dirs_exist_ok=True)
         else:
-            shutil.copyfile(read_path, write_path)
+            return shutil.copyfile(read_path, write_path)
+
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+        files = kwargs.get("files", None)
+
+        if len(files) == 1:
+            filename = os.path.basename(files[0])
+
+            if os.path.isdir(lpath):
+                lpath = os.path.join(lpath, filename)
+
+            return self.copy(read_path=files[0], write_path=lpath)
+        return self.copy(rpath=rpath, lpath=lpath)
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
