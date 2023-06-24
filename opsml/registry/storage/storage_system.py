@@ -343,8 +343,7 @@ class LocalStorageClient(StorageClient):
         """
         if os.path.isdir(read_path):
             return shutil.copytree(read_path, write_path, dirs_exist_ok=True)
-        else:
-            return shutil.copyfile(read_path, write_path)
+        return shutil.copyfile(read_path, write_path)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
         files = kwargs.get("files", None)
