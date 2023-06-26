@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, cast, Dict
 
 import os
 import sys
@@ -314,23 +314,24 @@ def test_pytorch_model(
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 def test_tf_model(
     mlflow_project: MlflowProject,
-    load_transformer_example: tuple[Any, NDArray],
+    load_multi_input_keras_example: tuple[Any, Dict[str, NDArray]],
 ):
     # another run (pytorch)
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
-        model, data = load_transformer_example
+        model, data = load_multi_input_keras_example
+
         data_card = DataCard(
-            data=data,
-            name="transformer_data",
+            data=data["title"],
+            name="sample_input",
             team="mlops",
             user_email="mlops.com",
         )
         run.register_card(card=data_card)
         model_card = ModelCard(
             trained_model=model,
-            sample_input_data=data[0:1],
-            name="transformer_model",
+            sample_input_data=data,
+            name="multi_model",
             team="mlops",
             user_email="mlops.com",
             datacard_uid=data_card.uid,
