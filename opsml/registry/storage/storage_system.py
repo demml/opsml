@@ -214,7 +214,7 @@ class StorageClient:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
 
-    def copy(self, read_path: str, write_path: str) -> None:
+    def copy(self, read_path: str, write_path: str) -> Optional[str]:
         raise ValueError("Storage class does not implement a copy method")
 
     def delete(self, read_path: str):
@@ -251,7 +251,7 @@ class GCSFSStorageClient(StorageClient):
             backend=StorageSystem.GCS.value,
         )
 
-    def copy(self, read_path: str, write_path: str) -> None:
+    def copy(self, read_path: str, write_path: str) -> Optional[str]:
         """Copies object from read_path to write_path
 
         Args:
@@ -260,7 +260,7 @@ class GCSFSStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        self.client.copy(read_path, write_path, recursive=True)
+        return self.client.copy(read_path, write_path, recursive=True)
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
@@ -332,7 +332,7 @@ class LocalStorageClient(StorageClient):
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
 
-    def copy(self, read_path: str, write_path: str) -> None:
+    def copy(self, read_path: str, write_path: str) -> str:
         """Copies object from read_path to write_path
 
         Args:
