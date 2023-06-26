@@ -1,13 +1,9 @@
 name: Testing
 
-on:
-  push:
-    branches:    
-      - '*' 
+on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
