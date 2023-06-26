@@ -5,7 +5,6 @@ type: docker
 trigger:
   event:
     - pull_request
-    - push
 
 steps:
   - name: setup_310
