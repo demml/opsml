@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
@@ -110,9 +110,9 @@ class CompareCardRequest(BaseModel):
 
 class RegisterModelRequest(BaseModel):
     name: str
-    version: str
+    version: str = Field(..., regex="^[0-9]+(.[0-9]+)?(.[0-9]+)?$")
     team: str
-    uid: Optional[str] = None
+    uid: Optional[str]
     onnx: bool = True
 
 
