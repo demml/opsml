@@ -12,7 +12,7 @@ from opsml.model.types import (
     InputData,
     InputDataType,
     OnnxModelDefinition,
-    TorchOnnxArgs,
+    ExtraOnnxArgs,
 )
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -278,15 +278,17 @@ class FloatTypeConverter:
 @dataclass
 class ModelInfo:
     """Helper class to be used with OnnxModelConverter.
-    Contains metadata needed for convertsion of trained model to onnx format.
+    Contains metadata needed for conversion of trained model to onnx format.
 
     Args:
         model:
-            Trained model (sklean, tf, keras, pytorch)
+            Trained model (sklearn, tf, keras, pytorch)
         input_data:
             Sample data use to train model
         model_type:
             Model type
+        model_class:
+            Model class
         data_type:
             Data type
         additional_model_args:
@@ -298,6 +300,7 @@ class ModelInfo:
     model: Any
     model_data: ModelData
     model_type: str
+    model_class: str
     data_type: type
-    additional_model_args: Optional[TorchOnnxArgs] = None
+    additional_model_args: Optional[ExtraOnnxArgs] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None

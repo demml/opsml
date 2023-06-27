@@ -14,7 +14,7 @@ from opsml.model.types import (
     InputDataType,
     OnnxModelDefinition,
     OnnxModelType,
-    TorchOnnxArgs,
+    ExtraOnnxArgs,
 )
 
 ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
@@ -278,7 +278,7 @@ class PyTorchOnnxDataConverter(DataConverter):
         self.input_name = self._get_input_name()
 
     def _get_input_name(self) -> str:
-        args = cast(TorchOnnxArgs, self.model_info.additional_model_args)
+        args = cast(ExtraOnnxArgs, self.model_info.additional_model_args)
         return args.input_names[0]
 
     def get_onnx_data_types(self) -> List[Any]:
@@ -316,7 +316,7 @@ class PyTorchOnnxDictConverter(DataConverter):
         self.input_names = self._get_input_names()
 
     def _get_input_names(self) -> List[str]:
-        args = cast(TorchOnnxArgs, self.model_info.additional_model_args)
+        args = cast(ExtraOnnxArgs, self.model_info.additional_model_args)
         return args.input_names
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:

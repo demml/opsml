@@ -24,7 +24,7 @@ from opsml.model.types import (
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
-    TorchOnnxArgs,
+    ExtraOnnxArgs,
 )
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import (
@@ -430,7 +430,7 @@ class ModelCard(ArtifactCard):
     onnx_model_def: Optional[OnnxModelDefinition]
     sample_data_type: Optional[str]
     model_type: Optional[str]
-    additional_onnx_args: Optional[TorchOnnxArgs]
+    additional_onnx_args: Optional[ExtraOnnxArgs]
     data_schema: Optional[ApiDataSchemas]
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
