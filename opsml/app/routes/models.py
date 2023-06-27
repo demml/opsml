@@ -22,7 +22,6 @@ from opsml.registry.storage.storage_system import StorageClientType
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
-CHUNK_SIZE = 31457280
 
 
 class ModelRegistrar:
@@ -144,20 +143,32 @@ class ModelRegistrar:
 
 @router.post("/models/register", name="register")
 def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
-    """Promotes a model from Opsml storage to the default model registry storage used for
-    Seldon model hosting.
+    """Registers a model to a known GCS location.
+
+       This is used from within our CI/CD infrastructure to ensure a known good
+       GCS location exists for the onnx model.
 
     Args:
         name:
-            Optional name of model
+            Model name (does not include team)
         version:
-            Optional semVar version of model
+            Version of model to register in major[.minor[.patch]] format. Valid
+            formats are "1", "1.1", and "1.1.1". If not all components are
+            specified, the latest version for the leftmost missing component
+            will be registered.
+
+            For example, assume the latest version is 1.2.3 and versions 1.1.1 thru 1.1.100 exist
+                * "1"     = registers 1.2.3 at "1" (the highest minor / patch version is used)
+                * "1.2"   = registers 1.2.3 at "1.2"
+                * "1.1"   = registers 1.1.100 at "1.1"
+                * "1.1.1" = regisers 1.1.1 at "1.1.1"
         team:
-            Optional team name
+            Team name
         uid:
             Optional uid of ModelCard
         onnx:
-            Whether to copy the onnx model or model in it's native format. Defaults to True
+            Whether to copy the onnx model or model in it's native format.
+            Defaults to True
 
     Returns:
         model uri or HTTP_404_NOT_FOUND if the model is not found.
