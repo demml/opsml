@@ -563,7 +563,7 @@ def test_metadata_download_and_registration(
         json={
             "name": "non-exist",
             "team": model_card.team,
-            "version": "v1.0.0",  # regex should *not* contain "v"
+            "version": "v1.0.0",  # version should *not* contain "v" - it must match the n.n.n pattern
         },
     )
 
