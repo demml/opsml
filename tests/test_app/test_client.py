@@ -1,4 +1,5 @@
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, Tuple
+import re
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
@@ -429,20 +430,19 @@ def test_full_pipeline_with_loading(
     assert uids["model"][0] == model_card.uid
 
 
-def test_download_model(
+def test_metadata_download_and_registration(
     test_app: TestClient,
     api_registries: Dict[str, CardRegistry],
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
     team = "mlops"
-    user_email = "mlops.com"
+    user_email = "test@mlops.com"
 
     model, data = linear_regression
 
     data_registry = api_registries.data
     model_registry = api_registries.model
 
-    #### Create DataCard
     data_card = DataCard(
         data=data,
         name="test_data",
@@ -451,7 +451,7 @@ def test_download_model(
     )
 
     data_registry.register_card(card=data_card)
-    ###### ModelCard
+
     model_card = ModelCard(
         trained_model=model,
         sample_input_data=data[:1],
@@ -467,12 +467,13 @@ def test_download_model(
         url=f"opsml/{ApiRoutes.MODEL_METADATA}",
         json={"uid": model_card.uid},
     )
+    assert response.status_code == 200
 
     model_def = response.json()
-
     assert model_def["model_name"] == model_card.name
     assert model_def["model_version"] == model_card.version
-    assert response.status_code == 200
+
+    print(f"registered model version: {model_card.version}")
 
     # test register model (onnx)
     response = test_app.post(
@@ -483,9 +484,11 @@ def test_download_model(
             "version": model_card.version,
         },
     )
-
-    copied_dir = response.json()
-    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
+    # NOTE: the *exact* model version sent must be returned in the URL.
+    # Otherwise the hosting infrastructure will not know where to find the URL
+    # as they do *not* use the response text, rather they assume the URL is in
+    # the correct format.
+    assert f"/model_registry/mlops/test-model/v{model_card.version}" in response.text
 
     # test register model (native)
     response = test_app.post(
@@ -494,14 +497,40 @@ def test_download_model(
             "name": model_card.name,
             "team": model_card.team,
             "version": model_card.version,
-            "onnx": "False",
+            "onnx": "false",
+        },
+    )
+    uri = response.json()
+    assert re.search(rf"/model_registry/mlops/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+
+    # test register model - latest patch given latest major.minor
+    minor = model_card.version[0 : model_card.version.rindex(".")]
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": minor,
         },
     )
 
-    copied_dir = response.json()
-    assert "/model_registry/mlops/test-model/v1.1.0" in copied_dir
+    uri = response.json()
+    assert re.search(rf"/model_registry/mlops/test-model/v{minor}$", uri, re.IGNORECASE) is not None
 
-    # test register model path fail
+    # test register model - latest minor / patch given major only
+    major = model_card.version[0 : model_card.version.index(".")]
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": model_card.name,
+            "team": model_card.team,
+            "version": major,
+        },
+    )
+    uri = response.json()
+    assert re.search(rf"/model_registry/mlops/test-model/v{major}$", uri, re.IGNORECASE) is not None
+
+    # test version fail - invalid name
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
@@ -515,19 +544,33 @@ def test_download_model(
     assert response.status_code == 404
     assert "Model not found" == msg
 
-    # test version fail
+    # test version fail - invalid team
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
-            "name": "non-exist",
-            "team": model_card.team,
-            "version": "blah",
+            "name": model_card.name,
+            "team": "non-exist",
+            "version": model_card.version,
         },
     )
 
     msg = response.json()["detail"]
     assert response.status_code == 404
     assert "Model not found" == msg
+
+    # test version fail (does not match regex)
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
+        json={
+            "name": "non-exist",
+            "team": model_card.team,
+            "version": "v1.0.0",  # regex should *not* contain "v"
+        },
+    )
+
+    loc = response.json()["detail"][0]["loc"]  # "location" of pydantic failure
+    assert response.status_code == 422
+    assert "version" in loc
 
     # test model copy failure
     with patch(
@@ -547,38 +590,6 @@ def test_download_model(
         msg = response.json()["detail"]
         assert response.status_code == 404
         assert "Model not found in registry path" == msg
-
-    # register with caret
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "team": model_card.team,
-            "version": "^1",
-        },
-    )
-
-    ###### ModelCard
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
-        name="test_model",
-        team=team,
-        user_email=user_email,
-        datacard_uid=data_card.uid,
-    )
-
-    model_registry.register_card(model_card)
-
-    # register: should delete file contents
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "team": model_card.team,
-            "version": "^1",
-        },
-    )
 
 
 def test_download_model_metadata_failure(test_app: TestClient):
