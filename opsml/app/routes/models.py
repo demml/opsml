@@ -149,29 +149,19 @@ def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
        GCS location exists for the onnx model.
 
     Args:
-        name:
-            Model name (does not include team)
-        version:
-            Version of model to register in major[.minor[.patch]] format. Valid
-            formats are "1", "1.1", and "1.1.1". If not all components are
-            specified, the latest version for the leftmost missing component
-            will be registered.
-
-            For example, assume the latest version is 1.2.3 and versions 1.1.1 thru 1.1.100 exist
-                * "1"     = registers 1.2.3 at "1" (the highest minor / patch version is used)
-                * "1.2"   = registers 1.2.3 at "1.2"
-                * "1.1"   = registers 1.1.100 at "1.1"
-                * "1.1.1" = regisers 1.1.1 at "1.1.1"
-        team:
-            Team name
-        uid:
-            Optional uid of ModelCard
-        onnx:
-            Whether to copy the onnx model or model in it's native format.
-            Defaults to True
-
+        request:
+            The incoming HTTP request.
+        payload:
+            Details on the model to register. See RegisterModelRequest for more
+            information.
     Returns:
-        model uri or HTTP_404_NOT_FOUND if the model is not found.
+        422 if the RegisterModelRequest is invalid (i.e., the version is
+        malformed).
+
+        404 if the model is not found.
+
+        200 if the model is found. The body will contain a JSON string with the
+        GCS URI to the *folder* where the model is registered.
     """
 
     # get model metadata
@@ -193,14 +183,11 @@ def post_model_metadata(
     Downloads a Model API definition
 
     Args:
-        name:
-            Optional name of model
-        version:
-            Optional semVar version of model
-        team:
-            Optional team name
-        uid:
-            Optional uid of ModelCard
+        request:
+            The incoming HTTP request
+
+        payload:
+            Details on the model to retrieve metadata for.
 
     Returns:
         ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
