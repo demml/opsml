@@ -4,7 +4,7 @@
 import tempfile
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
+import re
 import numpy as np
 import onnx
 import onnxruntime as rt
@@ -27,7 +27,7 @@ from opsml.model.types import (
     OnnxDataProto,
     OnnxModelDefinition,
     OnnxModelType,
-    TorchOnnxArgs,
+    ExtraOnnxArgs,
 )
 
 ONNX_VERSION = onnx.__version__
@@ -38,6 +38,13 @@ class ModelConverter:
     def __init__(self, model_info: ModelInfo):
         self.model_info = model_info
         self.data_converter = OnnxDataConverter(model_info=model_info)
+
+    @property
+    def is_sklearn_classifier(self) -> bool:
+        """Checks if model is a classifier"""
+        if re.search("[a-zA-Z]*regress*[a-zA-Z]*", self.model_info.model_class, re.IGNORECASE) is not None:
+            return False
+        return True
 
     def update_onnx_registries(self) -> bool:
         return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
@@ -93,7 +100,7 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
+    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
 
         for sig in signature:
@@ -111,8 +118,8 @@ class ModelConverter:
         return feature_dict
 
     def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
-        input_dict = self._parse_onnx_sigature(onnx_model.graph.input)
-        output_dict = self._parse_onnx_sigature(onnx_model.graph.output)
+        input_dict = self._parse_onnx_signature(onnx_model.graph.input)
+        output_dict = self._parse_onnx_signature(onnx_model.graph.output)
 
         return input_dict, output_dict
 
@@ -258,7 +265,21 @@ class SklearnOnnxModel(ModelConverter):
             warnings.simplefilter("ignore")
             from skl2onnx import convert_sklearn
 
-            onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types)
+            options = None
+            if self.is_sklearn_classifier:
+                if (
+                    self.model_info.additional_model_args is not None
+                    and self.model_info.additional_model_args.options is not None
+                ):
+                    options = self.model_info.additional_model_args.options
+                else:
+                    options = {"zipmap": False}
+
+            onnx_model = convert_sklearn(
+                model=self.model_info.model,
+                initial_types=initial_types,
+                options=options,
+            )
             self.validate_model(onnx_model=onnx_model)
 
         return onnx_model
@@ -268,7 +289,7 @@ class SklearnOnnxModel(ModelConverter):
         return model_type in SKLEARN_SUPPORTED_MODEL_TYPES
 
 
-class LighGBMBoosterOnnxModel(ModelConverter):
+class LightGBMBoosterOnnxModel(ModelConverter):
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
@@ -320,11 +341,11 @@ class PytorchArgBuilder:
     def _get_output_names(self) -> List[str]:
         return ["output"]
 
-    def get_args(self) -> TorchOnnxArgs:
+    def get_args(self) -> ExtraOnnxArgs:
         input_names = self._get_input_names()
         output_names = self._get_output_names()
 
-        return TorchOnnxArgs(
+        return ExtraOnnxArgs(
             input_names=input_names,
             output_names=output_names,
         )
@@ -343,9 +364,9 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_additional_model_args(
         self,
         input_data: Any,
-        additional_onnx_args: Optional[TorchOnnxArgs] = None,
-    ) -> TorchOnnxArgs:
-        """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
+        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
+    ) -> ExtraOnnxArgs:
+        """Passes or creates ExtraOnnxArgs needed for Onnx model conversion"""
 
         if additional_onnx_args is None:
             return PytorchArgBuilder(input_data=input_data).get_args()

@@ -250,14 +250,14 @@ class PydanticDataTypes(Enum):
 
 
 @dataclass
-class TorchOnnxArgs:
+class ExtraOnnxArgs:
     """
     input_names (List[str]): Optional list containing input names for model inputs.
     This is a PyTorch-specific attribute
     output_names (List[str]): Optional list containing output names for model outputs.
     This is a PyTorch-specific attribute
     dynamic_axes (Dictionary): Optional PyTorch attribute that defines dynamic axes
-    constant_folding (bool): Whether to use constant folding optimiation. Default is True
+    constant_folding (bool): Whether to use constant folding optimization. Default is True
     """
 
     input_names: List[str]
@@ -266,6 +266,7 @@ class TorchOnnxArgs:
     do_constant_folding: bool = True
     export_params: bool = True
     verbose: bool = False
+    options: Optional[Dict[str, Any]] = None
 
     def to_dict(self):
         return asdict(self)
