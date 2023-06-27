@@ -3,11 +3,11 @@ name: Unit-Test
 on: [push]
 
 jobs:
-  Unit-Test:
+  Unit-Test-py39:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9"]
         poetry-version: ["1.5.1"]
 
     steps:
@@ -31,26 +31,35 @@ jobs:
         run: |
           make test.unit
 
-      - uses: actions/upload-artifact@master
-        with:
-          name: coverage-report
-          path: ./coverage.xml
-
-  Coverage:
-    needs: Unit-Test
-    name: SonarQube Trigger
+  Unit-Test-py310:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+        poetry-version: ["1.5.1"]
+
     steps:
-      - name: Checking out
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Download
-        uses: actions/download-artifact@master
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          name: coverage-report
-          path: ./coverage.xml
+          python-version: ${{ matrix.python-version }}
 
-      - name: SonarQube Scan
+      - name: Run image
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      - name: Install dependencies
+        run: |
+          make setup.project
+
+      - name: Unit test
+        run: |
+          make test.unit
+
+      - name: Coverage
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -58,3 +67,6 @@ jobs:
         with:
             args: >
               -Dsonar.projectKey=${{ secrets.SONAR_PROJECT }}
+        
+
+  
