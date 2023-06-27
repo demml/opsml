@@ -26,8 +26,8 @@ logger = ArtifactLogger.get_logger(__name__)
 router = APIRouter()
 
 
-@router.post("/models/register", name="register")
-def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
+@router.post("/models/register", name="model_register")
+def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     """Registers a model to a known GCS location.
 
        This is used from within our CI/CD infrastructure to ensure a known good

@@ -12,7 +12,6 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class RegistrationError(Exception):
-    # TODO(@damon): Better registration error?
     pass
 
 
@@ -63,12 +62,11 @@ class ModelRegistrar:
         try:
             path = self._registry_path(request)
             files = self.storage_client.list_files(path)
-            if len(files) == 0:
+
+            if len(files) == 0 or files[0] == path:
+                # no files or only an empty directory exists
                 return False
-            if len(files) == 1:
-                # check if file is directory path
-                if files[0] == path:
-                    return False
+
             return True
         except FileNotFoundError:
             return False
@@ -99,35 +97,36 @@ class ModelRegistrar:
         read_path = os.path.dirname(model_uri)
         registry_path = self._registry_path(request)
 
-        # check if path already has contents
+        # delete existing model if it exists
         if self.is_registered(request):
             logger.info("Model detected in registry path. Deleting: %s", registry_path)
-            # delete files in existing dir
-            self.storage_client.delete(read_path=registry_path)
+            self.storage_client.delete(registry_path)
             assert not self.is_registered(request)
 
+        # register the model
         self.storage_client.copy(read_path=read_path, write_path=registry_path)
 
-        if self.is_registered(request):
-            logger.info("Model registered to %s", registry_path)
-            return registry_path
+        if not self.is_registered(request):
+            raise RegistrationError("Failed to copy model to registered URL")
 
-        raise RegistrationError()
+        return registry_path
 
     def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
-        """Registers a model to a hardcoded storage path
+        """Registers a model to a hardcoded storage path.
 
         Args:
-            metadata:
-                `ModelMetadata`
+            request: Registration rquest
+            metadata: Associated model metadata
 
         Returns:
-            model uri
-
+            The URI to the directory containing the registered model.
         """
         model_uri = self._get_correct_model_uri(request, metadata)
 
-        if model_uri is not None:
-            return self._copy_model_to_registry(request, model_uri)
+        if model_uri is None:
+            raise RegistrationError("the model_uri does not exist")
 
-        raise RegistrationError()
+        logger.info("ModelRegistrar: registering model: %s", request)
+        registry_path = self._copy_model_to_registry(request, model_uri)
+        logger.info("ModelRegistrar: registered model: %s path=%s", request, registry_path)
+        return registry_path
