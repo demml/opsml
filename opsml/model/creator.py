@@ -13,7 +13,7 @@ from opsml.model.types import (
     InputDataType,
     ModelReturn,
     OnnxModelDefinition,
-    TorchOnnxArgs,
+    ExtraOnnxArgs,
 )
 
 
@@ -22,7 +22,7 @@ class ModelCreator:
         self,
         model: Any,
         input_data: InputData,
-        additional_onnx_args: Optional[TorchOnnxArgs] = None,
+        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
         """
@@ -145,7 +145,7 @@ class OnnxModelCreator(ModelCreator):
         self,
         model: Any,
         input_data: InputData,
-        additional_onnx_args: Optional[TorchOnnxArgs] = None,
+        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
         """
@@ -212,6 +212,7 @@ class OnnxModelCreator(ModelCreator):
             model=self.model,
             model_data=model_data,
             model_type=self.model_type,
+            model_class=self.model_class,
             data_type=self.input_data_type,
             additional_model_args=self.additional_model_args,
             onnx_model_def=self.onnx_model_def,
@@ -235,7 +236,7 @@ def create_model(
     model: Any,
     input_data: InputData,
     to_onnx: bool,
-    additional_onnx_args: Optional[TorchOnnxArgs] = None,
+    additional_onnx_args: Optional[ExtraOnnxArgs] = None,
     onnx_model_def: Optional[OnnxModelDefinition] = None,
 ) -> ModelReturn:
     """
