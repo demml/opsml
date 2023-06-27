@@ -12,7 +12,7 @@ from opsml.helpers.request_helpers import ApiRoutes
 from requests.auth import HTTPBasicAuth
 import uuid
 from tests.conftest import TODAY_YMD
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch, MagicMock
 
 
 def test_client(test_app: TestClient):
@@ -571,10 +571,12 @@ def test_metadata_download_and_registration(
     assert response.status_code == 422
     assert "version" in loc
 
-    # test model copy failure
+    # test model copy failure. This should result in a 500 - internal server
+    # error. The model exists and is valid, but the internal copy failed.
+    # Returning a 4xx (i.e., 404) is not the correct response.
     with patch(
-        "opsml.app.routes.models.ModelRegistrar.is_registered",
-        new_callable=PropertyMock,
+        "opsml.registry.model.registrar.ModelRegistrar.is_registered",
+        new_callable=MagicMock,
     ) as mock_registrar:
         mock_registrar.return_value = False
         response = test_app.post(
@@ -587,8 +589,7 @@ def test_metadata_download_and_registration(
         )
 
         msg = response.json()["detail"]
-        assert response.status_code == 404
-        assert "Model not found in registry path" == msg
+        assert response.status_code == 500
 
 
 def test_download_model_metadata_failure(test_app: TestClient):

@@ -1,9 +1,7 @@
 # pylint: disable=protected-access
-import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from tenacity import retry, stop_after_attempt
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -17,128 +15,15 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.cards import ModelMetadata
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.model.registrar import (
+    ModelRegistrar,
+    RegistrationError,
+    RegistrationRequest,
+)
 
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
-
-
-class ModelRegistrar:
-    """Class used to register a model to a hardcoded uri"""
-
-    def __init__(
-        self,
-        payload: RegisterModelRequest,
-        storage_client: StorageClientType,
-    ):
-        """Instantiates Registrar class
-
-        Args:
-            payload:
-                `CardRequest`
-            storage_client:
-                `StorageClientType`
-        """
-        self.name = payload.name
-        self.team = payload.team
-        self.version = payload.version
-        self.onnx = payload.onnx
-        self.storage_client = storage_client
-
-    @property
-    def registry_path(self) -> str:
-        """Returns hardcoded uri"""
-        return f"{self.storage_client.base_path_prefix}/model_registry/{self.team}/{self.name}/v{self.version}"
-
-    @property
-    def is_registered(self) -> bool:
-        """Checks if registry path is empty"""
-
-        try:
-            files = self.storage_client.list_files(self.registry_path)
-            if len(files) == 0:
-                return False
-            if len(files) == 1:
-                # check if file is directory path
-                if files[0] == self.registry_path:
-                    return False
-            return True
-
-        except FileNotFoundError:
-            return False
-
-    def _get_correct_model_uri(self, metadata: ModelMetadata) -> Optional[str]:
-        """Gets correct model uri based on onnx flag
-
-        Args:
-            onnx:
-                Bool indicating if onnx uri is requested
-            metadata:
-                `ModelMetadata`
-        """
-        if self.onnx:
-            return metadata.onnx_uri
-        return metadata.model_uri
-
-    @retry(reraise=True, stop=stop_after_attempt(3))
-    def _copy_model_to_registry(self, model_uri: str):
-        """Copies a model from it's original storage path to a hardcoded model registry path
-
-        Args:
-            model_uri:
-                Model uri path
-            storage_client:
-                Storage client to use to copy
-            name:
-                Model name
-            team:
-                Team name
-
-        Returns:
-            New model path
-
-        """
-        read_path = os.path.dirname(model_uri)
-
-        # check if path already has contents
-        if self.is_registered:
-            logger.info("Model detected in registry path. Deleting...")
-            # delete files in existing dir
-            self.storage_client.delete(read_path=self.registry_path)
-            assert self.is_registered
-
-        self.storage_client.copy(read_path=read_path, write_path=self.registry_path)
-
-        if self.is_registered:
-            logger.info("Model registered to %s", self.registry_path)
-            return self.registry_path
-
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found in registry path",
-        )
-
-    def register_model(self, metadata: ModelMetadata) -> str:
-        """Registers a model to a hardcoded storage path
-
-        Args:
-            metadata:
-                `ModelMetadata`
-
-        Returns:
-            model uri
-
-        """
-        model_uri = self._get_correct_model_uri(metadata=metadata)
-
-        if model_uri is not None:
-            return self._copy_model_to_registry(model_uri=model_uri)
-
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found. Check if model exists in Opsml registry",
-        )
 
 
 @router.post("/models/register", name="register")
@@ -167,11 +52,17 @@ def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
     # get model metadata
     metadata = post_model_metadata(request, payload)
 
-    # instantiate registrar
-    registrar = ModelRegistrar(payload=payload, storage_client=request.app.state.storage_client)
-
-    # register/copy to new location
-    return registrar.register_model(metadata=metadata)
+    try:
+        registrar: ModelRegistrar = request.app.state.model_registrar
+        return registrar.register_model(
+            RegistrationRequest(name=payload.name, version=payload.version, team=payload.team, onnx=payload.onnx),
+            metadata,
+        )
+    except RegistrationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unknown error registering model",
+        ) from exc
 
 
 @router.post("/models/metadata", name="model_metadata")
