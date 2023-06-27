@@ -109,11 +109,33 @@ class CompareCardRequest(BaseModel):
 
 
 class RegisterModelRequest(BaseModel):
-    name: str
-    version: str = Field(..., regex="^[0-9]+(.[0-9]+)?(.[0-9]+)?$")
-    team: str
-    uid: Optional[str]
-    onnx: bool = True
+    name: str = Field(
+        ...,
+        description="Model name (does not include team)",
+        example="tlmd-drive-time",
+    )
+    version: str = Field(
+        ...,
+        regex="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
+        description="""
+                Version of model to register in major[.minor[.patch]] format. Valid
+                formats are "1", "1.1", and "1.1.1". If not all components are
+                specified, the latest version for the leftmost missing component
+                will be registered.
+
+                For example, assume the latest version is 1.2.3 and versions 1.1.1 thru 1.1.100 exist
+                    * "1"     = registers 1.2.3 at "1" (the highest minor / patch version is used)
+                    * "1.2"   = registers 1.2.3 at "1.2"
+                    * "1.1"   = registers 1.1.100 at "1.1"
+                    * "1.1.1" = regisers 1.1.1 at "1.1.1"
+                """,
+    )
+
+    team: str = Field(..., description="Team name")
+    uid: Optional[str] = Field(None, description="Optional UID. Overrides team / model name / version")
+    onnx: bool = Field(
+        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
+    )
 
 
 class DownloadFileRequest(BaseModel):
