@@ -473,8 +473,6 @@ def test_metadata_download_and_registration(
     assert model_def["model_name"] == model_card.name
     assert model_def["model_version"] == model_card.version
 
-    print(f"registered model version: {model_card.version}")
-
     # test register model (onnx)
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
@@ -488,7 +486,8 @@ def test_metadata_download_and_registration(
     # Otherwise the hosting infrastructure will not know where to find the URL
     # as they do *not* use the response text, rather they assume the URL is in
     # the correct format.
-    assert f"/model_registry/mlops/test-model/v{model_card.version}" in response.text
+    uri = response.json()
+    assert re.search(rf"/model_registry/mlops/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     # test register model (native)
     response = test_app.post(
