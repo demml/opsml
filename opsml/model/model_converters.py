@@ -34,6 +34,12 @@ ONNX_VERSION = onnx.__version__
 logger = ArtifactLogger.get_logger(__name__)
 
 
+def check_model_type(model_class_name: str) -> bool:
+    if re.search("[a-zA-Z]*regress*[a-zA-Z]*", model_class_name, re.IGNORECASE) is not None:
+        return False
+    return True
+
+
 class ModelConverter:
     def __init__(self, model_info: ModelInfo):
         self.model_info = model_info
@@ -42,9 +48,12 @@ class ModelConverter:
     @property
     def is_sklearn_classifier(self) -> bool:
         """Checks if model is a classifier"""
-        if re.search("[a-zA-Z]*regress*[a-zA-Z]*", self.model_info.model_class, re.IGNORECASE) is not None:
-            return False
-        return True
+
+        if self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE:
+            for step in self.model_info.model:
+                return check_model_type(step.__class__.__name__)
+        else:
+            return check_model_type(self.model_info.model_class)
 
     def update_onnx_registries(self) -> bool:
         return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
@@ -259,26 +268,34 @@ class SklearnOnnxModel(ModelConverter):
         self.prepare_registries_and_data()
         return super().convert_data()
 
+    @property
+    def options(self) -> Optional[Dict[str, Any]]:
+        """Sets onnx options for model conversion
+
+        Our inference implementation uses triton for onnx hosting which does not support sequence output
+        for classification models. This defaults all sklearn classifiers to an array output
+        """
+        options = None
+        if self.is_sklearn_classifier:
+            if (
+                self.model_info.additional_model_args is not None
+                and self.model_info.additional_model_args.options is not None
+            ):
+                options = self.model_info.additional_model_args.options
+            else:
+                options = {"zipmap": False}
+        return options
+
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             from skl2onnx import convert_sklearn
 
-            options = None
-            if self.is_sklearn_classifier:
-                if (
-                    self.model_info.additional_model_args is not None
-                    and self.model_info.additional_model_args.options is not None
-                ):
-                    options = self.model_info.additional_model_args.options
-                else:
-                    options = {"zipmap": False}
-
             onnx_model = convert_sklearn(
                 model=self.model_info.model,
                 initial_types=initial_types,
-                options=options,
+                options=self.options,
             )
             self.validate_model(onnx_model=onnx_model)
 
