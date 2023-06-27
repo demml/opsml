@@ -1,4 +1,4 @@
-name: Testing
+name: Unit-Test
 
 on: [push]
 
@@ -30,4 +30,18 @@ jobs:
       - name: Unit test
         run: |
           make test.unit
-  
+
+  Coverage:
+    name: SonarQube Trigger
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checking out
+      uses: actions/checkout@master
+      with:
+        # Disabling shallow clone is recommended for improving relevancy of reporting
+        fetch-depth: 0
+    - name: SonarQube Scan
+      uses: kitabisa/sonarqube-action@v1.2.0
+      with:
+        host: ${{ secrets.SONAR_HOST }}
+        login: ${{ secrets.SONAR_TOKEN }}
