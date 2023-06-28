@@ -15,7 +15,7 @@ from tests.conftest import TODAY_YMD
 from unittest.mock import patch, MagicMock
 
 
-def test_client(test_app: TestClient):
+def test_app_settings(test_app: TestClient):
     """Test settings"""
 
     response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")

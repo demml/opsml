@@ -285,29 +285,6 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> CardRegistries:
-    def callable_api():
-        return test_client
-
-    with patch("httpx.Client", callable_api) as mock_client:
-        from opsml.registry.sql.settings import settings
-
-        settings.opsml_tracking_uri = "http://testserver"
-        registries = CardRegistries()
-
-        engine = registries.model._registry._get_engine()
-        initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
-        initializer.initialize()
-
-        registries.data = ClientCardRegistry(registry_name="data")
-        registries.model = ClientCardRegistry(registry_name="model")
-        registries.pipeline = ClientCardRegistry(registry_name="pipeline")
-        registries.run = ClientCardRegistry(registry_name="run")
-        registries.project = ClientCardRegistry(registry_name="project")
-
-        return registries
-
-
 def mlflow_storage_client():
     mlflow_storage = StorageClientGetter.get_storage_client(
         storage_settings=StorageClientSettings(
@@ -348,7 +325,26 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
 
 @pytest.fixture(scope="function")
 def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistry]]:
-    yield mock_registries(test_app)
+    def callable_api():
+        return test_app
+
+    with patch("httpx.Client", callable_api):
+        from opsml.registry.sql.settings import settings
+
+        settings.opsml_tracking_uri = "http://testserver"
+        registries = CardRegistries()
+
+        engine = registries.model._registry._get_engine()
+        initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+        initializer.initialize()
+
+        registries.data = ClientCardRegistry(registry_name="data")
+        registries.model = ClientCardRegistry(registry_name="model")
+        registries.pipeline = ClientCardRegistry(registry_name="pipeline")
+        registries.run = ClientCardRegistry(registry_name="run")
+        registries.project = ClientCardRegistry(registry_name="project")
+
+        return registries
 
 
 @pytest.fixture(scope="function")
