@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
-import matplotlib.pyplot as plt
 import numpy as np
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
