@@ -8,11 +8,11 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import (
     DataDtypes,
+    ExtraOnnxArgs,
     Feature,
     InputData,
     InputDataType,
     OnnxModelDefinition,
-    ExtraOnnxArgs,
 )
 
 logger = ArtifactLogger.get_logger(__name__)
