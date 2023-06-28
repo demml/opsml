@@ -36,8 +36,8 @@ def _init_registries(app: FastAPI):
 
 def _shutdown_registries(app: FastAPI):
     app.state.registries = None
-    app.state.storage_client = None
-    app.state.model_registrar = None
+    # app.state.storage_client = None
+    # app.state.model_registrar = None
 
 
 def _log_url_and_storage():
