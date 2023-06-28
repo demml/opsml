@@ -249,8 +249,7 @@ class PydanticDataTypes(Enum):
     ANY = Any
 
 
-@dataclass
-class ExtraOnnxArgs:
+class ExtraOnnxArgs(BaseModel):
     """
     input_names (List[str]): Optional list containing input names for model inputs.
     This is a PyTorch-specific attribute
@@ -267,9 +266,6 @@ class ExtraOnnxArgs:
     export_params: bool = True
     verbose: bool = False
     options: Optional[Dict[str, Any]] = None
-
-    def to_dict(self):
-        return asdict(self)
 
 
 @dataclass
