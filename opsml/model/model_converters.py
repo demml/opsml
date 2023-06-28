@@ -1,6 +1,7 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
 """Code for generating Onnx Models"""
+import re
 import tempfile
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -22,12 +23,12 @@ from opsml.model.types import (
     UPDATE_REGISTRY_MODELS,
     ApiDataSchemas,
     DataDict,
+    ExtraOnnxArgs,
     Feature,
     ModelReturn,
     OnnxDataProto,
     OnnxModelDefinition,
     OnnxModelType,
-    TorchOnnxArgs,
 )
 
 ONNX_VERSION = onnx.__version__
@@ -38,6 +39,14 @@ class ModelConverter:
     def __init__(self, model_info: ModelInfo):
         self.model_info = model_info
         self.data_converter = OnnxDataConverter(model_info=model_info)
+
+    @property
+    def is_sklearn_classifier(self) -> bool:
+        """Checks if model is a classifier"""
+
+        from sklearn.base import is_classifier
+
+        return is_classifier(self.model_info.model)
 
     def update_onnx_registries(self) -> bool:
         return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
@@ -84,7 +93,6 @@ class ModelConverter:
         logger.info("Validating converted onnx model")
         sess = rt.InferenceSession(onnx_model.SerializeToString())
         onnx_preds = sess.run(None, inputs)
-
         if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
             raise ValueError("Model prediction validation failed")
 
@@ -93,7 +101,7 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    def _parse_onnx_sigature(self, signature: RepeatedCompositeFieldContainer):
+    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer):
         feature_dict = {}
 
         for sig in signature:
@@ -111,8 +119,8 @@ class ModelConverter:
         return feature_dict
 
     def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
-        input_dict = self._parse_onnx_sigature(onnx_model.graph.input)
-        output_dict = self._parse_onnx_sigature(onnx_model.graph.output)
+        input_dict = self._parse_onnx_signature(onnx_model.graph.input)
+        output_dict = self._parse_onnx_signature(onnx_model.graph.output)
 
         return input_dict, output_dict
 
@@ -252,14 +260,48 @@ class SklearnOnnxModel(ModelConverter):
         self.prepare_registries_and_data()
         return super().convert_data()
 
-    def convert_model(self, initial_types: List[Any]) -> ModelProto:
-        """Converts sklearn model to ONNX ModelProto"""
+    @property
+    def options(self) -> Optional[Dict[str, Any]]:
+        """Sets onnx options for model conversion
+
+        Our inference implementation uses triton for onnx hosting which does not support sequence output
+        for classification models (skl2onnx default). This defaults all sklearn classifiers to an array output
+        """
+        add_model_args = self.model_info.additional_model_args
+        options = getattr(add_model_args, "options", None)
+
+        if self.is_sklearn_classifier and options is None:
+            return {"zipmap": False}
+        return options
+
+    def _convert_sklearn(self, initial_types: List[Any]) -> ModelProto:
+        """Converts an sklearn model to onnx using skl2onnx library
+
+        Args:
+            initial_types:
+                List of data types the onnx model should expect
+        Returns:
+            `ModelProto`
+        """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             from skl2onnx import convert_sklearn
 
-            onnx_model = convert_sklearn(model=self.model_info.model, initial_types=initial_types)
-            self.validate_model(onnx_model=onnx_model)
+        try:
+            return convert_sklearn(model=self.model_info.model, initial_types=initial_types, options=self.options)
+        except NameError as error:
+            # There may be a small amount of instances where a sklearn classifier does
+            # not support zipmap as a default option (LinearSVC). This catches those errors
+            if re.search("Option 'zipmap' not in", str(error), re.IGNORECASE):
+                logger.info("Zipmap not supported for classifier")
+                return convert_sklearn(model=self.model_info.model, initial_types=initial_types)
+            raise error
+
+    def convert_model(self, initial_types: List[Any]) -> ModelProto:
+        """Converts sklearn model to ONNX ModelProto"""
+
+        onnx_model = self._convert_sklearn(initial_types=initial_types)
+        self.validate_model(onnx_model=onnx_model)
 
         return onnx_model
 
@@ -268,7 +310,7 @@ class SklearnOnnxModel(ModelConverter):
         return model_type in SKLEARN_SUPPORTED_MODEL_TYPES
 
 
-class LighGBMBoosterOnnxModel(ModelConverter):
+class LightGBMBoosterOnnxModel(ModelConverter):
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
@@ -320,11 +362,11 @@ class PytorchArgBuilder:
     def _get_output_names(self) -> List[str]:
         return ["output"]
 
-    def get_args(self) -> TorchOnnxArgs:
+    def get_args(self) -> ExtraOnnxArgs:
         input_names = self._get_input_names()
         output_names = self._get_output_names()
 
-        return TorchOnnxArgs(
+        return ExtraOnnxArgs(
             input_names=input_names,
             output_names=output_names,
         )
@@ -343,9 +385,9 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_additional_model_args(
         self,
         input_data: Any,
-        additional_onnx_args: Optional[TorchOnnxArgs] = None,
-    ) -> TorchOnnxArgs:
-        """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
+        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
+    ) -> ExtraOnnxArgs:
+        """Passes or creates ExtraOnnxArgs needed for Onnx model conversion"""
 
         if additional_onnx_args is None:
             return PytorchArgBuilder(input_data=input_data).get_args()
@@ -422,7 +464,7 @@ class PyTorchOnnxModel(ModelConverter):
                 model=self.model_info.model,
                 args=arg_data,
                 f=filename,
-                **self.additional_args.to_dict(),
+                **self.additional_args.dict(exclude={"options"}),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)

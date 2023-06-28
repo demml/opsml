@@ -3,6 +3,11 @@ from dataclasses import dataclass
 import os
 import pathlib
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
 # setting initial env vars to override default sql db
 # these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
