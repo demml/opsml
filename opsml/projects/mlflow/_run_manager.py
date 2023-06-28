@@ -18,6 +18,7 @@ from opsml.registry.storage.storage_system import MlflowStorageClient
 logger = ArtifactLogger.get_logger(__name__)
 
 mlflow_storage = MlflowStorageClient(storage_settings=settings.storage_settings)
+mlflow_storage.opsml_storage_client = settings.storage_client
 
 
 class _MlflowRunManager(_RunManager):

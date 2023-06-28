@@ -3,6 +3,11 @@ from dataclasses import dataclass
 import os
 import pathlib
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
 # setting initial env vars to override default sql db
 # these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
@@ -81,7 +86,6 @@ from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.projects import OpsmlProject
 from opsml.model.types import OnnxModelDefinition
-
 
 # testing
 from tests.mock_api_registries import CardRegistry as ClientCardRegistry
@@ -332,6 +336,7 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
 
     # set storage client
     mlflow_storage = mlflow_storage_client()
+    mlflow_storage.opsml_storage_client = api_card_registries.data._registry.storage_client
 
     api_card_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_card_registries
@@ -374,6 +379,7 @@ def mlflow_project(api_registries: CardRegistries) -> Iterator[MlflowProject]:
     mlflow_exp: MlflowProject = get_project(info=info)
 
     mlflow_storage = mlflow_storage_client()
+    mlflow_storage.opsml_storage_client = api_registries.data._registry.storage_client
     api_registries.set_storage_client(mlflow_storage)
     mlflow_exp._run_mgr.registries = api_registries
 
