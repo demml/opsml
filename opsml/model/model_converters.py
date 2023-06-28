@@ -464,7 +464,7 @@ class PyTorchOnnxModel(ModelConverter):
                 model=self.model_info.model,
                 args=arg_data,
                 f=filename,
-                **self.additional_args.to_dict(),
+                **self.additional_args.dict(exclude={"options"}),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
