@@ -344,7 +344,7 @@ def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistr
         registries.run = ClientCardRegistry(registry_name="run")
         registries.project = ClientCardRegistry(registry_name="project")
 
-        return registries
+        yield registries
 
 
 @pytest.fixture(scope="function")
