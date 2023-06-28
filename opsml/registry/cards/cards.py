@@ -20,11 +20,11 @@ from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
+    ExtraOnnxArgs,
     Feature,
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
-    ExtraOnnxArgs,
 )
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import (

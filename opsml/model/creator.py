@@ -8,12 +8,12 @@ from opsml.model.model_types import ModelType, OnnxModelType
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
+    ExtraOnnxArgs,
     Feature,
     InputData,
     InputDataType,
     ModelReturn,
     OnnxModelDefinition,
-    ExtraOnnxArgs,
 )
 
 
