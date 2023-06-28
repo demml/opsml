@@ -1,4 +1,4 @@
-## Pull Request Template
+## Pull Request
 
 ### Short Summary
 Include a short summary
