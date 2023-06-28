@@ -1,5 +1,5 @@
 # pylint: disable=invalid-envvar-value
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import (
@@ -223,6 +223,23 @@ class ActiveRun:
             timestamp=timestamp,
             step=step,
         )
+
+    def log_metrics(
+        self,
+        metrics: Dict[str, Union[float, int]],
+        step: Optional[int] = None,
+    ):
+        """Logs a collection of metrics for a run
+
+        Args:
+            metrics:
+                Dictionary of metrics
+            step:
+                step the metrics are associated with
+
+        """
+        self._verify_active()
+        self.runcard.log_metrics(metrics=metrics, step=step)
 
     def log_parameter(self, key: str, value: str) -> None:
         """
