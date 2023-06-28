@@ -11,14 +11,14 @@ from opsml.model.types import ModelMetadata
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        # lazy_fixture("linear_regression"),  # linear regress with numpy
-        # lazy_fixture("random_forest_classifier"),  # random forest with dataframe
-        # lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
-        # lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
-        # lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
-        # lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
-        # lazy_fixture("sklearn_pipeline_advanced"),
-        # lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
+        lazy_fixture("linear_regression"),  # linear regress with numpy
+        lazy_fixture("random_forest_classifier"),  # random forest with dataframe
+        lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
+        lazy_fixture("lgb_booster_dataframe"),  # lgb base package with dataframe
+        lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
+        lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
+        lazy_fixture("sklearn_pipeline_advanced"),
+        lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
         ## test all supported sklearn estimators
         # lazy_fixture("ard_regression"),
         # lazy_fixture("ada_boost_classifier"),
