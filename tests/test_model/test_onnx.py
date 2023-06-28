@@ -19,7 +19,7 @@ from opsml.model.types import ModelMetadata
         lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         lazy_fixture("sklearn_pipeline_advanced"),
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-        # test all supported sklearn estimators
+        ## test all supported sklearn estimators
         lazy_fixture("ard_regression"),
         lazy_fixture("ada_boost_classifier"),
         lazy_fixture("ada_regression"),
