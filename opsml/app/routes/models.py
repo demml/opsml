@@ -22,7 +22,6 @@ from opsml.registry.storage.storage_system import StorageClientType
 logger = ArtifactLogger.get_logger(__name__)
 
 router = APIRouter()
-CHUNK_SIZE = 31457280
 
 
 class ModelRegistrar:
@@ -144,23 +143,25 @@ class ModelRegistrar:
 
 @router.post("/models/register", name="register")
 def post_register_model(request: Request, payload: RegisterModelRequest) -> str:
-    """Promotes a model from Opsml storage to the default model registry storage used for
-    Seldon model hosting.
+    """Registers a model to a known GCS location.
+
+       This is used from within our CI/CD infrastructure to ensure a known good
+       GCS location exists for the onnx model.
 
     Args:
-        name:
-            Optional name of model
-        version:
-            Optional semVar version of model
-        team:
-            Optional team name
-        uid:
-            Optional uid of ModelCard
-        onnx:
-            Whether to copy the onnx model or model in it's native format. Defaults to True
-
+        request:
+            The incoming HTTP request.
+        payload:
+            Details on the model to register. See RegisterModelRequest for more
+            information.
     Returns:
-        model uri or HTTP_404_NOT_FOUND if the model is not found.
+        422 if the RegisterModelRequest is invalid (i.e., the version is
+        malformed).
+
+        404 if the model is not found.
+
+        200 if the model is found. The body will contain a JSON string with the
+        GCS URI to the *folder* where the model is registered.
     """
 
     # get model metadata
@@ -182,14 +183,11 @@ def post_model_metadata(
     Downloads a Model API definition
 
     Args:
-        name:
-            Optional name of model
-        version:
-            Optional semVar version of model
-        team:
-            Optional team name
-        uid:
-            Optional uid of ModelCard
+        request:
+            The incoming HTTP request
+
+        payload:
+            Details on the model to retrieve metadata for.
 
     Returns:
         ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
