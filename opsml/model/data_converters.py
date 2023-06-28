@@ -10,11 +10,11 @@ from opsml.model.onnx_data_types import get_onnx_tensor_spec
 from opsml.model.types import (
     AVAILABLE_MODEL_TYPES,
     DataDtypes,
+    ExtraOnnxArgs,
     Feature,
     InputDataType,
     OnnxModelDefinition,
     OnnxModelType,
-    ExtraOnnxArgs,
 )
 
 ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]

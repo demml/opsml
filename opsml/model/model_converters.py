@@ -1,10 +1,11 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
 """Code for generating Onnx Models"""
+import re
 import tempfile
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-import re
+
 import numpy as np
 import onnx
 import onnxruntime as rt
@@ -22,12 +23,12 @@ from opsml.model.types import (
     UPDATE_REGISTRY_MODELS,
     ApiDataSchemas,
     DataDict,
+    ExtraOnnxArgs,
     Feature,
     ModelReturn,
     OnnxDataProto,
     OnnxModelDefinition,
     OnnxModelType,
-    ExtraOnnxArgs,
 )
 
 ONNX_VERSION = onnx.__version__
@@ -294,8 +295,7 @@ class SklearnOnnxModel(ModelConverter):
             if re.search("Option 'zipmap' not in", str(error), re.IGNORECASE):
                 logger.info("Zipmap not supported for classifier")
                 return convert_sklearn(model=self.model_info.model, initial_types=initial_types)
-            else:
-                raise error
+            raise error
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
