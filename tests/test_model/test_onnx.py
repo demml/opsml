@@ -150,7 +150,7 @@ def test_model_predict_linux_only(model_and_data):
         lazy_fixture("linear_regression"),  # linear regress with numpy
     ],
 )
-def _test_byo_onnx(model_and_data):
+def test_byo_onnx(model_and_data):
     model, data = model_and_data
 
     if isinstance(data, dict):
