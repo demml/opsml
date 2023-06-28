@@ -214,7 +214,7 @@ class StorageClient:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
         return write_path
 
-    def copy(self, read_path: str, write_path: str) -> None:
+    def copy(self, read_path: str, write_path: str) -> Optional[str]:
         raise ValueError("Storage class does not implement a copy method")
 
     def delete(self, read_path: str):
@@ -251,7 +251,7 @@ class GCSFSStorageClient(StorageClient):
             backend=StorageSystem.GCS.value,
         )
 
-    def copy(self, read_path: str, write_path: str) -> None:
+    def copy(self, read_path: str, write_path: str) -> Optional[str]:
         """Copies object from read_path to write_path
 
         Args:
@@ -260,7 +260,7 @@ class GCSFSStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        self.client.copy(read_path, write_path, recursive=True)
+        return self.client.copy(read_path, write_path, recursive=True)
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
@@ -332,7 +332,7 @@ class LocalStorageClient(StorageClient):
     def store(self, storage_uri: str, **kwargs):
         return storage_uri
 
-    def copy(self, read_path: str, write_path: str) -> None:
+    def copy(self, read_path: str, write_path: str) -> str:
         """Copies object from read_path to write_path
 
         Args:
@@ -341,11 +341,21 @@ class LocalStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-
         if os.path.isdir(read_path):
-            shutil.copytree(read_path, write_path, dirs_exist_ok=True)
-        else:
-            shutil.copyfile(read_path, write_path)
+            return shutil.copytree(read_path, write_path, dirs_exist_ok=True)
+        return shutil.copyfile(read_path, write_path)
+
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+        files = kwargs.get("files", None)
+
+        if len(files) == 1:
+            filename = os.path.basename(files[0])
+
+            if os.path.isdir(lpath):
+                lpath = os.path.join(lpath, filename)
+
+            return self.copy(read_path=files[0], write_path=lpath)
+        return self.copy(read_path=rpath, write_path=lpath)
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
@@ -649,6 +659,17 @@ class MlflowStorageClient(StorageClient):
         self._artifact_path: str = "mlflow-artifacts:/"
         self._mlflow_client: Optional[MlFlowClientProto] = None
         self._storage_spec = ArtifactStorageSpecs(save_path=self.base_path_prefix)
+        self._opsml_storage_client: Optional[StorageClient] = None
+
+    @property
+    def opsml_storage_client(self) -> StorageClient:
+        if self._opsml_storage_client is not None:
+            return self._opsml_storage_client
+        raise ValueError("No storage client found")
+
+    @opsml_storage_client.setter
+    def opsml_storage_client(self, storage_client: StorageClient) -> None:
+        self._opsml_storage_client = storage_client
 
     def open(self, filename: str, mode: str):
         """not used"""
@@ -716,32 +737,24 @@ class MlflowStorageClient(StorageClient):
         return rpath
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
-        import mlflow
-
         temp_path = lpath
         if not recursive:
-            filename = os.path.basename(lpath)
+            filename = os.path.basename(rpath)
             temp_path = f"{temp_path}/{filename}"
 
-        download_path = self.swap_proxy_root(rpath=rpath)
-
         abs_temp_path = temp_path
-
-        file_path = mlflow.artifacts.download_artifacts(
-            artifact_uri=download_path,
-            dst_path=abs_temp_path,
-            tracking_uri=self.mlflow_client.tracking_uri,
-        )
+        file_path = self.opsml_storage_client.download(rpath, abs_temp_path, recursive, **kwargs)
 
         return file_path
 
     def _log_artifact(self, mlflow_info: MlflowInfo) -> str:
-        self.mlflow_client.log_artifact(
-            run_id=self.run_id,
-            local_path=mlflow_info.local_path,
-            artifact_path=mlflow_info.artifact_path,
-        )
+        write_path = f"{self.artifact_path}/{mlflow_info.artifact_path}/{mlflow_info.filename}"
+        write_path = self.swap_mlflow_root(rpath=write_path)
 
+        self.opsml_storage_client.upload(
+            local_path=mlflow_info.local_path,
+            write_path=write_path,
+        )
         return mlflow_info.filename
 
     def _log_model(self, mlflow_info: MlflowInfo) -> str:
@@ -841,7 +854,8 @@ class MlflowStorageClient(StorageClient):
         return "misc"
 
     def list_files(self, storage_uri: str) -> FilePath:
-        return [storage_uri]
+        return self.opsml_storage_client.list_files(storage_uri)
+        # return [storage_uri]
 
     def store(self, storage_uri: str, **kwargs):
         """Wrapper method needed for working with data artifacts and mlflow"""

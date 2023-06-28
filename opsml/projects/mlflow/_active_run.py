@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Dict, Optional, Union, cast
 
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo
@@ -63,6 +63,24 @@ class MlflowActiveRun(ActiveRun):
             step=step,
         )
 
+    def log_metrics(
+        self,
+        metrics: Dict[str, Union[float, int]],
+        step: Optional[int] = None,
+    ):
+        """Logs a collection of metrics for a run
+
+        Args:
+            metrics:
+                Dictionary of metrics
+            step:
+                step the metrics are associated with
+
+        """
+        super().log_metrics(metrics, step)
+        for key, value in metrics.items():
+            self.info.mlflow_client.log_metric(run_id=self.run_id, key=key, value=value, step=step)
+
     def log_parameter(self, key: str, value: str) -> None:
         """
         Logs a parameter to project run
@@ -118,7 +136,7 @@ class MlflowActiveRun(ActiveRun):
         return self.run_data.metrics
 
     @property
-    def parameterss(self) -> PARAMS:
+    def parameters(self) -> PARAMS:
         return self.run_data.parameters
 
     @property

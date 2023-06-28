@@ -1,6 +1,4 @@
-from typing import Any, Dict, Optional, cast
-
-import numpy as np
+from typing import Any, Dict, Optional
 
 from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data
@@ -8,12 +6,12 @@ from opsml.model.model_types import ModelType, OnnxModelType
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
+    ExtraOnnxArgs,
     Feature,
     InputData,
     InputDataType,
     ModelReturn,
     OnnxModelDefinition,
-    TorchOnnxArgs,
 )
 
 
@@ -22,7 +20,7 @@ class ModelCreator:
         self,
         model: Any,
         input_data: InputData,
-        additional_onnx_args: Optional[TorchOnnxArgs] = None,
+        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
         """
@@ -37,27 +35,12 @@ class ModelCreator:
                 Optional `OnnxModelDefinition`
         """
         self.model = model
-        self.input_data = self._get_one_sample(input_data)
+        self.input_data = input_data
         self.model_class = self._get_model_class_name()
         self.additional_model_args = additional_onnx_args
         self.onnx_model_def = onnx_model_def
         self.input_data_type = type(self.input_data)
         self.model_type = self.get_model_type()
-
-    def _get_one_sample(self, input_data: InputData) -> InputData:  # fix the any types later
-        """Parses input data and returns a single record to be used during ONNX conversion and validation"""
-
-        if not isinstance(input_data, InputDataType.DICT.value):
-            if isinstance(input_data, InputDataType.POLARS_DATAFRAME.value):
-                input_data = input_data.to_pandas()
-
-            return input_data[0:1]
-
-        sample_dict = cast(Dict[str, np.ndarray], {})
-        for key in cast(Dict[str, np.ndarray], input_data).keys():
-            sample_dict[key] = input_data[key][0:1]
-
-        return sample_dict
 
     def _get_model_class_name(self):
         """Gets class name from model"""
@@ -145,7 +128,7 @@ class OnnxModelCreator(ModelCreator):
         self,
         model: Any,
         input_data: InputData,
-        additional_onnx_args: Optional[TorchOnnxArgs] = None,
+        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
         """
@@ -212,6 +195,7 @@ class OnnxModelCreator(ModelCreator):
             model=self.model,
             model_data=model_data,
             model_type=self.model_type,
+            model_class=self.model_class,
             data_type=self.input_data_type,
             additional_model_args=self.additional_model_args,
             onnx_model_def=self.onnx_model_def,
@@ -235,7 +219,7 @@ def create_model(
     model: Any,
     input_data: InputData,
     to_onnx: bool,
-    additional_onnx_args: Optional[TorchOnnxArgs] = None,
+    additional_onnx_args: Optional[ExtraOnnxArgs] = None,
     onnx_model_def: Optional[OnnxModelDefinition] = None,
 ) -> ModelReturn:
     """
