@@ -22,6 +22,7 @@ from opsml.model.types import (
     DataDict,
     ExtraOnnxArgs,
     Feature,
+    InputDataType,
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
@@ -53,6 +54,8 @@ from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageTy
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client
+
+SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
 
 
 class ArtifactCard(BaseModel):
@@ -424,7 +427,7 @@ class ModelCard(ArtifactCard):
     """
 
     trained_model: Optional[Any]
-    sample_input_data: Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
+    sample_input_data: SampleModelData
     datacard_uid: Optional[str]
     onnx_model_data: Optional[DataDict]
     onnx_model_def: Optional[OnnxModelDefinition]
@@ -454,6 +457,28 @@ class ModelCard(ArtifactCard):
             )
 
         return values
+
+    @validator("sample_input_data", pre=True)
+    def get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
+        """Parses input data and returns a single record to be used during ONNX conversion and validation"""
+
+        if input_data is None:
+            return input_data
+
+        if not isinstance(input_data, InputDataType.DICT.value):
+            if isinstance(input_data, InputDataType.POLARS_DATAFRAME.value):
+                input_data = input_data.to_pandas()
+
+            return input_data[0:1]
+
+        sample_dict = {}
+        if isinstance(input_data, dict):
+            for key in input_data.keys():
+                sample_dict[key] = input_data[key][0:1]
+
+            return sample_dict
+
+        raise ValueError("Provided sample data is not a valid type")
 
     @classmethod
     def _required_args_present(cls, values: Dict[str, Any]) -> bool:
@@ -878,7 +903,7 @@ class RunCard(ArtifactCard):
         else:
             self.metrics[key] = [metric]
 
-    def log_metrics(self, metrics: Dict[str, Union[float, int]]) -> None:
+    def log_metrics(self, metrics: Dict[str, Union[float, int]], step: Optional[int] = None) -> None:
         """
         Log metrics to the existing RunCard metric dictionary
 
@@ -889,7 +914,7 @@ class RunCard(ArtifactCard):
         """
 
         for key, value in metrics.items():
-            self.log_metric(key, value)
+            self.log_metric(key, value, step)
 
     def log_artifact(self, name: str, artifact: Any) -> None:
         """
