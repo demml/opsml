@@ -167,6 +167,7 @@ class ArtifactStorage:
                 file_path=storage_uri,
                 tmp_path=tmpdirname,
             )
+
             artifact = self._load_artifact(file_path=loadable_filepath)
 
         return artifact, loadable_filepath

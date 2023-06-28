@@ -15,6 +15,7 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
+from opsml.registry.data.types import AllowedTableTypes
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -339,14 +340,22 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             uri=self.card.uris.sample_data_uri,
         )
 
-        arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
-        storage_path = save_record_artifact_to_storage(
-            artifact=arrow_table.table,
-            storage_client=self.storage_client,
-        )
+        if isinstance(self.card.sample_input_data, dict):
+            storage_path = save_record_artifact_to_storage(
+                artifact=self.card.sample_input_data,
+                storage_client=self.storage_client,
+            )
+            self.card.sample_data_type = AllowedTableTypes.DICTIONARY.value
+
+        else:
+            arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
+            storage_path = save_record_artifact_to_storage(
+                artifact=arrow_table.table,
+                storage_client=self.storage_client,
+            )
+            self.card.sample_data_type = arrow_table.table_type
 
         self.card.uris.sample_data_uri = storage_path.uri
-        self.card.sample_data_type = arrow_table.table_type
 
     def save_artifacts(self):
         """Save model artifacts associated with ModelCard"""
