@@ -598,11 +598,7 @@ class ModelCard(ArtifactCard):
 
     def _set_version_for_predictor(self) -> str:
         if self.version is None:
-            logger.warning(
-                """ModelCard has no version (not registered).
-                Defaulting to 1 (for testing only)
-            """
-            )
+            logger.warning("""ModelCard has no version (not registered). Defaulting to 1 (for testing only)""")
             version = "1.0.0"
         else:
             version = self.version
