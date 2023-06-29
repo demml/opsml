@@ -347,7 +347,7 @@ def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
 
 
 @pytest.fixture(scope="function")
-def api_registries(test_app: TestClient) -> Iterator[dict[str, ClientCardRegistry]]:
+def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
     yield mock_registries(test_app)
 
 
