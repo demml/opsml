@@ -293,7 +293,7 @@ class PyTorchOnnxDataConverter(DataConverter):
         return None
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.model_data.data.astype(np.float32)}
+        return {self.input_name: self.model_data.data}
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:

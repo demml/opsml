@@ -5,7 +5,7 @@ import re
 import tempfile
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
+from functools import reduce
 import numpy as np
 import onnx
 import onnxruntime as rt
@@ -67,22 +67,88 @@ class ModelConverter:
         """
         return self.data_converter.get_data_types()
 
+    def _raise_shape_mismatch(self, onnx_shape: Tuple[int], pred_shape: Tuple[int]):
+        raise ValueError(
+            f"""Onnx and model prediction shape mismatch. \n
+                Onnx prediction shape: {onnx_shape} \n
+                Model prediction shape: {pred_shape}
+            """
+        )
+
+    def _validate_pred_arrays(self, onnx_preds: NDArray, model_preds: NDArray) -> bool:
+        """
+        Validates onnx and original model predictions. Checks whether model and onnx
+        predictions are within .1% of each other
+
+        Args:
+            onnx_preds:
+                Array of onnx model predictions
+            model_preds:
+                Array of model predictions
+        Returns:
+            bool indicating if onnx model prediction is close to original model
+        """
+
+        if model_preds.ndim != onnx_preds.ndim:
+            if model_preds.ndim < onnx_preds.ndim:
+                # onnx tends to add an extra dim
+                if onnx_preds.shape[0] == 1:
+                    onnx_preds = onnx_preds[0]
+                else:
+                    self._raise_shape_mismatch(onnx_preds.shape, model_preds.shape)
+            else:
+                self._raise_shape_mismatch(onnx_preds.shape, model_preds.shape)
+
+        # assert shapes match
+        assert onnx_preds.shape == model_preds.shape
+
+        diff = np.sum(abs(np.around(onnx_preds, 4) - np.around(model_preds, 4)))
+        perc_err = np.sum(np.abs(np.divide(model_preds - onnx_preds, model_preds)))
+        n = reduce((lambda x, y: x * y), model_preds.shape)
+        mape = np.divide(perc_err, n)
+
+        # check if raw diff value is less than a certain amount
+        if diff <= 0.001:
+            return True
+
+        # Check MAPE
+        if mape <= 0.001:
+            return True
+        return False
+
     def _predictions_close(
         self,
-        onnx_preds: List[Union[float, int]],
+        onnx_preds: List[Union[float, int, NDArray]],
         model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
     ) -> bool:
-        if not isinstance(model_preds, list):
-            model_preds = cast(Union[float, int], model_preds)
-            valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+        """Checks if model and onnx predictions are close
 
-        else:
+        Args:
+            onnx_preds:
+                Onnx model predictions
+            model_preds:
+                Model predictions
+        Returns:
+            Bool indicating if onnx and original model predictions are close
+        """
+
+        if isinstance(onnx_preds, list) and isinstance(model_preds, list):
             valid_list = []
             for onnx_pred, model_pred in zip(onnx_preds, model_preds):
                 valid = np.sum(abs(onnx_pred - model_pred)) <= 0.001
                 valid_list.append(valid)
+            return all(valid_list)
 
-        return all(valid_list)
+        elif isinstance(model_preds, np.ndarray):
+            onnx_pred = onnx_preds[0]
+            if isinstance(onnx_pred, np.ndarray):
+                return self._validate_pred_arrays(onnx_pred, model_preds)
+            raise ValueError("Model and onnx predictions should both be of type NDArray")
+
+        else:
+            model_preds = cast(Union[float, int], model_preds)
+            valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+            return all(valid_list)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
@@ -398,7 +464,9 @@ class PyTorchOnnxModel(ModelConverter):
 
         if hasattr(predictions, "logits"):
             return predictions.logits.detach().numpy()
-        return predictions.detach().numpy()
+        if hasattr(predictions, "detach"):
+            return predictions.detach().numpy()
+        return predictions.numpy()
 
     def _model_predict(self) -> NDArray:
         """Generate prediction for pytorch model using sample data"""
