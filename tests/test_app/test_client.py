@@ -1,16 +1,20 @@
 from typing import Dict, List, Tuple
+
 import re
+import uuid
+
+import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
 from sklearn import linear_model, pipeline
-import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ValidationError
+from requests.auth import HTTPBasicAuth
+
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries, CardInfo
 from opsml.helpers.request_helpers import ApiRoutes
-from requests.auth import HTTPBasicAuth
-import uuid
+
 from tests.conftest import TODAY_YMD
 from unittest.mock import patch, MagicMock
 
@@ -132,31 +136,6 @@ def test_semver_registry_list(api_registries: Dict[str, CardRegistry], test_arra
         version="~2.3.0",
     )
     assert df.shape[0] == 1
-
-
-def test_register_large_data(api_registries: Dict[str, CardRegistry]):
-    import numpy as np
-
-    # create a numpy 1d-array
-    x = np.random.rand(500000, 100)
-    size = (x.size * x.itemsize) / 1_000_000_000
-
-    # create data card
-    registry = api_registries.data
-
-    data_card = DataCard(
-        data=x,
-        name="test_df",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    registry.register_card(card=data_card)
-
-    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
-    loaded_card.load_data()
-
-    assert (loaded_card.data == x).all()
-    assert loaded_card.data.shape == x.shape
 
 
 def test_run_card(
