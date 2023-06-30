@@ -7,29 +7,17 @@ trigger:
     - pull_request
 
 steps:
-  - name: setup_310
+  - name: py310
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make setup.project
+      - make lints.ci
+      - make test.unit
     environment:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_USERNAME:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-
-  - name: py310
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make test.unit
-    depends_on:
-      - setup_310
-
-  - name: quality-checks
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    commands:
-      - make lints.ci
-    depends_on:
-      - setup_310
 
   - name: py39
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.16_poetry_1.4.0
@@ -41,8 +29,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - py310
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -55,7 +41,6 @@ steps:
     depends_on:
       - py39
       - py310
-      - quality-checks
 
   - name: publish-release-candidate
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
@@ -82,7 +67,6 @@ trigger:
     - push
 
 steps:
-
   - name: setup_310
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
@@ -139,7 +123,6 @@ steps:
       - if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi
     depends_on:
       - code-analysis
-
 
 ---
 name: publish-release
@@ -204,4 +187,3 @@ steps:
       - make publish
     depends_on:
       - code-analysis
-
