@@ -104,8 +104,8 @@ class ModelConverter:
 
         diff = np.sum(abs(np.around(onnx_preds, 4) - np.around(model_preds, 4)))
         perc_err = np.sum(np.abs(np.divide(model_preds - onnx_preds, model_preds)))
-        n = reduce((lambda x, y: x * y), model_preds.shape)
-        mape = np.divide(perc_err, n)
+        n_values = reduce((lambda x, y: x * y), model_preds.shape)
+        mape = np.divide(perc_err, n_values)
 
         # check if raw diff value is less than a certain amount
         if diff <= 0.001:
@@ -139,16 +139,15 @@ class ModelConverter:
                 valid_list.append(valid)
             return all(valid_list)
 
-        elif isinstance(model_preds, np.ndarray):
+        if isinstance(model_preds, np.ndarray):
             onnx_pred = onnx_preds[0]
             if isinstance(onnx_pred, np.ndarray):
                 return self._validate_pred_arrays(onnx_pred, model_preds)
             raise ValueError("Model and onnx predictions should both be of type NDArray")
 
-        else:
-            model_preds = cast(Union[float, int], model_preds)
-            valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
-            return all(valid_list)
+        model_preds = cast(Union[float, int], model_preds)
+        valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+        return all(valid_list)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
