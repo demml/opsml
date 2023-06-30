@@ -624,6 +624,29 @@ class MlFlowPytorch(MlflowModelSaver):
         return model_type == OnnxModelType.PYTORCH
 
 
+class MlFlowTransformers(MlflowModelSaver):
+    def log_model(self) -> str:
+        import mlflow
+
+        signature = self._get_model_signature()
+
+        model_info = mlflow.transformers.log_model(
+            transformers_model=self.model,
+            artifact_path=self.artifact_path,
+            signature=signature,
+            input_example=self.sample_data,
+        )
+        print(model_info)
+        a
+
+        dir_name = model_info.flavors["pytorch"]["model_data"]
+        return f"{dir_name}/model.pth"
+
+    @staticmethod
+    def validate(model_type: str) -> bool:
+        return model_type == OnnxModelType.PYTORCH
+
+
 class MlFlowTensorflow(MlflowModelSaver):
     def log_model(self) -> str:
         import mlflow
