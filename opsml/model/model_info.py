@@ -30,6 +30,7 @@ class ModelData:
             input_data: Input or sample data associated with a trained model
         """
         self._data = input_data
+        self._features = ["inputs"]
 
     @property
     def data(self) -> Any:
@@ -53,7 +54,11 @@ class ModelData:
 
     @property
     def features(self) -> List[str]:
-        return ["inputs"]
+        return self._features
+
+    @features.setter
+    def features(self, features: List[str]) -> None:
+        self._features = features
 
     @property
     def feature_types(self):
@@ -122,6 +127,13 @@ class NumpyData(ModelData):
     def shape(self) -> Tuple[int, ...]:
         return self.data.shape
 
+    @property
+    def feature_dict(self) -> Dict[str, Feature]:
+        feature_dict = {}
+        for feature, type_ in zip(self.features, self.dtypes):
+            feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
+        return feature_dict
+
     @staticmethod
     def validate(data_type: type) -> bool:
         return data_type == InputDataType.NUMPY_ARRAY.value
@@ -159,6 +171,10 @@ class PandasDataFrame(ModelData):
     @property
     def features(self) -> List[str]:
         return self.data.columns
+
+    @features.setter
+    def features(self, features: List[str]) -> None:
+        self._features = features
 
     def to_numpy(self) -> NDArray:
         return self.data.to_numpy()
@@ -206,6 +222,10 @@ class DataDictionary(ModelData):
     @property
     def features(self) -> List[str]:
         return list(self.data.keys())
+
+    @features.setter
+    def features(self, features: List[str]) -> None:
+        self._features = features
 
     @staticmethod
     def validate(data_type: type) -> bool:
