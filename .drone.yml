@@ -82,7 +82,6 @@ trigger:
     - push
 
 steps:
-
   - name: setup_310
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
@@ -140,7 +139,6 @@ steps:
     depends_on:
       - code-analysis
 
-
 ---
 name: publish-release
 kind: pipeline
@@ -190,7 +188,6 @@ steps:
       - quality-checks
 
   - name: artifactory-poetry-publish
-    when:
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     environment:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
@@ -204,4 +201,3 @@ steps:
       - make publish
     depends_on:
       - code-analysis
-
