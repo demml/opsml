@@ -134,7 +134,7 @@ class OnnxModelPredictor:
         elif self.model_type == OnnxModelType.TF_KERAS:
             data_for_pred = pred_data.to_onnx()
 
-        elif self.model_type == OnnxModelType.PYTORCH:
+        elif self.model_type in [OnnxModelType.PYTORCH, OnnxModelType.TRANSFORMER]:
             import torch
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
