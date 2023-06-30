@@ -549,7 +549,10 @@ class PyTorchOnnxModel(ModelConverter):
 
     @staticmethod
     def validate(model_type: str) -> bool:
-        return model_type in OnnxModelType.PYTORCH
+        return model_type in [
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class OnnxModelConverter:
