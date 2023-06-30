@@ -297,9 +297,10 @@ class PyTorchOnnxDataConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return (
-            model_info.data_type == InputDataType.NUMPY_ARRAY.value and model_info.model_type == OnnxModelType.PYTORCH
-        )
+        return model_info.data_type == InputDataType.NUMPY_ARRAY.value and model_info.model_type == [
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class PyTorchOnnxDictConverter(DataConverter):
@@ -358,7 +359,10 @@ class PyTorchOnnxDictConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == InputDataType.DICT.value and model_info.model_type == OnnxModelType.PYTORCH
+        return model_info.data_type == InputDataType.DICT.value and model_info.model_type in [
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class OnnxDataConverter:

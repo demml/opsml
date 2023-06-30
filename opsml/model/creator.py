@@ -59,7 +59,7 @@ class ModelCreator:
 
         # for transformer models from huggingface
         if "transformers.models" in str(self.model.__class__.__bases__):
-            return OnnxModelType.PYTORCH.value
+            return OnnxModelType.TRANSFORMER.value
 
         return self.model.__class__.__name__
 
