@@ -287,7 +287,11 @@ class SklearnSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type not in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
+        return model_type not in [
+            OnnxModelType.TF_KERAS,
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class DeepLearningSigCreator(ApiSigCreator):
@@ -299,7 +303,11 @@ class DeepLearningSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
+        return model_type in [
+            OnnxModelType.TF_KERAS,
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class ApiSigCreatorGetter:
