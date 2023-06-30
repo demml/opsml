@@ -185,3 +185,19 @@ steps:
       SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
     depends_on:
       - py310
+      - quality-checks
+
+  - name: artifactory-poetry-publish
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      # tag events validate poetry version is equal to the tag
+      # increment patch version for releases based on drone tag
+      - test "v$(poetry version --short)" "=" "$DRONE_TAG"
+      - make publish
+    depends_on:
+      - code-analysis
