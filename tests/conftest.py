@@ -1,8 +1,6 @@
-from typing import Any, Iterator, Optional, Union
-from dataclasses import dataclass
+from typing import Any, Iterator
 import os
 import pathlib
-
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -54,7 +52,6 @@ from sklearn import (
     neighbors,
     svm,
     multioutput,
-    multiclass,
     neural_network,
     cross_decomposition,
 )
@@ -75,11 +72,13 @@ from opsml.registry.data.splitter import DataSplit
 from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
+from opsml.helpers.request_helpers import ApiClient
 from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
 from opsml.registry.sql.sql_schema import BaseMixin, Base, RegistryTableNames
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem
+from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem, StorageClientType
+
 from opsml.projects import get_project
 from opsml.projects.mlflow import MlflowProject
 from opsml.projects.base.types import ProjectInfo
@@ -116,7 +115,6 @@ def cleanup() -> None:
     shutil.rmtree("loader_test", ignore_errors=True)
 
 
-################ Test Classes
 class Blob(BaseModel):
     name: str = "test_upload/test.csv"
 
@@ -258,11 +256,6 @@ def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
         yield mock_dataset
 
 
-################################################################################
-# Mocks
-################################################################################
-
-
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
     cleanup()
@@ -289,7 +282,7 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
     def callable_api():
         return test_client
 
-    with patch("httpx.Client", callable_api) as mock_client:
+    with patch("httpx.Client", callable_api):
         from opsml.registry.sql.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
@@ -352,7 +345,7 @@ def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
 
 
 @pytest.fixture(scope="function")
-def mock_cli_property(api_registries):
+def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
     with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
         from opsml.registry.sql.settings import settings
 
@@ -361,16 +354,8 @@ def mock_cli_property(api_registries):
 
 
 @pytest.fixture(scope="function")
-def api_storage_client(api_registries):
+def api_storage_client(api_registries: CardRegistries) -> StorageClientType:
     return api_registries.data._registry.storage_client
-
-
-@pytest.fixture(scope="function")
-def mock_app_config_token(api_registries):
-    with patch("opsml.app.core.config.OpsmlConfig.PROD_TOKEN", new_callable=PropertyMock) as attr_mock:
-        attr_mock.return_value = "fail"
-
-        yield attr_mock
 
 
 @pytest.fixture(scope="function")
