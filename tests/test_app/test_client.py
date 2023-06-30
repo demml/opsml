@@ -14,7 +14,7 @@ from requests.auth import HTTPBasicAuth
 
 from opsml.registry import DataCard, ModelCard, RunCard, PipelineCard, CardRegistry, CardRegistries, CardInfo
 from opsml.helpers.request_helpers import ApiRoutes
-
+from opsml.app.core import config
 from tests.conftest import TODAY_YMD
 from unittest.mock import patch, MagicMock
 
@@ -84,7 +84,7 @@ def test_register_data(
         registry.list_cards()
 
 
-def test_semver_registry_list(api_registries: Dict[str, CardRegistry], test_array: NDArray):
+def test_semver_registry_list(api_registries: CardRegistries, test_array: NDArray):
     # create data card
     registry = api_registries.data
 
@@ -140,7 +140,7 @@ def test_semver_registry_list(api_registries: Dict[str, CardRegistry], test_arra
 
 def test_run_card(
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
-    api_registries: Dict[str, CardRegistry],
+    api_registries: CardRegistries,
 ):
     registry = api_registries.run
 
@@ -165,7 +165,7 @@ def test_run_card(
 
 
 def test_register_model(
-    api_registries: Dict[str, CardRegistry],
+    api_registries: CardRegistries,
     sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
 ):
     model, data = sklearn_pipeline
@@ -259,7 +259,7 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(api_registries: Dict[str, CardRegistry], test_data: pd.DataFrame):
+def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -319,7 +319,7 @@ def test_load_data_card(api_registries: Dict[str, CardRegistry], test_data: pd.D
         datacardv12.load_data()
 
 
-def test_pipeline_registry(api_registries: Dict[str, CardRegistry]):
+def test_pipeline_registry(api_registries: CardRegistry):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -344,7 +344,7 @@ def test_pipeline_registry(api_registries: Dict[str, CardRegistry]):
 
 
 def test_full_pipeline_with_loading(
-    api_registries: Dict[str, CardRegistry],
+    api_registries: CardRegistries,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
     from opsml.registry.cards.pipeline_loader import PipelineLoader
@@ -411,7 +411,7 @@ def test_full_pipeline_with_loading(
 
 def test_metadata_download_and_registration(
     test_app: TestClient,
-    api_registries: Dict[str, CardRegistry],
+    api_registries: CardRegistries,
     linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame],
 ):
     team = "mlops"
@@ -657,7 +657,7 @@ def test_model_metrics(
 
 def test_model_metric_failure(
     test_app: TestClient,
-    api_registries: Dict[str, CardRegistry],
+    api_registries: CardRegistries,
     sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
 ):
     model, data = sklearn_pipeline
@@ -685,10 +685,10 @@ def test_model_metric_failure(
 
 
 def test_token_fail(
-    api_registries: Dict[str, CardRegistry],
-    mock_app_config_token: str,
+    api_registries: CardRegistries,
+    monkeypatch: pytest.MonkeyPatch,
 ):
-    registry = api_registries.run
+    monkeypatch.setattr(config.config, "PROD_TOKEN", "fail")
 
     run = RunCard(
         name="test_df",
@@ -701,4 +701,4 @@ def test_token_fail(
         ValueError,
         match="Cannot perform write operation on prod resource without token",
     ):
-        registry.register_card(card=run)
+        api_registries.run.register_card(card=run)
