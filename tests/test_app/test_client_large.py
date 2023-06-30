@@ -12,7 +12,7 @@ from opsml.registry import DataCard, ModelCard, CardRegistries
 
 
 @pytest.mark.large
-def _test_register_large_data(api_registries: CardRegistries):
+def test_register_large_data(api_registries: CardRegistries):
     # create a numpy 1d-array
     x = np.random.rand(500000, 100)
 
@@ -36,7 +36,7 @@ def _test_register_large_data(api_registries: CardRegistries):
 
 # test opsml storage client
 @pytest.mark.large
-def _test_register_large_whisper_model(
+def test_register_large_whisper_model(
     api_registries: CardRegistries,
     huggingface_whisper: Tuple[Any, Dict[str, np.ndarray]],
 ) -> None:
@@ -69,7 +69,7 @@ def _test_register_large_whisper_model(
 
 
 @pytest.mark.large
-def _test_register_large_gpt_model(
+def test_register_large_gpt_model(
     api_registries: CardRegistries,
     huggingface_openai_gpt: Tuple[Any, Dict[str, torch.Tensor]],
 ) -> None:

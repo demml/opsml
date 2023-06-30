@@ -103,17 +103,13 @@ class ModelConverter:
         assert onnx_preds.shape == model_preds.shape
 
         diff = np.sum(abs(np.around(onnx_preds, 4) - np.around(model_preds, 4)))
-        perc_err = np.sum(np.abs(np.divide(model_preds - onnx_preds, model_preds)))
         n_values = reduce((lambda x, y: x * y), model_preds.shape)
-        mape = np.divide(perc_err, n_values)
+        avg_diff = np.divide(diff, n_values)
 
         # check if raw diff value is less than a certain amount
-        if diff <= 0.001:
+        if avg_diff <= 0.001:
             return True
 
-        # Check MAPE
-        if mape <= 0.001:
-            return True
         return False
 
     def _predictions_close(
@@ -421,7 +417,7 @@ class PytorchArgBuilder:
         if isinstance(self.input_data, dict):
             return list(self.input_data.keys())
 
-        return ["input"]
+        return ["predict"]
 
     def _get_output_names(self) -> List[str]:
         return ["output"]

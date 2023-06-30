@@ -118,6 +118,7 @@ class NumpyOnnxConverter(DataConverter):
             if model_info.model_type in AVAILABLE_MODEL_TYPES and model_info.model_type not in [
                 OnnxModelType.TF_KERAS,
                 OnnxModelType.PYTORCH,
+                OnnxModelType.TRANSFORMER,
             ]:
                 return True
         return False
@@ -297,7 +298,7 @@ class PyTorchOnnxDataConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == InputDataType.NUMPY_ARRAY.value and model_info.model_type == [
+        return model_info.data_type == InputDataType.NUMPY_ARRAY.value and model_info.model_type in [
             OnnxModelType.PYTORCH,
             OnnxModelType.TRANSFORMER,
         ]

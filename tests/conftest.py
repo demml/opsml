@@ -649,8 +649,8 @@ def load_pytorch_language():
         padding="max_length",
         truncation=True,
         return_tensors="pt",
-    )
-    sample_data = {name: values.numpy() for name, values in data.items()}
+    ).input_ids
+    sample_data = {"input_ids": data.numpy()}
     loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
 
     return loaded_model, sample_data
