@@ -53,6 +53,7 @@ setup.sysdep.poetry:
 
 test.unit:
 	poetry run pytest \
+		-m "not large" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
