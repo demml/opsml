@@ -1,5 +1,9 @@
+# pylint: disable=no-member,broad-exception-caught
 from typing import Any, Dict, Optional
 
+import numpy as np
+
+from opsml.helpers.logging import ArtifactLogger
 from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data
 from opsml.model.model_types import ModelType, OnnxModelType
@@ -13,6 +17,8 @@ from opsml.model.types import (
     ModelReturn,
     OnnxModelDefinition,
 )
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class ModelCreator:
@@ -93,13 +99,78 @@ class TrainedModelMetadataCreator(ModelCreator):
             data_type=type(predictions),
         )
 
+        model_data.features = ["outputs"]
+
         return model_data.feature_dict
 
-    def _get_output_schema(self) -> Dict[str, Feature]:
-        if hasattr(self.model, "predict"):
-            predictions = self.model.predict(self.input_data)
+    def _predict_prediction(self) -> Dict[str, Feature]:
+        """Test default predict method leveraged by most ml libraries"""
+        predictions = self.model.predict(self.input_data)
+        return self._get_prediction_type(predictions=predictions)
+
+    def _generate_prediction(self) -> Dict[str, Feature]:
+        """Tests generate method commonly used with huggingface models.
+        If generate fails, prediction will fall back to normal functional call.
+        """
+        import torch
+
+        try:
+            if isinstance(self.input_data, np.ndarray):
+                array_input = torch.from_numpy(self.input_data)
+                predictions = self.model.generate(array_input)
+
+            elif isinstance(self.input_data, dict):
+                dict_input: Dict[str, torch.Tensor] = {
+                    key: torch.from_numpy(val) for key, val in self.input_data.items()
+                }
+                predictions = self.model.generate(**dict_input)
+
+            if isinstance(predictions, torch.Tensor):
+                predictions = predictions.numpy()
+
             return self._get_prediction_type(predictions=predictions)
-        # placeholder for now
+
+        except TypeError as error:
+            logger.error("%s. Falling back to model functional call", error)
+
+        return self._functional_prediction()
+
+    def _functional_prediction(self) -> Dict[str, Feature]:
+        """Calls the model directly using functional call"""
+        import torch
+
+        if isinstance(self.input_data, np.ndarray):
+            array_input = torch.from_numpy(self.input_data)
+            predictions = self.model(array_input)
+
+        elif isinstance(self.input_data, dict):
+            dict_input: Dict[str, torch.Tensor] = {key: torch.from_numpy(val) for key, val in self.input_data.items()}
+            predictions = self.model(**dict_input)
+
+        if isinstance(predictions, torch.Tensor):
+            predictions = predictions.numpy()
+
+        # assumes model predictions can be retrieved via hidden state
+        else:
+            predictions = predictions.last_hidden_state.detach().numpy()
+
+        return self._get_prediction_type(predictions=predictions)
+
+    def _get_output_schema(self) -> Dict[str, Feature]:
+        try:
+            if hasattr(self.model, "predict"):
+                return self._predict_prediction()
+
+            # huggingface/pytorch
+            # Majority of huggingface models have generate method but may raise error
+            if hasattr(self.model, "generate"):
+                return self._generate_prediction()
+
+            return self._functional_prediction()
+
+        except Exception as error:
+            logger.error("Failed to determine prediction output. Defaulting to placeholder. %s", error)
+
         return {"placeholder": Feature(feature_type="str", shape=[1])}
 
     def create_model(self) -> ModelReturn:
