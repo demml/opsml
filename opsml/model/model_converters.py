@@ -153,7 +153,6 @@ class ModelConverter:
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
-
         model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
         logger.info("Validating converted onnx model")
@@ -466,6 +465,9 @@ class PyTorchOnnxModel(ModelConverter):
             return predictions.logits.detach().numpy()
         if hasattr(predictions, "detach"):
             return predictions.detach().numpy()
+        if hasattr(predictions, "last_hidden_state"):
+            return predictions.last_hidden_state.detach().numpy()
+
         return predictions.numpy()
 
     def _model_predict(self) -> NDArray:

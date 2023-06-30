@@ -1011,9 +1011,25 @@ def huggingface_openai_gpt():
 def huggingface_bart():
     from transformers import BartTokenizer, BartModel
 
-    tokenizer = BartTokenizer.from_pretrained('facebook/bart-base')
-    model = BartModel.from_pretrained('facebook/bart-base')
+    tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+    model = BartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
+
+    return model, inputs
+
+
+@pytest.fixture(scope="module")
+def huggingface_vit():
+    from transformers import ViTFeatureExtractor, ViTModel
+    from PIL import Image
+    import requests
+
+    image = Image.open("tests/assets/cats.jpg")
+
+    feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
+    model = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+
+    inputs = feature_extractor(images=image, return_tensors="pt")
 
     return model, inputs
 
