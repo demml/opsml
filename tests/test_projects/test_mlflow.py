@@ -1,4 +1,4 @@
-from typing import Any, cast, Dict
+from typing import Any, cast, Dict, Tuple
 
 import os
 import sys
@@ -17,7 +17,6 @@ from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
-
 import matplotlib
 
 matplotlib.use("Agg")
@@ -344,3 +343,35 @@ def test_tf_model(
         info=CardInfo(uid=model_card.uid),
     )
     loaded_card.load_trained_model()
+
+
+@pytest.mark.large
+def test_register_large_model_run(
+    mlflow_project: MlflowProject,
+    huggingface_whisper: Tuple[Any, Dict[str, np.ndarray]],
+) -> None:
+    with mlflow_project.run() as run:
+        """An example of saving a large, pretrained model to opsml using mlflow"""
+        model, data = huggingface_whisper
+
+        data_card = DataCard(
+            data=data,
+            name="dummy-data",
+            team="mlops",
+            user_email="test@mlops.com",
+        )
+
+        run.register_card(data_card)
+
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data=data,
+            name="whisper-small",
+            team="mlops",
+            user_email="test@mlops.com",
+            tags={"id": "model1"},
+            datacard_uid=data_card.uid,
+            to_onnx=False,  # onnx conversion fails w/ this model - not sure why
+        )
+
+        run.register_card(model_card)
