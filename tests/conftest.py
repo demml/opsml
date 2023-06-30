@@ -983,6 +983,41 @@ def random_forest_api_example():
     return 2, record
 
 
+@pytest.fixture(scope="module")
+def huggingface_whisper():
+    import transformers
+
+    model = transformers.WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny")
+    model.config.forced_decoder_ids = None
+
+    # come up with some dummy test data to fake out training.
+    data = joblib.load("tests/assets/whisper-data.joblib")
+
+    return model, data
+
+
+@pytest.fixture(scope="module")
+def huggingface_openai_gpt():
+    from transformers import OpenAIGPTTokenizer, OpenAIGPTLMHeadModel
+
+    tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
+    model = OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
+    inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
+
+    return model, inputs
+
+
+@pytest.fixture(scope="module")
+def huggingface_bart():
+    from transformers import BartTokenizer, BartModel
+
+    tokenizer = BartTokenizer.from_pretrained('facebook/bart-base')
+    model = BartModel.from_pretrained('facebook/bart-base')
+    inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
+
+    return model, inputs
+
+
 @pytest.fixture(scope="function")
 def tensorflow_api_example():
     record = {
