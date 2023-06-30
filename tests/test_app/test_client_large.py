@@ -97,7 +97,7 @@ def _test_register_large_gpt_model(
 
 
 @pytest.mark.large
-def _test_register_large_bart_model(
+def test_register_large_bart_model(
     api_registries: CardRegistries,
     huggingface_bart: Tuple[Any, Dict[str, torch.Tensor]],
 ) -> None:
@@ -126,7 +126,7 @@ def _test_register_large_bart_model(
 
 
 @pytest.mark.large
-def test_register_large_bart_model(
+def test_register_large_vit_model(
     api_registries: CardRegistries,
     huggingface_vit: Tuple[Any, Dict[str, torch.Tensor]],
 ) -> None:
