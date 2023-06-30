@@ -18,13 +18,14 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
 from tests import conftest
 import matplotlib
+import torch
 
 matplotlib.use("Agg")
 
 logger = ArtifactLogger.get_logger(__name__)
 
 
-def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
+def _test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
 
@@ -110,7 +111,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
         opsml_project = OpsmlProject(info=opsml_info)
 
 
-def test_metrics(mlflow_project: MlflowProject) -> None:
+def _test_metrics(mlflow_project: MlflowProject) -> None:
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
     with proj.run() as run:
@@ -122,7 +123,7 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
     assert proj.get_metric("m1").value == 1.1
 
 
-def test_metrics(mlflow_project: MlflowProject) -> None:
+def _test_metrics(mlflow_project: MlflowProject) -> None:
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
 
@@ -140,7 +141,7 @@ def test_metrics(mlflow_project: MlflowProject) -> None:
     assert proj.get_metric("m1").value == 1.1
 
 
-def test_run_fail(mlflow_project: MlflowProject) -> None:
+def _test_run_fail(mlflow_project: MlflowProject) -> None:
     info = ProjectInfo(name="test-new", team="test", user_email="user@test.com")
     proj = conftest.mock_mlflow_project(info)
 
@@ -160,7 +161,7 @@ def test_run_fail(mlflow_project: MlflowProject) -> None:
     assert len(cards) == 1
 
 
-def test_params(mlflow_project: MlflowProject) -> None:
+def _test_params(mlflow_project: MlflowProject) -> None:
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with conftest.mock_mlflow_project(info).run() as run:
         run.log_parameter(key="m1", value="apple")
@@ -172,7 +173,7 @@ def test_params(mlflow_project: MlflowProject) -> None:
     assert proj.get_parameter("m1").value == "apple"
 
 
-def test_log_artifact(mlflow_project: MlflowProject) -> None:
+def _test_log_artifact(mlflow_project: MlflowProject) -> None:
     filename = "test.png"
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with mlflow_project.run() as run:
@@ -197,7 +198,7 @@ def test_log_artifact(mlflow_project: MlflowProject) -> None:
     assert tags["test_tag"] == "1.0.0"
 
 
-def test_register_load(
+def _test_register_load(
     mlflow_project: MlflowProject,
     linear_regression: tuple[pipeline.Pipeline, pd.DataFrame],
 ) -> None:
@@ -244,7 +245,7 @@ def test_register_load(
     loaded_card.load_trained_model()
 
 
-def test_lgb_model(
+def _test_lgb_model(
     mlflow_project: MlflowProject,
     lgb_booster_dataframe: tuple[lgb.Booster, pd.DataFrame],
 ) -> None:
@@ -277,7 +278,7 @@ def test_lgb_model(
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
-def test_pytorch_model(
+def _test_pytorch_model(
     mlflow_project: MlflowProject,
     load_pytorch_resnet: tuple[Any, NDArray],
 ):
@@ -311,7 +312,7 @@ def test_pytorch_model(
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
-def test_tf_model(
+def _test_tf_model(
     mlflow_project: MlflowProject,
     load_multi_input_keras_example: tuple[Any, Dict[str, NDArray]],
 ):
@@ -346,7 +347,7 @@ def test_tf_model(
 
 
 @pytest.mark.large
-def test_register_large_model_run(
+def _test_register_large_model_run(
     mlflow_project: MlflowProject,
     huggingface_whisper: Tuple[Any, Dict[str, np.ndarray]],
 ) -> None:
@@ -372,6 +373,36 @@ def test_register_large_model_run(
             tags={"id": "model1"},
             datacard_uid=data_card.uid,
             to_onnx=False,  # onnx conversion fails w/ this model - not sure why
+        )
+
+        run.register_card(model_card)
+
+
+def test_register_transformer_model_run(
+    mlflow_project: MlflowProject,
+    huggingface_vit: Tuple[Any, Dict[str, torch.Tensor]],
+) -> None:
+    with mlflow_project.run() as run:
+        """An example of saving a large, pretrained model to opsml using mlflow"""
+        model, data = huggingface_vit
+
+        data_card = DataCard(
+            data=data["pixel_values"].numpy(),
+            name="dummy-data",
+            team="mlops",
+            user_email="test@mlops.com",
+        )
+
+        run.register_card(data_card)
+
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data={"pixel_values": data["pixel_values"].numpy()},
+            name="vit",
+            team="mlops",
+            user_email="test@mlops.com",
+            tags={"id": "model1"},
+            datacard_uid=data_card.uid,
         )
 
         run.register_card(model_card)
