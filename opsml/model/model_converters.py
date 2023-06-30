@@ -67,7 +67,7 @@ class ModelConverter:
         """
         return self.data_converter.get_data_types()
 
-    def _raise_shape_mismatch(self, onnx_shape: Tuple[int], pred_shape: Tuple[int]):
+    def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]):
         raise ValueError(
             f"""Onnx and model prediction shape mismatch. \n
                 Onnx prediction shape: {onnx_shape} \n
@@ -135,7 +135,7 @@ class ModelConverter:
         if isinstance(onnx_preds, list) and isinstance(model_preds, list):
             valid_list = []
             for onnx_pred, model_pred in zip(onnx_preds, model_preds):
-                valid = np.sum(abs(onnx_pred - model_pred)) <= 0.001
+                valid = np.sum(np.abs(onnx_pred - model_pred)) <= 0.001
                 valid_list.append(valid)
             return all(valid_list)
 
@@ -146,7 +146,7 @@ class ModelConverter:
             raise ValueError("Model and onnx predictions should both be of type NDArray")
 
         model_preds = cast(Union[float, int], model_preds)
-        valid_list = [np.sum(abs(onnx_preds[0] - model_preds)) <= 0.001]
+        valid_list = [np.sum(np.abs(onnx_preds[0] - model_preds)) <= 0.001]
         return all(valid_list)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
