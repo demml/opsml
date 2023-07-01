@@ -4,8 +4,9 @@
 import re
 import tempfile
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from functools import reduce
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
+
 import numpy as np
 import onnx
 import onnxruntime as rt
@@ -77,8 +78,8 @@ class ModelConverter:
 
     def _validate_pred_arrays(self, onnx_preds: NDArray, model_preds: NDArray) -> bool:
         """
-        Validates onnx and original model predictions. Checks whether model and onnx
-        predictions are within .1% of each other
+        Validates onnx and original model predictions. Checks whether average diff between model and onnx
+        is <= .001.
 
         Args:
             onnx_preds:
