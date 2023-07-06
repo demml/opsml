@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.1.4"
+version = "1.1.5"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -103,7 +103,6 @@ mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 
 
 [tool.poetry.scripts]
-load_model_card_to_file = "opsml.cli.load_model_card:load_model_card_to_file"
 opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
 opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
 opsml-cli = "opsml.cli.api_cli:app"
@@ -118,7 +117,7 @@ include = '\.pyi?$'
 
 [tool.pylint.MASTER]
 ignore-paths = [ "opsml/.local_tests/*","opsml/registry/sql/migration/*"]
-load-plugins = "pylint_pydantic"
+load-plugins = ["pylint_pydantic", "pylint.extensions.docparams"]
 
 [tool.pylint.messages_control]
 max-line-length = 120
