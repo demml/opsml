@@ -141,7 +141,7 @@ class MlflowModelFlavor(Protocol):
 
 
 class MlflowModel(Protocol):
-    def get_model_info(model_uri: str):
+    def get_model_info(self):
         ...
 
 

@@ -1,4 +1,4 @@
-# pylint: disable=import-outside-toplevel,disable=invalid-envvar-value
+# pylint: disable=import-outside-toplevel,disable=invalid-envvar-value,disable=protected-access
 
 
 import os
@@ -604,7 +604,7 @@ class MlflowModelSaver:
 
         return mlflow_model
 
-    def log_model(self, flavor: MlflowModelFlavor, **kwargs) -> MlflowModelInfo:
+    def _log_model(self, flavor: MlflowModelFlavor, **kwargs) -> MlflowModelInfo:
         """
         This code reproduces the mlflow.log_model function for most flavors. Function will
         save an mlflow model to a temp directory and then stream the directory to the
@@ -624,6 +624,9 @@ class MlflowModelSaver:
 
         return mlflow_model.get_model_info()
 
+    def log_model(self) -> str:
+        raise NotImplementedError
+
     @staticmethod
     def validate(model_type: str) -> bool:
         raise NotImplementedError
@@ -634,7 +637,7 @@ class MlFlowSklearn(MlflowModelSaver):
         "Log a sklearn model to mlflow"
         import mlflow
 
-        model_info = super().log_model(flavor=mlflow.sklearn, sk_model=self.model)
+        model_info = self._log_model(flavor=mlflow.sklearn, sk_model=self.model)
         filename = model_info.flavors["python_function"]["model_path"]
         return filename
 
@@ -648,7 +651,7 @@ class MlFlowLightGBM(MlflowModelSaver):
         "Log a lightgbm model to mlflow"
         import mlflow
 
-        model_info = super().log_model(flavor=mlflow.lightgbm, lgb_model=self.model)
+        model_info = self._log_model(flavor=mlflow.lightgbm, lgb_model=self.model)
         filename = model_info.flavors["lightgbm"]["data"]
 
         return filename
@@ -663,7 +666,7 @@ class MlFlowPytorch(MlflowModelSaver):
         """Log a pytorch model to mlflow"""
         import mlflow
 
-        model_info = super().log_model(flavor=mlflow.pytorch, pytorch_model=self.model)
+        model_info = self._log_model(flavor=mlflow.pytorch, pytorch_model=self.model)
         dir_name = model_info.flavors["pytorch"]["model_data"]
         return f"{dir_name}/model.pth"
 
@@ -677,7 +680,7 @@ class MlFlowTensorflow(MlflowModelSaver):
         "Log a tensorflow model to mlflow"
         import mlflow
 
-        model_info = super().log_model(flavor=mlflow.tensorflow, pytorch_model=self.model)
+        model_info = self._log_model(flavor=mlflow.tensorflow, model=self.model)
         dir_name = model_info.flavors["tensorflow"]["data"]
         return f"{dir_name}/model"
 
@@ -716,11 +719,13 @@ class MlflowStorageClient(StorageClient):
         """not used"""
 
     @property
-    def run_id(self) -> Optional[str]:
+    def run_id(self) -> str:
+        if self._run_id is None:
+            raise ValueError("No run_id set")
         return self._run_id
 
     @run_id.setter
-    def run_id(self, run_id: Optional[str]):
+    def run_id(self, run_id: str):
         self._run_id = run_id
 
     @property
