@@ -448,12 +448,14 @@ def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:
-        card (ArtifactCard): ArtifactCard to save
-        artifact_storage_info (ArtifactStorageSpecs): Extra storage info to associate
-        with card.
+        card:
+            ArtifactCard to save
+        storage_client:
+            StorageClient to use to save artifacts
 
     Returns:
-        Modified ArtifactCard
+        ArtifactCard with updated artifact uris
+
     """
     card_saver = next(
         card_saver

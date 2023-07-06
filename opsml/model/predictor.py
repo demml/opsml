@@ -63,13 +63,14 @@ class OnnxModelPredictor:
         return self.sig_creator.output_sig
 
     def predict(self, data: Dict[str, Any]) -> Any:
-        """Run prediction on onnx model. Data is expected to conform to pydantic
+        """
+        Run prediction on onnx model. Data is expected to conform to pydantic
         schema as defined in "api_sig" attribute. This schema will be used when
         deploying the model api.
 
         Args:
-            Data (dictionary): Record of data as dictionary that conforms to pydantic
-            schema.
+            data:
+                Record of data as dictionary that conforms to pydantic schema.
 
         Returns:
             Prediction (array or float depending on model type)

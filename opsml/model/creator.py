@@ -297,7 +297,7 @@ def create_model(
     Validates and selects s `ModeCreator` subclass and creates a `ModelReturn`
 
     Args:
-            Model:
+            model:
                 Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
             input_data:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
@@ -308,6 +308,8 @@ def create_model(
             onnx_model_def:
                 Optional onnx model def. This is primarily used for bring your own onnx models
 
+    Returns:
+        `ModelReturn`
     """
 
     creator = next(
