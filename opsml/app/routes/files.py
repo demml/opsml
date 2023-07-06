@@ -107,8 +107,10 @@ def download_file(
     """Downloads a file
 
     Args:
-        read_path (str):
-            Path to read from
+        request:
+            request object
+        payload:
+            `DownloadFileRequest`
 
     Returns:
         Streaming file response
@@ -139,11 +141,13 @@ def list_files(
     """Downloads a file
 
     Args:
-        read_path (str):
-            Path to search
+        request:
+            request object
+        payload:
+            `ListFileRequest`
 
     Returns:
-        List of files
+        `ListFileResponse`
     """
 
     try:
