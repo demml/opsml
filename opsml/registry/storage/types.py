@@ -134,8 +134,9 @@ class MlflowModelFlavor(Protocol):
         mlflow_model: Any,
         signature: Any,
         input_example: Union[pd.DataFrame, NDArray, Dict[str, NDArray]],
+        **kwargs,
     ):
-        "save model"
+        "Save model flavor"
 
 
 @dataclass
