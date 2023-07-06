@@ -480,23 +480,6 @@ def db_registries():
 
 
 @pytest.fixture(scope="function")
-def mock_model_cli_loader(db_registries):
-    model_registry = db_registries["model"]
-    from opsml.cli.load_model_card import ModelLoader
-
-    class MockModelLoader(ModelLoader):
-        @property
-        def base_path(self) -> str:
-            return "loader_test"
-
-        def _set_registry(self) -> Any:
-            return model_registry
-
-    with patch("opsml.cli.load_model_card.ModelLoader", MockModelLoader) as mock_cli_loader:
-        yield mock_cli_loader
-
-
-@pytest.fixture(scope="function")
 def mock_gcs_storage_response():
     class MockResponse:
         def __init__(self):

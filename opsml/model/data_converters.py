@@ -46,7 +46,7 @@ class DataConverter:
         converts Float64 types to Float32. Skl2Onnx does not support Float64 for some estimator types.
 
         Args:
-            all:
+            convert_all:
                 Boolean indicating whether to convert all columns to Float32
 
         """

@@ -282,6 +282,8 @@ def download_data_profile(
             Card version
         uid:
             Card uid
+        write_dir:
+            Directory to write data profile to
 
     Returns
         HTML file
@@ -333,6 +335,8 @@ def compare_data_profiles(
             List of versions to compare
         uid:
             List of Uids to compare
+        write_dir:
+            Directory to write data profile to
 
     Returns
         HTML file

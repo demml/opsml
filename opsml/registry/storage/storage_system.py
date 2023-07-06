@@ -476,6 +476,10 @@ class ApiStorageClient(LocalStorageClient):
                 Local path to artifact(s)
             write_path:
                 Path where current artifact has been saved to
+            recursive:
+                Whether to recursively upload files
+            kwargs:
+                Additional arguments to pass to upload function
         Returns:
             Write path
         """
@@ -851,9 +855,18 @@ class MlflowStorageClient(StorageClient):
         recursive: bool = False,
         **kwargs,
     ) -> str:
-        """Uploads local artifact to mlflow
+        """
+        Uploads local artifact to mlflow
+
         Args:
-            storage_uri: Path where current artifact has been saved to
+            local_path:
+                local path to file
+            write_path:
+                path to write to in mlflow
+            recursive:
+                whether to recursively upload a directory
+            kwargs:
+                additional kwargs to pass to upload
         """
 
         mlflow_write_dir = self._get_mlflow_dir(filename=write_path)

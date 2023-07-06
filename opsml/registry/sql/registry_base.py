@@ -236,7 +236,7 @@ class SQLRegistryBase:
         Adds new record to registry.
 
         Args:
-            Card:
+            card:
                 Card to register
             version_type:
                 Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
@@ -257,7 +257,7 @@ class SQLRegistryBase:
         Updates a registry record.
 
         Args:
-            Card:
+            card:
                 Card to update
         """
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
