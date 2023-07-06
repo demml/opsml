@@ -572,6 +572,10 @@ class MlflowModelSaver:
                 Local directory to upload
         """
         write_path = os.path.join(self.root_path, self.artifact_path)
+        write_path = MlflowStorageClient.swap_mlflow_root(
+            base_path_prefix=self.base_path_prefix,
+            rpath=write_path,
+        )
         self.opsml_storage_client.upload(
             local_path=local_dir,
             write_path=write_path,
@@ -602,9 +606,7 @@ class MlflowModelSaver:
 
     def log_model(self, flavor: MlflowModelFlavor, **kwargs) -> MlflowModelInfo:
         """
-        This code reproduces the mlflow.log_model function for most flavors.
-        The reason for this is that we need to be able to log models without using the
-        default mlflow rest client due to request limits/timeouts. This code will
+        This code reproduces the mlflow.log_model function for most flavors. Function will
         save an mlflow model to a temp directory and then stream the directory to the
         appropriate storage location using the opsml storage client.
 
@@ -629,6 +631,7 @@ class MlflowModelSaver:
 
 class MlFlowSklearn(MlflowModelSaver):
     def log_model(self) -> str:
+        "Log a sklearn model to mlflow"
         import mlflow
 
         model_info = super().log_model(flavor=mlflow.sklearn, sk_model=self.model)
@@ -642,17 +645,10 @@ class MlFlowSklearn(MlflowModelSaver):
 
 class MlFlowLightGBM(MlflowModelSaver):
     def log_model(self) -> str:
+        "Log a lightgbm model to mlflow"
         import mlflow
 
-        signature = self._get_model_signature()
-
-        model_info = mlflow.lightgbm.log_model(
-            lgb_model=self.model,
-            artifact_path=self.artifact_path,
-            signature=signature,
-            input_example=self.sample_data,
-        )
-
+        model_info = super().log_model(flavor=mlflow.lightgbm, lgb_model=self.model)
         filename = model_info.flavors["lightgbm"]["data"]
 
         return filename
@@ -664,17 +660,10 @@ class MlFlowLightGBM(MlflowModelSaver):
 
 class MlFlowPytorch(MlflowModelSaver):
     def log_model(self) -> str:
+        """Log a pytorch model to mlflow"""
         import mlflow
 
-        signature = self._get_model_signature()
-
-        model_info = mlflow.pytorch.log_model(
-            pytorch_model=self.model,
-            artifact_path=self.artifact_path,
-            signature=signature,
-            input_example=self.sample_data,
-        )
-
+        model_info = super().log_model(flavor=mlflow.pytorch, pytorch_model=self.model)
         dir_name = model_info.flavors["pytorch"]["model_data"]
         return f"{dir_name}/model.pth"
 
@@ -685,17 +674,10 @@ class MlFlowPytorch(MlflowModelSaver):
 
 class MlFlowTensorflow(MlflowModelSaver):
     def log_model(self) -> str:
+        "Log a tensorflow model to mlflow"
         import mlflow
 
-        signature = self._get_model_signature()
-
-        model_info = mlflow.tensorflow.log_model(
-            model=self.model,
-            artifact_path=self.artifact_path,
-            signature=signature,
-            input_example=self.sample_data,
-        )
-
+        model_info = super().log_model(flavor=mlflow.tensorflow, pytorch_model=self.model)
         dir_name = model_info.flavors["tensorflow"]["data"]
         return f"{dir_name}/model"
 
