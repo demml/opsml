@@ -41,10 +41,10 @@ from opsml.registry.storage.types import (
     FilePath,
     GcsStorageClientSettings,
     MlFlowClientProto,
+    MlflowInfo,
+    MlflowModel,
     MlflowModelFlavor,
     MlflowModelInfo,
-    MlflowModel,
-    MlflowInfo,
     StorageSettings,
 )
 
