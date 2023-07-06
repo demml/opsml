@@ -24,6 +24,7 @@ class DataDtypes(str, Enum):
 
 
 class OnnxModelType(str, Enum):
+    TRANSFORMER = "transformer"
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
     STACKING_ESTIMATOR = "stackingestimator"

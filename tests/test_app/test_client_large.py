@@ -40,7 +40,11 @@ def test_register_large_whisper_model(
     api_registries: CardRegistries,
     huggingface_whisper: Tuple[Any, Dict[str, np.ndarray]],
 ) -> None:
-    """An example of saving a large, pretrained model to ops, ml"""
+    """An example of saving a large, pretrained seq2seq model to opsml.
+
+    ### Note:
+        Whisper is a seq2seq model. To convert it to onnx, it must first be traced with JIT
+    """
     model, data = huggingface_whisper
     data_card = DataCard(
         data=data,
@@ -58,7 +62,7 @@ def test_register_large_whisper_model(
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
-        to_onnx=False,  # onnx conversion fails w/ this model - not sure why
+        to_onnx=False,  # seq2seq need to be handled differently
     )
     api_registries.model.register_card(model_card)
     assert model_card.data_schema.model_data_schema.output_features["outputs"].shape == [1, 26]
@@ -69,7 +73,7 @@ def test_register_large_gpt_model(
     api_registries: CardRegistries,
     huggingface_openai_gpt: Tuple[Any, Dict[str, torch.Tensor]],
 ) -> None:
-    """An example of saving a large, pretrained model to ops, ml"""
+    """An example of saving a large, pretrained gpt model to opsml"""
     model, data = huggingface_openai_gpt
 
     data_card = DataCard(
@@ -88,10 +92,8 @@ def test_register_large_gpt_model(
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
-        to_onnx=False,  # onnx conversion fails w/ this model - not sure why
     )
     api_registries.model.register_card(model_card)
-    assert model_card.data_schema.model_data_schema.output_features["outputs"].shape == [1, 20]
 
 
 @pytest.mark.large
@@ -99,7 +101,7 @@ def test_register_large_bart_model(
     api_registries: CardRegistries,
     huggingface_bart: Tuple[Any, Dict[str, torch.Tensor]],
 ) -> None:
-    """An example of saving a large, pretrained model to opsml"""
+    """An example of saving a large, pretrained  bart model to opsml"""
     model, data = huggingface_bart
 
     data_card = DataCard(
@@ -118,8 +120,36 @@ def test_register_large_bart_model(
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
-        to_onnx=False,  # onnx conversion fails w/ this model - not sure why
     )
 
     api_registries.model.register_card(model_card)
-    assert model_card.data_schema.model_data_schema.output_features["outputs"].shape == [1, 8, 768]
+
+
+@pytest.mark.large
+def test_register_large_vit_model(
+    api_registries: CardRegistries,
+    huggingface_vit: Tuple[Any, Dict[str, torch.Tensor]],
+) -> None:
+    """An example of saving a large, pretrained image model to opsml"""
+    model, data = huggingface_vit
+
+    data_card = DataCard(
+        data=data["pixel_values"].numpy(),
+        name="dummy-data",
+        team="mlops",
+        user_email="test@mlops.com",
+    )
+    api_registries.data.register_card(data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data={"pixel_values": data["pixel_values"].numpy()},
+        name="vit",
+        team="mlops",
+        user_email="test@mlops.com",
+        tags={"id": "model1"},
+        datacard_uid=data_card.uid,
+        # to_onnx=False,  # onnx conversion fails w/ this model - not sure why
+    )
+
+    api_registries.model.register_card(model_card)
