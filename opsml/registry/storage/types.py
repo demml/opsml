@@ -139,6 +139,57 @@ class MlflowModelFlavor(Protocol):
         "Save model flavor"
 
 
+class MlflowModel(Protocol):
+    def get_model_info(model_uri: str):
+        ...
+
+
+class MlflowModelInfo(Protocol):
+    @property
+    def artifact_path(self):
+        ...
+
+    @property
+    def flavors(self):
+        ...
+
+    @property
+    def model_uri(self):
+        ...
+
+    @property
+    def model_uuid(self):
+        ...
+
+    @property
+    def run_id(self):
+        ...
+
+    @property
+    def saved_input_example_info(self):
+        ...
+
+    @property
+    def signature_dict(self):
+        ...
+
+    @property
+    def signature(self):  # -> Optional[ModelSignature]
+        ...
+
+    @property
+    def utc_time_created(self):
+        ...
+
+    @property
+    def mlflow_version(self):
+        ...
+
+    @property
+    def metadata(self) -> Optional[Dict[str, Any]]:
+        ...
+
+
 @dataclass
 class MlflowInfo:
     local_path: str
