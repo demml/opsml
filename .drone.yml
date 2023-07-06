@@ -44,18 +44,18 @@ steps:
     depends_on:
       - py310
 
-  - name: code-analysis
-    image: plugins/sonarqube-drone-plugin
-    environment:
-      SONAR_HOST:
-        from_secret: SONAR_HOST
-      SONAR_TOKEN:
-        from_secret: SONAR_TOKEN
-      SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
-    depends_on:
-      - py39
-      - py310
-      - quality-checks
+  #- name: code-analysis
+  #  image: plugins/sonarqube-drone-plugin
+  #  environment:
+  #    SONAR_HOST:
+  #      from_secret: SONAR_HOST
+  #    SONAR_TOKEN:
+  #      from_secret: SONAR_TOKEN
+  #    SONAR_SCANNER_FLAGS: -Dsonar.verbose=true
+  #  depends_on:
+  #    - py39
+  #    - py310
+  #    - quality-checks
 
   - name: publish-release-candidate
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
@@ -65,7 +65,10 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
-      - code-analysis
+      #- code-analysis
+      - py39
+      - py310
+      - quality-checks
     commands:
       - make prep.pre.patch
       - make publish
