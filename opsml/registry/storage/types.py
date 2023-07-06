@@ -2,8 +2,9 @@ import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, List, Optional, Protocol, Tuple, Union
-
+from typing import Any, Generator, List, Optional, Protocol, Tuple, Union, Dict
+import pandas as pd
+from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from opsml.helpers.request_helpers import ApiClient
@@ -121,6 +122,20 @@ class StorageClientProto(Protocol):
 class MlFlowClientProto(Protocol):
     def log_artifact(self, run_id: str, local_path: str, artifact_path: str):
         "log artifact"
+
+    def _record_logged_model(self, run_id: str, mlflow_model: Any):
+        "record logged model"
+
+
+class MlflowModelFlavor(Protocol):
+    def save_model(
+        self,
+        path: str,
+        mlflow_model: Any,
+        signature: Any,
+        input_example: Union[pd.DataFrame, NDArray, Dict[str, NDArray]],
+    ):
+        "save model"
 
 
 @dataclass
