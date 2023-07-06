@@ -308,12 +308,12 @@ class DataCard(ArtifactCard):
         exclude_attr = {"data"}
         return DataRegistryRecord(**self.dict(exclude=exclude_attr))
 
-    def add_info(self, info: Dict[str, Union[float, int, str]]):
+    def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:
         """
         Adds metadata to the existing DataCard metadata dictionary
 
         Args:
-            Metadata:
+            info:
                 Dictionary containing name (str) and value (float, int, str) pairs
                 to add to the current metadata set
         """
@@ -582,16 +582,7 @@ class ModelCard(ArtifactCard):
         setattr(self, "onnx_model_def", model_def)
 
     def create_registry_record(self) -> RegistryRecord:
-        """
-        Creates a registry record from the current ModelCard
-
-        Args:
-            registry_name:
-                ModelCard Registry table making request
-            uid:
-                Unique id of ModelCard
-
-        """
+        """Creates a registry record from the current ModelCard"""
 
         exclude_vars = {"trained_model", "sample_input_data", "onnx_model_def"}
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
@@ -887,7 +878,7 @@ class RunCard(ArtifactCard):
                 Metric value
             timestamp:
                 Optional timestamp
-            ste:
+            step:
                 Optional step associated with name and value
         """
 
@@ -907,6 +898,8 @@ class RunCard(ArtifactCard):
             metrics:
                 Dictionary containing key (str) and value (float or int) pairs
                 to add to the current metric set
+            step:
+                Optional step associated with metrics
         """
 
         for key, value in metrics.items():
