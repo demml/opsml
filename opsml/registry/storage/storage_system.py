@@ -41,6 +41,9 @@ from opsml.registry.storage.types import (
     FilePath,
     GcsStorageClientSettings,
     MlFlowClientProto,
+    MlflowModelFlavor,
+    MlflowModelInfo,
+    MlflowModel,
     MlflowInfo,
     StorageSettings,
 )
@@ -561,27 +564,63 @@ class MlflowModelSaver:
 
         return signature
 
+    def _upload_model_dir(self, local_dir: str) -> None:
+        """Uploads model directory to storage
 
-    def _save_model(self, flavor:Any):
-        
-    def log_model(self) -> str:
-        """This code reproduces the mlflow.log_model function for most flavors.
-        The reason for this is that we need to be able to log models without using the 
-        default mlflow rest client due to request limits/time outs. This code will
+        Args:
+            local_dir:
+                Local directory to upload
+        """
+        write_path = os.path.join(self.root_path, self.artifact_path)
+        self.opsml_storage_client.upload(
+            local_path=local_dir,
+            write_path=write_path,
+            recursive=True,
+        )
+
+    def _save_model(self, flavor: MlflowModelFlavor, local_dir: str, **kwargs) -> MlflowModel:
+        """Saves model to local directory
+
+        Args:
+            flavor:
+                Mlflow flavor to save model with
+
+        Returns:
+            Mlflow model
+        """
+        from mlflow.models import Model
+
+        mlflow_model = Model(artifact_path=self.artifact_path, run_id=self.run_id)
+        flavor.save_model(
+            mlflow_model=mlflow_model,
+            path=local_dir,
+            signature=self._get_model_signature(),
+            **kwargs,
+        )
+
+        return mlflow_model
+
+    def log_model(self, flavor: MlflowModelFlavor, **kwargs) -> MlflowModelInfo:
+        """
+        This code reproduces the mlflow.log_model function for most flavors.
+        The reason for this is that we need to be able to log models without using the
+        default mlflow rest client due to request limits/timeouts. This code will
         save an mlflow model to a temp directory and then stream the directory to the
         appropriate storage location using the opsml storage client.
-        
+
         Returns:
             filename:
                 Name of the model file
         """
         # import
-        import mlflow
-        from mlflow.models import Model
-        
-        with tempfile.TemporaryDirectory() as tmp:
-            mlflow_model = Model(artifact_path=self.artifact_path, run_id=self.run_id)
-        
+        with tempfile.TemporaryDirectory() as local_dir:
+            mlflow_model = self._save_model(flavor=flavor, local_dir=local_dir, **kwargs)
+            self._upload_model_dir(local_dir=local_dir)
+
+        # record logged model
+        self.mlflow_client._record_logged_model(self.run_id, mlflow_model)
+
+        return mlflow_model.get_model_info()
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -591,40 +630,8 @@ class MlflowModelSaver:
 class MlFlowSklearn(MlflowModelSaver):
     def log_model(self) -> str:
         import mlflow
-        from mlflow.models import Model
 
-        signature = self._get_model_signature()
-
-        with tempfile.TemporaryDirectory() as tmp:
-            local_path = tmp
-            mlflow_model = Model(artifact_path=self.artifact_path, run_id=self.run_id)
-            model_info = mlflow.sklearn.save_model(
-                sk_model=self.model,
-                path=local_path,
-                mlflow_model=mlflow_model,
-                signature=signature,
-                input_example=self.sample_data,
-            )
-            write_path = f"{self.root_path}/{self.artifact_path}"
-            write_path = MlflowStorageClient.swap_mlflow_root(
-                base_path_prefix=self.base_path_prefix,
-                rpath=write_path,
-            )
-            self.opsml_storage_client.upload(
-                local_path=local_path,
-                write_path=write_path,
-            )
-
-            self.mlflow_client._record_logged_model(self.run_id, mlflow_model)
-
-        # model_info = mlflow.sklearn.log_model(
-        #    sk_model=self.model,
-        #    artifact_path=self.artifact_path,sss
-        #    signature=signature,
-        #    input_example=self.sample_data,
-        # )
-
-        model_info = mlflow_model.get_model_info()
+        model_info = super().log_model(flavor=mlflow.sklearn, sk_model=self.model)
         filename = model_info.flavors["python_function"]["model_path"]
         return filename
 
