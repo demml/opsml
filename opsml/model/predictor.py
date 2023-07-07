@@ -77,7 +77,6 @@ class OnnxModelPredictor:
         """
 
         pred_data = self.sig_creator.input_sig(**data)
-
         prediction = self.sess.run(
             output_names=self._output_names,
             input_feed=pred_data.to_onnx(),
@@ -106,6 +105,9 @@ class OnnxModelPredictor:
         output_dict = {}
 
         for idx, output in enumerate(self._output_names):
+            if output == "variable":
+                output = "value"
+
             pred = prediction[idx]
 
             if isinstance(pred, np.ndarray):
