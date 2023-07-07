@@ -212,8 +212,8 @@ class ModelConverter:
         )
 
     def _create_onnx_model(
-        self, initial_types: Dict[str, Any]
-    ) -> Tuple[ModelProto, Dict[str, Feature], Dict[str, Feature]]:
+        self, initial_types: List[Any]
+    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -226,37 +226,38 @@ class ModelConverter:
 
         onnx_model = self.convert_model(initial_types=initial_types)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
+        model_def = self.create_model_def(onnx_model=onnx_model)
 
-        return onnx_model, input_onnx_features, output_onnx_features
+        return model_def, input_onnx_features, output_onnx_features
 
-    def _load_onnx_model(self) -> Tuple[ModelProto, Dict[str, Feature], Dict[str, Feature]]:
+    def _load_onnx_model(
+        self, model_def: OnnxModelDefinition
+    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """
         Loads onnx model from model definition
 
         Returns:
-            Tuple containing onnx model, input features, and output features
+            Tuple containing onnx model definition, input features, and output features
         """
-        onnx_model = onnx.load_from_string(self.model_info.onnx_model_def.model_bytes)
+        onnx_model = onnx.load_from_string(model_def.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return onnx_model, input_onnx_features, output_onnx_features
+        return model_def, input_onnx_features, output_onnx_features
 
     def convert(self) -> ModelReturn:
-        """Converts model to onnx model, validates it, and create an
+        """Converts model to onnx model, validates it, and creates an
         onnx feature dictionary
 
         Returns:
-            Onnx ModelDefinition and Dictionary of Onnx features
+            ModelReturn object containing model definition and api data schema
         """
         initial_types, data_schema = self.convert_data()
 
         if self.model_info.onnx_model_def is None:
-            onnx_model, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
-            model_def = self.create_model_def(onnx_model=onnx_model)
+            model_def, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
 
         else:
-            model_def = self.model_info.onnx_model_def
-            onnx_model, input_onnx_features, output_onnx_features = self._load_onnx_model()
+            model_def, input_onnx_features, output_onnx_features = self._load_onnx_model(self.model_info.onnx_model_def)
 
         schema = ApiDataSchemas(
             model_data_schema=DataDict(
