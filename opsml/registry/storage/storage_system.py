@@ -6,6 +6,7 @@ import re
 import shutil
 import tempfile
 import uuid
+import warnings
 from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
@@ -47,6 +48,9 @@ from opsml.registry.storage.types import (
     MlflowModelInfo,
     StorageSettings,
 )
+
+warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
+warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer*")
 
 logger = ArtifactLogger.get_logger(__name__)
 
