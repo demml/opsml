@@ -47,6 +47,9 @@ from opsml.registry.storage.types import (
     MlflowModelInfo,
     StorageSettings,
 )
+import warnings
+
+warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -563,6 +566,8 @@ class MlflowModelSaver:
 
     def _get_model_signature(self):
         from mlflow.models.signature import infer_signature
+
+        warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer column(s).*")
 
         signature = infer_signature(model_input=self.sample_data)
 
