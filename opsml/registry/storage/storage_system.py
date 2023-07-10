@@ -6,6 +6,7 @@ import re
 import shutil
 import tempfile
 import uuid
+import warnings
 from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
@@ -47,7 +48,6 @@ from opsml.registry.storage.types import (
     MlflowModelInfo,
     StorageSettings,
 )
-import warnings
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 
