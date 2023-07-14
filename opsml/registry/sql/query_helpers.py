@@ -26,7 +26,7 @@ class QueryCreator:
         """Creates query to get latest card version"""
         return (
             select(table)
-            .filter(
+            .filter(  # type: ignore
                 table.name == name,
                 table.team == team,
             )

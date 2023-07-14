@@ -14,7 +14,7 @@ async def rollbar_middleware(
     request: Request, call_next: Callable[[Request], MiddlewareReturnType]
 ) -> MiddlewareReturnType:
     try:
-        return await call_next(request)  # type: ignore
+        return await call_next(request)
     except Exception:  # pylint: disable=broad-except
         rollbar.report_exc_info()
         logger.exception("unhandled API error")
