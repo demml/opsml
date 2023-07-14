@@ -1,3 +1,5 @@
+# type: ignore
+
 import datetime
 from functools import wraps
 from typing import Any, Dict, Iterable, Optional, Type, Union, cast
