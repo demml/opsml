@@ -141,3 +141,27 @@ Types of extras that can be installed:
 
 ## Contributing
 - If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
+
+### Developer Details
+Ensure your local machine is setup to run `opsml` by following the
+instructions
+[here](https://techhub.shipt.com/products-and-services/machine-learning/local_environment_setup/).
+
+```shell
+# Setup your environment. This assumes you've setup asdf, python, and poetry following Shipt's instructions here:
+# https://techhub.shipt.com/products-and-services/machine-learning/local_environment_setup/
+
+# required to run lightgbm; add to path after installation and restart terminal
+brew install libomp 
+
+make setup
+
+# format the source code
+make format
+
+# run lints
+make lints
+
+# run tests
+make test.unit
+```
