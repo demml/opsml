@@ -32,7 +32,7 @@ setup.uninstall:
          || rm -rf ./.venv) && echo "all cleaned up!") \
     || (echo "\nsetup.uninstall: failed to remove the virtualenv." && exit 1)
 setup.project:
-	poetry install
+	poetry install --all-extras --with dev,dev-lints
 setup.python:
 	@echo "Active Python version: $$(python --version)"
 	@echo "Base Interpreter path: $$(python -c 'import sys; print(sys.executable)')"
