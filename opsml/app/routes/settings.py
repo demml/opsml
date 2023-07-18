@@ -15,24 +15,17 @@ router = APIRouter()
 def get_storage_settings() -> StorageSettingsResponse:
     """Returns backend storage path and type"""
 
+    storage_type = StorageSystem.LOCAL.value
     if bool(config.STORAGE_URI):
-        if not config.is_proxy:
-            if "gs://" in config.STORAGE_URI:
-                return StorageSettingsResponse(
-                    storage_type=StorageSystem.GCS.value,
-                    storage_uri=config.STORAGE_URI,
-                )
-
-        # this should setup the api storage client
+        if not config.is_proxy and "gs://" in config.STORAGE_URI:
+            storage_type = StorageSystem.GCS.value
         if config.is_proxy:
-            return StorageSettingsResponse(
-                storage_type=StorageSystem.API.value,
-                storage_uri=config.STORAGE_URI,
-                proxy=config.is_proxy,
-            )
+            # this should setup the api storage client
+            storage_type = StorageSystem.API.value
 
     return StorageSettingsResponse(
-        storage_type=StorageSystem.LOCAL.value,
+        storage_type=storage_type,
         storage_uri=config.STORAGE_URI,
         proxy=config.is_proxy,
+        version=config.version,
     )
