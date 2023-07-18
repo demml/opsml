@@ -1,3 +1,5 @@
+from typing import Optional
+
 import os
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
@@ -30,24 +32,24 @@ class OpsmlConfig:
     TRACKING_URI = TRACKING_URI
     PROD_TOKEN = os.environ.get("OPSML_PROD_TOKEN", "staging")
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._proxy_root = os.environ.get("PROXY_ROOT")
         self._is_proxy = False
 
     @property
-    def proxy_root(self):
+    def proxy_root(self) -> Optional[str]:
         return self._proxy_root
 
     @proxy_root.setter
-    def proxy_root(self, root: str):
+    def proxy_root(self, root: str) -> None:
         self._proxy_root = root
 
     @property
-    def is_proxy(self):
+    def is_proxy(self) -> bool:
         return self._is_proxy
 
     @is_proxy.setter
-    def is_proxy(self, proxy: bool):
+    def is_proxy(self, proxy: bool) -> None:
         self._is_proxy = proxy
 
 
