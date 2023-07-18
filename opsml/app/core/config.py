@@ -1,5 +1,3 @@
-from importlib.metadata import version, PackageNotFoundError
-
 import os
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
@@ -51,13 +49,6 @@ class OpsmlConfig:
     @is_proxy.setter
     def is_proxy(self, proxy: bool):
         self._is_proxy = proxy
-
-    @property
-    def version(self) -> str:
-        try:
-            return version("opsml")
-        except PackageNotFoundError:
-            return "unknown"
 
 
 config = OpsmlConfig()

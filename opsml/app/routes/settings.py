@@ -1,6 +1,7 @@
 # pylint: disable=protected-access
 from fastapi import APIRouter
 
+from opsml import version
 from opsml.app.core.config import config
 from opsml.app.routes.pydantic_models import StorageSettingsResponse
 from opsml.helpers.logging import ArtifactLogger
@@ -27,5 +28,5 @@ def get_storage_settings() -> StorageSettingsResponse:
         storage_type=storage_type,
         storage_uri=config.STORAGE_URI,
         proxy=config.is_proxy,
-        version=config.version,
+        version=version.__version__,
     )
