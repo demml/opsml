@@ -26,6 +26,7 @@ class DebugResponse(BaseModel):
 class StorageSettingsResponse(BaseModel):
     storage_type: str
     storage_uri: str
+    version: str
     proxy: bool = False
 
 
