@@ -88,7 +88,7 @@ def list_cards(
                 replace_proxy_root(
                     card=card,
                     storage_root=config.STORAGE_URI,
-                    proxy_root=config.proxy_root,
+                    proxy_root=str(config.proxy_root),
                 )
                 for card in cards
             ]
