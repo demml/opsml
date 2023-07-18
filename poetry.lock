@@ -2433,7 +2433,6 @@ files = [
 numpy = [
     {version = ">1.20", markers = "python_version <= \"3.9\""},
     {version = ">=1.21.2", markers = "python_version > \"3.9\""},
-    {version = ">=1.23.3", markers = "python_version > \"3.10\""},
 ]
 
 [package.extras]
@@ -3031,7 +3030,6 @@ files = [
 numpy = [
     {version = ">=1.20.3", markers = "python_version < \"3.10\""},
     {version = ">=1.21.0", markers = "python_version >= \"3.10\""},
-    {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -5768,5 +5766,5 @@ server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar",
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9,<=3.11"
-content-hash = "331e4bf4627abd7cf5d8c5f89ce8be81cb6a61e7b28a365ffccc1d46fe92de5d"
+python-versions = ">=3.9,<3.11"
+content-hash = "21eb7cbea52b66c6aaab03bfca8d299773ff5a821f557ee1c2b638cb4ff672d0"
