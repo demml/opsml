@@ -7,7 +7,7 @@ authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 [tool.poetry.dependencies]
 
 # required dependencies
-python = ">=3.9,<=3.11"
+python = ">=3.9,<3.11"
 alembic = "^1.10.3"
 httpx ="^0.23.3"
 onnx = "^1.14.0"
