@@ -196,7 +196,7 @@ class LoadedDataRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.DATA
+        return table_name == RegistryTableNames.DATA.value
 
 
 class LoadedModelRecord(LoadRecord):
@@ -251,7 +251,7 @@ class LoadedModelRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.MODEL
+        return table_name == RegistryTableNames.MODEL.value
 
 
 class LoadedRunRecord(LoadRecord):
@@ -304,7 +304,7 @@ class LoadedRunRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.RUN
+        return table_name == RegistryTableNames.RUN.value
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -316,7 +316,7 @@ class LoadedPipelineRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.PIPELINE
+        return table_name == RegistryTableNames.PIPELINE.value
 
 
 LoadedRecordType = Union[
