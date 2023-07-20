@@ -55,7 +55,7 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
-      - py39
+      - py310
 
   #- name: code-analysis
   #  image: plugins/sonarqube-drone-plugin
