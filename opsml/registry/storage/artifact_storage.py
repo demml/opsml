@@ -657,7 +657,6 @@ def load_record_artifact_from_storage(artifact_type: str, storage_client: Storag
             artifact_type=artifact_type,
         )
     )
-
     return storage_type(
         artifact_type=artifact_type,
         storage_client=storage_client,
