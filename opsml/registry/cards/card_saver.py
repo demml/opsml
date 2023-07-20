@@ -118,7 +118,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """Saves a datacard to file system"""
 
         self._set_storage_spec(
-            filename=SaveName.DATACARD,
+            filename=SaveName.DATACARD.value,
             uri=self.card.uris.datacard_uri,
         )
 
@@ -173,7 +173,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """Saves a datacard data profile"""
 
         self._set_storage_spec(
-            filename=SaveName.DATA_PROFILE,
+            filename=SaveName.DATA_PROFILE.value,
             uri=self.card.uris.profile_uri,
         )
 
@@ -250,7 +250,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
-            filename=SaveName.ONNX_MODEL,
+            filename=SaveName.ONNX_MODEL.value,
             uri=self.card.uris.onnx_model_uri,
         )
 
@@ -278,7 +278,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self._save_sample_data()
 
         self._set_storage_spec(
-            filename=SaveName.MODEL_METADATA,
+            filename=SaveName.MODEL_METADATA.value,
             uri=self.card.uris.model_metadata_uri,
         )
 
@@ -296,7 +296,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves a modelcard to file system"""
 
         self._set_storage_spec(
-            filename=SaveName.MODELCARD,
+            filename=SaveName.MODELCARD.value,
             uri=self.card.uris.modelcard_uri,
         )
 
@@ -318,7 +318,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves trained model associated with ModelCard to filesystem"""
 
         self._set_storage_spec(
-            filename=SaveName.TRAINED_MODEL,
+            filename=SaveName.TRAINED_MODEL.value,
             uri=self.card.uris.trained_model_uri,
         )
 
@@ -336,7 +336,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves sample data associated with ModelCard to filesystem"""
 
         self._set_storage_spec(
-            filename=SaveName.SAMPLE_MODEL_DATA,
+            filename=SaveName.SAMPLE_MODEL_DATA.value,
             uri=self.card.uris.sample_data_uri,
         )
 
@@ -380,7 +380,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def _save_runcard(self):
         """Saves a runcard"""
         self._set_storage_spec(
-            filename=SaveName.RUNCARD,
+            filename=SaveName.RUNCARD.value,
             uri=self.card.runcard_uri,
         )
 

@@ -47,7 +47,7 @@ class DataCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.DATA
+        return registry_name in RegistryTableNames.DATA.value
 
 
 class ModelCardRegistry(Registry):
@@ -103,25 +103,25 @@ class ModelCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.MODEL
+        return registry_name in RegistryTableNames.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.RUN
+        return registry_name in RegistryTableNames.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PIPELINE
+        return registry_name in RegistryTableNames.PIPELINE.value
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PROJECT
+        return registry_name in RegistryTableNames.PROJECT.value
 
 
 # CardRegistry also needs to set a storage file system
