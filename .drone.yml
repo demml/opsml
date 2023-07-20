@@ -7,8 +7,8 @@ trigger:
     - pull_request
 
 steps:
-  - name: py39
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.16_poetry_1.4.0
+  - name: py310
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - make setup.project
       - make lints.ci
@@ -19,8 +19,8 @@ steps:
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
 
-  - name: py310
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+  - name: py39
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.9.16_poetry_1.4.0
     commands:
       - make setup.project
       - make test.unit
@@ -29,6 +29,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py310
 
   - name: py311
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.11.2_poetry_1.4.0
@@ -40,6 +42,8 @@ steps:
         from_secret: ARTIFACTORY_PYPI_USERNAME
       POETRY_HTTP_BASIC_SHIPT_RESOLVE_PASSWORD:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
+    depends_on:
+      - py39
 
   - name: code-analysis
     image: plugins/sonarqube-drone-plugin
@@ -59,8 +63,6 @@ steps:
         from_secret: ARTIFACTORY_PYPI_PASSWORD
     depends_on:
       - code-analysis
-      - py39
-      - py310
       - py311
     commands:
       - make prep.pre.patch
