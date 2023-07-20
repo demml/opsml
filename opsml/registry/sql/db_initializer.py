@@ -22,7 +22,7 @@ class DBInitializer:
         """Checks if all tables have been created previously"""
         table_names = Inspector.from_engine(self.engine).get_table_names()
         registry_tables = self.registry_tables
-        return all(registry_table in table_names for registry_table in registry_tables)
+        return all(registry_table.value in table_names for registry_table in registry_tables)
 
     def create_tables(self):
         """Creates tables"""
