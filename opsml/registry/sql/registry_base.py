@@ -77,7 +77,7 @@ def load_card_from_record(
     """
 
     card = table_name_card_map[table_name]
-    return card(**record.dict())
+    return card(**record.model_dump())
 
 
 class SQLRegistryBase:
@@ -224,7 +224,7 @@ class SQLRegistryBase:
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
 
-        self.add_and_commit(card=record.dict())
+        self.add_and_commit(card=record.model_dump())
 
     def register_card(
         self,
@@ -262,7 +262,7 @@ class SQLRegistryBase:
         """
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
         record = card.create_registry_record()
-        self.update_card_record(card=record.dict())
+        self.update_card_record(card=record.model_dump())
 
     def list_cards(
         self,

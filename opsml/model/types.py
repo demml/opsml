@@ -155,7 +155,7 @@ class Base(BaseModel):
 
 class NumpyBase(Base):
     def to_onnx(self):
-        values = list(self.dict().values())
+        values = list(self.model_dump().values())
         for _, feature in self.feature_map.items():  # there can only be one
             array = self.to_numpy(
                 type_=feature.feature_type,
@@ -180,7 +180,7 @@ class DictBase(Base):
         return feats
 
     def to_dataframe(self):
-        return pd.DataFrame(self.dict(), index=[0])
+        return pd.DataFrame(self.model_dump(), index=[0])
 
 
 class DeepLearningNumpyBase(Base):

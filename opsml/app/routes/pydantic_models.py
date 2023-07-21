@@ -117,7 +117,7 @@ class RegisterModelRequest(BaseModel):
     )
     version: str = Field(
         ...,
-        regex="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
+        pattern="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
         description="""
                 Version of model to register in major[.minor[.patch]] format. Valid
                 formats are "1", "1.1", and "1.1.1". If not all components are

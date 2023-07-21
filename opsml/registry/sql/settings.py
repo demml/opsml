@@ -3,7 +3,8 @@ from functools import cached_property
 from typing import Any, Dict, Optional, cast
 
 import httpx
-from pydantic import BaseSettings, Field, root_validator
+from pydantic_settings import BaseSettings
+from pydantic import Field, root_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
