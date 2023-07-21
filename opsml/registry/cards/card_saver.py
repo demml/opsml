@@ -285,7 +285,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         model_metadata = self._get_model_metadata(onnx_attr=onnx_attr)
 
         metadata_path = save_record_artifact_to_storage(
-            artifact=model_metadata.json(),
+            artifact=model_metadata.model_dump_json(),
             artifact_type=ArtifactStorageType.JSON.value,
             storage_client=self.storage_client,
         )

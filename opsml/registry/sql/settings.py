@@ -260,7 +260,7 @@ class DefaultSettings(BaseSettings):
     request_client: Optional[ApiClient] = Field(None)
 
     class Config:
-        allow_mutation = True
+        frozen = False
         arbitrary_types_allowed = True
         keep_untouched = (cached_property,)
         validate_assignment = True

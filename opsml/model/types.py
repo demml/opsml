@@ -102,7 +102,7 @@ class DataDict(BaseModel):
     output_features: Dict[str, Feature]
 
     class Config:
-        allow_mutation = True
+        frozen = False
 
 
 class OnnxModelDefinition(BaseModel):
@@ -115,7 +115,7 @@ class ApiDataSchemas(BaseModel):
     input_data_schema: Optional[Dict[str, Feature]] = None  # what the api can be fed
 
     class Config:
-        allow_mutation = True
+        frozen = False
 
 
 class ModelReturn(BaseModel):
@@ -124,12 +124,12 @@ class ModelReturn(BaseModel):
     model_type: str = "placeholder"
 
     class Config:
-        allow_mutation = True
+        frozen = False
 
 
 class Base(BaseModel):
     class Config:
-        allow_mutation = True
+        frozen = False
 
     def to_onnx(self):
         raise NotImplementedError
