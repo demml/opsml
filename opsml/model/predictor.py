@@ -81,23 +81,14 @@ class OnnxModelPredictor:
             output_names=self._output_names,
             input_feed=pred_data.to_onnx(),
         )
-
         return self._extract_predictions(prediction=prediction)
-
-    def _extract_from_array(self, prediction: NDArray) -> Union[int, str, float, List[Any]]:
-        flat_pred = prediction.flatten()
-
-        if flat_pred.ndim == 1 and flat_pred.shape[0] == 1:
-            return flat_pred[0]
-
-        # todo: what if prediction is ndimensional?
-        return list(flat_pred)
 
     def _extract_predictions(self, prediction: List[Any]) -> Dict[str, Any]:
         """Parses onnx runtime prediction
 
         Args:
-            Predictions (List): Onnx runtime prediction list
+            Predictions:
+                Onnx runtime prediction list
 
         Returns:
             Prediction in the form of a key value mapping
@@ -111,7 +102,8 @@ class OnnxModelPredictor:
             pred = prediction[idx]
 
             if isinstance(pred, np.ndarray):
-                output_dict[output] = self._extract_from_array(prediction=pred)
+                output_dict[output] = pred.tolist()
+
             else:
                 output_dict[output] = pred
 
