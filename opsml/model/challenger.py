@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
@@ -48,13 +48,13 @@ class ChallengeInputs(BaseModel):
     def thresholds(self) -> List[bool]:
         return cast(List[bool], self.lower_is_better)
 
-    @validator("metric_name")
+    @field_validator("metric_name")
     def convert_name(cls, name) -> List[str]:
         if not isinstance(name, list):
             return [name]
         return name
 
-    @validator("metric_value")
+    @field_validator("metric_value")
     def convert_value(cls, value, values) -> List[str]:
         nbr_metrics = len(values["metric_name"])
 
@@ -71,7 +71,7 @@ class ChallengeInputs(BaseModel):
 
         return metric_value
 
-    @validator("lower_is_better")
+    @field_validator("lower_is_better")
     def convert_threshold(cls, threshold, values) -> List[bool]:
         nbr_metrics = len(values["metric_name"])
 

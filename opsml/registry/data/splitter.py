@@ -35,7 +35,7 @@ class DataSplit(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    @validator("indices", pre=True)
+    @field_validator("indices", pre=True)
     def convert_to_list(cls, value):
         """Pre to convert indices to list if not None"""
 
@@ -44,7 +44,7 @@ class DataSplit(BaseModel):
 
         return value
 
-    @validator("inequality", pre=True)
+    @field_validator("inequality", pre=True)
     def trim_whitespace(cls, value):
         """Trims whitespace from inequality signs"""
 
