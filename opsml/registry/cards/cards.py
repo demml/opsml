@@ -72,7 +72,6 @@ class ArtifactCard(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         validate_assignment = False
-        smart_union = True
 
     @root_validator(pre=True)
     def validate(cls, env_vars):
