@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, model_validator, field_validator, FieldValidationInfo
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -72,8 +72,9 @@ class ArtifactCard(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         validate_assignment = False
+        validate_default = True
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate(cls, env_vars):
         """Validate base args and Lowercase name and team"""
 
@@ -165,28 +166,28 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]]
+    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Union[str, None]]]
-    data_type: Optional[str]
-    dependent_vars: Optional[List[Union[int, str]]]
-    feature_descriptions: Optional[Dict[str, str]]
-    additional_info: Optional[Dict[str, Union[float, int, str]]]
+    feature_map: Optional[Dict[str, Union[str, None]]] = None
+    data_type: Optional[str] = None
+    dependent_vars: Optional[List[Union[int, str]]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     uris: DataCardUris = DataCardUris()
     data_profile: Optional[ProfileReport] = None
 
-    @field_validator("uris", pre=True, always=True)
-    def check_data(cls, uris: DataCardUris, values):
-        if uris.data_uri is None:
-            if values["data"] is None and not bool(values["sql_logic"]):
+    @field_validator("uris", mode="before")
+    def check_data(cls, uris, info):
+        if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
+            if uris.data_uri is None:
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
         return uris
 
-    @field_validator("data_profile", pre=True, always=True)
+    @field_validator("data_profile", mode="before")
     def check_profile(cls, profile):
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
@@ -194,7 +195,7 @@ class DataCard(ArtifactCard):
             assert isinstance(profile, ydata_profile)
         return profile
 
-    @field_validator("feature_descriptions", pre=True, always=True)
+    @field_validator("feature_descriptions", mode="before")
     def lower_descriptions(cls, feature_descriptions):
         if feature_descriptions is None:
             return feature_descriptions
@@ -205,12 +206,12 @@ class DataCard(ArtifactCard):
 
         return feat_dict
 
-    @field_validator("additional_info", pre=True, always=True)
+    @field_validator("additional_info", mode="before")
     def check_info(cls, value):
         return value or {}
 
-    @field_validator("sql_logic", pre=True, always=True)
-    def load_sql(cls, sql_logic, values):
+    @field_validator("sql_logic", mode="before")
+    def load_sql(cls, sql_logic):
         if not bool(sql_logic):
             return sql_logic
 
@@ -425,15 +426,15 @@ class ModelCard(ArtifactCard):
                 URI where model metadata is stored
     """
 
-    trained_model: Optional[Any]
-    sample_input_data: SampleModelData
-    datacard_uid: Optional[str]
-    onnx_model_data: Optional[DataDict]
-    onnx_model_def: Optional[OnnxModelDefinition]
-    sample_data_type: Optional[str]
-    model_type: Optional[str]
-    additional_onnx_args: Optional[ExtraOnnxArgs]
-    data_schema: Optional[ApiDataSchemas]
+    trained_model: Optional[Any] = None
+    sample_input_data: SampleModelData = None
+    datacard_uid: Optional[str] = None
+    onnx_model_data: Optional[DataDict] = None
+    onnx_model_def: Optional[OnnxModelDefinition] = None
+    sample_data_type: Optional[str] = None
+    model_type: Optional[str] = None
+    additional_onnx_args: Optional[ExtraOnnxArgs] = None
+    data_schema: Optional[ApiDataSchemas] = None
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     to_onnx: bool = True
@@ -443,7 +444,7 @@ class ModelCard(ArtifactCard):
         arbitrary_types_allowed = True
         ignored_types = (cached_property,)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def check_args(cls, values: Dict[str, Any]):
         """Converts trained model to modelcard"""
 
@@ -457,7 +458,7 @@ class ModelCard(ArtifactCard):
 
         return values
 
-    @field_validator("sample_input_data", pre=True)
+    @field_validator("sample_input_data", mode="before")
     def get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
@@ -796,14 +797,14 @@ class RunCard(ArtifactCard):
 
     datacard_uids: List[str] = []
     modelcard_uids: List[str] = []
-    pipelinecard_uid: Optional[str]
+    pipelinecard_uid: Optional[str] = None
     metrics: METRICS = {}
     parameters: PARAMS = {}
     artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
-    project_id: Optional[str]
-    runcard_uri: Optional[str]
+    project_id: Optional[str] = None
+    runcard_uri: Optional[str] = None
 
     def add_tag(self, key: str, value: str):
         """
@@ -1029,7 +1030,7 @@ class ProjectCard(ArtifactCard):
 
     project_id: Optional[str] = None
 
-    @field_validator("project_id", pre=True, always=True)
+    @field_validator("project_id", mode="before")
     def create_project_id(cls, value, values, **kwargs):
         return f'{values["name"]}:{values["team"]}'
 
