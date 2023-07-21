@@ -141,7 +141,7 @@ def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
 
     # add card with a timestamp from 14 days ago
     record.timestamp = FOURTEEN_DAYS_TS
-    registry._registry.update_card_record(record.dict())
+    registry._registry.update_card_record(record.model_dump())
 
     cards = registry.list_cards(as_dataframe=False)
     assert len(cards) >= 1
