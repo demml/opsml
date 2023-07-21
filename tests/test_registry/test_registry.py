@@ -680,8 +680,19 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
     record = registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
     assert record["version"] == "1.2.0"
 
-    # test assertion error
-    with pytest.raises(ValueError):
+
+def test_datacard_failure():
+    data_name = "test_df"
+    team = "mlops"
+    user_email = "mlops.com"
+
+    data_split = [
+        DataSplit(label="train", column_name="year", column_value=2020),
+        DataSplit(label="train", column_name="year", column_value=2021),
+    ]
+
+    # should fail: data nor sql are provided
+    with pytest.raises(ValueError) as ve:
         data_card = DataCard(
             name=data_name,
             team=team,
@@ -690,6 +701,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
             additional_info={"input_metadata": 20},
             dependent_vars=[200, "test"],
         )
+    assert ve.match("Data or sql logic must be supplied when no data_uri")
 
 
 def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
