@@ -262,7 +262,7 @@ class DefaultSettings(BaseSettings):
     class Config:
         frozen = False
         arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
+        ignored_types = (cached_property,)
         validate_assignment = True
 
     @root_validator(pre=True)
