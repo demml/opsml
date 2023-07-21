@@ -1,7 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Extra, root_validator
+from pydantic import BaseModel, Extra, model_validator
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris, ModelCardUris
@@ -21,24 +21,24 @@ class SaveRecord(BaseModel):
     name: str
     team: str
     user_email: str
-    uid: Optional[str]
+    uid: Optional[str] = None
     version: str
     tags: Dict[str, str]
 
 
 class DataRegistryRecord(SaveRecord):
-    data_uri: Optional[str]
-    data_type: Optional[str]
+    data_uri: Optional[str] = None
+    data_type: Optional[str] = None
     timestamp: int = get_timestamp()
-    runcard_uid: Optional[str]
-    pipelinecard_uid: Optional[str]
+    runcard_uid: Optional[str] = None
+    pipelinecard_uid: Optional[str] = None
     datacard_uri: str
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def set_uris(cls, values):
         uris = values.get("uris")
-        values["data_uri"] = uris.data_uri
-        values["datacard_uri"] = uris.datacard_uri
+        values["data_uri"] = uris["data_uri"]
+        values["datacard_uri"] = uris["datacard_uri"]
 
         return values
 
@@ -52,33 +52,33 @@ class ModelRegistryRecord(SaveRecord):
     sample_data_type: str
     model_type: str
     timestamp: int = get_timestamp()
-    runcard_uid: Optional[str]
-    pipelinecard_uid: Optional[str]
+    runcard_uid: Optional[str] = None
+    pipelinecard_uid: Optional[str] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def set_uris(cls, values):
         uris = values.get("uris")
-        values["trained_model_uri"] = uris.trained_model_uri
-        values["model_metadata_uri"] = uris.model_metadata_uri
-        values["sample_data_uri"] = uris.sample_data_uri
-        values["modelcard_uri"] = uris.modelcard_uri
+        values["trained_model_uri"] = uris["trained_model_uri"]
+        values["model_metadata_uri"] = uris["model_metadata_uri"]
+        values["sample_data_uri"] = uris["sample_data_uri"]
+        values["modelcard_uri"] = uris["modelcard_uri"]
 
         return values
 
 
 class RunRegistryRecord(SaveRecord):
-    datacard_uids: Optional[List[str]]
-    modelcard_uids: Optional[List[str]]
-    pipelinecard_uid: Optional[str]
-    project_id: Optional[str]
-    artifact_uris: Optional[Dict[str, str]]
+    datacard_uids: Optional[List[str]] = None
+    modelcard_uids: Optional[List[str]] = None
+    pipelinecard_uid: Optional[str] = None
+    project_id: Optional[str] = None
+    artifact_uris: Optional[Dict[str, str]] = None
     tags: Dict[str, str]
     timestamp: int = get_timestamp()
     runcard_uri: str
 
 
 class PipelineRegistryRecord(SaveRecord):
-    pipeline_code_uri: Optional[str]
+    pipeline_code_uri: Optional[str] = None
     datacard_uids: List[str]
     modelcard_uids: List[str]
     runcard_uids: List[str]
@@ -90,8 +90,8 @@ class ProjectRegistryRecord(BaseModel):
     name: str
     team: str
     project_id: str
-    version: Optional[str]
-    description: Optional[str]
+    version: Optional[str] = None
+    description: Optional[str] = None
     timestamp: int = get_timestamp()
 
 
@@ -111,7 +111,7 @@ class LoadRecord(BaseModel):
     uid: str
     user_email: str
     tags: Dict[str, str]
-    storage_client: Optional[StorageClientType]
+    storage_client: Optional[StorageClientType] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -124,15 +124,15 @@ class LoadRecord(BaseModel):
 
 class LoadedDataRecord(LoadRecord):
     uris: DataCardUris
-    data_type: Optional[str]
-    feature_map: Optional[Dict[str, str]]
-    feature_descriptions: Optional[Dict[str, str]]
-    dependent_vars: Optional[List[Union[int, str]]]
-    additional_info: Optional[Dict[str, Union[float, int, str]]]
-    runcard_uid: Optional[str]
-    pipelinecard_uid: Optional[str]
+    data_type: Optional[str] = None
+    feature_map: Optional[Dict[str, str]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
+    dependent_vars: Optional[List[Union[int, str]]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    runcard_uid: Optional[str] = None
+    pipelinecard_uid: Optional[str] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def load_attributes(cls, values):
         storage_client = cast(StorageClientType, values["storage_client"])
 
@@ -143,10 +143,10 @@ class LoadedDataRecord(LoadRecord):
 
         # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
         datacard_definition["storage_client"] = storage_client
-        datacard_definition["uris"].datacard_uri = values.get("datacard_uri")
+        datacard_definition["uris"]["datacard_uri"] = values.get("datacard_uri")
 
-        if datacard_definition["uris"].profile_uri is not None:
-            profile_uri = datacard_definition["uris"].profile_uri
+        if datacard_definition["uris"]["profile_uri"] is not None:
+            profile_uri = datacard_definition["uris"]["profile_uri"]
 
             datacard_definition["data_profile"] = LoadedDataRecord.load_data_profile(
                 data_profile_uri=profile_uri,
@@ -199,11 +199,11 @@ class LoadedModelRecord(LoadRecord):
     datacard_uid: str
     sample_data_type: str
     model_type: str
-    runcard_uid: Optional[str]
-    pipelinecard_uid: Optional[str]
+    runcard_uid: Optional[str] = None
+    pipelinecard_uid: Optional[str] = None
     uris: ModelCardUris
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def load_model_attr(cls, values) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
@@ -251,18 +251,18 @@ class LoadedModelRecord(LoadRecord):
 
 
 class LoadedRunRecord(LoadRecord):
-    datacard_uids: Optional[List[str]]
-    modelcard_uids: Optional[List[str]]
-    pipelinecard_uid: Optional[str]
+    datacard_uids: Optional[List[str]] = None
+    modelcard_uids: Optional[List[str]] = None
+    pipelinecard_uid: Optional[str] = None
     artifact_uris: Dict[str, str]
     artifacts: Dict[str, Any] = {}
     metrics: METRICS
-    project_id: Optional[str]
+    project_id: Optional[str] = None
     parameters: PARAMS
     tags: Dict[str, str]
     runcard_uri: str
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def load_run_attr(cls, values) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
@@ -305,10 +305,10 @@ class LoadedRunRecord(LoadRecord):
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
 class LoadedPipelineRecord(LoadRecord):
-    pipeline_code_uri: Optional[str]
-    datacard_uids: Optional[List[str]]
-    modelcard_uids: Optional[List[str]]
-    runcard_uids: Optional[List[str]]
+    pipeline_code_uri: Optional[str] = None
+    datacard_uids: Optional[List[str]] = None
+    modelcard_uids: Optional[List[str]] = None
+    runcard_uids: Optional[List[str]] = None
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
