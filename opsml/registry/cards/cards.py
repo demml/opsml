@@ -750,7 +750,7 @@ class PipelineCard(ArtifactCard):
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current PipelineCard"""
-        return PipelineRegistryRecord(**self.dict())
+        return PipelineRegistryRecord(**self.model_dump())
 
     @property
     def card_type(self) -> str:
@@ -1037,7 +1037,7 @@ class ProjectCard(ArtifactCard):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record for a project"""
 
-        return ProjectRegistryRecord(**self.dict())
+        return ProjectRegistryRecord(**self.model_dump())
 
     @property
     def card_type(self) -> str:

@@ -132,7 +132,7 @@ def test_challenger_example(mlflow_project: MlflowProject):
         ],
     )
 
-    print([report.dict() for report in reports["mae"]])
+    print([report.model_dump() for report in reports["mae"]])
 
 
 def test_datacard(db_registries):
