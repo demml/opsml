@@ -61,7 +61,7 @@ class ProjectInfo(BaseModel):
         """The project name."""
         return self.name
 
-    @validator("name", "team", pre=True)
+    @field_validator("name", "team", pre=True)
     def identifier_validator(cls, value: Optional[str]) -> Optional[str]:
         """Lowers and strips an identifier.
 
