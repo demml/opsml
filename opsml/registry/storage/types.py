@@ -43,7 +43,7 @@ class ApiStorageClientSettings(StorageClientSettings):
     client: Optional[ApiClient] = None
 
     class Config:
-        allow_mutation = True
+        frozen = False
         arbitrary_types_allowed = True
 
     @property
@@ -65,7 +65,7 @@ class ArtifactStorageSpecs(BaseModel):
     filename: Optional[str] = None
 
     class Config:
-        allow_mutation = True
+        frozen = False
         extra = "allow"
 
 
