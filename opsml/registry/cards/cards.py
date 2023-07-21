@@ -178,7 +178,7 @@ class DataCard(ArtifactCard):
     uris: DataCardUris = DataCardUris()
     data_profile: Optional[ProfileReport] = None
 
-    @validator("uris", pre=True, always=True)
+    @field_validator("uris", pre=True, always=True)
     def check_data(cls, uris: DataCardUris, values):
         if uris.data_uri is None:
             if values["data"] is None and not bool(values["sql_logic"]):
@@ -186,7 +186,7 @@ class DataCard(ArtifactCard):
 
         return uris
 
-    @validator("data_profile", pre=True, always=True)
+    @field_validator("data_profile", pre=True, always=True)
     def check_profile(cls, profile):
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
@@ -194,7 +194,7 @@ class DataCard(ArtifactCard):
             assert isinstance(profile, ydata_profile)
         return profile
 
-    @validator("feature_descriptions", pre=True, always=True)
+    @field_validator("feature_descriptions", pre=True, always=True)
     def lower_descriptions(cls, feature_descriptions):
         if feature_descriptions is None:
             return feature_descriptions
@@ -205,11 +205,11 @@ class DataCard(ArtifactCard):
 
         return feat_dict
 
-    @validator("additional_info", pre=True, always=True)
+    @field_validator("additional_info", pre=True, always=True)
     def check_info(cls, value):
         return value or {}
 
-    @validator("sql_logic", pre=True, always=True)
+    @field_validator("sql_logic", pre=True, always=True)
     def load_sql(cls, sql_logic, values):
         if not bool(sql_logic):
             return sql_logic
@@ -441,7 +441,7 @@ class ModelCard(ArtifactCard):
 
     class Config:
         arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
+        ignored_types = (cached_property,)
 
     @root_validator(pre=True)
     def check_args(cls, values: Dict[str, Any]):
@@ -457,7 +457,7 @@ class ModelCard(ArtifactCard):
 
         return values
 
-    @validator("sample_input_data", pre=True)
+    @field_validator("sample_input_data", pre=True)
     def get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
@@ -1029,7 +1029,7 @@ class ProjectCard(ArtifactCard):
 
     project_id: Optional[str] = None
 
-    @validator("project_id", pre=True, always=True)
+    @field_validator("project_id", pre=True, always=True)
     def create_project_id(cls, value, values, **kwargs):
         return f'{values["name"]}:{values["team"]}'
 
