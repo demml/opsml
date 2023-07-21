@@ -25,9 +25,6 @@ class SaveRecord(BaseModel):
     version: str
     tags: Dict[str, str]
 
-    class Config:
-        smart_union = True
-
 
 class DataRegistryRecord(SaveRecord):
     data_uri: Optional[str]
@@ -118,7 +115,6 @@ class LoadRecord(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        smart_union = True
         extra = Extra.allow
 
     @staticmethod
