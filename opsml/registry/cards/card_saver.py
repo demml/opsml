@@ -385,7 +385,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
         )
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(exclude={"artifacts", "storage_client"}),
+            artifact=self.card.model_dump(exclude={"artifacts", "storage_client"}),
             storage_client=self.storage_client,
         )
         self.card.runcard_uri = storage_path.uri
