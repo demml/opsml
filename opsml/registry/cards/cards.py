@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
-from pydantic import BaseModel, model_validator, field_validator, FieldValidationInfo
+from pydantic import BaseModel, model_validator, field_validator, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -61,6 +61,12 @@ SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]
 class ArtifactCard(BaseModel):
     """Base pydantic class for artifact cards"""
 
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=False,
+        validate_default=True,
+    )
+
     name: str
     team: str
     user_email: str
@@ -68,11 +74,6 @@ class ArtifactCard(BaseModel):
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
     tags: Dict[str, str] = {}
-
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = False
-        validate_default = True
 
     @model_validator(mode="before")
     def validate(cls, env_vars):
@@ -305,7 +306,7 @@ class DataCard(ArtifactCard):
 
         """
         exclude_attr = {"data"}
-        return DataRegistryRecord(**self.dict(exclude=exclude_attr))
+        return DataRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
     def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:
         """
@@ -425,6 +426,8 @@ class ModelCard(ArtifactCard):
                 URI where model metadata is stored
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True, ignored_types=(cached_property,))
+
     trained_model: Optional[Any] = None
     sample_input_data: SampleModelData = None
     datacard_uid: Optional[str] = None
@@ -438,10 +441,6 @@ class ModelCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     to_onnx: bool = True
     uris: ModelCardUris = ModelCardUris()
-
-    class Config:
-        arbitrary_types_allowed = True
-        ignored_types = (cached_property,)
 
     @model_validator(mode="before")
     def check_args(cls, values: Dict[str, Any]):
@@ -584,7 +583,7 @@ class ModelCard(ArtifactCard):
         """Creates a registry record from the current ModelCard"""
 
         exclude_vars = {"trained_model", "sample_input_data", "onnx_model_def"}
-        return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
+        return ModelRegistryRecord(**self.model_dump(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
         if self.version is None:

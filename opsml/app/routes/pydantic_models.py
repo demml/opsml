@@ -19,8 +19,8 @@ class DebugResponse(BaseModel):
     url: str
     storage: str
     app_env: str
-    proxy_root: Optional[str]
-    is_proxy: Optional[bool]
+    proxy_root: Optional[str] = None
+    is_proxy: Optional[bool] = None
 
 
 class StorageSettingsResponse(BaseModel):
@@ -51,18 +51,18 @@ class UidExistsResponse(BaseModel):
 
 
 class ListCardRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
-    max_date: Optional[str]
-    limit: Optional[int]
-    tags: Optional[Dict[str, str]]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
+    max_date: Optional[str] = None
+    limit: Optional[int] = None
+    tags: Optional[Dict[str, str]] = None
     table_name: str
 
 
 class ListCardResponse(BaseModel):
-    cards: Optional[List[Dict[str, Any]]]
+    cards: Optional[List[Dict[str, Any]]] = None
 
 
 class AddCardRequest(BaseModel):
@@ -84,10 +84,10 @@ class UpdateCardResponse(BaseModel):
 
 
 class QuerycardRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
     table_name: str
 
 
@@ -110,11 +110,7 @@ class CompareCardRequest(BaseModel):
 
 
 class RegisterModelRequest(BaseModel):
-    name: str = Field(
-        ...,
-        description="Model name (does not include team)",
-        example="tlmd-drive-time",
-    )
+    name: str = Field(..., description="Model name (does not include team)")
     version: str = Field(
         ...,
         pattern="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
@@ -128,7 +124,7 @@ class RegisterModelRequest(BaseModel):
                     * "1"     = registers 1.2.3 at "1" (the highest minor / patch version is used)
                     * "1.2"   = registers 1.2.3 at "1.2"
                     * "1.1"   = registers 1.1.100 at "1.1"
-                    * "1.1.1" = regisers 1.1.1 at "1.1.1"
+                    * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
 
@@ -152,10 +148,10 @@ class ListFileResponse(BaseModel):
 
 
 class MetricRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
 
 
 class MetricResponse(BaseModel):

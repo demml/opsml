@@ -70,7 +70,7 @@ class CardArtifactSaver:
     def _copy_artifact_storage_info(self) -> ArtifactStorageSpecs:
         """Copies artifact storage info"""
 
-        return self.storage_client.storage_spec.copy(deep=True)
+        return self.storage_client.storage_spec.model_copy(deep=True)
 
     def _set_storage_spec(self, filename: str, uri: Optional[str] = None) -> None:
         """
@@ -123,7 +123,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         )
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(exclude={"data", "storage_client", "data_profile"}),
+            artifact=self.card.model_dump(exclude={"data", "storage_client", "data_profile"}),
             storage_client=self.storage_client,
         )
 
@@ -301,7 +301,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
 
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.dict(
+            artifact=self.card.model_dump(
                 exclude={
                     "sample_input_data",
                     "trained_model",
