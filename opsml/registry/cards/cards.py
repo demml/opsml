@@ -172,17 +172,22 @@ class DataCard(ArtifactCard):
     data_type: Optional[str] = None
     dependent_vars: Optional[List[Union[int, str]]] = None
     feature_descriptions: Optional[Dict[str, str]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = {}
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    uris: DataCardUris = DataCardUris()
     data_profile: Optional[ProfileReport] = None
+    uris: DataCardUris = DataCardUris()
 
     @field_validator("uris", mode="before")
     def check_data(cls, uris, info):
+        if isinstance(uris, DataCardUris):
+            data_uri = uris.data_uri
+        else:
+            data_uri = uris.get("data_uri")
+
         if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
-            if uris.data_uri is None:
+            if data_uri is None:
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
         return uris
@@ -199,16 +204,10 @@ class DataCard(ArtifactCard):
     def lower_descriptions(cls, feature_descriptions):
         if feature_descriptions is None:
             return feature_descriptions
-
         feat_dict = {}
         for feature, description in feature_descriptions.items():
             feat_dict[feature.lower()] = description.lower()
-
-        return feat_dict
-
-    @field_validator("additional_info", mode="before")
-    def check_info(cls, value):
-        return value or {}
+            return feat_dict
 
     @field_validator("sql_logic", mode="before")
     def load_sql(cls, sql_logic):
