@@ -1701,7 +1701,7 @@ def deeplabv3_resnet50():
     model = torch.hub.load("pytorch/vision:v0.8.0", "deeplabv3_resnet50", pretrained=True)
     model.eval()
 
-    input_image = Image.open("assets/deeplab.jpg")
+    input_image = Image.open("tests/assets/deeplab.jpg")
     preprocess = transforms.Compose(
         [
             transforms.ToTensor(),
