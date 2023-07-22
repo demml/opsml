@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, field_validator, ConfigDict
+from pydantic import BaseModel, field_validator, ConfigDict, ValidationInfo
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
@@ -50,8 +50,9 @@ class ChallengeInputs(BaseModel):
         return name
 
     @field_validator("metric_value")
-    def convert_value(cls, value, values) -> List[str]:
-        nbr_metrics = len(values["metric_name"])
+    def convert_value(cls, value, info: ValidationInfo) -> List[str]:
+        data = info.data
+        nbr_metrics = len(data.get("metric_name"))
 
         if value is not None:
             if not isinstance(value, list):
@@ -67,8 +68,9 @@ class ChallengeInputs(BaseModel):
         return metric_value
 
     @field_validator("lower_is_better")
-    def convert_threshold(cls, threshold, values) -> List[bool]:
-        nbr_metrics = len(values["metric_name"])
+    def convert_threshold(cls, threshold, info: ValidationInfo) -> List[bool]:
+        data = info.data
+        nbr_metrics = len(data.get("metric_name"))
 
         if not isinstance(threshold, list):
             _threshold = [threshold] * nbr_metrics
@@ -168,12 +170,11 @@ class ModelChallenger:
             challenger_win = self.challenger_metric.value < champion_metric.value
         else:
             challenger_win = self.challenger_metric.value > champion_metric.value
-
-        return BattleReport.construct(
+        return BattleReport.model_construct(
             champion_name=str(champion.name),
             champion_version=str(champion.version),
             champion_metric=champion_metric,
-            challenger_metric=self.challenger_metric.copy(),
+            challenger_metric=self.challenger_metric.model_copy(),
             challenger_win=challenger_win,
         )
 

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
-from pydantic import BaseModel, model_validator, field_validator, ConfigDict
+from pydantic import BaseModel, model_validator, field_validator, ConfigDict, ValidationInfo
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -543,7 +543,7 @@ class ModelCard(ArtifactCard):
             artifact_type=ArtifactStorageType.JSON.value,
         )
 
-        return ModelMetadata.parse_obj(model_metadata)
+        return ModelMetadata.model_validate(model_metadata)
 
     def _load_onnx_model(self, metadata: ModelMetadata) -> Any:
         """Loads the actual onnx file
@@ -927,7 +927,7 @@ class RunCard(ArtifactCard):
 
         exclude_attr = {"artifacts", "params", "metrics"}
 
-        return RunRegistryRecord(**self.dict(exclude=exclude_attr))
+        return RunRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
     def add_artifact_uri(self, name: str, uri: str):
         """
@@ -1029,8 +1029,9 @@ class ProjectCard(ArtifactCard):
     project_id: Optional[str] = None
 
     @field_validator("project_id", mode="before")
-    def create_project_id(cls, value, values, **kwargs):
-        return f'{values["name"]}:{values["team"]}'
+    def create_project_id(cls, value, info: ValidationInfo, **kwargs):
+        data = info.data
+        return f'{data.get("name")}:{data.get("team")}'
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record for a project"""
