@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
@@ -14,14 +14,12 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class BattleReport(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     champion_name: str
     champion_version: str
     champion_metric: Optional[Metric] = None
     challenger_metric: Optional[Metric] = None
     challenger_win: bool
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 MetricName = Union[str, List[str]]
@@ -32,9 +30,6 @@ class ChallengeInputs(BaseModel):
     metric_name: MetricName
     metric_value: Optional[MetricValue] = None
     lower_is_better: Union[bool, List[bool]] = True
-
-    class Config:
-        underscore_attrs_are_private = True
 
     @property
     def metric_names(self) -> List[str]:

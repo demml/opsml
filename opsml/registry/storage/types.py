@@ -6,7 +6,7 @@ from typing import Any, Dict, Generator, List, Optional, Protocol, Tuple, Union
 
 import pandas as pd
 from numpy.typing import NDArray
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.request_helpers import ApiClient
 
@@ -40,11 +40,9 @@ class GcsStorageClientSettings(StorageClientSettings):
 
 
 class ApiStorageClientSettings(StorageClientSettings):
-    client: Optional[ApiClient] = None
+    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
 
-    class Config:
-        frozen = False
-        arbitrary_types_allowed = True
+    client: Optional[ApiClient] = None
 
     @property
     def api_client(self) -> ApiClient:
@@ -61,12 +59,10 @@ StorageSettings = Union[
 
 
 class ArtifactStorageSpecs(BaseModel):
+    model_config = ConfigDict(extra="allow", frozen=False)
+
     save_path: str
     filename: Optional[str] = None
-
-    class Config:
-        frozen = False
-        extra = "allow"
 
 
 class StorageClientProto(Protocol):
