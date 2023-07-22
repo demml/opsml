@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, cast
 
 import httpx
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, root_validator, ConfigDict
+from pydantic import root_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
