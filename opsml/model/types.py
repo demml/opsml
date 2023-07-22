@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, ConfigDict  # pylint: disable=no-name-in-module
 
 InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
@@ -97,12 +97,11 @@ class Feature(BaseModel):
 class DataDict(BaseModel):
     """Datamodel for feature info"""
 
+    model_config = ConfigDict(frozen=False)
+
     data_type: Optional[str] = None
     input_features: Dict[str, Feature]
     output_features: Dict[str, Feature]
-
-    class Config:
-        frozen = False
 
 
 class OnnxModelDefinition(BaseModel):
@@ -111,25 +110,20 @@ class OnnxModelDefinition(BaseModel):
 
 
 class ApiDataSchemas(BaseModel):
+    model_config = ConfigDict(frozen=False)
     model_data_schema: DataDict  # expected model inputs and outputs
     input_data_schema: Optional[Dict[str, Feature]] = None  # what the api can be fed
 
-    class Config:
-        frozen = False
-
 
 class ModelReturn(BaseModel):
+    model_config = ConfigDict(frozen=False)
     model_definition: Optional[OnnxModelDefinition] = None
     api_data_schema: ApiDataSchemas
     model_type: str = "placeholder"
 
-    class Config:
-        frozen = False
-
 
 class Base(BaseModel):
-    class Config:
-        frozen = False
+    model_config = ConfigDict(frozen=False)
 
     def to_onnx(self):
         raise NotImplementedError
