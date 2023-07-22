@@ -1690,3 +1690,26 @@ def voting_regressor(drift_dataframe):
     eclf1 = ensemble.VotingRegressor(estimators=[("lr", clf1), ("rf", clf2), ("lso", clf3)])
     eclf1 = eclf1.fit(X_train, y_train)
     return eclf1, X_train
+
+
+@pytest.fixture(scope="module")
+def deeplabv3_resnet50():
+    import torch
+    from PIL import Image
+    from torchvision import transforms
+
+    model = torch.hub.load("pytorch/vision:v0.8.0", "deeplabv3_resnet50", pretrained=True)
+    model.eval()
+
+    input_image = Image.open("test_scripts/deeplab.jpg")
+    preprocess = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    input_tensor = preprocess(input_image)
+    input_batch = input_tensor.unsqueeze(0)
+
+    return model, input_batch.numpy()
