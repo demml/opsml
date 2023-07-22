@@ -9,6 +9,7 @@ import polars as pl
 from pyarrow import Table
 from pydantic import BaseModel, model_validator, field_validator, ConfigDict, ValidationInfo
 
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
     FindPath,
@@ -1030,7 +1031,7 @@ class ProjectCard(ArtifactCard):
 
     @field_validator("project_id", mode="before")
     def create_project_id(cls, value, info: ValidationInfo, **kwargs):
-        data = info.data
+        data = info.data  # type: ignore
         return f'{data.get("name")}:{data.get("team")}'
 
     def create_registry_record(self) -> RegistryRecord:
