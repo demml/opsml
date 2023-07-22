@@ -175,7 +175,7 @@ class LoadedDataRecord(LoadRecord):
         """Loads a model card definition from current attributes
 
         Returns:
-            Dictionary to be parsed by DataCard.parse_obj()
+            Dictionary to be parsed by DataCard.model_validate()
         """
 
         storage_spec = ArtifactStorageSpecs(save_path=save_path)
@@ -283,7 +283,7 @@ class LoadedRunRecord(LoadRecord):
         """Loads a model card definition from current attributes
 
         Returns:
-            Dictionary to be parsed by RunCard.parse_obj()
+            Dictionary to be parsed by RunCard.model_validate()
         """
 
         storage_spec = ArtifactStorageSpecs(save_path=runcard_uri)
