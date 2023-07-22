@@ -1,7 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Extra, model_validator, ConfigDict
+from pydantic import BaseModel, model_validator, ConfigDict
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris, ModelCardUris
