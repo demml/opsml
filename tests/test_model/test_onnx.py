@@ -151,6 +151,7 @@ def test_sklearn_models(model_and_data):
         lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
         lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
         lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
+        lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
 def test_model_predict_linux_only(model_and_data):
