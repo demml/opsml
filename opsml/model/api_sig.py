@@ -1,6 +1,6 @@
 # pylint: disable=import-outside-toplevel
 from functools import cached_property
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 from pydantic import conlist, create_model
 
@@ -67,7 +67,7 @@ class PydanticFeatureGenerator:
 
         return False
 
-    def _get_feature_shape(self, feature: Feature) -> Optional[Union[List[int], int]]:
+    def _get_feature_shape(self, feature: Feature) -> List[int]:
         """
         Gets feature shape
 

@@ -1,9 +1,8 @@
 # pylint: disable=import-outside-toplevel
 from functools import cached_property
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import numpy as np
-from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
 from opsml.model.types import ApiDataSchemas, Base, InputDataType, OnnxModelType
