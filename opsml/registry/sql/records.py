@@ -1,7 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-from pydantic import BaseModel, Extra, model_validator
+from pydantic import BaseModel, Extra, model_validator, ConfigDict
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris, ModelCardUris
@@ -105,6 +105,8 @@ RegistryRecord = Union[
 
 
 class LoadRecord(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
     version: str
     name: str
     team: str
@@ -112,10 +114,6 @@ class LoadRecord(BaseModel):
     user_email: str
     tags: Dict[str, str]
     storage_client: Optional[StorageClientType] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.allow
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
