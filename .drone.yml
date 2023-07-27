@@ -81,6 +81,7 @@ steps:
       #- code-analysis
       - py39
       - py310
+      - py311
       - quality-checks
     commands:
       - make prep.pre.patch
