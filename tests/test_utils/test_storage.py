@@ -3,16 +3,19 @@ import numpy as np
 import pyarrow as pa
 import pytest
 import json
+import os
 from pytest_lazyfixture import lazy_fixture
 from unittest.mock import patch, MagicMock
 from opsml.registry.storage.artifact_storage import (
     ParquetStorage,
-    JoblibStorage,
     NumpyStorage,
     TensorflowModelStorage,
     PyTorchModelStorage,
     JSONStorage,
 )
+import tempfile
+from opsml.registry.storage.storage_system import LocalStorageClient
+from opsml.helpers import utils
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 # from opsml.drift.data_drift import DriftDetector
@@ -216,3 +219,20 @@ def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
         load=MagicMock(return_value=model),
     ):
         model = model_storage.load_artifact(storage_uri=metadata.uri)
+
+
+@pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
+def test_local_paths(storage_client: LocalStorageClient):
+    FILENAME = "example.csv"
+    file_path = utils.FindPath.find_filepath(name=FILENAME)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        storage_client.upload(local_path=file_path, write_path=f"{tempdir}/{FILENAME}")
+
+        dir_path = utils.FindPath.find_dirpath(
+            anchor_file=FILENAME,
+            dir_name="assets",
+            path=os.getcwd(),
+        )
+
+        storage_client.upload(local_path=dir_path, write_path=f"{tempdir}/assets")
