@@ -55,7 +55,7 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     try:
         registrar: ModelRegistrar = request.app.state.model_registrar
         return registrar.register_model(
-            RegistrationRequest(name=payload.name, version=payload.version, team=payload.team, onnx=payload.onnx),
+            RegistrationRequest(name=payload.name, version=payload.version, onnx=payload.onnx),
             metadata,
         )
     except RegistrationError as exc:

@@ -165,6 +165,29 @@ def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
     assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
 
+def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "test_sql.sql"},
+    )
+
+    registry.register_card(card=data_card)
+
+    with pytest.raises(ValueError):
+        data_card = DataCard(
+            name="test_df",
+            team="fail_teams",
+            user_email="mlops.com",
+            sql_logic={"test": "test_sql.sql"},
+        )
+
+        registry.register_card(card=data_card)
+
+
 def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArray):
     # create data card
     registry = db_registries["data"]
@@ -232,7 +255,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     )
 
     assert len(cards) == 1
-    assert cards[0]["version"] == "1.11.5"
+    assert cards[0]["version"] == "1.12.5"
 
     # version 2
     data_card = DataCard(
