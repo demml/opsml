@@ -177,6 +177,7 @@ def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
 
     registry.register_card(card=data_card)
 
+    # test registering card with same name and different team
     with pytest.raises(ValueError):
         data_card = DataCard(
             name="test_df",
