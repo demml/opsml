@@ -283,7 +283,7 @@ def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame)
 
     data_card.add_info(info={"added_metadata": 10})
     registry.register_card(card=data_card)
-    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
+    loaded_data: DataCard = registry.load_card(name=data_name, version=data_card.version)
 
     loaded_data.load_data()
 
@@ -312,7 +312,7 @@ def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame)
         )
 
     # load card again
-    datacardv12: DataCard = registry.load_card(name=data_name, team=team, version="1.2.0")
+    datacardv12: DataCard = registry.load_card(name=data_name, version="1.2.0")
     datacardv12.uris.data_uri = "fail"
 
     with pytest.raises(FileNotFoundError):
@@ -449,6 +449,7 @@ def test_metadata_download_and_registration(
     assert response.status_code == 200
 
     model_def = response.json()
+
     assert model_def["model_name"] == model_card.name
     assert model_def["model_version"] == model_card.version
 
