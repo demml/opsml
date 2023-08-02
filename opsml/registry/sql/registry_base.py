@@ -294,17 +294,14 @@ class SQLRegistryBase:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         uid: Optional[str] = None,
     ) -> ArtifactCard:
         cleaned_name = clean_string(name)
-        cleaned_team = clean_string(team)
 
         record = self.list_cards(
             name=cleaned_name,
-            team=cleaned_team,
             version=version,
             uid=uid,
             limit=1,

@@ -119,7 +119,6 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
 
     data_card = registry.load_card(
         name="test_df",
-        team="mlops",
         tags={"test": "hello"},
     )
 
@@ -684,7 +683,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
     data_card.add_info(info={"added_metadata": 10})
     registry.register_card(card=data_card)
 
-    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
+    loaded_data: DataCard = registry.load_card(name=data_name, version=data_card.version)
 
     loaded_data.load_data()
 
