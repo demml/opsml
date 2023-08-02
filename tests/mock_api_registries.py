@@ -237,7 +237,6 @@ class CardRegistry:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
     ) -> ArtifactCard:
@@ -257,10 +256,7 @@ class CardRegistry:
             name = name.lower()
             name = name.replace("_", "-")
 
-        if team is not None:
-            team = team.lower()
-
-        return self._registry.load_card(uid=uid, name=name, team=team, version=version)
+        return self._registry.load_card(uid=uid, name=name, version=version)
 
     def register_card(
         self,

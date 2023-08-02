@@ -294,17 +294,14 @@ class SQLRegistryBase:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         uid: Optional[str] = None,
     ) -> ArtifactCard:
         cleaned_name = clean_string(name)
-        cleaned_team = clean_string(team)
 
         record = self.list_cards(
             name=cleaned_name,
-            team=cleaned_team,
             version=version,
             uid=uid,
             limit=1,
@@ -358,16 +355,16 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        query = query_creator.create_version_query(
-            table=self._table,
-            name=name,
-            team=team,
-        )
+        query = query_creator.create_version_query(table=self._table, name=name)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
 
         if bool(results):
+            # check if current model team is same as requesting team
+            if results[0].team != team:
+                raise ValueError("""Model name already exists for a different team. Try a different name.""")
+
             versions = [result.version for result in results]
             sorted_versions = sort_semvers(versions)
 

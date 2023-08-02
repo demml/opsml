@@ -69,7 +69,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
     # Load model card
     loaded_card: ModelCard = proj.load_card(
         registry_name="model",
-        info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
+        info=CardInfo(name="pipeline_model", user_email="mlops.com"),
     )
 
     loaded_card.load_trained_model()
@@ -78,7 +78,7 @@ def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeli
 
     # Load data card by uid
     loaded_data_card: DataCard = proj.load_card(
-        registry_name="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+        registry_name="data", info=CardInfo(name="pipeline_data", uid=data_card.uid)
     )
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
@@ -224,14 +224,14 @@ def test_register_load(
         ## Load model card
         loaded_model_card: ModelCard = run.load_card(
             registry_name="model",
-            info=CardInfo(name="linear_model", team="mlops", user_email="mlops.com"),
+            info=CardInfo(name="linear_model", user_email="mlops.com"),
         )
         loaded_model_card.load_trained_model()
         assert loaded_model_card.uid is not None
         assert loaded_model_card.trained_model is not None
         # Load data card by uid
         loaded_data_card: DataCard = run.load_card(
-            registry_name="data", info=CardInfo(name="linear_data", team="mlops", uid=data_card.uid)
+            registry_name="data", info=CardInfo(name="linear_data", uid=data_card.uid)
         )
         assert loaded_data_card.uid is not None
         assert loaded_data_card.uid == data_card.uid

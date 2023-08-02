@@ -19,19 +19,11 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
 class QueryCreator:
-    def create_version_query(
-        self,
-        table: Type[REGISTRY_TABLES],
-        name: str,
-        team: str,
-    ) -> Select:
+    def create_version_query(self, table: Type[REGISTRY_TABLES], name: str) -> Select:
         """Creates query to get latest card version"""
         return (
             select(table)
-            .filter(  # type: ignore
-                table.name == name,
-                table.team == team,
-            )
+            .filter(table.name == name)  # type: ignore
             .order_by(table.timestamp.desc(), table.version.desc())
             .limit(20)  # type: ignore
         )

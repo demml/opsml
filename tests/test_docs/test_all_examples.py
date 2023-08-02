@@ -117,7 +117,6 @@ def test_challenger_example(mlflow_project: MlflowProject):
     model_registry = CardRegistry(registry_name="model")
     linreg_card = model_registry.load_card(
         name="linear_reg",
-        team="mlops",
         tags={"example": "challenger"},
     )
 
@@ -308,7 +307,7 @@ def test_modelcard(db_registries):
     card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
 
     # load datacard
-    datacard = data_registry.load_card(name=card_info.name, team=card_info.team, version="1.0.0")
+    datacard = data_registry.load_card(name=card_info.name, version="1.0.0")
 
     # data is not loaded by default (helps when sharing cards with large data)
     datacard.load_data()
