@@ -132,7 +132,7 @@ class RegisterModelRequest(BaseModel):
                 """,
     )
 
-    team: str = Field(..., description="Team name")
+    team: Optional[str] = Field(None, description="Team name")
     uid: Optional[str] = Field(None, description="Optional UID. Overrides team / model name / version")
     onnx: bool = Field(
         True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."

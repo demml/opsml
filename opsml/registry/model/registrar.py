@@ -18,7 +18,6 @@ class RegistrationError(Exception):
 class RegistrationRequest(BaseModel):
     name: str
     version: str
-    team: str
     onnx: bool
 
 
@@ -46,7 +45,7 @@ class ModelRegistrar:
 
     def _registry_path(self, request: RegistrationRequest) -> str:
         """Returns hardcoded uri"""
-        return f"{self.storage_client.base_path_prefix}/model_registry/{request.team}/{request.name}/v{request.version}"
+        return f"{self.storage_client.base_path_prefix}/model_registry/{request.name}/v{request.version}"
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.
@@ -75,7 +74,7 @@ class ModelRegistrar:
         """Gets correct model uri based on the request's onnx flag.
 
         Args:
-            request: The model regisration request.
+            request: The model registration request.
             metadata: The model metadata.
         """
         if request.onnx:
@@ -115,7 +114,7 @@ class ModelRegistrar:
         """Registers a model to a hardcoded storage path.
 
         Args:
-            request: Registration rquest
+            request: Registration request
             metadata: Associated model metadata
 
         Returns:

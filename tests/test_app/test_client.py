@@ -455,31 +455,26 @@ def test_metadata_download_and_registration(
     # test register model (onnx)
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "team": model_card.team,
-            "version": model_card.version,
-        },
+        json={"name": model_card.name, "version": model_card.version},
     )
     # NOTE: the *exact* model version sent must be returned in the URL.
     # Otherwise the hosting infrastructure will not know where to find the URL
     # as they do *not* use the response text, rather they assume the URL is in
     # the correct format.
     uri = response.json()
-    assert re.search(rf"/model_registry/mlops/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     # test register model (native)
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
-            "team": model_card.team,
             "version": model_card.version,
             "onnx": "false",
         },
     )
     uri = response.json()
-    assert re.search(rf"/model_registry/mlops/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest patch given latest major.minor
     minor = model_card.version[0 : model_card.version.rindex(".")]
@@ -487,13 +482,12 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
-            "team": model_card.team,
             "version": minor,
         },
     )
 
     uri = response.json()
-    assert re.search(rf"/model_registry/mlops/test-model/v{minor}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"/model_registry/test-model/v{minor}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest minor / patch given major only
     major = model_card.version[0 : model_card.version.index(".")]
@@ -501,33 +495,17 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
-            "team": model_card.team,
             "version": major,
         },
     )
     uri = response.json()
-    assert re.search(rf"/model_registry/mlops/test-model/v{major}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"/model_registry/test-model/v{major}$", uri, re.IGNORECASE) is not None
 
     # test version fail - invalid name
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": "non-exist",
-            "team": model_card.team,
-            "version": model_card.version,
-        },
-    )
-
-    msg = response.json()["detail"]
-    assert response.status_code == 404
-    assert "Model not found" == msg
-
-    # test version fail - invalid team
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "team": "non-exist",
             "version": model_card.version,
         },
     )
@@ -541,7 +519,6 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": "non-exist",
-            "team": model_card.team,
             "version": "v1.0.0",  # version should *not* contain "v" - it must match the n.n.n pattern
         },
     )
@@ -562,7 +539,6 @@ def test_metadata_download_and_registration(
             url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
             json={
                 "name": model_card.name,
-                "team": model_card.team,
                 "version": model_card.version,
             },
         )

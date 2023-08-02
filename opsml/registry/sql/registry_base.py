@@ -358,16 +358,16 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        query = query_creator.create_version_query(
-            table=self._table,
-            name=name,
-            team=team,
-        )
+        query = query_creator.create_version_query(table=self._table, name=name)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
 
         if bool(results):
+            # check if current model team is same as requesting team
+            if results[0].team != team:
+                raise ValueError("""Model name already exists for a different team. Try a different name.""")
+
             versions = [result.version for result in results]
             sorted_versions = sort_semvers(versions)
 
