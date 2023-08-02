@@ -217,7 +217,6 @@ class CardRegistry:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         uid: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         version: Optional[str] = None,
@@ -228,8 +227,6 @@ class CardRegistry:
         Args:
             name:
                 Optional Card name
-            team:
-                Optional team associated with card
             uid:
                 Unique identifier for card. If present, the uid takes
                 precedence.
@@ -248,12 +245,11 @@ class CardRegistry:
         # find better way to do this later
         if info is not None:
             name = name or info.name
-            team = team or info.team
             uid = uid or info.uid
             version = version or info.version
             tags = tags or info.tags
 
-        return self._registry.load_card(uid=uid, name=name, team=team, version=version, tags=tags)
+        return self._registry.load_card(uid=uid, name=name, version=version, tags=tags)
 
     def register_card(
         self,
