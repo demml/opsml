@@ -173,7 +173,7 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
-    def _check_and_validate_semver(self, name: str, team: str, version: str) -> CardVersion:
+    def _validate_semver(self, name: str, team: str, version: str) -> CardVersion:
         """
         Validates version if version is manually passed to Card
 
@@ -205,7 +205,7 @@ class SQLRegistryBase:
         """
 
         if card.version is not None:
-            card_version = self._check_and_validate_semver(
+            card_version = self._validate_semver(
                 name=card.name,
                 team=card.team,
                 version=card.version,
