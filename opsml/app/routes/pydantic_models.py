@@ -98,7 +98,6 @@ class QuerycardResponse(BaseModel):
 class CardRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
-    team: Optional[str] = None
     uid: Optional[str] = None
 
 
@@ -127,9 +126,6 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-
-    team: str = Field(..., description="Team name")
-    uid: Optional[str] = Field(None, description="Optional UID. Overrides team / model name / version")
     onnx: bool = Field(
         True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
     )
