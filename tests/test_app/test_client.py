@@ -84,6 +84,32 @@ def test_register_data(
         registry.list_cards()
 
 
+def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
+    # create data card
+    registry = api_registries.data
+
+    data_card = DataCard(
+        data=test_array,
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.1.1",
+    )
+
+    registry.register_card(card=data_card)
+
+    data_card = DataCard(
+        data=test_array,
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.1",
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+    assert data_card.version == "3.1.2"
+
+
 def test_semver_registry_list(api_registries: CardRegistries, test_array: NDArray):
     # create data card
     registry = api_registries.data
