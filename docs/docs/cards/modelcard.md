@@ -26,7 +26,7 @@ card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com"
 
 
 # load datacard
-datacard = data_registry.load_card(name=card_info.name, team=card_info.team, version="1.0.0")
+datacard = data_registry.load_card(name=card_info.name, version="1.0.0")
 
 # data is not loaded by default (helps when sharing cards with large data)
 datacard.load_data()
