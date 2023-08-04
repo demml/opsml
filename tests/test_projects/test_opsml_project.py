@@ -67,7 +67,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     # Load model card
     loaded_card: ModelCard = proj.load_card(
         registry_name="model",
-        info=CardInfo(name="pipeline_model", team="mlops", user_email="mlops.com"),
+        info=CardInfo(name="pipeline_model", user_email="mlops.com"),
     )
     loaded_card.load_trained_model()
     assert loaded_card.uid is not None
@@ -75,7 +75,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
 
     # Load data card by uid
     loaded_data_card: DataCard = proj.load_card(
-        registry_name="data", info=CardInfo(name="pipeline_data", team="mlops", uid=data_card.uid)
+        registry_name="data", info=CardInfo(name="pipeline_data", uid=data_card.uid)
     )
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid

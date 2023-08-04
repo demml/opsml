@@ -119,7 +119,6 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
 
     data_card = registry.load_card(
         name="test_df",
-        team="mlops",
         tags={"test": "hello"},
     )
 
@@ -163,6 +162,30 @@ def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
     registry.register_card(card=data_card)
     loaded_card = registry.load_card(uid=data_card.uid)
     assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+
+
+def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "test_sql.sql"},
+    )
+
+    registry.register_card(card=data_card)
+
+    # test registering card with same name and different team
+    with pytest.raises(ValueError):
+        data_card = DataCard(
+            name="test_df",
+            team="fail_teams",
+            user_email="mlops.com",
+            sql_logic={"test": "test_sql.sql"},
+        )
+
+        registry.register_card(card=data_card)
 
 
 def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArray):
@@ -232,7 +255,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     )
 
     assert len(cards) == 1
-    assert cards[0]["version"] == "1.11.5"
+    assert cards[0]["version"] == "1.12.5"
 
     # version 2
     data_card = DataCard(
@@ -660,7 +683,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
     data_card.add_info(info={"added_metadata": 10})
     registry.register_card(card=data_card)
 
-    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
+    loaded_data: DataCard = registry.load_card(name=data_name, version=data_card.version)
 
     loaded_data.load_data()
 

@@ -6,7 +6,7 @@ import tempfile
 import warnings
 from functools import reduce
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
+from collections import OrderedDict
 import numpy as np
 import onnx
 import onnxruntime as rt
@@ -168,6 +168,7 @@ class ModelConverter:
         for sig in signature:
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
+
             dim_shape = [dim.dim_value for dim in shape_dims]
             if dim_shape:
                 dim_shape[0] = None  # set None for dynamic batch size
@@ -509,6 +510,10 @@ class PyTorchOnnxModel(ModelConverter):
         if hasattr(predictions, "last_hidden_state"):
             return predictions.last_hidden_state.detach().numpy()
 
+        # for vision model
+        if isinstance(predictions, OrderedDict):
+            return predictions["out"].detach().numpy()
+
         return predictions.numpy()
 
     def _model_predict(self) -> NDArray:
@@ -536,6 +541,7 @@ class PyTorchOnnxModel(ModelConverter):
 
         model_string = onnx_model.SerializeToString()
         sess = rt.InferenceSession(model_string)
+
         onnx_preds = sess.run(None, inputs)
 
         if not self._predictions_close(

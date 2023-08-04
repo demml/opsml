@@ -1,5 +1,5 @@
 # pylint: disable=protected-access
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 
@@ -50,12 +50,12 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     """
 
     # get model metadata
-    metadata = post_model_metadata(request, payload)
+    metadata = post_model_metadata(request, CardRequest(name=payload.name, version=payload.version))
 
     try:
         registrar: ModelRegistrar = request.app.state.model_registrar
         return registrar.register_model(
-            RegistrationRequest(name=payload.name, version=payload.version, team=payload.team, onnx=payload.onnx),
+            RegistrationRequest(name=payload.name, version=payload.version, onnx=payload.onnx),
             metadata,
         )
     except RegistrationError as exc:
@@ -68,7 +68,7 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
 @router.post("/models/metadata", name="model_metadata")
 def post_model_metadata(
     request: Request,
-    payload: Union[CardRequest, RegisterModelRequest],
+    payload: CardRequest,
 ) -> ModelMetadata:
     """
     Downloads a Model API definition
@@ -88,9 +88,8 @@ def post_model_metadata(
     try:
         model_card: ModelCard = registry.load_card(  # type:ignore
             name=payload.name,
-            team=payload.team,
-            uid=payload.uid,
             version=payload.version,
+            uid=payload.uid,
         )
 
     except IndexError as exc:
