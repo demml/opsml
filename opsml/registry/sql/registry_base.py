@@ -571,6 +571,7 @@ class ClientRegistry(SQLRegistryBase):
                 "table_name": self.table_name,
             },
         )
+
         return data.get("version")
 
     def list_cards(
