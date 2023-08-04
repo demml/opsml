@@ -192,7 +192,7 @@ class PolarsRowsSplitter(DataSplitterBase):
 class PandasIndexSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         # slice
-        data = data.loc[self.indices]
+        data = data.iloc[self.indices]
 
         if self.dependent_vars is not None:
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
