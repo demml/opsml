@@ -320,7 +320,29 @@ class LocalStorageClient(StorageClient):
         return save_path, filename
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> str:
-        shutil.copy(local_path, write_path)
+        """Uploads local_path to write_path
+
+        Args:
+            local_path:
+                local path to upload
+            write_path:
+                path to write to
+
+        Returns:
+            write_path
+
+        """
+
+        if os.path.isdir(local_path):
+            write_dir = Path(write_path)
+            write_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(local_path, write_path, dirs_exist_ok=True)
+
+        else:
+            write_dir = Path(write_path).parents[0]
+            write_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy(local_path, write_path)
+
         return write_path
 
     def list_files(self, storage_uri: str) -> FilePath:
