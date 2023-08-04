@@ -33,6 +33,7 @@ class StorageSettingsResponse(BaseModel):
 class VersionRequest(BaseModel):
     name: str
     team: str
+    version: Optional[str] = None
     version_type: VersionType
     table_name: str
 
@@ -127,7 +128,7 @@ class RegisterModelRequest(BaseModel):
                     * "1"     = registers 1.2.3 at "1" (the highest minor / patch version is used)
                     * "1.2"   = registers 1.2.3 at "1.2"
                     * "1.1"   = registers 1.1.100 at "1.1"
-                    * "1.1.1" = regisers 1.1.1 at "1.1.1"
+                    * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
     onnx: bool = Field(

@@ -94,6 +94,32 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     assert loaded_card.sql_logic.get("test") is not None
 
 
+def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "select * from test_table"},
+        version="3.1.1",
+    )
+
+    registry.register_card(card=data_card)
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.1",  # specifying major minor version
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+
+    assert data_card.version == "3.1.2"
+
+
 def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
     # create data card
     registry = db_registries["data"]
