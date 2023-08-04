@@ -48,6 +48,25 @@ class CardVersion:
         except AssertionError:
             raise AssertionError(f"Version {self.version} is not a valid semver or partial semver")
 
+    @staticmethod
+    def finalize_partial_version(version: str) -> str:
+        """Finalizes a partial semver version
+
+        Args:
+            version:
+                version to finalize
+        Returns:
+            str: finalized version
+        """
+        version_splits = version.split(".")
+
+        if len(version_splits) == 1:
+            return f"{version}.0.0"
+        elif len(version_splits) == 2:
+            return f"{version}.0"
+
+        return version
+
 
 def sort_semvers(semvers: List[str]) -> List[str]:
     """Sorts a list of semvers"""
