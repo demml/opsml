@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.1.8"
+version = "1.1.9"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -15,7 +15,7 @@ onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
 polars = "^0.18.0"
 pyarrow = ">=8.0.0"
-pydantic = ">=1.10.0, <=1.10.4"
+pydantic = "<2"
 python-json-logger = "^2.0.6"
 rich = "^13.3.5"
 scikit-learn = ">=1.0"
