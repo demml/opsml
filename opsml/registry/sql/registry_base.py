@@ -126,7 +126,7 @@ class SQLRegistryBase:
         name: str,
         team: str,
         version_type: VersionType,
-        version: Optional[str] = None,
+        partial_version: Optional[str] = None,
     ) -> str:
         raise NotImplementedError
 
@@ -216,7 +216,7 @@ class SQLRegistryBase:
 
         version = self.set_version(
             name=card.name,
-            version=card.version,
+            partial_version=card.version,
             team=card.team,
             version_type=version_type,
         )
@@ -368,7 +368,7 @@ class ServerRegistry(SQLRegistryBase):
         name: str,
         team: str,
         version_type: VersionType,
-        version: Optional[str] = None,
+        partial_version: Optional[str] = None,
     ) -> str:
         """
         Sets a version following semantic version standards
@@ -376,8 +376,8 @@ class ServerRegistry(SQLRegistryBase):
         Args:
             name:
                 Card name
-            version:
-                Version to set. If None, will increment the latest version
+            partial_version:
+                Validated partial version to set. If None, will increment the latest version
             version_type:
                 Type of version increment. Values are "major", "minor" and "patch
 
@@ -385,7 +385,7 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        query = query_creator.create_version_query(table=self._table, name=name, version=version)
+        query = query_creator.create_version_query(table=self._table, name=name, version=partial_version)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
@@ -402,7 +402,11 @@ class ServerRegistry(SQLRegistryBase):
                 version=sorted_versions[0],
                 version_type=version_type,
             )
-        return "1.0.0"
+
+        if partial_version is not None:
+            partial_version = CardVersion.finalize_partial_version(version=partial_version)
+
+        return partial_version or "1.0.0"
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -559,14 +563,14 @@ class ClientRegistry(SQLRegistryBase):
         name: str,
         team: str,
         version_type: VersionType = VersionType.MINOR,
-        version: Optional[str] = None,
+        partial_version: Optional[str] = None,
     ) -> str:
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
                 "name": name,
                 "team": team,
-                "version": version,
+                "version": partial_version,
                 "version_type": version_type,
                 "table_name": self.table_name,
             },
