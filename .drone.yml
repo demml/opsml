@@ -82,6 +82,7 @@ trigger:
     - push
 
 steps:
+
   - name: setup_310
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
@@ -118,24 +119,39 @@ steps:
       - py310
       - quality-checks
 
-  - name: publish-release-candidate
-    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
-    environment:
-      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
-        from_secret: ARTIFACTORY_PYPI_USERNAME
-      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
-        from_secret: ARTIFACTORY_PYPI_PASSWORD
-    depends_on:
-      - code-analysis
-    commands:
-      - make prep.pre.patch
-      - make publish
+  #- name: publish-release-candidate
+  #  image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+  #  environment:
+  #    POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+  #      from_secret: ARTIFACTORY_PYPI_USERNAME
+  #    POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+  #      from_secret: ARTIFACTORY_PYPI_PASSWORD
+  #  depends_on:
+  #    - code-analysis
+  #  commands:
+  #    - make prep.pre.patch
+  #    - make publish
 
   - name: publish-docs
     image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
     commands:
       - git diff $DRONE_COMMIT_BEFORE..$DRONE_COMMIT_AFTER --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
       - if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi
+    depends_on:
+      - code-analysis
+
+  - name: artifactory-poetry-publish
+    image: harbor.shipttech.com/apps/python-images/shipt-python:3.10.10_poetry_1.4.0
+    environment:
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_USERNAME:
+        from_secret: ARTIFACTORY_PYPI_USERNAME
+      POETRY_HTTP_BASIC_SHIPT_DEPLOY_PASSWORD:
+        from_secret: ARTIFACTORY_PYPI_PASSWORD
+    commands:
+      # tag events validate poetry version is equal to the tag
+      # increment patch version for releases based on drone tag
+      - test "v$(poetry version --short)" "=" "$DRONE_TAG"
+      - make publish
     depends_on:
       - code-analysis
 
