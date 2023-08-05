@@ -30,6 +30,7 @@ class CardVersion:
     @property
     def is_full_semver(self) -> bool:
         """Checks if a version is a full or partial semver
+
         Args:
             version:
                 version to check
