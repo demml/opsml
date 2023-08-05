@@ -48,16 +48,16 @@ def test_register_data(
 
     registry.register_card(card=data_card)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team)
+    df = registry.list_cards(name=data_card.name, team=data_card.team, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name)
+    df = registry.list_cards(name=data_card.name, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards()
+    df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
+    df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0", as_dataframe=True)
     assert df.shape[0] == 1
 
     data_card = DataCard(
@@ -181,10 +181,10 @@ def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
     record.timestamp = FOURTEEN_DAYS_TS
     registry._registry.update_card_record(record.dict())
 
-    cards = registry.list_cards(as_dataframe=False)
+    cards = registry.list_cards()
     assert len(cards) >= 1
 
-    cards = registry.list_cards(max_date=FOURTEEN_DAYS_STR, as_dataframe=False)
+    cards = registry.list_cards(max_date=FOURTEEN_DAYS_STR)
     assert len(cards) == 1
 
 
@@ -778,7 +778,7 @@ def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
-    df = registry.list_cards(uid=loaded_card.uid)
+    cards = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
