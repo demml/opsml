@@ -70,13 +70,13 @@ def test_register_data(
 
     registry.register_card(card=data_card)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team, max_date=TODAY_YMD)
+    df = registry.list_cards(name=data_card.name, team=data_card.team, max_date=TODAY_YMD, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name)
+    df = registry.list_cards(name=data_card.name, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards()
+    df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
     with pytest.raises(ValueError):
@@ -142,26 +142,26 @@ def test_semver_registry_list(api_registries: CardRegistries, test_array: NDArra
         registry.register_card(card=data_card)
 
     # should return 13 versions
-    df = registry.list_cards(
+    cards = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
         version="2.*.*",
     )
-    assert df.shape[0] == 13
+    assert len(cards) == 13
 
-    df = registry.list_cards(
+    cards = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
         version="^2.3.0",
     )
-    assert df.shape[0] == 1
+    assert len(cards) == 1
 
-    df = registry.list_cards(
+    cards = registry.list_cards(
         name=data_card.name,
         team=data_card.team,
         version="~2.3.0",
     )
-    assert df.shape[0] == 1
+    assert len(cards) == 1
 
 
 def test_run_card(
@@ -278,7 +278,6 @@ def test_register_model(
         name=model_card1.name,
         team=model_card1.team,
         tags=model_card1.tags,
-        as_dataframe=False,
     )
 
     assert cards[0]["tags"] == {"id": "model1"}
