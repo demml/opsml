@@ -168,7 +168,7 @@ class DataCard(ArtifactCard):
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]]
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Union[str, None]]]
+    feature_map: Optional[Dict[str, Optional[Any]]]
     data_type: Optional[str]
     dependent_vars: Optional[List[Union[int, str]]]
     feature_descriptions: Optional[Dict[str, str]]
@@ -287,9 +287,17 @@ class DataCard(ArtifactCard):
 
             settings.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
-                storage_client=settings.storage_client,
-                artifact_type=self.data_type,
+                storage_client=settings.storage_client, artifact_type=self.data_type
             )
+
+            if isinstance(data, pd.DataFrame):
+                if data.dtypes.to_dict() != self.feature_map:
+                    for col in data.columns:
+                        data[col] = data[col].astype(self.feature_map[col])
+
+            elif isinstance(data, pl.DataFrame):
+                if data.schema != self.feature_map:
+                    data = data.with_columns([pl.col(col).cast(self.feature_map[col]) for col in data.columns])
 
             setattr(self, "data", data)
 
