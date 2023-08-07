@@ -21,7 +21,7 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.sql.query_helpers import QueryCreator, log_card_change  # type: ignore
 from opsml.registry.sql.records import LoadedRecordType, load_record
-from opsml.registry.sql.semver import SemVerSymbols, sort_semvers, CardVersion
+from opsml.registry.sql.semver import SemVerSymbols, sort_semvers, CardVersion, VersionType
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -40,13 +40,6 @@ if settings.request_client is None:
         registry_tables=list(RegistryTableNames),
     )
     initializer.initialize()
-
-
-class VersionType(str, Enum):
-    MAJOR = "major"
-    MINOR = "minor"
-    PATCH = "patch"
-
 
 query_creator = QueryCreator()
 
@@ -126,7 +119,7 @@ class SQLRegistryBase:
         name: str,
         team: str,
         version_type: VersionType,
-        partial_version: Optional[str] = None,
+        partial_version: Optional[CardVersion] = None,
     ) -> str:
         raise NotImplementedError
 
@@ -204,6 +197,7 @@ class SQLRegistryBase:
                 Type of version increment
         """
 
+        card_version = None
         if card.version is not None:
             card_version = self._validate_semver(
                 name=card.name,
@@ -216,7 +210,7 @@ class SQLRegistryBase:
 
         version = self.set_version(
             name=card.name,
-            partial_version=card.version,
+            partial_version=card_version,
             team=card.team,
             version_type=version_type,
         )
@@ -368,7 +362,7 @@ class ServerRegistry(SQLRegistryBase):
         name: str,
         team: str,
         version_type: VersionType,
-        partial_version: Optional[str] = None,
+        partial_version: Optional[CardVersion] = None,
     ) -> str:
         """
         Sets a version following semantic version standards
@@ -385,7 +379,11 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        query = query_creator.create_version_query(table=self._table, name=name, version=partial_version)
+        version_to_search = None
+        if partial_version is not None:
+            version_to_search = partial_version.get_version_to_search(version_type=version_type)
+
+        query = query_creator.create_version_query(table=self._table, name=name, version=version_to_search)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
@@ -404,7 +402,7 @@ class ServerRegistry(SQLRegistryBase):
             )
 
         if partial_version is not None:
-            partial_version = CardVersion.finalize_partial_version(version=partial_version)
+            partial_version = CardVersion.finalize_partial_version(version=partial_version.valid_version)
 
         return partial_version or "1.0.0"
 
