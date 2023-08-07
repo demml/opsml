@@ -1,6 +1,6 @@
 import pytest
 from opsml.registry.sql.registry_base import VersionType
-from opsml.registry.sql.semver import get_version_to_search
+from opsml.registry.sql.semver import get_version_to_search, CardVersion
 from pytest_lazyfixture import lazy_fixture
 
 
@@ -46,3 +46,14 @@ def test_version_fail():
     with pytest.raises(ValueError) as ve:
         parsed_version = get_version_to_search(version=version)
     assert ve.match("SemVer")
+
+
+def test_card_version():
+    version = "1.0.0"
+
+    version = CardVersion(version=version)
+    assert version.major == 1
+    assert version.minor == 0
+    assert version.patch == 0
+
+    assert version.has_major_minor == True

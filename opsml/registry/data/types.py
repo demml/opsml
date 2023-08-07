@@ -18,6 +18,7 @@ class ArrowTable(BaseModel):
     table: Union[pa.Table, np.ndarray]
     table_type: AllowedTableTypes
     storage_uri: Optional[str] = None
+    schema_uri: Optional[str] = None
     feature_map: Optional[Dict[str, Union[str, None]]] = None
 
     class Config:
