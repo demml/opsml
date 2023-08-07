@@ -1,8 +1,14 @@
 import re
 from enum import Enum
-from typing import List
+from typing import List, Optional
 import semver
 from dataclasses import dataclass
+
+
+class VersionType(str, Enum):
+    MAJOR = "major"
+    MINOR = "minor"
+    PATCH = "patch"
 
 
 @dataclass
@@ -15,6 +21,29 @@ class CardVersion:
             self._validate_full_semver()
         else:
             self._validate_partial_semver()
+
+        self._version_splits = self.version.split(".")
+
+    def _get_version_split(self, split: int) -> List[str]:
+        """Splits a version into its major, minor, and patch components"""
+
+        try:
+            return self._version_splits[split]
+        except IndexError:
+            raise IndexError(f"Version split {split} not found: {self.version}")
+
+    @property
+    def has_major_minor(self) -> bool:
+        """Checks if a version has a major and minor component"""
+        return len(self._version_splits) >= 2
+
+    @property
+    def major(self) -> int:
+        return self._get_version_split(0)
+
+    @property
+    def minor(self) -> int:
+        return self._get_version_split(1)
 
     @property
     def valid_version(self) -> str:
@@ -67,6 +96,28 @@ class CardVersion:
             return f"{version}.0"
 
         return version
+
+    def get_version_to_search(self, version_type: VersionType) -> Optional[str]:
+        """Gets a version to search for in the database
+
+        Args:
+            version:
+                version to search for
+        Returns:
+            str: version to search for
+        """
+
+        if version_type == VersionType.PATCH:  # want to search major and minor if exists
+            if self.has_major_minor:
+                return f"{self.major}.{self.minor}"
+            else:
+                return str(self.major)
+
+        elif version_type == VersionType.MINOR:  # want to search major
+            return str(self.major)
+
+        else:
+            return None
 
 
 def sort_semvers(semvers: List[str]) -> List[str]:
