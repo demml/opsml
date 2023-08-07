@@ -145,7 +145,14 @@ class DataFormatter:
         return converter.convert(data=data)
 
     @staticmethod
-    def create_table_schema(data: Union[pa.Table, np.ndarray]) -> Dict[str, Optional[str]]:
+    def create_table_schema(
+        data: Union[
+            pa.Table,
+            np.ndarray,
+            pd.DataFrame,
+            pl.DataFrame,
+        ]
+    ) -> Dict[str, Optional[Any]]:
         """
         Generates a schema (column: type) from a py arrow table.
         Args:
@@ -153,18 +160,19 @@ class DataFormatter:
         Returns:
             schema: Dict[str,str]
         """
+        if isinstance(data, pd.DataFrame):
+            return data.dtypes.to_dict()
 
-        feature_map: Dict[str, Optional[str]] = {}
-        if isinstance(data, pa.Table):
+        elif isinstance(data, pl.DataFrame):
+            return data.schema
+
+        elif isinstance(data, pa.Table):
             schema = data.schema
 
-            for feature, type_ in zip(schema.names, schema.types):
-                feature_map[feature] = str(type_)
+            return {feature: str(type_) for feature, type_ in zip(schema.names, schema.types)}
 
         elif isinstance(data, np.ndarray):
-            feature_map["numpy_dtype"] = str(data.dtype)
+            return {"numpy_dtype": str(data.dtype)}
 
         else:
-            feature_map["data_dtype"] = None
-
-        return feature_map
+            return {"data_type": None}
