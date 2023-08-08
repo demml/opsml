@@ -176,3 +176,103 @@ class DataFormatter:
 
         else:
             return {"data_type": None}
+
+
+class SchemaValidator:
+    def __init__(
+        self,
+        data: Any,
+        schema: Any,
+    ):
+        self.data = data
+        self.schema = schema
+
+    def validate_schema(self) -> Any:
+        """Converts data to pyarrow"""
+        raise NotImplementedError
+
+    @staticmethod
+    def validate_data(data: Any) -> bool:
+        """Validate data to formatter"""
+        raise NotImplementedError
+
+
+class PolarsSchemaValidator(SchemaValidator):
+    def __init__(
+        self,
+        data: pl.DataFrame,
+        schema: pl.type_aliases.SchemaDict,
+    ):
+        """Instantiates schema validator for Polars dataframes
+
+        Args:
+            data:
+                Polars dataframe
+            schema:
+                Polars schema
+        """
+        self.data = data
+        self.schema = schema
+
+    def validate_schema(self) -> pl.DataFrame:
+        """Validate polars schema. Columns are converted if schema does not match"""
+
+        if self.data.schema != self.schema:
+            self.data = self.data.with_columns([pl.col(col).cast(self.schema[col]) for col in self.data.columns])
+
+        return self.data
+
+    @staticmethod
+    def validate_data(data: pl.DataFrame) -> bool:
+        return isinstance(data, pl.DataFrame)
+
+
+class PandasSchemaValidator(SchemaValidator):
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        schema: Dict[str, str],
+    ):
+        """Instantiates schema validator for Polars dataframes
+
+        Args:
+            data:
+                Pandas dataframe
+            schema:
+                Pandas schema
+        """
+        self.data = data
+        self.schema = schema
+
+    def validate_schema(self) -> pd.DataFrame:
+        """Validate pandas schema. Columns are converted if schema does not match"""
+
+        if self.data.dtypes.to_dict() != self.schema:
+            for col in self.data.columns:
+                self.data[col] = self.data[col].astype(self.schema[col])
+        return self.data
+
+    @staticmethod
+    def validate_data(data: pd.DataFrame) -> bool:
+        return isinstance(data, pd.DataFrame)
+
+
+def check_data_schema(
+    data: Union[pa.Table, pl.DataFrame, pd.DataFrame, np.ndarray],
+    schema: Dict[str, str],
+) -> Union[pa.Table, pl.DataFrame, pd.DataFrame, np.ndarray]:
+    """Check if data schema matches schema
+
+    Args:
+        data:
+            Data to check schema
+        schema:
+            Schema to check
+    """
+    validator = next(
+        (validator for validator in SchemaValidator.__subclasses__() if validator.validate_data(data=data)), None
+    )
+
+    if validator is None:
+        return data
+    return validator(data=data, schema=schema).validate_schema()
