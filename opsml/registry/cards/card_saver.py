@@ -3,7 +3,6 @@ import tempfile
 from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
-
 from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards.cards import (
     ArtifactCard,
@@ -136,8 +135,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             arrow table model
         """
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.data)
-        arrow_table.feature_map = DataFormatter.create_table_schema(arrow_table.table)
-
+        arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
     def _save_pyarrow_table(self, arrow_table: ArrowTable) -> StoragePath:
@@ -164,9 +162,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def _save_data(self) -> None:
         """Saves DataCard data to file system"""
 
-        arrow_table = self._convert_data_to_arrow()
+        arrow_table: ArrowTable = self._convert_data_to_arrow()
         storage_path = self._save_pyarrow_table(arrow_table=arrow_table)
         arrow_table.storage_uri = storage_path.uri
+
         self._set_arrow_card_attributes(arrow_table=arrow_table)
 
     def _save_profile(self):
