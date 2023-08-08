@@ -33,6 +33,7 @@ class StorageSettingsResponse(BaseModel):
 class VersionRequest(BaseModel):
     name: str
     team: str
+    version: Optional[str] = None
     version_type: VersionType
     table_name: str
 

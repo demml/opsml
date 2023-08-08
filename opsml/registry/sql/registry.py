@@ -157,7 +157,7 @@ class CardRegistry:
         info: Optional[CardInfo] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
-        as_dataframe: bool = True,
+        as_dataframe: bool = False,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 

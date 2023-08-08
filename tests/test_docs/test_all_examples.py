@@ -510,7 +510,7 @@ def test_overview_list(
     registry.list_cards(name="linear-reg", team="opsml", version="~2.3.4")
     # list card with name "linear-reg" with team "opsml" and latest version < 2.4.0
 
-    registry.list_cards(uid=uid, as_dataframe=False)
+    registry.list_cards(uid=uid, as_dataframe=True)
 
 
 def test_runcard_opsml_example(opsml_project: OpsmlProject):
@@ -690,8 +690,8 @@ def test_index_example(db_registries):
     )
 
     model_registry.register_card(card=modelcard)
-    print(data_registry.list_cards(info=card_info, as_dataframe=False))
-    print(model_registry.list_cards(info=card_info, as_dataframe=False))
+    print(data_registry.list_cards(info=card_info))
+    print(model_registry.list_cards(info=card_info))
 
 
 def test_quickstart(mlflow_project: MlflowProject):
