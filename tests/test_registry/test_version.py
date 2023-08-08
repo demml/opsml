@@ -52,8 +52,20 @@ def test_card_version():
     version = "1.0.0"
 
     version = CardVersion(version=version)
-    assert version.major == 1
-    assert version.minor == 0
-    assert version.patch == 0
+    assert version.major == "1"
+    assert version.minor == "0"
+    assert version.patch == "0"
+    assert version.is_full_semver == True
 
     assert version.has_major_minor == True
+
+
+def test_card_version_fail():
+    version = "1.0"
+
+    version = CardVersion(version=version)
+    assert version.major == "1"
+    assert version.minor == "0"
+
+    with pytest.raises(IndexError) as ve:
+        assert version.patch == "0"
