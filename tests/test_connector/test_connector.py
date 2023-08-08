@@ -15,7 +15,7 @@ def test_cloudsql_mysql_parsing():
     conn = DefaultConnector(tracking_uri=MYSQL_TRACKING_URI).get_connector()
 
     # these should work
-    assert conn._ip_type == IPTypes.PUBLIC
+    assert conn._ip_type == IPTypes.PUBLIC.value
     assert isinstance(conn._connection_name, str)
     assert conn._conn is not None
     assert isinstance(conn.get_engine(), sqlalchemy.engine.base.Engine)
@@ -32,7 +32,7 @@ def test_cloudsql_postgres_parsing():
     conn = DefaultConnector(tracking_uri=POSTGRES_TRACKING_URI).get_connector()
 
     # these should work
-    assert conn._ip_type == IPTypes.PUBLIC
+    assert conn._ip_type == IPTypes.PUBLIC.value
     assert isinstance(conn._connection_name, str)
     assert conn._conn is not None
     assert isinstance(conn.get_engine(), sqlalchemy.engine.base.Engine)
