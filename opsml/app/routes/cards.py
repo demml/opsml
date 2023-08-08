@@ -55,6 +55,7 @@ def set_version(
     version = registry._registry.set_version(
         name=payload.name,
         team=payload.team,
+        partial_version=payload.version,
         version_type=payload.version_type,
     )
 
