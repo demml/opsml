@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.registry_base import VersionType
+from opsml.registry.sql.semver import CardVersion
 
 
 class StorageUri(BaseModel):
@@ -33,7 +34,7 @@ class StorageSettingsResponse(BaseModel):
 class VersionRequest(BaseModel):
     name: str
     team: str
-    version: Optional[str] = None
+    version: Optional[CardVersion] = None
     version_type: VersionType
     table_name: str
 

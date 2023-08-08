@@ -39,6 +39,7 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     Param,
 )
+from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
@@ -170,11 +171,11 @@ class DataCard(ArtifactCard):
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Union[str, None]]] = None
-    data_type: Optional[str] = None
-    dependent_vars: Optional[List[Union[int, str]]] = None
-    feature_descriptions: Optional[Dict[str, str]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = {}
+    feature_map: Optional[Dict[str, Optional[Any]]]=None
+    data_type: Optional[str] =None
+    dependent_vars: Optional[List[Union[int, str]]]=None
+    feature_descriptions: Optional[Dict[str, str]]=None
+    additional_info: Optional[Dict[str, Union[float, int, str]]]=None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
@@ -288,9 +289,9 @@ class DataCard(ArtifactCard):
 
             settings.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
-                storage_client=settings.storage_client,
-                artifact_type=self.data_type,
+                storage_client=settings.storage_client, artifact_type=self.data_type
             )
+            data = check_data_schema(data, self.feature_map)
 
             setattr(self, "data", data)
 
