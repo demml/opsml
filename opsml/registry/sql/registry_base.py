@@ -1,6 +1,5 @@
 import uuid
 from contextlib import contextmanager
-from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
@@ -21,7 +20,7 @@ from opsml.registry.cards.cards import (
 )
 from opsml.registry.sql.query_helpers import QueryCreator, log_card_change  # type: ignore
 from opsml.registry.sql.records import LoadedRecordType, load_record
-from opsml.registry.sql.semver import SemVerSymbols, sort_semvers, CardVersion
+from opsml.registry.sql.semver import SemVerSymbols, sort_semvers, CardVersion, VersionType
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -40,13 +39,6 @@ if settings.request_client is None:
         registry_tables=list(RegistryTableNames),
     )
     initializer.initialize()
-
-
-class VersionType(str, Enum):
-    MAJOR = "major"
-    MINOR = "minor"
-    PATCH = "patch"
-
 
 query_creator = QueryCreator()
 
@@ -126,7 +118,7 @@ class SQLRegistryBase:
         name: str,
         team: str,
         version_type: VersionType,
-        partial_version: Optional[str] = None,
+        partial_version: Optional[CardVersion] = None,
     ) -> str:
         raise NotImplementedError
 
@@ -187,7 +179,7 @@ class SQLRegistryBase:
         Returns:
             `CardVersion`
         """
-        card_version = CardVersion(version=version)
+        card_version = CardVersion(version=version)  # type: ignore
         if card_version.is_full_semver:
             records = self.list_cards(name=name, team=team, version=card_version.valid_version)
             if len(records) > 0:
@@ -204,6 +196,7 @@ class SQLRegistryBase:
                 Type of version increment
         """
 
+        card_version = None
         if card.version is not None:
             card_version = self._validate_semver(
                 name=card.name,
@@ -216,7 +209,7 @@ class SQLRegistryBase:
 
         version = self.set_version(
             name=card.name,
-            partial_version=card.version,
+            partial_version=card_version,
             team=card.team,
             version_type=version_type,
         )
@@ -368,7 +361,7 @@ class ServerRegistry(SQLRegistryBase):
         name: str,
         team: str,
         version_type: VersionType,
-        partial_version: Optional[str] = None,
+        partial_version: Optional[CardVersion] = None,
     ) -> str:
         """
         Sets a version following semantic version standards
@@ -385,7 +378,12 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        query = query_creator.create_version_query(table=self._table, name=name, version=partial_version)
+        version_to_search = None
+        final_version = None
+        if partial_version is not None:
+            version_to_search = partial_version.get_version_to_search(version_type=version_type)
+
+        query = query_creator.create_version_query(table=self._table, name=name, version=version_to_search)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
@@ -404,9 +402,9 @@ class ServerRegistry(SQLRegistryBase):
             )
 
         if partial_version is not None:
-            partial_version = CardVersion.finalize_partial_version(version=partial_version)
+            final_version = CardVersion.finalize_partial_version(version=partial_version.valid_version)
 
-        return partial_version or "1.0.0"
+        return final_version or "1.0.0"
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -563,14 +561,19 @@ class ClientRegistry(SQLRegistryBase):
         name: str,
         team: str,
         version_type: VersionType = VersionType.MINOR,
-        partial_version: Optional[str] = None,
+        partial_version: Optional[CardVersion] = None,
     ) -> str:
+        if partial_version is not None:
+            version_to_send = partial_version.dict()
+        else:
+            version_to_send = None
+
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
                 "name": name,
                 "team": team,
-                "version": partial_version,
+                "version": version_to_send,
                 "version_type": version_type,
                 "table_name": self.table_name,
             },
