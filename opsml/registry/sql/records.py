@@ -123,7 +123,7 @@ class LoadRecord(BaseModel):
 class LoadedDataRecord(LoadRecord):
     uris: DataCardUris
     data_type: Optional[str] = None
-    feature_map: Optional[Dict[str, str]] = None
+    feature_map: Optional[Dict[str, Any]] = None
     feature_descriptions: Optional[Dict[str, str]] = None
     dependent_vars: Optional[List[Union[int, str]]] = None
     additional_info: Optional[Dict[str, Union[float, int, str]]] = None
@@ -139,7 +139,6 @@ class LoadedDataRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
         datacard_definition["storage_client"] = storage_client
         datacard_definition["uris"]["datacard_uri"] = values.get("datacard_uri")
 
