@@ -171,11 +171,11 @@ class DataCard(ArtifactCard):
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Optional[Any]]]=None
-    data_type: Optional[str] =None
-    dependent_vars: Optional[List[Union[int, str]]]=None
-    feature_descriptions: Optional[Dict[str, str]]=None
-    additional_info: Optional[Dict[str, Union[float, int, str]]]=None
+    feature_map: Optional[Dict[str, Optional[Any]]] = None
+    data_type: Optional[str] = None
+    dependent_vars: Optional[List[Union[int, str]]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
