@@ -153,16 +153,6 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         return storage_path
 
-    def _save_pyarrow_schema(self, arrow_schema: Dict[str, AllowedTableTypes]) -> StoragePath:
-        self._set_storage_spec(filename=self.card.name, uri=self.card.uris.data_schema_uri)
-
-        storage_path = save_record_artifact_to_storage(
-            artifact=arrow_schema,
-            storage_client=self.storage_client,
-        )
-
-        return storage_path
-
     def _set_arrow_card_attributes(self, arrow_table: ArrowTable):
         """Sets additional card attributes associated with arrow table"""
         self.card.uris.data_uri = arrow_table.storage_uri
