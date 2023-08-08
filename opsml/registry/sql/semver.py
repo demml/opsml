@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import List, Optional
 import semver
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
 
 class VersionType(str, Enum):
@@ -38,12 +38,16 @@ class CardVersion:
         return len(self._version_splits) >= 2
 
     @property
-    def major(self) -> int:
+    def major(self) -> str:
         return self._get_version_split(0)
 
     @property
     def minor(self) -> int:
         return self._get_version_split(1)
+
+    @property
+    def patch(self) -> int:
+        return self._get_version_split(2)
 
     @property
     def valid_version(self) -> str:
