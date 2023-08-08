@@ -3,8 +3,6 @@ import tempfile
 from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
-import pandas as pd
-import polars as pl
 from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards.cards import (
     ArtifactCard,

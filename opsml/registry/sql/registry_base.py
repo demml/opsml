@@ -1,6 +1,5 @@
 import uuid
 from contextlib import contextmanager
-from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
@@ -207,6 +206,8 @@ class SQLRegistryBase:
 
             if card_version.is_full_semver:
                 return None
+
+            card.version.dumps()
 
         version = self.set_version(
             name=card.name,
@@ -561,7 +562,7 @@ class ClientRegistry(SQLRegistryBase):
         name: str,
         team: str,
         version_type: VersionType = VersionType.MINOR,
-        partial_version: Optional[str] = None,
+        partial_version: Optional[CardVersion] = None,
     ) -> str:
         data = self._session.post_request(
             route=api_routes.VERSION,
