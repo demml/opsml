@@ -38,6 +38,7 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     Param,
 )
+from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
@@ -289,15 +290,7 @@ class DataCard(ArtifactCard):
             data = load_record_artifact_from_storage(
                 storage_client=settings.storage_client, artifact_type=self.data_type
             )
-
-            if isinstance(data, pd.DataFrame):
-                if data.dtypes.to_dict() != self.feature_map:
-                    for col in data.columns:
-                        data[col] = data[col].astype(self.feature_map[col])
-
-            elif isinstance(data, pl.DataFrame):
-                if data.schema != self.feature_map:
-                    data = data.with_columns([pl.col(col).cast(self.feature_map[col]) for col in data.columns])
+            data = check_data_schema(data, self.feature_map)
 
             setattr(self, "data", data)
 
