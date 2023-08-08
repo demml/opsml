@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import List, Optional
 import semver
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, root_validator
 
 
 class VersionType(str, Enum):
@@ -11,42 +11,70 @@ class VersionType(str, Enum):
     PATCH = "patch"
 
 
-@dataclass
-class CardVersion:
+class CardVersion(BaseModel):
     version: str
+    version_splits: List[str]
+    is_full_semver: bool
 
-    def __post_init__(self):
+    @root_validator(pre=True)
+    def validate_inputs(cls, values):
         """Validates a user-supplied version"""
-        if self.is_full_semver:
-            self._validate_full_semver()
+        version = values.get("version")
+        splits = version.split(".")
+        values["version_splits"] = splits
+
+        if cls.check_full_semver(splits):
+            values["is_full_semver"] = True
+            cls._validate_full_semver(version)
         else:
-            self._validate_partial_semver()
+            values["is_full_semver"] = False
+            cls._validate_partial_semver(splits)
 
-        self._version_splits = self.version.split(".")
+        return values
 
-    def _get_version_split(self, split: int) -> List[str]:
+    @classmethod
+    def check_full_semver(cls, version_splits: List[str]) -> bool:
+        """Checks if a version is a full semver"""
+        return len(version_splits) >= 3
+
+    @classmethod
+    def _validate_full_semver(cls, version: str) -> None:
+        """Validates a full semver"""
+        if not semver.VersionInfo.isvalid(version):
+            raise ValueError("Version is not a valid Semver")
+
+    @classmethod
+    def _validate_partial_semver(cls, version_splits: List[str]) -> None:
+        """Validates a partial semver"""
+        try:
+            assert all([i.isdigit() for i in version_splits])
+        except AssertionError:
+            version = ".".join(version_splits)
+            raise AssertionError(f"Version {version} is not a valid semver or partial semver")
+
+    def _get_version_split(self, split: int) -> str:
         """Splits a version into its major, minor, and patch components"""
 
         try:
-            return self._version_splits[split]
+            return self.version_splits[split]
         except IndexError:
             raise IndexError(f"Version split {split} not found: {self.version}")
 
     @property
     def has_major_minor(self) -> bool:
         """Checks if a version has a major and minor component"""
-        return len(self._version_splits) >= 2
+        return len(self.version_splits) >= 2
 
     @property
     def major(self) -> str:
         return self._get_version_split(0)
 
     @property
-    def minor(self) -> int:
+    def minor(self) -> str:
         return self._get_version_split(1)
 
     @property
-    def patch(self) -> int:
+    def patch(self) -> str:
         return self._get_version_split(2)
 
     @property
@@ -54,33 +82,6 @@ class CardVersion:
         if self.is_full_semver:
             return str(semver.VersionInfo.parse(self.version).finalize_version())
         return self.version
-
-    def _validate_full_semver(self):
-        """Validates a full semver"""
-        if not semver.VersionInfo.isvalid(self.version):
-            raise ValueError("Version is not a valid Semver")
-
-    @property
-    def is_full_semver(self) -> bool:
-        """Checks if a version is a full or partial semver
-
-        Args:
-            version:
-                version to check
-        Returns:
-            bool: True if version is a full semver, False otherwise
-        """
-        if len(self.version.split(".")) < 3:
-            return False
-        return True
-
-    def _validate_partial_semver(self) -> None:
-        """Validates a partial semver"""
-        version_splits = self.version.split(".")
-        try:
-            assert all([i.isdigit() for i in version_splits])
-        except AssertionError:
-            raise AssertionError(f"Version {self.version} is not a valid semver or partial semver")
 
     @staticmethod
     def finalize_partial_version(version: str) -> str:

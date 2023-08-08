@@ -179,7 +179,7 @@ class SQLRegistryBase:
         Returns:
             `CardVersion`
         """
-        card_version = CardVersion(version=version)
+        card_version = CardVersion(version=version)  # type: ignore
         if card_version.is_full_semver:
             records = self.list_cards(name=name, team=team, version=card_version.valid_version)
             if len(records) > 0:
@@ -206,8 +206,6 @@ class SQLRegistryBase:
 
             if card_version.is_full_semver:
                 return None
-
-            card.version.dumps()
 
         version = self.set_version(
             name=card.name,
@@ -381,6 +379,7 @@ class ServerRegistry(SQLRegistryBase):
         """
 
         version_to_search = None
+        final_version = None
         if partial_version is not None:
             version_to_search = partial_version.get_version_to_search(version_type=version_type)
 
@@ -403,9 +402,9 @@ class ServerRegistry(SQLRegistryBase):
             )
 
         if partial_version is not None:
-            partial_version = CardVersion.finalize_partial_version(version=partial_version.valid_version)
+            final_version = CardVersion.finalize_partial_version(version=partial_version.valid_version)
 
-        return partial_version or "1.0.0"
+        return final_version or "1.0.0"
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -564,12 +563,17 @@ class ClientRegistry(SQLRegistryBase):
         version_type: VersionType = VersionType.MINOR,
         partial_version: Optional[CardVersion] = None,
     ) -> str:
+        if partial_version is not None:
+            version_to_send = partial_version.dict()
+        else:
+            version_to_send = None
+
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
                 "name": name,
                 "team": team,
-                "version": partial_version,
+                "version": version_to_send,
                 "version_type": version_type,
                 "table_name": self.table_name,
             },
