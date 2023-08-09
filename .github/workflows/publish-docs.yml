@@ -1,0 +1,19 @@
+name: Publish-Github-Pages
+
+on:
+  pull_request:
+    branches:
+    - main
+    types:
+    - opened
+    - synchronize
+
+jobs:
+  PublishDocs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Publish docs
+        run: |
+          git diff ${{github.event.before}}..${{github.sha}} --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
+          if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi
