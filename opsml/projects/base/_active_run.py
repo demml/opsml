@@ -10,7 +10,7 @@ from opsml.registry import (
     RunCard,
     VersionType,
 )
-from opsml.registry.cards.cards import ArtifactCard
+from opsml.registry.cards import ArtifactCard
 from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType

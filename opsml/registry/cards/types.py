@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 @dataclass
@@ -12,6 +12,8 @@ class ModelCardUris:
     onnx_model_uri: Optional[str] = None
     model_metadata_uri: Optional[str] = None
     sample_data_uri: Optional[str] = None
+
+    model_config = ConfigDict(protected_namespaces=("protect_",))
 
 
 @dataclass

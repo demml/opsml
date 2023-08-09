@@ -55,6 +55,8 @@ class ModelRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
 
+    model_config = ConfigDict(protected_namespaces=("protect_",))
+
     @model_validator(mode="before")
     def set_uris(cls, values):
         uris = values.get("uris")
@@ -199,6 +201,8 @@ class LoadedModelRecord(LoadRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     uris: ModelCardUris
+
+    model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
     def load_model_attr(cls, values) -> Dict[str, Any]:
