@@ -3,7 +3,7 @@ name: Lint-Unit-Test
 on:
   pull_request:
     branches:
-      - blah
+      - main
     types:
       - opened
       - synchronize
