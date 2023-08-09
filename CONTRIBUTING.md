@@ -15,7 +15,7 @@ Steps:
 ```bash
 make setup
 ```
-or
+or with poetry
 
 ```bash
 poetry install --all-extras --with dev,dev-lints
