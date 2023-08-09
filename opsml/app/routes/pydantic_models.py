@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.registry_base import VersionType
+from opsml.registry.sql.semver import CardVersion
 
 
 class StorageUri(BaseModel):
@@ -26,12 +27,14 @@ class DebugResponse(BaseModel):
 class StorageSettingsResponse(BaseModel):
     storage_type: str
     storage_uri: str
+    version: str
     proxy: bool = False
 
 
 class VersionRequest(BaseModel):
     name: str
     team: str
+    version: Optional[CardVersion] = None
     version_type: VersionType
     table_name: str
 
@@ -97,7 +100,6 @@ class QuerycardResponse(BaseModel):
 class CardRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
-    team: Optional[str] = None
     uid: Optional[str] = None
 
 
@@ -127,12 +129,9 @@ class RegisterModelRequest(BaseModel):
                     * "1"     = registers 1.2.3 at "1" (the highest minor / patch version is used)
                     * "1.2"   = registers 1.2.3 at "1.2"
                     * "1.1"   = registers 1.1.100 at "1.1"
-                    * "1.1.1" = regisers 1.1.1 at "1.1.1"
+                    * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-
-    team: str = Field(..., description="Team name")
-    uid: Optional[str] = Field(None, description="Optional UID. Overrides team / model name / version")
     onnx: bool = Field(
         True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
     )
