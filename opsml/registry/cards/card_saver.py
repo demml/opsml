@@ -3,7 +3,6 @@ import tempfile
 from enum import Enum
 from functools import cached_property
 from typing import Dict, Optional, cast
-
 from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards.cards import (
     ArtifactCard,
@@ -118,7 +117,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """Saves a datacard to file system"""
 
         self._set_storage_spec(
-            filename=SaveName.DATACARD,
+            filename=SaveName.DATACARD.value,
             uri=self.card.uris.datacard_uri,
         )
 
@@ -136,8 +135,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             arrow table model
         """
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.data)
-        arrow_table.feature_map = DataFormatter.create_table_schema(arrow_table.table)
-
+        arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
     def _save_pyarrow_table(self, arrow_table: ArrowTable) -> StoragePath:
@@ -164,16 +162,17 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def _save_data(self) -> None:
         """Saves DataCard data to file system"""
 
-        arrow_table = self._convert_data_to_arrow()
+        arrow_table: ArrowTable = self._convert_data_to_arrow()
         storage_path = self._save_pyarrow_table(arrow_table=arrow_table)
         arrow_table.storage_uri = storage_path.uri
+
         self._set_arrow_card_attributes(arrow_table=arrow_table)
 
     def _save_profile(self):
         """Saves a datacard data profile"""
 
         self._set_storage_spec(
-            filename=SaveName.DATA_PROFILE,
+            filename=SaveName.DATA_PROFILE.value,
             uri=self.card.uris.profile_uri,
         )
 
@@ -250,7 +249,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_onnx_model(self) -> OnnxAttr:
         self._set_storage_spec(
-            filename=SaveName.ONNX_MODEL,
+            filename=SaveName.ONNX_MODEL.value,
             uri=self.card.uris.onnx_model_uri,
         )
 
@@ -278,7 +277,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self._save_sample_data()
 
         self._set_storage_spec(
-            filename=SaveName.MODEL_METADATA,
+            filename=SaveName.MODEL_METADATA.value,
             uri=self.card.uris.model_metadata_uri,
         )
 
@@ -296,7 +295,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves a modelcard to file system"""
 
         self._set_storage_spec(
-            filename=SaveName.MODELCARD,
+            filename=SaveName.MODELCARD.value,
             uri=self.card.uris.modelcard_uri,
         )
 
@@ -318,7 +317,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves trained model associated with ModelCard to filesystem"""
 
         self._set_storage_spec(
-            filename=SaveName.TRAINED_MODEL,
+            filename=SaveName.TRAINED_MODEL.value,
             uri=self.card.uris.trained_model_uri,
         )
 
@@ -336,7 +335,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves sample data associated with ModelCard to filesystem"""
 
         self._set_storage_spec(
-            filename=SaveName.SAMPLE_MODEL_DATA,
+            filename=SaveName.SAMPLE_MODEL_DATA.value,
             uri=self.card.uris.sample_data_uri,
         )
 
@@ -380,7 +379,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def _save_runcard(self):
         """Saves a runcard"""
         self._set_storage_spec(
-            filename=SaveName.RUNCARD,
+            filename=SaveName.RUNCARD.value,
             uri=self.card.runcard_uri,
         )
 
@@ -448,12 +447,14 @@ def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:
-        card (ArtifactCard): ArtifactCard to save
-        artifact_storage_info (ArtifactStorageSpecs): Extra storage info to associate
-        with card.
+        card:
+            ArtifactCard to save
+        storage_client:
+            StorageClient to use to save artifacts
 
     Returns:
-        Modified ArtifactCard
+        ArtifactCard with updated artifact uris
+
     """
     card_saver = next(
         card_saver

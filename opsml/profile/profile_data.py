@@ -25,6 +25,8 @@ class DataProfiler:
                 Pandas dataframe
             sample_perc:
                 Percentage to use for sampling
+            name:
+                Name of the report
 
         Returns:
             `ProfileReport`
