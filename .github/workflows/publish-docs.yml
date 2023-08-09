@@ -1,12 +1,9 @@
 name: Publish-Github-Pages
 
 on:
-  pull_request:
+  push:
     branches:
     - main
-    types:
-    - opened
-    - synchronize
 
 jobs:
   PublishDocs:
@@ -26,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
             make setup.project
-            
+
       - name: Publish Docs
         run: |
           git diff ${{github.event.before}}..${{github.sha}} --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
