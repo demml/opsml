@@ -55,6 +55,7 @@ def set_version(
     version = registry._registry.set_version(
         name=payload.name,
         team=payload.team,
+        partial_version=payload.version,
         version_type=payload.version_type,
     )
 
@@ -88,7 +89,7 @@ def list_cards(
                 replace_proxy_root(
                     card=card,
                     storage_root=config.STORAGE_URI,
-                    proxy_root=config.proxy_root,
+                    proxy_root=str(config.proxy_root),
                 )
                 for card in cards
             ]

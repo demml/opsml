@@ -25,7 +25,7 @@ else:
 class DataCardRegistry(Registry):
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.DATA
+        return registry_name in RegistryTableNames.DATA.value
 
 
 class ModelCardRegistry(Registry):
@@ -79,25 +79,25 @@ class ModelCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.MODEL
+        return registry_name in RegistryTableNames.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.RUN
+        return registry_name in RegistryTableNames.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PIPELINE
+        return registry_name in RegistryTableNames.PIPELINE.value
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PROJECT
+        return registry_name in RegistryTableNames.PROJECT.value
 
 
 # CardRegistry also needs to set a storage file system
@@ -157,7 +157,7 @@ class CardRegistry:
         info: Optional[CardInfo] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
-        as_dataframe: bool = True,
+        as_dataframe: bool = False,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -217,7 +217,6 @@ class CardRegistry:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         uid: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         version: Optional[str] = None,
@@ -228,8 +227,6 @@ class CardRegistry:
         Args:
             name:
                 Optional Card name
-            team:
-                Optional team associated with card
             uid:
                 Unique identifier for card. If present, the uid takes
                 precedence.
@@ -248,12 +245,11 @@ class CardRegistry:
         # find better way to do this later
         if info is not None:
             name = name or info.name
-            team = team or info.team
             uid = uid or info.uid
             version = version or info.version
             tags = tags or info.tags
 
-        return self._registry.load_card(uid=uid, name=name, team=team, version=version, tags=tags)
+        return self._registry.load_card(uid=uid, name=name, version=version, tags=tags)
 
     def register_card(
         self,
