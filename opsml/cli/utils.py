@@ -38,18 +38,16 @@ class CliApiClient:
 
     def download_metadata(self, payload: Dict[str, str], path: pathlib.Path) -> Dict[str, Any]:
         """
-        Loads and saves model metadata
+        Downloads model metadata to directory
 
         Args:
-            request_client:
-                `ApiClient`
             payload:
-                Payload to pass to request client
+                Payload to send to API
             path:
                 Pathlib path to save response to
 
         Returns:
-            Dictionary of metadata
+            Metadata
         """
 
         metadata = self.client.post_request(
@@ -68,13 +66,10 @@ class CliApiClient:
         Downloads model file to directory
 
         Args:
-            request_client:
-                `ApiClient`
             filepath:
                 External model filepath
             write_path:
                 Path to write file to
-
         """
 
         filepath_split = filepath.split("/")
@@ -125,13 +120,13 @@ class CliApiClient:
         write_path: pathlib.Path,
     ) -> None:
         """
-        Downloads model file to directory
+        Streams data file to directory
 
         Args:
-            request_client:
-                `ApiClient`
-            filepath:
-                External model filepath
+            path:
+                write path
+            payload:
+                Payload to pass to request client
             write_path:
                 Path to write file to
 

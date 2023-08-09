@@ -15,6 +15,9 @@ def test_datacard_create_data_profile_pandas(
 ):
     # create data card
     registry = db_registries["data"]
+
+    iris_data["date_"] = pd.Timestamp.today().strftime("%Y-%m-%d")
+
     data_card = DataCard(
         data=iris_data,
         name="test_df",
