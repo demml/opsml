@@ -10,7 +10,7 @@ To contribute to `Opsml` you will need to sign a Contributor License Agreement (
 Steps:
 1. Create a new env. `Opsml` currently supports python 3.9 -> 3.11
 2. Fork `Opsml`
-3. Install all required and development packages in you new env.
+3. Install all required and development packages in your new env (we use [poetry](https://github.com/python-poetry/poetry) for dependency management).
 
 ```bash
 make setup
@@ -27,8 +27,8 @@ poetry install --all-extras --with dev,dev-lints
       * `/username/<featureName>`: for features
       * `/username/<fixName>`: for general refactoring or bug fixes
 2. Test your changes:
-   * You can run formatting, lints and test locally via `make format`, `make lints` and `make unit.tests`, respectively.
-3. Submit a Draft Pull Request. Do it early and mark it `WIP` so a maintainer knows it's not ready for review just yet. You can also add a label to it if you feel like it :smile:
+   * You can run formatting, lints and tests locally via `make format`, `make lints` and `make unit.tests`, respectively.
+3. Submit a Draft Pull Request. Do it early and mark it `WIP` so a maintainer knows it's not ready for review just yet. You can also add a label to it if you feel like it :smile:.
 4. If you haven't signed our CLA before, then you will receive an email from HelloSign to sign the CLA (mentioned above).
     * The CLA request will be sent to the email address associated with your github account.
     * You cannot have your PR merged without signing the PR.
