@@ -100,14 +100,13 @@ class MlflowActiveRun(ActiveRun):
         """
         Logs an artifact for the current run. All artifacts are loaded
         to a parent directory named "misc".
+
         Args:
             local_path:
                 Local path to object
             artifact_path:
                 Artifact directory path in Mlflow to log to. This path will be appended
                 to parent directory "misc"
-        Returns:
-            None
         """
         self._verify_active()
 

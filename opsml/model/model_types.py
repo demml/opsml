@@ -38,6 +38,7 @@ class SklearnEstimator(ModelType):
             "Booster",
             "keras",
             "pytorch",
+            "transformer",
         ]
 
 
@@ -109,3 +110,13 @@ class PyTorch(ModelType):
     @staticmethod
     def validate(model_class_name: str) -> bool:
         return model_class_name == "pytorch"
+
+
+class Transformer(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return OnnxModelType.TRANSFORMER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "transformer"

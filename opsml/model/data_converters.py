@@ -46,7 +46,7 @@ class DataConverter:
         converts Float64 types to Float32. Skl2Onnx does not support Float64 for some estimator types.
 
         Args:
-            all:
+            convert_all:
                 Boolean indicating whether to convert all columns to Float32
 
         """
@@ -118,6 +118,7 @@ class NumpyOnnxConverter(DataConverter):
             if model_info.model_type in AVAILABLE_MODEL_TYPES and model_info.model_type not in [
                 OnnxModelType.TF_KERAS,
                 OnnxModelType.PYTORCH,
+                OnnxModelType.TRANSFORMER,
             ]:
                 return True
         return False
@@ -293,13 +294,14 @@ class PyTorchOnnxDataConverter(DataConverter):
         return None
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.model_data.data.astype(np.float32)}
+        return {self.input_name: self.model_data.data}
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return (
-            model_info.data_type == InputDataType.NUMPY_ARRAY.value and model_info.model_type == OnnxModelType.PYTORCH
-        )
+        return model_info.data_type == InputDataType.NUMPY_ARRAY.value and model_info.model_type in [
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class PyTorchOnnxDictConverter(DataConverter):
@@ -358,7 +360,10 @@ class PyTorchOnnxDictConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == InputDataType.DICT.value and model_info.model_type == OnnxModelType.PYTORCH
+        return model_info.data_type == InputDataType.DICT.value and model_info.model_type in [
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class OnnxDataConverter:

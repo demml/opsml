@@ -1,6 +1,6 @@
 # pylint: disable=import-outside-toplevel
 from functools import cached_property
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 from pydantic import conlist, create_model
 
@@ -26,7 +26,6 @@ class PydanticFeatureGenerator:
         self,
         features: Dict[str, Feature],
         model_type: str,
-        is_input: bool,
     ):
         """
         Generates pydantic field for api creation
@@ -40,7 +39,6 @@ class PydanticFeatureGenerator:
         self.features = features
         self.model_type = model_type
         self.pydantic_fields: PydanticFields = {}
-        self.is_input = is_input
 
     def _is_list_type(self, feature: Feature) -> bool:
         """
@@ -58,7 +56,7 @@ class PydanticFeatureGenerator:
             return True
 
         # it is assumed pytorch/tensorflow will be feeding list/arrays
-        if self.model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH] and self.is_input:
+        if self.model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]:
             return True
 
         if len(feature.shape) > 1 and feature.shape[1] > 1:
@@ -69,7 +67,7 @@ class PydanticFeatureGenerator:
 
         return False
 
-    def _get_feature_shape(self, feature: Feature) -> Optional[Union[List[int], int]]:
+    def _get_feature_shape(self, feature: Feature) -> List[int]:
         """
         Gets feature shape
 
@@ -81,12 +79,11 @@ class PydanticFeatureGenerator:
             Optional list of ints or int
 
         """
+
         feature_len = len(feature.shape)
-        if feature_len > 1:
-            if feature_len > 2:
-                return feature.shape[1:]
-            return None if feature.shape[1] == 0 else feature.shape[1]
-        return None
+        if feature_len > 2:
+            return feature.shape[1:]
+        return [1] if feature.shape[1] == 0 else [feature.shape[1]]
 
     def _get_list_feature_type(self, feature: Feature) -> List[Any]:
         """Creates list feature type to be used with pydantic model.
@@ -101,10 +98,7 @@ class PydanticFeatureGenerator:
         feature_shape = self._get_feature_shape(feature=feature)
         feature_type = ApiSigTypes[feature.feature_type].value
 
-        if isinstance(feature_shape, list):
-            shape_len = len(feature_shape)
-        else:
-            shape_len = 1
+        shape_len = len(feature_shape)
         for _ in range(shape_len):
             feature_type = conlist(feature_type)  # type: ignore
 
@@ -174,7 +168,7 @@ class ApiSigCreator:
         output_sig.feature_map = self.output_features  # type: ignore
         return output_sig
 
-    def _get_pydantic_sig(self, features: Dict[str, Feature], is_input: bool) -> PydanticFields:
+    def _get_pydantic_sig(self, features: Dict[str, Feature]) -> PydanticFields:
         """
         Infers the pydantic model needed for API signature
 
@@ -182,24 +176,17 @@ class ApiSigCreator:
             features:
                 Dictionary of keys and `Feature` objects
 
-            is_input:
-                bool indicating if created sig is for api input
-
         Returns
             PydanticFields model to be used with an API
         """
 
-        pydantic_generator = PydanticFeatureGenerator(
-            features=features,
-            model_type=self.model_type,
-            is_input=is_input,
-        )
+        pydantic_generator = PydanticFeatureGenerator(features=features, model_type=self.model_type)
         return pydantic_generator.get_pydantic_fields()
 
     def _get_pydantic_base(self):
         raise NotImplementedError
 
-    def _get_base_fields(self, features: Dict[str, Feature], is_input: bool) -> Tuple[Base, PydanticFields]:
+    def _get_base_fields(self, features: Dict[str, Feature]) -> Tuple[Base, PydanticFields]:
         """
         Creates fields and `Base` for api signature
 
@@ -207,13 +194,10 @@ class ApiSigCreator:
             features:
                 Dictionary of keys and `Feature` objects
 
-            is_input:
-                bool indicating if created sig is for api input
-
         Returns:
             `Base` and `PydanticFields`
         """
-        pydantic_fields = self._get_pydantic_sig(features=features, is_input=is_input)
+        pydantic_fields = self._get_pydantic_sig(features=features)
         base = self._get_pydantic_base()
 
         return base, pydantic_fields
@@ -230,12 +214,12 @@ class ApiSigCreator:
             Pydantic `Base`
 
         """
-        base, fields = self._get_base_fields(features=features, is_input=True)
+        base, fields = self._get_base_fields(features=features)
         return create_model("Features", **fields, __base__=base)  # type: ignore
 
     def _get_output_sig(self, features: Dict[str, Feature]) -> Base:
         """
-        Creates output sig for a model
+        Creates output sig for a model. Uses an Any type in order to support multiple output formats
 
         Args:
             features:
@@ -245,10 +229,13 @@ class ApiSigCreator:
             Pydantic `Base`
 
         """
+        pydantic_fields = {}
+        base = self._get_pydantic_base()
 
-        base, fields = self._get_base_fields(features=features, is_input=False)
+        for feature in features.keys():
+            pydantic_fields[feature] = (Any, ...)
 
-        return create_model("Predictions", **fields, __base__=base)  # type: ignore
+        return create_model("Predictions", **pydantic_fields, __base__=base)  # type: ignore
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
@@ -287,7 +274,11 @@ class SklearnSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type not in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
+        return model_type not in [
+            OnnxModelType.TF_KERAS,
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class DeepLearningSigCreator(ApiSigCreator):
@@ -299,7 +290,11 @@ class DeepLearningSigCreator(ApiSigCreator):
 
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
-        return model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]
+        return model_type in [
+            OnnxModelType.TF_KERAS,
+            OnnxModelType.PYTORCH,
+            OnnxModelType.TRANSFORMER,
+        ]
 
 
 class ApiSigCreatorGetter:

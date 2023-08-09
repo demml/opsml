@@ -47,7 +47,7 @@ class DataCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.DATA
+        return registry_name in RegistryTableNames.DATA.value
 
 
 class ModelCardRegistry(Registry):
@@ -103,25 +103,25 @@ class ModelCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.MODEL
+        return registry_name in RegistryTableNames.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.RUN
+        return registry_name in RegistryTableNames.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PIPELINE
+        return registry_name in RegistryTableNames.PIPELINE.value
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PROJECT
+        return registry_name in RegistryTableNames.PROJECT.value
 
 
 # CardRegistry also needs to set a storage file system
@@ -181,7 +181,7 @@ class CardRegistry:
         info: Optional[CardInfo] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
-        as_dataframe: bool = True,
+        as_dataframe: bool = False,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -237,7 +237,6 @@ class CardRegistry:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         uid: Optional[str] = None,
         version: Optional[str] = None,
     ) -> ArtifactCard:
@@ -257,10 +256,7 @@ class CardRegistry:
             name = name.lower()
             name = name.replace("_", "-")
 
-        if team is not None:
-            team = team.lower()
-
-        return self._registry.load_card(uid=uid, name=name, team=team, version=version)
+        return self._registry.load_card(uid=uid, name=name, version=version)
 
     def register_card(
         self,

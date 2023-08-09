@@ -1,9 +1,8 @@
 # pylint: disable=import-outside-toplevel
 from functools import cached_property
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import numpy as np
-from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
 from opsml.model.types import ApiDataSchemas, Base, InputDataType, OnnxModelType
@@ -63,41 +62,32 @@ class OnnxModelPredictor:
         return self.sig_creator.output_sig
 
     def predict(self, data: Dict[str, Any]) -> Any:
-        """Run prediction on onnx model. Data is expected to conform to pydantic
+        """
+        Run prediction on onnx model. Data is expected to conform to pydantic
         schema as defined in "api_sig" attribute. This schema will be used when
         deploying the model api.
 
         Args:
-            Data (dictionary): Record of data as dictionary that conforms to pydantic
-            schema.
+            data:
+                Record of data as dictionary that conforms to pydantic schema.
 
         Returns:
             Prediction (array or float depending on model type)
         """
 
         pred_data = self.sig_creator.input_sig(**data)
-
         prediction = self.sess.run(
             output_names=self._output_names,
             input_feed=pred_data.to_onnx(),
         )
-
         return self._extract_predictions(prediction=prediction)
-
-    def _extract_from_array(self, prediction: NDArray) -> Union[int, str, float, List[Any]]:
-        flat_pred = prediction.flatten()
-
-        if flat_pred.ndim == 1 and flat_pred.shape[0] == 1:
-            return flat_pred[0]
-
-        # todo: what if prediction is ndimensional?
-        return list(flat_pred)
 
     def _extract_predictions(self, prediction: List[Any]) -> Dict[str, Any]:
         """Parses onnx runtime prediction
 
         Args:
-            Predictions (List): Onnx runtime prediction list
+            Predictions:
+                Onnx runtime prediction list
 
         Returns:
             Prediction in the form of a key value mapping
@@ -105,10 +95,14 @@ class OnnxModelPredictor:
         output_dict = {}
 
         for idx, output in enumerate(self._output_names):
+            if output == "variable":
+                output = "value"
+
             pred = prediction[idx]
 
             if isinstance(pred, np.ndarray):
-                output_dict[output] = self._extract_from_array(prediction=pred)
+                output_dict[output] = pred.tolist()
+
             else:
                 output_dict[output] = pred
 
@@ -134,7 +128,7 @@ class OnnxModelPredictor:
         elif self.model_type == OnnxModelType.TF_KERAS:
             data_for_pred = pred_data.to_onnx()
 
-        elif self.model_type == OnnxModelType.PYTORCH:
+        elif self.model_type in [OnnxModelType.PYTORCH, OnnxModelType.TRANSFORMER]:
             import torch
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()

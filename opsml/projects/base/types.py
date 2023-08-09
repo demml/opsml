@@ -42,7 +42,7 @@ class ProjectInfo(BaseModel):
     )
 
     run_id: Optional[str] = Field(
-        os.environ.get(OpsmlUri.RUN_ID),
+        os.environ.get(OpsmlUri.RUN_ID.value),
         description="An existing run_id to use. If None, a new run is created when the project is activated",
     )
 

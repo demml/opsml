@@ -17,7 +17,7 @@ def cwd(path):
         os.chdir(oldpwd)
 
 
-def run_alembic_migrations() -> True:
+def run_alembic_migrations() -> str:
     alembicArgs = [
         "--raiseerr",
         "upgrade",

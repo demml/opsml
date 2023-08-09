@@ -38,6 +38,7 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     Param,
 )
+from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
@@ -168,7 +169,7 @@ class DataCard(ArtifactCard):
 
     data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]]
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Union[str, None]]]
+    feature_map: Optional[Dict[str, Optional[Any]]]
     data_type: Optional[str]
     dependent_vars: Optional[List[Union[int, str]]]
     feature_descriptions: Optional[Dict[str, str]]
@@ -287,9 +288,9 @@ class DataCard(ArtifactCard):
 
             settings.storage_client.storage_spec = storage_spec
             data = load_record_artifact_from_storage(
-                storage_client=settings.storage_client,
-                artifact_type=self.data_type,
+                storage_client=settings.storage_client, artifact_type=self.data_type
             )
+            data = check_data_schema(data, self.feature_map)
 
             setattr(self, "data", data)
 
@@ -308,12 +309,12 @@ class DataCard(ArtifactCard):
         exclude_attr = {"data"}
         return DataRegistryRecord(**self.dict(exclude=exclude_attr))
 
-    def add_info(self, info: Dict[str, Union[float, int, str]]):
+    def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:
         """
         Adds metadata to the existing DataCard metadata dictionary
 
         Args:
-            Metadata:
+            info:
                 Dictionary containing name (str) and value (float, int, str) pairs
                 to add to the current metadata set
         """
@@ -582,27 +583,14 @@ class ModelCard(ArtifactCard):
         setattr(self, "onnx_model_def", model_def)
 
     def create_registry_record(self) -> RegistryRecord:
-        """
-        Creates a registry record from the current ModelCard
-
-        Args:
-            registry_name:
-                ModelCard Registry table making request
-            uid:
-                Unique id of ModelCard
-
-        """
+        """Creates a registry record from the current ModelCard"""
 
         exclude_vars = {"trained_model", "sample_input_data", "onnx_model_def"}
         return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
         if self.version is None:
-            logger.warning(
-                """ModelCard has no version (not registered).
-                Defaulting to 1 (for testing only)
-            """
-            )
+            logger.warning("""ModelCard has no version (not registered). Defaulting to 1 (for testing only)""")
             version = "1.0.0"
         else:
             version = self.version
@@ -891,7 +879,7 @@ class RunCard(ArtifactCard):
                 Metric value
             timestamp:
                 Optional timestamp
-            ste:
+            step:
                 Optional step associated with name and value
         """
 
@@ -911,6 +899,8 @@ class RunCard(ArtifactCard):
             metrics:
                 Dictionary containing key (str) and value (float or int) pairs
                 to add to the current metric set
+            step:
+                Optional step associated with metrics
         """
 
         for key, value in metrics.items():

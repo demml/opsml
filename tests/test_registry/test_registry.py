@@ -48,16 +48,16 @@ def test_register_data(
 
     registry.register_card(card=data_card)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team)
+    df = registry.list_cards(name=data_card.name, team=data_card.team, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name)
+    df = registry.list_cards(name=data_card.name, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards()
+    df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
+    df = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0", as_dataframe=True)
     assert df.shape[0] == 1
 
     data_card = DataCard(
@@ -82,7 +82,7 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
-        name="test_df",
+        name="test_sql",
         team="mlops",
         user_email="mlops.com",
         sql_logic={"test": "select * from test_table"},
@@ -92,13 +92,52 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     registry.register_card(card=data_card)
     loaded_card: DataCard = registry.load_card(uid=data_card.uid)
     assert loaded_card.sql_logic.get("test") is not None
+    assert data_card.version == "1.0.0"
+
+
+def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "select * from test_table"},
+        version="3.1.1",
+    )
+
+    registry.register_card(card=data_card)
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.1",  # specifying major minor version
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+
+    assert data_card.version == "3.1.2"
+
+    # test initial partial registration
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="4.1",  # specifying major minor version
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+    assert data_card.version == "4.1.0"
 
 
 def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
-        name="test_df",
+        name="test_tags",
         team="mlops",
         user_email="mlops.com",
         feature_descriptions={"test": "test_description"},
@@ -109,7 +148,7 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
     registry.register_card(card=data_card)
 
     cards = registry.list_cards(
-        name="test_df",
+        name="test_tags",
         team="mlops",
         tags={"test": "hello"},
         as_dataframe=False,
@@ -118,8 +157,7 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
     assert cards[0]["tags"] == {"test": "hello"}
 
     data_card = registry.load_card(
-        name="test_df",
-        team="mlops",
+        name="test_tags",
         tags={"test": "hello"},
     )
 
@@ -130,7 +168,7 @@ def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
     # create data card at current time
     registry = db_registries["data"]
     data_card = DataCard(
-        name="test_df",
+        name="test_date",
         team="mlops",
         user_email="mlops.com",
         sql_logic={"test": "select * from test_table"},
@@ -143,10 +181,10 @@ def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
     record.timestamp = FOURTEEN_DAYS_TS
     registry._registry.update_card_record(record.dict())
 
-    cards = registry.list_cards(as_dataframe=False)
+    cards = registry.list_cards()
     assert len(cards) >= 1
 
-    cards = registry.list_cards(max_date=FOURTEEN_DAYS_STR, as_dataframe=False)
+    cards = registry.list_cards(max_date=FOURTEEN_DAYS_STR)
     assert len(cards) == 1
 
 
@@ -154,7 +192,7 @@ def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
-        name="test_df",
+        name="test_file",
         team="mlops",
         user_email="mlops.com",
         sql_logic={"test": "test_sql.sql"},
@@ -165,12 +203,36 @@ def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
     assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
 
+def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="test_name_fail",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "test_sql.sql"},
+    )
+
+    registry.register_card(card=data_card)
+
+    # test registering card with same name and different team
+    with pytest.raises(ValueError):
+        data_card = DataCard(
+            name="test_name_fail",
+            team="fail_teams",
+            user_email="mlops.com",
+            sql_logic={"test": "test_sql.sql"},
+        )
+
+        registry.register_card(card=data_card)
+
+
 def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArray):
     # create data card
     registry = db_registries["data"]
     data_card = DataCard(
         data=test_array,
-        name="test_df",
+        name="test_sql",
         team="mlops",
         user_email="mlops.com",
     )
@@ -199,14 +261,22 @@ def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArra
     assert data_card.sql_logic[name] == query
 
     data_card = DataCard(
-        data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: filename}
+        data=test_array,
+        name="test_sql",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={name: filename},
     )
     assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
     ## Test instantiation failure
     with pytest.raises(ValueError):
         data_card = DataCard(
-            data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={"fail": "fail.sql"}
+            data=test_array,
+            name="test_sql",
+            team="mlops",
+            user_email="mlops.com",
+            sql_logic={"fail": "fail.sql"},
         )
 
 
@@ -218,26 +288,26 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     for i in range(0, 5):
         data_card = DataCard(
             data=test_array,
-            name="test_df",
+            name="test_semver",
             team="mlops",
             user_email="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
     cards = registry.list_cards(
-        name="test_df",
+        name="test_semver",
         team="mlops",
         version="^1.0.0",
         as_dataframe=False,
     )
 
     assert len(cards) == 1
-    assert cards[0]["version"] == "1.11.5"
+    assert cards[0]["version"] == "1.0.4"
 
     # version 2
     data_card = DataCard(
         data=test_array,
-        name="test_df",
+        name="test_semver",
         team="mlops",
         user_email="mlops.com",
     )
@@ -246,7 +316,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     for i in range(0, 12):
         data_card = DataCard(
             data=test_array,
-            name="test_df",
+            name="test_semver",
             team="mlops",
             user_email="mlops.com",
         )
@@ -273,7 +343,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     # pre-release
     data_card_pre = DataCard(
         data=test_array,
-        name="test_df",
+        name="test_semver",
         team="mlops",
         user_email="mlops.com",
         version="3.0.0-rc.1",
@@ -306,7 +376,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
         # try registering card where version already exists
         data_card = DataCard(
             data=test_array,
-            name="test_df",
+            name="test_semver",
             team="mlops",
             user_email="mlops.com",
             version="3.0.0-rc.1",  # cant create a release for a minor version that already exists
@@ -317,7 +387,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
         # try invalid semver
         data_card = DataCard(
             data=test_array,
-            name="test_df",
+            name="test_semver",
             team="mlops",
             user_email="mlops.com",
             version="3.0.0blah",
@@ -327,7 +397,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
     # pre-release
     data_card_pre = DataCard(
         data=test_array,
-        name="test_df",
+        name="test_semver",
         team="mlops",
         user_email="mlops.com",
         version="3.0.1-rc.1",
@@ -360,7 +430,7 @@ def test_runcard(
 ):
     registry: CardRegistry = db_registries["run"]
     run = RunCard(
-        name="test_df",
+        name="test_run",
         team="mlops",
         user_email="mlops.com",
         datacard_uids=["test_uid"],
@@ -660,7 +730,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
     data_card.add_info(info={"added_metadata": 10})
     registry.register_card(card=data_card)
 
-    loaded_data: DataCard = registry.load_card(name=data_name, team=team, version=data_card.version)
+    loaded_data: DataCard = registry.load_card(name=data_name, version=data_card.version)
 
     loaded_data.load_data()
 
@@ -708,7 +778,7 @@ def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
-    df = registry.list_cards(uid=loaded_card.uid)
+    cards = registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
@@ -811,3 +881,144 @@ def test_model_registry_with_polars(
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
     assert loaded_card.uris.model_metadata_uri is not None
+
+
+def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
+    registry = db_registries["data"]
+    data, y, _, _ = drift_dataframe
+
+    data["col_11"] = y
+    data["eval_flg"] = np.where(data["col_11"] <= 5, 1, 0)
+    data["col_11"] = data["col_11"].astype("category")
+
+    datacard = DataCard(
+        name="pandas_dtype",
+        team="mlops",
+        user_email="mlops.com",
+        data=data,
+        data_splits=[
+            DataSplit(label="train", column_value=0, column_name="eval_flg"),
+            DataSplit(label="test", column_value=1, column_name="eval_flg"),
+        ],
+    )
+    registry.register_card(card=datacard, version_type="patch")
+    datacard = registry.load_card(uid=datacard.uid)
+    datacard.load_data()
+
+    splits = datacard.split_data()
+    assert splits.train.X.dtypes["col_11"] == "category"
+    assert splits.test.X.dtypes["col_11"] == "category"
+
+
+def test_polars_dtypes(db_registries: Dict[str, CardRegistry], iris_data_polars):
+    registry = db_registries["data"]
+    data = iris_data_polars
+
+    data = data.with_columns(
+        [
+            pl.when(pl.col("target") <= 1).then(pl.lit(1)).otherwise(pl.lit(0)).alias("eval_flg"),
+            pl.when(pl.col("target") <= 1).then(pl.lit("a")).otherwise(pl.lit("b")).alias("test_cat"),
+        ]
+    )
+    data = data.with_columns(pl.col("test_cat").cast(pl.Categorical))
+    orig_schema = data.schema
+
+    datacard = DataCard(
+        name="pandas_dtype",
+        team="mlops",
+        user_email="mlops.com",
+        data=data,
+        data_splits=[
+            DataSplit(label="train", column_value=0, column_name="eval_flg"),
+            DataSplit(label="test", column_value=1, column_name="eval_flg"),
+        ],
+    )
+    registry.register_card(card=datacard, version_type="patch")
+    datacard = registry.load_card(uid=datacard.uid)
+    datacard.load_data()
+
+    splits = datacard.split_data()
+    assert splits.train.X.schema["test_cat"] == orig_schema["test_cat"]
+    assert splits.test.X.schema["test_cat"] == orig_schema["test_cat"]
+
+
+def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry = db_registries["data"]
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        sql_logic={"test": "select * from test_table"},
+        version="3.1.1",
+    )
+
+    registry.register_card(card=data_card)
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.1",  # specifying major minor version
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+    assert data_card.version == "3.1.2"
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3",  # specifying major with minor bump
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="minor")
+    assert data_card.version == "3.2.0"
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3",  # specifying major with patch bump
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+    assert data_card.version == "3.2.1"
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.2",  # specifying major minor with minor bump.
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="minor")
+    assert data_card.version == "3.3.0"
+
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="3.2",  # specifying major minor with minor bump.
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    # This should rarely happen, but should work (3.3.0 already exists, should increment to 3.4.0)
+    registry.register_card(card=data_card, version_type="minor")
+    assert data_card.version == "3.4.0"
+
+    # test initial partial registration
+    data_card = DataCard(
+        name="major_minor",
+        team="mlops",
+        user_email="mlops.com",
+        version="4.1",  # specifying major minor version
+        sql_logic={"test": "select * from test_table"},
+    )
+
+    registry.register_card(card=data_card, version_type="patch")
+    assert data_card.version == "4.1.0"

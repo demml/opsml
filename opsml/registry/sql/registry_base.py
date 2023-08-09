@@ -1,6 +1,5 @@
 import uuid
 from contextlib import contextmanager
-from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
@@ -19,9 +18,9 @@ from opsml.registry.cards.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.sql.query_helpers import QueryCreator, log_card_change
+from opsml.registry.sql.query_helpers import QueryCreator, log_card_change  # type: ignore
 from opsml.registry.sql.records import LoadedRecordType, load_record
-from opsml.registry.sql.semver import SemVerSymbols, sort_semvers
+from opsml.registry.sql.semver import SemVerSymbols, sort_semvers, CardVersion, VersionType
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -40,13 +39,6 @@ if settings.request_client is None:
         registry_tables=list(RegistryTableNames),
     )
     initializer.initialize()
-
-
-class VersionType(str, Enum):
-    MAJOR = "major"
-    MINOR = "minor"
-    PATCH = "patch"
-
 
 query_creator = QueryCreator()
 
@@ -121,7 +113,13 @@ class SQLRegistryBase:
             return str(ver.bump_patch())
         raise ValueError(f"Unknown version_type: {version_type}")
 
-    def set_version(self, name: str, team: str, version_type: VersionType) -> str:
+    def set_version(
+        self,
+        name: str,
+        team: str,
+        version_type: VersionType,
+        partial_version: Optional[CardVersion] = None,
+    ) -> str:
         raise NotImplementedError
 
     def _is_correct_card_type(self, card: ArtifactCard):
@@ -167,23 +165,28 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
-    def _check_and_validate_version(self, card: ArtifactCard):
+    def _validate_semver(self, name: str, team: str, version: str) -> CardVersion:
         """
         Validates version if version is manually passed to Card
 
         Args:
-            card:
-                `ArtifactCard`
+            name:
+                Name of card
+            team:
+                Team of card
+            version:
+                Version of card
+        Returns:
+            `CardVersion`
         """
-        if not semver.VersionInfo.isvalid(card.version):
-            raise ValueError("Version is not a valid Semver")
+        card_version = CardVersion(version=version)  # type: ignore
+        if card_version.is_full_semver:
+            records = self.list_cards(name=name, team=team, version=card_version.valid_version)
+            if len(records) > 0:
+                raise ValueError("Major, minor and patch version combination already exists")
+        return card_version
 
-        version = str(semver.VersionInfo.parse(card.version).finalize_version())
-        records = self.list_cards(name=card.name, team=card.team, version=version)
-        if len(records) > 0:
-            raise ValueError("Major, minor and patch version combination already exists")
-
-    def _set_card_uid_version(self, card: ArtifactCard, version_type: VersionType):
+    def _set_card_version(self, card: ArtifactCard, version_type: VersionType):
         """Sets a given card's version and uid
 
         Args:
@@ -193,21 +196,34 @@ class SQLRegistryBase:
                 Type of version increment
         """
 
-        # need to find way to compare previous cards and automatically
-        # determine if change is major or minor
-
+        card_version = None
         if card.version is not None:
-            self._check_and_validate_version(card=card)
-
-        else:
-            version = self.set_version(
+            card_version = self._validate_semver(
                 name=card.name,
                 team=card.team,
-                version_type=version_type,
+                version=card.version,
             )
 
-            card.version = version
+            if card_version.is_full_semver:
+                return None
 
+        version = self.set_version(
+            name=card.name,
+            partial_version=card_version,
+            team=card.team,
+            version_type=version_type,
+        )
+        card.version = version
+
+        return None
+
+    def _set_card_uid(self, card: ArtifactCard) -> None:
+        """Sets a given card's uid
+
+        Args:
+            card:
+                Card to set
+        """
         if card.uid is None:
             card.uid = self._get_uid()
 
@@ -236,7 +252,7 @@ class SQLRegistryBase:
         Adds new record to registry.
 
         Args:
-            Card:
+            card:
                 Card to register
             version_type:
                 Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
@@ -248,7 +264,8 @@ class SQLRegistryBase:
         """
 
         self._validate_card_type(card=card)
-        self._set_card_uid_version(card=card, version_type=version_type)
+        self._set_card_version(card=card, version_type=version_type)
+        self._set_card_uid(card=card)
         self._set_artifact_storage_spec(card=card, save_path=save_path)
         self._create_registry_record(card=card)
 
@@ -257,7 +274,7 @@ class SQLRegistryBase:
         Updates a registry record.
 
         Args:
-            Card:
+            card:
                 Card to update
         """
         card = save_card_artifacts(card=card, storage_client=self.storage_client)
@@ -294,17 +311,14 @@ class SQLRegistryBase:
     def load_card(
         self,
         name: Optional[str] = None,
-        team: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         uid: Optional[str] = None,
     ) -> ArtifactCard:
         cleaned_name = clean_string(name)
-        cleaned_team = clean_string(team)
 
         record = self.list_cards(
             name=cleaned_name,
-            team=cleaned_team,
             version=version,
             uid=uid,
             limit=1,
@@ -342,15 +356,21 @@ class ServerRegistry(SQLRegistryBase):
         engine = self._get_engine()
         self._table.__table__.create(bind=engine, checkfirst=True)
 
-    def set_version(self, name: str, team: str, version_type: VersionType) -> str:
+    def set_version(
+        self,
+        name: str,
+        team: str,
+        version_type: VersionType,
+        partial_version: Optional[CardVersion] = None,
+    ) -> str:
         """
         Sets a version following semantic version standards
 
         Args:
             name:
                 Card name
-            team:
-                Team card belongs to
+            partial_version:
+                Validated partial version to set. If None, will increment the latest version
             version_type:
                 Type of version increment. Values are "major", "minor" and "patch
 
@@ -358,16 +378,21 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        query = query_creator.create_version_query(
-            table=self._table,
-            name=name,
-            team=team,
-        )
+        version_to_search = None
+        final_version = None
+        if partial_version is not None:
+            version_to_search = partial_version.get_version_to_search(version_type=version_type)
+
+        query = query_creator.create_version_query(table=self._table, name=name, version=version_to_search)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
 
         if bool(results):
+            # check if current model team is same as requesting team
+            if results[0].team != team:
+                raise ValueError("""Model name already exists for a different team. Try a different name.""")
+
             versions = [result.version for result in results]
             sorted_versions = sort_semvers(versions)
 
@@ -375,7 +400,11 @@ class ServerRegistry(SQLRegistryBase):
                 version=sorted_versions[0],
                 version_type=version_type,
             )
-        return "1.0.0"
+
+        if partial_version is not None:
+            final_version = CardVersion.finalize_partial_version(version=partial_version.valid_version)
+
+        return final_version or "1.0.0"
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -527,16 +556,29 @@ class ClientRegistry(SQLRegistryBase):
 
         return bool(data.get("uid_exists"))
 
-    def set_version(self, name: str, team: str, version_type: VersionType = VersionType.MINOR) -> str:
+    def set_version(
+        self,
+        name: str,
+        team: str,
+        version_type: VersionType = VersionType.MINOR,
+        partial_version: Optional[CardVersion] = None,
+    ) -> str:
+        if partial_version is not None:
+            version_to_send = partial_version.dict()
+        else:
+            version_to_send = None
+
         data = self._session.post_request(
             route=api_routes.VERSION,
             json={
                 "name": name,
                 "team": team,
+                "version": version_to_send,
                 "version_type": version_type,
                 "table_name": self.table_name,
             },
         )
+
         return data.get("version")
 
     def list_cards(

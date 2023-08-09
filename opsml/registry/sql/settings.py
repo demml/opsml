@@ -288,10 +288,12 @@ class DefaultSettings(BaseSettings):
         ).get_connector()
 
     def set_storage(self, storage_settings: StorageSettings) -> None:
-        """Set storage url and storage client from storage_uri
+        """
+        Set storage url and storage client from storage_uri
 
         Args:
-            storage_uri (str): Optional storage url
+            storage_settings:
+                StorageClientSettings pydantic Model
         """
 
         storage_client = StorageClientGetter.get_storage_client(storage_settings=storage_settings)
