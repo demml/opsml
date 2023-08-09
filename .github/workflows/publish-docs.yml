@@ -3,7 +3,7 @@ name: Publish-Github-Pages
 on:
   push:
     branches:
-    - main
+      - main
 
 jobs:
   PublishDocs:
