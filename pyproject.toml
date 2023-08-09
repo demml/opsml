@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "opsml"
-version = "1.1.5"
+version = "1.1.10"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
 
 # required dependencies
-python = ">=3.9,<=3.11"
+python = ">=3.9,<=3.11.2"
 alembic = "^1.10.3"
 httpx ="^0.23.3"
 onnx = "^1.14.0"
@@ -15,7 +15,7 @@ onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
 polars = "^0.18.0"
 pyarrow = ">=8.0.0"
-pydantic = ">=1.10.0, <=1.10.4"
+pydantic = "<2"
 python-json-logger = "^2.0.6"
 rich = "^13.3.5"
 scikit-learn = ">=1.0"
@@ -69,8 +69,8 @@ pytest = "^7.1.2"
 pytest-lazy-fixture = "^0.6.3"
 pytest-cov = "^3.0.0"
 coverage = {extras = ["toml"], version = "^6.5.0"}
-torch = "^1.13.1"
-torchvision = "^0.14.1"
+torch = "<=2.0.0"
+torchvision = "^0.15"
 tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
@@ -90,13 +90,9 @@ sqlalchemy-stubs = "^0.4"
 types-pymysql = "^1.0.19.1"
 types-requests = "^2.28.11.7"
 black = "22.3.0"
-flake8 = "^4.0.1"
-pylint = "^2.14.5"
-isort = "^5.10.1"
 sqlalchemy2-stubs = "0.0.2a32"
 mypy = "1.0.0"
 types-protobuf = "^4.21.0.3"
-pylint-pydantic = "^0.1.8"
 
 
 [tool.poetry.group.docs.dependencies]
@@ -180,7 +176,7 @@ source = ["opsml"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 60
+fail_under = 80
 
 
 [tool.ruff]

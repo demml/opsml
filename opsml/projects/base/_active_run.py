@@ -55,7 +55,7 @@ class CardHandler:
         """Loads an ArtifactCard"""
 
         registry: CardRegistry = getattr(registries, registry_name)
-        return registry.load_card(name=info.name, team=info.team, version=info.version, uid=info.uid)
+        return registry.load_card(name=info.name, version=info.version, uid=info.uid)
 
     @staticmethod
     def update_card(registries: CardRegistries, card: ArtifactCard) -> None:

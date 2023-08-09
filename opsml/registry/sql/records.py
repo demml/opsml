@@ -129,7 +129,7 @@ class LoadRecord(BaseModel):
 class LoadedDataRecord(LoadRecord):
     uris: DataCardUris
     data_type: Optional[str]
-    feature_map: Optional[Dict[str, str]]
+    feature_map: Optional[Dict[str, Any]]
     feature_descriptions: Optional[Dict[str, str]]
     dependent_vars: Optional[List[Union[int, str]]]
     additional_info: Optional[Dict[str, Union[float, int, str]]]
@@ -145,7 +145,6 @@ class LoadedDataRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        # values["data_splits"] = LoadedDataRecord.get_splits(splits=values["data_splits"])
         datacard_definition["storage_client"] = storage_client
         datacard_definition["uris"].datacard_uri = values.get("datacard_uri")
 
@@ -196,7 +195,7 @@ class LoadedDataRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.DATA
+        return table_name == RegistryTableNames.DATA.value
 
 
 class LoadedModelRecord(LoadRecord):
@@ -251,7 +250,7 @@ class LoadedModelRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.MODEL
+        return table_name == RegistryTableNames.MODEL.value
 
 
 class LoadedRunRecord(LoadRecord):
@@ -304,7 +303,7 @@ class LoadedRunRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.RUN
+        return table_name == RegistryTableNames.RUN.value
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -316,7 +315,7 @@ class LoadedPipelineRecord(LoadRecord):
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.PIPELINE
+        return table_name == RegistryTableNames.PIPELINE.value
 
 
 LoadedRecordType = Union[

@@ -130,12 +130,15 @@ class FindPath:
         """Finds the dir path of a given file.
 
         Args:
-            dir_name (str): Name of directory
-            path (str): Optional. Base path to search
-            anchor_file (str): Name of anchor file in directory
+            dir_name:
+                Name of directory
+            path:
+                Base path to search
+            anchor_file:
+                Name of anchor file in directory
 
         Returns:
-            dirpath (str)
+            dirpath
         """
 
         paths = glob.glob(f"{path}/**/{anchor_file}", recursive=True)

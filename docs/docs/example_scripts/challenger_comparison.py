@@ -125,7 +125,6 @@ with project.run(run_name="challenger-poisson") as run:
 model_registry = CardRegistry(registry_name="model")
 linreg_card = model_registry.load_card(
     name="linear_reg",
-    team="mlops",
     tags={"example": "challenger"},
 )
 
