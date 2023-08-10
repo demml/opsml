@@ -1,3 +1,4 @@
+# License: MIT
 import os
 from typing import cast
 
