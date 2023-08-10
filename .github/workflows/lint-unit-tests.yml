@@ -38,13 +38,14 @@ jobs:
             make lints.ci
 
   Unit-Test:
-    runs-on: ubuntu-latest
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
         poetry-version: ["1.5.1"]
+        os: [ubuntu, macos, windows]
 
+    runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v3
 
