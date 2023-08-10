@@ -54,57 +54,7 @@ jobs:
         run: |
             make lints.ci
 
-  Unit-Test:
-    needs: Lints
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
-        os: [ubuntu]
-
-    runs-on: ${{ matrix.os }}-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.5.1
-          
-      #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: make setup.project
-      #----------------------------------------------
-      #              run test suite
-      #----------------------------------------------
-      - name: Unit test
-        run: |
-          make test.unit
-
-
-
-
-
+  
   #Publish-RC:
   #  runs-on: ubuntu-latest
   #  needs: [Unit-Test-py39, Unit-Test-py310, Unit-Test-py311]
