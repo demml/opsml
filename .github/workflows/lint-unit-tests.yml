@@ -35,7 +35,7 @@ jobs:
       matrix:
         python-version: ["3.10","3.11"]
         poetry-version: ["1.5.1"]
-        os: [ubuntu, macos]
+        os: [ubuntu, macos, windows]
 
     runs-on: ${{ matrix.os }}-latest
     steps:
