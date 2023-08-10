@@ -1,6 +1,8 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 
 """Code for generating Onnx Models"""
+# License: MIT
+
 import re
 import tempfile
 import warnings

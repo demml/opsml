@@ -1,3 +1,4 @@
+# License: MIT
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 

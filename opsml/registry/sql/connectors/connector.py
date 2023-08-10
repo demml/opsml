@@ -1,3 +1,4 @@
+# License: MIT
 from enum import Enum
 from functools import cached_property
 from typing import Any, Type, cast

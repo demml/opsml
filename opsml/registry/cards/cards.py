@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+# License: MIT
 
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast

@@ -1,3 +1,4 @@
+# License: MIT
 from importlib.metadata import version, PackageNotFoundError
 
 

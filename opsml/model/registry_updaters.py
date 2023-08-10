@@ -1,4 +1,6 @@
 # pylint: disable=import-outside-toplevel
+# License: MIT
+
 """Code for generating Onnx Models"""
 import warnings
 
