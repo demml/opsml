@@ -8,7 +8,7 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.cards import ArtifactCard, ModelCard
+from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.sql.registry_base import OpsmlRegistry, ServerRegistry, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames

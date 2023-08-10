@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.cards.cards import (
+from opsml.registry.cards import (
     ArtifactCard,
     DataCard,
     ModelCard,
