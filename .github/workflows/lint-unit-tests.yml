@@ -28,3 +28,24 @@ jobs:
           cache: 'poetry'
       - run : make setup.project
       - run : make lints.ci
+
+  Unit-Test:
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.10","3.11"]
+        poetry-version: ["1.5.1"]
+        os: [ubuntu, macos]
+
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - run : make setup.project
+      - run : make test.unit
