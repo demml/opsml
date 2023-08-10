@@ -51,7 +51,7 @@ class CloudSQLConnection(BaseSQLConnection):
         """Sets IP type for CloudSql"""
         from google.cloud.sql.connector import IPTypes
 
-        return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
+        return IPTypes.PRIVATE.value if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC.value
 
     @property
     def _connection_name(self) -> str:

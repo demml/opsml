@@ -6,7 +6,8 @@ from functools import cached_property
 from typing import Any, Dict, Optional, cast
 
 import httpx
-from pydantic import BaseSettings, Field, root_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import root_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
@@ -255,17 +256,18 @@ class DefaultConnector:
 class DefaultSettings(BaseSettings):
     """Default variables to load"""
 
-    app_env: str = Field("development", env="APP_ENV")
-    opsml_tracking_uri: str = Field(..., env=OpsmlUri.TRACKING_URI)
+    model_config = SettingsConfigDict(
+        frozen=False,
+        arbitrary_types_allowed=True,
+        ignored_types=(cached_property,),
+        validate_assignment=True,
+    )
+
+    app_env: str = "development"
+    opsml_tracking_uri: str
     storage_settings: StorageSettings
     storage_client: StorageClientType
-    request_client: Optional[ApiClient] = Field(None)
-
-    class Config:
-        allow_mutation = True
-        arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
-        validate_assignment = True
+    request_client: Optional[ApiClient] = None
 
     @root_validator(pre=True)
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:

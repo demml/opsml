@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, model_validator, field_validator, ConfigDict, ValidationInfo
+
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -65,6 +66,12 @@ SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray]
 class ArtifactCard(BaseModel):
     """Base pydantic class for artifact cards"""
 
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=False,
+        validate_default=True,
+    )
+
     name: str
     team: str
     user_email: str
@@ -73,12 +80,7 @@ class ArtifactCard(BaseModel):
     info: Optional[CardInfo] = None
     tags: Dict[str, str] = {}
 
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = False
-        smart_union = True
-
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate(cls, env_vars):
         """Validate base args and Lowercase name and team"""
 
@@ -170,28 +172,33 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]]
+    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Optional[Any]]]
-    data_type: Optional[str]
-    dependent_vars: Optional[List[Union[int, str]]]
-    feature_descriptions: Optional[Dict[str, str]]
-    additional_info: Optional[Dict[str, Union[float, int, str]]]
+    feature_map: Optional[Dict[str, Optional[Any]]] = None
+    data_type: Optional[str] = None
+    dependent_vars: Optional[List[Union[int, str]]] = None
+    feature_descriptions: Optional[Dict[str, str]] = None
+    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    uris: DataCardUris = DataCardUris()
     data_profile: Optional[ProfileReport] = None
+    uris: DataCardUris = DataCardUris()
 
-    @validator("uris", pre=True, always=True)
-    def check_data(cls, uris: DataCardUris, values):
-        if uris.data_uri is None:
-            if values["data"] is None and not bool(values["sql_logic"]):
+    @field_validator("uris", mode="before")
+    def check_data(cls, uris, info):
+        if isinstance(uris, DataCardUris):
+            data_uri = uris.data_uri
+        else:
+            data_uri = uris.get("data_uri")
+
+        if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
+            if data_uri is None:
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
         return uris
 
-    @validator("data_profile", pre=True, always=True)
+    @field_validator("data_profile", mode="before")
     def check_profile(cls, profile):
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
@@ -199,23 +206,17 @@ class DataCard(ArtifactCard):
             assert isinstance(profile, ydata_profile)
         return profile
 
-    @validator("feature_descriptions", pre=True, always=True)
+    @field_validator("feature_descriptions", mode="before")
     def lower_descriptions(cls, feature_descriptions):
         if feature_descriptions is None:
             return feature_descriptions
-
         feat_dict = {}
         for feature, description in feature_descriptions.items():
             feat_dict[feature.lower()] = description.lower()
+            return feat_dict
 
-        return feat_dict
-
-    @validator("additional_info", pre=True, always=True)
-    def check_info(cls, value):
-        return value or {}
-
-    @validator("sql_logic", pre=True, always=True)
-    def load_sql(cls, sql_logic, values):
+    @field_validator("sql_logic", mode="before")
+    def load_sql(cls, sql_logic):
         if not bool(sql_logic):
             return sql_logic
 
@@ -310,7 +311,7 @@ class DataCard(ArtifactCard):
 
         """
         exclude_attr = {"data"}
-        return DataRegistryRecord(**self.dict(exclude=exclude_attr))
+        return DataRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
     def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:
         """
@@ -430,25 +431,23 @@ class ModelCard(ArtifactCard):
                 URI where model metadata is stored
     """
 
-    trained_model: Optional[Any]
-    sample_input_data: SampleModelData
-    datacard_uid: Optional[str]
-    onnx_model_data: Optional[DataDict]
-    onnx_model_def: Optional[OnnxModelDefinition]
-    sample_data_type: Optional[str]
-    model_type: Optional[str]
-    additional_onnx_args: Optional[ExtraOnnxArgs]
-    data_schema: Optional[ApiDataSchemas]
+    model_config = ConfigDict(arbitrary_types_allowed=True, ignored_types=(cached_property,))
+
+    trained_model: Optional[Any] = None
+    sample_input_data: SampleModelData = None
+    datacard_uid: Optional[str] = None
+    onnx_model_data: Optional[DataDict] = None
+    onnx_model_def: Optional[OnnxModelDefinition] = None
+    sample_data_type: Optional[str] = None
+    model_type: Optional[str] = None
+    additional_onnx_args: Optional[ExtraOnnxArgs] = None
+    data_schema: Optional[ApiDataSchemas] = None
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     to_onnx: bool = True
     uris: ModelCardUris = ModelCardUris()
 
-    class Config:
-        arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
-
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def check_args(cls, values: Dict[str, Any]):
         """Converts trained model to modelcard"""
 
@@ -462,7 +461,7 @@ class ModelCard(ArtifactCard):
 
         return values
 
-    @validator("sample_input_data", pre=True)
+    @field_validator("sample_input_data", mode="before")
     def get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
@@ -549,7 +548,7 @@ class ModelCard(ArtifactCard):
             artifact_type=ArtifactStorageType.JSON.value,
         )
 
-        return ModelMetadata.parse_obj(model_metadata)
+        return ModelMetadata.model_validate(model_metadata)
 
     def _load_onnx_model(self, metadata: ModelMetadata) -> Any:
         """Loads the actual onnx file
@@ -589,7 +588,7 @@ class ModelCard(ArtifactCard):
         """Creates a registry record from the current ModelCard"""
 
         exclude_vars = {"trained_model", "sample_input_data", "onnx_model_def"}
-        return ModelRegistryRecord(**self.dict(exclude=exclude_vars))
+        return ModelRegistryRecord(**self.model_dump(exclude=exclude_vars))
 
     def _set_version_for_predictor(self) -> str:
         if self.version is None:
@@ -754,7 +753,7 @@ class PipelineCard(ArtifactCard):
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current PipelineCard"""
-        return PipelineRegistryRecord(**self.dict())
+        return PipelineRegistryRecord(**self.model_dump())
 
     @property
     def card_type(self) -> str:
@@ -801,14 +800,14 @@ class RunCard(ArtifactCard):
 
     datacard_uids: List[str] = []
     modelcard_uids: List[str] = []
-    pipelinecard_uid: Optional[str]
+    pipelinecard_uid: Optional[str] = None
     metrics: METRICS = {}
     parameters: PARAMS = {}
     artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
-    project_id: Optional[str]
-    runcard_uri: Optional[str]
+    project_id: Optional[str] = None
+    runcard_uri: Optional[str] = None
 
     def add_tag(self, key: str, value: str):
         """
@@ -933,7 +932,7 @@ class RunCard(ArtifactCard):
 
         exclude_attr = {"artifacts", "params", "metrics"}
 
-        return RunRegistryRecord(**self.dict(exclude=exclude_attr))
+        return RunRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
     def add_artifact_uri(self, name: str, uri: str):
         """
@@ -1034,14 +1033,15 @@ class ProjectCard(ArtifactCard):
 
     project_id: Optional[str] = None
 
-    @validator("project_id", pre=True, always=True)
-    def create_project_id(cls, value, values, **kwargs):
-        return f'{values["name"]}:{values["team"]}'
+    @field_validator("project_id", mode="before")
+    def create_project_id(cls, value, info: ValidationInfo, **kwargs):
+        data = info.data  # type: ignore
+        return f'{data.get("name")}:{data.get("team")}'
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record for a project"""
 
-        return ProjectRegistryRecord(**self.dict())
+        return ProjectRegistryRecord(**self.model_dump())
 
     @property
     def card_type(self) -> str:

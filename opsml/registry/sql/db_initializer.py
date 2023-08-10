@@ -6,7 +6,7 @@ from typing import Any, List
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy import inspect
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.sql_schema import Base
@@ -23,7 +23,7 @@ class DBInitializer:
 
     def registry_tables_exist(self) -> bool:
         """Checks if all tables have been created previously"""
-        table_names = Inspector.from_engine(self.engine).get_table_names()
+        table_names = inspect(self.engine).get_table_names()
         registry_tables = self.registry_tables
         return all(registry_table.value in table_names for registry_table in registry_tables)
 

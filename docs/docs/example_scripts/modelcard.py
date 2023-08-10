@@ -42,7 +42,7 @@ pred_orig = onnx_predictor.predict_with_model(linreg, record)
 print(f"Original: {pred_orig}, Onnx: {pred_onnx}")
 # > Original: [54.4616866], Onnx: [54.4616866]
 
-print(onnx_predictor.input_sig.schema_json())
+print(onnx_predictor.input_sig.model_json_schema())
 
 """
 {

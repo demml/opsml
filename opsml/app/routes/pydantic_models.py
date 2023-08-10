@@ -23,8 +23,8 @@ class DebugResponse(BaseModel):
     url: str
     storage: str
     app_env: str
-    proxy_root: Optional[str]
-    is_proxy: Optional[bool]
+    proxy_root: Optional[str] = None
+    is_proxy: Optional[bool] = None
 
 
 class StorageSettingsResponse(BaseModel):
@@ -56,18 +56,18 @@ class UidExistsResponse(BaseModel):
 
 
 class ListCardRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
-    max_date: Optional[str]
-    limit: Optional[int]
-    tags: Optional[Dict[str, str]]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
+    max_date: Optional[str] = None
+    limit: Optional[int] = None
+    tags: Optional[Dict[str, str]] = None
     table_name: str
 
 
 class ListCardResponse(BaseModel):
-    cards: Optional[List[Dict[str, Any]]]
+    cards: Optional[List[Dict[str, Any]]] = None
 
 
 class AddCardRequest(BaseModel):
@@ -89,10 +89,10 @@ class UpdateCardResponse(BaseModel):
 
 
 class QuerycardRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
     table_name: str
 
 
@@ -114,14 +114,10 @@ class CompareCardRequest(BaseModel):
 
 
 class RegisterModelRequest(BaseModel):
-    name: str = Field(
-        ...,
-        description="Model name (does not include team)",
-        example="tlmd-drive-time",
-    )
+    name: str = Field(..., description="Model name (does not include team)")
     version: str = Field(
         ...,
-        regex="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
+        pattern="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
         description="""
                 Version of model to register in major[.minor[.patch]] format. Valid
                 formats are "1", "1.1", and "1.1.1". If not all components are
@@ -153,10 +149,10 @@ class ListFileResponse(BaseModel):
 
 
 class MetricRequest(BaseModel):
-    name: Optional[str]
-    team: Optional[str]
-    version: Optional[str]
-    uid: Optional[str]
+    name: Optional[str] = None
+    team: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
 
 
 class MetricResponse(BaseModel):

@@ -9,15 +9,13 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, field_validator, ConfigDict
 
 
 class DataHolder(BaseModel):
     """Class for holding data objects"""
 
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.allow
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
 
 
 @dataclass
@@ -27,6 +25,8 @@ class Data:
 
 
 class DataSplit(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     label: str
     column_name: Optional[str] = None
     column_value: Optional[Any] = None
@@ -35,10 +35,7 @@ class DataSplit(BaseModel):
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
 
-    class Config:
-        arbitrary_types_allowed = True
-
-    @validator("indices", pre=True)
+    @field_validator("indices", mode="before")
     def convert_to_list(cls, value):
         """Pre to convert indices to list if not None"""
 
@@ -47,7 +44,7 @@ class DataSplit(BaseModel):
 
         return value
 
-    @validator("inequality", pre=True)
+    @field_validator("inequality", mode="before")
     def trim_whitespace(cls, value):
         """Trims whitespace from inequality signs"""
 
