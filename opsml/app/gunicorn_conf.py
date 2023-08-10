@@ -1,3 +1,4 @@
+# License: MIT
 from gunicorn.arbiter import Arbiter
 from gunicorn.workers.base import Worker
 from prometheus_client import multiprocess
