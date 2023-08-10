@@ -1,5 +1,9 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 """Code for generating Onnx Models"""
+# Copyright (c) Shipt, Inc.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np

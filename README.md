@@ -138,6 +138,7 @@ Types of extras that can be installed:
   poetry add "opsml[gcp_postgres]"
   ```
 
-
 ## Contributing
-- If you'd like to contribute, feel free to create a branch and start adding in your edits. If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
+If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
+
+Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for creating a great foundation to build from!
