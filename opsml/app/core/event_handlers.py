@@ -1,3 +1,5 @@
+# License: MIT
+
 import os
 from typing import Any, Awaitable, Callable, Union
 

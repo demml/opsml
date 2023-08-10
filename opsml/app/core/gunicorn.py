@@ -1,4 +1,7 @@
 # pylint: disable=W0223
+
+# License: MIT
+
 from typing import Dict, Union
 
 from fastapi import FastAPI
