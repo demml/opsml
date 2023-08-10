@@ -42,8 +42,8 @@ class DataCardRegistry(Registry):
             None
         """
 
-        record = DataRegistryRecord(**card.dict())
-        self.update_card_record(card=record.dict())
+        record = DataRegistryRecord(**card.model_dump())
+        self.update_card_record(card=record.model_dump())
 
     @staticmethod
     def validate(registry_name: str):
