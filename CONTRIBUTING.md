@@ -43,7 +43,7 @@ poetry install --all-extras --with dev,dev-lints
 1. Create branch
 2. Add changes
 3. Test locally
-4. Create PR (fill our CLA if you haven't before)
+4. Create PR (fill out CLA if you haven't before)
 5. Get your awesome work reviewed and approved by a maintainer
 6. Merge
 7. Celebrate!
