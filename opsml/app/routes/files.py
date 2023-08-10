@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+# License: MIT
 import os
 
 import streaming_form_data

@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+# License: MIT
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Request, status

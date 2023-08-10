@@ -1,3 +1,5 @@
+# License: MIT
+
 from fastapi import HTTPException, Request
 
 from opsml.app.core.config import config

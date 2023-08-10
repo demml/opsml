@@ -1,3 +1,5 @@
+# License: MIT
+
 import click
 
 from opsml.helpers.logging import ArtifactLogger

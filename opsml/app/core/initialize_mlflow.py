@@ -1,4 +1,5 @@
 # pylint: disable-all
+# License: MIT
 import sys
 
 from mlflow.server.handlers import initialize_backend_stores

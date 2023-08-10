@@ -1,3 +1,4 @@
+# License: MIT
 from fastapi import APIRouter
 
 from opsml.app.routes import cards, data, files, healthcheck, models, settings

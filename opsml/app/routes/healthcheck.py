@@ -1,3 +1,4 @@
+# License: MIT
 from fastapi import APIRouter, HTTPException
 
 from opsml.app.core.config import config

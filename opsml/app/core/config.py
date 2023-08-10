@@ -1,3 +1,5 @@
+# License: MIT
+
 from typing import Optional
 
 import os

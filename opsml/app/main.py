@@ -1,4 +1,5 @@
 # pylint: disable=import-outside-toplevel
+# License: MIT
 from typing import Any, List, Optional
 
 import uvicorn

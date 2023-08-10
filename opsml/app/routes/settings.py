@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+# License: MIT
 from fastapi import APIRouter
 
 from opsml import version

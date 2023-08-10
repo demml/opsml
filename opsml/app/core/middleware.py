@@ -1,3 +1,4 @@
+# License: MIT
 from typing import Any, Awaitable, Callable, Union
 
 import rollbar

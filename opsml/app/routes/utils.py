@@ -1,3 +1,4 @@
+# License: MIT
 from typing import Any, Dict
 
 from streaming_form_data.targets import FileTarget
