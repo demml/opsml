@@ -1,3 +1,5 @@
+# License: MIT
+
 import os
 from enum import Enum
 from typing import Optional

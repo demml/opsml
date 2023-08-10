@@ -1,4 +1,6 @@
 # pylint: disable=import-outside-toplevel
+# License: MIT
+
 from functools import cached_property
 from typing import Any, Callable, Dict, List, Tuple, Union
 

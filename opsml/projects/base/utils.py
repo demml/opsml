@@ -1,4 +1,5 @@
 # pylint: disable=invalid-envvar-value
+# License: MIT
 
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistry

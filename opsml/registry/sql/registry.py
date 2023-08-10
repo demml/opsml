@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+# License: MIT
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union, cast
 
 import pandas as pd
