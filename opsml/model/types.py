@@ -100,29 +100,33 @@ class Feature(BaseModel):
 class DataDict(BaseModel):
     """Datamodel for feature info"""
 
-    model_config = ConfigDict(frozen=False)
-
     data_type: Optional[str] = None
     input_features: Dict[str, Feature]
     output_features: Dict[str, Feature]
+
+    model_config = ConfigDict(frozen=False)
 
 
 class OnnxModelDefinition(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
     model_bytes: bytes = Field(..., description="Onnx model as serialized string")
 
+    model_config = ConfigDict(protected_namespaces=("protect_",))
+
 
 class ApiDataSchemas(BaseModel):
-    model_config = ConfigDict(frozen=False)
     model_data_schema: DataDict  # expected model inputs and outputs
     input_data_schema: Optional[Dict[str, Feature]] = None  # what the api can be fed
 
+    model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
+
 
 class ModelReturn(BaseModel):
-    model_config = ConfigDict(frozen=False)
     model_definition: Optional[OnnxModelDefinition] = None
     api_data_schema: ApiDataSchemas
     model_type: str = "placeholder"
+
+    model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
 
 
 class Base(BaseModel):
@@ -282,6 +286,8 @@ class ModelMetadata(BaseModel):
     model_team: str
     sample_data: dict
     data_schema: ApiDataSchemas
+
+    model_config = ConfigDict(protected_namespaces=("protect_",))
 
 
 class ModelDownloadInfo(BaseModel):

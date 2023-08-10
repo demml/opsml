@@ -4,7 +4,7 @@ import numpy as np
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards.cards import DataCard, DataSplit
+from opsml.registry.cards import DataCard, DataSplit
 from opsml.registry.sql.registry import CardRegistry, CardInfo
 
 card_info = CardInfo(name="test-data", team="opsml", user_email="@opsml.com")

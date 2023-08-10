@@ -8,7 +8,7 @@ from os import path
 from unittest.mock import patch
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
+from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 from sklearn.model_selection import train_test_split

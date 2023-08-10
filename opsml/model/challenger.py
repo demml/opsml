@@ -7,7 +7,7 @@ from pydantic import BaseModel, field_validator, ConfigDict, ValidationInfo
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
-from opsml.registry.cards.cards import ModelCard, RunCard
+from opsml.registry.cards import ModelCard, RunCard
 from opsml.registry.cards.types import CardInfo, Metric
 from opsml.registry.sql.registry import CardRegistries
 
