@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
-from opsml.registry.cards.cards import ArtifactCard, PipelineCard
+from opsml.registry.cards import ArtifactCard, PipelineCard
 from opsml.registry.cards.types import (
     NON_PIPELINE_CARDS,
     CardType,
@@ -200,7 +200,6 @@ class PipelineLoader:
         return cast(PipelineCard, loaded_card)
 
     def _load_cards(self, cards: Dict[str, str], card_type: str):
-
         card_list = [self._registries[card_type].load_card(uid=card_uid) for card_uid in cards]
 
         self._card_deck[card_type] = card_list

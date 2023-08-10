@@ -17,7 +17,7 @@ from opsml.app.routes.pydantic_models import (
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
-from opsml.registry.cards.cards import ModelMetadata
+from opsml.registry.cards.model import ModelMetadata
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
