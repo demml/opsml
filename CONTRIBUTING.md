@@ -15,7 +15,7 @@ Steps:
 ```bash
 make setup
 ```
-or with poetry
+or with poetry directly
 
 ```bash
 poetry install --all-extras --with dev,dev-lints
@@ -23,7 +23,7 @@ poetry install --all-extras --with dev,dev-lints
 
 ### Contributing Changes
 1. Create a new branch for your addition
-   * General naming conventions:
+   * General naming conventions (we're not picky):
       * `/username/<featureName>`: for features
       * `/username/<fixName>`: for general refactoring or bug fixes
 2. Test your changes:
