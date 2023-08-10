@@ -1,3 +1,5 @@
+# License: MIT
+
 from enum import Enum
 
 

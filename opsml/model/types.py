@@ -1,4 +1,5 @@
 # pylint: disable=no-member
+# License: MIT
 
 """Base code for Onnx model conversion"""
 

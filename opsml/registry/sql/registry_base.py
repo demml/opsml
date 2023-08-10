@@ -1,3 +1,4 @@
+# License: MIT
 import uuid
 from contextlib import contextmanager
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast

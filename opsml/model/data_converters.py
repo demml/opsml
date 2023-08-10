@@ -1,5 +1,7 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 """Code for generating Onnx Models"""
+# License: MIT
+
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np

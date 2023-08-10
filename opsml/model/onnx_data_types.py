@@ -1,3 +1,5 @@
+# License: MIT
+
 import warnings
 from typing import List, Tuple, Union
 
