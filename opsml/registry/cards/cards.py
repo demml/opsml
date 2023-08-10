@@ -1,4 +1,7 @@
 # pylint: disable=too-many-lines
+# Copyright (c) Shipt, Inc.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union, cast
