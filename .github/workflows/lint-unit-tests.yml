@@ -31,6 +31,9 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.5.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
           
       #----------------------------------------------
       #       load cached venv if cache exists
@@ -46,10 +49,12 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: make setup.project
+        run: poetry install --all-extras --with dev,dev-lints --no-root
       #----------------------------------------------
       #              run lints
       #----------------------------------------------
       - name: Lints
         run: |
             make lints.ci
+
+  s
