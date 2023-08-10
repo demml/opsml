@@ -39,6 +39,15 @@ poetry install --all-extras --with dev,dev-lints
 7. Get Approval. We'll let you know if there are any changes that are needed. 
 8. Merge your changes into `Opsml`!
 
+### Contributing TLDR
+1. Create branch
+2. Add changes
+3. Test locally
+4. Create PR (fill our CLA if you haven't before)
+5. Get your awesome work reviewed and approved by a maintainer
+6. Merge
+7. Celebrate!
+
 ## Community Guidelines
   1. Be Kind
     - Working with us should be a fun learning opportunity, and we want it to be a good experience for everyone. Please treat each other with respect.  
