@@ -1,0 +1,94 @@
+name: Lint-Unit-Test
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  Lints:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10",]
+        poetry-version: ["1.5.1"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run image
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      - name: Install dependencies
+        run: |
+            make setup.project
+
+      - name: Lints
+        run: |
+            make lints.ci
+
+  Unit-Test:
+    runs-on: ubuntu-latest
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        poetry-version: ["1.5.1"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run image
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      - name: Install dependencies
+        run: |
+          make setup.project
+
+      - name: Unit test
+        run: |
+          make test.unit
+
+
+  #Publish-RC:
+  #  runs-on: ubuntu-latest
+  #  needs: [Unit-Test-py39, Unit-Test-py310, Unit-Test-py311]
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.10"]
+  #      poetry-version: ["1.5.1"]
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v4
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+#
+  #    - name: Run image
+  #      uses: abatilo/actions-poetry@v2
+  #      with:
+  #        poetry-version: ${{ matrix.poetry-version }}
+  #    
+  #    - name: Release
+  #      run: |
+  #        make prep.pre.patch
+  #        make publish
+
+
