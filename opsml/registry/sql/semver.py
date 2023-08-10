@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import List, Optional
 import semver
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 
 class VersionType(str, Enum):
@@ -19,7 +19,7 @@ class CardVersion(BaseModel):
     version_splits: List[str]
     is_full_semver: bool
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_inputs(cls, values):
         """Validates a user-supplied version"""
         version = values.get("version")

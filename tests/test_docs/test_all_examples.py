@@ -131,7 +131,7 @@ def test_challenger_example(mlflow_project: MlflowProject):
         ],
     )
 
-    print([report.dict() for report in reports["mae"]])
+    print([report.model_dump() for report in reports["mae"]])
 
 
 def test_datacard(db_registries):
@@ -331,14 +331,14 @@ def test_modelcard(db_registries):
     onnx_predictor = modelcard.onnx_model()
     record = list(modelcard.sample_input_data[0:1].T.to_dict().values())[0]
 
-    pred_onnx = onnx_predictor.predict(record)["variable"]
+    pred_onnx = onnx_predictor.predict(record)["value"]
     pred_orig = onnx_predictor.predict_with_model(linreg, record)[0][0]
 
     print(f"Original: {pred_orig}, Onnx: {pred_onnx}")
     # > Original: 54.4616866, Onnx: 54.4616866
 
-    print(onnx_predictor.input_sig.schema_json())
-    print(onnx_predictor.output_sig.schema_json())
+    print(onnx_predictor.input_sig.model_json_schema())
+    print(onnx_predictor.output_sig.model_json_schema())
 
     # everything looks good
     model_registry.register_card(modelcard)
