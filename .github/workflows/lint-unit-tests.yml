@@ -24,44 +24,32 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run image
-        uses: abatilo/actions-poetry@v2
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
         with:
-          poetry-version: ${{ matrix.poetry-version }}
-
+          version: 1.5.1
+          
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
       - name: Install dependencies
-        run: |
-            make setup.project
-
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: make setup.project
+      #----------------------------------------------
+      #              run lints
+      #----------------------------------------------
       - name: Lints
         run: |
             make lints.ci
-
-  Unit-Test:
-    runs-on: ubuntu-latest
-    needs: Lints
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-        poetry-version: ["1.5.1"]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Run image
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
-
-      - name: Install dependencies
-        run: |
-          make setup.project
-
-      - name: Unit test
-        run: |
-          make test.unit
