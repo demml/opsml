@@ -1,3 +1,5 @@
+# License: MIT
+
 from opsml.model.types import OnnxModelType
 
 

@@ -1,4 +1,5 @@
 # pylint: disable=[import-outside-toplevel,import-outside-toplevel]
+# License: MIT
 import os
 from functools import cached_property
 from typing import Any

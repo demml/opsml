@@ -1,4 +1,5 @@
 # pylint: disable=[import-outside-toplevel,import-error]
+# License: MIT
 
 import json
 import tempfile

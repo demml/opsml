@@ -1,3 +1,4 @@
+# License: MIT
 import os
 import tempfile
 from enum import Enum

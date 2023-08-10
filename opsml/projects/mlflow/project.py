@@ -1,4 +1,5 @@
 # pylint: disable=invalid-envvar-value
+# License: MIT
 from contextlib import contextmanager
 from typing import Iterator, List, Optional, Union, cast
 

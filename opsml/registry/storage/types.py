@@ -1,3 +1,4 @@
+# License: MIT
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass

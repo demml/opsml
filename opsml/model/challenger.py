@@ -1,3 +1,4 @@
+# License: MIT
 from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, validator

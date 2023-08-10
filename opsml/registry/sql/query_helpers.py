@@ -1,4 +1,5 @@
 # type: ignore
+# License: MIT
 
 import datetime
 from functools import wraps

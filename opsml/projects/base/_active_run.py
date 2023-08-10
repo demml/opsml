@@ -1,4 +1,6 @@
 # pylint: disable=invalid-envvar-value
+# License: MIT
+
 from typing import Any, Dict, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger

@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name,import-outside-toplevel
+# License: MIT
 
 import os
 from typing import Any, List, Union

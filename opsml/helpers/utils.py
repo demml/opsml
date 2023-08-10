@@ -1,4 +1,6 @@
 """Suite of helper objects"""
+# License: MIT
+
 import glob
 import os
 import re

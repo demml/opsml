@@ -1,3 +1,4 @@
+# License: MIT
 from typing import Dict, Optional, Union, cast
 
 from opsml.projects.base._active_run import ActiveRun

@@ -1,4 +1,5 @@
 # pylint: disable=invalid-envvar-value
+# License: MIT
 import os
 from typing import Optional
 

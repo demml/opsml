@@ -1,4 +1,6 @@
 # pylint: disable=no-member,broad-exception-caught
+# License: MIT
+
 from typing import Any, Dict, Optional
 
 import numpy as np

@@ -1,4 +1,6 @@
 # pylint: disable=invalid-envvar-value,disable=protected-access
+# License: MIT
+
 import uuid
 from typing import Optional, cast
 

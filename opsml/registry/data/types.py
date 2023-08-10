@@ -1,3 +1,4 @@
+# License: MIT
 from enum import Enum
 from typing import Dict, Optional, Union, Any
 

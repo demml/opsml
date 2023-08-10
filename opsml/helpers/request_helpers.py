@@ -1,3 +1,5 @@
+# License: MIT
+
 import json as py_json
 import os
 from pathlib import Path

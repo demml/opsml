@@ -1,4 +1,5 @@
 # pylint: disable=import-outside-toplevel,disable=invalid-envvar-value,disable=protected-access
+# License: MIT
 
 
 import os
