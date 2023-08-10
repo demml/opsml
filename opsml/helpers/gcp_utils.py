@@ -11,7 +11,7 @@ import google.auth
 from google.auth.credentials import Credentials
 from google.cloud import storage  # type: ignore
 from google.oauth2 import service_account
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
 
@@ -19,11 +19,9 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 class GcpCreds(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     creds: Optional[Credentials] = None
     project: Optional[str] = None
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class GCPService:

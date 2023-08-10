@@ -150,7 +150,6 @@ def compare_metrics(
         # Get challenger
         registries: CardRegistries = request.app.state.registries
         challenger_card: ModelCard = registries.model.load_card(uid=payload.challenger_uid)
-
         model_challenger = ModelChallenger(challenger=challenger_card)
 
         champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]

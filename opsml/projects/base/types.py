@@ -6,7 +6,7 @@ import os
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from opsml.helpers.types import OpsmlUri
 from opsml.registry.sql.settings import settings
@@ -65,7 +65,7 @@ class ProjectInfo(BaseModel):
         """The project name."""
         return self.name
 
-    @validator("name", "team", pre=True)
+    @field_validator("name", "team", mode="before")
     def identifier_validator(cls, value: Optional[str]) -> Optional[str]:
         """Lowers and strips an identifier.
 
