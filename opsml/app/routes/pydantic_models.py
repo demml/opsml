@@ -3,13 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, model_validator, field_validator
-import datetime
+from pydantic import BaseModel, Field, model_validator
 from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.registry_base import VersionType
 from opsml.registry.sql.semver import CardVersion
-from opsml.registry.sql.records import YEAR_MONTH_DATE
 
 
 class StorageUri(BaseModel):
