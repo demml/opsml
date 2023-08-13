@@ -7,7 +7,7 @@ import uuid
 from enum import Enum
 from typing import Type, Union, cast
 
-from sqlalchemy import BigInteger, Column, String, func
+from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
