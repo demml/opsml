@@ -75,6 +75,7 @@ def list_cards(
     try:
         table_for_registry = payload.table_name.split("_")[1].lower()
         registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        logger.info("Listing cards with request: %s", payload.dict())
 
         cards = registry.list_cards(
             uid=payload.uid,
@@ -121,6 +122,8 @@ def add_card(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
+    logger.info("Creating card: %s", payload.dict())
+
     registry._registry.add_and_commit(card=payload.card)
     return AddCardResponse(registered=True)
 
@@ -138,7 +141,8 @@ def update_card(
     """Updates a specific artifact card"""
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
-
     registry._registry.update_card_record(card=payload.card)
+
+    logger.info("Updated card: %s", payload.dict())
 
     return UpdateCardResponse(updated=True)
