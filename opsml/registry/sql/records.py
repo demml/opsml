@@ -12,8 +12,10 @@ from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
+import datetime
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
+YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 def get_timestamp():
@@ -27,6 +29,7 @@ class SaveRecord(BaseModel):
     uid: Optional[str] = None
     version: str
     tags: Dict[str, str]
+    date: str = datetime.datetime.now().strftime(YEAR_MONTH_DATE)
 
 
 class DataRegistryRecord(SaveRecord):
