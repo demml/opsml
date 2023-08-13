@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import datetime
 import os
 import uuid
 from enum import Enum
@@ -17,7 +16,6 @@ from opsml.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger(__name__)
 
 Base = declarative_base()
-YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 class RegistryTableNames(str, Enum):
@@ -31,7 +29,7 @@ class RegistryTableNames(str, Enum):
 @declarative_mixin
 class BaseMixin:
     uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime(YEAR_MONTH_DATE))
+    date = Column("date", String(512))
     timestamp = Column("timestamp", BigInteger)
     app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(512))
