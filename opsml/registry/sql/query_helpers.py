@@ -17,7 +17,6 @@ from opsml.registry.sql.sql_schema import REGISTRY_TABLES, YEAR_MONTH_DATE, Tabl
 
 logger = ArtifactLogger.get_logger(__name__)
 
-
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 

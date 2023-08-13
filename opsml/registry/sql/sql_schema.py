@@ -20,6 +20,10 @@ Base = declarative_base()
 YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
+def get_date() -> str:
+    return datetime.datetime.now().strftime(YEAR_MONTH_DATE)
+
+
 class RegistryTableNames(str, Enum):
     DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
@@ -31,7 +35,7 @@ class RegistryTableNames(str, Enum):
 @declarative_mixin
 class BaseMixin:
     uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=datetime.date.today().strftime(YEAR_MONTH_DATE))
+    date = Column("date", String(512), default=get_date)
     timestamp = Column("timestamp", BigInteger)
     app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(512))
