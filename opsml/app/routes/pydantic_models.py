@@ -81,13 +81,6 @@ class AddCardRequest(BaseModel):
     card: Dict[str, Any]
     table_name: str
 
-    @field_validator("card", mode="before")
-    def validate_card(cls, card: Dict[str, Any]):
-        today_date = datetime.datetime.now().strftime(YEAR_MONTH_DATE)
-        if card.get("date") != today_date:
-            card["date"] = today_date
-        return card
-
 
 class AddCardResponse(BaseModel):
     registered: bool
