@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import datetime
 import os
 import uuid
 from enum import Enum
@@ -11,17 +10,12 @@ from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
-
+from datetime import date
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
 
 Base = declarative_base()
-YEAR_MONTH_DATE = "%Y-%m-%d"
-
-
-def get_date() -> str:
-    return datetime.datetime.now().strftime(YEAR_MONTH_DATE)
 
 
 class RegistryTableNames(str, Enum):
@@ -35,7 +29,7 @@ class RegistryTableNames(str, Enum):
 @declarative_mixin
 class BaseMixin:
     uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=get_date)
+    date = Column("date", String(512), default=lambda: str(date.today()))
     timestamp = Column("timestamp", BigInteger)
     app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(512))

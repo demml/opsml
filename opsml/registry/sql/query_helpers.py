@@ -13,11 +13,12 @@ from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
-from opsml.registry.sql.sql_schema import REGISTRY_TABLES, YEAR_MONTH_DATE, TableSchema
+from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 
 logger = ArtifactLogger.get_logger(__name__)
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
+YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
 class QueryCreator:
