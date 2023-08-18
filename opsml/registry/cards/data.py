@@ -6,10 +6,8 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
-from pydantic import field_validator, model_validator, ConfigDict
+from pydantic import field_validator
 
-
-from opsml.helpers.exceptions import InvalidDataType
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
     FindPath,
@@ -103,8 +101,6 @@ class DataCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     data_profile: Optional[ProfileReport] = None
     uris: DataCardUris = DataCardUris()
-
-    model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @field_validator("uris", mode="before")
     def check_data(cls, uris, info):
