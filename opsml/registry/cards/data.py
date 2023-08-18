@@ -6,9 +6,10 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
-from pydantic import field_validator
+from pydantic import field_validator, model_validator, ConfigDict
 
 
+from opsml.helpers.exceptions import InvalidDataType
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
     FindPath,
@@ -32,6 +33,8 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client
+
+SUPPORTED_DATA_TYPES = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]
 
 
 class DataCard(ArtifactCard):
@@ -88,7 +91,7 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
+    data: Optional[SUPPORTED_DATA_TYPES] = None
     data_splits: List[DataSplit] = []
     feature_map: Optional[Dict[str, Optional[Any]]] = None
     data_type: Optional[str] = None
@@ -101,6 +104,8 @@ class DataCard(ArtifactCard):
     data_profile: Optional[ProfileReport] = None
     uris: DataCardUris = DataCardUris()
 
+    model_config = ConfigDict(protected_namespaces=("protect_",))
+
     @field_validator("uris", mode="before")
     def check_data(cls, uris, info):
         if isinstance(uris, DataCardUris):
@@ -108,9 +113,15 @@ class DataCard(ArtifactCard):
         else:
             data_uri = uris.get("data_uri")
 
-        if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
+        data = info.data.get("data")
+
+        if data is None and not bool(info.data.get("sql_logic")):
             if data_uri is None:
-                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
+                raise ValueError(
+                    """DataCards require either data, sql_logic or a data_uri.\n
+                    DataCards support polars dataframes, pandas dataframes, numpy arrays and parquet tables.
+                    """
+                )
 
         return uris
 

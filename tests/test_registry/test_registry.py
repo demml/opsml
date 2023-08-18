@@ -771,7 +771,7 @@ def test_datacard_failure():
             additional_info={"input_metadata": 20},
             dependent_vars=[200, "test"],
         )
-    assert ve.match("Data or sql logic must be supplied when no data_uri")
+    assert ve.match("DataCards require either data, sql_logic or a data_uri")
 
 
 def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
@@ -893,6 +893,26 @@ def test_model_registry_with_polars(
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
     assert loaded_card.uris.model_metadata_uri is not None
+
+
+def test_model_registry_sample_input_failure(
+    db_registries: Dict[str, CardRegistry],
+    linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
+):
+    # create data card
+    data_registry: CardRegistry = db_registries["data"]
+    model, data = linear_regression_polars
+
+    with pytest.raises(ValueError) as ve:
+        model_card = ModelCard(
+            trained_model=model,
+            sample_input_data=["fail"],
+            name="polars_model",
+            team="mlops",
+            user_email="mlops.com",
+        )
+
+    assert ve.match("Invalid data type")
 
 
 def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
