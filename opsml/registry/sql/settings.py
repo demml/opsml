@@ -269,7 +269,7 @@ class DefaultSettings(BaseSettings):
     storage_client: StorageClientType
     request_client: Optional[ApiClient] = None
 
-    @model_validator(mode="before")  # type: ignore
+    @model_validator(mode="before")
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:
         """Sets tracking url if it doesn't exist and sets storage
         client-related vars
