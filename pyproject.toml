@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.2.4"
+version = "1.2.5"
 description = "Package for creating, tracking, storing and versioning machine learning artifacts"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 
@@ -31,7 +31,7 @@ ydata-profiling = { git = "https://github.com/thorrester/ydata-profiling.git", b
 #ydata-profiling = "^4.2.0"
 
 # mlflow deps (remove this in the future if we create our own ui. mlflow has a good # of deps)
-mlflow = "^2.3.1"
+mlflow = ">=2.3.1, <=2.4"
 
 # optional dependencies for sql
 psycopg2 = {version="^2.9.6", optional = true}
