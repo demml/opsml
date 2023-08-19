@@ -9,6 +9,7 @@ import polars as pl
 from pydantic import model_validator, field_validator, ConfigDict
 
 
+from opsml.helpers.exceptions import InvalidDataType
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
@@ -126,6 +127,21 @@ class ModelCard(ArtifactCard):
 
         if input_data is None:
             return input_data
+
+        # check type
+        if not isinstance(
+            input_data,
+            (
+                InputDataType.POLARS_DATAFRAME.value,
+                InputDataType.DICT.value,
+                InputDataType.NUMPY_ARRAY.value,
+                InputDataType.PANDAS_DATAFRAME.value,
+            ),
+        ):
+            raise InvalidDataType(
+                f"""Invalid data type {type(input_data)} provided for sample_input_data.
+                Valid types are: pandas/polars dataframe, numpy array, or dictionary of numpy arrays""",
+            )
 
         if not isinstance(input_data, InputDataType.DICT.value):
             if isinstance(input_data, InputDataType.POLARS_DATAFRAME.value):
