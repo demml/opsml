@@ -39,3 +39,7 @@ class NotofTypeDataFrame(ValueError):
 
 class LengthMismatch(ValueError):
     """Non-matching length"""
+
+
+class InvalidDataType(ValueError):
+    """Invalid data type"""

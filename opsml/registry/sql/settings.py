@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, cast
 
 import httpx
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import root_validator
+from pydantic import model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
@@ -269,7 +269,7 @@ class DefaultSettings(BaseSettings):
     storage_client: StorageClientType
     request_client: Optional[ApiClient] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def set_base_settings(cls, env_vars) -> Dict[str, Any]:
         """Sets tracking url if it doesn't exist and sets storage
         client-related vars
