@@ -5,13 +5,12 @@ import polars as pl
 from numpy.typing import NDArray
 import pyarrow as pa
 from os import path
-from unittest.mock import patch
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
-from sklearn.model_selection import train_test_split
+from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
 import uuid
@@ -372,7 +371,7 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
 
     assert records[0]["version"] == "3.0.0"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(VersionError):
         # try registering card where version already exists
         data_card = DataCard(
             data=test_array,
@@ -643,8 +642,7 @@ def test_register_model(
         datacard_uid=data_card.uid,
     )
 
-    model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
-    assert "steven-test/models" in model_card_custom.uris.trained_model_uri
+    model_registry.register_card(card=model_card_custom)
 
     model_card2 = ModelCard(
         trained_model=model,
@@ -771,7 +769,7 @@ def test_datacard_failure():
             additional_info={"input_metadata": 20},
             dependent_vars=[200, "test"],
         )
-    assert ve.match("DataCards require either data, sql_logic or a data_uri")
+    assert ve.match("Data or sql logic must be supplied when no data_uri")
 
 
 def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
@@ -893,26 +891,6 @@ def test_model_registry_with_polars(
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
     assert loaded_card.uris.model_metadata_uri is not None
-
-
-def test_model_registry_sample_input_failure(
-    db_registries: Dict[str, CardRegistry],
-    linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
-):
-    # create data card
-    data_registry: CardRegistry = db_registries["data"]
-    model, data = linear_regression_polars
-
-    with pytest.raises(ValueError) as ve:
-        model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=["fail"],
-            name="polars_model",
-            team="mlops",
-            user_email="mlops.com",
-        )
-
-    assert ve.match("Invalid data type")
 
 
 def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
@@ -1054,3 +1032,74 @@ def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
 
     registry.register_card(card=data_card, version_type="patch")
     assert data_card.version == "4.1.0"
+
+
+def test_version_tags(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry: CardRegistry = db_registries["data"]
+
+    kwargs = {
+        "name": "pre_build",
+        "team": "mlops",
+        "user_email": "opsml.com",
+        "sql_logic": {"test": "select * from test_table"},
+    }
+
+    # create initial prerelease
+    card = DataCard(**kwargs, version="1.0.0")
+    registry.register_card(card=card, version_type="pre", pre_tag="prod")
+    assert card.version == "1.0.0-prod.1"
+
+    # increment pre-release
+    card = DataCard(**kwargs, version="1.0.0")
+    registry.register_card(card=card, version_type="pre", pre_tag="prod")
+    assert card.version == "1.0.0-prod.2"
+
+    # Switch pre-release to major.minor.patch
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, version_type="minor")
+    assert card.version == "1.0.0"
+
+    card = DataCard(**kwargs, version="1.0.0")
+    registry.register_card(card=card, version_type="pre", pre_tag="prod")
+    assert card.version == "1.0.0-prod.3"
+
+    # this should fail (version already exists)
+    card = DataCard(**kwargs, version="1.0.0")
+    with pytest.raises(VersionError) as ve:
+        registry.register_card(card=card, version_type="minor")
+    assert ve.match("Major, minor and patch version combination already exists")
+
+    # add build
+    card = DataCard(**kwargs, version="1.0.0")
+    registry.register_card(card=card, version_type="pre_build", pre_tag="prod")
+    assert card.version == "1.0.0-prod.4+build.1"
+
+    # increment build
+    card = DataCard(**kwargs, version="1.0.0")
+    registry.register_card(card=card, version_type="build")
+    assert card.version == "1.0.0-prod.4+build.2"
+
+    # increment minor
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, version_type="patch")
+    assert card.version == "1.0.1"
+
+    # this should fail
+    with pytest.raises(ValueError) as ve:
+        card = DataCard(**kwargs)
+        registry.register_card(card=card, version_type="pre")
+    assert ve.match("Cannot set pre-release or build tag without a version")
+
+    # this should fail
+    kwargs = {
+        "name": "pre_build",
+        "team": "fail",
+        "user_email": "opsml.com",
+        "sql_logic": {"test": "select * from test_table"},
+    }
+
+    with pytest.raises(ValueError) as ve:
+        card = DataCard(**kwargs, version="1.0.0")
+        registry.register_card(card=card)
+    assert ve.match("Model name already exists for a different team. Try a different name.")

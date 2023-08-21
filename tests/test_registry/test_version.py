@@ -1,6 +1,6 @@
 import pytest
 from opsml.registry.sql.registry_base import VersionType
-from opsml.registry.sql.semver import get_version_to_search, CardVersion
+from opsml.registry.sql.semver import get_version_to_search, CardVersion, SemVerUtils
 from pytest_lazyfixture import lazy_fixture
 
 
@@ -9,7 +9,12 @@ def test_semver(db_registries):
 
     for i in range(0, 10):
         expected_version = f"1.{i+1}.0"
-        new_version = model_registry._registry._increment_version(version=f"1.{i}.0", version_type=VersionType.MINOR)
+        new_version = SemVerUtils.increment_version(
+            version=f"1.{i}.0",
+            version_type=VersionType.MINOR,
+            pre_tag="rc",
+            build_tag="build",
+        )
 
         assert expected_version == new_version
 
