@@ -77,7 +77,6 @@ Setup your local environment:
 
 By default, `opsml` will log artifacts and experiments locally. To change this behavior and log to a remote server, you'll need to set the following environment variables:
 
-```shell
 
 ```shell
 export OPSML_TRACKING_URI=${YOUR_TRACKING_URI}
