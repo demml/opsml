@@ -6,18 +6,25 @@ from enum import Enum
 from typing import List, Optional
 import semver
 from pydantic import BaseModel, model_validator
+from opsml.registry.sql.exceptions import VersionError
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class VersionType(str, Enum):
     MAJOR = "major"
     MINOR = "minor"
     PATCH = "patch"
+    PRE = "pre"
+    BUILD = "build"
+    PRE_BUILD = "pre_build"
 
 
 class CardVersion(BaseModel):
     version: str
-    version_splits: List[str]
-    is_full_semver: bool
+    version_splits: List[str] = []
+    is_full_semver: bool = False
 
     @model_validator(mode="before")
     def validate_inputs(cls, values):
@@ -124,17 +131,207 @@ class CardVersion(BaseModel):
         elif version_type == VersionType.MINOR:  # want to search major
             return str(self.major)
 
+        elif version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
+            return self.valid_version
+
         else:
             return None
 
 
-def sort_semvers(semvers: List[str]) -> List[str]:
-    """Sorts a list of semvers"""
-    sorted_versions = sorted(
-        semvers, key=lambda x: [int(i) if i.isdigit() else i for i in x.replace("-", ".").split(".")]
-    )
-    sorted_versions.reverse()
-    return sorted_versions
+class SemVerUtils:
+    """Class for general semver-related functions"""
+
+    @staticmethod
+    def sort_semvers(versions: List[str]) -> List[str]:
+        """Sorts a list of semvers"""
+        sorted_versions = sorted(
+            versions,
+            key=lambda x: [int(i) if i.isdigit() else i for i in x.replace("+", ".").replace("-", ".").split(".")],
+            reverse=True,
+        )
+
+        return sorted_versions
+
+    @staticmethod
+    def is_release_candidate(version: str) -> str:
+        """Ignores pre-release versions"""
+        ver = semver.VersionInfo.parse(version)
+        if not any([ver.prerelease, ver.build]):
+            return True
+        return False
+
+    @staticmethod
+    def increment_version(
+        version: str,
+        version_type: VersionType,
+        pre_tag: str,
+        build_tag: str,
+    ) -> str:
+        """
+        Increments a version based on version type
+
+        Args:
+            version:
+                Current version
+            version_type:
+                Type of version increment.
+            pre_tag:
+                Pre-release tag
+            build_tag:
+                Build tag
+
+        Raises:
+            ValueError:
+                unknown version_type
+
+        Returns:
+            New version
+        """
+        ver: semver.VersionInfo = semver.VersionInfo.parse(version)
+
+        # Set major, minor, patch
+        if version_type == VersionType.MAJOR:
+            return str(ver.bump_major())
+        if version_type == VersionType.MINOR:
+            return str(ver.bump_minor())
+        if version_type == VersionType.PATCH:
+            return str(ver.bump_patch())
+
+        # Set pre-release
+        if version_type == VersionType.PRE:
+            return str(ver.bump_prerelease(token=pre_tag))
+
+        # Set build
+        if version_type == VersionType.BUILD:
+            return str(ver.bump_build(token=build_tag))
+
+        if version_type == VersionType.PRE_BUILD:
+            ver = ver.bump_prerelease(token=pre_tag)
+            ver = ver.bump_build(token=build_tag)
+
+            return str(ver)
+
+        raise ValueError(f"Unknown version_type: {version_type}")
+
+    @staticmethod
+    def add_tags(
+        version: str,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+    ):
+        if pre_tag is not None:
+            version = f"{version}-{pre_tag}"
+        if build_tag is not None:
+            version = f"{version}+{build_tag}"
+
+        return version
+
+
+class SemVerRegistryValidator:
+    """Class for obtaining the correct registry version"""
+
+    def __init__(
+        self,
+        name: str,
+        version_type: VersionType,
+        pre_tag: str,
+        build_tag: str,
+        version: Optional[CardVersion] = None,
+    ) -> None:
+        """Instantiate SemverValidator
+
+        Args:
+            name:
+                name of the artifact
+            version_type:
+                type of version increment
+            version:
+                version to use
+            pre_tag:
+                pre-release tag
+            build_tag:
+                build tag
+
+        Returns:
+            None
+        """
+        self.version = version
+        self._version_to_search = None
+        self.final_version = None
+        self.version_type = version_type
+        self.name = name
+        self.pre_tag = pre_tag
+        self.build_tag = build_tag
+
+    @property
+    def version_to_search(self) -> Optional[str]:
+        """Parses version and returns version to search for in the registry"""
+        if self.version is not None:
+            return self.version.get_version_to_search(version_type=self.version_type)
+        return self._version_to_search
+
+    def _set_version_from_existing(self, versions: List[str]) -> str:
+        """Search existing versions to find the correct version to use
+
+        Args:
+            versions:
+                list of existing versions
+
+        Returns:
+            str: version to use
+        """
+        version = versions[0]
+        recent_ver = semver.VersionInfo.parse(version)
+        # first need to check if increment is mmp
+        if self.version_type in [VersionType.MAJOR, VersionType.MINOR, VersionType.PATCH]:
+            # check if most recent version is a pre-release or build
+            if any([recent_ver.prerelease, recent_ver.build]):
+                version = str(recent_ver.finalize_version())
+                try:
+                    # if all version are pre-release or build use finalized version
+                    # if not, increment version
+                    for ver in versions:
+                        parsed_ver = semver.VersionInfo.parse(ver)
+                        if not any([parsed_ver.prerelease or parsed_ver.build]):
+                            raise VersionError("Major, minor and patch version combination already exists")
+                    return version
+                except VersionError:
+                    logger.info("Version already exists. Incrementing version")
+
+        return SemVerUtils.increment_version(
+            version=version,
+            version_type=self.version_type,
+            pre_tag=self.pre_tag,
+            build_tag=self.build_tag,
+        )
+
+    def set_version(self, versions: List[str]) -> str:
+        """Sets the correct version to use for incrementing and adding the the registry
+
+        Args:
+            version:
+                version to set
+
+        Returns:
+            str: version to use
+        """
+        if bool(versions):
+            return self._set_version_from_existing(versions=versions)
+        else:
+            final_version = None
+            if self.version is not None:
+                final_version = CardVersion.finalize_partial_version(version=self.version.valid_version)
+
+            version = final_version or "1.0.0"
+
+            if self.version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
+                return SemVerUtils.increment_version(
+                    version=version,
+                    version_type=self.version_type,
+                    pre_tag=self.pre_tag,
+                    build_tag=self.build_tag,
+                )
+            return version
 
 
 class SemVerSymbols(str, Enum):
