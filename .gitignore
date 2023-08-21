@@ -122,3 +122,4 @@ opsml_artifacts
 opsml/deploy/seldon/api_test.txt
 docs/site/
 expressions.txt
+.DS_Store
