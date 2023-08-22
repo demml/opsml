@@ -157,8 +157,8 @@ class SemVerUtils:
         """Ignores pre-release versions"""
         ver = semver.VersionInfo.parse(version)
         if not any([ver.prerelease, ver.build]):
-            return True
-        return False
+            return False
+        return True
 
     @staticmethod
     def increment_version(
