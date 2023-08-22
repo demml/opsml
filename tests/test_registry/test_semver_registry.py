@@ -86,7 +86,7 @@ def test_build_tag_official_version(db_registries: Dict[str, CardRegistry]):
     registry: CardRegistry = db_registries["data"]
 
     kwargs = {
-        "name": "pre_build",
+        "name": "build_tag",
         "team": "mlops",
         "user_email": "opsml.com",
         "sql_logic": {"test": "select * from test_table"},
@@ -95,17 +95,23 @@ def test_build_tag_official_version(db_registries: Dict[str, CardRegistry]):
     # create card with minor increment with build tag
     card = DataCard(**kwargs)
     registry.register_card(card=card, build_tag="git.1a5d783h3784")
-    assert card.version == "1.1.0+git.1a5d783h3784"
+    assert card.version == "1.0.0+git.1a5d783h3784"
 
     # patch increment
     card = DataCard(**kwargs)
     registry.register_card(card=card, build_tag="git.1a5d783h3784", version_type="patch")
-    assert card.version == "1.1.1+git.1a5d783h3784"
+    assert card.version == "1.0.1+git.1a5d783h3784"
 
     # minor increment
     card = DataCard(**kwargs)
     registry.register_card(card=card, build_tag="git.1a5d783h3784")
-    assert card.version == "1.2.0+git.1a5d783h3784"
+    assert card.version == "1.1.0+git.1a5d783h3784"
+
+    # create release candidate for next major
+    card = DataCard(**kwargs)
+    card.version = "2.0.0"
+    registry.register_card(card=card, version_type="pre", pre_tag="rc")
+    assert card.version == "2.0.0-rc.1"
 
     # major increment
     card = DataCard(**kwargs)
@@ -116,3 +122,7 @@ def test_build_tag_official_version(db_registries: Dict[str, CardRegistry]):
     card = DataCard(**kwargs)
     registry.register_card(card=card, version_type="major")
     assert card.version == "3.0.0"
+
+    # make sure git tags are in list cards
+    versions = [card["version"] for card in registry.list_cards(name="build_tag", ignore_release_candidates=True)]
+    assert len(versions) == 5  # 6 including one release candidate

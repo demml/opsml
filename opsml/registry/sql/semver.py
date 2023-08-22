@@ -317,7 +317,7 @@ class SemVerRegistryValidator:
                             raise VersionError("Major, minor and patch version combination already exists")
                     return version
                 except VersionError:
-                    logger.info("Version already exists. Incrementing version")
+                    logger.info("Major, minor and patch version combination already exists")
 
         while version in versions:
             version = SemVerUtils.increment_version(
