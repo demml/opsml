@@ -1,27 +1,17 @@
 # Installation
 
-Before installing, you'll need to set up your Artifactory credentials.
+### Poetry
 
-**Request credentials for Artifactory in Slack `#ask-info-sec`**
-
-Once you have your credentials, set the following variables.
-```bash
-export 
-export ***REMOVED***
-```
-
-If using poetry, you must also add the following in your `pyproject.toml`
-```toml
-[[tool.poetry.source]]
-name = ""
-url = ""
-default = true
-```
-
-Next, add opsml to your environment
 ```bash
 poetry add opsml
 ```
+
+### Pip
+
+```bash
+pip install opsml
+```
+
 ## Optional Dependencies
 `Opsml` is designed to work with a variety of 3rd-party integrations depending on your use-case.
 

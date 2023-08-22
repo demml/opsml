@@ -43,3 +43,7 @@ class LengthMismatch(ValueError):
 
 class InvalidDataType(ValueError):
     """Invalid data type"""
+
+
+class VersionError(ValueError):
+    """Invalid version"""

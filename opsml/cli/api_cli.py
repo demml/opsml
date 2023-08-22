@@ -130,6 +130,7 @@ def list_cards(
     tag_value: str = typer.Option(default=None),
     max_date: str = typer.Option(default=None),
     limit: int = typer.Option(default=None),
+    ignore_release_candidates: bool = typer.Option(default=False),
 ):
     """
     Lists cards from a specific registry in table format
@@ -184,6 +185,7 @@ def list_cards(
         "max_date": max_date,
         "tags": tags,
         "table_name": registry_name,
+        "ignore_release_candidates": ignore_release_candidates,
     }
     cards = api_client.list_cards(payload=payload)
 

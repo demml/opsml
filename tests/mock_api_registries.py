@@ -95,11 +95,7 @@ class ModelCardRegistry(Registry):
         if model_card.datacard_uid is not None:
             self._validate_datacard_uid(uid=model_card.datacard_uid)
 
-        return super().register_card(
-            card=card,
-            version_type=version_type,
-            save_path=save_path,
-        )
+        return super().register_card(card=card, version_type=version_type)
 
     @staticmethod
     def validate(registry_name: str):
@@ -182,6 +178,7 @@ class CardRegistry:
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         as_dataframe: bool = False,
+        ignore_release_candidates: bool = False,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -227,6 +224,7 @@ class CardRegistry:
             max_date=max_date,
             limit=limit,
             tags=tags,
+            ignore_release_candidates=ignore_release_candidates,
         )
 
         if as_dataframe:
@@ -283,7 +281,6 @@ class CardRegistry:
         self._registry.register_card(
             card=card,
             version_type=version_type,
-            save_path=save_path,
         )
 
     def update_card(

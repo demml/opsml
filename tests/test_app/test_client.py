@@ -247,8 +247,8 @@ def test_register_model(
         datacard_uid=data_card.uid,
     )
 
-    model_registry.register_card(card=model_card_custom, save_path="steven-test/models")
-    assert "steven-test/models" in model_card_custom.uris.trained_model_uri
+    model_registry.register_card(card=model_card_custom)
+    assert "pipeline-model" in model_card_custom.uris.trained_model_uri
 
     model_card2 = ModelCard(
         trained_model=model,

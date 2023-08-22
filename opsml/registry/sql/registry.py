@@ -48,7 +48,8 @@ class ModelCardRegistry(Registry):
         self,
         card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
-        save_path: Optional[str] = None,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
     ) -> None:
         """
         Adds new record to registry.
@@ -59,11 +60,10 @@ class ModelCardRegistry(Registry):
             version_type:
                 Version type for increment. Options are "major", "minor" and
                 "patch". Defaults to "minor"
-            save_path:
-                Blob path to save card artifacts to. SHOULD NOT include the base
-                prefix (e.g. "gs://my_bucket") - this prefix is already inferred
-                using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI" env
-                variables. In addition, save_path should specify a directory.
+            pre_tag:
+                pre-release tag
+            build_tag:
+                build tag
         """
 
         model_card = cast(ModelCard, card)
@@ -77,7 +77,8 @@ class ModelCardRegistry(Registry):
         return super().register_card(
             card=card,
             version_type=version_type,
-            save_path=save_path,
+            pre_tag=pre_tag,
+            build_tag=build_tag,
         )
 
     @staticmethod
@@ -161,6 +162,7 @@ class CardRegistry:
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         as_dataframe: bool = False,
+        ignore_release_candidates: bool = False,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -210,6 +212,7 @@ class CardRegistry:
             max_date=max_date,
             limit=limit,
             tags=tags,
+            ignore_release_candidates=ignore_release_candidates,
         )
 
         if as_dataframe:
@@ -224,6 +227,7 @@ class CardRegistry:
         tags: Optional[Dict[str, str]] = None,
         version: Optional[str] = None,
         info: Optional[CardInfo] = None,
+        ignore_release_candidates: bool = False,
     ) -> ArtifactCard:
         """Loads a specific card
 
@@ -252,13 +256,20 @@ class CardRegistry:
             version = version or info.version
             tags = tags or info.tags
 
-        return self._registry.load_card(uid=uid, name=name, version=version, tags=tags)
+        return self._registry.load_card(
+            uid=uid,
+            name=name,
+            version=version,
+            tags=tags,
+            ignore_release_candidates=ignore_release_candidates,
+        )
 
     def register_card(
         self,
         card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
-        save_path: Optional[str] = None,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
     ) -> None:
         """
         Adds new record to registry.
@@ -269,18 +280,17 @@ class CardRegistry:
             version_type:
                 Version type for increment. Options are "major", "minor" and
                 "patch". Defaults to "minor".
-            save_path:
-                Blob path to save card artifacts too. This path SHOULD NOT
-                include the base prefix (e.g. "gs://my_bucket") - this prefix is
-                already inferred using either "OPSML_TRACKING_URI" or
-                "OPSML_STORAGE_URI" env variables. In addition, save_path should
-                specify a directory.
+            pre_tag:
+                pre-release tag to add to card version
+            build_tag:
+                build tag to add to card version
         """
 
         self._registry.register_card(
             card=card,
             version_type=version_type,
-            save_path=save_path,
+            pre_tag=pre_tag,
+            build_tag=build_tag,
         )
 
     def update_card(self, card: ArtifactCard) -> None:
