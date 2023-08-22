@@ -38,9 +38,9 @@ registry.register_card(card=card, version_type="pre", pre_tag="foo")
 # 1.0.0-foo.1
 ```
 
-4. Registering a card with the same information (above) will increment the pre-release and/or build tag.
-5. Incrementing a pre-release tag resets the build tag counter.
-6. If a card is registered with a `major`, `minor` or `patch` increment **and** there are only pre-release or build candidates associated with the respective `major.minor.patch` the version will be incremented to the corresponding `valid` version.
+5. Registering a card with the same information (above) will increment the pre-release and/or build tag.
+6. Incrementing a pre-release tag resets the build tag counter.
+7. If a card is registered with a `major`, `minor` or `patch` increment **and** there are only pre-release or build candidates associated with the respective `major.minor.patch` the version will be incremented to the corresponding `valid` version.
 
 ```python
 
@@ -95,6 +95,11 @@ registry.register_card(card=card, version_type="build") # build increment -> 1.0
 
 card = DataCard(**kwargs, version="1.0.0")
 registry.register_card(card=card, version_type="pre_build") # pre-release and build increment -> 1.0.0-rc.1+build.1
+
+
+# Create a minor increment and associate it with a build tag (git commit hash)
+card = DataCard(**kwargs)
+registry.register_card(card=card, build_tag="git.1a5d783h3784") # minor increment with build tag -> 1.1.0+git.1a5d783h3784
 ```
 
 ### Terminology:
