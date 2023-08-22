@@ -143,22 +143,43 @@ class SemVerUtils:
 
     @staticmethod
     def sort_semvers(versions: List[str]) -> List[str]:
-        """Sorts a list of semvers"""
-        sorted_versions = sorted(
-            versions,
-            key=lambda x: [int(i) if i.isdigit() else i for i in x.replace("+", ".").replace("-", ".").split(".")],
-            reverse=True,
-        )
+        """Implements bubble sort for semvers
 
-        return sorted_versions
+        Args:
+            versions:
+                list of versions to sort
+
+        Returns:
+            sorted list of versions with highest version first
+        """
+
+        n = len(versions)
+
+        for i in range(n):
+            already_sorted = True
+
+            for j in range(n - i - 1):
+                j_version = semver.VersionInfo.parse(versions[j])
+                j1_version = semver.VersionInfo.parse(versions[j + 1])
+
+                # use semver comparison logic
+                if j_version > j1_version:
+                    # swap
+                    versions[j], versions[j + 1] = versions[j + 1], versions[j]
+
+                    already_sorted = False
+
+            if already_sorted:
+                break
+
+        versions.reverse()
+        return versions
 
     @staticmethod
     def is_release_candidate(version: str) -> bool:
         """Ignores pre-release versions"""
         ver = semver.VersionInfo.parse(version)
-        if not any([ver.prerelease, ver.build]):
-            return False
-        return True
+        return bool(ver.prerelease)
 
     @staticmethod
     def increment_version(
@@ -218,7 +239,7 @@ class SemVerUtils:
         version: str,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-    ):
+    ) -> str:
         if pre_tag is not None:
             version = f"{version}-{pre_tag}"
         if build_tag is not None:
@@ -298,12 +319,15 @@ class SemVerRegistryValidator:
                 except VersionError:
                     logger.info("Version already exists. Incrementing version")
 
-        return SemVerUtils.increment_version(
-            version=version,
-            version_type=self.version_type,
-            pre_tag=self.pre_tag,
-            build_tag=self.build_tag,
-        )
+        while version in versions:
+            version = SemVerUtils.increment_version(
+                version=version,
+                version_type=self.version_type,
+                pre_tag=self.pre_tag,
+                build_tag=self.build_tag,
+            )
+
+        return version
 
     def set_version(self, versions: List[str]) -> str:
         """Sets the correct version to use for incrementing and adding the the registry

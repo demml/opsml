@@ -164,9 +164,8 @@ class SQLRegistryBase:
                     raise ValueError("""Model name already exists for a different team. Try a different name.""")
 
                 for record in records:
-                    ver = VersionInfo.parse(record["version"])
-                    if not any([ver.prerelease or ver.build]):
-                        raise VersionError("Major, minor and patch version combination already exists")
+                    if record["version"] == version.version:
+                        raise VersionError("Version combination already exists. %s" % version.version)
 
     def _validate_pre_build_version(self, version: Optional[str] = None) -> CardVersion:
         if version is None:
@@ -196,11 +195,25 @@ class SQLRegistryBase:
 
         card_version = None
 
+        # validate pre-release and/or build tag
         if version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
             card_version = self._validate_pre_build_version(version=card.version)
 
-        # if DS specifies version
-        elif card.version is not None:
+        # if DS specifies version and not release candidate
+        if card.version is not None and version_type not in [VersionType.PRE, VersionType.PRE_BUILD]:
+            # build tags are allowed with "official" versions
+            if version_type == VersionType.BUILD:
+                # check whether DS-supplied version has a build tag already
+                if VersionInfo.parse(card.version).build is None:
+                    card.version = self.set_version(
+                        name=card.name,
+                        supplied_version=card_version,
+                        team=card.team,
+                        version_type=version_type,
+                        pre_tag=pre_tag,
+                        build_tag=build_tag,
+                    )
+
             card_version = CardVersion(version=card.version)
             if card_version.is_full_semver:
                 self._validate_semver(name=card.name, team=card.team, version=card_version)
