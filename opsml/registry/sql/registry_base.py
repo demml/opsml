@@ -3,13 +3,12 @@
 # LICENSE file in the root directory of this source tree.
 import uuid
 from contextlib import contextmanager
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Iterator
 
 import pandas as pd
-import semver
-from sqlalchemy.orm import Session
+from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
-
+from semver import VersionInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes
 from opsml.helpers.utils import clean_string
@@ -23,9 +22,10 @@ from opsml.registry.cards import (
 )
 from opsml.registry.sql.query_helpers import QueryCreator, log_card_change  # type: ignore
 from opsml.registry.sql.records import LoadedRecordType, load_record
-from opsml.registry.sql.semver import SemVerSymbols, sort_semvers, CardVersion, VersionType
+from opsml.registry.sql.semver import SemVerSymbols, CardVersion, VersionType, SemVerUtils, SemVerRegistryValidator
 from opsml.registry.sql.settings import settings
 from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
+from opsml.helpers.exceptions import VersionError
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
@@ -90,38 +90,14 @@ class SQLRegistryBase:
 
         self._table = TableSchema.get_table(table_name=table_name)
 
-    def _increment_version(self, version: str, version_type: VersionType) -> str:
-        """
-        Increments a version based on version type
-
-        Args:
-            version:
-                Current version
-            version_type:
-                Type of version increment.
-
-        Raises:
-            ValueError:
-                unknown version_type
-
-        Returns:
-            New version
-        """
-        ver: semver.VersionInfo = semver.VersionInfo.parse(version)
-        if version_type == VersionType.MAJOR:
-            return str(ver.bump_major())
-        if version_type == VersionType.MINOR:
-            return str(ver.bump_minor())
-        if version_type == VersionType.PATCH:
-            return str(ver.bump_patch())
-        raise ValueError(f"Unknown version_type: {version_type}")
-
     def set_version(
         self,
         name: str,
         team: str,
+        pre_tag: str,
+        build_tag: str,
         version_type: VersionType,
-        partial_version: Optional[CardVersion] = None,
+        supplied_version: Optional[CardVersion] = None,
     ) -> str:
         raise NotImplementedError
 
@@ -155,11 +131,10 @@ class SQLRegistryBase:
             """
             )
 
-    def _set_artifact_storage_spec(self, card: ArtifactCard, save_path: Optional[str] = None) -> None:
+    def _set_artifact_storage_spec(self, card: ArtifactCard) -> None:
         """Creates artifact storage info to associate with artifacts"""
 
-        if save_path is None:
-            save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
+        save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
 
         artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
         self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
@@ -168,7 +143,7 @@ class SQLRegistryBase:
         """Updates storage metadata"""
         self.storage_client.storage_spec = storage_specdata
 
-    def _validate_semver(self, name: str, team: str, version: str) -> CardVersion:
+    def _validate_semver(self, name: str, team: str, version: CardVersion) -> None:
         """
         Validates version if version is manually passed to Card
 
@@ -182,14 +157,40 @@ class SQLRegistryBase:
         Returns:
             `CardVersion`
         """
-        card_version = CardVersion(version=version)  # type: ignore
-        if card_version.is_full_semver:
-            records = self.list_cards(name=name, team=team, version=card_version.valid_version)
+        if version.is_full_semver:
+            records = self.list_cards(name=name, version=version.valid_version)
             if len(records) > 0:
-                raise ValueError("Major, minor and patch version combination already exists")
+                if records[0]["team"] != team:
+                    raise ValueError("""Model name already exists for a different team. Try a different name.""")
+
+                for record in records:
+                    ver = VersionInfo.parse(record["version"])
+
+                    if ver.prerelease is None and SemVerUtils.is_release_candidate(version.version):
+                        raise VersionError(
+                            "Cannot create a release candidate for an existing official version. %s" % version.version
+                        )
+
+                    if record["version"] == version.version:
+                        raise VersionError("Version combination already exists. %s" % version.version)
+
+    def _validate_pre_build_version(self, version: Optional[str] = None) -> CardVersion:
+        if version is None:
+            raise ValueError("Cannot set pre-release or build tag without a version")
+        card_version = CardVersion(version=version)
+
+        if not card_version.is_full_semver:
+            raise ValueError("Cannot set pre-release or build tag without a full major.minor.patch specified")
+
         return card_version
 
-    def _set_card_version(self, card: ArtifactCard, version_type: VersionType):
+    def _set_card_version(
+        self,
+        card: ArtifactCard,
+        version_type: VersionType,
+        pre_tag: str,
+        build_tag: str,
+    ):
         """Sets a given card's version and uid
 
         Args:
@@ -200,22 +201,48 @@ class SQLRegistryBase:
         """
 
         card_version = None
-        if card.version is not None:
-            card_version = self._validate_semver(
-                name=card.name,
-                team=card.team,
-                version=card.version,
-            )
 
+        # validate pre-release and/or build tag
+        if version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
+            card_version = self._validate_pre_build_version(version=card.version)
+
+        # if DS specifies version and not release candidate
+        if card.version is not None and version_type not in [VersionType.PRE, VersionType.PRE_BUILD]:
+            # build tags are allowed with "official" versions
+            if version_type == VersionType.BUILD:
+                # check whether DS-supplied version has a build tag already
+                if VersionInfo.parse(card.version).build is None:
+                    card.version = self.set_version(
+                        name=card.name,
+                        supplied_version=card_version,
+                        team=card.team,
+                        version_type=version_type,
+                        pre_tag=pre_tag,
+                        build_tag=build_tag,
+                    )
+
+            card_version = CardVersion(version=card.version)
             if card_version.is_full_semver:
+                self._validate_semver(name=card.name, team=card.team, version=card_version)
                 return None
 
         version = self.set_version(
             name=card.name,
-            partial_version=card_version,
+            supplied_version=card_version,
             team=card.team,
             version_type=version_type,
+            pre_tag=pre_tag,
+            build_tag=build_tag,
         )
+
+        # for instances where tag is explicitly provided for major, minor, patch
+        if version_type in [VersionType.MAJOR, VersionType.MINOR, VersionType.PATCH]:
+            if len(pre_tag.split(".")) == 2:
+                version = f"{version}-{pre_tag}"
+
+            if len(build_tag.split(".")) == 2:
+                version = f"{version}+{build_tag}"
+
         card.version = version
 
         return None
@@ -249,7 +276,8 @@ class SQLRegistryBase:
         self,
         card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
-        save_path: Optional[str] = None,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
     ) -> None:
         """
         Adds new record to registry.
@@ -259,17 +287,17 @@ class SQLRegistryBase:
                 Card to register
             version_type:
                 Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
-            save_path:
-                Blob path to save card artifacts too.
-                This path SHOULD NOT include the base prefix (e.g. "gs://my_bucket")
-                - this prefix is already inferred using either "OPSML_TRACKING_URI" or "OPSML_STORAGE_URI"
-                env variables. In addition, save_path should specify a directory.
         """
 
         self._validate_card_type(card=card)
-        self._set_card_version(card=card, version_type=version_type)
+        self._set_card_version(
+            card=card,
+            version_type=version_type,
+            pre_tag=pre_tag,
+            build_tag=build_tag,
+        )
         self._set_card_uid(card=card)
-        self._set_artifact_storage_spec(card=card, save_path=save_path)
+        self._set_artifact_storage_spec(card=card)
         self._create_registry_record(card=card)
 
     def update_card(self, card: ArtifactCard) -> None:
@@ -293,6 +321,7 @@ class SQLRegistryBase:
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
+        ignore_release_candidates: bool = False,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
@@ -301,7 +330,7 @@ class SQLRegistryBase:
 
     def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         versions = [record["version"] for record in records]
-        sorted_versions = sort_semvers(versions)
+        sorted_versions = SemVerUtils.sort_semvers(versions)
 
         sorted_records = []
         for version in sorted_versions:
@@ -317,6 +346,7 @@ class SQLRegistryBase:
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         uid: Optional[str] = None,
+        ignore_release_candidates: bool = False,
     ) -> ArtifactCard:
         cleaned_name = clean_string(name)
 
@@ -326,6 +356,7 @@ class SQLRegistryBase:
             uid=uid,
             limit=1,
             tags=tags,
+            ignore_release_candidates=ignore_release_candidates,
         )
 
         loaded_record = load_record(
@@ -348,8 +379,8 @@ class ServerRegistry(SQLRegistryBase):
     def _get_engine(self):
         return settings.connection_client.get_engine()
 
-    @contextmanager
-    def session(self) -> Any:
+    @contextmanager  # type: ignore
+    def session(self) -> Iterator[Session]:
         engine = self._get_engine()
 
         with Session(engine) as sess:  # type: ignore
@@ -359,12 +390,40 @@ class ServerRegistry(SQLRegistryBase):
         engine = self._get_engine()
         self._table.__table__.create(bind=engine, checkfirst=True)
 
+    def _get_versions_from_db(self, name: str, team: str, version_to_search: Optional[str] = None) -> List[str]:
+        """Query versions from Card Database
+
+        Args:
+            name:
+                Card name
+            team:
+                Card team
+            version_to_search:
+                Version to search for
+        Returns:
+            List of versions
+        """
+        query = query_creator.create_version_query(table=self._table, name=name, version=version_to_search)
+
+        with self.session() as sess:
+            results = sess.scalars(query).all()  # type: ignore[attr-defined]
+
+        if bool(results):
+            if results[0].team != team:
+                raise ValueError("""Model name already exists for a different team. Try a different name.""")
+
+            versions = [result.version for result in results]
+            return SemVerUtils.sort_semvers(versions=versions)
+        return []
+
     def set_version(
         self,
         name: str,
         team: str,
+        pre_tag: str,
+        build_tag: str,
         version_type: VersionType,
-        partial_version: Optional[CardVersion] = None,
+        supplied_version: Optional[CardVersion] = None,
     ) -> str:
         """
         Sets a version following semantic version standards
@@ -381,33 +440,21 @@ class ServerRegistry(SQLRegistryBase):
             Version string
         """
 
-        version_to_search = None
-        final_version = None
-        if partial_version is not None:
-            version_to_search = partial_version.get_version_to_search(version_type=version_type)
+        ver_validator = SemVerRegistryValidator(
+            version_type=version_type,
+            version=supplied_version,
+            name=name,
+            pre_tag=pre_tag,
+            build_tag=build_tag,
+        )
 
-        query = query_creator.create_version_query(table=self._table, name=name, version=version_to_search)
+        versions = self._get_versions_from_db(
+            name=name,
+            team=team,
+            version_to_search=ver_validator.version_to_search,
+        )
 
-        with self.session() as sess:
-            results = sess.scalars(query).all()
-
-        if bool(results):
-            # check if current model team is same as requesting team
-            if results[0].team != team:
-                raise ValueError("""Model name already exists for a different team. Try a different name.""")
-
-            versions = [result.version for result in results]
-            sorted_versions = sort_semvers(versions)
-
-            return self._increment_version(
-                version=sorted_versions[0],
-                version_type=version_type,
-            )
-
-        if partial_version is not None:
-            final_version = CardVersion.finalize_partial_version(version=partial_version.valid_version)
-
-        return final_version or "1.0.0"
+        return ver_validator.set_version(versions=versions)
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -479,6 +526,7 @@ class ServerRegistry(SQLRegistryBase):
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
+        ignore_release_candidates: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -521,9 +569,18 @@ class ServerRegistry(SQLRegistryBase):
         sorted_records = self._get_sql_records(query=query)
 
         if version is not None:
+            if ignore_release_candidates:
+                sorted_records = [
+                    record for record in sorted_records if not SemVerUtils.is_release_candidate(record["version"])
+                ]
             if any(symbol in version for symbol in [SemVerSymbols.CARET, SemVerSymbols.TILDE]):
                 # return top version
                 return sorted_records[:1]
+
+        if version is None and ignore_release_candidates:
+            sorted_records = [
+                record for record in sorted_records if not SemVerUtils.is_release_candidate(record["version"])
+            ]
 
         return sorted_records[:limit]
 
@@ -533,7 +590,7 @@ class ServerRegistry(SQLRegistryBase):
             table_to_check=table_to_check,
         )
         with self.session() as sess:
-            result = sess.scalars(query).first()
+            result = sess.scalars(query).first()  # type: ignore[attr-defined]
         return bool(result)
 
     @staticmethod
@@ -563,11 +620,13 @@ class ClientRegistry(SQLRegistryBase):
         self,
         name: str,
         team: str,
+        pre_tag: str,
+        build_tag: str,
         version_type: VersionType = VersionType.MINOR,
-        partial_version: Optional[CardVersion] = None,
+        supplied_version: Optional[CardVersion] = None,
     ) -> str:
-        if partial_version is not None:
-            version_to_send = partial_version.dict()
+        if supplied_version is not None:
+            version_to_send = supplied_version.model_dump()
         else:
             version_to_send = None
 
@@ -579,6 +638,8 @@ class ClientRegistry(SQLRegistryBase):
                 "version": version_to_send,
                 "version_type": version_type,
                 "table_name": self.table_name,
+                "pre_tag": pre_tag,
+                "build_tag": build_tag,
             },
         )
 
@@ -593,6 +654,7 @@ class ClientRegistry(SQLRegistryBase):
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
+        ignore_release_candidates: bool = False,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -627,6 +689,7 @@ class ClientRegistry(SQLRegistryBase):
                 "limit": limit,
                 "tags": tags,
                 "table_name": self.table_name,
+                "ignore_release_candidates": ignore_release_candidates,
             },
         )
 

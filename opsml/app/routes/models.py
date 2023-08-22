@@ -53,7 +53,14 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     """
 
     # get model metadata
-    metadata = post_model_metadata(request, CardRequest(name=payload.name, version=payload.version))
+    metadata = post_model_metadata(
+        request,
+        CardRequest(
+            name=payload.name,
+            version=payload.version,
+            ignore_release_candidate=True,
+        ),
+    )
 
     try:
         registrar: ModelRegistrar = request.app.state.model_registrar
@@ -93,6 +100,7 @@ def post_model_metadata(
             name=payload.name,
             version=payload.version,
             uid=payload.uid,
+            ignore_release_candidates=payload.ignore_release_candidate,
         )
 
     except IndexError as exc:

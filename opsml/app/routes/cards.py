@@ -58,8 +58,10 @@ def set_version(
     version = registry._registry.set_version(
         name=payload.name,
         team=payload.team,
-        partial_version=payload.version,
+        supplied_version=payload.version,
         version_type=payload.version_type,
+        pre_tag=payload.pre_tag,
+        build_tag=payload.build_tag,
     )
 
     return VersionResponse(version=version)
@@ -86,6 +88,7 @@ def list_cards(
             limit=payload.limit,
             tags=payload.tags,
             as_dataframe=False,
+            ignore_release_candidates=payload.ignore_release_candidates,
         )
 
         if config.is_proxy:

@@ -59,43 +59,34 @@
 
   - **Automation**: Automated processes including Onnx model conversion, api generation from Onnx model, data schema inference, code conversion and packaging for production.
 
-  - **Pipelines**: Coming soon. The abiliy to build pipelines (workflows) which are tracked and stored with OpsML.
-
 ## Installation:
 
-```bash
-export 
-export 
-```
-
-If using poetry, you must also add the following in your `pyproject.toml`
-```toml
-[[tool.poetry.source]]
-name = ""
-url = ""
-default = true
-```
-
-Next, add opsml to your project's poetry environment.
+### Poetry
 
 ```bash
 poetry add opsml
 ```
 
-Setup your local environment:
+### Pip
 
-By default, `opsml` will log artifacts and experiments locally. Configure your machine to use the staging environment by setting the `OPSML_TRACKING_URI` environment variable:
-
-```shell
-OPSML_TRACKING_URI=
+```bash
+pip install opsml
 ```
 
+Setup your local environment:
+
+By default, `opsml` will log artifacts and experiments locally. To change this behavior and log to a remote server, you'll need to set the following environment variables:
+
+
+```shell
+export OPSML_TRACKING_URI=${YOUR_TRACKING_URI}
+```
 
 ## Usage
 
-Now that `opsml` is installed in your poetry environment, you're all ready to start using it!
+Now that `opsml` is installed, you're ready to start using it!
 
-It's time to point you to the  official [Documentation Website](https://didactic-bassoon-l5emw7m.pages.github.io/) for more information on how to use `opsml`
+It's time to point you to the official [Documentation Website](https://didactic-bassoon-l5emw7m.pages.github.io/) for more information on how to use `opsml`
 
 
 ## Advanced Installation Scenarios

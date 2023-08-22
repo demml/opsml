@@ -31,7 +31,7 @@ Shipt has staging and production environments. Staging is read/write. Production
 ## Run Initial Python Script
 
 ```bash
-export OPSML_TRACKING_URI=
+export OPSML_TRACKING_URI=${YOUR_TRACKING_URI}
 ```
 
 ```python

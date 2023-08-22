@@ -1,5 +1,7 @@
 # pylint: disable=too-many-lines
-
+# Copyright (c) Shipt, Inc.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
@@ -7,6 +9,7 @@ import pandas as pd
 import polars as pl
 from pyarrow import Table
 from pydantic import field_validator
+
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
@@ -31,8 +34,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client
-
-SUPPORTED_DATA_TYPES = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]
 
 
 class DataCard(ArtifactCard):
@@ -89,7 +90,7 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[SUPPORTED_DATA_TYPES] = None
+    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
     data_splits: List[DataSplit] = []
     feature_map: Optional[Dict[str, Optional[Any]]] = None
     data_type: Optional[str] = None
@@ -109,15 +110,9 @@ class DataCard(ArtifactCard):
         else:
             data_uri = uris.get("data_uri")
 
-        data = info.data.get("data")
-
-        if data is None and not bool(info.data.get("sql_logic")):
+        if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
             if data_uri is None:
-                raise ValueError(
-                    """DataCards require either data, sql_logic or a data_uri.\n
-                    DataCards support polars dataframes, pandas dataframes, numpy arrays and parquet tables.
-                    """
-                )
+                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
         return uris
 
