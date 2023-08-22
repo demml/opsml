@@ -95,11 +95,7 @@ class ModelCardRegistry(Registry):
         if model_card.datacard_uid is not None:
             self._validate_datacard_uid(uid=model_card.datacard_uid)
 
-        return super().register_card(
-            card=card,
-            version_type=version_type,
-            save_path=save_path,
-        )
+        return super().register_card(card=card, version_type=version_type)
 
     @staticmethod
     def validate(registry_name: str):
@@ -285,7 +281,6 @@ class CardRegistry:
         self._registry.register_card(
             card=card,
             version_type=version_type,
-            save_path=save_path,
         )
 
     def update_card(
