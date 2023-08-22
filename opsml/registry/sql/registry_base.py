@@ -164,6 +164,13 @@ class SQLRegistryBase:
                     raise ValueError("""Model name already exists for a different team. Try a different name.""")
 
                 for record in records:
+                    ver = VersionInfo.parse(record["version"])
+
+                    if ver.prerelease is None and SemVerUtils.is_release_candidate(version.version):
+                        raise VersionError(
+                            "Cannot create a release candidate for an existing official version. %s" % version.version
+                        )
+
                     if record["version"] == version.version:
                         raise VersionError("Version combination already exists. %s" % version.version)
 
