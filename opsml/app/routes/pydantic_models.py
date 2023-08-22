@@ -39,6 +39,8 @@ class VersionRequest(BaseModel):
     version: Optional[CardVersion] = None
     version_type: VersionType
     table_name: str
+    pre_tag: str
+    build_tag: str
 
 
 class VersionResponse(BaseModel):
@@ -62,6 +64,7 @@ class ListCardRequest(BaseModel):
     max_date: Optional[str] = None
     limit: Optional[int] = None
     tags: Optional[Dict[str, str]] = None
+    ignore_release_candidates: bool = False
     table_name: str
 
     @model_validator(mode="before")
@@ -109,6 +112,7 @@ class CardRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
     uid: Optional[str] = None
+    ignore_release_candidate: bool = False
 
 
 class CompareCardRequest(BaseModel):

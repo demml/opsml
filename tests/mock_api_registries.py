@@ -182,6 +182,7 @@ class CardRegistry:
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         as_dataframe: bool = False,
+        ignore_release_candidates: bool = False,
     ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
@@ -227,6 +228,7 @@ class CardRegistry:
             max_date=max_date,
             limit=limit,
             tags=tags,
+            ignore_release_candidates=ignore_release_candidates,
         )
 
         if as_dataframe:
