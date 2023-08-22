@@ -1,6 +1,6 @@
 # Versioning
 
-All `ArtifactCard`s follow a Semver version format (`major.minor.patch`). By default, a `minor` increment is used whenever a card is registered. If a version is provided, it overrides the default version type.
+All `ArtifactCards` follow a Semver version format (`major.minor.patch`). By default, a `minor` increment is used whenever a card is registered. If a version is provided, it overrides the default version type.
 
 Cards can also be versioned as a release candidate and/or attached with a build tag (you can use default or provide your own tags when registering a card).
 - Release candidate -> `major.minor.patch-rc.{#}` -> `1.0.0-rc.1` -> version_type: "pre"
@@ -30,6 +30,7 @@ model_registry.register_card(
 1. A full `major.minor.patch` version must be specified in the card.
 2. `version_type` must be either `pre`, `build` or `pre_build`.
 3. Supply custom tags to either `pre_tag` or `build_tag` if you prefer to override defaults.
+4. `build-tags` are allowed to be attached to "official" `major.minor.patch` versions. Thus, it's possible to have `1.0.0` and `1.0.0+build.1` as valid versions in the registry. In this scenario `1.0.0+build.1` would be given precedence when listing or loading a card.
 
 ```python
 card = ModelCard(**kwargs, version="1.0.0")
