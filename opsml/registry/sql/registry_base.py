@@ -626,6 +626,7 @@ class ClientRegistry(SQLRegistryBase):
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
+        ignore_release_candidates: bool = False,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -660,6 +661,7 @@ class ClientRegistry(SQLRegistryBase):
                 "limit": limit,
                 "tags": tags,
                 "table_name": self.table_name,
+                "ignore_release_candidates": ignore_release_candidates,
             },
         )
 
