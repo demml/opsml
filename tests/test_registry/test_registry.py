@@ -10,6 +10,7 @@ from pytest_lazyfixture import lazy_fixture
 from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
 from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.sql.semver import SemVerUtils
 from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
@@ -1103,3 +1104,12 @@ def test_version_tags(db_registries: Dict[str, CardRegistry]):
         card = DataCard(**kwargs, version="1.0.0")
         registry.register_card(card=card)
     assert ve.match("Model name already exists for a different team. Try a different name.")
+
+
+def test_list_no_release_candidate(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry: CardRegistry = db_registries["data"]
+    cards = registry.list_cards(name="pre_build", ignore_release_candidates=True)
+
+    for card in cards:
+        assert SemVerUtils.is_release_candidate(card["version"]) is False
