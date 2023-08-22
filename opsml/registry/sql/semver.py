@@ -306,14 +306,14 @@ class SemVerRegistryValidator:
         # first need to check if increment is mmp
         if self.version_type in [VersionType.MAJOR, VersionType.MINOR, VersionType.PATCH]:
             # check if most recent version is a pre-release or build
-            if any([recent_ver.prerelease, recent_ver.build]):
+            if recent_ver.prerelease is not None:
                 version = str(recent_ver.finalize_version())
                 try:
-                    # if all version are pre-release or build use finalized version
+                    # if all versions are pre-release use finalized version
                     # if not, increment version
                     for ver in versions:
                         parsed_ver = semver.VersionInfo.parse(ver)
-                        if not any([parsed_ver.prerelease or parsed_ver.build]):
+                        if parsed_ver.prerelease is None:
                             raise VersionError("Major, minor and patch version combination already exists")
                     return version
                 except VersionError:
@@ -355,6 +355,7 @@ class SemVerRegistryValidator:
                     pre_tag=self.pre_tag,
                     build_tag=self.build_tag,
                 )
+
             return version
 
 

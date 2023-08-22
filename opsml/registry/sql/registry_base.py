@@ -228,6 +228,14 @@ class SQLRegistryBase:
             build_tag=build_tag,
         )
 
+        # for instances where tag is explicitly provided for major, minor, patch
+        if version_type in [VersionType.MAJOR, VersionType.MINOR, VersionType.PATCH]:
+            if len(pre_tag.split(".")) == 2:
+                version = f"{version}-{pre_tag}"
+
+            if len(build_tag.split(".")) == 2:
+                version = f"{version}+{build_tag}"
+
         card.version = version
 
         return None

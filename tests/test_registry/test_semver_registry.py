@@ -79,3 +79,40 @@ def test_version_tags(db_registries: Dict[str, CardRegistry]):
         card = DataCard(**kwargs, version="1.0.0")
         registry.register_card(card=card)
     assert ve.match("Model name already exists for a different team. Try a different name.")
+
+
+def test_build_tag_official_version(db_registries: Dict[str, CardRegistry]):
+    # create data card
+    registry: CardRegistry = db_registries["data"]
+
+    kwargs = {
+        "name": "pre_build",
+        "team": "mlops",
+        "user_email": "opsml.com",
+        "sql_logic": {"test": "select * from test_table"},
+    }
+
+    # create card with minor increment with build tag
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, build_tag="git.1a5d783h3784")
+    assert card.version == "1.1.0+git.1a5d783h3784"
+
+    # patch increment
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, build_tag="git.1a5d783h3784", version_type="patch")
+    assert card.version == "1.1.1+git.1a5d783h3784"
+
+    # minor increment
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, build_tag="git.1a5d783h3784")
+    assert card.version == "1.2.0+git.1a5d783h3784"
+
+    # major increment
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, build_tag="git.1a5d783h3784", version_type="major")
+    assert card.version == "2.0.0+git.1a5d783h3784"
+
+    # major increment
+    card = DataCard(**kwargs)
+    registry.register_card(card=card, version_type="major")
+    assert card.version == "3.0.0"
