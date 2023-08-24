@@ -76,7 +76,6 @@ poetry.sub.pre.tag:
 prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
 
 publish:
-	poetry config repositories. 
 	poetry publish --repository  --build
 
 publish.docs:
