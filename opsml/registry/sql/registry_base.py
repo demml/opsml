@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
@@ -540,7 +540,7 @@ class ClientRegistry(SQLRegistryBase):
 
     def _get_session(self) -> ApiClient:
         """Gets the requests session for connecting to the opsml api"""
-        return settings.request_client
+        return cast(ApiClient, settings.request_client)
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         data = self._session.post_request(
