@@ -1,16 +1,16 @@
-# type: ignore
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
 import datetime
 from functools import wraps
-from typing import Any, Dict, Iterable, Optional, Type, Union, cast
-
+from typing import Any, Dict, Iterable, Optional, Type, Union, cast, List
+from contextlib import _GeneratorContextManager, contextmanager
 from sqlalchemy import select
+from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
-
+from opsml.registry.sql.settings import settings
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
 from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
@@ -21,8 +21,16 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
-class QueryCreator:
-    def create_version_query(
+class QueryEngine:
+    def __init__(self):
+        self.engine = settings.connection_client.get_engine()
+
+    @contextmanager  # type: ignore
+    def session(self) -> _GeneratorContextManager[Session]:
+        with Session(self.engine) as sess:  # type: ignore
+            yield sess
+
+    def _create_version_query(
         self,
         table: Type[REGISTRY_TABLES],
         name: str,
@@ -47,8 +55,33 @@ class QueryCreator:
 
         return table_select.order_by(table.timestamp.desc(), table.version.desc()).limit(20)  # type: ignore
 
-    # TODO: refactor
-    def record_from_table_query(
+    def get_versions(
+        self,
+        table: Type[REGISTRY_TABLES],
+        name: str,
+        version: Optional[str] = None,
+    ) -> List[Any]:
+        """Return all versions of a card
+
+        Args:
+            table:
+                Registry table to query
+            name:
+                Name of the card
+            version:
+                Version of the card
+
+        Returns:
+            List of all versions of a card
+        """
+        query = self._create_version_query(table=table, name=name, version=version)
+
+        with self.session() as sess:
+            results = sess.scalars(query).all()  # type: ignore[attr-defined]
+
+        return results
+
+    def _records_from_table_query(
         self,
         table: Type[REGISTRY_TABLES],
         uid: Optional[str] = None,
@@ -110,6 +143,45 @@ class QueryCreator:
 
         return query
 
+    def _parse_records(self, records: List[Any]) -> List[Dict[str, Any]]:
+        """
+        Helper for parsing sql results
+
+        Args:
+            results:
+                Returned object sql query
+
+        Returns:
+            List of dictionaries
+        """
+        record_list: List[Dict[str, Any]] = []
+
+        for row in records:
+            result_dict = row[0].__dict__
+            result_dict.pop("_sa_instance_state")
+            record_list.append(result_dict)
+
+        return record_list
+
+    def get_records_from_table(
+        self,
+        table: Type[REGISTRY_TABLES],
+        uid: Optional[str] = None,
+        name: Optional[str] = None,
+        team: Optional[str] = None,
+        version: Optional[str] = None,
+        max_date: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
+    ) -> List[Dict[str, Any]]:
+        query = self._records_from_table_query(
+            table=table, uid=uid, name=name, team=team, version=version, max_date=max_date, tags=tags
+        )
+
+        with self.session() as sess:
+            results = sess.execute(query).all()
+
+        return self._parse_records(results)
+
     def _get_epoch_time_to_search(self, max_date: str):
         """
         Creates timestamp that represents the max epoch time to limit records to
@@ -131,12 +203,50 @@ class QueryCreator:
         sql_table = cast(SqlTableType, table)
         return cast(Select, select(sql_table))
 
-    def uid_exists_query(self, uid: str, table_to_check: str) -> Select:
+    def _uid_exists_query(self, uid: str, table_to_check: str) -> Select:
         table = TableSchema.get_table(table_name=table_to_check)
         query = self._get_base_select_query(table=table.uid)  # type: ignore
         query = query.filter(table.uid == uid)
 
         return cast(Select, query)
+
+    def get_uid(self, uid: str, table_to_check: str) -> List[Any]:
+        query = self._uid_exists_query(uid=uid, table_to_check=table_to_check)
+
+        with self.session() as sess:
+            results = sess.execute(query).first()
+
+        return results
+
+    def add_and_commit_card(
+        self,
+        table: Type[REGISTRY_TABLES],
+        card: Dict[str, Any],
+    ) -> None:
+        """Add card record to table
+
+        Args:
+            table_record:
+                table record to add
+            card:
+                card to add
+        """
+        sql_record = table(**card)
+
+        with self.session() as sess:
+            sess.add(sql_record)
+            sess.commit()
+
+    def update_card_record(
+        self,
+        table: Type[REGISTRY_TABLES],
+        card: Dict[str, Any],
+    ):
+        record_uid = cast(str, card.get("uid"))
+        with self.session() as sess:
+            query = sess.query(table).filter(table.uid == record_uid)
+            query.update(card)
+            sess.commit()
 
 
 def log_card_change(func):

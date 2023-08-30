@@ -454,15 +454,14 @@ def mock_local_engine():
 def db_registries():
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml.registry.sql.registry import CardRegistry
+    from opsml.registry.sql.query_helpers import QueryEngine
 
     model_registry = CardRegistry(registry_name="model")
     data_registry = CardRegistry(registry_name="data")
     run_registry = CardRegistry(registry_name="run")
     pipeline_registry = CardRegistry(registry_name="pipeline")
 
-    engine = model_registry._registry._get_engine()
-
-    initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
     # tables are created when settings are called.
     # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
     # need to do it manually
