@@ -283,8 +283,8 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         return test_client
 
     with patch("httpx.Client", callable_api):
-        from opsml.registry.sql.settings import settings
-        from opsml.registry.sql.query_helpers import QueryEngine
+        from opsml.registry.sql.base.settings import settings
+        from opsml.registry.sql.base.query_engine import QueryEngine
 
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
@@ -312,7 +312,7 @@ def mlflow_storage_client():
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
-    from opsml.registry.sql.query_helpers import QueryEngine
+    from opsml.registry.sql.base.query_engine import QueryEngine
 
     info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
@@ -348,7 +348,7 @@ def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
 @pytest.fixture(scope="function")
 def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
     with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
-        from opsml.registry.sql.settings import settings
+        from opsml.registry.sql.base.settings import settings
 
         client_mock.return_value = settings.request_client
         yield client_mock
@@ -455,7 +455,7 @@ def mock_local_engine():
 def db_registries():
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml.registry.sql.registry import CardRegistry
-    from opsml.registry.sql.query_helpers import QueryEngine
+    from opsml.registry.sql.base.query_engine import QueryEngine
 
     model_registry = CardRegistry(registry_name="model")
     data_registry = CardRegistry(registry_name="data")

@@ -16,9 +16,11 @@ from opsml.registry.sql.records import (
     PipelineRegistryRecord,
     ModelRegistryRecord,
 )
-from opsml.registry.cards.types import CardInfo, CardType
-from opsml.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
+from opsml.registry.cards.types import CardInfo
+from opsml.registry.sql.base.client import ClientRegistry
+from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
