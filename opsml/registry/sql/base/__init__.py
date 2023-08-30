@@ -2,8 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# This code is located in this file and not __init__ in order to avoid circular imports of the settings singleton
-
 from opsml.registry.utils.settings import settings
 
 
