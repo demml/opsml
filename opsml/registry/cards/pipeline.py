@@ -14,7 +14,7 @@ from opsml.registry.sql.records import (
     PipelineRegistryRecord,
     RegistryRecord,
 )
-from opsml.registry.sql.settings import settings
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client

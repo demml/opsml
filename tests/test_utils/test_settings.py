@@ -1,11 +1,10 @@
-from opsml.registry.sql.settings import DefaultSettings
+from opsml.registry.utils.settings import DefaultSettings
 from opsml.registry.storage.types import GcsStorageClientSettings, StorageClientSettings, ApiStorageClientSettings
 from opsml.helpers.gcp_utils import GcpCredsSetter
 from opsml.registry.storage.storage_system import StorageSystem
 
 
 def test_default_local_settings():
-
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
     local_client = settings.connection_client
@@ -13,7 +12,6 @@ def test_default_local_settings():
 
 
 def test_default_http_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
-
     monkeypatch.setenv(name="OPSML_TRACKING_URI", value="https://fake_url.com")
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
@@ -61,6 +59,6 @@ def test_api_storage(api_registries):
     """Tests settings for presence of ApiStorageClient when using api"""
 
     settings = DefaultSettings()
-    from opsml.registry.sql.settings import settings
+    from opsml.registry.utils.settings import settings
 
     assert settings.storage_client.__class__.__name__ == "ApiStorageClient"
