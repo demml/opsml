@@ -13,9 +13,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.model.registrar import ModelRegistrar
 from opsml.registry.sql.registry import CardRegistries
 from opsml.registry.sql.sql_schema import RegistryTableNames
-from opsml.registry.sql.base.registry_base import (
-    settings,  # importing settings from already initialized registry base
-)
+from opsml.registry.utils.settings import settings
 from opsml.registry.sql.db_initializer import DBInitializer
 
 logger = ArtifactLogger.get_logger(__name__)
