@@ -2,15 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from contextlib import contextmanager
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Iterator
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
-from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.expression import ColumnElement, FromClause, Select
+from sqlalchemy.sql.expression import ColumnElement, FromClause
 from semver import VersionInfo
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import api_routes
+from opsml.helpers.request_helpers import api_routes, ApiClient
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards import (
@@ -20,7 +18,7 @@ from opsml.registry.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.sql.query_helpers import QueryCreator, log_card_change  # type: ignore
+from opsml.registry.sql.query_helpers import QueryEngine, log_card_change  # type: ignore
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import SemVerSymbols, CardVersion, VersionType, SemVerUtils, SemVerRegistryValidator
 from opsml.registry.sql.settings import settings
@@ -43,7 +41,7 @@ if settings.request_client is None:
     )
     initializer.initialize()
 
-query_creator = QueryCreator()
+query_engine = QueryEngine()
 
 table_name_card_map = {
     RegistryTableNames.DATA.value: DataCard,
@@ -84,11 +82,16 @@ class SQLRegistryBase:
             table_name:
                 CardRegistry table name
         """
-        self.table_name = table_name
-        self.supported_card = f"{table_name.split('_')[1]}Card"
         self.storage_client = settings.storage_client
-
         self._table = TableSchema.get_table(table_name=table_name)
+
+    @property
+    def table_name(self) -> str:
+        return self._table.__tablename__
+
+    @property
+    def supported_card(self) -> str:
+        return f"{self.table_name.split('_')[1]}Card"
 
     def set_version(
         self,
@@ -374,21 +377,12 @@ class SQLRegistryBase:
 class ServerRegistry(SQLRegistryBase):
     def __init__(self, table_name: str):
         super().__init__(table_name)
-        self.table_name = self._table.__tablename__
-
-    def _get_engine(self):
-        return settings.connection_client.get_engine()
-
-    @contextmanager  # type: ignore
-    def session(self) -> Iterator[Session]:
-        engine = self._get_engine()
-
-        with Session(engine) as sess:  # type: ignore
-            yield sess
 
     def _create_table_if_not_exists(self):
-        engine = self._get_engine()
-        self._table.__table__.create(bind=engine, checkfirst=True)
+        self._table.__table__.create(
+            bind=query_engine.engine,
+            checkfirst=True,
+        )
 
     def _get_versions_from_db(self, name: str, team: str, version_to_search: Optional[str] = None) -> List[str]:
         """Query versions from Card Database
@@ -403,10 +397,7 @@ class ServerRegistry(SQLRegistryBase):
         Returns:
             List of versions
         """
-        query = query_creator.create_version_query(table=self._table, name=name, version=version_to_search)
-
-        with self.session() as sess:
-            results = sess.scalars(query).all()  # type: ignore[attr-defined]
+        results = query_engine.get_versions(table=self._table, name=name, version=version_to_search)
 
         if bool(results):
             if results[0].team != team:
@@ -458,64 +449,13 @@ class ServerRegistry(SQLRegistryBase):
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        sql_record = self._table(**card)
-
-        with self.session() as sess:
-            sess.add(sql_record)
-            sess.commit()
-
+        query_engine.add_and_commit_card(table=self._table, card=card)
         return card, "registered"
 
     @log_card_change
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        record_uid = cast(str, card.get("uid"))
-
-        with self.session() as sess:
-            query = sess.query(self._table).filter(self._table.uid == record_uid)
-            query.update(card)
-            sess.commit()
-
+        query_engine.update_card_record(table=self._table, card=card)
         return card, "updated"
-
-    def _parse_sql_results(self, results: Any) -> List[Dict[str, Any]]:
-        """
-        Helper for parsing sql results
-
-        Args:
-            results:
-                Returned object sql query
-
-        Returns:
-            List of dictionaries
-        """
-        records: List[Dict[str, Any]] = []
-
-        for row in results:
-            result_dict = row[0].__dict__
-            result_dict.pop("_sa_instance_state")
-            records.append(result_dict)
-
-        return records
-
-    def _get_sql_records(self, query: Select) -> List[Dict[str, Any]]:
-        """
-        Gets sql records from database given a query
-
-        Args:
-            query:
-                sql query
-        Returns:
-            List of records
-        """
-
-        with self.session() as sess:
-            results = sess.execute(query).all()
-
-        records = self._parse_sql_results(results=results)
-
-        sorted_records = self._sort_by_version(records=records)
-
-        return sorted_records
 
     def list_cards(
         self,
@@ -556,7 +496,7 @@ class ServerRegistry(SQLRegistryBase):
         cleaned_name = clean_string(name)
         cleaned_team = clean_string(team)
 
-        query = query_creator.record_from_table_query(
+        records = query_engine.get_records_from_table(
             table=self._table,
             name=cleaned_name,
             team=cleaned_team,
@@ -566,31 +506,25 @@ class ServerRegistry(SQLRegistryBase):
             tags=tags,
         )
 
-        sorted_records = self._get_sql_records(query=query)
+        records = self._sort_by_version(records=records)
 
         if version is not None:
             if ignore_release_candidates:
-                sorted_records = [
-                    record for record in sorted_records if not SemVerUtils.is_release_candidate(record["version"])
-                ]
+                records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
             if any(symbol in version for symbol in [SemVerSymbols.CARET, SemVerSymbols.TILDE]):
                 # return top version
-                return sorted_records[:1]
+                return records[:1]
 
         if version is None and ignore_release_candidates:
-            sorted_records = [
-                record for record in sorted_records if not SemVerUtils.is_release_candidate(record["version"])
-            ]
+            records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
 
-        return sorted_records[:limit]
+        return records[:limit]
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
-        query = query_creator.uid_exists_query(
+        result = query_engine.get_uid(
             uid=uid,
             table_to_check=table_to_check,
         )
-        with self.session() as sess:
-            result = sess.scalars(query).first()  # type: ignore[attr-defined]
         return bool(result)
 
     @staticmethod
@@ -604,7 +538,7 @@ class ClientRegistry(SQLRegistryBase):
 
         self._session = self._get_session()
 
-    def _get_session(self):
+    def _get_session(self) -> ApiClient:
         """Gets the requests session for connecting to the opsml api"""
         return settings.request_client
 
@@ -643,7 +577,7 @@ class ClientRegistry(SQLRegistryBase):
             },
         )
 
-        return data.get("version")
+        return str(data["version"])
 
     def list_cards(
         self,
