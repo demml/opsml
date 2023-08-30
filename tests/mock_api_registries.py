@@ -6,19 +6,15 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import (
     ArtifactCard,
     DataCard,
-    RunCard,
     ModelCard,
-    PipelineCard,
 )
-from opsml.registry.sql.records import (
-    DataRegistryRecord,
-    RunRegistryRecord,
-    PipelineRegistryRecord,
-    ModelRegistryRecord,
-)
-from opsml.registry.cards.types import CardInfo, CardType
-from opsml.registry.sql.registry_base import ClientRegistry, SQLRegistryBase, VersionType
+from opsml.registry.sql.records import DataRegistryRecord
+from opsml.registry.cards.types import CardInfo
+from opsml.registry.sql.base.client import ClientRegistry
+from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.base.registry_base import SQLRegistryBase
+
 
 logger = ArtifactLogger.get_logger(__name__)
 
@@ -58,7 +54,7 @@ class ModelCardRegistry(Registry):
         table_to_check = self._get_data_table_name()
         exists = self.check_uid(uid=uid, table_to_check=table_to_check)
         if not exists:
-            raise ValueError("""ModelCard must be assoicated with a valid DataCard uid""")
+            raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
     def _has_datacard_uid(self, uid: Optional[str]) -> bool:
         return bool(uid)

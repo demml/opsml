@@ -1,6 +1,5 @@
 import pytest
-from opsml.registry.sql.registry_base import VersionType
-from opsml.registry.sql.semver import get_version_to_search, CardVersion, SemVerUtils
+from opsml.registry.sql.semver import get_version_to_search, CardVersion, SemVerUtils, VersionType
 from pytest_lazyfixture import lazy_fixture
 
 

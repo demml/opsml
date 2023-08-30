@@ -283,13 +283,13 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         return test_client
 
     with patch("httpx.Client", callable_api):
-        from opsml.registry.sql.settings import settings
+        from opsml.registry.utils.settings import settings
+        from opsml.registry.sql.base.query_engine import QueryEngine
 
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
 
-        engine = registries.model._registry._get_engine()
-        initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+        initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
         initializer.initialize()
 
         registries.data = ClientCardRegistry(registry_name="data")
@@ -312,13 +312,14 @@ def mlflow_storage_client():
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
+    from opsml.registry.sql.base.query_engine import QueryEngine
+
     info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
 
     api_card_registries = CardRegistries()
 
-    engine = api_card_registries.model._registry._get_engine()
-    initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
     initializer.initialize()
 
     api_card_registries.data = ClientCardRegistry(registry_name="data")
@@ -347,7 +348,7 @@ def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
 @pytest.fixture(scope="function")
 def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
     with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
-        from opsml.registry.sql.settings import settings
+        from opsml.registry.utils.settings import settings
 
         client_mock.return_value = settings.request_client
         yield client_mock
@@ -454,15 +455,14 @@ def mock_local_engine():
 def db_registries():
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml.registry.sql.registry import CardRegistry
+    from opsml.registry.sql.base.query_engine import QueryEngine
 
     model_registry = CardRegistry(registry_name="model")
     data_registry = CardRegistry(registry_name="data")
     run_registry = CardRegistry(registry_name="run")
     pipeline_registry = CardRegistry(registry_name="pipeline")
 
-    engine = model_registry._registry._get_engine()
-
-    initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
     # tables are created when settings are called.
     # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
     # need to do it manually

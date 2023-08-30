@@ -14,7 +14,7 @@ from opsml.projects.base.utils import (
     verify_runcard_project_match,
 )
 from opsml.registry import CardRegistries, CardRegistry, RunCard
-from opsml.registry.sql.settings import settings
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
 

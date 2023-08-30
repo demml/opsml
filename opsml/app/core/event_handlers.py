@@ -12,14 +12,19 @@ from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.model.registrar import ModelRegistrar
 from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.sql.registry_base import (
-    settings,  # importing settings from already initialized registry base
-)
-from opsml.registry.sql.registry_base import initializer
+from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.utils.settings import settings
+from opsml.registry.sql.db_initializer import DBInitializer
 
 logger = ArtifactLogger.get_logger(__name__)
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
+
+# set up db initializer
+initializer = DBInitializer(
+    engine=settings.connection_client.get_engine(),
+    registry_tables=list(RegistryTableNames),
+)
 
 
 def _init_rollbar():

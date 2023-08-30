@@ -79,9 +79,8 @@ def test_register_data(
     df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         registry._registry.table_name = "no_table"
-        registry.list_cards()
 
 
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
