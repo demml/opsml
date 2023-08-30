@@ -312,13 +312,14 @@ def mlflow_storage_client():
 
 
 def mock_mlflow_project(info: ProjectInfo) -> MlflowProject:
+    from opsml.registry.sql.query_helpers import QueryEngine
+
     info.tracking_uri = SQL_PATH
     mlflow_exp: MlflowProject = get_project(info)
 
     api_card_registries = CardRegistries()
 
-    engine = api_card_registries.model._registry._get_engine()
-    initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
     initializer.initialize()
 
     api_card_registries.data = ClientCardRegistry(registry_name="data")
