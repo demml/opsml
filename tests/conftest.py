@@ -283,7 +283,7 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         return test_client
 
     with patch("httpx.Client", callable_api):
-        from opsml.registry.sql.base.settings import settings
+        from opsml.registry.utils.settings import settings
         from opsml.registry.sql.base.query_engine import QueryEngine
 
         settings.opsml_tracking_uri = "http://testserver"
@@ -348,7 +348,7 @@ def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
 @pytest.fixture(scope="function")
 def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
     with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
-        from opsml.registry.sql.base.settings import settings
+        from opsml.registry.utils.settings import settings
 
         client_mock.return_value = settings.request_client
         yield client_mock

@@ -22,7 +22,7 @@ from opsml.registry.cards.types import (
 from opsml.registry.sql.records import (
     RegistryRecord,
 )
-from opsml.registry.sql.base.settings import settings
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client

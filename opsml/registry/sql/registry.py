@@ -12,7 +12,7 @@ from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.server import ServerRegistry
-from opsml.registry.sql.base.opsml_registry import OpsmlRegistry
+from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
 

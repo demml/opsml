@@ -17,7 +17,7 @@ from opsml.registry.cards import (
 )
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, VersionType, SemVerUtils
-from opsml.registry.sql.base.settings import settings
+from opsml.registry.utils.settings import settings
 from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.helpers.exceptions import VersionError
 from opsml.registry.storage.types import ArtifactStorageSpecs
