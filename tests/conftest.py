@@ -284,12 +284,12 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
 
     with patch("httpx.Client", callable_api):
         from opsml.registry.sql.settings import settings
+        from opsml.registry.sql.query_helpers import QueryEngine
 
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
 
-        engine = registries.model._registry._get_engine()
-        initializer = DBInitializer(engine=engine, registry_tables=list(RegistryTableNames))
+        initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
         initializer.initialize()
 
         registries.data = ClientCardRegistry(registry_name="data")
