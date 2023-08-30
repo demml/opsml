@@ -6,7 +6,6 @@ from opsml.helpers import gcp_utils
 from google.oauth2.service_account import Credentials
 import json
 
-# from opsml.helpers.settings import settings
 from opsml.helpers.gcp_utils import GCPClient
 
 
