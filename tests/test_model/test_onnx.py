@@ -262,4 +262,4 @@ def test_byo_pytorch_onnx(model_and_data):
 #    import json
 #
 #    with open(f"{filename}_model_def.json", "w") as file_:
-#        json.dump(model_def.dict(), file_)
+#        json.dump(model_def.model_dump(), file_)

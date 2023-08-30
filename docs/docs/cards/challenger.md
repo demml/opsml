@@ -179,7 +179,7 @@ reports = challenger.challenge_champion(
 )
 
 # can also access the battle report objects directly
-print([report.dict() for report in reports["mae"]])
+print([report.model_dump() for report in reports["mae"]])
 ```
 
 ```json
