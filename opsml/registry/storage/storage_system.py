@@ -488,7 +488,6 @@ class ApiStorageClient(LocalStorageClient):
                     write_dir=write_dir,
                     filename=filename,
                 )
-
         return write_path
 
     def upload(

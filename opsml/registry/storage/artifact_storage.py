@@ -5,7 +5,7 @@
 
 import json
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any, Optional, Tuple
 
 import joblib
@@ -163,7 +163,6 @@ class ArtifactStorage:
     @cleanup_files
     def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)
-
         with tempfile.TemporaryDirectory() as tmpdirname:
             loadable_filepath = self._download_artifacts(
                 files=files,
@@ -328,23 +327,25 @@ class ImageDataStorage(ArtifactStorage):
         Returns:
             Storage path
         """
-
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-
+        storage_path = f"{storage_uri}/{artifact.image_dir}"
         self.storage_client.upload(
             local_path=artifact.image_dir,
-            write_path=file_path,
+            write_path=storage_path,
             **{"is_dir": True},
         )
 
-        return file_path
+        return storage_path
 
-    def _load_artifact(self, file_path: FilePath) -> Any:
-        return self.storage_client.download(
-            rpath=file_path,
-            lpath=file_path,
-            **{"is_dir": True},
+    @cleanup_files
+    def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
+        files = self.storage_client.list_files(storage_uri=storage_uri)
+        loadable_filepath = self.storage_client.download(
+            rpath=storage_uri,
+            lpath=kwargs.get("image_dir"),
+            **{"files": files},
         )
+
+        return None, loadable_filepath
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -703,7 +704,7 @@ def save_record_artifact_to_storage(
     ).save_artifact(artifact=artifact)
 
 
-def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType):
+def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType, **kwargs):
     if not bool(storage_client.storage_spec.save_path):
         return None
 
@@ -717,4 +718,4 @@ def load_record_artifact_from_storage(artifact_type: str, storage_client: Storag
     return storage_type(
         artifact_type=artifact_type,
         storage_client=storage_client,
-    ).load_artifact(storage_uri=storage_client.storage_spec.save_path)
+    ).load_artifact(storage_uri=storage_client.storage_spec.save_path, **kwargs)

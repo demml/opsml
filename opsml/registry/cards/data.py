@@ -15,7 +15,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import (
     FindPath,
 )
-
+import os
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardUris, ImageDataset
@@ -33,6 +33,36 @@ logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client
 
 ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
+
+
+# refactor into class
+def download_image_data(data: ImageDataset, save_path: str, data_type: str) -> None:
+    if os.path.exists(data.image_dir):
+        logger.info("Image data already exists")
+        return
+
+    kwargs = {"image_dir": data.image_dir}
+
+    storage_spec = ArtifactStorageSpecs(save_path=save_path)
+    settings.storage_client.storage_spec = storage_spec
+    data = load_record_artifact_from_storage(
+        storage_client=settings.storage_client,
+        artifact_type=data_type,
+        **kwargs,
+    )
+
+
+def download_data(data: ValidData, save_path: str, data_type: str) -> ValidData:
+    storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
+    settings.storage_client.storage_spec = storage_spec
+    data = load_record_artifact_from_storage(
+        storage_client=settings.storage_client,
+        artifact_type=self.data_type,
+    )
+
+    data = check_data_schema(data, self.feature_map)
+
+    return data
 
 
 class DataCard(ArtifactCard):
@@ -206,22 +236,26 @@ class DataCard(ArtifactCard):
     def load_data(self):
         """Loads data"""
 
+        if isinstance(self.data, ImageDataset):
+            return download_image_data(
+                data=self.data,
+                save_path=self.uris.data_uri,
+                data_type=self.data_type,
+            )
+
         if self.data is None:
-            if self.data_type != "ImageDataset":
-                storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
+            storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
+            settings.storage_client.storage_spec = storage_spec
+            data = load_record_artifact_from_storage(
+                storage_client=settings.storage_client,
+                artifact_type=self.data_type,
+            )
 
-                settings.storage_client.storage_spec = storage_spec
-                data = load_record_artifact_from_storage(
-                    storage_client=settings.storage_client, artifact_type=self.data_type
-                )
-                data = check_data_schema(data, self.feature_map)
-
-                setattr(self, "data", data)
-            else:
-                pass
+            data = check_data_schema(data, self.feature_map)
+            setattr(self, "data", data)
 
         else:
-            logger.info("Data has already been loaded")
+            logger.info("Data already exists")
 
     def create_registry_record(self) -> RegistryRecord:
         """
