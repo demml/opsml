@@ -67,6 +67,7 @@ class ArtifactStorageSpecs(BaseModel):
 
     save_path: str
     filename: Optional[str] = None
+    dir_name: Optional[str] = None
 
 
 class StorageClientProto(Protocol):
