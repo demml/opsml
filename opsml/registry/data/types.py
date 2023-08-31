@@ -19,6 +19,7 @@ class AllowedTableTypes(str, Enum):
     PANDAS_DATAFRAME = "PandasDataFrame"
     POLARS_DATAFRAME = "PolarsDataFrame"
     DICTIONARY = "Dictionary"
+    IMAGE_DATASET = "ImageDataset"
 
 
 class ArrowTable(BaseModel):
