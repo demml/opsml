@@ -297,6 +297,60 @@ class JoblibStorage(ArtifactStorage):
         return artifact_type not in ARTIFACT_TYPES
 
 
+class ImageDataStorage(ArtifactStorage):
+    """Class that uploads and downloads image data"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            artifact_class=ArtifactClass.DATA.value,
+            extra_path=extra_path,
+        )
+
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+        """
+        Writes the artifact as a joblib file to a storage_uri
+
+        Args:
+            artifact:
+                Artifact to write to joblib
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used
+                for some storage client.
+
+        Returns:
+            Storage path
+        """
+
+        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+        self.storage_client.upload(
+            local_path=artifact,
+            write_path=file_path,
+            **{"is_dir": True},
+        )
+
+        return file_path
+
+    def _load_artifact(self, file_path: FilePath) -> Any:
+        return self.storage_client.download(
+            rpath=file_path,
+            lpath=file_path,
+            **{"is_dir": True},
+        )
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageType.IMAGE_DATASET
+
+
 class ParquetStorage(ArtifactStorage):
     """Class that saves and loads a parquet file"""
 
