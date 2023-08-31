@@ -1,0 +1,26 @@
+artifact_path: model/mlops-test/linear-reg1/v1.1.0/model
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.2
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.2.2
+mlflow_version: 2.4.0
+model_uuid: 3d328f54474b40f6aa8e3962681c5171
+run_id: 02b5da44359a49e19c7edbd440c8ea41
+signature:
+  inputs: '[{"type": "double", "name": "col_0"}, {"type": "double", "name": "col_1"},
+    {"type": "double", "name": "col_2"}, {"type": "double", "name": "col_3"}, {"type":
+    "double", "name": "col_4"}, {"type": "double", "name": "col_5"}, {"type": "double",
+    "name": "col_6"}, {"type": "double", "name": "col_7"}, {"type": "double", "name":
+    "col_8"}, {"type": "double", "name": "col_9"}, {"type": "long", "name": "col_11"}]'
+  outputs: null
+utc_time_created: '2023-08-30 20:23:26.160630'

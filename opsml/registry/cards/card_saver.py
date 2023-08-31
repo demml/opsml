@@ -155,6 +155,23 @@ class DataCardArtifactSaver(CardArtifactSaver):
         )
 
         return storage_path
+    
+    def _save_image_dataset(self, image_dataset: ImageDataset) -> StoragePath:
+        """Saves image dataset to file system
+        
+        
+        Args:
+            image_dataset:
+                Image dataset
+        """
+        
+        self._set_storage_spec(filename=self.card.name, uri=self.card.uris.data_uri)
+        storage_path = save_record_artifact_to_storage(
+            artifact=image_dataset,
+            storage_client=self.storage_client,
+        )
+        
+        return storage_path
 
     def _set_arrow_card_attributes(self, arrow_table: ArrowTable):
         """Sets additional card attributes associated with arrow table"""
@@ -165,6 +182,8 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def _save_data(self) -> None:
         """Saves DataCard data to file system"""
 
+        if isinstance(self.card.data, ImageDataset):
+            self.
         arrow_table: ArrowTable = self._convert_data_to_arrow()
         storage_path = self._save_pyarrow_table(arrow_table=arrow_table)
         arrow_table.storage_uri = storage_path.uri
