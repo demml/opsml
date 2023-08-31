@@ -18,10 +18,7 @@ from opsml.helpers.utils import (
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import (
-    CardType,
-    DataCardUris,
-)
+from opsml.registry.cards.types import CardType, DataCardUris, ImageDataset
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.sql.records import (
@@ -34,6 +31,8 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client
+
+ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
 
 
 class DataCard(ArtifactCard):
@@ -90,7 +89,7 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame]] = None
+    data: Optional[ValidData] = None
     data_splits: List[DataSplit] = []
     feature_map: Optional[Dict[str, Optional[Any]]] = None
     data_type: Optional[str] = None
@@ -189,6 +188,8 @@ class DataCard(ArtifactCard):
         if self.data is None:
             self.load_data()
 
+        assert not isinstance(self.data, ImageDataset), "ImageDataset splits are not currently supported"
+
         if len(self.data_splits) > 0:
             data_holder = DataHolder()
             for data_split in self.data_splits:
@@ -206,15 +207,18 @@ class DataCard(ArtifactCard):
         """Loads data"""
 
         if self.data is None:
-            storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
+            if self.data_type != "ImageDataset":
+                storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
 
-            settings.storage_client.storage_spec = storage_spec
-            data = load_record_artifact_from_storage(
-                storage_client=settings.storage_client, artifact_type=self.data_type
-            )
-            data = check_data_schema(data, self.feature_map)
+                settings.storage_client.storage_spec = storage_spec
+                data = load_record_artifact_from_storage(
+                    storage_client=settings.storage_client, artifact_type=self.data_type
+                )
+                data = check_data_schema(data, self.feature_map)
 
-            setattr(self, "data", data)
+                setattr(self, "data", data)
+            else:
+                pass
 
         else:
             logger.info("Data has already been loaded")
