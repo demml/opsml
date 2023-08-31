@@ -17,7 +17,7 @@ import zarr
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml.helpers.utils import all_subclasses
-from opsml.registry.cards.types import StoragePath
+from opsml.registry.cards.types import StoragePath, ImageDataset
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
     MlflowStorageClient,
@@ -313,7 +313,7 @@ class ImageDataStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: ImageDataset, storage_uri: str, tmp_uri: str) -> str:
         """
         Writes the artifact as a joblib file to a storage_uri
 
@@ -331,8 +331,9 @@ class ImageDataStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+
         self.storage_client.upload(
-            local_path=artifact,
+            local_path=artifact.image_dir,
             write_path=file_path,
             **{"is_dir": True},
         )
