@@ -315,7 +315,7 @@ class ImageDataStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: ImageDataset, storage_uri: str, tmp_uri: str) -> str:
         """
-        Writes the artifact as a joblib file to a storage_uri
+        Writes image directory to storage client location
 
         Args:
             artifact:
@@ -324,7 +324,6 @@ class ImageDataStorage(ArtifactStorage):
                 Path to write to
             tmp_uri:
                 Temporary uri to write to. This will be used
-                for some storage client.
 
         Returns:
             Storage path
