@@ -3,9 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
 from enum import Enum
+import json
+import os
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo
 
 
 @dataclass
@@ -37,6 +39,50 @@ class Metric(BaseModel):
 class Param(BaseModel):
     name: str
     value: Union[float, int, str]
+
+
+class BBox(BaseModel):
+    bbox: List[List[float]]
+    categories: List[Union[str, int, float]]
+
+
+class ImageRecord(BaseModel):
+    file_name: str
+    caption: Optional[str] = None
+    categories: Optional[List[Union[str, int, float]]] = None
+    objects: Optional[BBox] = None
+
+
+class ImageMetadata(BaseModel):
+    records: List[ImageRecord]
+
+
+class ImageDataset(BaseModel):
+    image_dir: str
+    metadata: Union[str, ImageMetadata]
+
+    @field_validator("image_dir", mode="before")
+    def check_dir(cls, value):
+        assert os.path.isdir(value), "image_dir must be a directory"
+
+        return value
+
+    @field_validator("metadata", mode="before")
+    def check_metadata(cls, value, info: ValidationInfo):
+        if isinstance(value, str):
+            # check metadata file is valid
+            assert "json" in value, "metadata must be a json file"
+
+            # file should exist in image dir
+            filepath = os.path.join(info.data.get("image_dir"), value)
+
+            assert os.path.isfile(filepath), f"metadata file {value} does not exist in image_dir"
+
+            with open(filepath, "r") as file_:
+                metadata_json = json.load(file_)
+                ImageMetadata(records=metadata_json)
+
+        return value
 
 
 METRICS = Dict[str, List[Metric]]
