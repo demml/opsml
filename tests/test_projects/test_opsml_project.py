@@ -185,7 +185,7 @@ def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
         # Create metrics / params / cards
         image_dataset = ImageDataset(
             image_dir="tests/assets/image_dataset",
-            metadata="metadata.json",
+            metadata="metadata.jsonl",
         )
 
         data_card = DataCard(

@@ -435,3 +435,30 @@ def test_mlflow_image_dataset(mlflow_project: MlflowProject) -> None:
         assert os.path.isdir(loaded_card.data.image_dir)
         meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
         assert os.path.exists(meta_path)
+
+
+def test_mlflow_image_dataset(mlflow_project: MlflowProject) -> None:
+    """verify we can save image dataset"""
+
+    with mlflow_project.run() as run:
+        # Create metrics / params / cards
+        image_dataset = ImageDataset(
+            image_dir="tests/assets/image_dataset",
+            metadata="metadata.jsonl",
+        )
+
+        data_card = DataCard(
+            data=image_dataset,
+            name="image_test",
+            team="mlops",
+            user_email="mlops.com",
+        )
+
+        run.register_card(card=data_card)
+        loaded_card = run.load_card(registry_name="data", info=CardInfo(uid=data_card.uid))
+        loaded_card.data.image_dir = "test_image_dir"
+        loaded_card.load_data()
+
+        assert os.path.isdir(loaded_card.data.image_dir)
+        meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
+        assert os.path.exists(meta_path)
