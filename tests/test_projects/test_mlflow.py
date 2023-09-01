@@ -16,7 +16,7 @@ from opsml.registry.cards.types import CardInfo
 from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.types import ImageDataset
+from opsml.registry.image import ImageDataset
 from tests import conftest
 import matplotlib
 import torch

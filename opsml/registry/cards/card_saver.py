@@ -17,7 +17,8 @@ from opsml.registry.cards import (
     ProjectCard,
     RunCard,
 )
-from opsml.registry.cards.types import CardType, StoragePath, ImageDataset
+from opsml.registry.cards.types import CardType, StoragePath
+from opsml.registry.image import ImageDataset
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
 from opsml.registry.data.types import AllowedTableTypes
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
@@ -172,6 +173,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """Saves DataCard data to file system"""
 
         if isinstance(self.card.data, ImageDataset):
+            self.card.data.convert_metadata()
             storage_path = self._save_data_to_storage(data=self.card.data)
             self.card.uris.data_uri = storage_path.uri
             self.card.data_type = AllowedTableTypes.IMAGE_DATASET.value

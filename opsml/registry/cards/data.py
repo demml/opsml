@@ -17,7 +17,8 @@ from opsml.helpers.utils import (
 )
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType, DataCardUris, ImageDataset
+from opsml.registry.cards.types import CardType, DataCardUris
+from opsml.registry.image import ImageDataset
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.sql.records import (
     DataRegistryRecord,
