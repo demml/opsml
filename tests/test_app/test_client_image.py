@@ -9,7 +9,7 @@ def test_register_data(api_registries: CardRegistries):
 
     image_dataset = ImageDataset(
         image_dir="tests/assets/image_dataset",
-        metadata="metadata.json",
+        metadata="metadata.jsonl",
     )
 
     data_card = DataCard(

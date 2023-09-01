@@ -72,6 +72,7 @@ class ImageDataset(BaseModel):
 
     @field_validator("metadata", mode="before")
     def check_metadata(cls, value, info: ValidationInfo):
+        """Validates if metadata is a jsonl file and if each record is valid"""
         if isinstance(value, str):
             # check metadata file is valid
             assert "jsonl" in value, "metadata must be a jsonl file"

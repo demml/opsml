@@ -49,16 +49,16 @@ def test_image_metadata():
 def test_image_dataset():
     image_dataset = ImageDataset(
         image_dir="tests/assets/image_dataset",
-        metadata="metadata.json",
+        metadata="metadata.jsonl",
     )
 
     # fail if file doesn't exists
     with pytest.raises(ValidationError) as ve:
         ImageDataset(
             image_dir="tests/assets/image_dataset",
-            metadata="blah.json",
+            metadata="blah.jsonl",
         )
-    ve.match("metadata file blah.json does not exist")
+    ve.match("metadata file blah.jsonl does not exist")
 
     # fail on non-json
     with pytest.raises(ValidationError) as ve:
@@ -66,4 +66,4 @@ def test_image_dataset():
             image_dir="tests/assets/image_dataset",
             metadata="metadata.txt",
         )
-    ve.match("metadata must be a json file")
+    ve.match("metadata must be a jsonl file")
