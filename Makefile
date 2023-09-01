@@ -70,13 +70,15 @@ poetry.pre.patch:
 poetry.sub.pre.tag:
 	$(eval VER = $(shell grep "^version =" pyproject.toml | tr -d '"' | sed "s/^version = //"))
 	$(eval TS = $(shell date +%s))
-	$(eval REL_CANDIDATE = $(subst a0,rc.$(TS),$(VER)))
+	$(eval REL_CANDIDATE = $(VER)-rc.$(TS))
 	@sed -i "s/$(VER)/$(REL_CANDIDATE)/" pyproject.toml
 
-prep.pre.patch: poetry.pre.patch poetry.sub.pre.tag
+prep.release.candidate : poetry.pre.patch poetry.sub.pre.tag
 
 publish:
-	poetry publish --repository  --build
+	poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+	poetry publish --build
+
 
 publish.docs:
 	cd docs && poetry run mkdocs gh-deploy --force
