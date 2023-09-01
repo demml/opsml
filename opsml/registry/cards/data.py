@@ -28,41 +28,12 @@ from opsml.registry.sql.records import (
 from opsml.registry.utils.settings import settings
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.cards.download import download_object
 
 logger = ArtifactLogger.get_logger(__name__)
 storage_client = settings.storage_client
 
 ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
-
-
-# refactor into class
-def download_image_data(data: ImageDataset, save_path: str, data_type: str) -> None:
-    if os.path.exists(data.image_dir):
-        logger.info("Image data already exists")
-        return
-
-    kwargs = {"image_dir": data.image_dir}
-
-    storage_spec = ArtifactStorageSpecs(save_path=save_path)
-    settings.storage_client.storage_spec = storage_spec
-    data = load_record_artifact_from_storage(
-        storage_client=settings.storage_client,
-        artifact_type=data_type,
-        **kwargs,
-    )
-
-
-def download_data(data: ValidData, save_path: str, data_type: str) -> ValidData:
-    storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
-    settings.storage_client.storage_spec = storage_spec
-    data = load_record_artifact_from_storage(
-        storage_client=settings.storage_client,
-        artifact_type=self.data_type,
-    )
-
-    data = check_data_schema(data, self.feature_map)
-
-    return data
 
 
 class DataCard(ArtifactCard):
@@ -234,28 +205,13 @@ class DataCard(ArtifactCard):
         raise ValueError("No data splits provided")
 
     def load_data(self):
-        """Loads data"""
+        """Loads DataCard data from storage"""
 
-        if isinstance(self.data, ImageDataset):
-            return download_image_data(
-                data=self.data,
-                save_path=self.uris.data_uri,
-                data_type=self.data_type,
-            )
-
-        if self.data is None:
-            storage_spec = ArtifactStorageSpecs(save_path=self.uris.data_uri)
-            settings.storage_client.storage_spec = storage_spec
-            data = load_record_artifact_from_storage(
-                storage_client=settings.storage_client,
-                artifact_type=self.data_type,
-            )
-
-            data = check_data_schema(data, self.feature_map)
-            setattr(self, "data", data)
-
-        else:
-            logger.info("Data already exists")
+        download_object(
+            card=self,
+            artifact_type=self.data_type,
+            storage_client=storage_client,
+        )
 
     def create_registry_record(self) -> RegistryRecord:
         """
