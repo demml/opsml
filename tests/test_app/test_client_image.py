@@ -1,5 +1,5 @@
 from opsml.registry import DataCard, CardRegistries
-from opsml.registry.cards.types import ImageDataset
+from opsml.registry.image import ImageDataset
 import os
 
 

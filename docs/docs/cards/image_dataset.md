@@ -1,10 +1,10 @@
 # ImageDataset
 
-In addition to polars.DataFrame, pandas.DataFrame, numpy.ndarray and pyarrow.Table you can also use the `ImageDataset` class to associated an image directory with a `DataCard`.
+In addition to `polars.DataFrame`, `pandas.DataFrame`, `numpy.ndarray` and `pyarrow.Table` you can also use the `ImageDataset` class to associate an image directory with a `DataCard`.
 
 ## Why?
 
-In some cases you may want to associate a directory of images with a `DataCard`. This is useful for computer vision tasks where you may want to train a model on a directory of images, or load a director of images into something like a `Pytorch` or `HuggingFace` dataset.
+In some cases you may want to associate a directory of images with a `DataCard`. This is useful for computer vision tasks where you may want to train a model on a directory of images, or load a directory  of images into something like a `Pytorch` or `HuggingFace` dataset.
 
 ## Usage
 
@@ -17,13 +17,13 @@ Assume we have the following directory structure:
     └── metadata.jsonl
 ```
 
-`my_images` contains two images and a metadata file. We can use the `ImageDataset` class to associate this directory with a `DataCard`. **Note** you can configure all file contents under `my_images` as you see fit (additional directories, etc.). The only requirement is that the `metadata.jsonl` file exists under the top-level directory (in this case `image_dir`).
+`my_images` contains two images and a metadata file. We can use the `ImageDataset` class to associate this directory with a `DataCard`. **Note** you can configure all file contents under `my_images` as you see fit (additional directories, etc.). The only requirement is that the `metadata.jsonl` file exists under the top-level directory (in this case `my_images`).
 
 This structure is similar to `HuggingFace` datasets, which was intentional in order to maintain some level of parity.
 
 ### Metadata anatomy
 
-The `metadata.jsonl` file is a `jsonl` file containing a line separated json entries that follow the following specification:
+The `metadata.jsonl` file is a `jsonl` file containing line separated json entries that follow the following specification:
 
 `file_name`
 : Name of the file (Required)
@@ -73,11 +73,17 @@ record = ImageRecord(
     ),
 )
 
+metadata = ImageMetadata(records=[record])
+
+# if you'd like to write the metadata to file
+metadata.write_to_file("my_images/metadata.jsonl")
+
 # Create image dataset
 image_dataset = ImageDataset(
     image_dir="my_images",
-    metadata=ImageMetadata(records=[record])
+    metadata=metadata # or if you wrote the file to disk, metadata="metadata.jsonl"
 )
+
 
 # Create DataCard
 DataCard(
@@ -87,4 +93,16 @@ DataCard(
 
 ```
 
+## Docs
+
+::: opsml.registry.image.dataset
+    options:
+        members:
+            - ImageDataset
+            - ImageMetadata
+            - ImageRecord
+            - BBox
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
 
