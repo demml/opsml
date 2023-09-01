@@ -8,6 +8,9 @@ import os
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 @dataclass
@@ -71,18 +74,32 @@ class ImageDataset(BaseModel):
     def check_metadata(cls, value, info: ValidationInfo):
         if isinstance(value, str):
             # check metadata file is valid
-            assert "json" in value, "metadata must be a json file"
+            assert "jsonl" in value, "metadata must be a jsonl file"
 
             # file should exist in image dir
             filepath = os.path.join(info.data.get("image_dir"), value)  # type: ignore
 
             assert os.path.isfile(filepath), f"metadata file {value} does not exist in image_dir"
 
-            with open(filepath, "r") as file_:
-                metadata_json = json.load(file_)
-                ImageMetadata(records=metadata_json)
+            # read and validate each record in the jsonl file
+            # tag: rust-op
+            with open(filepath, "r", encoding="utf-8") as file_:
+                for line in file_:
+                    ImageRecord(**json.loads(line))
 
         return value
+
+    def convert_metadata(self):
+        """Converts metadata to jsonl file if metadata is an ImageMetadata object"""
+
+        if isinstance(self.metadata, ImageMetadata):
+            logger.info("convert metadata to jsonl file")
+            filepath = os.path.join(self.image_dir, "metadata.jsonl")
+
+            # tag: rust-op
+            with open(filepath, "a", encoding="utf-8") as file_:
+                for record in self.metadata.records:
+                    file_.write(record.model_dump() + "\n")
 
 
 METRICS = Dict[str, List[Metric]]
