@@ -157,7 +157,7 @@ def test_model_pytorch_predict(model_and_data):
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win_32", reason="No tf test with wn_32")
+@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize(
     "model_and_data",
     [
