@@ -45,6 +45,7 @@ nav:
         - 'cards/datacard.md'
         - 'cards/data_profile.md'
         - 'cards/data_splits.md'
+        - 'cards/image_dataset.md'
       - ModelCard:
         - 'cards/modelcard.md'
         - 'cards/challenger.md'
