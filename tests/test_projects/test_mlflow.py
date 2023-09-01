@@ -313,6 +313,7 @@ def test_pytorch_model(
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.skipif(sys.platform == "win_32", reason="No tf test with wn_32")
 def test_tf_model(
     mlflow_project: MlflowProject,
     load_multi_input_keras_example: tuple[Any, Dict[str, NDArray]],
