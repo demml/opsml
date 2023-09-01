@@ -74,7 +74,7 @@ class ImageDataset(BaseModel):
             assert "json" in value, "metadata must be a json file"
 
             # file should exist in image dir
-            filepath = os.path.join(info.data.get("image_dir"), value)
+            filepath = os.path.join(info.data.get("image_dir"), value)  # type: ignore
 
             assert os.path.isfile(filepath), f"metadata file {value} does not exist in image_dir"
 

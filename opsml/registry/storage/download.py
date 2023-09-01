@@ -1,15 +1,23 @@
-from typing import cast
+from typing import cast, Dict, Any
 import os
+from pydantic import BaseModel
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.cards import ArtifactCard, DataCard
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.data.types import AllowedTableTypes
-from opsml.registry.cards.types import ImageDataset
+from opsml.registry.cards.types import ImageDataset, DataCardUris
+from opsml.registry.cards import ArtifactCard
 
 logger = ArtifactLogger.get_logger(__name__)
+
+
+class DataCardProto(BaseModel):
+    data: Any
+    feature_map: Dict[str, str]
+    data_type: str
+    uris: DataCardUris = DataCardUris()
 
 
 class Downloader:
@@ -29,8 +37,8 @@ class DataDownloader(Downloader):
     """Class for downloading data from storage"""
 
     @property
-    def card(self) -> DataCard:
-        return cast(DataCard, self._card)
+    def card(self) -> DataCardProto:
+        return cast(DataCardProto, self._card)
 
     def download(self) -> None:
         if self.card.data is not None:
@@ -42,11 +50,12 @@ class DataDownloader(Downloader):
         )
 
         data = load_record_artifact_from_storage(
-            storage_client=self.s.storage_client,
+            storage_client=self.storage_client,
             artifact_type=self.card.data_type,
         )
-        data = check_data_schema(data, self.feature_map)
-        setattr(self, "data", data)
+
+        data = check_data_schema(data, self.card.feature_map)
+        setattr(self.card, "data", data)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -61,8 +70,8 @@ class DataDownloader(Downloader):
 
 class ImageDownloader(Downloader):
     @property
-    def card(self) -> DataCard:
-        return cast(DataCard, self._card)
+    def card(self) -> DataCardProto:
+        return cast(DataCardProto, self._card)
 
     def download(self) -> None:
         data = cast(ImageDataset, self.card.data)

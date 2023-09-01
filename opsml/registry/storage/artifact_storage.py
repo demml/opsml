@@ -5,7 +5,7 @@
 
 import json
 import tempfile
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Any, Optional, Tuple
 
 import joblib
@@ -340,11 +340,12 @@ class ImageDataStorage(ArtifactStorage):
         files = self.storage_client.list_files(storage_uri=storage_uri)
         loadable_filepath = self.storage_client.download(
             rpath=storage_uri,
-            lpath=kwargs.get("image_dir"),
+            lpath=str(kwargs.get("image_dir")),
+            recursive=kwargs.get("recursive", False),
             **{"files": files},
         )
 
-        return None, loadable_filepath
+        return None, loadable_filepath  # type: ignore
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
