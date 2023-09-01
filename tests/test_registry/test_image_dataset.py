@@ -1,4 +1,5 @@
 from typing import Dict
+import os
 from opsml.registry.cards import DataCard
 from opsml.registry.sql.registry import CardRegistry
 from opsml.registry.cards.types import ImageDataset
@@ -23,3 +24,11 @@ def test_register_data(
     )
 
     registry.register_card(card=data_card)
+
+    loaded_card = registry.load_card(uid=data_card.uid)
+    loaded_card.data.image_dir = "test_image_dir"
+    loaded_card.load_data()
+
+    assert os.path.isdir(loaded_card.data.image_dir)
+    meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
+    assert os.path.exists(meta_path)

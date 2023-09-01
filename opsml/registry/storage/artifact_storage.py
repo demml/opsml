@@ -328,13 +328,11 @@ class ImageDataStorage(ArtifactStorage):
             Storage path
         """
         storage_path = f"{storage_uri}/{artifact.image_dir}"
-        self.storage_client.upload(
+        return self.storage_client.upload(
             local_path=artifact.image_dir,
             write_path=storage_path,
             **{"is_dir": True},
         )
-
-        return storage_path
 
     def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)

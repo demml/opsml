@@ -3,14 +3,14 @@ import pandas as pd
 
 import pytest
 from sklearn import pipeline
-
+import os
 import numpy as np
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
-
+from opsml.registry.cards.types import ImageDataset
 from tests import conftest
 
 
@@ -176,3 +176,30 @@ def test_run_fail(opsml_project: OpsmlProject) -> None:
     # Failed run should still exist
     cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
     assert len(cards) == 1
+
+
+def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
+    """verify we can save image dataset"""
+
+    with opsml_project.run() as run:
+        # Create metrics / params / cards
+        image_dataset = ImageDataset(
+            image_dir="tests/assets/image_dataset",
+            metadata="metadata.json",
+        )
+
+        data_card = DataCard(
+            data=image_dataset,
+            name="image_test",
+            team="mlops",
+            user_email="mlops.com",
+        )
+
+        run.register_card(card=data_card)
+        loaded_card = run.load_card(registry_name="data", info=CardInfo(uid=data_card.uid))
+
+        loaded_card.data.image_dir = "test_image_dir"
+        loaded_card.load_data()
+        assert os.path.isdir(loaded_card.data.image_dir)
+        meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
+        assert os.path.exists(meta_path)
