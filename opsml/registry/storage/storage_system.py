@@ -820,7 +820,6 @@ class MlflowStorageClient(StorageClient):
         if not recursive:
             filename = os.path.basename(rpath)
             temp_path = f"{temp_path}/{filename}"
-
         abs_temp_path = temp_path
         file_path = self.opsml_storage_client.download(rpath, abs_temp_path, recursive, **kwargs)
 
@@ -837,6 +836,7 @@ class MlflowStorageClient(StorageClient):
             local_path=mlflow_info.local_path,
             write_path=write_path,
         )
+
         return mlflow_info.filename
 
     def _log_model(self, mlflow_info: MlflowInfo) -> str:
