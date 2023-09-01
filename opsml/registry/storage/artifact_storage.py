@@ -336,7 +336,6 @@ class ImageDataStorage(ArtifactStorage):
 
         return storage_path
 
-    @cleanup_files
     def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)
         loadable_filepath = self.storage_client.download(
