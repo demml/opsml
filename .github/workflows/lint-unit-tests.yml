@@ -28,7 +28,6 @@ jobs:
           cache: 'poetry'
       - run : make setup.project
       - run : make lints.ci
-      - run : poetry export -f requirements.txt -o requirements.txt --without-hashes --with dev,dev-lints
 
   Unit-Test:
     needs: Lints
@@ -69,5 +68,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+      - run : poetry export -f requirements.txt -o requirements.txt --without-hashes --with dev,dev-lints
       - run : pip install -r requirements.txt
       - run : make test.unit.windows
