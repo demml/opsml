@@ -18,6 +18,7 @@ from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
 
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.cards.types import StoragePath
+from opsml.registry.image import ImageDataset
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
     MlflowStorageClient,
@@ -163,7 +164,6 @@ class ArtifactStorage:
     @cleanup_files
     def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)
-
         with tempfile.TemporaryDirectory() as tmpdirname:
             loadable_filepath = self._download_artifacts(
                 files=files,
@@ -295,6 +295,60 @@ class JoblibStorage(ArtifactStorage):
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type not in ARTIFACT_TYPES
+
+
+class ImageDataStorage(ArtifactStorage):
+    """Class that uploads and downloads image data"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            artifact_class=ArtifactClass.DATA.value,
+            extra_path=extra_path,
+        )
+
+    def _save_artifact(self, artifact: ImageDataset, storage_uri: str, tmp_uri: str) -> str:
+        """
+        Writes image directory to storage client location
+
+        Args:
+            artifact:
+                Artifact to write to joblib
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used
+
+        Returns:
+            Storage path
+        """
+        storage_path = f"{storage_uri}/{artifact.image_dir}"
+        return self.storage_client.upload(
+            local_path=artifact.image_dir,
+            write_path=storage_path,
+            **{"is_dir": True},
+        )
+
+    def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
+        files = self.storage_client.list_files(storage_uri=storage_uri)
+        loadable_filepath = self.storage_client.download(
+            rpath=storage_uri,
+            lpath=str(kwargs.get("image_dir")),
+            recursive=kwargs.get("recursive", False),
+            **{"files": files},
+        )
+
+        return None, loadable_filepath  # type: ignore
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageType.IMAGE_DATASET
 
 
 class ParquetStorage(ArtifactStorage):
@@ -649,7 +703,7 @@ def save_record_artifact_to_storage(
     ).save_artifact(artifact=artifact)
 
 
-def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType):
+def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType, **kwargs):
     if not bool(storage_client.storage_spec.save_path):
         return None
 
@@ -663,4 +717,4 @@ def load_record_artifact_from_storage(artifact_type: str, storage_client: Storag
     return storage_type(
         artifact_type=artifact_type,
         storage_client=storage_client,
-    ).load_artifact(storage_uri=storage_client.storage_spec.save_path)
+    ).load_artifact(storage_uri=storage_client.storage_spec.save_path, **kwargs)

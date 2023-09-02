@@ -1,0 +1,50 @@
+name: Publish-RC
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Unit-Lint:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          python-version: ["3.10",]
+          poetry-version: ["1.5.1"]
+
+      steps:
+        - uses: actions/checkout@v3
+        - name: Install poetry
+          run: pipx install poetry==${{ matrix.poetry-version }}
+
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
+            cache: 'poetry'
+        - run : make setup.project
+        - run : make lints.ci
+        - run : make test.unit
+
+  Publish-RC:
+    runs-on: ubuntu-latest
+    needs: Unit-Lint
+    strategy:
+      matrix:
+        python-version: ["3.10",]
+        poetry-version: ["1.5.1"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - run : make setup.project
+      - run : make prep.release.candidate
+      - run : make publish

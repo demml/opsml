@@ -1,9 +1,11 @@
 name: Publish-Github-Pages
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - Publish-PyPI
+    types:
+      - completed
 
 jobs:
   PublishDocs:
@@ -21,10 +23,7 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
 
       - name: Install dependencies
-        run: |
-            make setup.project
+        run: make setup.project
 
       - name: Publish Docs
-        run: |
-          git diff ${{github.event.before}}..${{github.sha}} --name-only | grep docs/ && export DOC_CHANGE=1 || export DOC_CHANGE=0;
-          if [ $DOC_CHANGE ] ; then make publish.docs; else echo "No doc change"; fi
+        run: make publish.docs
