@@ -23,6 +23,8 @@ jobs:
           with:
             python-version: ${{ matrix.python-version }}
             cache: 'poetry'
+          env:
+            POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         - run : make setup.project
         - run : make lints.ci
         - run : make test.unit
