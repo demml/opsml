@@ -61,15 +61,6 @@ test.unit:
 		--cov-report term \
 		--junitxml=./results.xml
 
-test.unit.windows:
-	pytest \
-		-m "not large" \
-		--cov \
-		--cov-fail-under=0 \
-		--cov-report xml:./coverage.xml \
-		--cov-report term \
-		--junitxml=./results.xml
-
 
 test.doc_examples:
 	poetry run pytest tests/test_docs
