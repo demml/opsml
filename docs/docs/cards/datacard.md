@@ -95,7 +95,7 @@ Output:
 ## DataCard Args
 
 `data`
-: np.ndarray, pd.DataFrame, or pyarrow Table. You're data (Required)
+: np.ndarray, pd.DataFrame, polars.DataFrame, pyarrow Table or `ImageDataset`. You're data (Required)
 
 `name`
 : Name for the data (Required)

@@ -50,3 +50,29 @@ jobs:
           cache: 'poetry'
       - run : make setup.project
       - run : make test.unit
+
+  #Windows-Test:
+  #  needs: Lints
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.10"]
+  #      poetry-version: ["1.5.1"]
+  #      os: [windows]
+#
+  #  runs-on: ${{ matrix.os }}-latest
+  #  steps:
+  #    - uses: actions/checkout@v3
+#
+  #    - uses: actions/download-artifact@master
+  #      with:
+  #        name: requirements
+  #        path: deps
+#
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v4
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+  #        cache: 'pip'
+  #    - run : pip install -r deps/requirements.txt
+  #    - run : pip install google-auth
+  #    - run : make test.unit.windows

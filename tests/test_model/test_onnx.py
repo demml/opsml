@@ -146,15 +146,27 @@ def test_sklearn_models(model_and_data):
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        # Not supportd on apple silicon
-        lazy_fixture("load_transformer_example"),  # keras transformer example
-        lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
+        # Not supported on apple silicon
         lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
         lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
         lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
-def test_model_predict_linux_only(model_and_data):
+def test_model_pytorch_predict(model_and_data):
+    model_predict(model_and_data)
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        # Not supported on apple silicon
+        lazy_fixture("load_transformer_example"),  # keras transformer example
+        lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
+    ],
+)
+def test_tensorflow_predict(model_and_data):
     model_predict(model_and_data)
 
 

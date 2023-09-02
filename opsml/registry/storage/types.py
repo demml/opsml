@@ -26,6 +26,7 @@ class ArtifactStorageType(str, Enum):
     JSON = "json"
     BOOSTER = "booster"
     ONNX = "onnx"
+    IMAGE_DATASET = "ImageDataset"
 
 
 ARTIFACT_TYPES = list(ArtifactStorageType)
@@ -66,6 +67,7 @@ class ArtifactStorageSpecs(BaseModel):
 
     save_path: str
     filename: Optional[str] = None
+    dir_name: Optional[str] = None
 
 
 class StorageClientProto(Protocol):

@@ -4,8 +4,10 @@
 import os
 import tempfile
 from enum import Enum
+import pyarrow as pa
+import numpy as np
 from functools import cached_property
-from typing import Dict, Optional, cast
+from typing import Dict, Optional, cast, Union
 from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards import (
     ArtifactCard,
@@ -16,6 +18,7 @@ from opsml.registry.cards import (
     RunCard,
 )
 from opsml.registry.cards.types import CardType, StoragePath
+from opsml.registry.image import ImageDataset
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
 from opsml.registry.data.types import AllowedTableTypes
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
@@ -124,8 +127,14 @@ class DataCardArtifactSaver(CardArtifactSaver):
             uri=self.card.uris.datacard_uri,
         )
 
+        exclude_attr = {"data_profile", "storage_client"}
+
+        # ImageDataSets use pydantic models for data
+        if self.card.data_type != AllowedTableTypes.IMAGE_DATASET.value:
+            exclude_attr.add("data")
+
         storage_path = save_record_artifact_to_storage(
-            artifact=self.card.model_dump(exclude={"data", "storage_client", "data_profile"}),
+            artifact=self.card.model_dump(exclude=exclude_attr),
             storage_client=self.storage_client,
         )
 
@@ -141,35 +150,40 @@ class DataCardArtifactSaver(CardArtifactSaver):
         arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
-    def _save_pyarrow_table(self, arrow_table: ArrowTable) -> StoragePath:
+    def _save_data_to_storage(self, data: Union[pa.Table, np.ndarray, ImageDataset]) -> StoragePath:
         """Saves pyarrow table to file system
 
         Args:
-            arrow_table (ArrowTable): Pyarrow table
+            data:
+                either numpy array , pyarrow table or image dataset
+
+        Returns:
+            StoragePath
         """
         self._set_storage_spec(filename=self.card.name, uri=self.card.uris.data_uri)
 
         storage_path = save_record_artifact_to_storage(
-            artifact=arrow_table.table,
+            artifact=data,
             storage_client=self.storage_client,
         )
 
         return storage_path
 
-    def _set_arrow_card_attributes(self, arrow_table: ArrowTable):
-        """Sets additional card attributes associated with arrow table"""
-        self.card.uris.data_uri = arrow_table.storage_uri
-        self.card.feature_map = arrow_table.feature_map
-        self.card.data_type = arrow_table.table_type
-
     def _save_data(self) -> None:
         """Saves DataCard data to file system"""
 
-        arrow_table: ArrowTable = self._convert_data_to_arrow()
-        storage_path = self._save_pyarrow_table(arrow_table=arrow_table)
-        arrow_table.storage_uri = storage_path.uri
+        if isinstance(self.card.data, ImageDataset):
+            self.card.data.convert_metadata()
+            storage_path = self._save_data_to_storage(data=self.card.data)
+            self.card.uris.data_uri = storage_path.uri
+            self.card.data_type = AllowedTableTypes.IMAGE_DATASET.value
 
-        self._set_arrow_card_attributes(arrow_table=arrow_table)
+        else:
+            arrow_table: ArrowTable = self._convert_data_to_arrow()
+            storage_path = self._save_data_to_storage(data=arrow_table.table)
+            self.card.uris.data_uri = storage_path.uri
+            self.card.feature_map = arrow_table.feature_map
+            self.card.data_type = arrow_table.table_type
 
     def _save_profile(self):
         """Saves a datacard data profile"""

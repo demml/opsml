@@ -16,6 +16,7 @@ from opsml.registry.cards.types import CardInfo
 from opsml.projects.mlflow import MlflowProject, ProjectInfo, MlflowActiveRun
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.image import ImageDataset
 from tests import conftest
 import matplotlib
 import torch
@@ -312,6 +313,7 @@ def test_pytorch_model(
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 def test_tf_model(
     mlflow_project: MlflowProject,
     load_multi_input_keras_example: tuple[Any, Dict[str, NDArray]],
@@ -407,3 +409,57 @@ def test_register_transformer_model_run(
         )
 
         run.register_card(model_card)
+
+
+def test_mlflow_image_dataset(mlflow_project: MlflowProject) -> None:
+    """verify we can save image dataset"""
+
+    with mlflow_project.run() as run:
+        # Create metrics / params / cards
+        image_dataset = ImageDataset(
+            image_dir="tests/assets/image_dataset",
+            metadata="metadata.json",
+        )
+
+        data_card = DataCard(
+            data=image_dataset,
+            name="image_test",
+            team="mlops",
+            user_email="mlops.com",
+        )
+
+        run.register_card(card=data_card)
+        loaded_card = run.load_card(registry_name="data", info=CardInfo(uid=data_card.uid))
+
+        loaded_card.data.image_dir = "test_image_dir"
+        loaded_card.load_data()
+        assert os.path.isdir(loaded_card.data.image_dir)
+        meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
+        assert os.path.exists(meta_path)
+
+
+def test_mlflow_image_dataset(mlflow_project: MlflowProject) -> None:
+    """verify we can save image dataset"""
+
+    with mlflow_project.run() as run:
+        # Create metrics / params / cards
+        image_dataset = ImageDataset(
+            image_dir="tests/assets/image_dataset",
+            metadata="metadata.jsonl",
+        )
+
+        data_card = DataCard(
+            data=image_dataset,
+            name="image_test",
+            team="mlops",
+            user_email="mlops.com",
+        )
+
+        run.register_card(card=data_card)
+        loaded_card = run.load_card(registry_name="data", info=CardInfo(uid=data_card.uid))
+        loaded_card.data.image_dir = "test_image_dir"
+        loaded_card.load_data()
+
+        assert os.path.isdir(loaded_card.data.image_dir)
+        meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
+        assert os.path.exists(meta_path)
