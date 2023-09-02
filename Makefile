@@ -74,7 +74,7 @@ poetry.sub.pre.tag:
 	$(eval REL_CANDIDATE = $(VER)-rc.$(TS))
 	@sed -i "s/$(VER)/$(REL_CANDIDATE)/" pyproject.toml
 
-prep.release.candidate : poetry.pre.patch poetry.sub.pre.tag
+prep.release.candidate : poetry.sub.pre.tag
 
 publish:
 	poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
