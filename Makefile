@@ -77,7 +77,6 @@ poetry.sub.pre.tag:
 prep.release.candidate : poetry.sub.pre.tag
 
 publish:
-	poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
 	poetry publish --build
 
 
