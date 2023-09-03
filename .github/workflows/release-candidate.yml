@@ -15,9 +15,6 @@ jobs:
 
     permissions:
       id-token: write
-    environment:
-      name: pypi
-      url: https://pypi.org/p/opsml
 
     steps:
       - uses: actions/checkout@v3
