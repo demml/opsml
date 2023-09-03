@@ -30,6 +30,13 @@ jobs:
       - run : make setup.project
       - run : make lints.ci
       - run : make test.unit
+      - run : poetry build
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@v1.8.6
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+
       #- run: make prep.release.candidate
       #- run: poetry build
 #
