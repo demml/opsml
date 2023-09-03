@@ -7,29 +7,31 @@ on:
 
 jobs:
   Publish-RC:
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          python-version: ["3.10",]
-          poetry-version: ["1.5.1"]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10",]
+        poetry-version: ["1.5.1"]
 
-      steps:
-        - uses: actions/checkout@v3
-        - name: Install poetry
-          run: pipx install poetry==${{ matrix.poetry-version }}
+    permissions:
+      id-token: write
 
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v4
-          with:
-            python-version: ${{ matrix.python-version }}
-            cache: 'poetry'
-          env:
-            POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        - run : make setup.project
-        - run : make lints.ci
-        - run : make test.unit
-        - run: make prep.release.candidate
-        - run: poetry build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
 
-        - name: Upload package to PyPI
-          uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - run : make setup.project
+      - run : make lints.ci
+      - run : make test.unit
+      - run: make prep.release.candidate
+      - run: poetry build
+
+      - name: Upload package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
