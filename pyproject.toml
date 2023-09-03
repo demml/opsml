@@ -82,7 +82,6 @@ pymysql = {version="^1.0.2", optional = true}
 
 # optional dep for visualization
 graphviz = {version="^0.20.1", optional = true}
-twine = "^4.0.2"
 
 [tool.poetry.extras]
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
