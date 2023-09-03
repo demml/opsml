@@ -29,4 +29,7 @@ jobs:
         - run : make lints.ci
         - run : make test.unit
         - run: make prep.release.candidate
-        - run: make publish
+        - run: poetry build
+
+        - name: Upload package to PyPI
+          uses: pypa/gh-action-pypi-publish@release/v1
