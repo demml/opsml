@@ -5856,13 +5856,15 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [[package]]
-name = "ydata-profiling"
-version = "0.0.dev0"
+name = "ydata-profiling-thorrester"
+version = "0.0.0"
 description = "Generate profile report for pandas DataFrame"
 optional = false
 python-versions = ">=3.7, <3.12"
-files = []
-develop = false
+files = [
+    {file = "ydata-profiling-thorrester-0.0.0.tar.gz", hash = "sha256:b74b929d362639bd30bc4fc6596562df905fb7e2f9b5a0797b9e8815402c2fa1"},
+    {file = "ydata_profiling_thorrester-0.0.0-py2.py3-none-any.whl", hash = "sha256:bf253df0b317440d3525cf4c24f9e498784970a155571e575403380a7eccb1c7"},
+]
 
 [package.dependencies]
 dacite = ">=1.8"
@@ -5888,12 +5890,6 @@ wordcloud = ">=1.9.1"
 [package.extras]
 notebook = ["ipywidgets (>=7.5.1)", "jupyter-client (>=5.3.4)", "jupyter-core (>=4.6.3)"]
 unicode = ["tangled-up-in-unicode (==0.2.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/thorrester/ydata-profiling.git"
-reference = "pydanticv2"
-resolved_reference = "5edd18197046f7e2c8d74ba12ada5e159d08858d"
 
 [[package]]
 name = "zarr"
@@ -5941,4 +5937,4 @@ server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar",
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "996699b403e5adc11d2c35ee51104963f52f1fe100ecb16ad1ecaaf23c39a948"
+content-hash = "e95579e5e2c777e08fc66b2fe099fb0eb0399a46e5e79bfd1490fe0bd4a08e40"
