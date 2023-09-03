@@ -34,6 +34,7 @@ jobs:
 
   Unit-Test:
     needs: Lints
+    if: ${{ github.event_name }} == 'pull_request'
     strategy:
       matrix:
         python-version: ["3.9", "3.10","3.11"]
@@ -56,7 +57,7 @@ jobs:
 
   Merge-Unit-Test:
     needs: Lints
-    if: ${{ github.event.action }} == 'push' && ${{ github.ref }} == 'refs/heads/main
+    if: ${{ github.event_name }} == 'push' && ${{ github.ref }} == 'refs/heads/main
     strategy:
       matrix:
         python-version: ["3.11"]
