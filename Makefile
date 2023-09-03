@@ -79,6 +79,5 @@ prep.release.candidate : poetry.sub.pre.tag
 publish:
 	poetry publish --build
 
-
 publish.docs:
 	cd docs && poetry run mkdocs gh-deploy --force
