@@ -48,7 +48,7 @@ class ArtifactCard(BaseModel):
     tags: Dict[str, str] = {}
 
     @model_validator(mode="before")
-    def validate(cls, env_vars):
+    def model_validate(cls, env_vars):
         """Validate base args and Lowercase name and team"""
 
         card_info = env_vars.get("info")

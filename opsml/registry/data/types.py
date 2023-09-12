@@ -10,7 +10,7 @@ from polars.datatypes.classes import DataType, DataTypeClass
 from pydantic import BaseModel, ConfigDict
 
 
-POLARS_SCHEMA = Mapping[str, Union[DataTypeClass, DataType]]
+POLARS_SCHEMA = Mapping[str, Union[DataTypeClass, DataType]]  # pylint: disable=invalid-name
 
 
 class AllowedTableTypes(str, Enum):

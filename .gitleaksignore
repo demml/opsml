@@ -1,0 +1,22 @@
+# ignore old non-relevant token for sonar and fake gcp-creds
+649eb1415b7dc004292f7898e58d0681762c4365:sonar-project.properties:generic-api-key:1
+0442247a5b779ea4620c7bc00c16882f54cee0a6:sonar-project.properties:generic-api-key:1
+cf4ca5e2bd293ee8b4af9a8ba0666caed32938e6:docs/docs/index.md:generic-api-key:56
+160e3ee285783b76809ac60c322141c4c136a8a9:docs/site/index.html:generic-api-key:687
+160e3ee285783b76809ac60c322141c4c136a8a9:docs/site/index.html:generic-api-key:691
+d436f11c0febe250ef820dc8cad7ea68dbf51219:docs/site/index.html:generic-api-key:687
+d436f11c0febe250ef820dc8cad7ea68dbf51219:docs/site/index.html:generic-api-key:691
+497b2de07c066834c96bdfda068c104b8a05aaa1:docs/docs/index.md:generic-api-key:21
+497b2de07c066834c96bdfda068c104b8a05aaa1:docs/docs/index.md:generic-api-key:25
+e7d6398c22eba31ecffb3a109996c4544502a967:tests/assets/fake_gcp_creds.json:private-key:4
+c9a81ebe6e1a1f8d95423e9e672d3624e025f434:tests/assets/fake_gcp_creds.json:private-key:4
+325f8bbad434722293023f123bfc3f31cafaacdd:opsml_artifacts/helpers/fixtures/fake_gcp_creds.json:private-key:4
+8b3e47894ed1f260da1708d730de6e1c4a434216:opsml_artifacts/helpers/fixtures/fake_gcp_creds.json:private-key:4
+3dc727be36af12f1d27fd6e15002ca3418ff0837:README.md:generic-api-key:19
+3dc727be36af12f1d27fd6e15002ca3418ff0837:README.md:generic-api-key:22
+f1445e52ee0ea6aeb0ff78e7ef5635ceeff861ac:README.md:generic-api-key:11
+f1445e52ee0ea6aeb0ff78e7ef5635ceeff861ac:README.md:generic-api-key:14
+330c1d0d4301382548efb5903090f1f72231556e:README.md:generic-api-key:13
+330c1d0d4301382548efb5903090f1f72231556e:README.md:generic-api-key:16
+54ef3d7cca7c73c468100a38afc58da27e3b274e:README.md:generic-api-key:13
+54ef3d7cca7c73c468100a38afc58da27e3b274e:README.md:generic-api-key:16

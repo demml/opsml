@@ -330,6 +330,10 @@ class LocalStorageClient(StorageClient):
                 local path to upload
             write_path:
                 path to write to
+            recursive:
+                whether to recursively upload files
+            kwargs:
+                additional arguments to pass to upload function
 
         Returns:
             write_path

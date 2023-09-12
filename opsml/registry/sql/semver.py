@@ -57,7 +57,7 @@ class CardVersion(BaseModel):
     def _validate_partial_semver(cls, version_splits: List[str]) -> None:
         """Validates a partial semver"""
         try:
-            assert all([i.isdigit() for i in version_splits])
+            assert all((i.isdigit() for i in version_splits))
         except AssertionError:
             version = ".".join(version_splits)
             raise AssertionError(f"Version {version} is not a valid semver or partial semver")

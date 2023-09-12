@@ -69,7 +69,7 @@ class ListCardRequest(BaseModel):
 
     @model_validator(mode="before")
     def update_limit(cls, env_vars: Dict[str, Optional[Union[str, int]]]):
-        if not any([env_vars.get(key) for key in ["name", "team", "limit"]]):
+        if not any((env_vars.get(key) for key in ["name", "team", "limit"])):
             env_vars["limit"] = 20
         return env_vars
 
