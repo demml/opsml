@@ -156,11 +156,11 @@ class SQLRegistryBase:
 
                     if ver.prerelease is None and SemVerUtils.is_release_candidate(version.version):
                         raise VersionError(
-                            "Cannot create a release candidate for an existing official version. %s" % version.version
+                            f"Cannot create a release candidate for an existing official version. {version.version}"
                         )
 
                     if record["version"] == version.version:
-                        raise VersionError("Version combination already exists. %s" % version.version)
+                        raise VersionError(f"Version combination already exists. {version.version}")
 
     def _validate_pre_build_version(self, version: Optional[str] = None) -> CardVersion:
         if version is None:
@@ -275,6 +275,10 @@ class SQLRegistryBase:
                 Card to register
             version_type:
                 Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
+            pre_tag:
+                Pre-release tag. Defaults to "rc"
+            build_tag:
+                Build tag. Defaults to "build"
         """
 
         self._validate_card_type(card=card)
