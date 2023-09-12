@@ -337,7 +337,6 @@ class ImageDataStorage(ArtifactStorage):
 
     def _load_artifact(self, file_path: FilePath) -> None:
         """Not implemented"""
-        pass
 
     def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)
