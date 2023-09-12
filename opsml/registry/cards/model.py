@@ -303,10 +303,10 @@ class ModelCard(ArtifactCard):
         if isinstance(sample_data, np.ndarray):
             model_data = self.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
-            return {input_name: sample_data[0, :].tolist()}
+            return {input_name: sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
 
         if isinstance(sample_data, pd.DataFrame):
-            record = list(sample_data[0:1].T.to_dict().values())[0]
+            record = list(sample_data[0:1].T.to_dict().values())[0]  # pylint: disable=unsubscriptable-object
             return record
 
         if isinstance(sample_data, pl.DataFrame):

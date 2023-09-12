@@ -166,19 +166,18 @@ class DataFormatter:
         if isinstance(data, pd.DataFrame):
             return data.dtypes.to_dict()
 
-        elif isinstance(data, pl.DataFrame):
+        if isinstance(data, pl.DataFrame):
             return data.schema
 
-        elif isinstance(data, pa.Table):
+        if isinstance(data, pa.Table):
             schema = data.schema
 
             return {feature: str(type_) for feature, type_ in zip(schema.names, schema.types)}
 
-        elif isinstance(data, np.ndarray):
+        if isinstance(data, np.ndarray):
             return {"numpy_dtype": str(data.dtype)}
 
-        else:
-            return {"data_type": None}
+        return {"data_type": None}
 
 
 class SchemaValidator:
@@ -214,8 +213,8 @@ class PolarsSchemaValidator(SchemaValidator):
             schema:
                 Polars schema
         """
-        self.data = data
-        self.schema = schema
+
+        super().__init__(data=data, schema=schema)
 
     def validate_schema(self) -> pl.DataFrame:
         """Validate polars schema. Columns are converted if schema does not match"""
@@ -244,8 +243,7 @@ class PandasSchemaValidator(SchemaValidator):
             schema:
                 Pandas schema
         """
-        self.data = data
-        self.schema = schema
+        super().__init__(data=data, schema=schema)
 
     def validate_schema(self) -> pd.DataFrame:
         """Validate pandas schema. Columns are converted if schema does not match"""
