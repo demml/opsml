@@ -329,10 +329,10 @@ class DataDownloader(Downloader):
 
         data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
-            artifact_type=self.card.data_type,
+            artifact_type=cast(str, self.card.data_type),
         )
 
-        data = check_data_schema(data, self.card.feature_map)
+        data = check_data_schema(data, cast(Dict[str, str], self.card.feature_map))
         setattr(self.card, "data", data)
 
     @staticmethod
@@ -364,7 +364,7 @@ class ImageDownloader(Downloader):
 
         data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
-            artifact_type=self.card.data_type,
+            artifact_type=cast(str, self.card.data_type),
             **kwargs,
         )
 
