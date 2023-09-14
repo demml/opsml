@@ -26,6 +26,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
+
+      - run: sudo apt-get install gitleaks
       - run : make setup.project
       - run : make lints.ci
 
