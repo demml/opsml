@@ -27,9 +27,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
-      - run: sudo apt-get install gitleaks
       - run : make setup.project
       - run : make lints.ci
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Unit-Test:
     needs: Lints
