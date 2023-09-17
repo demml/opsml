@@ -228,8 +228,8 @@ class QueryEngine:
         """Add card record to table
 
         Args:
-            table_record:
-                table record to add
+            table:
+                table to add card to
             card:
                 card to add
         """

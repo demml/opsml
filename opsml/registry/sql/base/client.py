@@ -90,6 +90,8 @@ class ClientRegistry(SQLRegistryBase):
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
+            ignore_release_candidates:
+                If True, release candidates will be ignored
 
         Returns:
             Dictionary of card records

@@ -154,6 +154,8 @@ def list_cards(
             Max date to search
         limit:
             Max number of records to return
+        ignore_release_candidates:
+            Whether to ignore release candidates
 
     Example:
 

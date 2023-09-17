@@ -14,18 +14,17 @@ def get_registry():
         from opsml.registry.sql.base.server import ServerRegistry
         from opsml.registry.sql.sql_schema import RegistryTableNames
 
-        initializer = DBInitializer(
+        db_initializer = DBInitializer(
             engine=settings.connection_client.get_engine(),
             registry_tables=list(RegistryTableNames),
         )
-        initializer.initialize()
+        db_initializer.initialize()
 
-        return initializer, ServerRegistry
+        return db_initializer, ServerRegistry
 
-    else:
-        from opsml.registry.sql.base.client import ClientRegistry
+    from opsml.registry.sql.base.client import ClientRegistry
 
-        return None, ClientRegistry
+    return None, ClientRegistry
 
 
 initializer, OpsmlRegistry = get_registry()

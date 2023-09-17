@@ -104,6 +104,8 @@ def download_object(card: ArtifactCard, artifact_type: str, storage_client: Stor
             Artifact Card
         storage_client:
             Storage client to use for downloading data
+        artifact_type:
+            Type of artifact to download
     """
     downloader = next(
         downloader
