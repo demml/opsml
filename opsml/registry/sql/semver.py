@@ -57,18 +57,18 @@ class CardVersion(BaseModel):
     def _validate_partial_semver(cls, version_splits: List[str]) -> None:
         """Validates a partial semver"""
         try:
-            assert all([i.isdigit() for i in version_splits])
-        except AssertionError:
+            assert all((i.isdigit() for i in version_splits))
+        except AssertionError as exc:
             version = ".".join(version_splits)
-            raise AssertionError(f"Version {version} is not a valid semver or partial semver")
+            raise AssertionError(f"Version {version} is not a valid semver or partial semver") from exc
 
     def _get_version_split(self, split: int) -> str:
         """Splits a version into its major, minor, and patch components"""
 
         try:
             return self.version_splits[split]
-        except IndexError:
-            raise IndexError(f"Version split {split} not found: {self.version}")
+        except IndexError as exc:
+            raise IndexError(f"Version split {split} not found: {self.version}") from exc
 
     @property
     def has_major_minor(self) -> bool:
@@ -107,7 +107,7 @@ class CardVersion(BaseModel):
 
         if len(version_splits) == 1:
             return f"{version}.0.0"
-        elif len(version_splits) == 2:
+        if len(version_splits) == 2:
             return f"{version}.0"
 
         return version
@@ -116,8 +116,8 @@ class CardVersion(BaseModel):
         """Gets a version to search for in the database
 
         Args:
-            version:
-                version to search for
+            version_type:
+                type of version to search for
         Returns:
             str: version to search for
         """
@@ -125,17 +125,15 @@ class CardVersion(BaseModel):
         if version_type == VersionType.PATCH:  # want to search major and minor if exists
             if self.has_major_minor:
                 return f"{self.major}.{self.minor}"
-            else:
-                return str(self.major)
-
-        elif version_type == VersionType.MINOR:  # want to search major
             return str(self.major)
 
-        elif version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
+        if version_type == VersionType.MINOR:  # want to search major
+            return str(self.major)
+
+        if version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
             return self.valid_version
 
-        else:
-            return None
+        return None
 
 
 class SemVerUtils:
@@ -153,12 +151,12 @@ class SemVerUtils:
             sorted list of versions with highest version first
         """
 
-        n = len(versions)
+        n_ver = len(versions)
 
-        for i in range(n):
+        for i in range(n_ver):
             already_sorted = True
 
-            for j in range(n - i - 1):
+            for j in range(n_ver - i - 1):
                 j_version = semver.VersionInfo.parse(versions[j])
                 j1_version = semver.VersionInfo.parse(versions[j + 1])
 
@@ -333,30 +331,30 @@ class SemVerRegistryValidator:
         """Sets the correct version to use for incrementing and adding the the registry
 
         Args:
-            version:
-                version to set
+            versions:
+                list of existing versions
 
         Returns:
             str: version to use
         """
         if bool(versions):
             return self._set_version_from_existing(versions=versions)
-        else:
-            final_version = None
-            if self.version is not None:
-                final_version = CardVersion.finalize_partial_version(version=self.version.valid_version)
 
-            version = final_version or "1.0.0"
+        final_version = None
+        if self.version is not None:
+            final_version = CardVersion.finalize_partial_version(version=self.version.valid_version)
 
-            if self.version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
-                return SemVerUtils.increment_version(
-                    version=version,
-                    version_type=self.version_type,
-                    pre_tag=self.pre_tag,
-                    build_tag=self.build_tag,
-                )
+        version = final_version or "1.0.0"
 
-            return version
+        if self.version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:
+            return SemVerUtils.increment_version(
+                version=version,
+                version_type=self.version_type,
+                pre_tag=self.pre_tag,
+                build_tag=self.build_tag,
+            )
+
+        return version
 
 
 class SemVerSymbols(str, Enum):

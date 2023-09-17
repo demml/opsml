@@ -13,10 +13,15 @@ lints.format_check:
 	poetry run black --check ${SOURCE_OBJECTS}
 lints.ruff:
 	poetry run ruff check ${SOURCE_OBJECTS}
+lints.pylint:
+	poetry run pylint --rcfile pyproject.toml ${SOURCE_OBJECTS}
 lints.mypy:
 	poetry run mypy ${SOURCE_OBJECTS}
-lints: lints.ruff lints.mypy
-lints.ci: lints.format_check lints.ruff lints.mypy
+lints.gitleaks:
+	poetry run gitleaks detect --log-level debug -v
+	poetry run gitleaks protect --log-level debug -v
+lints: lints.format_check lints.ruff lints.pylint lints.gitleaks lints.mypy
+lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup: setup.sysdeps setup.python setup.project
 # setup.uninstall - handle in and out of project venvs

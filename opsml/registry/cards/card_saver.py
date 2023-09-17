@@ -1,13 +1,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from typing import Dict, Optional, cast, Union
 import os
+from functools import cached_property
 import tempfile
 from enum import Enum
 import pyarrow as pa
 import numpy as np
-from functools import cached_property
-from typing import Dict, Optional, cast, Union
 from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards import (
     ArtifactCard,

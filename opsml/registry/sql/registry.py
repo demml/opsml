@@ -190,6 +190,8 @@ class CardRegistry:
                 If True, returns a pandas dataframe. If False, returns a list of records
             info:
                 CardInfo object. If present, the info object takes precedence
+            ignore_release_candidates:
+                If True, ignores release candidates
 
         Returns:
             pandas dataframe of records or list of dictionaries
@@ -248,6 +250,8 @@ class CardRegistry:
                 most recent version will be used
             info:
                 Optional CardInfo object. If present, the info takes precedence
+            ignore_release_candidates:
+                If True, ignores release candidates
 
         Returns
             ArtifactCard

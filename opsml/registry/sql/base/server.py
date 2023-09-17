@@ -62,10 +62,16 @@ class ServerRegistry(SQLRegistryBase):
         Args:
             name:
                 Card name
-            partial_version:
-                Validated partial version to set. If None, will increment the latest version
+            team:
+                Card team
+            pre_tag:
+                Pre-release tag
+            build_tag:
+                Build tag
             version_type:
-                Type of version increment. Values are "major", "minor" and "patch
+                Version type
+            supplied_version:
+                Optional version to set. If not specified, will use the most recent version
 
         Returns:
             Version string
@@ -127,6 +133,8 @@ class ServerRegistry(SQLRegistryBase):
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
+            ignore_release_candidates:
+                If True, will ignore release candidates when searching for versions
 
 
         Returns:

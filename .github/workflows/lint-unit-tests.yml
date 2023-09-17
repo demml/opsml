@@ -18,6 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+            fetch-depth: 0
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
@@ -26,8 +28,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
+
       - run : make setup.project
       - run : make lints.ci
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
 
   Unit-Test:
     needs: Lints
