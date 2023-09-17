@@ -55,16 +55,22 @@ def set_version(
     table_for_registry = payload.table_name.split("_")[1].lower()
     registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    version = registry._registry.set_version(
-        name=payload.name,
-        team=payload.team,
-        supplied_version=payload.version,
-        version_type=payload.version_type,
-        pre_tag=payload.pre_tag,
-        build_tag=payload.build_tag,
-    )
+    try:
+        version = registry._registry.set_version(
+            name=payload.name,
+            team=payload.team,
+            supplied_version=payload.version,
+            version_type=payload.version_type,
+            pre_tag=payload.pre_tag,
+            build_tag=payload.build_tag,
+        )
 
-    return VersionResponse(version=version)
+        return VersionResponse(version=version)
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to set version. {error}",
+        ) from error
 
 
 @router.post("/cards/list", response_model=ListCardResponse, name="list_cards")
