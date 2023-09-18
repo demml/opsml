@@ -2,8 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Optional
-
+from typing import Optional, Dict
+import tempfile
+import json
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
 
@@ -85,7 +86,12 @@ class ModelRegistrar:
         return metadata.model_uri
 
     @retry(reraise=True, stop=stop_after_attempt(3))
-    def _copy_model_to_registry(self, request: RegistrationRequest, model_uri: str):
+    def _copy_model_to_registry(
+        self,
+        request: RegistrationRequest,
+        model_uri: str,
+        metadata: ModelMetadata,
+    ) -> str:
         """Copies a model from it's original storage path to a hardcoded model registry path
 
         Args:
@@ -108,10 +114,45 @@ class ModelRegistrar:
         # register the model
         self.storage_client.copy(read_path=read_path, write_path=registry_path)
 
+        # register model settings
+        self.register_model_settings(metadata, registry_path)
+
         if not self.is_registered(request):
             raise RegistrationError("Failed to copy model to registered URL")
 
         return registry_path
+
+    def _model_settings(self, metadata: ModelMetadata) -> Dict[str, str]:
+        """Create standard dictionary for model-settings.json file"""
+        return {
+            "name": metadata.model_name,
+            "implementation": "models.OnnxModel",
+            "parameters": {
+                "uri": "./model.onnx",
+                "extra": {
+                    "model_version": metadata.model_version,
+                    "opsml_name": metadata.model_name,
+                },
+            },
+        }
+
+    def register_model_settings(self, metadata: ModelMetadata, registry_path: str) -> None:
+        """Generate a model-settings.json file for Seldon custom server
+
+        Args:
+            metadata:
+                The model metadata.
+            registry_path:
+                The path to the registered model.
+        """
+
+        model_settings = self._model_settings(metadata)
+        logger.info("ModelRegistrar: registering model settings: %s", model_settings)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            local_path = f"{tmpdirname}/model-settings.json"
+            with open(local_path, "w") as outfile:
+                json.dump(model_settings, outfile)
+                self.storage_client.upload(local_path=local_path, write_path=registry_path)
 
     def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
         """Registers a model to a hardcoded storage path.
@@ -129,6 +170,7 @@ class ModelRegistrar:
             raise RegistrationError("the model_uri does not exist")
 
         logger.info("ModelRegistrar: registering model: %s", request)
-        registry_path = self._copy_model_to_registry(request, model_uri)
+        registry_path = self._copy_model_to_registry(request, model_uri, metadata)
         logger.info("ModelRegistrar: registered model: %s path=%s", request, registry_path)
+
         return registry_path
