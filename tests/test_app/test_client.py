@@ -292,6 +292,19 @@ def test_register_model(
 
     assert cards[0]["tags"] == {"id": "model1"}
 
+    # try registering model to different team
+    model_card_dup = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="new-team",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+    )
+    with pytest.raises(ValueError) as ve:
+        model_registry.register_card(card=model_card_dup)
+    assert ve.match("Failed to set version. Model name already exists for a different team")
+
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
 def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame):
