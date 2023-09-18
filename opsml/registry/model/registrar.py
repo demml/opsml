@@ -2,17 +2,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 import tempfile
 import json
+from pathlib import Path
+
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
-from pathlib import Path
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ModelMetadata
 from opsml.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger(__name__)
+
+ModelSettingsType = Dict[str, Union[str, Dict[str, Union[str, Dict[str, str]]]]]
 
 
 class RegistrationError(Exception):
@@ -122,7 +126,7 @@ class ModelRegistrar:
 
         return registry_path
 
-    def _model_settings(self, metadata: ModelMetadata, model_uri: str) -> Dict[str, str]:
+    def _model_settings(self, metadata: ModelMetadata, model_uri: str) -> ModelSettingsType:
         """Create standard dictionary for model-settings.json file
 
         Args:
@@ -165,7 +169,7 @@ class ModelRegistrar:
         logger.info("ModelRegistrar: registering model settings: %s", model_settings)
         with tempfile.TemporaryDirectory() as tmpdirname:
             local_path = f"{tmpdirname}/model-settings.json"
-            with open(local_path, "w") as outfile:
+            with open(local_path, "w", encoding="utf-8") as outfile:
                 json.dump(model_settings, outfile)
                 self.storage_client.upload(local_path=local_path, write_path=registry_path)
 
