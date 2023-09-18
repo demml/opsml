@@ -7,7 +7,7 @@ import tempfile
 import json
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
-
+from pathlib import Path
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ModelMetadata
 from opsml.registry.storage.storage_system import StorageClientType
@@ -115,14 +115,14 @@ class ModelRegistrar:
         self.storage_client.copy(read_path=read_path, write_path=registry_path)
 
         # register model settings
-        self.register_model_settings(metadata, registry_path)
+        self.register_model_settings(metadata, registry_path, model_uri)
 
         if not self.is_registered(request):
             raise RegistrationError("Failed to copy model to registered URL")
 
         return registry_path
 
-    def _model_settings(self, metadata: ModelMetadata) -> Dict[str, str]:
+    def _model_settings(self, metadata: ModelMetadata, model_uri: str) -> Dict[str, str]:
         """Create standard dictionary for model-settings.json file"""
 
         # remove dashes for downstream compatibility
@@ -130,7 +130,7 @@ class ModelRegistrar:
             "name": metadata.model_name.replace("-", "_"),
             "implementation": "models.OnnxModel",
             "parameters": {
-                "uri": "./model.onnx",
+                "uri": f"./{Path(model_uri).name}",
                 "extra": {
                     "model_version": metadata.model_version,
                     "opsml_name": metadata.model_name.replace("-", "_"),
@@ -138,7 +138,7 @@ class ModelRegistrar:
             },
         }
 
-    def register_model_settings(self, metadata: ModelMetadata, registry_path: str) -> None:
+    def register_model_settings(self, metadata: ModelMetadata, registry_path: str, model_uri: str) -> None:
         """Generate a model-settings.json file for Seldon custom server
 
         Args:
@@ -148,7 +148,7 @@ class ModelRegistrar:
                 The path to the registered model.
         """
 
-        model_settings = self._model_settings(metadata)
+        model_settings = self._model_settings(metadata, model_uri)
         logger.info("ModelRegistrar: registering model settings: %s", model_settings)
         with tempfile.TemporaryDirectory() as tmpdirname:
             local_path = f"{tmpdirname}/model-settings.json"
