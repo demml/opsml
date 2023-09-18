@@ -123,7 +123,18 @@ class ModelRegistrar:
         return registry_path
 
     def _model_settings(self, metadata: ModelMetadata, model_uri: str) -> Dict[str, str]:
-        """Create standard dictionary for model-settings.json file"""
+        """Create standard dictionary for model-settings.json file
+
+        Args:
+            metadata:
+                The model metadata.
+
+            model_uri:
+                The URI to the model.
+
+        Returns:
+            A dictionary containing the model settings.
+        """
 
         # remove dashes for downstream compatibility
         return {
@@ -146,6 +157,8 @@ class ModelRegistrar:
                 The model metadata.
             registry_path:
                 The path to the registered model.
+            model_uri:
+                The URI to the model.
         """
 
         model_settings = self._model_settings(metadata, model_uri)
