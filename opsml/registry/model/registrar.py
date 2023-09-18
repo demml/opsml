@@ -124,14 +124,16 @@ class ModelRegistrar:
 
     def _model_settings(self, metadata: ModelMetadata) -> Dict[str, str]:
         """Create standard dictionary for model-settings.json file"""
+
+        # remove dashes for downstream compatibility
         return {
-            "name": metadata.model_name,
+            "name": metadata.model_name.replace("-", "_"),
             "implementation": "models.OnnxModel",
             "parameters": {
                 "uri": "./model.onnx",
                 "extra": {
                     "model_version": metadata.model_version,
-                    "opsml_name": metadata.model_name,
+                    "opsml_name": metadata.model_name.replace("-", "_"),
                 },
             },
         }
