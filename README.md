@@ -6,7 +6,7 @@
 
 <h2 align="center">Tooling for machine learning workflows</h2>
 
-<h1 align="center"><a href="https://didactic-bassoon-l5emw7m.pages.github.io/">OpsML Documentation</h1>
+<h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
 
 <p align="center">
 
