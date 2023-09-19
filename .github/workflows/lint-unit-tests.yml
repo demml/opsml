@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10",]
+        python-version: ["3.9", "3.11", "3.11"]
         poetry-version: ["1.5.1"]
 
     steps:
@@ -42,9 +42,9 @@ jobs:
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.9", "3.11", "3.11"]
         poetry-version: ["1.5.1"]
-        os: [ubuntu]
+        os: [ubuntu, macos]
 
     runs-on: ${{ matrix.os }}-latest
     steps:
@@ -85,7 +85,7 @@ jobs:
       - run: smokeshow upload coverage
         env:
           SMOKESHOW_GITHUB_STATUS_DESCRIPTION: CLI Coverage {coverage-percentage}
-          SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 50
+          SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 85
           SMOKESHOW_GITHUB_CONTEXT: coverage
           SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
