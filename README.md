@@ -86,7 +86,7 @@ export OPSML_TRACKING_URI=${YOUR_TRACKING_URI}
 
 Now that `opsml` is installed, you're ready to start using it!
 
-It's time to point you to the official [Documentation Website](https://didactic-bassoon-l5emw7m.pages.github.io/) for more information on how to use `opsml`
+It's time to point you to the official [Documentation Website](https://thorrester.github.io/opsml-ghpages/) for more information on how to use `opsml`
 
 
 ## Advanced Installation Scenarios
