@@ -13,12 +13,14 @@ jobs:
         poetry-version: ["1.5.1"]
 
     steps:
-      - uses: actions/checkout@v3
-      - run: |
-          git clone https://thorrester:${{ secrets.DOCSITE_TOKEN }}@github.com/thorrester/opsml-docsite.git docsite
-          rm -r docsite/docs
-          cp -r docs docsite/docs
-          cd docsite
-          git add .
-          git diff-index --quiet HEAD || git commit -m "Automatic Documentation Update"
-          git push docsite main
+      - name: Pushes to another repository
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.DOCSITE_TOKEN }}
+        with:
+          source-directory: 'docs'
+          destination-github-username: 'thorrester'
+          destination-repository-name: 'opsml-docsite'
+          user-email: ${{ secrets.USER_EMAIL }}
+          target-branch: main
+          target-directory: docs
