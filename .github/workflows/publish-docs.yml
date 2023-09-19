@@ -17,7 +17,7 @@ jobs:
       - run: |
           git clone https://thorrester:${{ secrets.DOCSITE_TOKEN }}@github.com/thorrester/opsml-docsite.git docsite
           rm -r docsite/docs
-          copy docs docsite/docs
+          cp -r docs docsite/docs
           cd docsite
           git add .
           git diff-index --quiet HEAD || git commit -m "Automatic Documentation Update"
