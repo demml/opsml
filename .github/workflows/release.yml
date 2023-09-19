@@ -22,15 +22,20 @@ jobs:
           with:
             python-version: ${{ matrix.python-version }}
             cache: 'poetry'
-        - run : make setup.project
-        - run : make lints.ci
-        - run : make test.unit
-        - run : make setup.project
-        - run : test "v$(poetry version --short)" "=" "$GITHUB_REF_NAME"
-        - run : poetry build
 
-        - name: Publish
-          uses: pypa/gh-action-pypi-publish@v1.8.6
-          with:
-            password: ${{ secrets.PYPI_TOKEN }}
+        - run : |
+                make setup.project
+                pip install -U twine
+                make lints.ci
+                make test.unit
+                make setup.project
+                test "v$(poetry version --short)" "=" "$GITHUB_REF_NAME"
+                poetry build
+                twine check --strict dist/*
+                
+        - name: upload to pypi
+          run: twine upload dist/*
+          env:
+            TWINE_USERNAME: __token__
+            TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
 
