@@ -1,11 +1,11 @@
 # Overview
 
-DataCards are cards for storing, splitting, versioning, and tracking data. DataCards currently support `pd.DataFrames`, `np.Arrays`, and `pyarrow.Tables`.
+DataCards are cards for storing, splitting, versioning, and tracking data. DataCards currently support `pd.DataFrames`, `np.Arrays`, `pyarrow.Tables` and `ImageDatasets`.
 
 ## Features
 - **shareable**: All cards including DataCards are shareable and searchable.
 - **auto-schema**: Automatic shema detection and feature map creation for features and feature data types.
-- **data-conversion**: Auto-conversion to either parquet (pa.Table, pd.DataFrame) or zarr (np.Arrays) for fast reading and writing to storage.
+- **data-conversion**: Auto-conversion to either [parquet](https://arrow.apache.org/docs/python/index.html) (pa.Table, pd.DataFrame) or [zarr](https://github.com/zarr-developers/zarr-python) (np.Arrays) for fast reading and writing to storage.
 - **data_splits**: Define split logic for your data to generate splits (i.e., train, test, eval)
 - **extra-info**: Additional optional arguments that allow you to associate your data with feature descriptions or extra info (sql scripts etc.)
 - **versioning**: SemVer for your data.
