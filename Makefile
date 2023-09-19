@@ -62,7 +62,7 @@ test.unit:
 		-m "not large" \
 		--cov \
 		--cov-fail-under=0 \
-		--cov-report xml:./coverage.xml \
+		--cov-report html:coverage \
 		--cov-report term \
 		--junitxml=./results.xml
 
