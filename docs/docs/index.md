@@ -47,29 +47,33 @@
 
 ## What is it?
 
-`OpsML` is a tooling library that simplifies the machine learning project lifecycle.
+`OpsML` is an ML tooling library that simplifies the machine learning project lifecycle and provides process consistency.
 
 ## Features
-
-  - `Shareable`: Share cards and workflows across teams
   
   - `Simple Design`: Standardized design that can easily be incorporated into existing workflows.
 
-  - `Cards`: Track, version, and store a variety of ML artifacts via cards (data, models, runs, pipelines) and a SQL-based card registry system. Think "trading cards for machine learning".
+  - `Cards`: Track, version, and store a variety of ML artifacts via `cards`` (data, models, runs, projects) and a SQL-based card registry system. Think **"trading cards for machine learning"**.
 
-  - `Automation`: Automated processes including Onnx model conversion, api generation from Onnx model, data schema inference, code conversion and packaging for production.
-  
-  - `Pipelines`: Coming soon. Auto-pipeline creation
+  - `Prioritization`: Every `Card` is given the same priority. No more treating `data` as a model artifact.
+
+  - `Automation`: Automated processes including Onnx model conversion, data schema inference, code conversion and packaging for production.
+
+  - `Consistency`: No surpises. Outputs and generated artifacts follow engineering standards providing consistency across the entire ML workflow. `Varying input --> Standardized output`.
+
+  - `Shareable`: Share cards and workflows across teams
+
+  - `Server`: Run `Opsml` as a server to provide a centralized location for ML artifacts and metadata. Easily setup on any system that supports Docker.
 
 ## Why?
 
-The main goal of `Opsml` is to provide an intuitive interface for DSs to create standardized, reusable and auditable machine learning workflows.
+The primary goal of `Opsml` is to **empower** data scientists and engineers by providing tooling that is intuitive and produces ML artifacts that meet engineering standards.
 
 ### Two sides of the same coin (dev as prod)
 
-Taking a data science project from ideation :bulb: to deployment :rocket: often involves a `dev` side and a `deployment` side. 
+Taking a data science project from ideation :bulb: to deployment :rocket: often involves a `development` side and a `production` side. 
 
-#### Dev Themes
+#### Development Themes
 
 - Experimentation and iteration in order to generate many potential solutions
 - Feature/Data engineering
@@ -77,10 +81,10 @@ Taking a data science project from ideation :bulb: to deployment :rocket: often 
 - Flexible work environment (often **Jupyter Notebooks**)
 - Many other things
 
-#### Deployment Themes
+#### Production Themes
 
 - Compute infrastructure for hosting
-- Conversion of data science code to production code (including creating dags/pipelines)
+- Conversion of data science code to production code (data/model artifacts, metadata, etc.)
 - CI/CD
 - Versioning
 - Monitoring
@@ -90,18 +94,18 @@ Taking a data science project from ideation :bulb: to deployment :rocket: often 
 
 - :angry: Overhead in packaging data science code into production code. This results in duplicating data science code just to run in another environment (necessary, but can this be simplified?). 
 
-- :watch: Time lag in deployment due to different teams having different priorities (especially true if developers/ML engineers are needed to help data scientists deploy their code)
+- :watch: Time lag in deployment due to different teams having different priorities (especially true if developers/ML engineers are needed to help data scientists deploy their code). Lack of consistency in the production process.
 
 - :rage: Inflexible prod code that is not easily updatable
 
 - :sob: Often no linking of metadata across the entire workflow (data, runs/experiments, models, pipelines)
 
-What `Opsml` aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from `dev` and `deployment` processes and help teams go from ideation to deployment quicker :smile: with the added benefits of reproducibility and auditability.
+What `Opsml` aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from `development` and `production` processes and help teams go from ideation to deployment quicker :smile: with the added benefits of reproducibility and auditability.
 
 
 ## Example
 
-The primary interface for `Opsml` is an `ArtifactCard` (see [here](cards/overview.md) for detailed information). All Cards within `Opsml` follow the same design with a few specific required arguments for each card type. The following example shows how to create a DataCard and a ModelCard.
+The primary interface for `Opsml` is an `ArtifactCard` (see [here](cards/overview.md) for detailed information). All Cards within `Opsml` follow the same design with a few specific required arguments for each card type. The following example shows how to create a `DataCard` and a `ModelCard`.
 
 ```python
 # Data and Model
