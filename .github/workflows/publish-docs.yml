@@ -13,6 +13,7 @@ jobs:
         poetry-version: ["1.5.1"]
 
     steps:
+      - uses: actions/checkout@v3
       - name: Pushes to another repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
