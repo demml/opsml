@@ -19,9 +19,9 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.DOCSITE_TOKEN }}
         with:
-          source-directory: 'docs'
+          source-directory: 'docs/docs'
           destination-github-username: 'thorrester'
           destination-repository-name: 'opsml-docsite'
           user-email: ${{ secrets.USER_EMAIL }}
           target-branch: main
-          target-directory: docs
+          target-directory: docs/docs
