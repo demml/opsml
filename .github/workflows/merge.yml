@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10",]
+        python-version: ["3.11"]
         poetry-version: ["1.5.1"]
 
     steps:
@@ -47,3 +47,34 @@ jobs:
           cache: 'poetry'
       - run : make setup.project
       - run : make test.unit
+
+      - name: Store coverage files
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage
+
+  Coverage:
+    needs: Unit-Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - run: pip install smokeshow
+
+      - name: get coverage artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage
+          path: coverage
+      
+      - run: smokeshow upload coverage
+        env:
+          SMOKESHOW_GITHUB_STATUS_DESCRIPTION: CLI Coverage {coverage-percentage}
+          SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 85
+          SMOKESHOW_GITHUB_CONTEXT: coverage
+          SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SMOKESHOW_AUTH_KEY: ${{ secrets.SMOKESHOW_AUTH_TOKEN }}

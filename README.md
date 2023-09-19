@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="images/opsml-logo.png"  width="400" height="400" alt="opsml logo"/>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
   <br>
 </h1>
 
