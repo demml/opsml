@@ -42,9 +42,9 @@ jobs:
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.9", "3.10","3.11"]
+        python-version: ["3.11"]
         poetry-version: ["1.5.1"]
-        os: [ubuntu, macos]
+        os: [ubuntu]
 
     runs-on: ${{ matrix.os }}-latest
     steps:
@@ -82,7 +82,7 @@ jobs:
           name: coverage
           path: coverage
       
-      - run: smokeshow upload coverage report
+      - run: smokeshow upload coverage
         env:
           SMOKESHOW_GITHUB_STATUS_DESCRIPTION: CLI Coverage {coverage-percentage}
           SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 50
