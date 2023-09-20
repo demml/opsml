@@ -97,6 +97,10 @@ class CloudSQLConnection(BaseSQLConnection):
         return sqlalchemy.create_engine(
             self._sqlalchemy_prefix,
             creator=self._conn,
+            **{
+                "pool_size": os.environ.get("OPSML_POOL_SIZE", 5),
+                "max_overflow": os.environ.get("OPSML_MAX_POOL_OVERFLOW", 5),
+            },
         )
 
     @staticmethod
