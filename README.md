@@ -16,8 +16,9 @@
   <img alt="Code Style" src="https://img.shields.io/badge/  code%20style-black-000000.svg" />
   <a href="https://www.python.org/downloads/release/python-390/">
   </a>
-  <img alt="Python" src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Blue_Python_3.9_Shield_Badge.svg" />
-
+  <a href="https://pypi.org/project/opsml" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058" alt="Supported Python versions">
+</a>
 
 </p>
 
