@@ -60,6 +60,8 @@ nav:
       - Common Questions: 'faq/common_questions.md'
   - Engineering:
       - Ownership: 'engineering/ownership.md'
+  - Contributing:
+      - Contributing: 'faq/contributing.md'
   - RoadMap:
       - RoadMap: 'roadmap/roadmap.md'
  
