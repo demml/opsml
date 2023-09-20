@@ -85,6 +85,17 @@ jobs:
         with:
           name: coverage
           path: coverage
+
+      - name: Coverage Badge
+        uses: tj-actions/coverage-badge-py@v2
+        with:
+          working-directory: coverage
+
+      - name: Verify Changed files
+        uses: tj-actions/verify-changed-files@v16
+        id: verify-changed-files
+        with:
+          files: coverage.svg
       
       - run: smokeshow upload coverage
         env:
