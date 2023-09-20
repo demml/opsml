@@ -18,7 +18,7 @@
   </a>
   <a href="https://pypi.org/project/opsml" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058" alt="Supported Python versions">
-</a>
+  </a>
 
 </p>
 
