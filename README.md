@@ -10,10 +10,14 @@
 
 <p align="center">
 
+   <a alt="Tests" href="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml">
+      <img src="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main">
+  </a>
+  <img alt="Code Style" src="https://img.shields.io/badge/  code%20style-black-000000.svg" />
   <a href="https://www.python.org/downloads/release/python-390/">
+  </a>
   <img alt="Python" src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Blue_Python_3.9_Shield_Badge.svg" />
 
-  <img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" />
 
 </p>
 
