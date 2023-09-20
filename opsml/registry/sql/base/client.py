@@ -36,8 +36,8 @@ class ClientRegistry(SQLRegistryBase):
         self,
         name: str,
         team: str,
-        pre_tag: str,
-        build_tag: str,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
         version_type: VersionType = VersionType.MINOR,
         supplied_version: Optional[CardVersion] = None,
     ) -> str:
