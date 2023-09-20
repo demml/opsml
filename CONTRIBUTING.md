@@ -3,10 +3,21 @@
 ## Welcome
 Hello! We're glad and grateful that you're interested in contributing to `Opsml` :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests`.
 
-### Very Important
+## Very Important
 To contribute to `Opsml` you will need to sign a Contributor License Agreement (CLA) via HelloSign when you create your first `pull_request` (this is an automated process). For a `pull_request` to be valid, your Github email address must match the email address used to sign the CLA. Github has [documentation](https://help.github.com/articles/setting-your-commit-email-address-on-github/) on setting email addresses. Your git email must also match this email address
 
-### Environment Setup
+
+## Table of contents
+
+- [Environment setup](#environment-setup)
+- [Contributing changes](#contributing-changes)
+- [Contributing TLDR](#contributing-tldr)
+- [Community guidelines](#community-guidelines)
+- [Reporting bugs](#submitting-issues/bugs)
+- [Suggesting enhancements](#suggesting-enhancements)
+
+
+## Environment Setup
 Steps:
 1. Create a new env. `Opsml` currently supports python 3.9 -> 3.11
 2. Fork `Opsml`
@@ -21,7 +32,7 @@ or with poetry directly
 poetry install --all-extras --with dev,dev-lints
 ```
 
-### Contributing Changes
+## Contributing Changes
 1. Create a new branch for your addition
    * General naming conventions (we're not picky):
       * `/username/<featureName>`: for features
@@ -39,7 +50,7 @@ poetry install --all-extras --with dev,dev-lints
 7. Get Approval. We'll let you know if there are any changes that are needed. 
 8. Merge your changes into `Opsml`!
 
-### Contributing TLDR
+## Contributing TLDR
 1. Create branch
 2. Add changes
 3. Test locally
@@ -55,5 +66,16 @@ poetry install --all-extras --with dev,dev-lints
   2. Own Your Work
      * Creating a PR for `Opsml` is your first step to becoming a contributor, so make sure that you own your changes. 
      * Our maintainers will do their best to respond to you in a timely manner, but we ask the same from you as the contributor. 
+
+## Submitting issues/bugs
+
+We use [GitHub issues](https://github.com/thorrester/opsml/issues) to track bugs and suggested enhancements. You can report a bug by opening a new issue [new issue](https://github.com/shipt/opsml/issues/new/choose) Before reporting a bug/issue, please check that it has not already been reported, and that it is not already fixed in the latest version. If you find a closed issue related to your current issue, please open a new issue and include a link to the original issue in the body of your new one. Please include as much information about your bug as possible.
+
+## Suggesting enhancements
+
+You can suggest an enhancement by opening a [new feature request](https://github.com/shipt/opsml/issues/new?labels=enhancement&template=feature_request.yml).
+Before creating an enhancement suggestion, please check that a similar issue does not already exist.
+
+Please describe the behavior you want and why, and provide examples of how `Opsml` would be used if your feature were added.
 
 ## _Thank you!_
