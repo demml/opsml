@@ -171,7 +171,7 @@ class ModelRegistrar:
             local_path = f"{tmpdirname}/model-settings.json"
             with open(local_path, "w", encoding="utf-8") as outfile:
                 json.dump(model_settings, outfile)
-                self.storage_client.upload(local_path=local_path, write_path=registry_path)
+            self.storage_client.upload(local_path=local_path, write_path=registry_path)
 
     def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
         """Registers a model to a hardcoded storage path.
