@@ -287,7 +287,7 @@ class OnnxModelCreator(ModelCreator):
             raise ValueError(
                 textwrap.dedent(
                     f"""
-                Failed to convert model to onnx format. If wish to turn onnx conversion off
+                Failed to convert model to onnx format. If you'd like to turn onnx conversion off
                 set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition, 
                 please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md. 
                 Error: {exc}
