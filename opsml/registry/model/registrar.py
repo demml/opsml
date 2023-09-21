@@ -166,7 +166,7 @@ class ModelRegistrar:
         """
 
         model_settings = self._model_settings(metadata, model_uri)
-        logger.info("ModelRegistrar: registering model settings: %s", model_settings)
+        logger.info("ModelRegistrar: registering model settings: %s", str(model_settings))
         with tempfile.TemporaryDirectory() as tmpdirname:
             local_path = f"{tmpdirname}/model-settings.json"
             with open(local_path, "w", encoding="utf-8") as outfile:
@@ -188,8 +188,8 @@ class ModelRegistrar:
         if model_uri is None:
             raise RegistrationError("the model_uri does not exist")
 
-        logger.info("ModelRegistrar: registering model: %s", request)
+        logger.info("ModelRegistrar: registering model: %s", str(request.model_dump()))
         registry_path = self._copy_model_to_registry(request, model_uri, metadata)
-        logger.info("ModelRegistrar: registered model: %s path=%s", request, registry_path)
+        logger.info("ModelRegistrar: registered model: %s path=%s", str(request.model_dump()), registry_path)
 
         return registry_path
