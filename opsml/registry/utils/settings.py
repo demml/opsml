@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, cast
 import httpx
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import model_validator
-
+import sqlalchemy
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.types import OpsmlAuth, OpsmlUri
@@ -281,16 +281,16 @@ class DefaultSettings(BaseSettings):
         """Retrieve sql connection client.
         Connection client is only used in the Registry class.
         """
-
-        if hasattr(self.storage_settings, "credentials"):
-            credentials = self.storage_settings.credentials
-        else:
-            credentials = None
-
         return DefaultConnector(
             tracking_uri=self.opsml_tracking_uri,
-            credentials=credentials,
+            credentials=None,
         ).get_connector()
+
+    @cached_property
+    def sql_engine(self) -> sqlalchemy.engine.base.Engine:
+        """Retrieve sql engine"""
+
+        return self.connection_client.sql_engine
 
     def set_storage(self, storage_settings: StorageSettings) -> None:
         """

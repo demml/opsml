@@ -116,19 +116,13 @@ class CardRegistry:
 
         Args:
             registry_name:
-                Name of the registry to connect to. Options are "pipeline",
-                "model", "data" and "experiment".
+                Name of the registry to connect to. Options are "model", "data" and "run".
 
         Returns:
             Instantiated connection to specific Card registry
 
         Example:
-            # With connection type cloud_sql = CloudSQLConnection(...)
-            data_registry = CardRegistry(registry_name="data",
-            connection_client=cloud_sql)
-
-            # With connection client data_registry =
-            CardRegistry(registry_name="data", connection_type="gcp")
+            data_registry = CardRegistry(registry_name="data")
         """
 
         self._registry = self._set_registry(registry_name=registry_name)

@@ -3,9 +3,8 @@
 # LICENSE file in the root directory of this source tree.
 from enum import Enum
 from functools import cached_property
-from typing import Any, Type, cast
-
-import sqlalchemy
+from typing import Any, Type, cast, Dict
+import os
 
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
@@ -15,6 +14,7 @@ class SqlType(str, Enum):
     CLOUDSQL_MYSQL = "cloudsql_mysql"
     CLOUDSQL_POSTGRES = "cloudsql_postgresql"
     LOCAL = "local"
+    SQLITE = "sqlite"
 
 
 class PythonCloudSqlType(str, Enum):
@@ -79,12 +79,17 @@ class LocalSQLConnection(BaseSQLConnection):
         self.storage_backend: str = SqlType.LOCAL.value
 
     @cached_property
+    def default_db_kwargs(self) -> Dict[str, int]:
+        if SqlType.SQLITE.value in self.tracking_uri:
+            return {}
+        return {
+            "pool_size": os.getenv("OPSML_POOL_SIZE", 5),
+            "max_overflow": os.getenv("OPSML_MAX_OVERFLOW", 5),
+        }
+
+    @cached_property
     def _sqlalchemy_prefix(self):
         return self.tracking_uri
-
-    def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        engine = sqlalchemy.create_engine(self._sqlalchemy_prefix)
-        return engine
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:

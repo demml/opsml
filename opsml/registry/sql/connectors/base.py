@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from functools import cached_property
-from typing import Any
+from typing import Any, Dict
 
 import sqlalchemy
 from sqlalchemy.engine.url import make_url
@@ -22,17 +22,31 @@ class BaseSQLConnection:
         self.connection_parts = self._make_url()
         self.credentials = credentials
 
+        self._engine = sqlalchemy.create_engine(
+            self._sqlalchemy_prefix,
+            **self.default_db_kwargs,
+        )
+
     def _make_url(self) -> Any:
         if ":memory:" in self.tracking_uri:
             return None
         return make_url(self.tracking_uri)
 
     @cached_property
+    def default_db_kwargs(self) -> Dict[str, int]:
+        return {
+            "pool_size": os.getenv("OPSML_POOL_SIZE", 5),
+            "max_overflow": os.getenv("OPSML_MAX_OVERFLOW", 5),
+        }
+
+    @cached_property
     def _sqlalchemy_prefix(self):
         raise NotImplementedError
 
-    def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        raise NotImplementedError
+    @property
+    def sql_engine(self) -> sqlalchemy.engine.base.Engine:
+        """Gets the sqlalchemy connection prefix"""
+        return self._engine
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:
@@ -45,6 +59,16 @@ class CloudSQLConnection(BaseSQLConnection):
     a connection to a MySql or Postgres cloudsql DB
 
     """
+
+    def __init__(self, tracking_uri: str, credentials: Any = None):
+        super().__init__(tracking_uri, credentials)
+
+        # overwrite engine
+        self._engine = sqlalchemy.create_engine(
+            self._sqlalchemy_prefix,
+            creator=self._conn,
+            **self.default_db_kwargs,
+        )
 
     @property
     def _ip_type(self) -> str:
@@ -89,14 +113,6 @@ class CloudSQLConnection(BaseSQLConnection):
             password=self.connection_parts.password,
             db=self.connection_parts.database,
             ip_type=self._ip_type,
-        )
-
-    def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        """Creates SQLAlchemy engine"""
-
-        return sqlalchemy.create_engine(
-            self._sqlalchemy_prefix,
-            creator=self._conn,
         )
 
     @staticmethod
