@@ -7,7 +7,15 @@ from typing import Any, Type, cast, Dict
 import os
 
 from opsml.helpers.utils import all_subclasses
-from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
+from opsml.registry.sql.connectors.base import (
+    BaseSQLConnection,
+    CloudSQLConnection,
+    DEFAULT_OVERFLOW,
+    DEFAULT_POOL_SIZE,
+)
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class SqlType(str, Enum):
@@ -80,12 +88,15 @@ class LocalSQLConnection(BaseSQLConnection):
 
     @cached_property
     def default_db_kwargs(self) -> Dict[str, int]:
-        if SqlType.SQLITE.value in self.tracking_uri:
-            return {}
-        return {
-            "pool_size": os.getenv("OPSML_POOL_SIZE", 5),
-            "max_overflow": os.getenv("OPSML_MAX_OVERFLOW", 5),
-        }
+        kwargs = {}
+        if SqlType.SQLITE.value not in self.tracking_uri:
+            kwargs = {
+                "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
+                "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
+            }
+
+        logger.info("Default pool size: %s, overflow: %s", kwargs.get("pool_size"), kwargs.get("max_overflow"))
+        return kwargs
 
     @cached_property
     def _sqlalchemy_prefix(self):
