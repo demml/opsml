@@ -18,7 +18,7 @@ def test_cloudsql_mysql_parsing():
     assert conn._ip_type == IPTypes.PUBLIC.value
     assert isinstance(conn._connection_name, str)
     assert conn._conn is not None
-    assert isinstance(conn.get_engine(), sqlalchemy.engine.base.Engine)
+    assert isinstance(conn.sql_engine, sqlalchemy.engine.base.Engine)
 
     assert "CloudSqlMySql" in conn.__class__.__name__
 
@@ -35,7 +35,7 @@ def test_cloudsql_postgres_parsing():
     assert conn._ip_type == IPTypes.PUBLIC.value
     assert isinstance(conn._connection_name, str)
     assert conn._conn is not None
-    assert isinstance(conn.get_engine(), sqlalchemy.engine.base.Engine)
+    assert isinstance(conn.sql_engine, sqlalchemy.engine.base.Engine)
 
     assert "CloudSqlPostgresql" in conn.__class__.__name__
 
@@ -47,7 +47,8 @@ def test_cloudsql():
     CONNECTION_NAME = "test-project:us-central1:fake-instance"
 
     MYSQL_TRACKING_URI = f"mysql+pymysql://{USER}:{PASSWORD}@/{DB_NAME}?unix_socket=/cloudsql/{CONNECTION_NAME}"
-    conn = CloudSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
+    with pytest.raises(NotImplementedError):
+        conn = CloudSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
 
 
 def test_base_sql_connection():
@@ -57,13 +58,5 @@ def test_base_sql_connection():
     CONNECTION_NAME = "test-project:us-central1:fake-instance"
 
     MYSQL_TRACKING_URI = f"mysql+pymysql://{USER}:{PASSWORD}@/{DB_NAME}?unix_socket=/cloudsql/{CONNECTION_NAME}"
-    conn = BaseSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
-
     with pytest.raises(NotImplementedError):
-        conn._sqlalchemy_prefix
-
-    with pytest.raises(NotImplementedError):
-        conn.get_engine()
-
-    with pytest.raises(NotImplementedError):
-        conn.validate_type(connector_type="test")
+        conn = BaseSQLConnection(tracking_uri=MYSQL_TRACKING_URI)

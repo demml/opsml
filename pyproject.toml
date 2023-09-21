@@ -36,6 +36,7 @@ classifiers = [
 python = ">=3.9,<3.12"
 alembic = "^1.10.3"
 httpx ="^0.23.3"
+matplotlib= ">=3.7.0, <3.8.0"
 onnx = "^1.14.0"
 onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
