@@ -2,6 +2,13 @@
 
 One of the benefits to linking and tracking `ModelCards` along with various `Runcard` metrics is that it's relatively easy to compare different model versions via the `ModelChallenger` class.
 
+## Examples
+
+- [Comparing registered models](#comparing-registered-models)
+- [Comparing new un-registered model with registered models](#comparing-new-model-prior-to-registration)
+
+## Comparing registered models
+
 The following example will create 3 different model versions across 3 different runs. The `ModelChallenger` will then be used to compare the models.
 
 All code blocks can be run as one script. We will break them up to explain what's going on.
@@ -219,6 +226,120 @@ print([report.model_dump() for report in reports["mae"]])
         "challenger_win": False,
     },
 ]
+```
+
+## Comparing new model prior to registration
+
+The following example will train a model, create a card (without registering it), and then compare it to a registered model. This is useful for when you want to compare a challenger or candidate model to already registered models.
+
+### **Create Champion Model**
+
+```python
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+import numpy as np
+
+from opsml.projects import ProjectInfo
+
+from opsml.projects.mlflow import MlflowProject
+from opsml.registry import DataCard, ModelCard
+from opsml.model.challenger import ModelChallenger
+
+
+def fake_data():
+    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
+
+    col_names = []
+    for i in range(0, X_train.shape[1]):
+        col_names.append(f"col_{i}")
+
+    X = pd.DataFrame(X_train, columns=col_names)
+    X["col_11"] = np.random.randint(1, 20, size=(1000, 1))
+
+    y = np.random.randint(1, 10, size=(1000, 1))
+    return X, y
+
+
+info = ProjectInfo(
+    name="opsml",
+    team="devops",
+    user_email="test_email",
+)
+project = MlflowProject(info=info)
+with project.run(run_name="create-model") as run:
+    X, y = fake_data()
+    reg = LinearRegression().fit(X.to_numpy(), y)
+    mae = mean_absolute_error(y, reg.predict(X))
+    data_card = DataCard(
+        data=X,
+        name="pipeline-data1",
+        team="mlops-test",
+        user_email="mlops.com",
+    )
+    data_card.create_data_profile()
+
+    run.register_card(card=data_card)
+
+    # register champion model - needed for example
+    champion_model = ModelCard(
+        trained_model=reg,
+        sample_input_data=X[0:1],
+        name=f"linear-reg",
+        team="mlops-test",
+        user_email="mlops.com",
+        datacard_uid=data_card.uid,
+        tags={"name": "model_tag"},
+    )
+    run.log_metric("mae", mae)
+```
+### **Create and Compare Challenger Model**
+
+Here we will create a run, train a new model, instantiate a `ModelCard` for the challenger and then compare it to the champion model prior to registration.
+
+```python
+info = ProjectInfo(
+    name="opsml",
+    team="devops",
+    user_email="test_email",
+)
+project = MlflowProject(info=info)
+with project.run(run_name="challenge-model") as run:
+    X, y = fake_data()
+    reg = LinearRegression().fit(X.to_numpy(), y)
+    mae = mean_absolute_error(y, reg.predict(X))
+
+    # create challenger model card
+    challenger_model = ModelCard(
+        trained_model=reg,
+        sample_input_data=X[0:1],
+        name=f"linear-reg",
+        team="mlops-test",
+        user_email="mlops.com",
+    )
+
+    challenger = ModelChallenger(challenger=challenger_model)
+
+    # challenge previous champion before registering challenger
+    # this will pull the previous model version
+    report = challenger.challenge_champion(
+        metric_name="mae",
+        metric_value=mae,  # could be metric from training
+        lower_is_better=True,
+    )
+
+    if report["mae"][0].challenger_win:
+        # now we register cards
+        data_card = DataCard(
+            data=X,
+            name="pipeline-data1",
+            team="mlops-test",
+            user_email="mlops.com",
+        )
+        run.register_card(card=data_card)
+
+        # append uid
+        challenger_model.datacard_uid = data_card.uid
+        run.register_card(card=challenger_model)
 ```
 
 ### Docs
