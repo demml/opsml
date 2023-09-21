@@ -13,6 +13,8 @@ class ArtifactLogger(Logger):
             name=name,
             config=LogConfig(
                 stdout=True,
+                show_name=False,
+                time_format="[year]-[month]-[day]T[hour repr:24]:[minute]:[second]",
                 json_config=JsonConfig(),
             ),
         )

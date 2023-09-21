@@ -46,5 +46,5 @@ def initialize_mlflow() -> MlFlowConfig:
         return config
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error initializing backend store")
-        logger.exception(e)
+        logger.error(e)
         sys.exit(1)
