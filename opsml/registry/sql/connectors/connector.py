@@ -3,18 +3,26 @@
 # LICENSE file in the root directory of this source tree.
 from enum import Enum
 from functools import cached_property
-from typing import Any, Type, cast
-
-import sqlalchemy
+from typing import Any, Type, cast, Dict
+import os
 
 from opsml.helpers.utils import all_subclasses
-from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
+from opsml.registry.sql.connectors.base import (
+    BaseSQLConnection,
+    CloudSQLConnection,
+    DEFAULT_OVERFLOW,
+    DEFAULT_POOL_SIZE,
+)
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger(__name__)
 
 
 class SqlType(str, Enum):
     CLOUDSQL_MYSQL = "cloudsql_mysql"
     CLOUDSQL_POSTGRES = "cloudsql_postgresql"
     LOCAL = "local"
+    SQLITE = "sqlite"
 
 
 class PythonCloudSqlType(str, Enum):
@@ -79,12 +87,20 @@ class LocalSQLConnection(BaseSQLConnection):
         self.storage_backend: str = SqlType.LOCAL.value
 
     @cached_property
+    def default_db_kwargs(self) -> Dict[str, int]:
+        kwargs = {}
+        if SqlType.SQLITE.value not in self.tracking_uri:
+            kwargs = {
+                "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
+                "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
+            }
+
+        logger.info("Default pool size: %s, overflow: %s", kwargs.get("pool_size"), kwargs.get("max_overflow"))
+        return kwargs
+
+    @cached_property
     def _sqlalchemy_prefix(self):
         return self.tracking_uri
-
-    def get_engine(self) -> sqlalchemy.engine.base.Engine:
-        engine = sqlalchemy.create_engine(self._sqlalchemy_prefix)
-        return engine
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:

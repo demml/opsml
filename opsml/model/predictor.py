@@ -157,4 +157,7 @@ class OnnxModelPredictor:
     def _create_onnx_session(self, model_definition: bytes):
         import onnxruntime as rt  # pylint: disable=import-outside-toplevel
 
-        return rt.InferenceSession(model_definition)
+        return rt.InferenceSession(
+            path_or_bytes=model_definition,
+            providers=rt.get_available_providers(),
+        )

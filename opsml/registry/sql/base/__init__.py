@@ -15,7 +15,7 @@ def get_registry():
         from opsml.registry.sql.sql_schema import RegistryTableNames
 
         db_initializer = DBInitializer(
-            engine=settings.connection_client.get_engine(),
+            engine=settings.sql_engine,
             registry_tables=list(RegistryTableNames),
         )
         db_initializer.initialize()
