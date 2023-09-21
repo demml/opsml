@@ -20,5 +20,5 @@ async def rollbar_middleware(
         return await call_next(request)  # type: ignore
     except Exception:  # pylint: disable=broad-except
         rollbar.report_exc_info()
-        logger.exception("unhandled API error")
+        logger.error("unhandled API error")
         return Response("Internal server error", status_code=500)
