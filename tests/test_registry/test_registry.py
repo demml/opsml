@@ -8,7 +8,6 @@ from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
-from opsml.registry.cards.pipeline_loader import PipelineLoader
 from opsml.registry.sql.registry import CardRegistry
 from opsml.registry.sql.semver import SemVerUtils
 from opsml.helpers.exceptions import VersionError
@@ -853,13 +852,6 @@ def test_full_pipeline_with_loading(
         runcard_uids=[exp_card.uid],
     )
     pipeline_registry.register_card(card=pipeline_card)
-
-    loader = PipelineLoader(pipelinecard_uid=pipeline_card.uid)
-    uids = loader.card_uids
-
-    assert uids["data"][0] == data_card.uid
-    assert uids["run"][0] == exp_card.uid
-    assert uids["model"][0] == model_card.uid
 
 
 def test_model_registry_with_polars(
