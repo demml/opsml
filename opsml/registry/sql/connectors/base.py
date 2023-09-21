@@ -12,6 +12,8 @@ from sqlalchemy.engine.url import make_url
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
+DEFAULT_POOL_SIZE = "5"
+DEFAULT_OVERFLOW = "5"
 
 
 class BaseSQLConnection:
@@ -34,10 +36,13 @@ class BaseSQLConnection:
 
     @cached_property
     def default_db_kwargs(self) -> Dict[str, int]:
-        return {
-            "pool_size": os.getenv("OPSML_POOL_SIZE", 5),
-            "max_overflow": os.getenv("OPSML_MAX_OVERFLOW", 5),
+        """Default db kwargs for sqlalchemy engine"""
+        kwargs = {
+            "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
+            "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
         }
+        logger.info("Default pool size: %s, overflow: %s", kwargs["pool_size"], kwargs["max_overflow"])
+        return kwargs
 
     @cached_property
     def _sqlalchemy_prefix(self):

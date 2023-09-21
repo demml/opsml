@@ -4,9 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Any, Dict, Optional
-
+import textwrap
 import numpy as np
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data
@@ -286,11 +285,15 @@ class OnnxModelCreator(ModelCreator):
         except Exception as exc:
             logger.error("Failed to convert model to onnx. %s", exc)
             raise ValueError(
-                """Failed to convert model to onnx format. If wish to turn onnx conversion off, set to_onnx=False in the ModelCard.""",
-                """If you wish to provide your own onnx definition, please refer to """
-                """https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md. """,
-                f"""Error: {exc}""",
-            )
+                textwrap.dedent(
+                    f"""
+                Failed to convert model to onnx format. If wish to turn onnx conversion off
+                set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition, 
+                please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md. 
+                Error: {exc}
+                """
+                )
+            ) from exc
 
     @staticmethod
     def validate(to_onnx: bool) -> bool:
