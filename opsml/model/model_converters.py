@@ -156,7 +156,10 @@ class ModelConverter:
         model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
         logger.info("Validating converted onnx model")
-        sess = rt.InferenceSession(onnx_model.SerializeToString())
+        sess = rt.InferenceSession(
+            path_or_bytes=onnx_model.SerializeToString(),
+            providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
+        )
         onnx_preds = sess.run(None, inputs)
         if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
             raise ValueError("Model prediction validation failed")
@@ -544,7 +547,10 @@ class PyTorchOnnxModel(ModelConverter):
         logger.info("Validating converted onnx model")
 
         model_string = onnx_model.SerializeToString()
-        sess = rt.InferenceSession(model_string)
+        sess = rt.InferenceSession(
+            path_or_bytes=model_string,
+            providers=rt.get_available_providers(),
+        )
 
         onnx_preds = sess.run(None, inputs)
 

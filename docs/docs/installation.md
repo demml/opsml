@@ -52,3 +52,15 @@ Types of extras that can be installed:
 
 - **OPSML_STORAGE_URI**: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file systems and google cloud storage.
 If running `Opsml` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
+
+## TLDR Scenarios
+
+**Server is already setup and I need to interact with it from the client side (notebook, python script, cli, etc.)**:
+  
+  - Set `OPSML_TRACKING_URI` to the http address of the server
+
+**I need to setup the Server**:
+  
+  - Set `OPSML_TRACKING_URI` to the sql tracking uri of your card registry database
+  - Set `OPSML_STORAGE_URI` to the storage uri of your choice
+  - Follow instructions in [server](server/overview.md) docs
