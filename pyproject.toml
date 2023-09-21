@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.2"
-description = "Package for creating, tracking, storing and versioning machine learning artifacts"
+version = "1.4.3"
+description = "Adding consistency and standardization to the ML lifecycle"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 readme = "README.md"
 
@@ -36,6 +36,7 @@ classifiers = [
 python = ">=3.9,<3.12"
 alembic = "^1.10.3"
 httpx ="^0.23.3"
+matplotlib= ">=3.7.0, <3.8.0"
 onnx = "^1.14.0"
 onnxmltools = "^1.11.1"
 onnxruntime = "^1.13.0"
@@ -78,12 +79,8 @@ cloud-sql-python-connector = {version="^1.2.0", optional = true}
 pg8000 = {version="^1.29.4", optional = true}
 pymysql = {version="^1.0.2", optional = true}
 
-# optional dep for visualization
-graphviz = {version="^0.20.1", optional = true}
-
 [tool.poetry.extras]
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
-graphviz = ["graphviz"]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]
 postgres = ["psycopg2"]
@@ -98,11 +95,10 @@ pytest-cov = "^3.0.0"
 coverage = {extras = ["toml"], version = "^6.5.0"}
 torch = "<=2.0.0"
 torchvision = "^0.15"
-tabulate = "^0.9.0"
+#tabulate = "^0.9.0"
 lightgbm = "^3.3.3"
 xgboost = "^1.7.1"
 transformers = "^4.27.3"
-snakeviz = "^2.1.1"
 tensorflow = {version="^2.11.0", platform = "linux"}
 # Tensorflow < 2.13.0 has no arm64 build in the main pypi package, so this separate one must be used for apple silicon
 tensorflow-macos = {version="^2.12.0", platform="darwin"}
