@@ -50,9 +50,9 @@ def _shutdown_registries(app: FastAPI):
 
 
 def _log_url_and_storage():
-    logger.info("OpsML tracking url: %s", config.TRACKING_URI)
-    logger.info("OpsML storage url: %s", config.STORAGE_URI)
-    logger.info("Environment: %s", config.APP_ENV)
+    logger.info(f"OpsML tracking url: {config.TRACKING_URI}")
+    logger.info(f"OpsML storage url: {config.STORAGE_URI}")
+    logger.info(f"Environment: {config.APP_ENV}")
 
 
 def start_app_handler(app: FastAPI) -> Callable[[], None]:

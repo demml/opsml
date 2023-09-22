@@ -134,7 +134,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             return self._get_prediction_type(predictions=predictions)
 
         except TypeError as error:
-            logger.error("%s. Falling back to model functional call", error)
+            logger.error("%s. Falling back to model functional call", str(error))
 
         return self._functional_prediction()
 
@@ -172,7 +172,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             return self._functional_prediction()
 
         except Exception as error:
-            logger.error("Failed to determine prediction output. Defaulting to placeholder. %s", error)
+            logger.error("Failed to determine prediction output. Defaulting to placeholder. %s", str(error))
 
         return {"placeholder": Feature(feature_type="str", shape=[1])}
 
@@ -283,11 +283,11 @@ class OnnxModelCreator(ModelCreator):
             # add onnx version
             return onnx_model_return
         except Exception as exc:
-            logger.error("Failed to convert model to onnx. %s", exc)
+            logger.error("Failed to convert model to onnx. %s", str(exc))
             raise ValueError(
                 textwrap.dedent(
                     f"""
-                Failed to convert model to onnx format. If wish to turn onnx conversion off
+                Failed to convert model to onnx format. If you'd like to turn onnx conversion off
                 set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition, 
                 please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md. 
                 Error: {exc}
