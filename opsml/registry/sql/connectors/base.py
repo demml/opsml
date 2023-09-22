@@ -41,7 +41,11 @@ class BaseSQLConnection:
             "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
             "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
         }
-        logger.info("Default pool size: %s, overflow: %s", kwargs["pool_size"], kwargs["max_overflow"])
+        logger.info(
+            "Default pool size: %s, overflow: %s",
+            str(kwargs["pool_size"]),
+            str(kwargs["max_overflow"]),
+        )
         return kwargs
 
     @cached_property

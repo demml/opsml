@@ -188,7 +188,7 @@ class GCSStorageClient(GCPService):
         blob.upload_from_filename(filename)
         gcs_uri = f"gs://{gcs_bucket}/{destination_path}"
 
-        logger.info("Uploaded %s to %s", filename, gcs_uri)
+        logger.info("Uploaded %s to %s", str(filename), str(gcs_uri))
 
         return gcs_uri
 
