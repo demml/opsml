@@ -5,18 +5,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger(__name__)
-
-
-@dataclass
-class DataCardUris:
-    data_uri: Optional[str] = None
-    datacard_uri: Optional[str] = None
-    profile_uri: Optional[str] = None
-    profile_html_uri: Optional[str] = None
 
 
 class Metric(BaseModel):

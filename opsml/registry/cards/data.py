@@ -22,6 +22,7 @@ from opsml.registry.image import ImageDataset
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.data.formatter import check_data_schema
+from opsml.registry.data.types import DataCardMetadata
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.data.types import AllowedTableTypes
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -93,29 +94,23 @@ class DataCard(ArtifactCard):
 
     data: Optional[ValidData] = None
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Optional[Any]]] = None
-    data_type: Optional[str] = None
     dependent_vars: Optional[List[Union[int, str]]] = None
-    feature_descriptions: Optional[Dict[str, str]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
-    runcard_uid: Optional[str] = None
-    pipelinecard_uid: Optional[str] = None
-    data_profile: Optional[ProfileReport] = None
-    uris: DataCardUris = DataCardUris()
+    metadata: DataCardMetadata = DataCardMetadata()
 
-    @field_validator("uris", mode="before")
-    def check_data(cls, uris, info):
-        if isinstance(uris, DataCardUris):
-            data_uri = uris.data_uri
+    @field_validator("metadata", mode="before")
+    def check_data(cls, metadata, info):
+        # check data uri
+        if isinstance(metadata, DataCardMetadata):
+            data_uri = metadata.uris.data_uri
         else:
-            data_uri = uris.get("data_uri")
+            data_uri = metadata["uris"].get("data_uri")
 
         if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
             if data_uri is None:
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
-        return uris
+        return metadata
 
     @field_validator("data_profile", mode="before")
     def check_profile(cls, profile):
@@ -124,15 +119,6 @@ class DataCard(ArtifactCard):
 
             assert isinstance(profile, ydata_profile)
         return profile
-
-    @field_validator("feature_descriptions", mode="before")
-    def lower_descriptions(cls, feature_descriptions):
-        if feature_descriptions is None:
-            return feature_descriptions
-        feat_dict = {}
-        for feature, description in feature_descriptions.items():
-            feat_dict[feature.lower()] = description.lower()
-            return feat_dict
 
     @field_validator("sql_logic", mode="before")
     def load_sql(cls, sql_logic):
@@ -210,7 +196,7 @@ class DataCard(ArtifactCard):
 
         download_object(
             card=self,
-            artifact_type=self.data_type,
+            artifact_type=self.metadata.data_type,
             storage_client=storage_client,
         )
 
@@ -236,8 +222,8 @@ class DataCard(ArtifactCard):
                 to add to the current metadata set
         """
 
-        curr_info = cast(Dict[str, Union[int, float, str]], self.additional_info)
-        self.additional_info = {**info, **curr_info}
+        curr_info = cast(Dict[str, Union[int, float, str]], self.metadata.additional_info)
+        self.metadata.additional_info = {**info, **curr_info}
 
     def add_sql(
         self,
@@ -324,15 +310,15 @@ class DataDownloader(Downloader):
             return
 
         self.storage_client.storage_spec = ArtifactStorageSpecs(
-            save_path=self.card.uris.data_uri,
+            save_path=self.card.metadata.uris.data_uri,
         )
 
         data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
-            artifact_type=cast(str, self.card.data_type),
+            artifact_type=cast(str, self.card.metadata.data_type),
         )
 
-        data = check_data_schema(data, cast(Dict[str, str], self.card.feature_map))
+        data = check_data_schema(data, cast(Dict[str, str], self.card.metadata.feature_map))
         setattr(self.card, "data", data)
 
     @staticmethod
@@ -359,12 +345,12 @@ class ImageDownloader(Downloader):
 
         kwargs = {"image_dir": data.image_dir}
         self.storage_client.storage_spec = ArtifactStorageSpecs(
-            save_path=self.card.uris.data_uri,
+            save_path=self.card.metadata.uris.data_uri,
         )
 
         data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
-            artifact_type=cast(str, self.card.data_type),
+            artifact_type=cast(str, self.card.metadata.data_type),
             **kwargs,
         )
 
