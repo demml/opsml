@@ -45,7 +45,7 @@ def download_data_profile(
         storage_client = request.app.state.storage_client
         return StreamingResponse(
             storage_client.iterfile(
-                file_path=datacard.uris.profile_html_uri,
+                file_path=datacard.metadata.uris.profile_html_uri,
                 chunk_size=CHUNK_SIZE,
             ),
             media_type="application/octet-stream",
