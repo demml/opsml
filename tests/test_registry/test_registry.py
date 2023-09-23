@@ -7,9 +7,8 @@ import pyarrow as pa
 from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
+from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit, DataCardMetadata
 from opsml.registry.sql.registry import CardRegistry
-from opsml.registry.sql.semver import SemVerUtils
 from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
@@ -139,8 +138,10 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
         name="test_tags",
         team="mlops",
         user_email="mlops.com",
-        feature_descriptions={"test": "test_description"},
         sql_logic={"test": "select * from test_table"},
+        metadata=DataCardMetadata(
+            feature_descriptions={"test": "test_description"},
+        ),
     )
     data_card.add_tag("test", "hello")
 
@@ -720,7 +721,9 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
         team=team,
         user_email=user_email,
         data_splits=data_split,
-        additional_info={"input_metadata": 20},
+        metadata=DataCardMetadata(
+            additional_info={"input_metadata": 20},
+        ),
         dependent_vars=[200, "test"],
         sql_logic={"test": "SELECT * FROM TEST_TABLE"},
     )
@@ -732,8 +735,8 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
 
     loaded_data.load_data()
 
-    assert int(loaded_data.additional_info["input_metadata"]) == 20
-    assert int(loaded_data.additional_info["added_metadata"]) == 10
+    assert int(loaded_data.metadata.additional_info["input_metadata"]) == 20
+    assert int(loaded_data.metadata.additional_info["added_metadata"]) == 10
     assert isinstance(loaded_data.dependent_vars[0], int)
     assert isinstance(loaded_data.dependent_vars[1], str)
     assert bool(loaded_data)
@@ -766,7 +769,7 @@ def test_datacard_failure():
             team=team,
             user_email=user_email,
             data_splits=data_split,
-            additional_info={"input_metadata": 20},
+            metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
             dependent_vars=[200, "test"],
         )
     assert ve.match("Data or sql logic must be supplied when no data_uri")

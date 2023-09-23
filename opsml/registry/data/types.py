@@ -44,15 +44,15 @@ class DataCardMetadata(BaseModel):
     description: Optional[str] = None
     feature_map: Optional[Dict[str, Optional[Any]]] = None
     data_type: Optional[str] = None
-    feature_descriptions: Optional[Dict[str, str]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
+    feature_descriptions: Dict[str, str] = {}
+    additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     uris: DataCardUris = DataCardUris()
 
     @field_validator("feature_descriptions", mode="before")
     def lower_descriptions(cls, feature_descriptions):
-        if feature_descriptions is None:
+        if not bool(feature_descriptions):
             return feature_descriptions
 
         feat_dict = {}
