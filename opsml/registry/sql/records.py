@@ -7,12 +7,13 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, model_validator, ConfigDict
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris
+from opsml.registry.cards.types import METRICS, PARAMS
 from opsml.model.types import ModelCardMetadata, ModelCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.data.types import DataCardMetadata
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
@@ -40,9 +41,14 @@ class DataRegistryRecord(SaveRecord):
 
     @model_validator(mode="before")
     def set_uris(cls, values):
-        uris = values.get("uris")
+        metadata = values.get("metadata")
+        uris = metadata.get("uris")
+
         values["data_uri"] = uris["data_uri"]
         values["datacard_uri"] = uris["datacard_uri"]
+        values["data_type"] = metadata["data_type"]
+        values["runcard_uid"] = metadata["runcard_uid"]
+        values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
 
         return values
 
@@ -129,14 +135,8 @@ class LoadRecord(BaseModel):
 
 
 class LoadedDataRecord(LoadRecord):
-    uris: DataCardUris
-    data_type: Optional[str] = None
-    feature_map: Optional[Dict[str, Any]] = None
-    feature_descriptions: Optional[Dict[str, str]] = None
     dependent_vars: Optional[List[Union[int, str]]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
-    runcard_uid: Optional[str] = None
-    pipelinecard_uid: Optional[str] = None
+    metadata: DataCardMetadata
 
     @model_validator(mode="before")
     def load_attributes(cls, values):
@@ -148,10 +148,10 @@ class LoadedDataRecord(LoadRecord):
         )
 
         datacard_definition["storage_client"] = storage_client
-        datacard_definition["uris"]["datacard_uri"] = values.get("datacard_uri")
+        datacard_definition["metadata"]["uris"]["datacard_uri"] = values.get("datacard_uri")
 
-        if datacard_definition["uris"]["profile_uri"] is not None:
-            profile_uri = datacard_definition["uris"]["profile_uri"]
+        if datacard_definition["metadata"]["uris"]["profile_uri"] is not None:
+            profile_uri = datacard_definition["metadata"]["uris"]["profile_uri"]
 
             datacard_definition["data_profile"] = LoadedDataRecord.load_data_profile(
                 data_profile_uri=profile_uri,
