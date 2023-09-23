@@ -1,11 +1,10 @@
 import sys
 
-from opsml.registry.cards import ModelCard
+from opsml.registry.cards import ModelCard, ModelCardMetadata
 import numpy as np
 import pytest
 import pandas as pd
 from pytest_lazyfixture import lazy_fixture
-from opsml.model.types import ModelMetadata
 import warnings
 
 
@@ -191,10 +190,10 @@ def test_byo_onnx(model_and_data):
         name="test_model",
         team="mlops",
         user_email="test_email",
-        datacard_uids=["test_uid"],
+        datacard_uid="test_uid",
     )
     predictor = modelcard.onnx_model()
-    model_def = modelcard.onnx_model_def
+    model_def = modelcard.metadata.onnx_model_def
 
     # byo onnx model def
     new_modelcard = ModelCard(
@@ -203,11 +202,11 @@ def test_byo_onnx(model_and_data):
         name="test_model",
         team="mlops",
         user_email="test_email",
-        datacard_uids=["test_uid"],
-        onnx_model_def=model_def,
+        datacard_uid="test_uid",
+        metadata=ModelCardMetadata(onnx_model_def=model_def),
     )
     predictor = new_modelcard.onnx_model()
-    assert new_modelcard.data_schema is not None
+    assert new_modelcard.metadata.data_schema is not None
 
     if isinstance(data, np.ndarray):
         input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
@@ -245,8 +244,8 @@ def test_byo_pytorch_onnx(model_and_data):
         name="test_model",
         team="mlops",
         user_email="test_email",
-        datacard_uids=["test_uid"],
-        onnx_model_def=model_def,
+        datacard_uid="test_uid",
+        metadata=ModelCardMetadata(onnx_model_def=model_def),
     )
     predictor = modelcard.onnx_model()
     input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
