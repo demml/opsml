@@ -68,14 +68,16 @@ class ModelRegistryRecord(SaveRecord):
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
-    def set_uris(cls, values):
+    def set_metadata(cls, values):
         metadata = values.get("metadata")
+        values["modelcard_uri"] = metadata["uris"]["modelcard_uri"]
         values["trained_model_uri"] = metadata["uris"]["trained_model_uri"]
         values["model_metadata_uri"] = metadata["uris"]["model_metadata_uri"]
         values["sample_data_uri"] = metadata["uris"]["sample_data_uri"]
-        values["modelcard_uri"] = metadata["uris"]["modelcard_uri"]
         values["sample_data_type"] = metadata["sample_data_type"]
         values["model_type"] = metadata["model_type"]
+        values["runcard_uid"] = metadata["runcard_uid"]
+        values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
 
         return values
 

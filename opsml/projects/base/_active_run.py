@@ -138,7 +138,7 @@ class ActiveRun:
 
         # add runuid to card
         if isinstance(card, (DataCard, ModelCard)):
-            card.runcard_uid = self.runcard.uid
+            card.metadata.runcard_uid = self.runcard.uid
 
         CardHandler.register_card(
             registries=self._info.registries,
