@@ -16,17 +16,16 @@ from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
-    ExtraOnnxArgs,
     Feature,
     InputDataType,
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
+    ModelCardMetadata,
 )
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import (
     CardType,
-    ModelCardUris,
 )
 from opsml.registry.sql.records import (
     ModelRegistryRecord,
@@ -97,16 +96,8 @@ class ModelCard(ArtifactCard):
     trained_model: Optional[Any] = None
     sample_input_data: SampleModelData = None
     datacard_uid: Optional[str] = None
-    onnx_model_data: Optional[DataDict] = None
-    onnx_model_def: Optional[OnnxModelDefinition] = None
-    sample_data_type: Optional[str] = None
-    model_type: Optional[str] = None
-    additional_onnx_args: Optional[ExtraOnnxArgs] = None
-    data_schema: Optional[ApiDataSchemas] = None
-    runcard_uid: Optional[str] = None
-    pipelinecard_uid: Optional[str] = None
     to_onnx: bool = True
-    uris: ModelCardUris = ModelCardUris()
+    metadata: ModelCardMetadata = ModelCardMetadata()
 
     @model_validator(mode="before")
     def check_args(cls, values: Dict[str, Any]):
@@ -156,25 +147,25 @@ class ModelCard(ArtifactCard):
 
     @property
     def model_data_schema(self) -> DataDict:
-        if self.data_schema is not None:
-            return self.data_schema.model_data_schema
+        if self.metadata.data_schema is not None:
+            return self.metadata.data_schema.model_data_schema
         raise ValueError("Model data schema has not been set")
 
     @property
     def input_data_schema(self) -> Dict[str, Feature]:
-        if self.data_schema is not None and self.data_schema.input_data_schema is not None:
-            return self.data_schema.input_data_schema
+        if self.metadata.data_schema is not None and self.metadata.data_schema.input_data_schema is not None:
+            return self.metadata.data_schema.input_data_schema
         raise ValueError("Model input data schema has not been set or is not needed for this model")
 
     def load_sample_data(self):
         """Loads sample data associated with original non-onnx model"""
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.uris.sample_data_uri)
+        storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri)
 
         storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
             storage_client=storage_client,
-            artifact_type=self.sample_data_type,
+            artifact_type=self.metadata.sample_data_type,
         )
 
         setattr(self, "sample_input_data", sample_data)
@@ -182,19 +173,19 @@ class ModelCard(ArtifactCard):
     def load_trained_model(self):
         """Loads original trained model"""
 
-        if not all([bool(self.uris.trained_model_uri), bool(self.uris.sample_data_uri)]):
+        if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
             raise ValueError(
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
         if self.trained_model is None:
             self.load_sample_data()
-            storage_spec = ArtifactStorageSpecs(save_path=self.uris.trained_model_uri)
+            storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri)
             storage_client.storage_spec = storage_spec
 
             trained_model = load_record_artifact_from_storage(
                 storage_client=storage_client,
-                artifact_type=self.model_type,
+                artifact_type=self.metadata.model_type,
             )
 
             setattr(self, "trained_model", trained_model)
@@ -202,7 +193,7 @@ class ModelCard(ArtifactCard):
     @property
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
-        storage_spec = ArtifactStorageSpecs(save_path=self.uris.model_metadata_uri)
+        storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri)
         storage_client.storage_spec = storage_spec
         model_metadata = load_record_artifact_from_storage(
             storage_client=storage_client,
@@ -232,7 +223,7 @@ class ModelCard(ArtifactCard):
     def load_onnx_model_definition(self) -> None:
         """Loads the onnx model definition"""
 
-        if self.uris.model_metadata_uri is None:
+        if self.metadata.uris.model_metadata_uri is None:
             raise ValueError("No model metadata exists. Please check the registry or register a new model")
 
         metadata = self.model_metadata
@@ -243,13 +234,16 @@ class ModelCard(ArtifactCard):
             model_bytes=onnx_model.SerializeToString(),
         )
 
-        setattr(self, "onnx_model_def", model_def)
+        setattr(self.metadata, "onnx_model_def", model_def)
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
 
-        exclude_vars = {"trained_model", "sample_input_data", "onnx_model_def"}
-        return ModelRegistryRecord(**self.model_dump(exclude=exclude_vars))
+        exclude_vars = {"trained_model", "sample_input_data"}
+        dumped_model = self.model_dump(exclude=exclude_vars)
+        dumped_model["metadata"].pop("onnx_model_def")
+
+        return ModelRegistryRecord(**dumped_model)
 
     def _set_version_for_predictor(self) -> str:
         if self.version is None:
@@ -261,9 +255,9 @@ class ModelCard(ArtifactCard):
         return version
 
     def _set_model_attributes(self, model_return: ModelReturn) -> None:
-        setattr(self, "onnx_model_def", model_return.model_definition)
-        setattr(self, "data_schema", model_return.api_data_schema)
-        setattr(self, "model_type", model_return.model_type)
+        setattr(self.metadata, "onnx_model_def", model_return.model_definition)
+        setattr(self.metadata, "data_schema", model_return.api_data_schema)
+        setattr(self.metadata, "model_type", model_return.model_type)
 
     def _create_and_set_model_attr(self) -> None:
         """
@@ -279,9 +273,9 @@ class ModelCard(ArtifactCard):
         model_return = create_model(
             model=self.trained_model,
             input_data=self.sample_input_data,
-            additional_onnx_args=self.additional_onnx_args,
+            additional_onnx_args=self.metadata.additional_onnx_args,
             to_onnx=self.to_onnx,
-            onnx_model_def=self.onnx_model_def,
+            onnx_model_def=self.metadata.onnx_model_def,
         )
 
         self._set_model_attributes(model_return=model_return)
@@ -332,16 +326,16 @@ class ModelCard(ArtifactCard):
         """
 
         # todo: clean this up
-        if self.onnx_model_def is None or self.data_schema is None:
+        if self.metadata.onnx_model_def is None or self.metadata.data_schema is None:
             self._create_and_set_model_attr()
 
         version = self._set_version_for_predictor()
 
         # recast to make mypy happy
         # todo: refactor
-        model_def = cast(OnnxModelDefinition, self.onnx_model_def)
-        model_type = str(self.model_type)
-        data_schema = cast(ApiDataSchemas, self.data_schema)
+        model_def = cast(OnnxModelDefinition, self.metadata.onnx_model_def)
+        model_type = str(self.metadata.model_type)
+        data_schema = cast(ApiDataSchemas, self.metadata.data_schema)
 
         sample_api_data = self._get_sample_data_for_api()
 
