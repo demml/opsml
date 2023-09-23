@@ -16,6 +16,19 @@ POLARS_SCHEMA = Mapping[str, Union[DataTypeClass, DataType]]  # pylint: disable=
 
 @dataclass
 class DataCardUris:
+    """Data uri holder for DataCardMetadata
+
+    Args:
+        data_uri:
+            Location where converted data is stored
+        datacard_uri:
+            Location where DataCard is stored
+        profile_uri:
+            Location where profile is stored
+        profile_html_uri:
+            Location where profile html is stored
+    """
+
     data_uri: Optional[str] = None
     datacard_uri: Optional[str] = None
     profile_uri: Optional[str] = None
@@ -41,6 +54,29 @@ class ArrowTable(BaseModel):
 
 
 class DataCardMetadata(BaseModel):
+
+    """Create a DataCard metadata
+
+    Args:
+        description:
+            Description for your data
+        feature_map:
+            Map of features in data (inferred when converting to pyarrow table)
+        feature_descriptions:
+            Dictionary of features and their descriptions
+        additional_info:
+            Dictionary of additional info to associate with data
+            (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})
+        data_uri:
+            Location where converted pyarrow table is stored
+        runcard_uid:
+            Id of RunCard that created the DataCard
+        pipelinecard_uid:
+            Associated PipelineCard
+        uris:
+            DataCardUris object containing all uris associated with DataCard
+    """
+
     description: Optional[str] = None
     feature_map: Optional[Dict[str, Optional[Any]]] = None
     data_type: Optional[str] = None

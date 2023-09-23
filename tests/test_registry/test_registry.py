@@ -7,7 +7,15 @@ import pyarrow as pa
 from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit, DataCardMetadata
+from opsml.registry.cards import (
+    DataCard,
+    RunCard,
+    PipelineCard,
+    ModelCard,
+    DataSplit,
+    DataCardMetadata,
+    ModelCardMetadata,
+)
 from opsml.registry.sql.registry import CardRegistry
 from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
@@ -620,6 +628,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        metadata=ModelCardMetadata(description="test description"),
     )
 
     model_registry: CardRegistry = db_registries["model"]
@@ -633,6 +642,7 @@ def test_register_model(
 
     assert getattr(loaded_card, "trained_model") is not None
     assert getattr(loaded_card, "sample_input_data") is not None
+    assert loaded_card.metadata.description == "test description"
 
     model_card_custom = ModelCard(
         trained_model=model,
@@ -723,6 +733,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
         data_splits=data_split,
         metadata=DataCardMetadata(
             additional_info={"input_metadata": 20},
+            description="test description",
         ),
         dependent_vars=[200, "test"],
         sql_logic={"test": "SELECT * FROM TEST_TABLE"},
@@ -737,6 +748,7 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
 
     assert int(loaded_data.metadata.additional_info["input_metadata"]) == 20
     assert int(loaded_data.metadata.additional_info["added_metadata"]) == 10
+    assert loaded_data.metadata.description == "test description"
     assert isinstance(loaded_data.dependent_vars[0], int)
     assert isinstance(loaded_data.dependent_vars[1], str)
     assert bool(loaded_data)

@@ -150,6 +150,19 @@ class ExtraOnnxArgs(BaseModel):
 
 @dataclass
 class ModelCardUris:
+    """Uri holder for ModelCardMetadata
+
+    Args:
+        modelcard_uri:
+            URI of modelcard
+        trained_model_uri:
+            URI where model is stored
+        sample_data_uri:
+            URI of trained model sample data
+        model_metadata_uri:
+            URI where model metadata is stored
+    """
+
     modelcard_uri: Optional[str] = None
     trained_model_uri: Optional[str] = None
     onnx_model_uri: Optional[str] = None
@@ -160,6 +173,30 @@ class ModelCardUris:
 
 
 class ModelCardMetadata(BaseModel):
+    """Create modelcard metadata
+
+    Args:
+        description:
+            Description for your model
+        onnx_model_data:
+            Pydantic model containing onnx data schema
+        onnx_model_def:
+            Pydantic model containing OnnxModel definition
+        model_type:
+            Type of model
+        data_schema:
+            Optional dictionary of the data schema used in model training
+        additional_onnx_args:
+            Optional pydantic model containing Torch args for model conversion to onnx.
+        runcard_uid:
+            RunCard associated with the ModelCard
+        pipelinecard_uid:
+            Associated PipelineCard
+        uris:
+            ModelCardUris object containing all uris associated with ModelCard
+    """
+
+    description: Optional[str] = None
     onnx_model_data: Optional[DataDict] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None
     sample_data_type: Optional[str] = None
