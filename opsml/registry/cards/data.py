@@ -17,7 +17,7 @@ from opsml.helpers.utils import (
 )
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType, DataCardUris
+from opsml.registry.cards.types import CardType
 from opsml.registry.image import ImageDataset
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.storage.storage_system import StorageClientType
@@ -96,6 +96,7 @@ class DataCard(ArtifactCard):
     data_splits: List[DataSplit] = []
     dependent_vars: Optional[List[Union[int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
+    data_profile: Optional[ProfileReport] = None
     metadata: DataCardMetadata = DataCardMetadata()
 
     @field_validator("metadata", mode="before")
@@ -222,8 +223,7 @@ class DataCard(ArtifactCard):
                 to add to the current metadata set
         """
 
-        curr_info = cast(Dict[str, Union[int, float, str]], self.metadata.additional_info)
-        self.metadata.additional_info = {**info, **curr_info}
+        self.metadata.additional_info = {**info, **self.metadata.additional_info}
 
     def add_sql(
         self,

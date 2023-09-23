@@ -124,13 +124,13 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         self._set_storage_spec(
             filename=SaveName.DATACARD.value,
-            uri=self.card.uris.datacard_uri,
+            uri=self.card.metadata.uris.datacard_uri,
         )
 
         exclude_attr = {"data_profile", "storage_client"}
 
         # ImageDataSets use pydantic models for data
-        if self.card.data_type != AllowedTableTypes.IMAGE_DATASET.value:
+        if self.card.metadata.data_type != AllowedTableTypes.IMAGE_DATASET.value:
             exclude_attr.add("data")
 
         storage_path = save_record_artifact_to_storage(
@@ -138,7 +138,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             storage_client=self.storage_client,
         )
 
-        self.card.uris.datacard_uri = storage_path.uri
+        self.card.metadata.uris.datacard_uri = storage_path.uri
 
     def _convert_data_to_arrow(self) -> ArrowTable:
         """Converts data to arrow table
@@ -160,7 +160,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         Returns:
             StoragePath
         """
-        self._set_storage_spec(filename=self.card.name, uri=self.card.uris.data_uri)
+        self._set_storage_spec(filename=self.card.name, uri=self.card.metadata.uris.data_uri)
 
         storage_path = save_record_artifact_to_storage(
             artifact=data,
@@ -175,22 +175,22 @@ class DataCardArtifactSaver(CardArtifactSaver):
         if isinstance(self.card.data, ImageDataset):
             self.card.data.convert_metadata()
             storage_path = self._save_data_to_storage(data=self.card.data)
-            self.card.uris.data_uri = storage_path.uri
-            self.card.data_type = AllowedTableTypes.IMAGE_DATASET.value
+            self.card.metadata.uris.data_uri = storage_path.uri
+            self.card.metadata.data_type = AllowedTableTypes.IMAGE_DATASET.value
 
         else:
             arrow_table: ArrowTable = self._convert_data_to_arrow()
             storage_path = self._save_data_to_storage(data=arrow_table.table)
-            self.card.uris.data_uri = storage_path.uri
-            self.card.feature_map = arrow_table.feature_map
-            self.card.data_type = arrow_table.table_type
+            self.card.metadata.uris.data_uri = storage_path.uri
+            self.card.metadata.feature_map = arrow_table.feature_map
+            self.card.metadata.data_type = arrow_table.table_type
 
     def _save_profile(self):
         """Saves a datacard data profile"""
 
         self._set_storage_spec(
             filename=SaveName.DATA_PROFILE.value,
-            uri=self.card.uris.profile_uri,
+            uri=self.card.metadata.uris.profile_uri,
         )
 
         # profile report needs to be dumped to bytes and saved in joblib/pickle format
@@ -210,7 +210,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         filename = f"{self.card.name}-{self.card.version}-profile.html"
         self._set_storage_spec(
             filename=filename,
-            uri=self.card.uris.profile_html_uri,
+            uri=self.card.metadata.uris.profile_html_uri,
         )
 
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -223,7 +223,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
                 write_path=write_path,
             )
 
-        self.card.uris.profile_html_uri = storage_uri
+        self.card.metadata.uris.profile_html_uri = storage_uri
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""

@@ -6,3 +6,4 @@ from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.types import CardInfo
 from opsml.registry.data.splitter import DataSplit
+from opsml.registry.data.types import DataCardMetadata
