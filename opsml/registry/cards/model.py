@@ -62,29 +62,10 @@ class ModelCard(ArtifactCard):
             Current version (assigned if card has been registered)
         datacard_uid:
             Uid of the DataCard associated with training the model
-        onnx_model_data:
-            Pydantic model containing onnx data schema
-        onnx_model_def:
-            Pydantic model containing OnnxModel definition
-        model_type:
-            Type of model
-        data_schema:
-            Optional dictionary of the data schema used in model training
-        additional_onnx_args:
-            Optional pydantic model containing Torch args for model conversion to onnx.
-        runcard_uid:
-            RunCard associated with the ModelCard
-        pipelinecard_uid:
-            Associated PipelineCard
-        uris:
-            modelcard_uri:
-                URI of modelcard
-            trained_model_uri:
-                URI where model is stored
-            sample_data_uri:
-                URI of trained model sample data
-            model_metadata_uri:
-                URI where model metadata is stored
+        to_onnx:
+            Whether to convert the model to onnx or not
+        metadata:
+            `ModelCardMetadata` associated with the model
     """
 
     model_config = ConfigDict(

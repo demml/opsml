@@ -33,7 +33,8 @@ class PolarsFormatter(ArrowFormatter):
         """Convert pandas dataframe to pyarrow table
 
         Args:
-            data (polar dataframe): Polar dataframe
+            data:
+                Polar dataframe
 
         Returns
             ArrowTable pydantic class containing table and table type
@@ -55,7 +56,8 @@ class PandasFormatter(ArrowFormatter):
         """Convert pandas dataframe to pyarrow table
 
         Args:
-            data (pd.DataFrame): Pandas dataframe to convert
+            data:
+                Pandas dataframe to convert
 
         Returns
             ArrowTable pydantic class containing table and table type

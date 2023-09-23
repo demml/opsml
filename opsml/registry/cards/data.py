@@ -52,36 +52,13 @@ class DataCard(ArtifactCard):
         user_email:
             Email to associate with data card
         dependent_vars:
-            Optional list of dependent variables in data
-        dependent_vars:
             List of dependent variables. Can be string or index if using numpy
-        feature_descriptions:
-            Dictionary of features and their descriptions
-        additional_info:
-            Dictionary of additional info to associate with data
-            (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})
         data_splits:
             Optional list of `DataSplit`
-
-        runcard_uid:
-            Id of RunCard that created the DataCard
-
-        pipelinecard_uid:
-            Associated PipelineCard
-
         sql_logic:
             Dictionary of strings containing sql logic or sql files used to create the data
-
-        The following are non-required args and are set after registering a DataCard
-
-        data_uri:
-            Location where converted pyarrow table is stored
         version:
             DataCard version
-        feature_map:
-            Map of features in data (inferred when converting to pyarrow table)
-        data_type:
-            Data type inferred from supplied data
         uid:
             Unique id assigned to the DataCard
         data_profile:
