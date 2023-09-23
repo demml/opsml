@@ -7,7 +7,8 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, model_validator, ConfigDict
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris, ModelCardUris
+from opsml.registry.cards.types import METRICS, PARAMS, DataCardUris
+from opsml.model.types import ModelCardMetadata, ModelCardUris
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -62,11 +63,13 @@ class ModelRegistryRecord(SaveRecord):
 
     @model_validator(mode="before")
     def set_uris(cls, values):
-        uris = values.get("uris")
-        values["trained_model_uri"] = uris["trained_model_uri"]
-        values["model_metadata_uri"] = uris["model_metadata_uri"]
-        values["sample_data_uri"] = uris["sample_data_uri"]
-        values["modelcard_uri"] = uris["modelcard_uri"]
+        metadata = values.get("metadata")
+        values["trained_model_uri"] = metadata["uris"]["trained_model_uri"]
+        values["model_metadata_uri"] = metadata["uris"]["model_metadata_uri"]
+        values["sample_data_uri"] = metadata["uris"]["sample_data_uri"]
+        values["modelcard_uri"] = metadata["uris"]["modelcard_uri"]
+        values["sample_data_type"] = metadata["sample_data_type"]
+        values["model_type"] = metadata["model_type"]
 
         return values
 
@@ -199,11 +202,7 @@ class LoadedDataRecord(LoadRecord):
 
 class LoadedModelRecord(LoadRecord):
     datacard_uid: str
-    sample_data_type: str
-    model_type: str
-    runcard_uid: Optional[str] = None
-    pipelinecard_uid: Optional[str] = None
-    uris: ModelCardUris
+    metadata: ModelCardMetadata
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
@@ -215,10 +214,10 @@ class LoadedModelRecord(LoadRecord):
             storage_client=storage_client,
         )
 
-        modelcard_definition["sample_data_type"] = values.get("sample_data_type")
-        modelcard_definition["model_type"] = values.get("model_type")
+        modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
+        modelcard_definition["metadata"]["model_type"] = values.get("model_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
-        modelcard_definition["uris"] = ModelCardUris(
+        modelcard_definition["metadata"]["uris"] = ModelCardUris(
             model_metadata_uri=values.get("model_metadata_uri"),
             trained_model_uri=values.get("trained_model_uri"),
             modelcard_uri=values.get("modelcard_uri"),

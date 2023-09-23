@@ -12,17 +12,6 @@ logger = ArtifactLogger.get_logger(__name__)
 
 
 @dataclass
-class ModelCardUris:
-    modelcard_uri: Optional[str] = None
-    trained_model_uri: Optional[str] = None
-    onnx_model_uri: Optional[str] = None
-    model_metadata_uri: Optional[str] = None
-    sample_data_uri: Optional[str] = None
-
-    model_config = ConfigDict(protected_namespaces=("protect_",))
-
-
-@dataclass
 class DataCardUris:
     data_uri: Optional[str] = None
     datacard_uri: Optional[str] = None

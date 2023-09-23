@@ -502,7 +502,7 @@ def test_local_model_registry_to_onnx(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.uris.model_metadata_uri is not None
+    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
 def test_local_model_registry_no_onnx(
@@ -534,7 +534,7 @@ def test_local_model_registry_no_onnx(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.uris.model_metadata_uri is not None
+    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
 def test_local_model_registry(
@@ -576,14 +576,14 @@ def test_local_model_registry(
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(model_card)
 
-    assert path.exists(model_card.uris.model_metadata_uri)
-    assert path.exists(model_card.uris.trained_model_uri)
-    assert path.exists(model_card.uris.sample_data_uri)
+    assert path.exists(model_card.metadata.uris.model_metadata_uri)
+    assert path.exists(model_card.metadata.uris.trained_model_uri)
+    assert path.exists(model_card.metadata.uris.sample_data_uri)
 
-    loaded_card = model_registry.load_card(uid=model_card.uid)
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
 
     assert loaded_card != model_card
-    assert loaded_card.onnx_model_def is None
+    assert loaded_card.metadata.onnx_model_def is None
     assert loaded_card.trained_model is None
     assert loaded_card.sample_input_data is None
 
@@ -592,7 +592,7 @@ def test_local_model_registry(
 
     assert loaded_card.trained_model is not None
     assert loaded_card.sample_input_data is not None
-    assert loaded_card.onnx_model_def is not None
+    assert loaded_card.metadata.onnx_model_def is not None
 
 
 def test_register_model(
@@ -883,7 +883,7 @@ def test_model_registry_with_polars(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.uris.model_metadata_uri is not None
+    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
 def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
