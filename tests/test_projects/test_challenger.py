@@ -97,7 +97,7 @@ def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
     """Test ModelChallenger using champion list"""
 
     modelcard = opsml_project._run_mgr.registries.model.load_card(name="pipeline_model", version="1.1.0")
-    runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.runcard_uid)
+    runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
 
     challenger = ModelChallenger(challenger=modelcard)
 
@@ -166,7 +166,7 @@ def test_challenger_fail_no_runcard(
 
     # run test
     modelcard = opsml_project._run_mgr.registries.model.load_card(name="pipeline_model", version="1.1.0")
-    runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.runcard_uid)
+    runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
 
     challenger = ModelChallenger(challenger=modelcard)
 

@@ -69,7 +69,6 @@ import lightgbm as lgb
 
 # opsml
 from opsml.registry.data.splitter import DataSplit
-from opsml.registry.cards.types import ModelCardUris
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
@@ -83,6 +82,7 @@ from opsml.projects import get_project
 from opsml.projects.mlflow import MlflowProject
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry import CardRegistries
+from opsml.registry.cards.types import ModelCardUris
 from opsml.projects import OpsmlProject
 from opsml.model.types import OnnxModelDefinition
 

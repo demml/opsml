@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast
 import os
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ from opsml.helpers.utils import (
 )
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType, DataCardUris
+from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.image import ImageDataset
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.storage.storage_system import StorageClientType
@@ -51,36 +51,13 @@ class DataCard(ArtifactCard):
         user_email:
             Email to associate with data card
         dependent_vars:
-            Optional list of dependent variables in data
-        dependent_vars:
             List of dependent variables. Can be string or index if using numpy
-        feature_descriptions:
-            Dictionary of features and their descriptions
-        additional_info:
-            Dictionary of additional info to associate with data
-            (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})
         data_splits:
             Optional list of `DataSplit`
-
-        runcard_uid:
-            Id of RunCard that created the DataCard
-
-        pipelinecard_uid:
-            Associated PipelineCard
-
         sql_logic:
             Dictionary of strings containing sql logic or sql files used to create the data
-
-        The following are non-required args and are set after registering a DataCard
-
-        data_uri:
-            Location where converted pyarrow table is stored
         version:
             DataCard version
-        feature_map:
-            Map of features in data (inferred when converting to pyarrow table)
-        data_type:
-            Data type inferred from supplied data
         uid:
             Unique id assigned to the DataCard
         data_profile:
@@ -93,29 +70,24 @@ class DataCard(ArtifactCard):
 
     data: Optional[ValidData] = None
     data_splits: List[DataSplit] = []
-    feature_map: Optional[Dict[str, Optional[Any]]] = None
-    data_type: Optional[str] = None
     dependent_vars: Optional[List[Union[int, str]]] = None
-    feature_descriptions: Optional[Dict[str, str]] = None
-    additional_info: Optional[Dict[str, Union[float, int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
-    runcard_uid: Optional[str] = None
-    pipelinecard_uid: Optional[str] = None
     data_profile: Optional[ProfileReport] = None
-    uris: DataCardUris = DataCardUris()
+    metadata: DataCardMetadata = DataCardMetadata()
 
-    @field_validator("uris", mode="before")
-    def check_data(cls, uris, info):
-        if isinstance(uris, DataCardUris):
-            data_uri = uris.data_uri
+    @field_validator("metadata", mode="before")
+    def check_data(cls, metadata, info):
+        # check data uri
+        if isinstance(metadata, DataCardMetadata):
+            data_uri = metadata.uris.data_uri
         else:
-            data_uri = uris.get("data_uri")
+            data_uri = metadata["uris"].get("data_uri")
 
         if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
             if data_uri is None:
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
 
-        return uris
+        return metadata
 
     @field_validator("data_profile", mode="before")
     def check_profile(cls, profile):
@@ -124,15 +96,6 @@ class DataCard(ArtifactCard):
 
             assert isinstance(profile, ydata_profile)
         return profile
-
-    @field_validator("feature_descriptions", mode="before")
-    def lower_descriptions(cls, feature_descriptions):
-        if feature_descriptions is None:
-            return feature_descriptions
-        feat_dict = {}
-        for feature, description in feature_descriptions.items():
-            feat_dict[feature.lower()] = description.lower()
-            return feat_dict
 
     @field_validator("sql_logic", mode="before")
     def load_sql(cls, sql_logic):
@@ -210,7 +173,7 @@ class DataCard(ArtifactCard):
 
         download_object(
             card=self,
-            artifact_type=self.data_type,
+            artifact_type=self.metadata.data_type,
             storage_client=storage_client,
         )
 
@@ -236,8 +199,7 @@ class DataCard(ArtifactCard):
                 to add to the current metadata set
         """
 
-        curr_info = cast(Dict[str, Union[int, float, str]], self.additional_info)
-        self.additional_info = {**info, **curr_info}
+        self.metadata.additional_info = {**info, **self.metadata.additional_info}
 
     def add_sql(
         self,
@@ -324,15 +286,15 @@ class DataDownloader(Downloader):
             return
 
         self.storage_client.storage_spec = ArtifactStorageSpecs(
-            save_path=self.card.uris.data_uri,
+            save_path=self.card.metadata.uris.data_uri,
         )
 
         data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
-            artifact_type=cast(str, self.card.data_type),
+            artifact_type=cast(str, self.card.metadata.data_type),
         )
 
-        data = check_data_schema(data, cast(Dict[str, str], self.card.feature_map))
+        data = check_data_schema(data, cast(Dict[str, str], self.card.metadata.feature_map))
         setattr(self.card, "data", data)
 
     @staticmethod
@@ -359,12 +321,12 @@ class ImageDownloader(Downloader):
 
         kwargs = {"image_dir": data.image_dir}
         self.storage_client.storage_spec = ArtifactStorageSpecs(
-            save_path=self.card.uris.data_uri,
+            save_path=self.card.metadata.uris.data_uri,
         )
 
         data = load_record_artifact_from_storage(
             storage_client=self.storage_client,
-            artifact_type=cast(str, self.card.data_type),
+            artifact_type=cast(str, self.card.metadata.data_type),
             **kwargs,
         )
 
