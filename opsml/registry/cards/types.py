@@ -110,7 +110,10 @@ class ModelCardUris:
     model_metadata_uri: Optional[str] = None
     sample_data_uri: Optional[str] = None
 
-    model_config = ConfigDict(protected_namespaces=("protect_",))
+    model_config = ConfigDict(
+        protected_namespaces=("protect_",),
+        frozen=False,
+    )
 
 
 class ModelCardMetadata(BaseModel):
