@@ -165,7 +165,7 @@ class LoadedDataRecord(LoadRecord):
         return datacard_definition
 
     @classmethod
-    def convert_data_metadata(cls, card_def: Dict[str, Any]) -> ModelCardMetadata:
+    def convert_data_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
         """This classmethod is used for backward compatibility"""
         return DataCardMetadata(**card_def).model_dump()
 
@@ -222,6 +222,7 @@ class LoadedModelRecord(LoadRecord):
             values=values,
             storage_client=storage_client,
         )
+
         if modelcard_definition.get("metadata") is None:  # needed for backward compat
             modelcard_definition["metadata"] = cls.convert_model_metadata(modelcard_definition)
 
@@ -262,6 +263,7 @@ class LoadedModelRecord(LoadRecord):
     @classmethod
     def convert_model_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
         """This classmethod is used for backward compatibility"""
+
         return ModelCardMetadata(**card_def).model_dump()
 
     @staticmethod
