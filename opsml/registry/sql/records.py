@@ -7,13 +7,11 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, model_validator, ConfigDict
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.registry.cards.types import METRICS, PARAMS
-from opsml.model.types import ModelCardMetadata, ModelCardUris
+from opsml.registry.cards.types import METRICS, PARAMS, ModelCardMetadata, ModelCardUris, DataCardMetadata
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
-from opsml.registry.data.types import DataCardMetadata
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
@@ -150,6 +148,10 @@ class LoadedDataRecord(LoadRecord):
         )
 
         datacard_definition["storage_client"] = storage_client
+
+        if datacard_definition.get("metadata") is None:  # this is None for previous v1 cards
+            datacard_definition["metadata"] = cls.convert_data_metadata(datacard_definition)
+
         datacard_definition["metadata"]["uris"]["datacard_uri"] = values.get("datacard_uri")
 
         if datacard_definition["metadata"]["uris"]["profile_uri"] is not None:
@@ -161,6 +163,11 @@ class LoadedDataRecord(LoadRecord):
             )
 
         return datacard_definition
+
+    @classmethod
+    def convert_data_metadata(cls, card_def: Dict[str, Any]) -> ModelCardMetadata:
+        """This classmethod is used for backward compatibility"""
+        return DataCardMetadata(**card_def).model_dump()
 
     @staticmethod
     def load_data_profile(data_profile_uri: str, storage_client: StorageClientType) -> ProfileReport:
@@ -215,6 +222,8 @@ class LoadedModelRecord(LoadRecord):
             values=values,
             storage_client=storage_client,
         )
+        if modelcard_definition.get("metadata") is None:  # needed for backward compat
+            modelcard_definition["metadata"] = cls.convert_model_metadata(modelcard_definition)
 
         modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["metadata"]["model_type"] = values.get("model_type")
@@ -249,6 +258,11 @@ class LoadedModelRecord(LoadRecord):
         )
 
         return model_card_definition
+
+    @classmethod
+    def convert_model_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
+        """This classmethod is used for backward compatibility"""
+        return ModelCardMetadata(**card_def).model_dump()
 
     @staticmethod
     def validate_table(table_name: str) -> bool:
