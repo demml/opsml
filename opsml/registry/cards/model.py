@@ -21,12 +21,9 @@ from opsml.model.types import (
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
-    ModelCardMetadata,
 )
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import (
-    CardType,
-)
+from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.sql.records import (
     ModelRegistryRecord,
     RegistryRecord,
