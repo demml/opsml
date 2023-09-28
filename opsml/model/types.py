@@ -129,6 +129,25 @@ class ModelReturn(BaseModel):
     model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
 
 
+class ExtraOnnxArgs(BaseModel):
+    """
+    input_names (List[str]): Optional list containing input names for model inputs.
+    This is a PyTorch-specific attribute
+    output_names (List[str]): Optional list containing output names for model outputs.
+    This is a PyTorch-specific attribute
+    dynamic_axes (Dictionary): Optional PyTorch attribute that defines dynamic axes
+    constant_folding (bool): Whether to use constant folding optimization. Default is True
+    """
+
+    input_names: List[str]
+    output_names: List[str]
+    dynamic_axes: Optional[Dict[str, Dict[int, str]]] = None
+    do_constant_folding: bool = True
+    export_params: bool = True
+    verbose: bool = False
+    options: Optional[Dict[str, Any]] = None
+
+
 class Base(BaseModel):
     model_config = ConfigDict(frozen=False)
 
@@ -249,25 +268,6 @@ class PydanticDataTypes(Enum):
     INTEGER = int
     STRING = str
     ANY = Any
-
-
-class ExtraOnnxArgs(BaseModel):
-    """
-    input_names (List[str]): Optional list containing input names for model inputs.
-    This is a PyTorch-specific attribute
-    output_names (List[str]): Optional list containing output names for model outputs.
-    This is a PyTorch-specific attribute
-    dynamic_axes (Dictionary): Optional PyTorch attribute that defines dynamic axes
-    constant_folding (bool): Whether to use constant folding optimization. Default is True
-    """
-
-    input_names: List[str]
-    output_names: List[str]
-    dynamic_axes: Optional[Dict[str, Dict[int, str]]] = None
-    do_constant_folding: bool = True
-    export_params: bool = True
-    verbose: bool = False
-    options: Optional[Dict[str, Any]] = None
 
 
 @dataclass

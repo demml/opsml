@@ -136,6 +136,7 @@ def post_model_metrics(
         )
 
     card = cards[0]
+
     if card.get("runcard_uid") is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -288,8 +288,10 @@ class ModelChallenger:
         ):
             # get challenger metric
             if value is None:
-                if self._challenger.runcard_uid is not None:
-                    self.challenger_metric = self._get_runcard_metric(self._challenger.runcard_uid, metric_name=name)
+                if self._challenger.metadata.runcard_uid is not None:
+                    self.challenger_metric = self._get_runcard_metric(
+                        self._challenger.metadata.runcard_uid, metric_name=name
+                    )
                 else:
                     raise ValueError("Challenger and champions must be associated with a registered RunCard")
             else:

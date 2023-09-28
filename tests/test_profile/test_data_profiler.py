@@ -32,7 +32,7 @@ def test_datacard_create_data_profile_pandas(
 
     registry.register_card(data_card)
 
-    assert data_card.uris.profile_uri is not None
+    assert data_card.metadata.uris.profile_uri is not None
 
     data_card = registry.load_card(uid=data_card.uid)
 
@@ -63,7 +63,7 @@ def test_datacard_create_data_profile_polars(
 
     registry.register_card(data_card)
 
-    assert data_card.uris.profile_uri is not None
+    assert data_card.metadata.uris.profile_uri is not None
 
     data_card = registry.load_card(uid=data_card.uid)
 

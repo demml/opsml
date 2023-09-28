@@ -2,7 +2,7 @@ from typing import Tuple
 from typer.testing import CliRunner
 from sklearn import linear_model
 import pandas as pd
-from opsml.registry import DataCard, ModelCard, CardRegistries, RunCard, CardInfo
+from opsml.registry import DataCard, ModelCard, CardRegistries, RunCard, CardInfo, ModelCardMetadata
 import tempfile
 from opsml.cli.api_cli import app
 from sklearn import pipeline
@@ -185,7 +185,7 @@ def test_model_metrics(
         sample_input_data=data[0:1],
         info=card_info,
         datacard_uid=datacard.uid,
-        runcard_uid=runcard.uid,
+        metadata=ModelCardMetadata(runcard_uid=runcard.uid),
     )
     api_registries.model.register_card(modelcard)
 
@@ -214,7 +214,7 @@ def test_model_metrics(
         sample_input_data=data[0:1],
         info=card_info,
         datacard_uid=datacard.uid,
-        runcard_uid=runcard.uid,
+        metadata=ModelCardMetadata(runcard_uid=runcard.uid),
     )
     api_registries.model.register_card(challenger)
 

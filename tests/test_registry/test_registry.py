@@ -7,9 +7,17 @@ import pyarrow as pa
 from os import path
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards import DataCard, RunCard, PipelineCard, ModelCard, DataSplit
+from opsml.registry.cards import (
+    DataCard,
+    RunCard,
+    PipelineCard,
+    ModelCard,
+    DataSplit,
+    DataCardMetadata,
+    ModelCardMetadata,
+    Description,
+)
 from opsml.registry.sql.registry import CardRegistry
-from opsml.registry.sql.semver import SemVerUtils
 from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
@@ -139,8 +147,10 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
         name="test_tags",
         team="mlops",
         user_email="mlops.com",
-        feature_descriptions={"test": "test_description"},
         sql_logic={"test": "select * from test_table"},
+        metadata=DataCardMetadata(
+            feature_descriptions={"test": "test_description"},
+        ),
     )
     data_card.add_tag("test", "hello")
 
@@ -502,7 +512,7 @@ def test_local_model_registry_to_onnx(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.uris.model_metadata_uri is not None
+    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
 def test_local_model_registry_no_onnx(
@@ -534,7 +544,7 @@ def test_local_model_registry_no_onnx(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.uris.model_metadata_uri is not None
+    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
 def test_local_model_registry(
@@ -576,14 +586,14 @@ def test_local_model_registry(
     model_registry: CardRegistry = db_registries["model"]
     model_registry.register_card(model_card)
 
-    assert path.exists(model_card.uris.model_metadata_uri)
-    assert path.exists(model_card.uris.trained_model_uri)
-    assert path.exists(model_card.uris.sample_data_uri)
+    assert path.exists(model_card.metadata.uris.model_metadata_uri)
+    assert path.exists(model_card.metadata.uris.trained_model_uri)
+    assert path.exists(model_card.metadata.uris.sample_data_uri)
 
-    loaded_card = model_registry.load_card(uid=model_card.uid)
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
 
     assert loaded_card != model_card
-    assert loaded_card.onnx_model_def is None
+    assert loaded_card.metadata.onnx_model_def is None
     assert loaded_card.trained_model is None
     assert loaded_card.sample_input_data is None
 
@@ -592,7 +602,7 @@ def test_local_model_registry(
 
     assert loaded_card.trained_model is not None
     assert loaded_card.sample_input_data is not None
-    assert loaded_card.onnx_model_def is not None
+    assert loaded_card.metadata.onnx_model_def is not None
 
 
 def test_register_model(
@@ -619,6 +629,9 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        metadata=ModelCardMetadata(
+            description=Description(summary="test description"),
+        ),
     )
 
     model_registry: CardRegistry = db_registries["model"]
@@ -632,6 +645,7 @@ def test_register_model(
 
     assert getattr(loaded_card, "trained_model") is not None
     assert getattr(loaded_card, "sample_input_data") is not None
+    assert loaded_card.metadata.description.summary == "test description"
 
     model_card_custom = ModelCard(
         trained_model=model,
@@ -720,7 +734,10 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
         team=team,
         user_email=user_email,
         data_splits=data_split,
-        additional_info={"input_metadata": 20},
+        metadata=DataCardMetadata(
+            additional_info={"input_metadata": 20},
+            description=Description(summary="test description"),
+        ),
         dependent_vars=[200, "test"],
         sql_logic={"test": "SELECT * FROM TEST_TABLE"},
     )
@@ -732,8 +749,9 @@ def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.Da
 
     loaded_data.load_data()
 
-    assert int(loaded_data.additional_info["input_metadata"]) == 20
-    assert int(loaded_data.additional_info["added_metadata"]) == 10
+    assert int(loaded_data.metadata.additional_info["input_metadata"]) == 20
+    assert int(loaded_data.metadata.additional_info["added_metadata"]) == 10
+    assert loaded_data.metadata.description.summary == "test description"
     assert isinstance(loaded_data.dependent_vars[0], int)
     assert isinstance(loaded_data.dependent_vars[1], str)
     assert bool(loaded_data)
@@ -766,7 +784,7 @@ def test_datacard_failure():
             team=team,
             user_email=user_email,
             data_splits=data_split,
-            additional_info={"input_metadata": 20},
+            metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
             dependent_vars=[200, "test"],
         )
     assert ve.match("Data or sql logic must be supplied when no data_uri")
@@ -883,7 +901,7 @@ def test_model_registry_with_polars(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.uris.model_metadata_uri is not None
+    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
 def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
