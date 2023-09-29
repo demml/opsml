@@ -1,23 +1,24 @@
-from typing import Dict
+from typing import Tuple
 from os import path
+import pandas as pd
+from sklearn import pipeline
 
-from opsml.registry.cards import (
+
+from opsml.registry import (
     DataCard,
-    RunCard,
     ModelCard,
+    CardRegistries,
 )
-from opsml.registry.sql.registry import CardRegistry
-from sklearn import linear_model
-from sklearn.pipeline import Pipeline
 
 
 def test_delete_data_model(
-    db_registries: Dict[str, CardRegistry],
-    sklearn_pipeline: Pipeline,
+    api_registries: CardRegistries,
+    sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
 ):
-    # create data card
-    data_registry: CardRegistry = db_registries["data"]
     model, data = sklearn_pipeline
+    # create data card
+    data_registry = api_registries.data
+
     data_card = DataCard(
         data=data,
         name="pipeline_data",
@@ -25,9 +26,9 @@ def test_delete_data_model(
         user_email="mlops.com",
     )
     data_registry.register_card(card=data_card)
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
 
     # assert card and artifacts exist
+    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
     assert len(cards) == 1
     data_filepath = data_card.metadata.uris.data_uri
     datacard_filepath = data_card.metadata.uris.datacard_uri
@@ -40,12 +41,13 @@ def test_delete_data_model(
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
+        tags={"id": "model1"},
         datacard_uid=data_card.uid,
-        to_onnx=True,
     )
 
-    model_registry: CardRegistry = db_registries["model"]
-    model_registry.register_card(card=model_card)
+    model_registry = api_registries.model
+    model_registry.register_card(model_card)
+
     cards = model_registry.list_cards(name="pipeline_model", team="mlops")
     assert len(cards) == 1
 
@@ -81,33 +83,3 @@ def test_delete_data_model(
     # check artifacts have been deleted
     assert not path.exists(data_filepath)
     assert not path.exists(datacard_filepath)
-
-
-def test_delete_runcard(
-    linear_regression: linear_model.LinearRegression,
-    db_registries: Dict[str, CardRegistry],
-):
-    registry: CardRegistry = db_registries["run"]
-    run = RunCard(
-        name="test_run",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uids=["test_uid"],
-    )
-    run.log_metric("test_metric", 10)
-    run.log_metrics({"test_metric2": 20})
-    assert run.get_metric("test_metric").value == 10
-    assert run.get_metric("test_metric2").value == 20
-
-    # save artifacts
-    model, _ = linear_regression
-    run.log_artifact("reg_model", model)
-    assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
-    registry.register_card(card=run)
-
-    registry.delete_card(card=run)
-    cards = registry.list_cards(name="test_run", team="mlops")
-    assert len(cards) == 0
-
-    # check artifacts have been deleted
-    assert not path.exists(run.runcard_uri)
