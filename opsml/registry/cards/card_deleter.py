@@ -24,13 +24,12 @@ class CardArtifactDeleter:
 
     @cached_property
     def card(self):
-        return self.card
+        return self._card
 
     def delete_artifacts(self) -> None:
         """
         Delete artifacts for an ArtifactCard
         """
-
         for _, uri in asdict(self.card.metadata.uris).items():
             if uri is not None:
                 self.storage_client.delete(uri)
