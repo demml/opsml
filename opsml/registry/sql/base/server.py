@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
+from opsml.registry.cards import ArtifactCard
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.query_engine import QueryEngine, log_card_change  # type: ignore
 from opsml.registry.sql.semver import SemVerSymbols, CardVersion, VersionType, SemVerUtils, SemVerRegistryValidator
@@ -175,6 +176,8 @@ class ServerRegistry(SQLRegistryBase):
         )
         return bool(result)
 
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        raise NotImplementedError
+    @log_card_change
+    def delete_card_record(self, card: Dict[str, Any]) -> None:
+        """Deletes a card record from the backend database"""
+        self.engine.delete_card_record(table=self._table, card=card)
+        return card, "deleted"

@@ -20,6 +20,7 @@ class ApiRoutes:
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
+    DELETE_CARD = "cards/delete"
     DATA_PROFILE = "data/profile"
     COMPARE_DATA = "data/compare"
     UPLOAD = "upload"
