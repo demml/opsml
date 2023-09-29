@@ -366,13 +366,6 @@ class SQLRegistryBase:
             record=loaded_record,
         )
 
-    def _delete_registry_record(self, card: ArtifactCard) -> None:
-        """
-        Deletes a registry record from a given database
-        """
-
-        raise NotImplementedError
-
     def delete_card(self, card: ArtifactCard) -> None:
         """Delete a specific card"""
 

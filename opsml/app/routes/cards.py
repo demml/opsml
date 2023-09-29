@@ -165,7 +165,7 @@ def update_card(
     name="update_card",
     dependencies=[Depends(verify_token)],
 )
-def update_card(
+def delete_card(
     request: Request,
     payload: DeleteCardRequest = Body(...),
 ) -> DeleteCardResponse:
@@ -176,4 +176,4 @@ def update_card(
 
     logger.info("Deleted card: %s", str(payload.model_dump()))
 
-    return UpdateCardResponse(updated=True)
+    return DeleteCardResponse(deleted=True)

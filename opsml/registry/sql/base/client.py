@@ -142,7 +142,7 @@ class ClientRegistry(SQLRegistryBase):
         raise ValueError("Failed to update card")
 
     @log_card_change
-    def delete_card_record(self, card: Dict[str, Any]) -> None:
+    def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
             route=api_routes.DELETE_CARD,
             json={
@@ -154,3 +154,7 @@ class ClientRegistry(SQLRegistryBase):
         if bool(data.get("deleted")):
             return card, "deleted"
         raise ValueError("Failed to delete card")
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        raise NotImplementedError

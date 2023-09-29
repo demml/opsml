@@ -17,6 +17,7 @@ from opsml.app.routes.pydantic_models import (
     ListFileRequest,
     ListFileResponse,
     DeleteFileResponse,
+    DeleteFileRequest,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,
@@ -166,10 +167,10 @@ def list_files(
         ) from error
 
 
-@router.get("/files/delete", name="delete_files")
+@router.post("/files/delete", name="delete_files")
 def delete_files(
     request: Request,
-    read_path: str,
+    payload: DeleteFileRequest,
 ) -> DeleteFileResponse:
     """Deletes a file
 
@@ -185,8 +186,8 @@ def delete_files(
 
     try:
         storage_client = request.app.state.storage_client
-        storage_client.delete(read_path)
-        return DeleteFileResponse(True)
+        storage_client.delete(payload.read_path)
+        return DeleteFileResponse(deleted=True)
 
     except Exception as error:
         raise HTTPException(

@@ -170,6 +170,10 @@ class DeleteFileResponse(BaseModel):
     deleted: bool
 
 
+class DeleteFileRequest(BaseModel):
+    read_path: str
+
+
 class MetricRequest(BaseModel):
     name: Optional[str] = None
     team: Optional[str] = None
