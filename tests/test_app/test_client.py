@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 
 import re
 import uuid
-
+import pathlib
 import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
@@ -676,10 +676,11 @@ def test_token_fail(
 def test_delete_no_file(test_app: TestClient):
     """Test error path"""
 
+    pathlib.Path("tests/assets/empty").mkdir(parents=True, exist_ok=True)
+
     response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty"})
 
     detail = response.json()
-    print(detail)
     assert detail["deleted"] == False
     assert response.status_code == 200
 
