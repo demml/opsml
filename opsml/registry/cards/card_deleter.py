@@ -48,7 +48,7 @@ class DataCardArtifactDeleter(CardArtifactDeleter):
 class ModelArtifactDeleter(CardArtifactDeleter):
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardType.DATACARD.value in card_type
+        return CardType.MODELCARD.value in card_type
 
 
 class RunCardArtifactDeleter(CardArtifactDeleter):
