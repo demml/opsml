@@ -399,7 +399,10 @@ class LocalStorageClient(StorageClient):
             read_path:
                 Path to delete
         """
-        return self.client.delete_dir(read_path)
+        if os.path.isdir(read_path):
+            return self.client.delete_dir(read_path)
+
+        return self.client.delete_file(read_path)
 
     @staticmethod
     def validate(storage_backend: str) -> bool:

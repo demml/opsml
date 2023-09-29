@@ -370,4 +370,4 @@ class SQLRegistryBase:
         """Delete a specific card"""
 
         delete_card_artifacts(card=card, storage_client=self.storage_client)
-        self.delete_card_record(card=card.model_dump(include={"uid"}))
+        self.delete_card_record(card=card.model_dump(include={"uid", "name", "version"}))
