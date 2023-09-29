@@ -679,6 +679,7 @@ def test_delete_no_file(test_app: TestClient):
     response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty"})
 
     detail = response.json()
+    print(detail)
     assert detail["deleted"] == False
     assert response.status_code == 200
 
