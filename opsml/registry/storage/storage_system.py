@@ -376,7 +376,7 @@ class LocalStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        if os.path.isdir(read_path):
+        if Path(read_path).is_dir():
             return shutil.copytree(read_path, write_path, dirs_exist_ok=True)
         return shutil.copyfile(read_path, write_path)
 
@@ -399,7 +399,7 @@ class LocalStorageClient(StorageClient):
             read_path:
                 Path to delete
         """
-        if os.path.isdir(read_path):
+        if Path(read_path).is_dir():
             return self.client.delete_dir(read_path)
 
         return self.client.delete_file(read_path)
