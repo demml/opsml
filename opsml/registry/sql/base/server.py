@@ -175,6 +175,12 @@ class ServerRegistry(SQLRegistryBase):
         )
         return bool(result)
 
+    @log_card_change
+    def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        """Deletes a card record from the backend database"""
+        self.engine.delete_card_record(table=self._table, card=card)
+        return card, "deleted"
+
     @staticmethod
     def validate(registry_name: str) -> bool:
         raise NotImplementedError

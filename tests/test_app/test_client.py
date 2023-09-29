@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 
 import re
 import uuid
-
+import pathlib
 import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
@@ -671,3 +671,55 @@ def test_token_fail(
         match="Cannot perform write operation on prod resource without token",
     ):
         api_registries.run.register_card(card=run)
+
+
+def test_delete_no_file(test_app: TestClient):
+    """Test error path"""
+
+    pathlib.Path("tests/assets/empty").mkdir(parents=True, exist_ok=True)
+
+    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty"})
+
+    detail = response.json()
+    assert detail["deleted"] == False
+    assert response.status_code == 200
+
+    # this should fail because there is no file
+    response = test_app.post("/opsml/files/delete", json={"read_path": "fail"})
+    assert response.status_code == 500
+
+
+def test_card_create_fail(test_app: TestClient):
+    """Test error path"""
+
+    response = test_app.post(
+        "/opsml/cards/create",
+        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        headers={"X-Prod-Token": "test-token"},
+    )
+
+    assert response.status_code == 500
+
+
+def test_card_update_fail(test_app: TestClient):
+    """Test error path"""
+
+    response = test_app.post(
+        "/opsml/cards/update",
+        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        headers={"X-Prod-Token": "test-token"},
+    )
+
+    assert response.status_code == 500
+
+
+def test_card_list_fail(test_app: TestClient):
+    """Test error path"""
+
+    response = test_app.post(
+        "/opsml/cards/list",
+        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        headers={"X-Prod-Token": "test-token"},
+    )
+
+    assert response.status_code == 500

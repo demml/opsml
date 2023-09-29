@@ -101,11 +101,27 @@ class PipelineCardRegistry(Registry):  # type:ignore
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PIPELINE.value
 
+    def delete_card(self, card: ArtifactCard) -> None:
+        raise ValueError("PipelineCardRegistry does not support delete_card")
+
 
 class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
         return registry_name in RegistryTableNames.PROJECT.value
+
+    def load_card(
+        self,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
+        uid: Optional[str] = None,
+        ignore_release_candidates: bool = False,
+    ) -> ArtifactCard:
+        raise ValueError("ProjectCardRegistry does not support load_card")
+
+    def delete_card(self, card: ArtifactCard) -> None:
+        raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
 # CardRegistry also needs to set a storage file system
@@ -320,6 +336,16 @@ class CardRegistry:
         """
         results = self._registry.list_cards(uid=uid)[0]
         return {col: results[col] for col in columns}
+
+    def delete_card(self, card: ArtifactCard) -> None:
+        """
+        Delete a specific Card
+
+        Args:
+            card:
+                Card to delete
+        """
+        return self._registry.delete_card(card)
 
 
 class CardRegistries:

@@ -306,3 +306,13 @@ class CardRegistry:
         """
         results = self._registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}
+
+    def delete_card(self, card: ArtifactCard) -> None:
+        """
+        Delete a specific Card
+
+        Args:
+            card:
+                Card to delete
+        """
+        return self._registry.delete_card(card)

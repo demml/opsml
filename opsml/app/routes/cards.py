@@ -17,6 +17,8 @@ from opsml.app.routes.pydantic_models import (
     UidExistsResponse,
     UpdateCardRequest,
     UpdateCardResponse,
+    DeleteCardResponse,
+    DeleteCardRequest,
     VersionRequest,
     VersionResponse,
 )
@@ -122,19 +124,26 @@ def list_cards(
     name="create_card",
     dependencies=[Depends(verify_token)],
 )
-def add_card(
+def create_card(
     request: Request,
     payload: AddCardRequest = Body(...),
 ) -> AddCardResponse:
     """Adds Card record to a registry"""
 
-    table_for_registry = payload.table_name.split("_")[1].lower()
-    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+    try:
+        table_for_registry = payload.table_name.split("_")[1].lower()
+        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-    logger.info("Creating card: %s", str(payload.model_dump()))
+        logger.info("Creating card: %s", str(payload.model_dump()))
 
-    registry._registry.add_and_commit(card=payload.card)
-    return AddCardResponse(registered=True)
+        registry._registry.add_and_commit(card=payload.card)
+        return AddCardResponse(registered=True)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"""Error creating card in registry. {error}""",
+        ) from error
 
 
 @router.post(
@@ -148,10 +157,45 @@ def update_card(
     payload: UpdateCardRequest = Body(...),
 ) -> UpdateCardResponse:
     """Updates a specific artifact card"""
-    table_for_registry = payload.table_name.split("_")[1].lower()
-    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
-    registry._registry.update_card_record(card=payload.card)
 
-    logger.info("Updated card: %s", str(payload.model_dump()))
+    try:
+        table_for_registry = payload.table_name.split("_")[1].lower()
+        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        registry._registry.update_card_record(card=payload.card)
 
-    return UpdateCardResponse(updated=True)
+        logger.info("Updated card: %s", str(payload.model_dump()))
+
+        return UpdateCardResponse(updated=True)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"""Error updating card in registry. {error}""",
+        ) from error
+
+
+@router.post(
+    "/cards/delete",
+    response_model=DeleteCardResponse,
+    name="delete_card",
+    dependencies=[Depends(verify_token)],
+)
+def delete_card(
+    request: Request,
+    payload: DeleteCardRequest = Body(...),
+) -> DeleteCardResponse:
+    """Deletes a specific artifact card"""
+
+    try:
+        table_for_registry = payload.table_name.split("_")[1].lower()
+        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        registry._registry.delete_card_record(card=payload.card)
+        logger.info("Deleted card: %s", str(payload.model_dump()))
+
+        return DeleteCardResponse(deleted=True)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"""Error deleting card record from registry. {error}""",
+        ) from error

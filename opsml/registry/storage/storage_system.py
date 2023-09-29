@@ -1,8 +1,7 @@
-# pylint: disable=import-outside-toplevel,disable=invalid-envvar-value,disable=protected-access
+# pylint: disable=import-outside-toplevel,disable=invalid-envvar-value,disable=protected-access,disable=too-many-lines
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
 
 import os
 import re
@@ -377,7 +376,7 @@ class LocalStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        if os.path.isdir(read_path):
+        if Path(read_path).is_dir():
             return shutil.copytree(read_path, write_path, dirs_exist_ok=True)
         return shutil.copyfile(read_path, write_path)
 
@@ -400,7 +399,10 @@ class LocalStorageClient(StorageClient):
             read_path:
                 Path to delete
         """
-        return self.client.delete_dir(read_path)
+        if Path(read_path).is_dir():
+            return self.client.delete_dir(read_path)
+
+        return self.client.delete_file(read_path)
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -564,6 +566,21 @@ class ApiStorageClient(LocalStorageClient):
     def store(self, storage_uri: str, **kwargs):
         """Wrapper method needed for working with data artifacts (zarr)"""
         return storage_uri
+
+    def delete(self, read_path: str) -> None:
+        """Deletes files from a read path
+
+        Args:
+            read_path:
+                Path to delete
+        """
+        response = self.api_client.post_request(
+            route=ApiRoutes.DELETE_FILE,
+            json={"read_path": read_path},
+        )
+
+        if response.get("deleted") is False:
+            raise ValueError("Failed to delete file")
 
     @staticmethod
     def validate(storage_backend: str) -> bool:

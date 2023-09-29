@@ -16,6 +16,8 @@ from opsml.app.routes.pydantic_models import (
     DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
+    DeleteFileResponse,
+    DeleteFileRequest,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,
@@ -141,7 +143,7 @@ def list_files(
     request: Request,
     payload: ListFileRequest,
 ) -> ListFileResponse:
-    """Downloads a file
+    """Lists files
 
     Args:
         request:
@@ -162,4 +164,43 @@ def list_files(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error listing files. {error}",
+        ) from error
+
+
+@router.post("/files/delete", name="delete_files")
+def delete_files(
+    request: Request,
+    payload: DeleteFileRequest,
+) -> DeleteFileResponse:
+    """Deletes a file
+
+    Args:
+        request:
+            request object
+        payload:
+            `DeleteFileRequest`
+
+    Returns:
+        `DeleteFileResponse`
+    """
+
+    try:
+        storage_client = request.app.state.storage_client
+
+        files = list_files(
+            request=request,
+            payload=ListFileRequest(read_path=payload.read_path),
+        )
+
+        # no point of deleting when its empty
+        if len(files.files) == 0:
+            return DeleteFileResponse(deleted=False)
+
+        storage_client.delete(payload.read_path)
+        return DeleteFileResponse(deleted=True)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error deleting files. {error}",
         ) from error
