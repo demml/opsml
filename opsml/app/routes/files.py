@@ -186,6 +186,16 @@ def delete_files(
 
     try:
         storage_client = request.app.state.storage_client
+
+        files = list_files(
+            request=request,
+            payload=ListFileRequest(read_path=payload.read_path),
+        )
+
+        # no point of deleting when its empty
+        if len(files.files) == 0:
+            return DeleteFileResponse(deleted=False)
+
         storage_client.delete(payload.read_path)
         return DeleteFileResponse(deleted=True)
 
