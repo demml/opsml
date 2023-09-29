@@ -813,6 +813,10 @@ def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     )
     assert bool(values["datacard_uids"])
 
+    with pytest.raises(ValueError) as ve:
+        registry.delete_card(card=loaded_card)
+    assert ve.match("PipelineCardRegistry does not support delete_card")
+
 
 def test_full_pipeline_with_loading(
     db_registries: Dict[str, CardRegistry],
