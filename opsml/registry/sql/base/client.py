@@ -146,7 +146,7 @@ class ClientRegistry(SQLRegistryBase):
         data = self._session.post_request(
             route=api_routes.DELETE_CARD,
             json={
-                "uid": card.get("uid"),
+                "card": card,
                 "table_name": self.table_name,
             },
         )
