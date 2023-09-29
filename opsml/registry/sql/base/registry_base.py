@@ -8,6 +8,7 @@ from semver import VersionInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
+from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.cards import (
     ArtifactCard,
     DataCard,
@@ -362,6 +363,15 @@ class SQLRegistryBase:
             record=loaded_record,
         )
 
-    def delete_card(self, uid: str) -> None:
-        """Delete a specific card"""
+    def _delete_registry_record(self, card: ArtifactCard) -> None:
+        """
+        Deletes a registry record from a given database
+        """
+
         raise NotImplementedError
+
+    def delete_card(self, card: ArtifactCard) -> None:
+        """Delete a specific card"""
+
+        delete_card_artifacts(card=card, storage_client=self.storage_client)
+        self._delete_registry_record(card=card)
