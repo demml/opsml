@@ -361,3 +361,7 @@ class SQLRegistryBase:
             table_name=self.table_name,
             record=loaded_record,
         )
+
+    def delete_card(self, uid: str) -> None:
+        """Delete a specific card"""
+        raise NotImplementedError
