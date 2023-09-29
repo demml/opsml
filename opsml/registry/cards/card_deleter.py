@@ -1,8 +1,9 @@
 from typing import cast
 from dataclasses import asdict
+from functools import cached_property
 from opsml.registry.cards import ArtifactCard, RunCard
 from opsml.registry.storage.storage_system import StorageClientType
-from functools import cached_property
+
 from opsml.registry.cards.types import CardType
 
 
@@ -74,16 +75,13 @@ class RunCardArtifactDeleter(CardArtifactDeleter):
 
 
 def delete_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> None:
-    """Saves a given ArtifactCard's artifacts to a filesystem
+    """Deletes a given ArtifactCard's artifacts from a file system
 
     Args:
         card:
             ArtifactCard to save
         storage_client:
             StorageClient to use to save artifacts
-
-    Returns:
-        ArtifactCard with updated artifact uris
 
     """
     card_deleter = next(
@@ -95,9 +93,6 @@ def delete_card_artifacts(card: ArtifactCard, storage_client: StorageClientType)
         None,
     )
 
-    if card_deleter is None:
-        return
-
-    deleter = card_deleter(card=card, storage_client=storage_client)
-
-    return deleter.delete_artifacts()
+    if card_deleter is not None:
+        deleter = card_deleter(card=card, storage_client=storage_client)
+        deleter.delete_artifacts()
