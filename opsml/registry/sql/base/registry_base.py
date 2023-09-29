@@ -104,6 +104,9 @@ class SQLRegistryBase:
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
+    def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        raise NotImplementedError
+
     def _validate_card_type(self, card: ArtifactCard):
         # check compatibility
         if not self._is_correct_card_type(card=card):
@@ -374,4 +377,4 @@ class SQLRegistryBase:
         """Delete a specific card"""
 
         delete_card_artifacts(card=card, storage_client=self.storage_client)
-        self._delete_registry_record(card=card)
+        self.delete_card_record(card=card.model_dump(include={"uid"}))

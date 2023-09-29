@@ -17,6 +17,8 @@ from opsml.app.routes.pydantic_models import (
     UidExistsResponse,
     UpdateCardRequest,
     UpdateCardResponse,
+    DeleteCardResponse,
+    DeleteCardRequest,
     VersionRequest,
     VersionResponse,
 )
@@ -153,5 +155,25 @@ def update_card(
     registry._registry.update_card_record(card=payload.card)
 
     logger.info("Updated card: %s", str(payload.model_dump()))
+
+    return UpdateCardResponse(updated=True)
+
+
+@router.post(
+    "/cards/delete",
+    response_model=DeleteCardResponse,
+    name="update_card",
+    dependencies=[Depends(verify_token)],
+)
+def update_card(
+    request: Request,
+    payload: DeleteCardRequest = Body(...),
+) -> DeleteCardResponse:
+    """Deletes a specific artifact card"""
+    table_for_registry = payload.table_name.split("_")[1].lower()
+    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+    registry._registry.delete_card_record(card=payload.card)
+
+    logger.info("Deleted card: %s", str(payload.model_dump()))
 
     return UpdateCardResponse(updated=True)

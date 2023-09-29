@@ -92,8 +92,17 @@ class UpdateCardRequest(BaseModel):
     table_name: str
 
 
+class DeleteCardRequest(BaseModel):
+    card: Dict[str, Any]
+    table_name: str
+
+
 class UpdateCardResponse(BaseModel):
     updated: bool
+
+
+class DeleteCardResponse(BaseModel):
+    deleted: bool
 
 
 class QuerycardRequest(BaseModel):
