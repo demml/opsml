@@ -65,7 +65,7 @@ def test_register_large_whisper_model(
         to_onnx=False,  # seq2seq need to be handled differently
     )
     api_registries.model.register_card(model_card)
-    assert model_card.data_schema.model_data_schema.output_features["outputs"].shape == [1, 26]
+    assert model_card.metadata.data_schema.model_data_schema.output_features["outputs"].shape == [1, 26]
 
 
 @pytest.mark.large

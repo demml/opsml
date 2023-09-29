@@ -20,6 +20,7 @@ class ApiRoutes:
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
+    DELETE_CARD = "cards/delete"
     DATA_PROFILE = "data/profile"
     COMPARE_DATA = "data/compare"
     UPLOAD = "upload"
@@ -28,6 +29,7 @@ class ApiRoutes:
     MODEL_METRICS = "models/metrics"
     COMPARE_MODEL_METRICS = "models/compare_metrics"
     DOWNLOAD_FILE = "files/download"
+    DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"
 
 
