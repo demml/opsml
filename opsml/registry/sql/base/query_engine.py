@@ -250,6 +250,17 @@ class QueryEngine:
             query.update(card)
             sess.commit()
 
+    def delete_card_record(
+        self,
+        table: Type[REGISTRY_TABLES],
+        card: Dict[str, Any],
+    ):
+        record_uid = cast(str, card.get("uid"))
+        with self.session() as sess:
+            query = sess.query(table).filter(table.uid == record_uid)
+            query.delete()
+            sess.commit()
+
 
 def log_card_change(func):
     """Decorator for logging card changes"""
