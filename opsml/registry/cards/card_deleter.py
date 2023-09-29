@@ -1,7 +1,6 @@
 from typing import cast
-from dataclasses import asdict
 from functools import cached_property
-from opsml.registry.cards import ArtifactCard, RunCard
+from opsml.registry.cards import ArtifactCard, RunCard, ModelCard, DataCard
 from opsml.registry.storage.storage_system import StorageClientType
 
 from opsml.registry.cards.types import CardType
@@ -23,16 +22,18 @@ class CardArtifactDeleter:
         self.storage_client = storage_client
 
     @cached_property
-    def card(self):
+    def card(self) -> ArtifactCard:
         return self._card
 
     def delete_artifacts(self) -> None:
-        """
-        Delete artifacts for an ArtifactCard
-        """
-        for _, uri in asdict(self.card.metadata.uris).items():
-            if uri is not None:
-                self.storage_client.delete(uri)
+        raise NotImplementedError
+
+    def _delete_artifacts(self, read_path: str) -> None:
+        """Find common directory from path and delete files"""
+        path_split = read_path.split("/")
+        version_index = path_split.index(f"v{self.card.version}")
+        dir_path = "/".join(path_split[: version_index + 1])
+        self.storage_client.delete(dir_path)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -40,15 +41,39 @@ class CardArtifactDeleter:
 
 
 class DataCardArtifactDeleter(CardArtifactDeleter):
+    @cached_property
+    def card(self) -> DataCard:
+        return cast(DataCard, self._card)
+
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.DATACARD.value in card_type
 
+    def delete_artifacts(self) -> None:
+        """
+        Delete artifacts for a DataCard from the common directory path
+        """
+        self._delete_artifacts(
+            read_path=str(self.card.metadata.uris.datacard_uri),
+        )
+
 
 class ModelArtifactDeleter(CardArtifactDeleter):
+    @cached_property
+    def card(self) -> ModelCard:
+        return cast(ModelCard, self._card)
+
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.MODELCARD.value in card_type
+
+    def delete_artifacts(self) -> None:
+        """
+        Delete artifacts for a DataCard from the common directory path
+        """
+        self._delete_artifacts(
+            read_path=str(self.card.metadata.uris.modelcard_uri),
+        )
 
 
 class RunCardArtifactDeleter(CardArtifactDeleter):
@@ -61,12 +86,7 @@ class RunCardArtifactDeleter(CardArtifactDeleter):
         Delete artifacts for a RunCard
         """
 
-        for _, uri in self.card.artifact_uris.items():
-            if uri is not None:
-                self.storage_client.delete(uri)
-
-        if self.card.runcard_uri is not None:
-            self.storage_client.delete(self.card.runcard_uri)
+        self._delete_artifacts(read_path=self.card.runcard_uri)
 
     @staticmethod
     def validate(card_type: str) -> bool:
