@@ -1,6 +1,6 @@
 from typing import cast
 from dataclasses import asdict
-from opsml.registry.cards import ArtifactCard, RunCard, PipelineCard
+from opsml.registry.cards import ArtifactCard, RunCard
 from opsml.registry.storage.storage_system import StorageClientType
 from functools import cached_property
 from opsml.registry.cards.types import CardType
