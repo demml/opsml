@@ -141,6 +141,16 @@ class ClientRegistry(SQLRegistryBase):
             return card, "updated"
         raise ValueError("Failed to update card")
 
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        raise NotImplementedError
+    @log_card_change
+    def delete_card_record(self, card: Dict[str, Any]) -> None:
+        data = self._session.post_request(
+            route=api_routes.DELETE_CARD,
+            json={
+                "uid": card.get("uid"),
+                "table_name": self.table_name,
+            },
+        )
+
+        if bool(data.get("deleted")):
+            return card, "deleted"
+        raise ValueError("Failed to delete card")
