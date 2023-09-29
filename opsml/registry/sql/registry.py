@@ -321,6 +321,16 @@ class CardRegistry:
         results = self._registry.list_cards(uid=uid)[0]
         return {col: results[col] for col in columns}
 
+    def delete_card(self, uid: str) -> None:
+        """
+        Delete a specific Card
+
+        Args:
+            uid:
+                Uid of Card
+        """
+        return self._registry.delete_card(uid=uid)
+
 
 class CardRegistries:
     def __init__(self):
