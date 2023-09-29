@@ -52,7 +52,8 @@ def test_delete_card(
 
     cards = registry.list_cards(name="test_df", team="mlops")
     assert len(cards) == 1
-    filepath = data_card.metadata.uris.data_uri
+    data_filepath = data_card.metadata.uris.data_uri
+    datacard_filepath = data_card.metadata.uris.datacard_uri
 
     # delete data card
     registry.delete_card(card=data_card)
@@ -62,4 +63,5 @@ def test_delete_card(
     assert len(cards) == 0
 
     # check data is deleted
-    assert not path.exists(filepath)
+    assert not path.exists(data_filepath)
+    assert not path.exists(datacard_filepath)
