@@ -16,7 +16,6 @@ from opsml.app.routes.pydantic_models import (
     DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
-    DeleteFileRequest,
     DeleteFileResponse,
 )
 from opsml.app.routes.utils import (

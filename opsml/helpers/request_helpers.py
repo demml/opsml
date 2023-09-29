@@ -29,6 +29,7 @@ class ApiRoutes:
     MODEL_METRICS = "models/metrics"
     COMPARE_MODEL_METRICS = "models/compare_metrics"
     DOWNLOAD_FILE = "files/download"
+    DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"
 
 

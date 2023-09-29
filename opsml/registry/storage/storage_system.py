@@ -565,6 +565,17 @@ class ApiStorageClient(LocalStorageClient):
         """Wrapper method needed for working with data artifacts (zarr)"""
         return storage_uri
 
+    def delete(self, read_path: str) -> None:
+        """Deletes files from a read path
+
+        Args:
+            read_path:
+                Path to delete
+        """
+        self.api_client.get_request(
+            route=f"{ApiRoutes.DELETE_FILE}?read_path={read_path}",
+        )
+
     @staticmethod
     def validate(storage_backend: str) -> bool:
         return storage_backend == StorageSystem.API

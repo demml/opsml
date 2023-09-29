@@ -166,10 +166,6 @@ class ListFileResponse(BaseModel):
     files: List[str]
 
 
-class DeleteFileRequest(BaseModel):
-    read_path: str
-
-
 class DeleteFileResponse(BaseModel):
     deleted: bool
 
