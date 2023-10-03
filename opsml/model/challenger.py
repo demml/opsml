@@ -55,7 +55,8 @@ class ChallengeInputs(BaseModel):
     @field_validator("metric_value")
     def convert_value(cls, value, info: ValidationInfo) -> List[str]:
         data = info.data  # type: ignore
-        nbr_metrics = len(data.get("metric_name"))
+        metric = cast(list, data["metric_name"])
+        nbr_metrics = len(metric)
 
         if value is not None:
             if not isinstance(value, list):
@@ -73,7 +74,8 @@ class ChallengeInputs(BaseModel):
     @field_validator("lower_is_better")
     def convert_threshold(cls, threshold, info: ValidationInfo) -> List[bool]:
         data = info.data  # type: ignore
-        nbr_metrics = len(data.get("metric_name"))
+        metric = cast(list, data["metric_name"])
+        nbr_metrics = len(metric)
 
         if not isinstance(threshold, list):
             _threshold = [threshold] * nbr_metrics
