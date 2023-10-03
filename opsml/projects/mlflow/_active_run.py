@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Dict, Optional, Union, cast
 from pathlib import Path
+import os
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo
 from opsml.registry.cards.types import METRICS, PARAMS
@@ -99,7 +100,7 @@ class MlflowActiveRun(ActiveRun):
         super().log_parameter(key, value)
         self.info.mlflow_client.log_param(run_id=self.run_id, key=key, value=value)
 
-    def log_artifact_from_file(self, local_path: Union[Path, str], artifact_path: Optional[str] = None) -> None:
+    def log_artifact_from_file(self, local_path: Union[os.PathLike, str], artifact_path: Optional[str] = None) -> None:
         """
         Logs an artifact for the current run. All artifacts are loaded
         to a parent directory named "misc".
@@ -124,7 +125,7 @@ class MlflowActiveRun(ActiveRun):
             artifact_path=_artifact_path,
         )
 
-        filename = local_path.name if isinstance(local_path, Path) else Path(local_path).name
+        filename = local_path.name if isinstance(local_path, os.PathLike) else Path(local_path).name
         artifact_uri = f"{self.info.base_artifact_path}/{_artifact_path}/{filename}"
 
         self.runcard.add_artifact_uri(name=filename, uri=artifact_uri)
