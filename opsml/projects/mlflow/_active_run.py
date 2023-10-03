@@ -125,7 +125,7 @@ class MlflowActiveRun(ActiveRun):
             artifact_path=_artifact_path,
         )
 
-        filename = local_path.name if isinstance(local_path, os.PathLike) else Path(local_path).name
+        filename = local_path.name if isinstance(local_path, Path) else Path(local_path).name
         artifact_uri = f"{self.info.base_artifact_path}/{_artifact_path}/{filename}"
 
         self.runcard.add_artifact_uri(name=filename, uri=artifact_uri)
