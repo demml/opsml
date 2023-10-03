@@ -2,7 +2,7 @@ from typing import Any, cast, Dict, Tuple
 
 import os
 import sys
-
+from pathlib import Path
 import pandas as pd
 from numpy.typing import NDArray
 import pytest
@@ -183,7 +183,13 @@ def test_log_artifact(mlflow_project: MlflowProject) -> None:
         array = np.random.random((10, 10))
         fig.savefig("test.png")  # save the figure to file
         plt.close(fig)
+
+        # try string
         run.log_artifact_from_file(local_path=filename)
+
+        # try path
+        run.log_artifact_from_file(local_path=Path(filename))
+        #
         run.log_artifact("test_array", array)
         run.add_tag("test_tag", "1.0.0")
         info.run_id = run.run_id
