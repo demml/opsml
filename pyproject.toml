@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.3"
+version = "1.4.4"
 description = "Adding consistency and standardization to the ML lifecycle"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 readme = "README.md"
