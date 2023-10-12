@@ -177,8 +177,11 @@ class TrainedModelMetadataCreator(ModelCreator):
         return {"placeholder": Feature(feature_type="str", shape=[1])}
 
     def create_model(self) -> ModelReturn:
-        input_features = self._get_input_schema()
+        # make predictions first in case of column type switching for input cols
         output_features = self._get_output_schema()
+
+        # this will convert categorical to string
+        input_features = self._get_input_schema()
 
         api_schema = ApiDataSchemas(
             model_data_schema=DataDict(
