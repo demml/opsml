@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI")).strip("/")  # strip trailing slash if it has one
 _METADATA_FILENAME = "metadata.json"

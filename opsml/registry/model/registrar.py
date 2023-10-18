@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ModelMetadata
 from opsml.registry.storage.storage_system import StorageClientType
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 ModelSettingsType = Dict[str, Union[str, Dict[str, Union[str, Dict[str, str]]]]]
 

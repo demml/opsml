@@ -16,7 +16,7 @@ from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.utils.settings import settings
 from opsml.registry.sql.db_initializer import DBInitializer
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
 

@@ -10,7 +10,7 @@ import warnings
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import OnnxModelType
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class RegistryUpdater:

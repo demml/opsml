@@ -11,7 +11,7 @@ from sqlalchemy.engine.url import make_url
 
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 DEFAULT_POOL_SIZE = "5"
 DEFAULT_OVERFLOW = "5"
 

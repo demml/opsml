@@ -21,7 +21,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
 )
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class ModelCreator:

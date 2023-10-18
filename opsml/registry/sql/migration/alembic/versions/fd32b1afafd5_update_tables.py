@@ -9,7 +9,7 @@ from alembic import op
 
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 # revision identifiers, used by Alembic.
 revision = "fd32b1afafd5"
 down_revision = None

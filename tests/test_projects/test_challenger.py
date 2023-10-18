@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger, ChallengeInputs
 
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 data_info = CardInfo(
     name="pipeline_data",

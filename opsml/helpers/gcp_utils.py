@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class GcpCreds(BaseModel):

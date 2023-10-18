@@ -18,7 +18,7 @@ from opsml.projects.mlflow._active_run import MlflowActiveRun
 from opsml.projects.mlflow._run_manager import _MlflowRunManager
 from opsml.registry.cards.types import METRICS, PARAMS, Metric, Param
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class MlflowProject(OpsmlProject):

@@ -10,7 +10,7 @@ from mlflow.utils.server_cli_utils import resolve_default_artifact_root
 from opsml.app.core.config import MlFlowConfig
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 def initialize_mlflow() -> MlFlowConfig:

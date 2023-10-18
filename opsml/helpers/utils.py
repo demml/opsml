@@ -15,7 +15,7 @@ from opsml.helpers.logging import ArtifactLogger
 
 from . import exceptions
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 PUNCTUATION = string.punctuation.replace("_", "").replace("-", "")
 REMOVE_CHARS = re.escape(PUNCTUATION)
