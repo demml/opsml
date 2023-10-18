@@ -16,7 +16,7 @@ from opsml.projects.base.utils import (
 from opsml.registry import CardRegistries, CardRegistry, RunCard
 from opsml.registry.utils.settings import settings
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 registries = CardRegistries()

@@ -11,7 +11,7 @@ from opsml.registry.sql.base.registry_base import SQLRegistryBase, settings
 from opsml.registry.sql.base.query_engine import log_card_change  # type: ignore
 from opsml.registry.sql.semver import CardVersion, VersionType
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class ClientRegistry(SQLRegistryBase):

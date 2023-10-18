@@ -15,7 +15,7 @@ from opsml.app.core.middleware import rollbar_middleware
 from opsml.app.routes.router import api_router
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 instrumentator = Instrumentator()
 

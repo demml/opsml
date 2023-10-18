@@ -9,7 +9,7 @@ from pydantic import BaseModel, model_validator
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class VersionType(str, Enum):

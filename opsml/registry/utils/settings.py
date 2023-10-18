@@ -29,7 +29,7 @@ BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
 STORAGE_URI = f"{os.path.expanduser('~')}/opsml_artifacts"
 
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class StorageSettingsGetter:

@@ -10,7 +10,7 @@ from opsml.registry.data.types import AllowedTableTypes, DataCardUris
 from opsml.registry.image import ImageDataset
 from opsml.registry.cards import ArtifactCard
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class DataCardProto(BaseModel):

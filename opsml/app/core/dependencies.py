@@ -7,7 +7,7 @@ from fastapi import HTTPException, Request
 from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 def verify_token(request: Request):

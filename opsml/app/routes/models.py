@@ -24,7 +24,7 @@ from opsml.registry.model.registrar import (
     RegistrationRequest,
 )
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 
