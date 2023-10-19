@@ -29,7 +29,7 @@ def experimental_feature(func):
     def wrapper(self, *args, **kwargs):
         class_name = self.__class__.__name__
 
-        logger.warning("Class %s and it's features are experimental and may not work as intended", class_name)
+        logger.warning("Class {} and it's features are experimental and may not work as intended", class_name)
         func(self, *args, **kwargs)
 
     return wrapper
