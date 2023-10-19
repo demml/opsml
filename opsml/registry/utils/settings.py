@@ -213,14 +213,12 @@ class DefaultAttrCreator:
 
         if storage_uri is not None:
             storage_type = self._get_storage_type(storage_uri=storage_uri)
+            StorageSettingsGetter(
+                storage_uri=storage_uri,
+                storage_type=storage_type,
+            ).get_storage_settings()
 
-        else:
-            raise ValueError("Missing OPSML_STORAGE_URI env variable")
-
-        return StorageSettingsGetter(
-            storage_uri=storage_uri,
-            storage_type=storage_type,
-        ).get_storage_settings()
+        raise ValueError("Missing OPSML_STORAGE_URI env variable")
 
     @property
     def env_vars(self):
