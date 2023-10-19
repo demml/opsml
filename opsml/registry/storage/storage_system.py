@@ -43,6 +43,7 @@ from opsml.registry.storage.types import (
     ArtifactStorageSpecs,
     FilePath,
     GcsStorageClientSettings,
+    S3StorageClientSettings,
     MlFlowClientProto,
     MlflowInfo,
     MlflowModel,
@@ -59,6 +60,7 @@ logger = ArtifactLogger.get_logger()
 
 class StorageSystem(str, Enum):
     GCS = "gcs"
+    S3 = "s3"
     LOCAL = "local"
     MLFLOW = "mlflow"
     API = "api"
@@ -304,6 +306,68 @@ class GCSFSStorageClient(StorageClient):
     @staticmethod
     def validate(storage_backend: str) -> bool:
         return storage_backend == StorageSystem.GCS
+
+
+class S3StorageClient(StorageClient):
+    def __init__(
+        self,
+        storage_settings: StorageSettings,
+    ):
+        import s3fs
+
+        storage_settings = cast(S3StorageClientSettings, storage_settings)
+        client = s3fs.S3FileSystem()
+
+        super().__init__(
+            storage_settings=storage_settings,
+            client=client,
+            backend=StorageSystem.S3.value,
+        )
+
+    def copy(self, read_path: str, write_path: str) -> Optional[str]:
+        """Copies object from read_path to write_path
+
+        Args:
+            read_path:
+                Path to read from
+            write_path:
+                Path to write to
+        """
+        return self.client.mv(read_path, write_path, recursive=True)
+
+    def delete(self, read_path: str) -> None:
+        """Deletes files from a read path
+
+        Args:
+            read_path:
+                Path to delete
+        """
+        return self.client.rm(path=read_path, recursive=True)
+
+    def open(self, filename: str, mode: str) -> IO:
+        return self.client.open(filename, mode)
+
+    def list_files(self, storage_uri: str) -> FilePath:
+        files = ["s3://" + path for path in self.client.ls(path=storage_uri)]
+        return files
+
+    def store(self, storage_uri: str, **kwargs) -> Any:
+        """Create store for use with Zarr arrays"""
+        import s3fs  # pylint: disable=import-outside-toplevel
+
+        return s3fs.S3Map(storage_uri, s3=self.client, check=False)
+
+    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
+        loadable_path = self.client.get(rpath=rpath, lpath=lpath, recursive=recursive)
+
+        if all(path is None for path in loadable_path):
+            file_ = os.path.basename(rpath)
+            return os.path.join(lpath, file_)
+        return loadable_path
+
+    @staticmethod
+    def validate(storage_backend: str) -> bool:
+        return storage_backend == StorageSystem.S3
 
 
 class LocalStorageClient(StorageClient):
@@ -989,6 +1053,7 @@ class MlflowStorageClient(StorageClient):
 StorageClientType = Union[
     LocalStorageClient,
     GCSFSStorageClient,
+    S3StorageClient,
     MlflowStorageClient,
     ApiStorageClient,
 ]
