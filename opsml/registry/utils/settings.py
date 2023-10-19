@@ -213,7 +213,7 @@ class DefaultAttrCreator:
 
         if storage_uri is not None:
             storage_type = self._get_storage_type(storage_uri=storage_uri)
-            StorageSettingsGetter(
+            return StorageSettingsGetter(
                 storage_uri=storage_uri,
                 storage_type=storage_type,
             ).get_storage_settings()

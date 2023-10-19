@@ -72,7 +72,7 @@ from opsml.registry.data.splitter import DataSplit
 from opsml.registry import ModelCard
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
-from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings
+from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings, S3StorageClientSettings
 from opsml.registry.sql.sql_schema import BaseMixin, Base, RegistryTableNames
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
@@ -192,6 +192,16 @@ def gcp_storage_client(mock_gcp_vars):
 
 
 @pytest.fixture(scope="function")
+def s3_storage_client():
+    s3_settings = S3StorageClientSettings(
+        storage_type="s3",
+        storage_uri="s3://test",
+    )
+    storage_client = StorageClientGetter.get_storage_client(storage_settings=s3_settings)
+    return storage_client
+
+
+@pytest.fixture(scope="function")
 def local_storage_client():
     storage_client = StorageClientGetter.get_storage_client(storage_settings=StorageClientSettings())
     return storage_client
@@ -207,6 +217,18 @@ def mock_gcsfs():
         rm=MagicMock(return_value=None),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_s3fs():
+    with patch.multiple(
+        "s3fs.S3FileSystem",
+        ls=MagicMock(return_value=["test"]),
+        upload=MagicMock(return_value=True),
+        download=MagicMock(return_value="s3://test"),
+        rm=MagicMock(return_value=None),
+    ) as mocked_s3fs:
+        yield mocked_s3fs
 
 
 @pytest.fixture(scope="function")
