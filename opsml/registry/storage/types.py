@@ -43,6 +43,10 @@ class GcsStorageClientSettings(StorageClientSettings):
     gcp_project: Optional[str] = None
 
 
+class S3StorageClientSettings(StorageClientSettings):
+    storage_type: str = "s3"
+
+
 class ApiStorageClientSettings(StorageClientSettings):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
 
@@ -59,6 +63,7 @@ StorageSettings = Union[
     StorageClientSettings,
     GcsStorageClientSettings,
     ApiStorageClientSettings,
+    S3StorageClientSettings,
 ]
 
 
