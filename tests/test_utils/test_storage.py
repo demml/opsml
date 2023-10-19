@@ -117,8 +117,8 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
     assert model == model
 
 
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client")])
-def test_parquet_gcs(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")])
+def test_parquet_cloud(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     storage_spec = ArtifactStorageSpecs(save_path="blob")
 
     storage_client.storage_spec = storage_spec
@@ -152,7 +152,10 @@ def test_parquet_local(test_arrow_table, storage_client, mock_pyarrow_parquet_wr
     assert isinstance(table, pa.Table)
 
 
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
+@pytest.mark.parametrize(
+    "storage_client",
+    [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client"), lazy_fixture("s3_storage_client")],
+)
 def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
     storage_spec = ArtifactStorageSpecs(save_path="blob")
 
@@ -174,7 +177,10 @@ def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
+@pytest.mark.parametrize(
+    "storage_client",
+    [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client"), lazy_fixture("s3_storage_client")],
+)
 def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib):
     model, data = load_transformer_example
     storage_spec = ArtifactStorageSpecs(save_path="blob")
@@ -199,7 +205,10 @@ def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client")])
+@pytest.mark.parametrize(
+    "storage_client",
+    [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client"), lazy_fixture("s3_storage_client")],
+)
 def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
     model, data = load_pytorch_resnet
     storage_spec = ArtifactStorageSpecs(save_path="blob")

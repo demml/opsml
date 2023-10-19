@@ -21,6 +21,7 @@ from opsml.registry.storage.storage_system import (
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
     GcsStorageClientSettings,
+    S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
 )
@@ -62,6 +63,12 @@ class StorageSettingsGetter:
             storage_uri=self.storage_uri,
         )
 
+    def _get_s3_settings(self) -> S3StorageClientSettings:
+        return S3StorageClientSettings(
+            storage_type=self.storage_type,
+            storage_uri=self.storage_uri,
+        )
+
     def _get_default_settings(self) -> StorageClientSettings:
         return StorageClientSettings(
             storage_uri=self.storage_uri,
@@ -74,6 +81,9 @@ class StorageSettingsGetter:
 
         if self.storage_type == StorageSystem.API:
             return self._get_api_storage_settings()
+
+        if self.storage_type == StorageSystem.S3:
+            return self._get_s3_settings()
 
         if self.storage_uri is not None:
             return self._get_default_settings()
@@ -184,9 +194,11 @@ class DefaultAttrCreator:
             storage_type=str(storage_type),
         ).get_storage_settings()
 
-    def _get_storage_type(self, storage_uri: str):
+    def _get_storage_type(self, storage_uri: str) -> str:
         if "gs://" in storage_uri:
             return StorageSystem.GCS.value
+        if "s3://" in storage_uri:
+            return StorageSystem.S3.value
         return StorageSystem.LOCAL.value
 
     def _get_storage_settings_from_local(self) -> StorageSettings:
@@ -201,14 +213,12 @@ class DefaultAttrCreator:
 
         if storage_uri is not None:
             storage_type = self._get_storage_type(storage_uri=storage_uri)
+            return StorageSettingsGetter(
+                storage_uri=storage_uri,
+                storage_type=storage_type,
+            ).get_storage_settings()
 
-        else:
-            raise ValueError("Missing OPSML_STORAGE_URI env variable")
-
-        return StorageSettingsGetter(
-            storage_uri=storage_uri,
-            storage_type=storage_type,
-        ).get_storage_settings()
+        raise ValueError("Missing OPSML_STORAGE_URI env variable")
 
     @property
     def env_vars(self):
