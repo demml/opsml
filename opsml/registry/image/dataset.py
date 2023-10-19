@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, field_validator, ValidationInfo
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class BBox(BaseModel):

@@ -8,7 +8,7 @@ from fastapi import Request, Response
 
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
 

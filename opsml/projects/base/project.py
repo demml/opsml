@@ -20,7 +20,7 @@ from opsml.registry.cards.types import (
     Param,
 )
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class OpsmlProject:
@@ -46,7 +46,7 @@ class OpsmlProject:
             )
             # the project is in "read only" mode. all read operations will work
             for k, v in project.params:
-                logger.info("%s = %s", k, v)
+                logger.info("{} = {}", k, v)
 
             # creating a project run
             with project.run() as run:
@@ -94,7 +94,7 @@ class OpsmlProject:
             yield cast(ActiveRun, self._run_mgr.active_run)
 
         except Exception as error:
-            logger.error("Error encountered. Ending run. %s", str(error))
+            logger.error("Error encountered. Ending run. {}", error)
             self._run_mgr.end_run()
             raise error
 

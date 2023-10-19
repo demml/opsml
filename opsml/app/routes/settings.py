@@ -10,7 +10,7 @@ from opsml.app.routes.pydantic_models import StorageSettingsResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.storage.storage_system import StorageSystem
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 

@@ -15,7 +15,7 @@ from opsml.helpers.logging import ArtifactLogger
 
 from . import exceptions
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 PUNCTUATION = string.punctuation.replace("_", "").replace("-", "")
 REMOVE_CHARS = re.escape(PUNCTUATION)
@@ -29,7 +29,7 @@ def experimental_feature(func):
     def wrapper(self, *args, **kwargs):
         class_name = self.__class__.__name__
 
-        logger.warning("Class %s and it's features are experimental and may not work as intended", class_name)
+        logger.warning("Class {} and it's features are experimental and may not work as intended", class_name)
         func(self, *args, **kwargs)
 
     return wrapper

@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 TRACKING_URI = str(os.environ.get("OPSML_TRACKING_URI")).strip("/")  # strip trailing slash if it has one
 _METADATA_FILENAME = "metadata.json"
@@ -60,7 +60,7 @@ class CliApiClient:
         )
 
         metadata_path = path / _METADATA_FILENAME
-        logger.info("saving metadata to %s", str(metadata_path))
+        logger.info("saving metadata to {}", metadata_path)
         metadata_path.write_text(json.dumps(metadata, indent=4))
 
         return metadata
@@ -80,7 +80,7 @@ class CliApiClient:
         filename = filepath_split[-1]
         read_dir = "/".join(filepath_split[:-1])
 
-        logger.info("saving model to %s", str(write_path))
+        logger.info("saving model to {}", write_path)
         self.client.stream_download_file_request(
             route=ApiRoutes.DOWNLOAD_FILE,
             local_dir=str(write_path),

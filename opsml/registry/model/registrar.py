@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ModelMetadata
 from opsml.registry.storage.storage_system import StorageClientType
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 ModelSettingsType = Dict[str, Union[str, Dict[str, Union[str, Dict[str, str]]]]]
 
@@ -111,7 +111,7 @@ class ModelRegistrar:
 
         # delete existing model if it exists
         if self.is_registered(request):
-            logger.info("Model detected in registry path. Deleting: %s", registry_path)
+            logger.info("Model detected in registry path. Deleting: {}", registry_path)
             self.storage_client.delete(registry_path)
             assert not self.is_registered(request)
 
@@ -166,7 +166,7 @@ class ModelRegistrar:
         """
 
         model_settings = self._model_settings(metadata, model_uri)
-        logger.info("ModelRegistrar: registering model settings: %s", str(model_settings))
+        logger.info("ModelRegistrar: registering model settings: {}", model_settings)
         with tempfile.TemporaryDirectory() as tmpdirname:
             local_path = f"{tmpdirname}/model-settings.json"
             with open(local_path, "w", encoding="utf-8") as outfile:
@@ -188,8 +188,8 @@ class ModelRegistrar:
         if model_uri is None:
             raise RegistrationError("the model_uri does not exist")
 
-        logger.info("ModelRegistrar: registering model: %s", str(request.model_dump()))
+        logger.info("ModelRegistrar: registering model: {}", request.model_dump())
         registry_path = self._copy_model_to_registry(request, model_uri, metadata)
-        logger.info("ModelRegistrar: registered model: %s path=%s", str(request.model_dump()), registry_path)
+        logger.info("ModelRegistrar: registered model: {} path={}", request.model_dump(), registry_path)
 
         return registry_path

@@ -15,7 +15,7 @@ from opsml.registry.sql.connectors.base import (
 )
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class SqlType(str, Enum):

@@ -23,7 +23,7 @@ from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.helpers.exceptions import VersionError
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]

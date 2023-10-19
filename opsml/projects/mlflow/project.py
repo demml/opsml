@@ -18,7 +18,7 @@ from opsml.projects.mlflow._active_run import MlflowActiveRun
 from opsml.projects.mlflow._run_manager import _MlflowRunManager
 from opsml.registry.cards.types import METRICS, PARAMS, Metric, Param
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class MlflowProject(OpsmlProject):
@@ -45,7 +45,7 @@ class MlflowProject(OpsmlProject):
             )
             # the project is in "read only" mode. all read operations will work
             for k, v in project.params:
-                logger.info("%s = %s", k, v)
+                logger.info("{} = {}", k, v)
 
             # creating a project run
             with project.run() as run:
@@ -83,7 +83,7 @@ class MlflowProject(OpsmlProject):
         try:
             yield cast(MlflowActiveRun, self._run_mgr.active_run)
         except Exception as error:
-            logger.error("Error encountered. Ending run. %s", str(error))
+            logger.error("Error encountered. Ending run. {}", error)
             self._run_mgr.end_run()
             raise error
 

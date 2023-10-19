@@ -8,7 +8,7 @@ from streaming_form_data.targets import FileTarget
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:

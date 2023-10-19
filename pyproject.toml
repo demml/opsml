@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.4"
+version = "1.4.5"
 description = "Adding consistency and standardization to the ML lifecycle"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 readme = "README.md"
@@ -45,7 +45,6 @@ pyarrow = ">=8.0.0"
 pydantic = ">=2, <3"
 pydantic_settings = "^2"
 rich = "^13.3.5"
-rusty-logger = "^0.1.2"
 scikit-learn = ">=1.0"
 semver = "^2.13.0"
 skl2onnx = "1.14.1"
@@ -78,6 +77,7 @@ gcsfs = {version="^2023.5.0", optional = true}
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
 pg8000 = {version="^1.29.4", optional = true}
 pymysql = {version="^1.0.2", optional = true}
+rusty-logger = "^0.2.0"
 
 [tool.poetry.extras]
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]

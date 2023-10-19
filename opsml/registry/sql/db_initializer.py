@@ -11,7 +11,7 @@ from sqlalchemy import inspect
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.sql_schema import Base
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 DIR_PATH = os.path.dirname(__file__)
 

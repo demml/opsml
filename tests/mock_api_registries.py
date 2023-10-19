@@ -16,7 +16,7 @@ from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]

@@ -11,7 +11,7 @@ from opsml.registry.cards import ModelCard, RunCard
 from opsml.registry.cards.types import CardInfo, Metric
 from opsml.registry.sql.registry import CardRegistries
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 # User interfaces should primarily be checked at runtime
 

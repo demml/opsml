@@ -12,7 +12,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistry, DataCard
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 CHUNK_SIZE = 31457280
