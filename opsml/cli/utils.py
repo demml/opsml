@@ -60,7 +60,7 @@ class CliApiClient:
         )
 
         metadata_path = path / _METADATA_FILENAME
-        logger.info("saving metadata to %s", str(metadata_path))
+        logger.info("saving metadata to {}", metadata_path)
         metadata_path.write_text(json.dumps(metadata, indent=4))
 
         return metadata
@@ -80,7 +80,7 @@ class CliApiClient:
         filename = filepath_split[-1]
         read_dir = "/".join(filepath_split[:-1])
 
-        logger.info("saving model to %s", str(write_path))
+        logger.info("saving model to {}", write_path)
         self.client.stream_download_file_request(
             route=ApiRoutes.DOWNLOAD_FILE,
             local_dir=str(write_path),

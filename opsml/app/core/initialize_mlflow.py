@@ -29,10 +29,10 @@ def initialize_mlflow() -> MlFlowConfig:
 
     logger.info("-------------------------------------------------------")
     logger.info("Starting mlflow")
-    logger.info(f"MLFLOW_SERVER_ARTIFACT_DESTINATION: {config.MLFLOW_SERVER_ARTIFACT_DESTINATION}")
-    logger.info(f"MLFLOW_SERVER_ARTIFACT_ROOT: {config.MLFLOW_SERVER_ARTIFACT_ROOT}")
-    logger.info(f"MLFLOW_SERVER_FILE_STORE: {config.MLFLOW_SERVER_FILE_STORE}")
-    logger.info(f"MLFLOW_SERVER_SERVE_ARTIFACTS: {config.MLFLOW_SERVER_SERVE_ARTIFACTS}")
+    logger.info("MLFLOW_SERVER_ARTIFACT_DESTINATION: {}", config.MLFLOW_SERVER_ARTIFACT_DESTINATION)
+    logger.info("MLFLOW_SERVER_ARTIFACT_ROOT: {}", config.MLFLOW_SERVER_ARTIFACT_ROOT)
+    logger.info("MLFLOW_SERVER_FILE_STORE: {}", config.MLFLOW_SERVER_FILE_STORE)
+    logger.info("MLFLOW_SERVER_SERVE_ARTIFACTS: {}", config.MLFLOW_SERVER_SERVE_ARTIFACTS)
     logger.info("-------------------------------------------------------")
 
     # Ensure that both backend_store_uri and default_artifact_uri are set correctly.

@@ -218,10 +218,10 @@ class _RunManager:
             raise ValueError("Could not start run. Another run is currently active")
 
         self._set_active_run(run_name=run_name)
-        logger.info("starting run: %s", self.run_id)
+        logger.info("starting run: {}", self.run_id)
 
     def _end_run(self) -> None:
-        logger.info("ending run: %s", self.run_id)
+        logger.info("ending run: {}", self.run_id)
         self.active_run.create_or_update_runcard()
         self.version = cast(str, self.active_run.runcard.version)
 
