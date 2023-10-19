@@ -16,7 +16,7 @@ from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.utils.settings import settings
 from opsml.registry.sql.db_initializer import DBInitializer
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
 
@@ -50,9 +50,9 @@ def _shutdown_registries(app: FastAPI):
 
 
 def _log_url_and_storage():
-    logger.info(f"OpsML tracking url: {config.TRACKING_URI}")
-    logger.info(f"OpsML storage url: {config.STORAGE_URI}")
-    logger.info(f"Environment: {config.APP_ENV}")
+    logger.info("OpsML tracking url: {}", config.TRACKING_URI)
+    logger.info("OpsML storage url: {}", config.STORAGE_URI)
+    logger.info("Environment: {}", config.APP_ENV)
 
 
 def start_app_handler(app: FastAPI) -> Callable[[], None]:

@@ -54,7 +54,7 @@ from opsml.registry.storage.types import (
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer*")
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class StorageSystem(str, Enum):

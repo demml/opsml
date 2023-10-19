@@ -20,7 +20,7 @@ from opsml.registry.storage.artifact_storage import save_record_artifact_to_stor
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 # dataclass inheritance doesnt handle default vals well for <= py3.9

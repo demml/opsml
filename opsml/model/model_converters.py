@@ -37,7 +37,7 @@ from opsml.model.types import (
 )
 
 ONNX_VERSION = onnx.__version__
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class ModelConverter:

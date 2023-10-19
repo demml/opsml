@@ -12,7 +12,7 @@ from rich.text import Text
 from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 app = typer.Typer()
 api_client = CliApiClient()
@@ -187,8 +187,8 @@ def list_cards(
         "max_date": max_date,
         "tags": tags,
         "table_name": registry_name,
-        "ignore_release_candidates": ignore_release_candidates,
     }
+    print(payload)
     cards = api_client.list_cards(payload=payload)
 
     table = Table(title=f"{registry_name} cards")

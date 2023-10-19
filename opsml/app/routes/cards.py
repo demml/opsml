@@ -26,7 +26,7 @@ from opsml.app.routes.utils import replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 
@@ -85,7 +85,7 @@ def list_cards(
     try:
         table_for_registry = payload.table_name.split("_")[1].lower()
         registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
-        logger.info("Listing cards with request: %s", str(payload.model_dump()))
+        logger.info("Listing cards with request: {}", payload.model_dump())
 
         cards = registry.list_cards(
             uid=payload.uid,
@@ -134,7 +134,7 @@ def create_card(
         table_for_registry = payload.table_name.split("_")[1].lower()
         registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
 
-        logger.info("Creating card: %s", str(payload.model_dump()))
+        logger.info("Creating card: {}", payload.model_dump())
 
         registry._registry.add_and_commit(card=payload.card)
         return AddCardResponse(registered=True)
@@ -163,7 +163,7 @@ def update_card(
         registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
         registry._registry.update_card_record(card=payload.card)
 
-        logger.info("Updated card: %s", str(payload.model_dump()))
+        logger.info("Updated card: {}", payload.model_dump())
 
         return UpdateCardResponse(updated=True)
 
@@ -190,7 +190,7 @@ def delete_card(
         table_for_registry = payload.table_name.split("_")[1].lower()
         registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
         registry._registry.delete_card_record(card=payload.card)
-        logger.info("Deleted card: %s", str(payload.model_dump()))
+        logger.info("Deleted card: {}", payload.model_dump())
 
         return DeleteCardResponse(deleted=True)
 

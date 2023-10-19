@@ -21,7 +21,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
 )
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class ModelCreator:
@@ -134,7 +134,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             return self._get_prediction_type(predictions=predictions)
 
         except TypeError as error:
-            logger.error("%s. Falling back to model functional call", str(error))
+            logger.error("{}. Falling back to model functional call", error)
 
         return self._functional_prediction()
 
@@ -172,7 +172,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             return self._functional_prediction()
 
         except Exception as error:
-            logger.error("Failed to determine prediction output. Defaulting to placeholder. %s", str(error))
+            logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
 
         return {"placeholder": Feature(feature_type="str", shape=[1])}
 
@@ -286,7 +286,7 @@ class OnnxModelCreator(ModelCreator):
             # add onnx version
             return onnx_model_return
         except Exception as exc:
-            logger.error("Failed to convert model to onnx. %s", str(exc))
+            logger.error("Failed to convert model to onnx. {}", exc)
             raise ValueError(
                 textwrap.dedent(
                     f"""

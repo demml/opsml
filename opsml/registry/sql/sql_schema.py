@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 Base = declarative_base()
 

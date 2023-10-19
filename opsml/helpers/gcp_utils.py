@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 
 class GcpCreds(BaseModel):
@@ -89,7 +89,7 @@ class GCSStorageClient(GCPService):
         blob = bucket.blob(blob_path)
         blob.download_to_filename(destination_filename)
 
-        logger.info("Successully downloaded gs://%s/%s", gcs_bucket, blob_path)
+        logger.info("Successfully downloaded gs://{}/{}", gcs_bucket, blob_path)
 
     def download_object_from_uri(self, gcs_uri: str):
         bucket, blob, filename = self.parse_gcs_uri(gcs_uri=gcs_uri)
@@ -121,7 +121,7 @@ class GCSStorageClient(GCPService):
         blob = bucket.blob(blob_path)
         blob.delete()
 
-        logger.info("Successully deleted gs://%s/%s", gcs_bucket, blob_path)
+        logger.info("Successfully deleted gs://{}/{}", gcs_bucket, blob_path)
 
     def parse_gcs_uri(
         self,
@@ -188,7 +188,7 @@ class GCSStorageClient(GCPService):
         blob.upload_from_filename(filename)
         gcs_uri = f"gs://{gcs_bucket}/{destination_path}"
 
-        logger.info("Uploaded %s to %s", str(filename), str(gcs_uri))
+        logger.info("Uploaded {} to {}", filename, gcs_uri)
 
         return gcs_uri
 

@@ -26,7 +26,7 @@ from opsml.app.routes.utils import (
 )
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger.get_logger(__name__)
+logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 CHUNK_SIZE = 31457280
