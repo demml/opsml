@@ -1,5 +1,5 @@
 from opsml.registry.utils.settings import DefaultSettings
-from opsml.registry.storage.types import GcsStorageClientSettings, StorageClientSettings, ApiStorageClientSettings
+from opsml.registry.storage.types import GcsStorageClientSettings, S3StorageClientSettings
 from opsml.helpers.gcp_utils import GcpCredsSetter
 from opsml.registry.storage.storage_system import StorageSystem
 
@@ -53,6 +53,10 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
 
     settings.set_storage(storage_settings=storage_settings)
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
+
+    storage_settings = S3StorageClientSettings(storage_type="s3", storage_uri="s3://test")
+    settings.set_storage(storage_settings=storage_settings)
+    assert settings.storage_client.__class__.__name__ == "S3StorageClient"
 
 
 def test_api_storage(api_registries):

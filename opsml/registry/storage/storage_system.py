@@ -333,7 +333,7 @@ class S3StorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        return self.client.mv(read_path, write_path, recursive=True)
+        return self.client.copy(read_path, write_path, recursive=True)
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
@@ -358,7 +358,7 @@ class S3StorageClient(StorageClient):
         return s3fs.S3Map(storage_uri, s3=self.client, check=False)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
-        loadable_path = self.client.get(rpath=rpath, lpath=lpath, recursive=recursive)
+        loadable_path = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
         if all(path is None for path in loadable_path):
             file_ = os.path.basename(rpath)
@@ -1030,7 +1030,7 @@ class MlflowStorageClient(StorageClient):
                     write_dir = f"{parent_dir}/{uuid.uuid4().hex}"
 
             except Exception as error:  # pylint: disable=broad-exception-caught
-                logger.error("Failed to retrieve parent and child save paths. Defaulting to random. %s", error)
+                logger.error("Failed to retrieve parent and child save paths. Defaulting to random. {}", error)
                 write_dir = f"misc/{uuid.uuid4().hex}"
 
             return write_dir.lower()
