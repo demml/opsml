@@ -43,7 +43,18 @@ class SklearnEstimator(ModelType):
             "keras",
             "pytorch",
             "transformer",
+            "CalibratedClassifierCV",
         ]
+
+
+class SklearnCalibratedClassifier(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return OnnxModelType.CALIBRATED_CLASSIFIER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "CalibratedClassifierCV"
 
 
 class SklearnStackingEstimator(ModelType):
