@@ -31,6 +31,7 @@ class OnnxModelType(str, Enum):
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
     STACKING_ESTIMATOR = "stackingestimator"
+    CALIBRATED_CLASSIFIER = "calibratedclassifier"
     LGBM_REGRESSOR = "lgbmregressor"
     LGBM_CLASSIFIER = "lgbmclassifier"
     XGB_REGRESSOR = "xgbregressor"
