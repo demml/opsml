@@ -916,6 +916,25 @@ def lgb_classifier_calibrated(drift_dataframe):
 
 
 @pytest.fixture(scope="function")
+def lgb_classifier_calibrated_pipeline(drift_dataframe):
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = lgb.LGBMClassifier(
+        n_estimators=3,
+        max_depth=3,
+        num_leaves=5,
+    )
+
+    pipe = Pipeline(
+        [("preprocess", StandardScaler()), ("clf", CalibratedClassifierCV(reg, method="isotonic", cv=3))]
+    )
+    pipe.fit(X_train, y_train)
+
+    print(pipe.__dict__)
+    a
+    return pipe, X_test[:10]
+
+
+@pytest.fixture(scope="function")
 def lgb_booster_dataframe(drift_dataframe):
     X_train, y_train, X_test, y_test = drift_dataframe
     # create dataset for lightgbm
