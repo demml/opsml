@@ -45,8 +45,14 @@
   <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
 
 <h4 align="left">Supported Storage Types</h4>
-<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
-  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
+<a href="https://cloud.google.com/storage">
+  <img alt="google cloud" src="https://img.shields.io/badge/google_cloud_storage-grey.svg?logo=google-cloud"/>
+</a>
+
+<a href="https://cloud.google.com/storage">
+  <img alt="google cloud" src="https://img.shields.io/badge/aws_s3-grey?logo=amazons3"/>
+</a>
+
 
 <p align="center">
   <a href="#what-is-it">What is it?</a> •
