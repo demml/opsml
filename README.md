@@ -116,7 +116,7 @@ Types of extras that can be installed:
   poetry add "opsml[s3,postgres]"
   ```
 
-- **AWS with mysql**: Installs postgres and s3fs dependencies to be used with `Opsml`
+- **AWS with mysql**: Installs mysql and s3fs dependencies to be used with `Opsml`
   ```bash
   poetry add "opsml[s3,mysql]"
   ```
