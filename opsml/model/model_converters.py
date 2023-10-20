@@ -363,6 +363,7 @@ class SklearnOnnxModel(ModelConverter):
     def update_sklearn_onnx_registries(self) -> bool:
         if self._is_pipeline:
             return self._update_onnx_registries_pipelines()
+
         if self._is_stacking_estimator:
             return self._update_onnx_registries_stacking()
 

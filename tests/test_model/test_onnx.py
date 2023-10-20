@@ -56,7 +56,8 @@ def model_predict(model_and_data):
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        lazy_fixture("lgb_classifier_calibrated"),
+        # lazy_fixture("lgb_classifier_calibrated"),
+        lazy_fixture("lgb_classifier_calibrated_pipeline"),
         # lazy_fixture("linear_regression"),  # linear regress with numpy
         # lazy_fixture("random_forest_classifier"),  # random forest with dataframe
         # lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
