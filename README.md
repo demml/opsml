@@ -91,14 +91,34 @@ Types of extras that can be installed:
   poetry add "opsml[server]"
   ```
 
-- **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP with mysql**: Installs mysql and gcsfs to be used with `Opsml`
+  ```bash
+  poetry add "opsml[gcs,mysql]"
+  ```
+
+- **GCP with mysql(cloud-sql)**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add "opsml[gcp_mysql]"
   ```
 
-- **GCP-postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP with postgres**: Installs postgres and gcsgs to be used with `Opsml`
+  ```bash
+  poetry add "opsml[gcs,postgres]"
+  ```
+
+- **GCP with postgres(cloud-sql)**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add "opsml[gcp_postgres]"
+  ```
+
+- **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `Opsml`
+  ```bash
+  poetry add "opsml[s3,postgres]"
+  ```
+
+- **AWS with mysql**: Installs postgres and s3fs dependencies to be used with `Opsml`
+  ```bash
+  poetry add "opsml[s3,mysql]"
   ```
 
 ## Contributing

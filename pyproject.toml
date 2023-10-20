@@ -88,7 +88,9 @@ server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "p
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]
 s3 = ["s3fs", "boto3"]
+gcs = ["gcsfs"]
 postgres = ["psycopg2"]
+mysql = ["pymysql"]
 
 [tool.poetry.group.dev]
 optional = true
