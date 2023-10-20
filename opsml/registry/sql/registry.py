@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKI
 
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-
+import textwrap
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType
@@ -70,20 +70,32 @@ class ModelCardRegistry(Registry):
                 build tag
         """
 
-        model_card = cast(ModelCard, card)
+        if card.uid is not None:
+            logger.info(
+                textwrap.dedent(
+                    f"""
+                Card {card.uid} already exists. Skipping registration. If you'd like to register 
+                a new card, please instantiate a new Card object. If you'd like to update the 
+                existing card, please use the update_card method.
+                """
+                )
+            )
 
-        if not self._has_datacard_uid(uid=model_card.datacard_uid):
-            raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
+        else:
+            model_card = cast(ModelCard, card)
 
-        if model_card.datacard_uid is not None:
-            self._validate_datacard_uid(uid=model_card.datacard_uid)
+            if not self._has_datacard_uid(uid=model_card.datacard_uid):
+                raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
-        return super().register_card(
-            card=card,
-            version_type=version_type,
-            pre_tag=pre_tag,
-            build_tag=build_tag,
-        )
+            if model_card.datacard_uid is not None:
+                self._validate_datacard_uid(uid=model_card.datacard_uid)
+
+            super().register_card(
+                card=card,
+                version_type=version_type,
+                pre_tag=pre_tag,
+                build_tag=build_tag,
+            )
 
     @staticmethod
     def validate(registry_name: str):
@@ -290,7 +302,7 @@ class CardRegistry:
         build_tag: str = "build",
     ) -> None:
         """
-        Adds new record to registry.
+        Adds a new `Card` record to registry. Registration will be skipped if the card already exists.
 
         Args:
             card:
@@ -304,12 +316,24 @@ class CardRegistry:
                 build tag to add to card version
         """
 
-        self._registry.register_card(
-            card=card,
-            version_type=version_type,
-            pre_tag=pre_tag,
-            build_tag=build_tag,
-        )
+        if card.uid is not None:
+            logger.info(
+                textwrap.dedent(
+                    f"""
+                Card {card.uid} already exists. Skipping registration. If you'd like to register 
+                a new card, please instantiate a new Card object. If you'd like to update the 
+                existing card, please use the update_card method.
+                """
+                )
+            )
+
+        else:
+            self._registry.register_card(
+                card=card,
+                version_type=version_type,
+                pre_tag=pre_tag,
+                build_tag=build_tag,
+            )
 
     def update_card(self, card: ArtifactCard) -> None:
         """
