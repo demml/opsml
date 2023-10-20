@@ -22,6 +22,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
 from opsml.model.model_info import ModelInfo
 from opsml.model.registry_updaters import OnnxRegistryUpdater
+from opsml.model.model_types import ModelType
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -306,6 +307,10 @@ class SklearnOnnxModel(ModelConverter):
         return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
 
     @property
+    def _is_calibrated_classifier(self) -> bool:
+        return self.model_info.model_class.lower() == OnnxModelType.CALIBRATED_CLASSIFIER
+
+    @property
     def _is_pipeline(self) -> bool:
         return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
 
@@ -334,11 +339,36 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
+    def _update_onnx_registries_calibrated_classifier(self):
+        updated = False
+        estimator = self.model_info.model.estimator
+
+        model_type = next(
+            (
+                model_type
+                for model_type in ModelType.__subclasses__()
+                if model_type.validate(model_class_name=estimator.__class__.__name__)
+            )
+        )
+        estimator_type = model_type.get_type()
+
+        if estimator_type in UPDATE_REGISTRY_MODELS:
+            OnnxRegistryUpdater.update_onnx_registry(
+                model_estimator_name=estimator_type,
+            )
+            updated = True
+
+        return updated
+
     def update_sklearn_onnx_registries(self) -> bool:
         if self._is_pipeline:
             return self._update_onnx_registries_pipelines()
         if self._is_stacking_estimator:
             return self._update_onnx_registries_stacking()
+
+        if self._is_calibrated_classifier:
+            return self._update_onnx_registries_calibrated_classifier()
+
         return self.update_onnx_registries()
 
     def _convert_data_for_onnx(self) -> None:
@@ -416,7 +446,6 @@ class SklearnOnnxModel(ModelConverter):
 
         onnx_model = self._convert_sklearn(initial_types=initial_types)
         self.validate_model(onnx_model=onnx_model)
-
         return onnx_model
 
     @staticmethod
@@ -632,5 +661,4 @@ class OnnxModelConverter:
                 if converter.validate(model_type=self.model_info.model_type)
             )
         )
-        a
         return converter(model_info=self.model_info).convert()
