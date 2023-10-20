@@ -231,6 +231,9 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
+        if all([var is None for var in [name, team, version, uid, tags]]):
+            limit = limit or 50
+
         card_list = self._registry.list_cards(
             uid=uid,
             name=name,
