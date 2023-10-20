@@ -8,18 +8,18 @@
 
 <h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
 
-
-
-   <a alt="Tests" href="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml">
+<div align="center">
+ <a alt="Tests" href="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml">
       <img src="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main">
-  </a>
-  <img alt="Code Style" src="https://img.shields.io/badge/  code%20style-black-000000.svg" />
-  <a href="https://www.python.org/downloads/release/python-390/">
-  </a>
-  <a href="https://pypi.org/project/opsml" target="_blank">
+ </a> 
+ <a href=""><img alt="Code Style" src="https://img.shields.io/badge/  code%20style-black-000000.svg">
+ </a>
+ <a href="https://pypi.org/project/opsml" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058" alt="Supported Python versions">
   </a>
 
+</div>
+ 
 
 
 
