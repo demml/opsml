@@ -1998,13 +1998,13 @@ files = [
 
 [[package]]
 name = "jax"
-version = "0.4.18"
+version = "0.4.19"
 description = "Differentiate, compile, and transform Numpy code."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "jax-0.4.18-py3-none-any.whl", hash = "sha256:2ded3f558b74593c3533036a90c20d41ea35f35c74b25ca0fc86f4aafc388746"},
-    {file = "jax-0.4.18.tar.gz", hash = "sha256:776cf33890100803e98f45f9af10aa727271c6993d4e766c069118733c928132"},
+    {file = "jax-0.4.19-py3-none-any.whl", hash = "sha256:168462f53774d727eede0e3bfbc90b9946c708483564d3179b8e44bb54846b46"},
+    {file = "jax-0.4.19.tar.gz", hash = "sha256:29f87f9a50964d3ca5eeb2973de3462f0e8b4eca6d46027894a0e9a903420601"},
 ]
 
 [package.dependencies]
@@ -2015,20 +2015,20 @@ numpy = [
     {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
 ]
 opt-einsum = "*"
-scipy = ">=1.7"
+scipy = ">=1.9"
 
 [package.extras]
 australis = ["protobuf (>=3.13,<4)"]
-ci = ["jaxlib (==0.4.17)"]
-cpu = ["jaxlib (==0.4.18)"]
-cuda = ["jaxlib (==0.4.18+cuda11.cudnn86)"]
-cuda11-cudnn86 = ["jaxlib (==0.4.18+cuda11.cudnn86)"]
-cuda11-local = ["jaxlib (==0.4.18+cuda11.cudnn86)"]
-cuda11-pip = ["jaxlib (==0.4.18+cuda11.cudnn86)", "nvidia-cublas-cu11 (>=11.11)", "nvidia-cuda-cupti-cu11 (>=11.8)", "nvidia-cuda-nvcc-cu11 (>=11.8)", "nvidia-cuda-runtime-cu11 (>=11.8)", "nvidia-cudnn-cu11 (>=8.8)", "nvidia-cufft-cu11 (>=10.9)", "nvidia-cusolver-cu11 (>=11.4)", "nvidia-cusparse-cu11 (>=11.7)", "nvidia-nccl-cu11 (>=2.18.3)"]
-cuda12-local = ["jaxlib (==0.4.18+cuda12.cudnn89)"]
-cuda12-pip = ["jaxlib (==0.4.18+cuda12.cudnn89)", "nvidia-cublas-cu12 (>=12.2.5.6)", "nvidia-cuda-cupti-cu12 (>=12.2.142)", "nvidia-cuda-nvcc-cu12 (>=12.2.140)", "nvidia-cuda-runtime-cu12 (>=12.2.140)", "nvidia-cudnn-cu12 (>=8.9)", "nvidia-cufft-cu12 (>=11.0.8.103)", "nvidia-cusolver-cu12 (>=11.5.2)", "nvidia-cusparse-cu12 (>=12.1.2.141)", "nvidia-nccl-cu12 (>=2.18.3)"]
+ci = ["jaxlib (==0.4.18)"]
+cpu = ["jaxlib (==0.4.19)"]
+cuda = ["jaxlib (==0.4.19+cuda11.cudnn86)"]
+cuda11-cudnn86 = ["jaxlib (==0.4.19+cuda11.cudnn86)"]
+cuda11-local = ["jaxlib (==0.4.19+cuda11.cudnn86)"]
+cuda11-pip = ["jaxlib (==0.4.19+cuda11.cudnn86)", "nvidia-cublas-cu11 (>=11.11)", "nvidia-cuda-cupti-cu11 (>=11.8)", "nvidia-cuda-nvcc-cu11 (>=11.8)", "nvidia-cuda-runtime-cu11 (>=11.8)", "nvidia-cudnn-cu11 (>=8.8)", "nvidia-cufft-cu11 (>=10.9)", "nvidia-cusolver-cu11 (>=11.4)", "nvidia-cusparse-cu11 (>=11.7)", "nvidia-nccl-cu11 (>=2.18.3)"]
+cuda12-local = ["jaxlib (==0.4.19+cuda12.cudnn89)"]
+cuda12-pip = ["jaxlib (==0.4.19+cuda12.cudnn89)", "nvidia-cublas-cu12 (>=12.2.5.6)", "nvidia-cuda-cupti-cu12 (>=12.2.142)", "nvidia-cuda-nvcc-cu12 (>=12.2.140)", "nvidia-cuda-runtime-cu12 (>=12.2.140)", "nvidia-cudnn-cu12 (>=8.9)", "nvidia-cufft-cu12 (>=11.0.8.103)", "nvidia-cusolver-cu12 (>=11.5.2)", "nvidia-cusparse-cu12 (>=12.1.2.141)", "nvidia-nccl-cu12 (>=2.18.3)", "nvidia-nvjitlink-cu12 (>=12.2)"]
 minimum-jaxlib = ["jaxlib (==0.4.14)"]
-tpu = ["jaxlib (==0.4.18)", "libtpu-nightly (==0.1.dev20231006)", "requests"]
+tpu = ["jaxlib (==0.4.19)", "libtpu-nightly (==0.1.dev20231018)", "requests"]
 
 [[package]]
 name = "jinja2"
@@ -3985,13 +3985,13 @@ pylint-plugin-utils = "*"
 
 [[package]]
 name = "pymdown-extensions"
-version = "10.3"
+version = "10.3.1"
 description = "Extension pack for Python Markdown."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pymdown_extensions-10.3-py3-none-any.whl", hash = "sha256:77a82c621c58a83efc49a389159181d570e370fff9f810d3a4766a75fc678b66"},
-    {file = "pymdown_extensions-10.3.tar.gz", hash = "sha256:94a0d8a03246712b64698af223848fd80aaf1ae4c4be29c8c61939b0467b5722"},
+    {file = "pymdown_extensions-10.3.1-py3-none-any.whl", hash = "sha256:8cba67beb2a1318cdaf742d09dff7c0fc4cafcc290147ade0f8fb7b71522711a"},
+    {file = "pymdown_extensions-10.3.1.tar.gz", hash = "sha256:f6c79941498a458852853872e379e7bab63888361ba20992fc8b4f8a9b61735e"},
 ]
 
 [package.dependencies]
@@ -6441,6 +6441,8 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [extras]
 gcp-mysql = ["cloud-sql-python-connector", "gcsfs", "pymysql"]
 gcp-postgres = ["cloud-sql-python-connector", "gcsfs", "pg8000"]
+gcs = ["gcsfs"]
+mysql = ["pymysql"]
 postgres = ["psycopg2"]
 s3 = ["boto3", "s3fs"]
 server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
@@ -6448,4 +6450,4 @@ server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar",
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "72c286a75fbee415b2f4a4867fc9d221d7ca5147d66f8289893c6ddbc7fbfaef"
+content-hash = "0a702962e5982cb7602c9dd4dabb504dabcaf42adce75106b07d2b8ca2037448"
