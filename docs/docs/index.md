@@ -9,19 +9,20 @@
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
 
+<h4 align="left">Supported Model Types</h4>
 
-<h4 align="left">Supported Model Types</h4
-
-![Keras](https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white)
-![Pytorch](https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch)
+[![Keras](https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white)]()
+[![Pytorch](https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch)]()
 [![Sklearn](https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/stable/)
 [![Xgboost](https://img.shields.io/badge/Package-XGBoost-blueviolet)](https://xgboost.readthedocs.io/en/stable/)
 [![Lightgbm](https://img.shields.io/badge/Package-LightGBM-success)](https://lightgbm.readthedocs.io/en/v3.3.2/)
+
 
 <h4 align="left">Supported Storage Types</h4>
 
 [![GCS](https://img.shields.io/badge/google_cloud_storage-grey.svg?logo=google-cloud)](https://cloud.google.com/storage)
 [![S3](https://img.shields.io/badge/aws_s3-grey?logo=amazons3)](https://aws.amazon.com/)
+
 
 **Source Code**: [Code](https://github.com/shipt/opsml)
 
