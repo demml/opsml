@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from collections import OrderedDict
 import numpy as np
 import onnx
+from sklearn.base import BaseEstimator
 import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
@@ -316,9 +317,15 @@ class SklearnOnnxModel(ModelConverter):
 
     def _update_onnx_registries_pipelines(self):
         updated = False
+
         for model_step in self.model_info.model.steps:
             estimator_name = model_step[1].__class__.__name__.lower()
-            if estimator_name in UPDATE_REGISTRY_MODELS:
+
+            if estimator_name == OnnxModelType.CALIBRATED_CLASSIFIER:
+                updated = self._update_onnx_registries_calibrated_classifier(estimator=model_step[1].estimator)
+
+            # check if estimator is calibrated
+            elif estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,
                 )
@@ -339,9 +346,11 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
-    def _update_onnx_registries_calibrated_classifier(self):
+    def _update_onnx_registries_calibrated_classifier(self, estimator: Optional[BaseEstimator] = None):
         updated = False
-        estimator = self.model_info.model.estimator
+
+        if estimator is None:
+            estimator = self.model_info.model.estimator
 
         model_type = next(
             (
