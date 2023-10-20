@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from collections import OrderedDict
 import numpy as np
 import onnx
+from sklearn.base import BaseEstimator
 import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
@@ -22,6 +23,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
 from opsml.model.model_info import ModelInfo
 from opsml.model.registry_updaters import OnnxRegistryUpdater
+from opsml.model.model_types import ModelType
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -306,14 +308,24 @@ class SklearnOnnxModel(ModelConverter):
         return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
 
     @property
+    def _is_calibrated_classifier(self) -> bool:
+        return self.model_info.model_class.lower() == OnnxModelType.CALIBRATED_CLASSIFIER
+
+    @property
     def _is_pipeline(self) -> bool:
         return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
 
     def _update_onnx_registries_pipelines(self):
         updated = False
+
         for model_step in self.model_info.model.steps:
             estimator_name = model_step[1].__class__.__name__.lower()
-            if estimator_name in UPDATE_REGISTRY_MODELS:
+
+            if estimator_name == OnnxModelType.CALIBRATED_CLASSIFIER:
+                updated = self._update_onnx_registries_calibrated_classifier(estimator=model_step[1].estimator)
+
+            # check if estimator is calibrated
+            elif estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,
                 )
@@ -334,11 +346,39 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
+    def _update_onnx_registries_calibrated_classifier(self, estimator: Optional[BaseEstimator] = None):
+        updated = False
+
+        if estimator is None:
+            estimator = self.model_info.model.estimator
+
+        model_type = next(
+            (
+                model_type
+                for model_type in ModelType.__subclasses__()
+                if model_type.validate(model_class_name=estimator.__class__.__name__)
+            )
+        )
+        estimator_type = model_type.get_type()
+
+        if estimator_type in UPDATE_REGISTRY_MODELS:
+            OnnxRegistryUpdater.update_onnx_registry(
+                model_estimator_name=estimator_type,
+            )
+            updated = True
+
+        return updated
+
     def update_sklearn_onnx_registries(self) -> bool:
         if self._is_pipeline:
             return self._update_onnx_registries_pipelines()
+
         if self._is_stacking_estimator:
             return self._update_onnx_registries_stacking()
+
+        if self._is_calibrated_classifier:
+            return self._update_onnx_registries_calibrated_classifier()
+
         return self.update_onnx_registries()
 
     def _convert_data_for_onnx(self) -> None:
@@ -416,7 +456,6 @@ class SklearnOnnxModel(ModelConverter):
 
         onnx_model = self._convert_sklearn(initial_types=initial_types)
         self.validate_model(onnx_model=onnx_model)
-
         return onnx_model
 
     @staticmethod
@@ -632,5 +671,4 @@ class OnnxModelConverter:
                 if converter.validate(model_type=self.model_info.model_type)
             )
         )
-
         return converter(model_info=self.model_info).convert()

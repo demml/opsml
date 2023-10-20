@@ -56,6 +56,8 @@ def model_predict(model_and_data):
 @pytest.mark.parametrize(
     "model_and_data",
     [
+        lazy_fixture("lgb_classifier_calibrated"),
+        lazy_fixture("lgb_classifier_calibrated_pipeline"),
         lazy_fixture("linear_regression"),  # linear regress with numpy
         lazy_fixture("random_forest_classifier"),  # random forest with dataframe
         lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
@@ -64,7 +66,7 @@ def model_predict(model_and_data):
         lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         lazy_fixture("sklearn_pipeline_advanced"),
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-        ### test all supported sklearn estimators
+        #### test all supported sklearn estimators
         lazy_fixture("ard_regression"),
         lazy_fixture("ada_boost_classifier"),
         lazy_fixture("ada_regression"),

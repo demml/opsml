@@ -74,7 +74,6 @@ class ModelCreator:
                 if model_type.validate(model_class_name=self.model_class)
             )
         )
-
         return model_type.get_type()
 
     def create_model(self) -> ModelReturn:
