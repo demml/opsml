@@ -924,13 +924,9 @@ def lgb_classifier_calibrated_pipeline(drift_dataframe):
         num_leaves=5,
     )
 
-    pipe = Pipeline(
-        [("preprocess", StandardScaler()), ("clf", CalibratedClassifierCV(reg, method="isotonic", cv=3))]
-    )
+    pipe = Pipeline([("preprocess", StandardScaler()), ("clf", CalibratedClassifierCV(reg, method="isotonic", cv=3))])
     pipe.fit(X_train, y_train)
 
-    print(pipe.__dict__)
-    a
     return pipe, X_test[:10]
 
 
