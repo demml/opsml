@@ -4,50 +4,24 @@
 
 <h4 align="center">Tooling for machine learning workflows</h4>
 ---
-<p align="center">
 
-   <a alt="Tests" href="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml">
-      <img src="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main">
-  </a>
-  <img alt="Code Style" src="https://img.shields.io/badge/  code%20style-black-000000.svg" />
-  <a href="https://www.python.org/downloads/release/python-390/">
-  </a>
-  <a href="https://pypi.org/project/opsml" target="_blank">
-    <img src="https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058" alt="Supported Python versions">
-  </a>
+[![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
+![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
 
-</p>
 
-<h4 align="left">Supported Model Types</h4>
+<h4 align="left">Supported Model Types</h4
 
-<p align="center">
+![Keras](https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white)
+![Pytorch](https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch)
+[![Sklearn](https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/stable/)
+[![Xgboost](https://img.shields.io/badge/Package-XGBoost-blueviolet)](https://xgboost.readthedocs.io/en/stable/)
+[![Lightgbm](https://img.shields.io/badge/Package-LightGBM-success)](https://lightgbm.readthedocs.io/en/v3.3.2/)
 
-<a href="https://www.tensorflow.org/">
-  <img alt="tensorflow" src="https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white"/>
-</a>
+<h4 align="left">Supported Storage Types</h4>
 
-<a href="https://keras.io/">
-  <img alt="keras"" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
-</a>
-
-<a href="https://pytorch.org/">
-  <img alt="pytorch" src="https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch"/>
-</a>
-
-<a href="https://scikit-learn.org/stable/">
-  <img alt="scikit-learn" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
-</a>
-
-<a href="https://xgboost.readthedocs.io/en/stable/">
-  <img alt="xgboost" src=https://img.shields.io/badge/Package-XGBoost-blueviolet"/>
-</a>
-
-<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
-  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success">
-</a>
-
-</p>
-
+[![GCS](https://img.shields.io/badge/google_cloud_storage-grey.svg?logo=google-cloud)](https://cloud.google.com/storage)
+[![S3](https://img.shields.io/badge/aws_s3-grey?logo=amazons3)](https://aws.amazon.com/)
 
 **Source Code**: [Code](https://github.com/shipt/opsml)
 

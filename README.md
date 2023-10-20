@@ -8,43 +8,24 @@
 
 <h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
 
-<p align="center">
-
-   <a alt="Tests" href="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml">
-      <img src="https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main">
-  </a>
-  <img alt="Code Style" src="https://img.shields.io/badge/  code%20style-black-000000.svg" />
-  <a href="https://www.python.org/downloads/release/python-390/">
-  </a>
-  <a href="https://pypi.org/project/opsml" target="_blank">
-    <img src="https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058" alt="Supported Python versions">
-  </a>
-
-</p>
-
-<h4 align="left">Supported Model Types</h4>
-
-<a href="https://www.tensorflow.org/">
-  <img alt="tensorflow" src="https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white"/>
-
-<a href="https://keras.io/">
-  <img alt="keras"" src="https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white"/>
-
-<a href="https://pytorch.org/">
-  <img alt="pytorch" src="https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch"/>
-
-<a href="https://scikit-learn.org/stable/">
-  <img alt="scikit-learn" src="https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white"/>
+[![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
+![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
 
 
-<a href="https://xgboost.readthedocs.io/en/stable/">
-  <img alt="xgboost" src=https://img.shields.io/badge/Package-XGBoost-blueviolet"/>
+<h4 align="left">Supported Model Types</h4
 
+[![Keras](https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white)]()
+[![Pytorch](https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch)]()
+[![Sklearn](https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/stable/)
+[![Xgboost](https://img.shields.io/badge/Package-XGBoost-blueviolet)](https://xgboost.readthedocs.io/en/stable/)
+[![Lightgbm](https://img.shields.io/badge/Package-LightGBM-success)](https://lightgbm.readthedocs.io/en/v3.3.2/)
 
-<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
-  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
+<h4 align="left">Supported Storage Types</h4>
 
-</p>
+[![GCS](https://img.shields.io/badge/google_cloud_storage-grey.svg?logo=google-cloud)](https://cloud.google.com/storage)
+[![S3](https://img.shields.io/badge/aws_s3-grey?logo=amazons3)](https://aws.amazon.com/)
+
 <p align="center">
   <a href="#what-is-it">What is it?</a> •
   <a href="#features">Features</a> •
@@ -110,14 +91,34 @@ Types of extras that can be installed:
   poetry add "opsml[server]"
   ```
 
-- **GCP-mysql**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP with mysql**: Installs mysql and gcsfs to be used with `Opsml`
+  ```bash
+  poetry add "opsml[gcs,mysql]"
+  ```
+
+- **GCP with mysql(cloud-sql)**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add "opsml[gcp_mysql]"
   ```
 
-- **GCP-postgres**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP with postgres**: Installs postgres and gcsgs to be used with `Opsml`
+  ```bash
+  poetry add "opsml[gcs,postgres]"
+  ```
+
+- **GCP with postgres(cloud-sql)**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
   ```bash
   poetry add "opsml[gcp_postgres]"
+  ```
+
+- **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `Opsml`
+  ```bash
+  poetry add "opsml[s3,postgres]"
+  ```
+
+- **AWS with mysql**: Installs postgres and s3fs dependencies to be used with `Opsml`
+  ```bash
+  poetry add "opsml[s3,mysql]"
   ```
 
 ## Contributing
@@ -128,3 +129,8 @@ Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) and peo
 <a href="https://github.com/shipt/opsml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shipt/opsml" />
 </a>
+
+
+
+
+
