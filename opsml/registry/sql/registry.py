@@ -3,10 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
-
+import textwrap
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
-import textwrap
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType
