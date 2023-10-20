@@ -61,6 +61,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.datasets import load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn import ensemble
 from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
@@ -896,6 +897,22 @@ def lgb_classifier(drift_dataframe):
     )
     reg.fit(X_train.to_numpy(), y_train)
     return reg, X_train[:100]
+
+
+@pytest.fixture(scope="function")
+def lgb_classifier_calibrated(drift_dataframe):
+    X_train, y_train, X_test, y_test = drift_dataframe
+    reg = lgb.LGBMClassifier(
+        n_estimators=3,
+        max_depth=3,
+        num_leaves=5,
+    )
+    reg.fit(X_train.to_numpy(), y_train)
+
+    calibrated_model = CalibratedClassifierCV(reg, method="isotonic", cv="prefit")
+    calibrated_model.fit(X_test, y_test)
+
+    return calibrated_model, X_test[:10]
 
 
 @pytest.fixture(scope="function")

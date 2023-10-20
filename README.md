@@ -44,7 +44,10 @@
 <a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
   <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
 
-</p>
+<h4 align="left">Supported Storage Types</h4>
+<a href="https://lightgbm.readthedocs.io/en/v3.3.2/">
+  <img alt="lightgbm" src=https://img.shields.io/badge/Package-LightGBM-success"/>
+
 <p align="center">
   <a href="#what-is-it">What is it?</a> •
   <a href="#features">Features</a> •
