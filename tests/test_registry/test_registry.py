@@ -55,6 +55,11 @@ def test_register_data(
 
     registry.register_card(card=data_card)
 
+    # test idempotency
+    version = data_card.version
+    registry.register_card(card=data_card)
+    assert data_card.version == version
+
     df = registry.list_cards(name=data_card.name, team=data_card.team, as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
