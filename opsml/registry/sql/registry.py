@@ -315,7 +315,7 @@ class CardRegistry:
                 build tag to add to card version
         """
 
-        if card.uid is not None:
+        if card.uid is not None and card.version is not None:
             logger.info(
                 textwrap.dedent(
                     f"""
