@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.6"
+version = "1.4.7"
 description = "A production MLOps tooling framework for python"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 readme = "README.md"
