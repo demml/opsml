@@ -22,7 +22,6 @@ from opsml.registry.sql.records import AuditRegistryRecord, RegistryRecord
 logger = ArtifactLogger.get_logger()
 DIR_PATH = os.path.dirname(__file__)
 AUDIT_TEMPLATE_PATH = os.path.join(DIR_PATH, "templates/audit_card.yaml")
-AUDIT_TEMPLATE_HTML_FILE = "templates/report-copy.html"
 
 
 # create new python class that inherits from ArtifactCard and is called AuditCard
@@ -300,14 +299,6 @@ class AuditCard(ArtifactCard):
         except KeyError as exc:
             logger.error("Question {} not found in section {}", question_nbr, section)
             raise exc
-
-    def create_report(self, save_path: str) -> None:
-        from jinja2 import FileSystemLoader, Environment
-
-        template_env = Environment(
-            loader=FileSystemLoader(searchpath=DIR_PATH),
-        )
-        template_env.get_template(AUDIT_TEMPLATE_HTML_FILE)
 
     @property
     def card_type(self) -> str:
