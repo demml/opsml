@@ -18,7 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    logger.info(f"Alembic initial revision: {revision}")
+    logger.info(f"Alembic initial table check")
     pass
 
 
