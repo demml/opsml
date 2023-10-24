@@ -24,6 +24,25 @@ class ServerRegistry(SQLRegistryBase):
             checkfirst=True,
         )
 
+    @property
+    def unique_teams(self) -> List[str]:
+        """Returns a list of unique teams"""
+        return self.engine.get_unique_teams(table=self._table)
+
+    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+        """Returns a list of unique card names
+        Args:
+            team:
+                Team to filter by
+        Returns:
+            List of unique card names
+        """
+
+        return self.engine.get_unique_card_names(
+            table=self._table,
+            team=team,
+        )
+
     def _get_versions_from_db(self, name: str, team: str, version_to_search: Optional[str] = None) -> List[str]:
         """Query versions from Card Database
 
