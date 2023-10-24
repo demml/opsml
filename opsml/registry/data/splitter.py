@@ -29,7 +29,7 @@ class DataSplit(BaseModel):
 
     label: str
     column_name: Optional[str] = None
-    column_value: Optional[Any] = None
+    column_value: Optional[Union[str, float, int, pd.Timestamp]] = None
     inequality: Optional[str] = None
     start: Optional[int] = None
     stop: Optional[int] = None
