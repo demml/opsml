@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union, Any
-
+import datetime
 from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ApiDataSchemas, DataDict, ExtraOnnxArgs, OnnxModelDefinition
@@ -26,6 +26,15 @@ class Param(BaseModel):
 
 METRICS = Dict[str, List[Metric]]
 PARAMS = Dict[str, List[Param]]
+
+
+class Comment(BaseModel):
+    name: str
+    comment: str
+    timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 @dataclass
@@ -68,6 +77,7 @@ class CardType(str, Enum):
     MODELCARD = "model"
     PIPELINECARD = "pipeline"
     PROJECTCARD = "project"
+    AUDITCARD = "audit"
 
 
 class PipelineCardArgs(str, Enum):
@@ -80,6 +90,19 @@ class RunCardArgs(str, Enum):
     DATA_UID = "datacard_uid"
     MODEL_UIDS = "modelcard_uids"
     PIPELINE_UID = "pipelinecard_uid"
+
+
+class CardVersion(BaseModel):
+    name: str
+    version: str
+    card_type: CardType
+
+
+class AuditCardMetadata(BaseModel):
+    audit_uri: Optional[str] = None
+    datacards: List[CardVersion] = []
+    modelcards: List[CardVersion] = []
+    runcards: List[CardVersion] = []
 
 
 class Description(BaseModel):
@@ -221,4 +244,4 @@ class DataCardMetadata(BaseModel):
             return feat_dict
 
 
-NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project"]]
+NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]
