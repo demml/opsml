@@ -58,6 +58,8 @@ def test_gcs_storage_client_integration(mock_gcs):
         prefix="test_upload/",
     )
 
+    filename = storage_client.download_object_from_uri(gcs_uri="gs://test_bucket/test_upload/test.csv")
+
     for blob in blobs:
         assert path in blob.name
 

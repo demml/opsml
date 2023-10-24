@@ -1,6 +1,7 @@
 from typing import Dict, Tuple
 from opsml.registry import AuditCard, DataCard, ModelCard, CardRegistry, PipelineCard
-from opsml.registry.sql.base.query_engine import QueryEngine
+from opsml.registry.cards import audit_deco
+
 from sklearn import linear_model
 import pandas as pd
 import pytest
@@ -29,6 +30,13 @@ def test_audit_card(
     # test loading card
     card = audit_registry.load_card(uid=card.uid)
     assert card.business[1].response == "response"
+
+    # add comment
+    card.add_comment(name="test", comment="comment")
+    assert len(card.comments) == 1
+
+    for i in ["business", "data_understanding", "data_preparation", "modeling", "evaluation", "deployment", "misc"]:
+        assert isinstance(getattr(card, i), dict)
 
 
 def test_audit_card_failure():
@@ -90,3 +98,33 @@ def test_audit_card_add_uids(
     with pytest.raises(ValueError):
         pipe = PipelineCard(name="pipe", team="team", user_email="test")
         auditcard.add_card(pipe)
+
+    # need fail on unregistered modelcard
+    with pytest.raises(ValueError):
+        modelcard = ModelCard(
+            name="model_card",
+            team="team",
+            user_email="test",
+            trained_model=reg,
+            sample_input_data=data,
+        )
+        auditcard.add_card(modelcard)
+
+    # need fail on unregistered datacard
+    with pytest.raises(ValueError):
+        datacard = DataCard(name="data_card", team="team", user_email="test", data=data)
+        auditcard.add_card(datacard)
+
+
+def test_audit_deco():
+    # calling for coverage
+    audit_deco.AuditCard.card_type
+    audit_deco.AuditCard.uid
+
+    # test deco
+    @audit_deco.auditable
+    class Test:
+        def __init__(self):
+            pass
+
+    assert hasattr(Test, "add_to_auditcard")

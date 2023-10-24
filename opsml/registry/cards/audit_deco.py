@@ -28,9 +28,6 @@ def add_to_auditcard(self, auditcard: Optional[AuditCard] = None, auditcard_uid:
 
     """
 
-    if self.card_type == CardType.AUDITCARD:
-        raise ValueError("add_to_auditcard is not implemented for AuditCard")
-
     if self.uid is None:
         raise ValueError("Card must be registered before adding to auditcard")
 
