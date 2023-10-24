@@ -7,3 +7,4 @@ omit =
     *opsml/helpers/settings.py
     */opt/*
     *opsml/registry/sql/migration/*
+    *opsml/app/core/middleware.py 
