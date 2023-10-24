@@ -135,6 +135,15 @@ class ProjectCardRegistry(Registry):  # type:ignore
         raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
+class AuditCardRegistry(Registry):  # type:ignore
+    def validate_uid(self, uid: str, table_to_check: str) -> bool:
+        return self.check_uid(uid=uid, table_to_check=table_to_check)
+
+    @staticmethod
+    def validate(registry_name: str):
+        return registry_name in RegistryTableNames.AUDIT.value
+
+
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
@@ -382,8 +391,9 @@ class CardRegistries:
         self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
         self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
         self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
+        self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value)
 
     def set_storage_client(self, storage_client: StorageClientType):
-        for attr in ["data", "model", "run", "project", "pipeline"]:
+        for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
             registry: CardRegistry = getattr(self, attr)
             registry._registry.storage_client = storage_client
