@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional, Union, Any, Mapping
 
@@ -12,27 +11,6 @@ from pydantic import BaseModel, ConfigDict
 
 
 POLARS_SCHEMA = Mapping[str, Union[DataTypeClass, DataType]]  # pylint: disable=invalid-name
-
-
-@dataclass
-class DataCardUris:
-    """Data uri holder for DataCardMetadata
-
-    Args:
-        data_uri:
-            Location where converted data is stored
-        datacard_uri:
-            Location where DataCard is stored
-        profile_uri:
-            Location where profile is stored
-        profile_html_uri:
-            Location where profile html is stored
-    """
-
-    data_uri: Optional[str] = None
-    datacard_uri: Optional[str] = None
-    profile_uri: Optional[str] = None
-    profile_html_uri: Optional[str] = None
 
 
 class AllowedTableTypes(str, Enum):
