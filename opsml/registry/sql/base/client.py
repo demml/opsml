@@ -1,7 +1,7 @@
-# Copyright (c) Shipt, Inc.
+## Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast, List
 
 import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
@@ -19,6 +19,39 @@ class ClientRegistry(SQLRegistryBase):
         super().__init__(table_name)
 
         self._session = self._get_session()
+
+    @property
+    def unique_teams(self) -> List[str]:
+        """Returns a list of unique teams"""
+        data = self._session.get_request(
+            route=api_routes.TEAM_CARDS,
+            params={"table_name": self.table_name},
+        )
+
+        return data["teams"]
+
+    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+        """Returns a list of unique card names
+
+        Args:
+            team:
+                Team to filter by
+
+        Returns:
+            List of unique card names
+        """
+
+        params = {"table_name": self.table_name}
+
+        if team is not None:
+            params["team"] = team
+
+        data = self._session.get_request(
+            route=api_routes.NAME_CARDS,
+            params=params,
+        )
+
+        return data["names"]
 
     def _get_session(self) -> ApiClient:
         """Gets the requests session for connecting to the opsml api"""
