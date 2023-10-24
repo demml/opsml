@@ -17,6 +17,8 @@ class ApiRoutes:
     CHECK_UID = "cards/uid"
     VERSION = "cards/version"
     LIST_CARDS = "cards/list"
+    TEAM_CARDS = "cards/teams"
+    NAME_CARDS = "cards/names"
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
