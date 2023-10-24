@@ -286,23 +286,6 @@ class ModelConverter:
 
 
 class SklearnOnnxModel(ModelConverter):
-    def _get_shape_dims(self, shape_dims: List[Any]) -> Tuple[Optional[int], Optional[int]]:
-        if len(shape_dims) == 0:
-            return None, None
-
-        row = shape_dims[0].dim_value
-
-        if row == 0:
-            row = None
-
-        if len(shape_dims) > 1:
-            col = shape_dims[1].dim_value
-
-        else:
-            col = 1
-
-        return row, col
-
     @property
     def _is_stacking_estimator(self) -> bool:
         return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
