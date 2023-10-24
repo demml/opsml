@@ -154,10 +154,6 @@ class RegisterModelRequest(BaseModel):
     )
 
 
-class DownloadFileRequest(BaseModel):
-    read_path: Optional[str] = None
-
-
 class ListFileRequest(BaseModel):
     read_path: Optional[str] = None
 
