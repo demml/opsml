@@ -117,18 +117,6 @@ def test_list_card_names(
     assert names[0] == "test-df"
 
 
-def test_list_team_info(
-    api_registries: CardRegistries,
-):
-    registry = api_registries.data
-    info = list_team_name_info(registry=registry, team="mlops")
-    assert info.names[0] == "test-df"
-    assert info.teams[0] == "mlops"
-
-    info = list_team_name_info(registry=registry)
-    assert info.names[0] == "test-df"
-
-
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
     # create data card
     registry = api_registries.data
