@@ -154,6 +154,14 @@ class RegisterModelRequest(BaseModel):
     )
 
 
+class TeamsResponse(BaseModel):
+    teams: List[str] = []
+
+
+class NamesResponse(BaseModel):
+    names: List[str] = []
+
+
 class ListFileRequest(BaseModel):
     read_path: Optional[str] = None
 

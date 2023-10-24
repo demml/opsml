@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Union
+from typing import Union, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
@@ -21,6 +21,8 @@ from opsml.app.routes.pydantic_models import (
     DeleteCardRequest,
     VersionRequest,
     VersionResponse,
+    NamesResponse,
+    TeamsResponse,
 )
 from opsml.app.routes.utils import replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
@@ -48,7 +50,62 @@ def check_uid(
     return UidExistsResponse(uid_exists=False)
 
 
-@router.post("/cards/version", response_model=Union[VersionResponse, UidExistsResponse], name="version")
+@router.get("/cards/teams", response_model=TeamsResponse, name="teams")
+def card_teams(
+    request: Request,
+    table_name: str,
+) -> TeamsResponse:
+    """Get all teams associated with a registry
+
+    Args:
+        request:
+            FastAPI request object
+        table_name:
+            Name of the registry table
+
+    Returns:
+        `TeamsResponse`
+    """
+
+    table_for_registry = table_name.split("_")[1].lower()
+    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+
+    teams = registry._registry.unique_teams
+
+    return TeamsResponse(teams=teams)
+
+
+@router.get("/cards/names", response_model=NamesResponse, name="names")
+def card_names(
+    request: Request,
+    table_name: str,
+    team: Optional[str] = None,
+):
+    """Get all names associated with a registry
+
+    Args:
+        request:
+            FastAPI request object
+        table_name:
+            Name of the registry table
+        team:
+            Team to filter names by
+
+    Returns:
+        `NamesResponse`
+    """
+    table_for_registry = table_name.split("_")[1].lower()
+    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+    names = registry._registry.get_unique_card_names(team=team)
+
+    return NamesResponse(names=names)
+
+
+@router.post(
+    "/cards/version",
+    response_model=Union[VersionResponse, UidExistsResponse],
+    name="version",
+)
 def set_version(
     request: Request,
     payload: VersionRequest = Body(...),
