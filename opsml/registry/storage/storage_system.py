@@ -413,11 +413,9 @@ class LocalStorageClient(StorageClient):
         return write_path
 
     def list_files(self, storage_uri: str) -> FilePath:
-        if os.path.isdir(storage_uri):
-            paths = []
-            for path, _, files in os.walk(storage_uri):
-                for filename in files:
-                    paths.append(os.path.join(path, filename))
+        path = Path(storage_uri)
+        if path.is_dir():
+            paths = [str(p) for p in path.rglob("*")]
             return paths
 
         return [storage_uri]
