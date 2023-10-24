@@ -18,7 +18,6 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, CardVersion, Comment, AuditCardMetadata
 from opsml.registry.sql.records import AuditRegistryRecord, RegistryRecord
 
-
 logger = ArtifactLogger.get_logger()
 DIR_PATH = os.path.dirname(__file__)
 AUDIT_TEMPLATE_PATH = os.path.join(DIR_PATH, "templates/audit_card.yaml")
@@ -155,55 +154,37 @@ class AuditCard(ArtifactCard):
         if card.card_type.lower() not in [
             CardType.DATACARD.value,
             CardType.MODELCARD.value,
-            CardType.RUNCARD.value,
         ]:
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data, model or run")
 
         audit_registry = AuditCardRegistry(RegistryTableNames.AUDIT.value)
 
-        if card.card_type.lower() == CardType.DATACARD.value:
-            if card.uid is None:
-                raise ValueError(
-                    f"""Card uid must be provided for {card.card_type}. 
-                    Uid must be registered prior to adding to AuditCard."""
-                )
+        if not card.card_type.lower() in [CardType.DATACARD.value, CardType.MODELCARD.value]:
+            raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data or model")
 
-            if audit_registry.validate_uid(card.uid, RegistryTableNames.DATA.value):
-                self.metadata.datacards.append(
-                    CardVersion(
-                        name=card.name,
-                        version=card.version,
-                        card_type=card.card_type,
-                    )
-                )
-                return
-
-        elif card.card_type.lower() == CardType.MODELCARD:
-            if card.uid is None:
-                raise ValueError(
-                    f"""Card uid must be provided for {card.card_type}. 
-                    Uid must be registered prior to adding to AuditCard."""
-                )
-            if audit_registry.validate_uid(card.uid, RegistryTableNames.MODEL.value):
-                self.metadata.modelcards.append(
-                    CardVersion(
-                        name=card.name,
-                        version=card.version,
-                        card_type=card.card_type,
-                    )
-                )
-                return
-
-        elif card.card_type.lower() == CardType.RUNCARD:
-            # RunCard does not get a validation because registration will occur at end of run
-            self.metadata.runcards.append(
-                CardVersion(
-                    name=card.name,
-                    version=card.version,
-                    card_type=card.card_type,
-                )
+        if card.uid is None:
+            raise ValueError(
+                f"""Card uid must be provided for {card.card_type}. 
+                Uid must be registered prior to adding to AuditCard."""
             )
-            return  # Exit early
+
+        if card.card_type.lower() == CardType.DATACARD:
+            if not audit_registry.validate_uid(card.uid, RegistryTableNames.DATA.value):
+                raise ValueError(f"""Card uid {card.uid} not found in {RegistryTableNames.DATA.value} registry""")
+
+        if card.card_type.lower() == CardType.MODELCARD:
+            if not audit_registry.validate_uid(card.uid, RegistryTableNames.MODEL.value):
+                raise ValueError(f"""Card uid {card.uid} not found in {RegistryTableNames.MODEL.value} registry""")
+
+        card_list = getattr(self.metadata, f"{card.card_type.lower()}cards")
+        card_list.append(
+            CardVersion(
+                name=card.name,
+                version=card.version,
+                card_type=card.card_type,
+            )
+        )
+        return
 
     @property
     def business(self) -> Dict[int, Question]:
