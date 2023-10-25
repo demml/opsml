@@ -879,22 +879,21 @@ class MlflowStorageClient(StorageClient):
 
         return save_path, filename
 
-    def swap_proxy_root(self, rpath: str) -> str:
-        """Swaps the realpath with the expected mlflow proxy path"""
-
-        if "http" in self.mlflow_client.tracking_uri:
-            path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
-
-            mlflow_path = os.path.normpath(
-                os.path.join(
-                    self.artifact_path,
-                    path_to_file,
-                )
-            )
-
-            return mlflow_path
-
-        return rpath
+    # def swap_proxy_root(self, rpath: str) -> str:
+    #    """Swaps the realpath with the expected mlflow proxy path"""
+    #    if "http" in self.mlflow_client.tracking_uri:
+    #        path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
+    #
+    #        mlflow_path = os.path.normpath(
+    #            os.path.join(
+    #                self.artifact_path,
+    #                path_to_file,
+    #            )
+    #        )
+    #
+    #        return mlflow_path
+    #
+    #    return rpath
 
     @staticmethod
     def swap_mlflow_root(base_path_prefix: str, rpath: str) -> str:
