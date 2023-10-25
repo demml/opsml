@@ -6,8 +6,6 @@ from opsml.helpers import gcp_utils
 from google.oauth2.service_account import Credentials
 import json
 
-from opsml.helpers.gcp_utils import GCPClient
-
 
 def test_find_path():
     path = utils.FindPath.find_filepath("requirements.txt")
