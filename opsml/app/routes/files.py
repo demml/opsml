@@ -119,7 +119,6 @@ def download_file(
     Returns:
         Streaming file response
     """
-
     try:
         storage_client = request.app.state.storage_client
         return StreamingResponse(
