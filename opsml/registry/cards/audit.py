@@ -159,7 +159,7 @@ class AuditCard(ArtifactCard):
 
         audit_registry = AuditCardRegistry(RegistryTableNames.AUDIT.value)
 
-        if not card.card_type.lower() in [CardType.DATACARD.value, CardType.MODELCARD.value]:
+        if card.card_type.lower() not in [CardType.DATACARD.value, CardType.MODELCARD.value]:
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data or model")
 
         if card.uid is None:
@@ -184,7 +184,6 @@ class AuditCard(ArtifactCard):
                 card_type=card.card_type,
             )
         )
-        return
 
     @property
     def business(self) -> Dict[int, Question]:
