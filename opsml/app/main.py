@@ -8,7 +8,8 @@ import uvicorn
 from fastapi import Depends, FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
-
+import os
+from fastapi.staticfiles import StaticFiles
 from opsml.app.core.config import config
 from opsml.app.core.event_handlers import start_app_handler, stop_app_handler
 from opsml.app.core.middleware import rollbar_middleware
@@ -18,6 +19,7 @@ from opsml.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger()
 
 instrumentator = Instrumentator()
+STATIC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "static"))
 
 
 class OpsmlApp:
@@ -72,10 +74,17 @@ class OpsmlApp:
             from wsgi_basic_auth import BasicAuth
 
             logger.info("Setting login credentials")
+            self.app.mount("/mlflow", WSGIMiddleware(mlflow_flask))
             self.app.mount("/", WSGIMiddleware(BasicAuth(mlflow_flask)))
 
         else:
             self.app.mount("/", WSGIMiddleware(mlflow_flask))
+            self.app.mount("/mlflow", WSGIMiddleware(mlflow_flask))
+
+    def add_static(self):
+        """Add static files"""
+
+        self.app.mount("/static", StaticFiles(directory="opsml/app/static"), name="static")
 
     def add_middleware(self):
         """Add rollbar middleware"""
@@ -83,6 +92,7 @@ class OpsmlApp:
 
     def build_app(self):
         self.app.include_router(api_router)
+        self.add_static()
 
         if self.run_mlflow:
             self.build_mlflow_app()
