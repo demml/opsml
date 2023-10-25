@@ -1,10 +1,18 @@
-# pylint: disable=protected-access
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List
 
+import os
+from typing import Any, Dict, List, Optional, cast
+import json
+from opsml.app.core.config import config
 from fastapi import APIRouter, Body, HTTPException, Request, status
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
+from opsml.app.routes.utils import (
+    error_to_500,
+    list_team_name_info,
+)
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -18,6 +26,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.model import ModelMetadata
+from mlflow.tracking import MlflowClient
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
@@ -26,12 +35,112 @@ from opsml.registry.model.registrar import (
 
 logger = ArtifactLogger.get_logger()
 
+# Constants
+PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
+
+# setting this here instead of event handler because it causes issues during unit tests
+# this will be remove din V2
+mlflow_client = MlflowClient(config.TRACKING_URI)
+
 router = APIRouter()
+
+
+@router.get("/models/list/")
+@error_to_500
+async def model_list_homepage(request: Request, team: Optional[str] = None):
+    """UI home for listing models in model registry
+    Args:
+        request:
+            The incoming HTTP request.
+        team:
+            The team to query
+    Returns:
+        200 if the request is successful. The body will contain a JSON string
+        with the list of models.
+    """
+    registry: CardRegistry = request.app.state.registries.model
+
+    info = list_team_name_info(registry, team)
+
+    return templates.TemplateResponse(
+        "include/model/models.html",
+        {
+            "request": request,
+            "all_teams": info.teams,
+            "selected_team": info.selected_team,
+            "models": info.names,
+        },
+    )
+
+
+@router.get("/models/versions/")
+@error_to_500
+async def model_versions_page(
+    request: Request,
+    model: Optional[str] = None,
+    version: Optional[str] = None,
+):
+    if model is None:
+        return RedirectResponse(url="/opsml/models/list/")
+
+    registry: CardRegistry = request.app.state.registries.model
+    versions = registry.list_cards(name=model, as_dataframe=False, limit=50)
+
+    metadata = post_model_metadata(
+        request=request,
+        payload=CardRequest(name=model, version=version),
+    )
+
+    if version is None:
+        selected_model = cast(ModelCard, registry.load_card(uid=versions[0]["uid"]))
+        version = selected_model.version
+
+    else:
+        selected_model = cast(ModelCard, registry.load_card(name=model, version=version))
+
+    if selected_model.metadata.runcard_uid is not None:
+        runcard = request.app.state.registries.run.load_card(uid=selected_model.metadata.runcard_uid)
+        project_num = mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
+
+    else:
+        runcard = None
+        project_num = None
+
+    max_dim = 0
+    if metadata.data_schema.model_data_schema.data_type == "NUMPY_ARRAY":
+        features = metadata.data_schema.model_data_schema.input_features
+        inputs = features.get("inputs")
+        if inputs is not None:
+            max_dim = max(inputs.shape)
+
+    # capping amount of sample data shown
+    if max_dim > 200:
+        metadata.sample_data = {"inputs": "Sample data is too large to load in ui"}
+
+    metadata_json = json.dumps(metadata.model_dump(), indent=4)
+    sample_data = json.dumps(metadata.sample_data, indent=4)
+
+    return templates.TemplateResponse(
+        "include/model/model_version.html",
+        {
+            "request": request,
+            "versions": versions,
+            "selected_model": selected_model,
+            "selected_version": version,
+            "project_num": project_num,
+            "metadata": metadata,
+            "sample_data": sample_data,
+            "runcard": runcard,
+            "metadata_json": metadata_json,
+        },
+    )
 
 
 @router.post("/models/register", name="model_register")
 def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
-    """Registers a model to a known GCS location.
+    """Registers a model to a known cloud storage location.
 
        This is used from within our CI/CD infrastructure to ensure a known good
        GCS location exists for the onnx model.
