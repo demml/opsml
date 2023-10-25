@@ -40,6 +40,7 @@ def _init_registries(app: FastAPI):
     app.state.storage_client = settings.storage_client
     app.state.model_registrar = ModelRegistrar(settings.storage_client)
 
+    # initialize dbs
     initializer.initialize()
 
 
