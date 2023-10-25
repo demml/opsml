@@ -115,16 +115,6 @@ class ArtifactStorage:
             **kwargs,
         )
 
-    def _list_files(self, storage_uri: str) -> FilePath:
-        """list files"""
-        files = self.storage_client.list_files(storage_uri=storage_uri)
-
-        if self.is_data:
-            if not self.is_storage_a_proxy:
-                return files
-            return files[0]
-        return files[0]
-
     def _load_artifact(self, file_path: FilePath) -> Any:
         raise NotImplementedError
 
