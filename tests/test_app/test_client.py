@@ -757,3 +757,18 @@ def test_card_list_fail(test_app: TestClient):
     )
 
     assert response.status_code == 500
+
+
+def test_streaming_download_fail(api_registries: CardRegistries):
+    # test download failure
+    route = "files/download"
+    local_dir = "blah"
+    filename = "blah"
+    read_dir = "blah"
+    response = api_registries.data._registry._session.stream_download_file_request(
+        route=route,
+        local_dir=local_dir,
+        filename=filename,
+        read_dir=read_dir,
+    )
+    assert isinstance(response, dict)
