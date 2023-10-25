@@ -1,0 +1,17 @@
+<tr>
+    <td class="text-center">{{version["date"]}}</td>
+    <td class="text-center">{{version["name"]}}</td>
+    <td class="text-center">{{version["team"]}}</td>
+    <td class="text-center">{{version["version"]}}</td>
+    <td class="text-center">{{version["user_email"]}}</td>
+    <td class="text-center">{{version["datacard_uid"]}}</td>
+    <td class="text-center"><a href="/opsml/models/metadata/?uid={{version["uid"]}}" style="color:white; background:#038767;" class="btn" type="button">Info</a></td>
+
+    {% if version["runcard_uid"] is not none %}
+        <td class="text-center"><a href="/mlflow/#/experiments/{{project_num}}/runs/{{version["runcard_uid"]}}" style="color:white; background:#038767;" class="btn" type="button">Run</a></td>
+    {% else %}
+        <td class="text-center"><a href="#" style="color:white; background:#b83d3d;" class="btn" type="button">No Run</a></td>
+    {% endif %}
+    
+</tr>
+

@@ -1,0 +1,65 @@
+
+
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Summary</button></a>
+  
+  {% if data.metadata.description.summary is not none %}
+
+    <div id="SummaryText">
+        <p id="SummaryText">{{ data.metadata.description.summary }}</p>
+    </div> 
+  
+  {% else %}
+    
+    <div id="SummaryText">
+        <p id="SummaryText">No summary provided</p>
+    </div>
+  
+  {% endif %}
+  
+
+</div>
+
+<hr id="version-spacer">
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Intended Use</button></a>
+  {% if data.metadata.description.intended_use is not none %}
+
+    <div id="SummaryText">
+        <p id="SummaryText">{{ data.metadata.description.intended_use }}</p>
+    </div>
+
+  {% else %}
+
+    <div id="SummaryText">
+        <p id="SummaryText">No use case provided</p>
+    </div>
+
+  {% endif %}
+</div>
+  
+<hr id="version-spacer">
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Sample Code</button></a>
+  {% if data.metadata.description.sample_code is not none %}
+
+    <div id="SummaryText">
+        <p id="SummaryText">{{ data.metadata.description.sample_code }}</p>
+    </div>
+
+  {% else %}
+
+    <pre>
+      <code class="python">
+from opsml.registry import CardRegistry
+
+data_registry = CardRegistry("data")
+datacard = data_registry.load_card(name="{{data.name}}", version="{{data.version}}")
+datacard.load_data # load the data
+      </code>
+    </pre>
+
+</div>
+{% endif %}
+
+  
