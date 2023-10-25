@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}
+  <title>Version</title>
+{% endblock %}
+
+{% block content %}
+<body id="ModelVersionPage">
+  <div class="container" style="padding-top:65px;">
+  </div>
+
+{% include "include/model/model_subnav.html" %}
+
+<br>
+
+<div class="container-fluid" style="padding-top:50px;" id="VersionContainer">
+  <div class="row">
+    <h5 class="display-8">Available Model Versions</h5>
+  </div>
+</div>
+
+
+
+<!---- Model version table -------->
+<div class="container-fluid" id="VersionContainer">
+  <div class="page-header">
+    <h2>{{selected_model["name"]}}</h2>
+  </div>
+</div>
+<br>
+
+<!---Create vesion tables ------>
+<div class="boxes" id="VersionContainer">
+
+  <div id="VersionColumn">
+    <div class="list-group">
+      {% for version in versions %}
+        <a href="/opsml/models/versions/?model={{ selected_model["name"] }}&selected_version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="MetadataColumn">
+
+    <div class="card" style="width:100%;">
+      <div class="card-body">
+        <h4>Model 
+          <div id="CardTabBox">
+          <span><button id="metadata-button" type="button" class="btn btn-success" >Metadata</button></span>
+          <span><button id="summary-button" type="button" class="btn btn-success">Summary</button></span>
+          </div>
+        </h4>
+    </div>
+
+    <div class="card border-0" id="CardBox" style="width:100%;">
+    {% include "include/model/model_metadata.html" %}
+    </div>
+ 
+    {% if runcard["tags"]|length > 0 %}
+    <div class="card border-0" id="TagBox" style="width:100%;">
+      {% include "include/model/model_tags.html" %}
+    </div>
+    {% endif %}
+    <hr id="version-spacer">
+
+    <div class="card border-0" id="ExtraBox" style="width:100%;">
+      {% include "include/model/model_extras.html" %}
+    </div>
+   
+
+    <div class="card border-0" style="display: None; width:100%;" id="SummaryBox">
+      {% with model=selected_model %}
+        {% include "include/model/model_summary.html" %}
+        {% endwith %}
+    </div>
+
+
+
+
+
+
+  
+</div>
+
+
+
+</body>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script>
+  $('.list-group-item').click(function() {
+    $('.list-group-item').removeClass('active');
+    $(this).addClass('active');
+    var version_uid = $(this).attr('id');
+    alert(id);
+    // write javscript that will take the value of the active div on click and pass that value to another div
+ });
+
+ $('#CardButtons > span').click(function() {
+  var ix = $(this).index();
+  
+  $('#Metrics').toggle( ix === 0 );
+  $('#SampleData').toggle( ix === 1 );
+  $('#Params').toggle( ix === 2 );
+  $('#Artifacts').toggle( ix === 3 );
+  $('#MetadataJson').toggle( ix === 4 );
+});
+
+
+$('#CardTabBox > span').click(function() {
+  var ix = $(this).index();
+  
+  $('#CardBox').toggle( ix === 0 );
+  $('#TagBox').toggle( ix === 0 );
+  $('#ExtraBox').toggle( ix === 0 );
+  $('#SummaryBox').toggle( ix === 1 );
+});
+
+function copyToClipboard(element) {
+  var $temp = $("<input>");
+  $("body").append($temp);
+  $temp.val($(element).text().trim()).select();
+  document.execCommand("copy");
+  $temp.remove();
+}
+
+
+
+
+
+</script>
+
+
+{% endblock %}
