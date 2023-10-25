@@ -200,22 +200,6 @@ class GCSStorageClient(GCPService):
 ClientTypes = GCSStorageClient
 
 
-class GCPClient:
-    @staticmethod
-    def get_service(
-        service_name: str,
-        gcp_credentials: Optional[Credentials] = None,
-    ) -> ClientTypes:
-        service = next(
-            service
-            for service in GCPService.__subclasses__()
-            if service.valid_service_name(
-                service_name=service_name,
-            )
-        )
-        return cast(ClientTypes, service(gcp_credentials=gcp_credentials))
-
-
 class GcpCredsSetter:
     def __init__(self, service_creds: Optional[str] = None):
         """Set credentials"""

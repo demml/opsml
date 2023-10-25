@@ -31,11 +31,6 @@ def test_find_src_dir():
     assert src_dir == "assets"
 
 
-def test_gcp_service():
-    storage_client = GCPClient.get_service("storage")
-    assert isinstance(storage_client, gcp_utils.GCSStorageClient)
-
-
 def test_gcs_storage_client_integration(mock_gcs):
     FILENAME = "example.csv"
     file_path = utils.FindPath.find_filepath(name=FILENAME)
