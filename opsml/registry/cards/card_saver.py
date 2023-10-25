@@ -431,20 +431,24 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     def _save_run_artifacts(self) -> None:
         """Saves all artifacts associated with RunCard to filesystem"""
-
         # check if artifacts have already been saved (Mlflow runs save artifacts during run)
         if self.card.artifact_uris is None:
             artifact_uris: Dict[str, str] = {}
+        else:
+            artifact_uris = self.card.artifact_uris
 
-            if self.card.artifacts is not None:
-                for name, artifact in self.card.artifacts.items():
-                    storage_path = save_record_artifact_to_storage(
-                        artifact=artifact,
-                        storage_client=self.storage_client,
-                    )
-                    artifact_uris[name] = storage_path.uri
+        if self.card.artifacts is not None:
+            for name, artifact in self.card.artifacts.items():
+                if name in artifact_uris:
+                    continue
 
-            self.card.artifact_uris = artifact_uris
+                storage_path = save_record_artifact_to_storage(
+                    artifact=artifact,
+                    storage_client=self.storage_client,
+                )
+                artifact_uris[name] = storage_path.uri
+
+        self.card.artifact_uris = artifact_uris
 
     def save_artifacts(self) -> ArtifactCard:
         self._save_run_artifacts()
