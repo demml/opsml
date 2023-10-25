@@ -355,7 +355,7 @@ def compare_data_profiles(
         ```
 
     """
-    if uid is None and not all(bool(val) for val in [name, team, version]):
+    if uid is None and not all(bool(val) for val in [name, version]):
         raise ValueError("A list of versions (with name and team) or uids is required")
 
     payload: Dict[str, Union[str, int, List[str]]] = {
