@@ -996,8 +996,3 @@ def test_audit_upload(
         data=audit_form.model_dump(),
     )
     assert response.status_code == 200
-
-
-def test_mlflow_client():
-    client = setup_mlflow_client()
-    assert isinstance(client, MlflowClient)

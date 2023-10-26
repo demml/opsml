@@ -83,13 +83,7 @@ class ModelData:
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
-        feature_dict = {}
-        for feature, type_, shape in zip(self.features, self.dtypes, self.shape):
-            if not isinstance(shape, list):
-                shape = [shape]
-
-            feature_dict[feature] = Feature(feature_type=type_, shape=shape)
-        return feature_dict
+        raise NotImplementedError
 
     def to_numpy(self) -> NDArray:
         raise ValueError("This method is not implemented for this Data type")
