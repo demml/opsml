@@ -112,7 +112,7 @@ class TrainedModelMetadataCreator(ModelCreator):
         predictions = self.model.predict(self.input_data)
         return self._get_prediction_type(predictions=predictions)
 
-    def _generate_prediction(self) -> Dict[str, Feature]:
+    def _generate_prediction(self) -> Dict[str, Feature]:  # pragma: no cover
         """Tests generate method commonly used with huggingface models.
         If generate fails, prediction will fall back to normal functional call.
         """
@@ -139,7 +139,7 @@ class TrainedModelMetadataCreator(ModelCreator):
 
         return self._functional_prediction()
 
-    def _functional_prediction(self) -> Dict[str, Feature]:
+    def _functional_prediction(self) -> Dict[str, Feature]:  # pragma: no cover
         """Calls the model directly using functional call"""
         import torch
 

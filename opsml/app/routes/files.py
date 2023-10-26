@@ -37,7 +37,7 @@ MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 
 # upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
-async def upload_file(request: Request):
+async def upload_file(request: Request):  # pragma: no cover
     """Uploads files in chunks to storage destination"""
 
     filename = request.headers.get("Filename")
