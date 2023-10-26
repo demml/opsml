@@ -94,6 +94,8 @@ body {
     background-size: cover;
     background-position: right center;
     background-repeat: no-repeat;
+    overflow: hidden;
+
 }
 
 
@@ -572,6 +574,7 @@ p {
     margin-left: auto;
     margin-right: auto;
  }
+
 
 
  
