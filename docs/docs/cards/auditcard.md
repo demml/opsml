@@ -1,4 +1,4 @@
-# Overview
+# AuditCard
 
 `AuditCards` serve a special purpose in `OpsML` and can be viewed as a card that contains governance, compliance, and ethical information about a particular model and its associated assets. Importantly, information contained in an `AuditCard` can be used be governing bodies and stakeholders to assess and approve a model for production.
 
@@ -35,9 +35,10 @@ audit_registry = CardRegistry("audit")
 audit_registry.register_card(auditcard)
 ```
 
-# AuditCard Audit Sections
+## AuditCard Audit Sections
 
-`business`
+### Business
+
 : In the Business Understanding section, various important aspects are addressed to clarify the purpose and objectives of an AI application. These questions help provide a comprehensive understanding of the business context:
 
 1. **Business Objectives**: The product owner's goals and intentions are identified. This helps in understanding what they aim to achieve with the AI application.
@@ -63,7 +64,8 @@ audit_registry.register_card(auditcard)
 These questions help stakeholders gain a clear understanding of the business context, goals, and risks associated with the AI application, facilitating better decision-making and project management.
 
 
-`data_understanding`
+### Data Understanding
+
 : In the Data Understanding section, we delve into various aspects of data that are essential for the successful operation of the application. Here are concise descriptions of the key questions and their purposes:
 
 1. **Data Processed by the Application**: This question seeks to understand the types of data that the application works with, encompassing both the data it receives as input and the data it generates as output. It's about identifying the information the application handles.
@@ -78,7 +80,7 @@ These questions help stakeholders gain a clear understanding of the business con
 
 6. **Data Quality Thresholds**: This question focuses on whether threshold values have been set for data quality and the reasons for choosing them, along with what actions are taken when data quality falls below or exceeds these thresholds.
 
-7. **Documentation of Data Model Semantic**: This question focuses on whether the meaning and structure of data have been clearly defined in the data model. This includes checking if the team has established the interpretation of data, including any abbreviations or codes used (e.g., S&D, BOO, etc.), ensuring consistency and understanding in data usage.
+7. **Documentation of Data Model Semantic**: This question focuses on whether the meaning and structure of data have been clearly defined in the data model. This includes checking if the team has established the interpretation of data, including any abbreviations or codes used, ensuring consistency and understanding in data usage.
 
 8. **Data Subject to Security Requirements**: This helps identify whether the application handles data subject to security regulations like FTC and the rationale behind using such data.
 
@@ -87,7 +89,8 @@ These questions help stakeholders gain a clear understanding of the business con
 These questions assist in comprehensively assessing the data-related aspects of the application, ensuring data quality, security, and compliance with relevant regulations.
 
 
-`data_preparation`
+### Data Preparation
+
 : In the Data Preparation section, the focus is on the process of getting the data ready for use in the application. Here are concise descriptions of the key questions and their purposes:
 
 1. **Shortcomings in Data Quality**: Identify and document any shortcomings in the quality of input data, including missing values, errors, inaccuracies, outdated information, and inconsistencies.
@@ -115,7 +118,8 @@ These questions assist in comprehensively assessing the data-related aspects of 
 These questions are essential for ensuring that data used by the application is of high quality and that the data preparation process is well-documented and effective in enhancing data quality. They also address risk management and data management structures.
 
 
-`modeling`
+### Modeling
+
 : In the Modeling section, the focus is on the data analysis methods and datasets used for training, validation, and testing in the application. Here are concise descriptions of the key questions and their purposes:
 
 1. **Data Analysis Methods**: Identify the data analysis methods used in the modeling process and the criteria for their selection. These methods can include frequent pattern mining, classification, cluster analysis, and outlier detection.
@@ -145,7 +149,8 @@ These questions are essential for ensuring that data used by the application is 
 These questions help ensure that the modeling process is well-documented, and that the data used for training, validation, and testing is of high quality, aligning with the objectives of the application. Additionally, it addresses the proactive management of risks in the modeling process.
 
 
-`evaluation`
+### Evaluation
+
 : In the Evaluation section, the focus is on assessing the performance and effectiveness of the model in the application. Here are concise descriptions of the key questions and their purposes:
 
 1. **Validation Methods and Selection Criteria**: Identify the validation methods used and the criteria for their selection. Understand how the model's quality has been reviewed, how decisions/forecasts have been tracked, and how the impact of individual criteria on decisions has been analyzed. Assess model fairness.
@@ -161,7 +166,8 @@ These questions help ensure that the modeling process is well-documented, and th
 These questions are essential for evaluating the performance and effectiveness of the model, ensuring that it aligns with its intended purposes and objectives, and addressing potential risks and shortcomings in the modeling process.
 
 
-`deployment`
+### Deployment
+
 : In the Deployment & Monitoring section, the focus is on the deployment and ongoing monitoring of the application, including its integration into the system architecture and processes. Here are concise descriptions of the key questions and their purposes:
 
 1. **Model Update Intervals**: Determine at what intervals the model is updated to reflect current training data and whether the model is static or dynamic.
@@ -204,14 +210,15 @@ These questions are essential for evaluating the performance and effectiveness o
 
 20. **Factors Impacting Reliability (Decisions/Proposals)**: Understand additional variables that may impact the reliability of the application's decisions, beyond the application's framework conditions.
 
-21. **Avoiding Inequal Treatment**: Determine the extent to which any unequal treatment of individuals, facts, or matters arising from using the application can be ruled out and how incidents are verified.
+21. **Avoiding Unequal Treatment**: Determine the extent to which any unequal treatment of individuals, facts, or matters arising from using the application can be ruled out and how incidents are verified.
 
 22. **Sustainability Considerations**: Explore whether sustainability considerations, such as energy efficiency, have been taken into account in operating the AI components.
 
 These questions are essential for ensuring the successful deployment and ongoing monitoring of the application, addressing issues related to ethics, compliance, misuse, and reliability, and considering sustainability aspects.
 
 
-`misc`
+### Misc
+
 : In this section, various miscellaneous topics related to the AI project are addressed. Each topic provides insights into different aspects of the project's management and development:
 
 1. **Demand and Change Management**: Understand how demand and change management for developing the application/system have been designed, including the tools used, and the involvement of the product owner in managing changes and requirements.
@@ -232,3 +239,23 @@ These questions are essential for ensuring the successful deployment and ongoing
 
 These miscellaneous topics cover important aspects of the AI project's management, development, quality assurance, and change management, ensuring a comprehensive understanding of the project's structure and processes.
 
+
+## Audit UI
+
+The recommended way to interact with `AuditCards` is through the UI.
+
+### Find your model
+
+Navigate to the model tab and find your specific model and version.
+
+<p align="left">
+  <img src="../../images/model-ui.png" width="703" height="536"/>
+</p>
+
+### Click the Audit link and fill out the audit form
+
+You can also upload and existing audit csv, download the current audit as a csv, and add comments via the comment button.
+
+<p align="left">
+  <img src="../../images/audit-ui.png" width="716" height="427"/>
+</p>
