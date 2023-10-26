@@ -2,14 +2,15 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import os
 from typing import Any, List, Optional
 
 import uvicorn
 from fastapi import Depends, FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
-import os
 from fastapi.staticfiles import StaticFiles
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from opsml.app.core.config import config
 from opsml.app.core.event_handlers import start_app_handler, stop_app_handler
 from opsml.app.core.middleware import rollbar_middleware

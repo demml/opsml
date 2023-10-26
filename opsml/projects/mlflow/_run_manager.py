@@ -15,8 +15,8 @@ from opsml.projects.base._run_manager import _RunManager
 from opsml.projects.base.types import ProjectInfo, Tags
 from opsml.projects.mlflow._active_run import MlflowActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo, set_env_vars
-from opsml.registry.utils.settings import settings
 from opsml.registry.storage.storage_system import MlflowStorageClient
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 

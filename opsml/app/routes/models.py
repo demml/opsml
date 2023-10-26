@@ -2,17 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import os
 from typing import Any, Dict, List, Optional, cast
-import json
-from opsml.app.core.config import config
+
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from opsml.app.routes.utils import (
-    error_to_500,
-    list_team_name_info,
-)
+from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -22,11 +18,11 @@ from opsml.app.routes.pydantic_models import (
     MetricResponse,
     RegisterModelRequest,
 )
+from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.model import ModelMetadata
-from mlflow.tracking import MlflowClient
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
@@ -39,10 +35,6 @@ logger = ArtifactLogger.get_logger()
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
-
-# setting this here instead of event handler because it causes issues during unit tests
-# this will be remove din V2
-mlflow_client = MlflowClient(config.TRACKING_URI)
 
 router = APIRouter()
 
@@ -102,7 +94,7 @@ async def model_versions_page(
 
     if selected_model.metadata.runcard_uid is not None:
         runcard = request.app.state.registries.run.load_card(uid=selected_model.metadata.runcard_uid)
-        project_num = mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
+        project_num = request.app.state.mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
 
     else:
         runcard = None

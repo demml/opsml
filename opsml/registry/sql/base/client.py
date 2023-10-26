@@ -3,14 +3,14 @@
 # L# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, Tuple, cast, List
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
-from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import api_routes, ApiClient
 
-from opsml.registry.sql.base.registry_base import SQLRegistryBase, settings
+from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.registry.sql.base.query_engine import log_card_change  # type: ignore
+from opsml.registry.sql.base.registry_base import SQLRegistryBase, settings
 from opsml.registry.sql.semver import CardVersion, VersionType
 
 logger = ArtifactLogger.get_logger()

@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from rusty_logger import Logger, JsonConfig, LogConfig
+from rusty_logger import JsonConfig, LogConfig, Logger
 
 
 class ArtifactLogger(Logger):

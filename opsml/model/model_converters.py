@@ -8,22 +8,23 @@
 import re
 import tempfile
 import warnings
+from collections import OrderedDict
 from functools import reduce
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-from collections import OrderedDict
+
 import numpy as np
 import onnx
-from sklearn.base import BaseEstimator
 import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
 from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
+from sklearn.base import BaseEstimator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
 from opsml.model.model_info import ModelInfo
-from opsml.model.registry_updaters import OnnxRegistryUpdater
 from opsml.model.model_types import ModelType
+from opsml.model.registry_updaters import OnnxRegistryUpdater
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,

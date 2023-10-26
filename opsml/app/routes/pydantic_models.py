@@ -2,13 +2,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Optional, Union
-from fastapi import Form, File, UploadFile
+
+from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
+
 from opsml.model.challenger import BattleReport
+from opsml.registry.cards.audit import AuditSections, Comment
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.base.registry_base import VersionType
 from opsml.registry.sql.semver import CardVersion
-from opsml.registry.cards.audit import Comment, AuditSections
 
 
 class StorageUri(BaseModel):
@@ -167,14 +169,6 @@ class RegisterModelRequest(BaseModel):
     onnx: bool = Field(
         True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
     )
-
-
-class TeamsResponse(BaseModel):
-    teams: List[str] = []
-
-
-class NamesResponse(BaseModel):
-    names: List[str] = []
 
 
 class ListFileRequest(BaseModel):

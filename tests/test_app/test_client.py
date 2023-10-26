@@ -1,15 +1,12 @@
 from typing import Dict, List, Tuple
 
 import re
-import csv
-import codecs
 import uuid
 import pathlib
 import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
-from fastapi import UploadFile
 from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
@@ -28,7 +25,6 @@ from opsml.registry import (
     ModelCardMetadata,
 )
 from opsml.app.routes.utils import list_team_name_info, error_to_500
-from opsml.app.routes.audit import upload_audit_data
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.app.core import config
@@ -84,7 +80,7 @@ def test_register_data(
         user_email="mlops.com",
         data_splits=data_splits,
     )
-
+    data_card.create_data_profile()
     registry.register_card(card=data_card)
 
     df = registry.list_cards(name=data_card.name, team=data_card.team, max_date=TODAY_YMD, as_dataframe=True)
@@ -121,6 +117,18 @@ def test_list_card_names(
     names = registry._registry.get_unique_card_names()
     assert len(names) == 1
     assert names[0] == "test-df"
+
+
+def test_list_team_info(
+    api_registries: CardRegistries,
+):
+    registry = api_registries.data
+    info = list_team_name_info(registry=registry, team="mlops")
+    assert info.names[0] == "test-df"
+    assert info.teams[0] == "mlops"
+
+    info = list_team_name_info(registry=registry)
+    assert info.names[0] == "test-df"
 
 
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
@@ -663,6 +671,26 @@ def test_model_metrics(
 
     assert response.status_code == 500
 
+    comment = CommentSaveRequest(
+        uid=auditcard.uid,
+        name=auditcard.name,
+        team=auditcard.team,
+        email=auditcard.user_email,
+        selected_model_name=modelcard.name,
+        selected_model_version=modelcard.version,
+        selected_model_team=modelcard.team,
+        selected_model_email=modelcard.user_email,
+        comment_name="test",
+        comment_text="test",
+    )
+
+    # test auditcard comment
+    response = test_app.post(
+        f"/opsml/audit/comment/save",
+        data=comment.model_dump(),
+    )
+    assert response.status_code == 200
+
 
 def test_model_metric_failure(
     test_app: TestClient,
@@ -804,8 +832,23 @@ def test_data_list(test_app: TestClient):
 
 
 ##### Test list data
-def test_data_version(test_app: TestClient):
+def test_data_version(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+):
     """Test settings"""
+
+    _, data = sklearn_pipeline
+
+    datacard = DataCard(
+        data=data,
+        name="test_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    datacard.create_data_profile()
+    api_registries.data.register_card(card=datacard)
 
     response = test_app.get(f"/opsml/data/versions/")
     assert response.status_code == 200
@@ -813,10 +856,12 @@ def test_data_version(test_app: TestClient):
     response = test_app.get(f"/opsml/data/versions/?name=test_data")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/models/versions/?name=test_data&version=1.0.0")
+    response = test_app.get(f"/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/models/versions/?name=profile_data&version=1.0.0&load_data=true")
+    response = test_app.get(
+        f"/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
+    )
     assert response.status_code == 200
 
 
