@@ -16,6 +16,7 @@ from opsml.registry.cards import (
     DataCardMetadata,
     ModelCardMetadata,
     Description,
+    CardInfo,
 )
 from opsml.registry.sql.registry import CardRegistry
 from opsml.helpers.exceptions import VersionError
@@ -124,7 +125,15 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     registry.register_card(card=data_card)
     loaded_card: DataCard = registry.load_card(uid=data_card.uid)
     assert loaded_card.sql_logic.get("test") is not None
-    assert data_card.version == "1.0.0"
+    assert loaded_card.version == "1.0.0"
+
+
+def test_load_card_info(db_registries: Dict[str, CardRegistry]):
+    registry = db_registries["data"]
+    info = CardInfo(name="test_sql", team="mlops", version="1.0.0")
+    loaded_card: DataCard = registry.load_card(info=info)
+    assert loaded_card.sql_logic.get("test") is not None
+    assert loaded_card.version == "1.0.0"
 
 
 def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):

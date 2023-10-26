@@ -11,7 +11,7 @@ from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
 from requests.auth import HTTPBasicAuth
-
+from mlflow.tracking import MlflowClient
 from opsml.registry import (
     AuditCard,
     DataCard,
@@ -25,6 +25,7 @@ from opsml.registry import (
     ModelCardMetadata,
 )
 from opsml.app.routes.utils import list_team_name_info, error_to_500
+from opsml.app.core.event_handlers import setup_mlflow_client
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.app.core import config
@@ -810,20 +811,6 @@ def test_model_list(test_app: TestClient):
 
 
 ##### Test list models
-def test_model_version(test_app: TestClient):
-    """Test settings"""
-
-    response = test_app.get(f"/opsml/models/versions/")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/models/versions/?name=pipeline_model")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/models/versions/?name=pipeline_model&version=1.0.0")
-    assert response.status_code == 200
-
-
-##### Test list models
 def test_data_list(test_app: TestClient):
     """Test settings"""
 
@@ -832,14 +819,14 @@ def test_data_list(test_app: TestClient):
 
 
 ##### Test list data
-def test_data_version(
+def test_data_model_version(
     test_app: TestClient,
     api_registries: CardRegistries,
     sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ):
     """Test settings"""
 
-    _, data = sklearn_pipeline
+    model, data = sklearn_pipeline
 
     datacard = DataCard(
         data=data,
@@ -850,6 +837,19 @@ def test_data_version(
     datacard.create_data_profile()
     api_registries.data.register_card(card=datacard)
 
+    modelcard = ModelCard(
+        trained_model=model,
+        sample_input_data=data[0:1],
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        tags={"id": "model1"},
+        datacard_uid=datacard.uid,
+    )
+
+    model_registry = api_registries.model
+    model_registry.register_card(modelcard)
+
     response = test_app.get(f"/opsml/data/versions/")
     assert response.status_code == 200
 
@@ -859,9 +859,21 @@ def test_data_version(
     response = test_app.get(f"/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
     assert response.status_code == 200
 
+    response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
+    assert response.status_code == 200
+
     response = test_app.get(
         f"/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
     )
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/models/versions/")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
     assert response.status_code == 200
 
 
@@ -984,3 +996,8 @@ def test_audit_upload(
         data=audit_form.model_dump(),
     )
     assert response.status_code == 200
+
+
+def test_mlflow_client():
+    client = setup_mlflow_client()
+    assert isinstance(client, MlflowClient)
