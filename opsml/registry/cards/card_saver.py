@@ -1,19 +1,29 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Dict, Optional, cast, Union
 import os
-from functools import cached_property
 import tempfile
 from enum import Enum
-import pyarrow as pa
+from functools import cached_property
+from typing import Dict, Optional, Union, cast
+
 import numpy as np
+import pyarrow as pa
+
 from opsml.model.types import ModelMetadata, OnnxAttr
-from opsml.registry.cards import ArtifactCard, DataCard, ModelCard, PipelineCard, ProjectCard, RunCard, AuditCard
+from opsml.registry.cards import (
+    ArtifactCard,
+    AuditCard,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    ProjectCard,
+    RunCard,
+)
 from opsml.registry.cards.types import CardType, StoragePath
-from opsml.registry.image import ImageDataset
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
 from opsml.registry.data.types import AllowedTableTypes
+from opsml.registry.image import ImageDataset
 from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType

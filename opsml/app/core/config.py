@@ -2,9 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional
-
 import os
+from typing import Optional
 
 BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
 TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", BASE_LOCAL_SQL)

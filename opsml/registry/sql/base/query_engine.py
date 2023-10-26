@@ -3,17 +3,19 @@
 # LICENSE file in the root directory of this source tree.
 # type: ignore
 import datetime
-from functools import wraps
-from typing import Any, Dict, Iterable, Optional, Type, Union, cast, List, Iterator
 from contextlib import contextmanager
+from functools import wraps
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, cast
+
 from sqlalchemy import select
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
-from opsml.registry.utils.settings import settings
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
 from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 

@@ -1,22 +1,28 @@
+# pylint: disable=protected-access
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
-import io
-import re
-import csv
 import codecs
-from typing import Dict, Optional, List, Union, Any, BinaryIO
+import csv
 import datetime
-from fastapi.responses import StreamingResponse
-from fastapi import APIRouter, Request, Depends, BackgroundTasks
-from fastapi.templating import Jinja2Templates
-from opsml.app.routes.utils import error_to_500, get_names_teams_versions
-from opsml.app.routes.pydantic_models import CommentSaveRequest, AuditFormRequest, AuditReport
-from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, AuditCard
-from opsml.registry.cards.audit import AuditSections
+import io
+import os
+import re
+from typing import Any, BinaryIO, Dict, List, Optional, Union
 
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi.responses import StreamingResponse
+from fastapi.templating import Jinja2Templates
+
+from opsml.app.routes.pydantic_models import (
+    AuditFormRequest,
+    AuditReport,
+    CommentSaveRequest,
+)
+from opsml.app.routes.utils import error_to_500, get_names_teams_versions
+from opsml.helpers.logging import ArtifactLogger
+from opsml.registry import AuditCard, CardRegistries
+from opsml.registry.cards.audit import AuditSections
 
 logger = ArtifactLogger.get_logger()
 

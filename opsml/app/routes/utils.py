@@ -1,17 +1,19 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, List, Tuple
 import os
-from pathlib import Path
 import traceback
 from functools import wraps
-from streaming_form_data.targets import FileTarget
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from streaming_form_data.targets import FileTarget
+
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
-from opsml.registry import CardRegistries, RunCard, CardRegistry
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry import CardRegistries, CardRegistry, RunCard
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()

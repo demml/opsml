@@ -1,1 +1,1 @@
-from opsml.registry.image.dataset import ImageDataset, ImageMetadata, ImageRecord, BBox
+from opsml.registry.image.dataset import BBox, ImageDataset, ImageMetadata, ImageRecord

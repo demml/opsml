@@ -5,10 +5,11 @@ Revises: fd32b1afafd5
 Create Date: 2023-10-24 14:10:02.062476
 
 """
-from alembic import op
 import sqlalchemy as sa
-from opsml.registry.sql.sql_schema import RegistryTableNames
+from alembic import op
+
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
