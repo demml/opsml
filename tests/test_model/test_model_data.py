@@ -29,6 +29,7 @@ def test_dataframe(test_df: pd.DataFrame):
     assert isinstance(pd_data.shape, tuple)
     assert isinstance(pd_data.dtypes, list)
     assert isinstance(pd_data.feature_dict, dict)
+    assert isinstance(pd_data.feature_types, zip)
 
 
 def test_numpy(test_array: NDArray):
