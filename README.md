@@ -208,15 +208,15 @@ print(model_registry.list_cards(info=card_info, as_dataframe=False))
 
 Outputs:
 
+data registry output
 ```json
-# data registry output
 [
     {
         "name": "linnerrud",
         "version": "1.0.0",
         "tags": {},
         "data_type": "PandasDataFrame",
-        "pipelinecard_uid": None,
+        "pipelinecard_uid": none,
         "date": "2023-10-29",
         "timestamp": 1698622188318014,
         "app_env": "development",
@@ -224,13 +224,15 @@ Outputs:
         "team": "opsml",
         "user_email": "user@email.com",
         "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
-        "runcard_uid": None,
+        "runcard_uid": none,
         "datacard_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/datacard.joblib",
     }
 
 ]
+```
 
-# model registry output
+model registry output
+```json
 [
     {
         "uid": "1e68ef7851b34974bfaac764f348491d",
@@ -241,7 +243,7 @@ Outputs:
         "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",
         "sample_data_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/sample-model-data.parquet",
         "model_type": "sklearn_estimator",
-        "pipelinecard_uid": None,
+        "pipelinecard_uid": none,
         "date": "2023-10-29",
         "name": "linnerrud",
         "timestamp": 1698622188320834,
@@ -250,7 +252,7 @@ Outputs:
         "datacard_uid": "07131023c60d4a6892092851eab0f86d",
         "model_metadata_uri": "***/OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model-metadata.json",
         "sample_data_type": "PandasDataFrame",
-        "runcard_uid": None,
+        "runcard_uid": none,
     }
 ]
 ```
