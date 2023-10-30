@@ -8,7 +8,7 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
 from opsml.registry.sql.sql_schema import RegistryTableNames
@@ -35,8 +35,7 @@ class ModelCardRegistry(Registry):
         return RegistryTableNames.DATA.value
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        table_to_check = self._get_data_table_name()
-        exists = self.check_uid(uid=uid, table_to_check=table_to_check)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -132,8 +131,8 @@ class ProjectCardRegistry(Registry):  # type:ignore
 
 
 class AuditCardRegistry(Registry):  # type:ignore
-    def validate_uid(self, uid: str, table_to_check: str) -> bool:
-        return self.check_uid(uid=uid, table_to_check=table_to_check)
+    def validate_uid(self, uid: str, registry_type: str) -> bool:
+        return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
     def validate(registry_name: str):

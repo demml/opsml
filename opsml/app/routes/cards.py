@@ -43,7 +43,7 @@ def check_uid(
 
     if registry._registry.check_uid(
         uid=payload.uid,
-        table_to_check=registry.table_name,
+        registry_type=registry.registry_type,
     ):
         return UidExistsResponse(uid_exists=True)
     return UidExistsResponse(uid_exists=False)

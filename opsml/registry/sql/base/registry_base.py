@@ -42,8 +42,8 @@ def load_card_from_record(
     from backend database
 
     Args:
-        table_name:
-            Name of table
+        registry_type:
+            Registry type
         record:
             Loaded record from backend database
 
@@ -124,7 +124,7 @@ class SQLRegistryBase:
                 {self._table.__tablename__}"""
             )
 
-        if self.check_uid(uid=str(card.uid), table_to_check=self.table_name):
+        if self.check_uid(uid=str(card.uid), registry_type=self.registry_type):
             raise ValueError(
                 """This Card has already been registered.
             If the card has been modified try updating the Card in the registry.
@@ -330,7 +330,7 @@ class SQLRegistryBase:
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
-    def check_uid(self, uid: str, table_to_check: str) -> bool:
+    def check_uid(self, uid: str, registry_type: str) -> bool:
         raise NotImplementedError
 
     def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

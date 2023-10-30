@@ -6,9 +6,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
+from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.query_engine import QueryEngine, log_card_change  # type: ignore
 from opsml.registry.sql.semver import SemVerSymbols, CardVersion, VersionType, SemVerUtils, SemVerRegistryValidator
+from opsml.registry.cards.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 
@@ -187,10 +189,10 @@ class ServerRegistry(SQLRegistryBase):
 
         return records[:limit]
 
-    def check_uid(self, uid: str, table_to_check: str) -> bool:
+    def check_uid(self, uid: str, registry_type: str) -> bool:
         result = self.engine.get_uid(
             uid=uid,
-            table_to_check=table_to_check,
+            table_to_check=RegistryTableNames[registry_type.upper()].value,
         )
         return bool(result)
 
