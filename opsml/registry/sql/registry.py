@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
 import textwrap
+from enum import Enum
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
@@ -28,10 +29,19 @@ else:
     Registry = OpsmlRegistry
 
 
+class RegistryType(str, Enum):
+    DATA = "data"
+    MODEL = "model"
+    RUN = "run"
+    PIPELINE = "pipeline"
+    AUDIT = "audit"
+    PROJECT = "project"
+
+
 class DataCardRegistry(Registry):
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.DATA.value
+        return registry_name.lower() == RegistryType.DATA.value
 
 
 class ModelCardRegistry(Registry):
@@ -98,19 +108,19 @@ class ModelCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.MODEL.value
+        return registry_name.lower() == RegistryType.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.RUN.value
+        return registry_name.lower() == RegistryType.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PIPELINE.value
+        return registry_name.lower() == RegistryType.PIPELINE.value
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("PipelineCardRegistry does not support delete_card")
@@ -119,7 +129,7 @@ class PipelineCardRegistry(Registry):  # type:ignore
 class ProjectCardRegistry(Registry):  # type:ignore
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PROJECT.value
+        return registry_name.lower() == RegistryType.PROJECT.value
 
     def load_card(
         self,
@@ -141,7 +151,7 @@ class AuditCardRegistry(Registry):  # type:ignore
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.AUDIT.value
+        return registry_name.lower() == RegistryType.AUDIT.value
 
 
 # CardRegistry also needs to set a storage file system
