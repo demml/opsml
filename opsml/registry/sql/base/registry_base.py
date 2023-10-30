@@ -97,6 +97,11 @@ class SQLRegistryBase:
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
+    @property
+    def registry_type(self) -> str:
+        """Registry type"""
+        raise NotImplementedError
+
     def _get_uid(self) -> str:
         """Sets a unique id to be applied to a card"""
         return uuid.uuid4().hex
