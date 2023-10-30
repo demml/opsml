@@ -44,12 +44,8 @@ class ModelCardRegistry(Registry):
     def registry_type(self) -> str:
         return RegistryType.MODEL.value
 
-    def _get_data_table_name(self) -> str:
-        return RegistryTableNames.DATA.value
-
     def _validate_datacard_uid(self, uid: str) -> None:
-        table_to_check = self._get_data_table_name()
-        exists = self.check_uid(uid=uid, table_to_check=table_to_check)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -161,8 +157,8 @@ class AuditCardRegistry(Registry):  # type:ignore
     def registry_type(self) -> str:
         return RegistryType.AUDIT.value
 
-    def validate_uid(self, uid: str, table_to_check: str) -> bool:
-        return self.check_uid(uid=uid, table_to_check=table_to_check)
+    def validate_uid(self, uid: str, registry_type: str) -> bool:
+        return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
     def validate(registry_name: str):

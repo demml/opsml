@@ -27,7 +27,11 @@ def upgrade() -> None:
     insp = sa.inspect(bind)
     columns = insp.get_columns(RegistryTableNames.DATA.value)
 
-    for table_name in [RegistryTableNames.DATA.value, RegistryTableNames.MODEL.value]:
+    for table_name in [
+        RegistryTableNames.DATA.value,
+        RegistryTableNames.MODEL.value,
+        RegistryTableNames.RUN.value,
+    ]:
         columns = insp.get_columns(table_name)
         if not "auditcard_uid" in [column["name"] for column in columns]:
             logger.info(f"Migration Adding auditcard column to {table_name} table")
