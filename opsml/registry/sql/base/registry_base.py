@@ -8,6 +8,7 @@ from semver import VersionInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.cards import ArtifactCard, DataCard, ModelCard, PipelineCard, RunCard, AuditCard
 from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.sql.records import LoadedRecordType, load_record
@@ -24,16 +25,16 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
 table_name_card_map = {
-    RegistryTableNames.DATA.value: DataCard,
-    RegistryTableNames.MODEL.value: ModelCard,
-    RegistryTableNames.RUN.value: RunCard,
-    RegistryTableNames.PIPELINE.value: PipelineCard,
-    RegistryTableNames.AUDIT.value: AuditCard,
+    RegistryType.DATA.value: DataCard,
+    RegistryType.MODEL.value: ModelCard,
+    RegistryType.RUN.value: RunCard,
+    RegistryType.PIPELINE.value: PipelineCard,
+    RegistryType.AUDIT.value: AuditCard,
 }
 
 
 def load_card_from_record(
-    table_name: str,
+    registry_type: str,
     record: LoadedRecordType,
 ) -> ArtifactCard:
     """
@@ -50,7 +51,7 @@ def load_card_from_record(
         `ArtifactCard`
     """
 
-    card = table_name_card_map[table_name]
+    card = table_name_card_map[registry_type]
 
     return card(**record.model_dump())
 
@@ -364,13 +365,13 @@ class SQLRegistryBase:
         )
 
         loaded_record = load_record(
-            table_name=self.table_name,
+            registry_type=self.registry_type,
             record_data=record[0],
             storage_client=self.storage_client,
         )
 
         return load_card_from_record(
-            table_name=self.table_name,
+            registry_type=self.registry_type,
             record=loaded_record,
         )
 

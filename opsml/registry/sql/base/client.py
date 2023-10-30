@@ -88,7 +88,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version_to_send,
                 "version_type": version_type,
-                "table_name": self.table_name,
+                "registry_type": self.registry_type,
                 "pre_tag": pre_tag,
                 "build_tag": build_tag,
             },
