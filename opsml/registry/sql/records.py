@@ -16,8 +16,8 @@ from opsml.registry.cards.types import (
     ModelCardMetadata,
     ModelCardUris,
     DataCardMetadata,
+    RegistryType,
 )
-from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -163,7 +163,7 @@ class LoadRecord(BaseModel):
     storage_client: Optional[StorageClientType] = None
 
     @staticmethod
-    def validate_table(table_name: str) -> bool:
+    def validate_table(registry_type: str) -> bool:
         raise NotImplementedError
 
 
@@ -239,8 +239,8 @@ class LoadedDataRecord(LoadRecord):
         return datacard_definition
 
     @staticmethod
-    def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.DATA.value
+    def validate_table(registry_type: str) -> bool:
+        return registry_type == RegistryType.DATA.value
 
 
 class LoadedModelRecord(LoadRecord):
@@ -300,8 +300,8 @@ class LoadedModelRecord(LoadRecord):
         return ModelCardMetadata(**card_def).model_dump()
 
     @staticmethod
-    def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.MODEL.value
+    def validate_table(registry_type: str) -> bool:
+        return registry_type == RegistryType.MODEL.value
 
 
 class LoadedAuditRecord(LoadRecord):
@@ -351,8 +351,8 @@ class LoadedAuditRecord(LoadRecord):
         return audit_definition
 
     @staticmethod
-    def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.AUDIT.value
+    def validate_table(registry_type: str) -> bool:
+        return registry_type == RegistryType.AUDIT.value
 
 
 class LoadedRunRecord(LoadRecord):
@@ -404,8 +404,8 @@ class LoadedRunRecord(LoadRecord):
         return runcard_definition
 
     @staticmethod
-    def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.RUN.value
+    def validate_table(registry_type: str) -> bool:
+        return registry_type == RegistryType.RUN.value
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -416,8 +416,8 @@ class LoadedPipelineRecord(LoadRecord):
     runcard_uids: Optional[List[str]] = None
 
     @staticmethod
-    def validate_table(table_name: str) -> bool:
-        return table_name == RegistryTableNames.PIPELINE.value
+    def validate_table(registry_type: str) -> bool:
+        return registry_type == RegistryType.PIPELINE.value
 
 
 LoadedRecordType = Union[
@@ -430,7 +430,7 @@ LoadedRecordType = Union[
 
 
 def load_record(
-    table_name: str,
+    registry_type: str,
     record_data: Dict[str, Any],
     storage_client: StorageClientType,
 ) -> LoadedRecordType:
@@ -438,7 +438,7 @@ def load_record(
         record
         for record in LoadRecord.__subclasses__()
         if record.validate_table(
-            table_name=table_name,
+            registry_type=registry_type,
         )
     )
 
