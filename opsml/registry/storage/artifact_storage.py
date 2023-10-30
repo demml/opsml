@@ -1,4 +1,4 @@
-# pylint: disable=[import-outside-toplevel,import-error]
+# pylint: disable=[import-outside-toplevel,import-error,no-name-in-module]
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -14,7 +14,7 @@ import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
-from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
+from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
 
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.cards.types import StoragePath
