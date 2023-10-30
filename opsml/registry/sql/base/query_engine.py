@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-# type: ignore
 import datetime
 from functools import wraps
 from typing import Any, Dict, Iterable, Optional, Type, Union, cast, List, Iterator
