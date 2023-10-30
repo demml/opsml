@@ -24,7 +24,7 @@ def test_card_create_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/create",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -36,7 +36,7 @@ def test_card_update_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/update",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -48,7 +48,7 @@ def test_card_list_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/list",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
