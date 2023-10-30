@@ -30,12 +30,20 @@ else:
 
 
 class DataCardRegistry(Registry):
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.DATA.value
+
     @staticmethod
     def validate(registry_name: str):
         return registry_name.lower() == RegistryType.DATA.value
 
 
 class ModelCardRegistry(Registry):
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.MODEL.value
+
     def _get_data_table_name(self) -> str:
         return RegistryTableNames.DATA.value
 
@@ -103,12 +111,20 @@ class ModelCardRegistry(Registry):
 
 
 class RunCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.RUN.value
+
     @staticmethod
     def validate(registry_name: str):
         return registry_name.lower() == RegistryType.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.PIPELINE.value
+
     @staticmethod
     def validate(registry_name: str):
         return registry_name.lower() == RegistryType.PIPELINE.value
@@ -118,6 +134,10 @@ class PipelineCardRegistry(Registry):  # type:ignore
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.PROJECT.value
+
     @staticmethod
     def validate(registry_name: str):
         return registry_name.lower() == RegistryType.PROJECT.value
@@ -137,6 +157,10 @@ class ProjectCardRegistry(Registry):  # type:ignore
 
 
 class AuditCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.AUDIT.value
+
     def validate_uid(self, uid: str, table_to_check: str) -> bool:
         return self.check_uid(uid=uid, table_to_check=table_to_check)
 
@@ -164,6 +188,11 @@ class CardRegistry:
 
         self._registry = self._set_registry(registry_name=registry_name)
         self.table_name = self._registry._table.__tablename__
+
+    @property
+    def registry_type(self) -> str:
+        "Registry type for card registry"
+        return self._registry.registry_type
 
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
