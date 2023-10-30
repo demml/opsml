@@ -9,7 +9,7 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.base import OpsmlRegistry
@@ -27,15 +27,6 @@ if TYPE_CHECKING:
     Registry = ServerRegistry
 else:
     Registry = OpsmlRegistry
-
-
-class RegistryType(str, Enum):
-    DATA = "data"
-    MODEL = "model"
-    RUN = "run"
-    PIPELINE = "pipeline"
-    AUDIT = "audit"
-    PROJECT = "project"
 
 
 class DataCardRegistry(Registry):
