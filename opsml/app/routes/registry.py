@@ -15,9 +15,9 @@ logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
-@router.get("/registry/table", response_model=TableNameResponse, name="teams")
+@router.get("/registry/table", response_model=TableNameResponse, name="table_name")
 def get_table_name(request: Request, registry_type: str) -> TableNameResponse:
-    """Get all teams associated with a registry
+    """Gets table name for a given registry type
 
     Args:
         request:
@@ -26,6 +26,7 @@ def get_table_name(request: Request, registry_type: str) -> TableNameResponse:
             Type of registry
 
     Returns:
-        `TeamsResponse`
+        `TableNameResponse`
     """
-    return TableNameResponse(table_name=RegistryTableNames[registry_type].value)
+
+    return TableNameResponse(table_name=RegistryTableNames[registry_type.upper()].value)

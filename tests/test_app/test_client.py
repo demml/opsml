@@ -90,9 +90,6 @@ def test_register_data(
     df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    with pytest.raises(AttributeError):
-        registry._registry.table_name = "no_table"
-
 
 def test_list_teams(
     api_registries: CardRegistries,

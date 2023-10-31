@@ -16,8 +16,8 @@ logger = ArtifactLogger.get_logger()
 
 
 class ServerRegistry(SQLRegistryBase):
-    def __init__(self, table_name: str):
-        super().__init__(table_name)
+    def __init__(self, registry_type: str):
+        super().__init__(registry_type)
         self.engine = QueryEngine()
 
     @property

@@ -15,7 +15,7 @@ from rich.table import Table
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType, CardVersion, Comment, AuditCardMetadata
+from opsml.registry.cards.types import CardType, CardVersion, Comment, AuditCardMetadata, RegistryType
 from opsml.registry.sql.records import AuditRegistryRecord, RegistryRecord
 
 logger = ArtifactLogger.get_logger()
@@ -147,18 +147,15 @@ class AuditCard(ArtifactCard):
         from opsml.registry.sql.registry import (  # pylint: disable=cyclic-import
             AuditCardRegistry,
         )
-        from opsml.registry.sql.sql_schema import (  # pylint: disable=cyclic-import
-            RegistryTableNames,
-        )
 
         if card.card_type.lower() not in [
             CardType.DATACARD.value,
             CardType.MODELCARD.value,
+            CardType.RUNCARD.value,
         ]:
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data, model or run")
 
-        audit_registry = AuditCardRegistry(RegistryTableNames.AUDIT.value)
-
+        audit_registry = AuditCardRegistry(RegistryType.AUDIT.value)
         if card.card_type.lower() not in [CardType.DATACARD.value, CardType.MODELCARD.value]:
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data or model")
 
@@ -168,13 +165,8 @@ class AuditCard(ArtifactCard):
                 Uid must be registered prior to adding to AuditCard."""
             )
 
-        if card.card_type.lower() == CardType.DATACARD:
-            if not audit_registry.validate_uid(card.uid, RegistryTableNames.DATA.value):
-                raise ValueError(f"""Card uid {card.uid} not found in {RegistryTableNames.DATA.value} registry""")
-
-        if card.card_type.lower() == CardType.MODELCARD:
-            if not audit_registry.validate_uid(card.uid, RegistryTableNames.MODEL.value):
-                raise ValueError(f"""Card uid {card.uid} not found in {RegistryTableNames.MODEL.value} registry""")
+        if not audit_registry.validate_uid(card.uid, card.card_type):
+            raise ValueError(f"""Card uid {card.uid} not found in {card.card_type} registry""")
 
         card_list = getattr(self.metadata, f"{card.card_type.lower()}cards")
         card_list.append(
