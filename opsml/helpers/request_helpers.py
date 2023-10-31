@@ -19,6 +19,7 @@ class ApiRoutes:
     LIST_CARDS = "cards/list"
     TEAM_CARDS = "cards/teams"
     NAME_CARDS = "cards/names"
+    TABLE_NAME = "registry/table"
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
@@ -94,6 +95,9 @@ class ApiClient:
     @retry(reraise=True, stop=stop_after_attempt(3))
     def get_request(self, route: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         response = self.client.get(url=f"{self._base_url}/{route}", params=params)
+
+        print(f"{self._base_url}/{route}")
+        print(response.__dict__)
 
         if response.status_code == 200:
             return response.json()

@@ -26,14 +26,14 @@
 [![GCS](https://img.shields.io/badge/google_cloud_storage-grey.svg?logo=google-cloud)](https://cloud.google.com/storage)
 [![S3](https://img.shields.io/badge/aws_s3-grey?logo=amazons3)](https://aws.amazon.com/)
 
-<p align="center">
-  <a href="#what-is-it">What is it?</a> •
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a>  •
-  <a href="#advanced-installation-scenarios">Advanced Installation Scenarios</a> •
-  <a href="#contributing">Contributing</a>
-</p>
+## Table of Contents
+- [What is it?](#what-is-it)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [advanced-installation-scenarios](#advanced-installation-scenarios)
+- [Quickstart](#quickstart)
+- [Contributing](#contributing)
 
 ## What is it?
 `OpsML` is a library which simplifies the machine learning project lifecycle.
@@ -120,6 +120,144 @@ Types of extras that can be installed:
   ```bash
   poetry add "opsml[s3,mysql]"
   ```
+
+## QuickStart
+
+```console
+opsml-cli launch-uvicorn-app
+```
+
+Open new terminal
+
+```console
+export OPSML_TRACKING_URI=http://0.0.0.0:8888
+```
+
+Run the following py script
+
+```python
+# Data and Model
+from sklearn.datasets import load_linnerud
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+import numpy as np
+
+# Opsml
+from opsml.registry import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
+
+# set up registries
+data_registry = CardRegistry(registry_name="data")
+model_registry = CardRegistry(registry_name="model")
+
+# card info (optional, but is used to simplify required args a bit)
+card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+
+# get X, y
+data, target = load_linnerud(return_X_y=True, as_frame=True)
+data["Pulse"] = target.Pulse
+
+# Split indices
+indices = np.arange(data.shape[0])
+
+# usual train-test split
+train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
+
+datacard = DataCard(
+    info=card_info,
+    data=data,
+    dependent_vars=["Pulse"],
+    # define splits
+    data_splits=[
+        DataSplit(label="train", indices=train_idx),
+        DataSplit(label="test", indices=test_idx),
+    ],
+)
+
+# register card
+data_registry.register_card(datacard)
+
+# split data
+data_splits = datacard.split_data()
+X_train = data_splits.train.X
+y_train = data_splits.train.y
+
+# fit model
+linreg = LinearRegression()
+linreg = linreg.fit(X=X_train, y=y_train)
+
+# Create ModelCard
+modelcard = ModelCard(
+    info=card_info,
+    trained_model=linreg,
+    sample_input_data=X_train,
+    datacard_uid=datacard.uid,
+)
+
+model_registry.register_card(card=modelcard)
+
+# >{"level": "INFO", "message": "OPSML_DATA_REGISTRY: linnerrud, version:1.0.0 registered", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
+# >{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
+# >{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
+# >{"level": "INFO", "message": "OPSML_MODEL_REGISTRY: linnerrud, version:1.0.0 registered", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
+
+
+print(data_registry.list_cards(info=card_info, as_dataframe=False))
+print(model_registry.list_cards(info=card_info, as_dataframe=False))
+```
+*(Code will run as-is)*
+
+Outputs:
+
+data registry output
+```json
+[
+    {
+        "name": "linnerrud",
+        "version": "1.0.0",
+        "tags": {},
+        "data_type": "PandasDataFrame",
+        "pipelinecard_uid": null,
+        "date": "2023-10-29",
+        "timestamp": 1698622188318014,
+        "app_env": "development",
+        "uid": "07131023c60d4a6892092851eab0f86d",
+        "team": "opsml",
+        "user_email": "user@email.com",
+        "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
+        "runcard_uid": null,
+        "datacard_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/datacard.joblib",
+    }
+
+]
+```
+
+model registry output
+```json
+[
+    {
+        "uid": "1e68ef7851b34974bfaac764f348491d",
+        "app_env": "development",
+        "team": "opsml",
+        "user_email": "user@email.com",
+        "modelcard_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/modelcard.joblib",
+        "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",
+        "sample_data_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/sample-model-data.parquet",
+        "model_type": "sklearn_estimator",
+        "pipelinecard_uid": null,
+        "date": "2023-10-29",
+        "name": "linnerrud",
+        "timestamp": 1698622188320834,
+        "version": "1.0.0",
+        "tags": {},
+        "datacard_uid": "07131023c60d4a6892092851eab0f86d",
+        "model_metadata_uri": "***/OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model-metadata.json",
+        "sample_data_type": "PandasDataFrame",
+        "runcard_uid": null,
+    }
+]
+```
+
+
 
 ## Contributing
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:

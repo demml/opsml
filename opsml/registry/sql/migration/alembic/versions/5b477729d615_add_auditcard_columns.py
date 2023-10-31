@@ -28,7 +28,11 @@ def upgrade() -> None:
     insp = sa.inspect(bind)
     columns = insp.get_columns(RegistryTableNames.DATA.value)
 
-    for table_name in [RegistryTableNames.DATA.value, RegistryTableNames.MODEL.value]:
+    for table_name in [
+        RegistryTableNames.DATA.value,
+        RegistryTableNames.MODEL.value,
+        RegistryTableNames.RUN.value,
+    ]:
         columns = insp.get_columns(table_name)
         if not "auditcard_uid" in [column["name"] for column in columns]:
             logger.info(f"Migration Adding auditcard column to {table_name} table")
@@ -43,7 +47,11 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     logger.info("Dropping uris column from data table")
-    for table_name in [RegistryTableNames.DATA.value, RegistryTableNames.MODEL.value]:
+    for table_name in [
+        RegistryTableNames.DATA.value,
+        RegistryTableNames.MODEL.value,
+        RegistryTableNames.RUN.value,
+    ]:
         with op.batch_alter_table(table_name) as batch_op:
             batch_op.drop_column("auditcard_uid")
 

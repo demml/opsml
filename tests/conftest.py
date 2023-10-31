@@ -117,6 +117,9 @@ def cleanup() -> None:
     # delete test image dir
     shutil.rmtree("test_image_dir", ignore_errors=True)
 
+    # delete blah directory
+    shutil.rmtree("blah", ignore_errors=True)
+
 
 class Blob(BaseModel):
     name: str = "test_upload/test.csv"

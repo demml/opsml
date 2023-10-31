@@ -93,9 +93,6 @@ def test_register_data(
     df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    with pytest.raises(AttributeError):
-        registry._registry.table_name = "no_table"
-
 
 def test_list_teams(
     api_registries: CardRegistries,
@@ -112,10 +109,12 @@ def test_list_card_names(
     # create data card
     registry = api_registries.data
     names = registry._registry.get_unique_card_names(team="mlops")
+
     assert len(names) == 1
     assert names[0] == "test-df"
 
     names = registry._registry.get_unique_card_names()
+
     assert len(names) == 1
     assert names[0] == "test-df"
 
@@ -763,7 +762,7 @@ def test_card_create_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/create",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -775,7 +774,7 @@ def test_card_update_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/update",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -787,7 +786,7 @@ def test_card_list_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/list",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -996,3 +995,12 @@ def test_audit_upload(
         data=audit_form.model_dump(),
     )
     assert response.status_code == 200
+
+
+def test_registry_name_fail(test_app: TestClient):
+    response = test_app.get(
+        "/opsml/registry/table",
+        params={"registry_type": "blah"},
+    )
+
+    assert response.status_code == 500

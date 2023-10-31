@@ -8,7 +8,7 @@ import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
 from opsml.registry.sql.sql_schema import RegistryTableNames
@@ -25,18 +25,22 @@ Registry = ClientRegistry
 
 
 class DataCardRegistry(Registry):
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.DATA.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.DATA.value
+        return registry_name.lower() == RegistryType.DATA.value
 
 
 class ModelCardRegistry(Registry):
-    def _get_data_table_name(self) -> str:
-        return RegistryTableNames.DATA.value
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.MODEL.value
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        table_to_check = self._get_data_table_name()
-        exists = self.check_uid(uid=uid, table_to_check=table_to_check)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -94,28 +98,40 @@ class ModelCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.MODEL.value
+        return registry_name.lower() == RegistryType.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.RUN.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.RUN.value
+        return registry_name.lower() == RegistryType.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.PIPELINE.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PIPELINE.value
+        return registry_name.lower() == RegistryType.PIPELINE.value
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.PROJECT.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PROJECT.value
+        return registry_name.lower() == RegistryType.PROJECT.value
 
     def load_card(
         self,
@@ -132,12 +148,16 @@ class ProjectCardRegistry(Registry):  # type:ignore
 
 
 class AuditCardRegistry(Registry):  # type:ignore
-    def validate_uid(self, uid: str, table_to_check: str) -> bool:
-        return self.check_uid(uid=uid, table_to_check=table_to_check)
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.AUDIT.value
+
+    def validate_uid(self, uid: str, registry_type: str) -> bool:
+        return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.AUDIT.value
+        return registry_name.lower() == RegistryType.AUDIT.value
 
 
 # CardRegistry also needs to set a storage file system
@@ -170,7 +190,6 @@ class CardRegistry:
             SQL Registry
         """
 
-        registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
             for registry in Registry.__subclasses__()
@@ -179,7 +198,7 @@ class CardRegistry:
             )
         )
 
-        return registry(table_name=registry_name)
+        return registry(registry_type=registry_name)
 
     def list_cards(
         self,
@@ -236,7 +255,7 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        if all(var is None for var in [name, team, version, uid, tags]):
+        if all(not bool(var) for var in [name, team, version, uid, tags]):
             limit = limit or 50
 
         card_list = self._registry.list_cards(
