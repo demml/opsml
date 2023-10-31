@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, Optional, Tuple, cast, List
-
+from functools import cached_property
 import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes, ApiClient
@@ -17,10 +17,21 @@ logger = ArtifactLogger.get_logger()
 
 
 class ClientRegistry(SQLRegistryBase):
-    def __init__(self, table_name: str):
-        super().__init__(table_name)
+    def __init__(self, registry_type: str):
+        super().__init__(registry_type)
 
         self._session = self._get_session()
+        self._registry_type = registry_type
+
+    @cached_property
+    def table_name(self) -> List[str]:
+        """Returns a list of unique teams"""
+        data = self._session.get_request(
+            route=api_routes.TABLE_NAME,
+            params={"registry_type": self.registry_type},
+        )
+
+        return data["table_name"]
 
     @property
     def unique_teams(self) -> List[str]:

@@ -57,7 +57,7 @@ def load_card_from_record(
 
 
 class SQLRegistryBase:
-    def __init__(self, table_name: str):
+    def __init__(self, registry_type: str):
         """
         Base class for SQL Registries to inherit from
 
@@ -66,6 +66,7 @@ class SQLRegistryBase:
                 CardRegistry table name
         """
         self.storage_client = settings.storage_client
+        table_name = RegistryTableNames[registry_type.upper()].value
         self._table = TableSchema.get_table(table_name=table_name)
 
     @property
