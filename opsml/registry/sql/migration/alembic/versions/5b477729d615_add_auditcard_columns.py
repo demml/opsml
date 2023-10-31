@@ -46,7 +46,11 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     logger.info("Dropping uris column from data table")
-    for table_name in [RegistryTableNames.DATA.value, RegistryTableNames.MODEL.value]:
+    for table_name in [
+        RegistryTableNames.DATA.value,
+        RegistryTableNames.MODEL.value,
+        RegistryTableNames.RUN.value,
+    ]:
         with op.batch_alter_table(table_name) as batch_op:
             batch_op.drop_column("auditcard_uid")
 
