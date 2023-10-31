@@ -15,7 +15,13 @@ from rich.table import Table
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType, CardVersion, Comment, AuditCardMetadata, RegistryType
+from opsml.registry.cards.types import (
+    AuditCardMetadata,
+    CardType,
+    CardVersion,
+    Comment,
+    RegistryType,
+)
 from opsml.registry.sql.records import AuditRegistryRecord, RegistryRecord
 
 logger = ArtifactLogger.get_logger()

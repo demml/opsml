@@ -11,9 +11,9 @@ from opsml.app.routes import (
     healthcheck,
     homepage,
     models,
+    registry,
     settings,
 )
-from opsml.app.routes import cards, data, files, healthcheck, models, settings, registry
 
 api_router = APIRouter(responses={404: {"description": "Not found"}})
 api_router.include_router(healthcheck.router, tags=["health"], prefix="/opsml")

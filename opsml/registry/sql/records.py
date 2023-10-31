@@ -16,7 +16,6 @@ from opsml.registry.cards.types import (
     DataCardMetadata,
     ModelCardMetadata,
     ModelCardUris,
-    DataCardMetadata,
     RegistryType,
 )
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
