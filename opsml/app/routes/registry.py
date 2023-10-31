@@ -32,9 +32,9 @@ def get_table_name(request: Request, registry_type: str) -> TableNameResponse:
         table_name = RegistryTableNames[registry_type.upper()].value
         return TableNameResponse(table_name=table_name)
 
-    except KeyError:
+    except KeyError as exc:
         logger.error(f"Registry type {registry_type} does not exist")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"""Registry type {registry_type} does not exist""",
-        )
+        ) from exc
