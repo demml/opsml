@@ -24,7 +24,7 @@ class ClientRegistry(SQLRegistryBase):
         self._registry_type = registry_type
 
     @cached_property
-    def table_name(self) -> List[str]:
+    def table_name(self) -> str:
         """Returns a list of unique teams"""
         data = self._session.get_request(
             route=api_routes.TABLE_NAME,

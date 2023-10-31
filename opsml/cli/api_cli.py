@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
+from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()

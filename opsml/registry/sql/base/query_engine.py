@@ -259,25 +259,26 @@ class QueryEngine:
         Returns:
             List of unique teams
         """
-
-        query = select(table.team).distinct()
+        team_col = cast(SqlTableType, table.team)
+        query = select(team_col).distinct()
 
         with self.session() as sess:
-            results = sess.scalars(query).all()
+            results = sess.scalars(query).all()  # type: ignore[attr-defined]
 
         return results
 
     def get_unique_card_names(self, team: Optional[str], table: Type[REGISTRY_TABLES]) -> List[str]:
         """Returns a list of unique card names"""
-        query = select(table.name)
+        name_col = cast(SqlTableType, table.team)
+        query = select(name_col)
 
         if team is not None:
-            query = query.filter(table.team == team).distinct()
+            query = query.filter(table.team == team).distinct()  # type: ignore[attr-defined]
         else:
             query = query.distinct()
 
         with self.session() as sess:
-            results = sess.scalars(query).all()
+            results = sess.scalars(query).all()  # type: ignore[attr-defined]
 
         return results
 
