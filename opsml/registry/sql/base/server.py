@@ -10,7 +10,6 @@ from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.query_engine import QueryEngine, log_card_change  # type: ignore
 from opsml.registry.sql.semver import SemVerSymbols, CardVersion, VersionType, SemVerUtils, SemVerRegistryValidator
-from opsml.registry.cards.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 

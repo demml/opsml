@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
 import textwrap
-from enum import Enum
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
@@ -13,7 +12,6 @@ from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.base import OpsmlRegistry
-from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
 
 
