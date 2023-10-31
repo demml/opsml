@@ -19,6 +19,15 @@ from opsml.model.types import (
 logger = ArtifactLogger.get_logger()
 
 
+class RegistryType(str, Enum):
+    DATA = "data"
+    MODEL = "model"
+    RUN = "run"
+    PIPELINE = "pipeline"
+    AUDIT = "audit"
+    PROJECT = "project"
+
+
 class Metric(BaseModel):
     name: str
     value: Union[float, int]

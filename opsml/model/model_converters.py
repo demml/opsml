@@ -1,4 +1,4 @@
-# pylint: disable=[import-outside-toplevel,import-error]
+# pylint: disable=[import-outside-toplevel,import-error,no-name-in-module]
 
 """Code for generating Onnx Models"""
 # Copyright (c) Shipt, Inc.
@@ -17,8 +17,7 @@ import onnx
 import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
-from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
-from sklearn.base import BaseEstimator
+from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
