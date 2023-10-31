@@ -269,7 +269,7 @@ class QueryEngine:
 
     def get_unique_card_names(self, team: Optional[str], table: Type[REGISTRY_TABLES]) -> List[str]:
         """Returns a list of unique card names"""
-        name_col = cast(SqlTableType, table.team)
+        name_col = cast(SqlTableType, table.name)
         query = select(name_col)
 
         if team is not None:

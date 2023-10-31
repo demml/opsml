@@ -106,10 +106,12 @@ def test_list_card_names(
     # create data card
     registry = api_registries.data
     names = registry._registry.get_unique_card_names(team="mlops")
+
     assert len(names) == 1
     assert names[0] == "test-df"
 
     names = registry._registry.get_unique_card_names()
+
     assert len(names) == 1
     assert names[0] == "test-df"
 
@@ -751,6 +753,15 @@ def test_card_list_fail(test_app: TestClient):
         "/opsml/cards/list",
         json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
+    )
+
+    assert response.status_code == 500
+
+
+def test_registry_name_fail(test_app: TestClient):
+    response = test_app.get(
+        "/opsml/registry/table",
+        params={"registry_type": "blah"},
     )
 
     assert response.status_code == 500

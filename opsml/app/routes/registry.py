@@ -1,9 +1,8 @@
-# pylint: disable=protected-access
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException, status
 
 
 from opsml.app.routes.pydantic_models import TableNameResponse
@@ -29,4 +28,13 @@ def get_table_name(request: Request, registry_type: str) -> TableNameResponse:
         `TableNameResponse`
     """
 
-    return TableNameResponse(table_name=RegistryTableNames[registry_type.upper()].value)
+    try:
+        table_name = RegistryTableNames[registry_type.upper()].value
+        return TableNameResponse(table_name=table_name)
+
+    except KeyError:
+        logger.error(f"Registry type {registry_type} does not exist")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"""Registry type {registry_type} does not exist""",
+        )
