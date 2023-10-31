@@ -11,9 +11,9 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
-from opsml.registry.sql.semver import VersionType
-from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.base import OpsmlRegistry
+from opsml.registry.sql.base.server import ServerRegistry
+from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger()

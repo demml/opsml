@@ -18,6 +18,7 @@ import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
 from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
+from sklearn.base import BaseEstimator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
