@@ -200,7 +200,6 @@ class CardRegistry:
             SQL Registry
         """
 
-        registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
             for registry in Registry.__subclasses__()

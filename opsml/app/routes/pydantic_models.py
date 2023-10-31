@@ -158,6 +158,10 @@ class TeamsResponse(BaseModel):
     teams: List[str] = []
 
 
+class TableNameResponse(BaseModel):
+    table_name: str
+
+
 class NamesResponse(BaseModel):
     names: List[str] = []
 

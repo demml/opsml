@@ -19,6 +19,7 @@ class ApiRoutes:
     LIST_CARDS = "cards/list"
     TEAM_CARDS = "cards/teams"
     NAME_CARDS = "cards/names"
+    TABLE_NAME = "registry/table"
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"

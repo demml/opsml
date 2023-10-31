@@ -20,12 +20,6 @@ class ServerRegistry(SQLRegistryBase):
         super().__init__(table_name)
         self.engine = QueryEngine()
 
-    def _create_table_if_not_exists(self):
-        self._table.__table__.create(
-            bind=self.engine.engine,
-            checkfirst=True,
-        )
-
     @property
     def unique_teams(self) -> List[str]:
         """Returns a list of unique teams"""
