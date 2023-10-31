@@ -65,7 +65,8 @@ class AuditQuestionTable:
     def __init__(self) -> None:
         self.table = self.create_table()
 
-    def create_table(self):
+    def create_table(self) -> Table:
+        """Create Rich table of Audit"""
         table = Table(title="Audit Questions")
         table.add_column("Section", no_wrap=True)
         table.add_column("Number")
@@ -73,7 +74,8 @@ class AuditQuestionTable:
         table.add_column("Answered", justify="right")
         return table
 
-    def add_row(self, section_name: str, nbr: int, question: Question):
+    def add_row(self, section_name: str, nbr: int, question: Question) -> None:
+        """Add row to table"""
         self.table.add_row(
             section_name,
             str(nbr),
@@ -81,10 +83,12 @@ class AuditQuestionTable:
             "Yes" if question.response else "No",
         )
 
-    def add_section(self):
+    def add_section(self) -> None:
+        """Add section"""
         self.table.add_section()
 
-    def print_table(self):
+    def print_table(self) -> None:
+        """Print table"""
         console = Console()
         console.print(self.table)
 
