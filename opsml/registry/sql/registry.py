@@ -208,7 +208,7 @@ class CardRegistry:
             )
         )
 
-        return registry(table_name=registry_name)
+        return registry(registry_type=registry_name)
 
     def list_cards(
         self,
@@ -265,7 +265,7 @@ class CardRegistry:
         if team is not None:
             team = team.lower()
 
-        if all(var is None for var in [name, team, version, uid, tags]):
+        if all(not bool(var) for var in [name, team, version, uid, tags]):
             limit = limit or 50
 
         card_list = self._registry.list_cards(
