@@ -69,8 +69,7 @@ import lightgbm as lgb
 
 
 # opsml
-from opsml.registry.data.splitter import DataSplit
-from opsml.registry import ModelCard
+from opsml.registry import ModelCard, DataSplit
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
 from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings, S3StorageClientSettings
@@ -117,6 +116,9 @@ def cleanup() -> None:
 
     # delete test image dir
     shutil.rmtree("test_image_dir", ignore_errors=True)
+
+    # delete blah directory
+    shutil.rmtree("blah", ignore_errors=True)
 
 
 class Blob(BaseModel):
@@ -323,6 +325,7 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         registries.pipeline = ClientCardRegistry(registry_name="pipeline")
         registries.run = ClientCardRegistry(registry_name="run")
         registries.project = ClientCardRegistry(registry_name="project")
+        registries.audit = ClientCardRegistry(registry_name="audit")
 
         return registries
 
@@ -487,6 +490,7 @@ def db_registries():
     data_registry = CardRegistry(registry_name="data")
     run_registry = CardRegistry(registry_name="run")
     pipeline_registry = CardRegistry(registry_name="pipeline")
+    audit_registry = CardRegistry(registry_name="audit")
 
     initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
     # tables are created when settings are called.
@@ -500,6 +504,7 @@ def db_registries():
         "model": model_registry,
         "run": run_registry,
         "pipeline": pipeline_registry,
+        "audit": audit_registry,
     }
 
     cleanup()

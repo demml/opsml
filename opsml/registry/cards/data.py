@@ -29,6 +29,7 @@ from opsml.registry.sql.records import (
     DataRegistryRecord,
     RegistryRecord,
 )
+from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -37,6 +38,7 @@ storage_client = settings.storage_client
 ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
 
 
+@auditable
 class DataCard(ArtifactCard):
     """Create a DataCard from your data.
 

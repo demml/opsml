@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Union
+from typing import Union, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
@@ -21,6 +21,8 @@ from opsml.app.routes.pydantic_models import (
     DeleteCardRequest,
     VersionRequest,
     VersionResponse,
+    NamesResponse,
+    TeamsResponse,
 )
 from opsml.app.routes.utils import replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
@@ -37,25 +39,76 @@ def check_uid(
     payload: UidExistsRequest = Body(...),
 ) -> UidExistsResponse:
     """Checks if a uid already exists in the database"""
-    table_for_registry = payload.table_name.split("_")[1].lower()
-    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+    registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
 
     if registry._registry.check_uid(
         uid=payload.uid,
-        table_to_check=payload.table_name,
+        registry_type=registry.registry_type,
     ):
         return UidExistsResponse(uid_exists=True)
     return UidExistsResponse(uid_exists=False)
 
 
-@router.post("/cards/version", response_model=Union[VersionResponse, UidExistsResponse], name="version")
+@router.get("/cards/teams", response_model=TeamsResponse, name="teams")
+def card_teams(
+    request: Request,
+    registry_type: str,
+) -> TeamsResponse:
+    """Get all teams associated with a registry
+
+    Args:
+        request:
+            FastAPI request object
+        registry_type:
+            Type of registry
+
+    Returns:
+        `TeamsResponse`
+    """
+    registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+
+    teams = registry._registry.unique_teams
+
+    return TeamsResponse(teams=teams)
+
+
+@router.get("/cards/names", response_model=NamesResponse, name="names")
+def card_names(
+    request: Request,
+    registry_type: str,
+    team: Optional[str] = None,
+):
+    """Get all names associated with a registry
+
+    Args:
+        request:
+            FastAPI request object
+        registry_type:
+            Type of registry
+        team:
+            Team to filter names by
+
+    Returns:
+        `NamesResponse`
+    """
+
+    registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+    names = registry._registry.get_unique_card_names(team=team)
+
+    return NamesResponse(names=names)
+
+
+@router.post(
+    "/cards/version",
+    response_model=Union[VersionResponse, UidExistsResponse],
+    name="version",
+)
 def set_version(
     request: Request,
     payload: VersionRequest = Body(...),
 ) -> Union[VersionResponse, UidExistsResponse]:
     """Sets the version for an artifact card"""
-    table_for_registry = payload.table_name.split("_")[1].lower()
-    registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+    registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
 
     try:
         version = registry._registry.set_version(
@@ -83,8 +136,7 @@ def list_cards(
     """Lists a Card"""
 
     try:
-        table_for_registry = payload.table_name.split("_")[1].lower()
-        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
         logger.info("Listing cards with request: {}", payload.model_dump())
 
         cards = registry.list_cards(
@@ -131,8 +183,7 @@ def create_card(
     """Adds Card record to a registry"""
 
     try:
-        table_for_registry = payload.table_name.split("_")[1].lower()
-        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
 
         logger.info("Creating card: {}", payload.model_dump())
 
@@ -159,8 +210,7 @@ def update_card(
     """Updates a specific artifact card"""
 
     try:
-        table_for_registry = payload.table_name.split("_")[1].lower()
-        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
         registry._registry.update_card_record(card=payload.card)
 
         logger.info("Updated card: {}", payload.model_dump())
@@ -187,8 +237,7 @@ def delete_card(
     """Deletes a specific artifact card"""
 
     try:
-        table_for_registry = payload.table_name.split("_")[1].lower()
-        registry: CardRegistry = getattr(request.app.state.registries, table_for_registry)
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
         registry._registry.delete_card_record(card=payload.card)
         logger.info("Deleted card: {}", payload.model_dump())
 

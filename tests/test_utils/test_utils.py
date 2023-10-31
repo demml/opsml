@@ -6,8 +6,6 @@ from opsml.helpers import gcp_utils
 from google.oauth2.service_account import Credentials
 import json
 
-from opsml.helpers.gcp_utils import GCPClient
-
 
 def test_find_path():
     path = utils.FindPath.find_filepath("requirements.txt")
@@ -57,6 +55,10 @@ def test_gcs_storage_client_integration(mock_gcs):
         gcs_bucket="test_bucket",
         prefix="test_upload/",
     )
+
+    _ = storage_client.download_object_from_uri(gcs_uri="gs://test_bucket/test_upload/test.csv")
+
+    storage_client.delete_object_from_uri(gcs_uri="gs://test_bucket/test_upload/test.csv")
 
     for blob in blobs:
         assert path in blob.name
