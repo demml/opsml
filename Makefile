@@ -66,6 +66,13 @@ test.unit:
 		--cov-report term \
 		--junitxml=./results.xml
 
+test.unit.missing:
+	poetry run pytest \
+		--cov \
+		--cov-fail-under=0 \
+		--cov-report html:coverage \
+		--cov-report term-missing \
+		--junitxml=./results.xml
 
 test.doc_examples:
 	poetry run pytest tests/test_docs

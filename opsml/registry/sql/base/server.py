@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
+from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.query_engine import QueryEngine, log_card_change  # type: ignore
 from opsml.registry.sql.semver import SemVerSymbols, CardVersion, VersionType, SemVerUtils, SemVerRegistryValidator
@@ -14,14 +15,27 @@ logger = ArtifactLogger.get_logger()
 
 
 class ServerRegistry(SQLRegistryBase):
-    def __init__(self, table_name: str):
-        super().__init__(table_name)
+    def __init__(self, registry_type: str):
+        super().__init__(registry_type)
         self.engine = QueryEngine()
 
-    def _create_table_if_not_exists(self):
-        self._table.__table__.create(
-            bind=self.engine.engine,
-            checkfirst=True,
+    @property
+    def unique_teams(self) -> List[str]:
+        """Returns a list of unique teams"""
+        return self.engine.get_unique_teams(table=self._table)
+
+    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+        """Returns a list of unique card names
+        Args:
+            team:
+                Team to filter by
+        Returns:
+            List of unique card names
+        """
+
+        return self.engine.get_unique_card_names(
+            table=self._table,
+            team=team,
         )
 
     def _get_versions_from_db(self, name: str, team: str, version_to_search: Optional[str] = None) -> List[str]:
@@ -169,10 +183,10 @@ class ServerRegistry(SQLRegistryBase):
 
         return records
 
-    def check_uid(self, uid: str, table_to_check: str) -> bool:
+    def check_uid(self, uid: str, registry_type: str) -> bool:
         result = self.engine.get_uid(
             uid=uid,
-            table_to_check=table_to_check,
+            table_to_check=RegistryTableNames[registry_type.upper()].value,
         )
         return bool(result)
 
