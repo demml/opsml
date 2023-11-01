@@ -1,8 +1,10 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
+# L# Copyright (c) Shipt, Inc.
+# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, Tuple, cast
-
+from typing import Any, Dict, Optional, Tuple, cast, List
+from functools import cached_property
 import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import api_routes, ApiClient
@@ -15,19 +17,63 @@ logger = ArtifactLogger.get_logger()
 
 
 class ClientRegistry(SQLRegistryBase):
-    def __init__(self, table_name: str):
-        super().__init__(table_name)
+    def __init__(self, registry_type: str):
+        super().__init__(registry_type)
 
         self._session = self._get_session()
+        self._registry_type = registry_type
+
+    @cached_property
+    def table_name(self) -> str:
+        """Returns a list of unique teams"""
+        data = self._session.get_request(
+            route=api_routes.TABLE_NAME,
+            params={"registry_type": self.registry_type},
+        )
+
+        return data["table_name"]
+
+    @property
+    def unique_teams(self) -> List[str]:
+        """Returns a list of unique teams"""
+        data = self._session.get_request(
+            route=api_routes.TEAM_CARDS,
+            params={"registry_type": self.registry_type},
+        )
+
+        return data["teams"]
+
+    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+        """Returns a list of unique card names
+
+        Args:
+            team:
+                Team to filter by
+
+        Returns:
+            List of unique card names
+        """
+
+        params = {"registry_type": self.registry_type}
+
+        if team is not None:
+            params["team"] = team
+
+        data = self._session.get_request(
+            route=api_routes.NAME_CARDS,
+            params=params,
+        )
+
+        return data["names"]
 
     def _get_session(self) -> ApiClient:
         """Gets the requests session for connecting to the opsml api"""
         return cast(ApiClient, settings.request_client)
 
-    def check_uid(self, uid: str, table_to_check: str) -> bool:
+    def check_uid(self, uid: str, registry_type: str) -> bool:
         data = self._session.post_request(
             route=api_routes.CHECK_UID,
-            json={"uid": uid, "table_name": table_to_check},
+            json={"uid": uid, "registry_type": registry_type},
         )
 
         return bool(data.get("uid_exists"))
@@ -53,7 +99,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version_to_send,
                 "version_type": version_type,
-                "table_name": self.table_name,
+                "registry_type": self.registry_type,
                 "pre_tag": pre_tag,
                 "build_tag": build_tag,
             },
@@ -106,7 +152,7 @@ class ClientRegistry(SQLRegistryBase):
                 "max_date": max_date,
                 "limit": limit,
                 "tags": tags,
-                "table_name": self.table_name,
+                "registry_type": self.registry_type,
                 "ignore_release_candidates": ignore_release_candidates,
             },
         )
@@ -119,7 +165,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.CREATE_CARD,
             json={
                 "card": card,
-                "table_name": self.table_name,
+                "registry_type": self.registry_type,
             },
         )
 
@@ -133,7 +179,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.UPDATE_CARD,
             json={
                 "card": card,
-                "table_name": self.table_name,
+                "registry_type": self.registry_type,
             },
         )
 
@@ -147,7 +193,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.DELETE_CARD,
             json={
                 "card": card,
-                "table_name": self.table_name,
+                "registry_type": self.registry_type,
             },
         )
 
