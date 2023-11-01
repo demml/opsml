@@ -38,7 +38,7 @@ class VersionRequest(BaseModel):
     team: str
     version: Optional[CardVersion] = None
     version_type: VersionType
-    registry_type: str
+    table_name: str
     pre_tag: str = "rc"
     build_tag: str = "build"
 
@@ -49,7 +49,7 @@ class VersionResponse(BaseModel):
 
 class UidExistsRequest(BaseModel):
     uid: str
-    registry_type: str
+    table_name: str
 
 
 class UidExistsResponse(BaseModel):
@@ -65,7 +65,7 @@ class ListCardRequest(BaseModel):
     limit: Optional[int] = None
     tags: Optional[Dict[str, str]] = None
     ignore_release_candidates: bool = False
-    registry_type: str
+    table_name: str
 
     @model_validator(mode="before")
     def update_limit(cls, env_vars: Dict[str, Optional[Union[str, int]]]):
@@ -80,7 +80,7 @@ class ListCardResponse(BaseModel):
 
 class AddCardRequest(BaseModel):
     card: Dict[str, Any]
-    registry_type: str
+    table_name: str
 
 
 class AddCardResponse(BaseModel):
@@ -89,12 +89,12 @@ class AddCardResponse(BaseModel):
 
 class UpdateCardRequest(BaseModel):
     card: Dict[str, Any]
-    registry_type: str
+    table_name: str
 
 
 class DeleteCardRequest(BaseModel):
     card: Dict[str, Any]
-    registry_type: str
+    table_name: str
 
 
 class UpdateCardResponse(BaseModel):
@@ -110,7 +110,7 @@ class QuerycardRequest(BaseModel):
     team: Optional[str] = None
     version: Optional[str] = None
     uid: Optional[str] = None
-    registry_type: str
+    table_name: str
 
 
 class QuerycardResponse(BaseModel):
@@ -154,16 +154,8 @@ class RegisterModelRequest(BaseModel):
     )
 
 
-class TeamsResponse(BaseModel):
-    teams: List[str] = []
-
-
-class TableNameResponse(BaseModel):
-    table_name: str
-
-
-class NamesResponse(BaseModel):
-    names: List[str] = []
+class DownloadFileRequest(BaseModel):
+    read_path: Optional[str] = None
 
 
 class ListFileRequest(BaseModel):

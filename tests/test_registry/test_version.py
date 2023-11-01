@@ -73,13 +73,3 @@ def test_card_version_fail():
 
     with pytest.raises(IndexError) as ve:
         assert version.patch == "0"
-
-
-def test_tags():
-    version = SemVerUtils.add_tags(
-        version="1.0.0",
-        pre_tag="rc",
-        build_tag="build",
-    )
-
-    assert version == "1.0.0-rc+build"

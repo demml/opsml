@@ -28,7 +28,6 @@ from opsml.registry.sql.records import (
     ModelRegistryRecord,
     RegistryRecord,
 )
-from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.utils.settings import settings
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -39,7 +38,6 @@ storage_client = settings.storage_client
 SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
 
 
-@auditable
 class ModelCard(ArtifactCard):
     """Create a ModelCard from your trained machine learning model.
     This Card is used in conjunction with the ModelCardCreator class.
