@@ -231,6 +231,9 @@ class StorageClient:
     def delete(self, read_path: str):
         raise ValueError("Storage class does not implement a delete method")
 
+    def _make_path(self, folder_path: str):
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
+
     def post_process(self, storage_uri: str) -> str:
         """Method that does post processing. Mainly used for mlflow work"""
         return storage_uri
@@ -378,7 +381,7 @@ class LocalStorageClient(StorageClient):
             extra_path=extra_path,
         )
 
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        self._make_path("/".join(save_path.split("/")[:-1]))
 
         return save_path, filename
 
@@ -413,10 +416,11 @@ class LocalStorageClient(StorageClient):
         return write_path
 
     def list_files(self, storage_uri: str) -> FilePath:
-        path = Path(storage_uri)
-
-        if path.is_dir():
-            paths = [str(p) for p in path.rglob("*")]
+        if os.path.isdir(storage_uri):
+            paths = []
+            for path, _, files in os.walk(storage_uri):
+                for filename in files:
+                    paths.append(os.path.join(path, filename))
             return paths
 
         return [storage_uri]
@@ -441,23 +445,15 @@ class LocalStorageClient(StorageClient):
         return shutil.copyfile(read_path, write_path)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
-        local_path = Path(lpath)
-        read_path = Path(rpath)
+        files = kwargs.get("files", None)
 
-        # check if files have been passed (used with downloading artifacts)
-        files = kwargs.get("files", [])
         if len(files) == 1:
-            filepath = Path(files[0])
+            filename = os.path.basename(files[0])
 
-            if local_path.is_dir():
-                lpath = str(local_path / filepath.name)
-            return self.copy(read_path=str(filepath), write_path=lpath)
+            if os.path.isdir(lpath):
+                lpath = os.path.join(lpath, filename)
 
-        # check if trying to copy single file to directory
-        if read_path.is_file():
-            lpath = str(local_path / read_path.name)
-            return self.copy(read_path=rpath, write_path=lpath)
-
+            return self.copy(read_path=files[0], write_path=lpath)
         return self.copy(read_path=rpath, write_path=lpath)
 
     def delete(self, read_path: str) -> None:
@@ -599,17 +595,15 @@ class ApiStorageClient(LocalStorageClient):
         recursive: bool = False,
     ) -> str:
         for file_ in files:
-            path = Path(file_)
-            read_dir = str(path.parents[0])
-
-            if path.is_dir():
-                continue  # folder name path gets added to files list when use local storage client
+            read_dir = os.path.dirname(file_)
+            local_dir = read_dir.replace(rpath, lpath)
+            filename = os.path.basename(file_)
 
             self.api_client.stream_download_file_request(
                 route=ApiRoutes.DOWNLOAD_FILE,
-                local_dir=read_dir.replace(rpath, lpath),
+                local_dir=local_dir,
                 read_dir=read_dir,
-                filename=path.name,
+                filename=filename,
             )
 
         return lpath
@@ -879,21 +873,22 @@ class MlflowStorageClient(StorageClient):
 
         return save_path, filename
 
-    # def swap_proxy_root(self, rpath: str) -> str:
-    #    """Swaps the realpath with the expected mlflow proxy path"""
-    #    if "http" in self.mlflow_client.tracking_uri:
-    #        path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
-    #
-    #        mlflow_path = os.path.normpath(
-    #            os.path.join(
-    #                self.artifact_path,
-    #                path_to_file,
-    #            )
-    #        )
-    #
-    #        return mlflow_path
-    #
-    #    return rpath
+    def swap_proxy_root(self, rpath: str) -> str:
+        """Swaps the realpath with the expected mlflow proxy path"""
+
+        if "http" in self.mlflow_client.tracking_uri:
+            path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
+
+            mlflow_path = os.path.normpath(
+                os.path.join(
+                    self.artifact_path,
+                    path_to_file,
+                )
+            )
+
+            return mlflow_path
+
+        return rpath
 
     @staticmethod
     def swap_mlflow_root(base_path_prefix: str, rpath: str) -> str:

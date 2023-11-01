@@ -1,18 +1,19 @@
-# pylint: disable=protected-access
-# Copyright (c) Shipt, Inc.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
-import textwrap
+import os
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardInfo, CardType, RegistryType
-from opsml.registry.sql.semver import VersionType
+from opsml.registry.cards import (
+    ArtifactCard,
+    DataCard,
+    ModelCard,
+)
+from opsml.registry.sql.records import DataRegistryRecord
+from opsml.registry.cards.types import CardInfo
 from opsml.registry.sql.base.client import ClientRegistry
+from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.sql.base.registry_base import SQLRegistryBase
 
 
 logger = ArtifactLogger.get_logger()
@@ -21,175 +22,137 @@ logger = ArtifactLogger.get_logger()
 SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
+# Separate module to force use of ClientRegistry for some tests
 Registry = ClientRegistry
 
 
 class DataCardRegistry(Registry):
-    @property
-    def registry_type(self) -> str:
-        return RegistryType.DATA.value
+    # specific update logic
+    def update_card(self, card: DataCard) -> None:
+        """Updates an existing data card in the data registry
+
+        Args:
+            data_card (DataCard): Existing data card record
+
+        Returns:
+            None
+        """
+
+        record = DataRegistryRecord(**card.model_dump())
+        self.update_card_record(card=record.model_dump())
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name.lower() == RegistryType.DATA.value
+        return registry_name in RegistryTableNames.DATA.value
 
 
 class ModelCardRegistry(Registry):
-    @property
-    def registry_type(self) -> str:
-        return RegistryType.MODEL.value
+    def _get_data_table_name(self) -> str:
+        return RegistryTableNames.DATA.value
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
+        table_to_check = self._get_data_table_name()
+        exists = self.check_uid(uid=uid, table_to_check=table_to_check)
         if not exists:
-            raise ValueError("ModelCard must be associated with a valid DataCard uid")
+            raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
     def _has_datacard_uid(self, uid: Optional[str]) -> bool:
         return bool(uid)
 
+    # custom registration
     def register_card(
         self,
         card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
-        pre_tag: str = "rc",
-        build_tag: str = "build",
+        save_path: Optional[str] = None,
     ) -> None:
         """
         Adds new record to registry.
 
         Args:
             card:
-                Card to register
+                card to register
             version_type:
                 Version type for increment. Options are "major", "minor" and
                 "patch". Defaults to "minor"
-            pre_tag:
-                pre-release tag
-            build_tag:
-                build tag
+            save_path:
+                Blob path to save card artifacts too. This path SHOULD NOT
+                include the base prefix (e.g. "gs://my_bucket" - this prefix is
+                already inferred using either "OPSML_TRACKING_URI" or
+                "OPSML_STORAGE_URI" env variables. In addition, save_path should
+                specify a directory.
         """
 
-        if card.uid is not None:
-            logger.info(
-                textwrap.dedent(
-                    f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
-                existing card, please use the update_card method.
-                """
-                )
-            )
+        model_card = cast(ModelCard, card)
 
-        else:
-            model_card = cast(ModelCard, card)
+        if not self._has_datacard_uid(uid=model_card.datacard_uid):
+            raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
-            if not self._has_datacard_uid(uid=model_card.datacard_uid):
-                raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
+        if model_card.datacard_uid is not None:
+            self._validate_datacard_uid(uid=model_card.datacard_uid)
 
-            if model_card.datacard_uid is not None:
-                self._validate_datacard_uid(uid=model_card.datacard_uid)
-
-            super().register_card(
-                card=card,
-                version_type=version_type,
-                pre_tag=pre_tag,
-                build_tag=build_tag,
-            )
+        return super().register_card(card=card, version_type=version_type)
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name.lower() == RegistryType.MODEL.value
+        return registry_name in RegistryTableNames.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
-    @property
-    def registry_type(self) -> str:
-        return RegistryType.RUN.value
-
     @staticmethod
     def validate(registry_name: str):
-        return registry_name.lower() == RegistryType.RUN.value
+        return registry_name in RegistryTableNames.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
-    @property
-    def registry_type(self) -> str:
-        return RegistryType.PIPELINE.value
-
     @staticmethod
     def validate(registry_name: str):
-        return registry_name.lower() == RegistryType.PIPELINE.value
-
-    def delete_card(self, card: ArtifactCard) -> None:
-        raise ValueError("PipelineCardRegistry does not support delete_card")
+        return registry_name in RegistryTableNames.PIPELINE.value
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
-    @property
-    def registry_type(self) -> str:
-        return RegistryType.PROJECT.value
-
     @staticmethod
     def validate(registry_name: str):
-        return registry_name.lower() == RegistryType.PROJECT.value
-
-    def load_card(
-        self,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        uid: Optional[str] = None,
-        ignore_release_candidates: bool = False,
-    ) -> ArtifactCard:
-        raise ValueError("ProjectCardRegistry does not support load_card")
-
-    def delete_card(self, card: ArtifactCard) -> None:
-        raise ValueError("ProjectCardRegistry does not support delete_card")
-
-
-class AuditCardRegistry(Registry):  # type:ignore
-    @property
-    def registry_type(self) -> str:
-        return RegistryType.AUDIT.value
-
-    def validate_uid(self, uid: str, registry_type: str) -> bool:
-        return self.check_uid(uid=uid, registry_type=registry_type)
-
-    @staticmethod
-    def validate(registry_name: str):
-        return registry_name.lower() == RegistryType.AUDIT.value
+        return registry_name in RegistryTableNames.PROJECT.value
 
 
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
-        """
-        Interface for connecting to any of the ArtifactCard registries
+        """Interface for connecting to any of the ArtifactCard registries
 
         Args:
-            registry_name:
-                Name of the registry to connect to. Options are "model", "data" and "run".
+            registry_name (str): Name of the registry to connect to. Options are
+            "pipeline", "model", "data" and "experiment".
 
         Returns:
             Instantiated connection to specific Card registry
 
         Example:
-            data_registry = CardRegistry(registry_name="data")
+
+            # With connection type
+            cloud_sql = CloudSQLConnection(...)
+            data_registry = CardRegistry(registry_name="data", connection_client=cloud_sql)
+
+            # With connection client
+            data_registry = CardRegistry(registry_name="data", connection_type="gcp")
+
         """
 
-        self._registry = self._set_registry(registry_name=registry_name)
+        self._registry: SQLRegistryBase = self._set_registry(registry_name=registry_name)
         self.table_name = self._registry._table.__tablename__
 
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
 
         Args:
-            registry_name: Name of the registry (pipeline, model, data, experiment)
+            registry_name (str): Name of the registry (pipeline, model, data, experiment)
 
         Returns:
             SQL Registry
         """
 
+        registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
             for registry in Registry.__subclasses__()
@@ -198,7 +161,7 @@ class CardRegistry:
             )
         )
 
-        return registry(registry_type=registry_name)
+        return registry(table_name=registry_name)
 
     def list_cards(
         self,
@@ -231,12 +194,6 @@ class CardRegistry:
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
-            as_dataframe:
-                If True, returns a pandas dataframe. If False, returns a list of records
-            info:
-                CardInfo object. If present, the info object takes precedence
-            ignore_release_candidates:
-                If True, ignores release candidates
 
         Returns:
             pandas dataframe of records or list of dictionaries
@@ -254,9 +211,6 @@ class CardRegistry:
 
         if team is not None:
             team = team.lower()
-
-        if all(not bool(var) for var in [name, team, version, uid, tags]):
-            limit = limit or 50
 
         card_list = self._registry.list_cards(
             uid=uid,
@@ -278,113 +232,79 @@ class CardRegistry:
         self,
         name: Optional[str] = None,
         uid: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
         version: Optional[str] = None,
-        info: Optional[CardInfo] = None,
-        ignore_release_candidates: bool = False,
     ) -> ArtifactCard:
         """Loads a specific card
 
         Args:
-            name:
-                Optional Card name
-            uid:
-                Unique identifier for card. If present, the uid takes
-                precedence.
-            tags:
-                Optional tags associated with model.
-            version:
-                Optional version number of existing data. If not specified, the
-                most recent version will be used
-            info:
-                Optional CardInfo object. If present, the info takes precedence
-            ignore_release_candidates:
-                If True, ignores release candidates
+            name (str): Optional Card name
+            team (str): Optional team associated with card
+            version (int): Optional version number of existing data. If not specified,
+            the most recent version will be used
+            uid (str): Unique identifier for DataCard. If present, the uid takes precedence.
 
         Returns
             ArtifactCard
         """
+        if name is not None:
+            name = name.lower()
+            name = name.replace("_", "-")
 
-        # find better way to do this later
-        if info is not None:
-            name = name or info.name
-            uid = uid or info.uid
-            version = version or info.version
-            tags = tags or info.tags
-
-        return self._registry.load_card(
-            uid=uid,
-            name=name,
-            version=version,
-            tags=tags,
-            ignore_release_candidates=ignore_release_candidates,
-        )
+        return self._registry.load_card(uid=uid, name=name, version=version)
 
     def register_card(
         self,
         card: ArtifactCard,
         version_type: VersionType = VersionType.MINOR,
-        pre_tag: str = "rc",
-        build_tag: str = "build",
+        save_path: Optional[str] = None,
     ) -> None:
         """
-        Adds a new `Card` record to registry. Registration will be skipped if the card already exists.
-
-        Args:
-            card:
-                card to register
-            version_type:
-                Version type for increment. Options are "major", "minor" and
-                "patch". Defaults to "minor".
-            pre_tag:
-                pre-release tag to add to card version
-            build_tag:
-                build tag to add to card version
-        """
-
-        if card.uid is not None and card.version is not None:
-            logger.info(
-                textwrap.dedent(
-                    f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
-                existing card, please use the update_card method.
-                """
-                )
-            )
-
-        else:
-            self._registry.register_card(
-                card=card,
-                version_type=version_type,
-                pre_tag=pre_tag,
-                build_tag=build_tag,
-            )
-
-    def update_card(self, card: ArtifactCard) -> None:
-        """
-        Update an artifact card based on current registry
+        Adds new record to registry.
 
         Args:
             card:
                 Card to register
+            version_type:
+                Version type for increment. Options are "major", "minor" and "patch". Defaults to "minor"
+            save_path:
+                Blob path to save card artifacts too. This path SHOULD NOT
+                include the base prefix (e.g. "gs://my_bucket") - this prefix is
+                already inferred using either "OPSML_TRACKING_URI" or
+                "OPSML_STORAGE_URI" env variables. In addition, save_path should
+                specify a directory.
         """
+
+        self._registry.register_card(
+            card=card,
+            version_type=version_type,
+        )
+
+    def update_card(
+        self,
+        card: ArtifactCard,
+    ) -> None:
+        """Update and artifact card (DataCard only) based on current registry
+
+        Args:
+            card (DataCard or ModelCard): Card to register
+
+        Returns:
+            None
+        """
+
         return self._registry.update_card(card=card)
 
     def query_value_from_card(self, uid: str, columns: List[str]) -> Dict[str, Any]:
-        """
-        Query column values from a specific Card
+        """Query column values from a specific Card
 
         Args:
-            uid:
-                Uid of Card
-            columns:
-                List of columns to query
+            uid (str): Uid of Card
+            columns (List[str]): List of columns to query
 
         Returns:
             Dictionary of column, values pairs
         """
-        results = self._registry.list_cards(uid=uid)[0]
+        results = self._registry.list_cards(uid=uid)[0]  # pylint: disable=protected-access
         return {col: results[col] for col in columns}
 
     def delete_card(self, card: ArtifactCard) -> None:
@@ -396,19 +316,3 @@ class CardRegistry:
                 Card to delete
         """
         return self._registry.delete_card(card)
-
-
-class CardRegistries:
-    def __init__(self):
-        """Instantiates class that contains all registries"""
-        self.data = CardRegistry(registry_name=CardType.DATACARD.value)
-        self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
-        self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
-        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
-        self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
-        self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value)
-
-    def set_storage_client(self, storage_client: StorageClientType):
-        for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
-            registry: CardRegistry = getattr(self, attr)
-            registry._registry.storage_client = storage_client

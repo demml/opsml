@@ -75,8 +75,7 @@ def compare_data_profile(
 
     profiles = []
 
-    # make mypy happy
-    if payload.uids is not None and bool(payload.uids):
+    if payload.uids is not None:
         for uid in payload.uids:
             datacard = cast(DataCard, registry.load_card(uid=uid))
 
@@ -88,7 +87,7 @@ def compare_data_profile(
                     detail=f"No data profile detected for {datacard.uid}",
                 )
 
-    elif payload.versions is not None and bool(payload.versions):
+    elif payload.versions is not None:
         for version in payload.versions:
             datacard = cast(
                 DataCard,

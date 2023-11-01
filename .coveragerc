@@ -6,6 +6,3 @@ omit =
     */tmp/*
     *opsml/helpers/settings.py
     */opt/*
-    *opsml/registry/sql/migration/*
-    *opsml/app/core/middleware.py 
-    *opsml/app/core/initialize_mlflow.py

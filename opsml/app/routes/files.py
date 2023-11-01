@@ -13,6 +13,7 @@ from streaming_form_data.validators import MaxSizeValidator
 
 from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
+    DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
     DeleteFileResponse,
@@ -103,27 +104,28 @@ async def upload_file(request: Request):
     }
 
 
-@router.get("/files/download", name="download_file")
+@router.post("/files/download", name="download_file")
 def download_file(
     request: Request,
-    read_path: str,
+    payload: DownloadFileRequest,
 ) -> StreamingResponse:
     """Downloads a file
 
     Args:
         request:
             request object
-        read_path:
-            path to file
+        payload:
+            `DownloadFileRequest`
 
     Returns:
         Streaming file response
     """
+
     try:
         storage_client = request.app.state.storage_client
         return StreamingResponse(
             storage_client.iterfile(
-                file_path=read_path,
+                file_path=payload.read_path,
                 chunk_size=CHUNK_SIZE,
             ),
             media_type="application/octet-stream",
