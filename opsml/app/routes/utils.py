@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict
-from pathlib import Path
+
 from streaming_form_data.targets import FileTarget
 
 from opsml.helpers.logging import ArtifactLogger
@@ -76,7 +76,7 @@ class ExternalFileTarget(FileTarget):
 
     def _create_base_path(self):
         if isinstance(self.storage_client, LocalStorageClient):
-            Path(self.write_path).mkdir(parents=True, exist_ok=True)
+            self.storage_client._make_path(folder_path=self.write_path)  # pylint: disable=protected-access
 
     def on_start(self):
         self._fd = self.storage_client.open(self.filepath, self._mode)

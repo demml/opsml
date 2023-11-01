@@ -17,9 +17,6 @@ class ApiRoutes:
     CHECK_UID = "cards/uid"
     VERSION = "cards/version"
     LIST_CARDS = "cards/list"
-    TEAM_CARDS = "cards/teams"
-    NAME_CARDS = "cards/names"
-    TABLE_NAME = "registry/table"
     SETTINGS = "settings"
     CREATE_CARD = "cards/create"
     UPDATE_CARD = "cards/update"
@@ -93,11 +90,8 @@ class ApiClient:
         raise ValueError(f"""Failed to to make server call for post request Url: {route}, {detail}""")
 
     @retry(reraise=True, stop=stop_after_attempt(3))
-    def get_request(self, route: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-        response = self.client.get(url=f"{self._base_url}/{route}", params=params)
-
-        print(f"{self._base_url}/{route}")
-        print(response.__dict__)
+    def get_request(self, route: str) -> Dict[str, Any]:
+        response = self.client.get(url=f"{self._base_url}/{route}")
 
         if response.status_code == 200:
             return response.json()
@@ -148,8 +142,9 @@ class ApiClient:
         read_path = os.path.join(read_dir, filename)
         with open(os.path.join(local_dir, filename), "wb") as local_file:
             with self.client.stream(
-                method="GET",
-                url=f"{self._base_url}/{route}?read_path={read_path}",
+                method="POST",
+                url=f"{self._base_url}/{route}",
+                json={"read_path": read_path},
             ) as response:
                 for data in response.iter_bytes():
                     local_file.write(data)

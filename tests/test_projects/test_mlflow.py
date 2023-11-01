@@ -199,7 +199,6 @@ def test_log_artifact(mlflow_project: MlflowProject) -> None:
     proj.download_artifacts(artifact_path="misc", local_path="test_path")
     assert os.path.exists("test_path/misc/test_array.joblib")
     assert os.path.exists("test_path/misc/test.png")
-
     os.remove(filename)
     shutil.rmtree("test_path")  # if assertions pass, this should not fail
     tags = proj.tags

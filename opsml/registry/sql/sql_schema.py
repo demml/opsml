@@ -6,7 +6,7 @@ import uuid
 from enum import Enum
 from typing import Type, Union, cast
 from datetime import date
-from sqlalchemy import BigInteger, Column, String, Boolean
+from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
@@ -23,7 +23,6 @@ class RegistryTableNames(str, Enum):
     RUN = os.getenv("ML_RUN_REGISTRY_NAME", "OPSML_RUN_REGISTRY")
     PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
     PROJECT = os.getenv("ML_PROJECT_REGISTRY_NAME", "OPSML_PROJECT_REGISTRY")
-    AUDIT = os.getenv("ML_AUDIT_REGISTRY_NAME", "OPSML_AUDIT_REGISTRY")
 
 
 @declarative_mixin
@@ -54,8 +53,6 @@ class DataMixin:
     runcard_uid = Column("runcard_uid", String(2048))
     pipelinecard_uid = Column("pipelinecard_uid", String(2048))
     datacard_uri = Column("datacard_uri", String(2048))
-    auditcard_uid = Column("auditcard_uid", String(2048))
-    uris = Column("uris", JSON)
 
 
 class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
@@ -76,7 +73,6 @@ class ModelMixin:
     model_type = Column("model_type", String(512))
     runcard_uid = Column("runcard_uid", String(2048))
     pipelinecard_uid = Column("pipelinecard_uid", String(2048))
-    auditcard_uid = Column("auditcard_uid", String(2048))
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
@@ -98,22 +94,6 @@ class RunMixin:
 
 class RunSchema(Base, BaseMixin, RunMixin):  # type: ignore
     __tablename__ = RegistryTableNames.RUN.value
-
-    def __repr__(self):
-        return f"<SqlMetric({self.__tablename__}"
-
-
-@declarative_mixin
-class AuditMixin:
-    approved = Column("approved", Boolean)
-    audit_uri = Column("audit_uri", String(2048))
-    datacards = Column("datacard_uids", JSON)
-    modelcards = Column("modelcard_uids", JSON)
-    runcards = Column("runcard_uids", JSON)
-
-
-class AuditSchema(Base, BaseMixin, AuditMixin):  # type: ignore
-    __tablename__ = RegistryTableNames.AUDIT.value
 
     def __repr__(self):
         return f"<SqlMetric({self.__tablename__}"
@@ -152,7 +132,6 @@ REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
     RunSchema,
     PipelineSchema,
     ProjectSchema,
-    AuditSchema,
 ]
 
 

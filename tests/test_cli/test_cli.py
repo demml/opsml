@@ -282,7 +282,6 @@ def test_compare_data_profile(
     datacard.create_data_profile()
     api_registries.data.register_card(datacard)
 
-    # test uids
     with tempfile.TemporaryDirectory() as tmpdirname:
         result = runner.invoke(
             app, ["compare-data-profiles", "--uid", datacard.uid, "--uid", datacard.uid, "--write-dir", tmpdirname]
@@ -290,28 +289,12 @@ def test_compare_data_profile(
 
     assert result.exit_code == 0
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        result = runner.invoke(
-            app,
-            [
-                "compare-data-profiles",
-                "--name",
-                datacard.name,
-                "--version",
-                datacard.version,
-                "--version",
-                datacard.version,
-                "--write-dir",
-                tmpdirname,
-            ],
-        )
-    assert result.exit_code == 0
-
     # failure
     with tempfile.TemporaryDirectory() as tmpdirname:
         result = runner.invoke(
             app, ["compare-data-profiles", "--name", datacard.name, "--team", datacard.team, "--write-dir", tmpdirname]
         )
+
     assert result.exit_code == 1
 
     # Not data profile fail
