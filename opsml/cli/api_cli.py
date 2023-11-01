@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient
+from opsml.cli.utils import TRACKING_URI, ApiRoutes, CliApiClient, RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
@@ -165,7 +165,9 @@ def list_cards(
 
     """
 
-    if registry not in ["model", "data", "pipeline", "run"]:
+    registry_name = getattr(RegistryTableNames, registry.upper())
+
+    if registry_name is None:
         raise ValueError(
             f"No registry found. Accepted values are 'model', 'data', 'pipeline', and 'run'. Found {registry}",
             registry,
@@ -184,11 +186,12 @@ def list_cards(
         "limit": limit,
         "max_date": max_date,
         "tags": tags,
-        "registry_type": registry,
+        "table_name": registry_name,
     }
+    print(payload)
     cards = api_client.list_cards(payload=payload)
 
-    table = Table(title=f"{registry} cards")
+    table = Table(title=f"{registry_name} cards")
     table.add_column("Name", no_wrap=True)
     table.add_column("Team")
     table.add_column("Date")
@@ -352,7 +355,7 @@ def compare_data_profiles(
         ```
 
     """
-    if uid is None and not all(bool(val) for val in [name, version]):
+    if uid is None and not all(bool(val) for val in [name, team, version]):
         raise ValueError("A list of versions (with name and team) or uids is required")
 
     payload: Dict[str, Union[str, int, List[str]]] = {

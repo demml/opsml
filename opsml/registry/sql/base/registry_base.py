@@ -8,9 +8,14 @@ from semver import VersionInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.cards.types import RegistryType
-from opsml.registry.cards import ArtifactCard, DataCard, ModelCard, PipelineCard, RunCard, AuditCard
 from opsml.registry.cards.card_deleter import delete_card_artifacts
+from opsml.registry.cards import (
+    ArtifactCard,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    RunCard,
+)
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, VersionType, SemVerUtils
 from opsml.registry.utils.settings import settings
@@ -25,16 +30,15 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
 
 table_name_card_map = {
-    RegistryType.DATA.value: DataCard,
-    RegistryType.MODEL.value: ModelCard,
-    RegistryType.RUN.value: RunCard,
-    RegistryType.PIPELINE.value: PipelineCard,
-    RegistryType.AUDIT.value: AuditCard,
+    RegistryTableNames.DATA.value: DataCard,
+    RegistryTableNames.MODEL.value: ModelCard,
+    RegistryTableNames.RUN.value: RunCard,
+    RegistryTableNames.PIPELINE.value: PipelineCard,
 }
 
 
 def load_card_from_record(
-    registry_type: str,
+    table_name: str,
     record: LoadedRecordType,
 ) -> ArtifactCard:
     """
@@ -42,8 +46,8 @@ def load_card_from_record(
     from backend database
 
     Args:
-        registry_type:
-            Registry type
+        table_name:
+            Name of table
         record:
             Loaded record from backend database
 
@@ -51,13 +55,12 @@ def load_card_from_record(
         `ArtifactCard`
     """
 
-    card = table_name_card_map[registry_type]
-
+    card = table_name_card_map[table_name]
     return card(**record.model_dump())
 
 
 class SQLRegistryBase:
-    def __init__(self, registry_type: str):
+    def __init__(self, table_name: str):
         """
         Base class for SQL Registries to inherit from
 
@@ -66,15 +69,7 @@ class SQLRegistryBase:
                 CardRegistry table name
         """
         self.storage_client = settings.storage_client
-        table_name = RegistryTableNames[registry_type.upper()].value
         self._table = TableSchema.get_table(table_name=table_name)
-
-    @property
-    def unique_teams(self) -> List[str]:
-        raise NotImplementedError
-
-    def get_unique_card_names(self, team: Optional[str] = None):
-        raise NotImplementedError
 
     @property
     def table_name(self) -> str:
@@ -99,11 +94,6 @@ class SQLRegistryBase:
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
-    @property
-    def registry_type(self) -> str:
-        """Registry type"""
-        raise NotImplementedError
-
     def _get_uid(self) -> str:
         """Sets a unique id to be applied to a card"""
         return uuid.uuid4().hex
@@ -125,7 +115,7 @@ class SQLRegistryBase:
                 {self._table.__tablename__}"""
             )
 
-        if self.check_uid(uid=str(card.uid), registry_type=self.registry_type):
+        if self.check_uid(uid=str(card.uid), table_to_check=self.table_name):
             raise ValueError(
                 """This Card has already been registered.
             If the card has been modified try updating the Card in the registry.
@@ -331,7 +321,7 @@ class SQLRegistryBase:
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, table_to_check: str) -> bool:
         raise NotImplementedError
 
     def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -366,13 +356,13 @@ class SQLRegistryBase:
         )
 
         loaded_record = load_record(
-            registry_type=self.registry_type,
+            table_name=self.table_name,
             record_data=record[0],
             storage_client=self.storage_client,
         )
 
         return load_card_from_record(
-            registry_type=self.registry_type,
+            table_name=self.table_name,
             record=loaded_record,
         )
 

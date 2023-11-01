@@ -7,17 +7,8 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, model_validator, ConfigDict
 
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.registry.cards.types import (
-    METRICS,
-    PARAMS,
-    Comment,
-    CardVersion,
-    AuditCardMetadata,
-    ModelCardMetadata,
-    ModelCardUris,
-    DataCardMetadata,
-    RegistryType,
-)
+from opsml.registry.cards.types import METRICS, PARAMS, ModelCardMetadata, ModelCardUris, DataCardMetadata
+from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -44,11 +35,10 @@ class DataRegistryRecord(SaveRecord):
     timestamp: int = get_timestamp()
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    auditcard_uid: Optional[str] = None
     datacard_uri: str
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
+    def set_uris(cls, values):
         metadata = values.get("metadata")
         uris = metadata.get("uris")
 
@@ -57,7 +47,6 @@ class DataRegistryRecord(SaveRecord):
         values["data_type"] = metadata["data_type"]
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
-        values["auditcard_uid"] = metadata["auditcard_uid"]
 
         return values
 
@@ -73,7 +62,6 @@ class ModelRegistryRecord(SaveRecord):
     timestamp: int = get_timestamp()
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
-    auditcard_uid: Optional[str] = None
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
@@ -88,7 +76,6 @@ class ModelRegistryRecord(SaveRecord):
         values["model_type"] = metadata["model_type"]
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
-        values["auditcard_uid"] = metadata["auditcard_uid"]
 
         return values
 
@@ -122,32 +109,12 @@ class ProjectRegistryRecord(BaseModel):
     timestamp: int = get_timestamp()
 
 
-class AuditRegistryRecord(SaveRecord):
-    approved: bool
-    audit_uri: str
-    datacards: List[CardVersion]
-    modelcards: List[CardVersion]
-    runcards: List[CardVersion]
-    timestamp: int = get_timestamp()
-
-    @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
-        values["audit_uri"] = metadata["audit_uri"]
-        values["datacards"] = metadata["datacards"]
-        values["modelcards"] = metadata["modelcards"]
-        values["runcards"] = metadata["runcards"]
-
-        return values
-
-
 RegistryRecord = Union[
     DataRegistryRecord,
     ModelRegistryRecord,
     RunRegistryRecord,
     PipelineRegistryRecord,
     ProjectRegistryRecord,
-    AuditRegistryRecord,
 ]
 
 
@@ -163,7 +130,7 @@ class LoadRecord(BaseModel):
     storage_client: Optional[StorageClientType] = None
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
+    def validate_table(table_name: str) -> bool:
         raise NotImplementedError
 
 
@@ -186,7 +153,6 @@ class LoadedDataRecord(LoadRecord):
             datacard_definition["metadata"] = cls.convert_data_metadata(datacard_definition)
 
         datacard_definition["metadata"]["uris"]["datacard_uri"] = values.get("datacard_uri")
-        datacard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
 
         if datacard_definition["metadata"]["uris"]["profile_uri"] is not None:
             profile_uri = datacard_definition["metadata"]["uris"]["profile_uri"]
@@ -239,8 +205,8 @@ class LoadedDataRecord(LoadRecord):
         return datacard_definition
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.DATA.value
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.DATA.value
 
 
 class LoadedModelRecord(LoadRecord):
@@ -256,10 +222,10 @@ class LoadedModelRecord(LoadRecord):
             values=values,
             storage_client=storage_client,
         )
-        if modelcard_definition.get("metadata") is None:
+
+        if modelcard_definition.get("metadata") is None:  # needed for backward compat
             modelcard_definition["metadata"] = cls.convert_model_metadata(modelcard_definition)
 
-        modelcard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
         modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["metadata"]["model_type"] = values.get("model_type")
         modelcard_definition["storage_client"] = values.get("storage_client")
@@ -297,62 +263,12 @@ class LoadedModelRecord(LoadRecord):
     @classmethod
     def convert_model_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
         """This classmethod is used for backward compatibility"""
+
         return ModelCardMetadata(**card_def).model_dump()
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.MODEL.value
-
-
-class LoadedAuditRecord(LoadRecord):
-    approved: bool
-    audit: Dict[str, Dict[int, Dict[str, Optional[str]]]]
-    comments: List[Comment]
-    metadata: AuditCardMetadata
-
-    @model_validator(mode="before")
-    def load_audit_attr(cls, values) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
-
-        audit = cls._load_audit(
-            audit_uri=values.get("audit_uri"),
-            storage_client=storage_client,
-        )
-        audit["metadata"]["audit_uri"] = values.get("audit_uri")
-
-        return audit
-
-    @classmethod
-    def _load_audit(
-        cls,
-        audit_uri: str,
-        storage_client: StorageClientType,
-    ) -> Dict[str, Any]:
-        """Loads a audit artifact from an audit uri
-
-        Args:
-            audit_uri:
-                URI to audit artifact
-            storage_client:
-                Storage client to use for loading
-
-        Returns:
-            Audit dictionary
-        """
-
-        storage_spec = ArtifactStorageSpecs(save_path=audit_uri)
-
-        storage_client.storage_spec = storage_spec
-        audit_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
-            artifact_type=ARBITRARY_ARTIFACT_TYPE,
-        )
-
-        return audit_definition
-
-    @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.AUDIT.value
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.MODEL.value
 
 
 class LoadedRunRecord(LoadRecord):
@@ -404,8 +320,8 @@ class LoadedRunRecord(LoadRecord):
         return runcard_definition
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.RUN.value
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.RUN.value
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -416,8 +332,8 @@ class LoadedPipelineRecord(LoadRecord):
     runcard_uids: Optional[List[str]] = None
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.PIPELINE.value
+    def validate_table(table_name: str) -> bool:
+        return table_name == RegistryTableNames.PIPELINE.value
 
 
 LoadedRecordType = Union[
@@ -425,12 +341,11 @@ LoadedRecordType = Union[
     LoadedDataRecord,
     LoadedRunRecord,
     LoadedModelRecord,
-    LoadedAuditRecord,
 ]
 
 
 def load_record(
-    registry_type: str,
+    table_name: str,
     record_data: Dict[str, Any],
     storage_client: StorageClientType,
 ) -> LoadedRecordType:
@@ -438,7 +353,7 @@ def load_record(
         record
         for record in LoadRecord.__subclasses__()
         if record.validate_table(
-            registry_type=registry_type,
+            table_name=table_name,
         )
     )
 
