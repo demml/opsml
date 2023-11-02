@@ -188,7 +188,7 @@ def list_cards(
         "tags": tags,
         "table_name": registry_name,
     }
-    print(payload)
+
     cards = api_client.list_cards(payload=payload)
 
     table = Table(title=f"{registry_name} cards")
