@@ -23,6 +23,10 @@ def get_storage_settings() -> StorageSettingsResponse:
     if bool(config.STORAGE_URI):
         if not config.is_proxy and "gs://" in config.STORAGE_URI:
             storage_type = StorageSystem.GCS.value
+
+        if not config.is_proxy and "s3://" in config.STORAGE_URI:
+            storage_type = StorageSystem.S3.value
+
         if config.is_proxy:
             # this should setup the api storage client
             storage_type = StorageSystem.API.value

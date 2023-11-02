@@ -1047,3 +1047,10 @@ def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
 
     registry.register_card(card=data_card, version_type="patch")
     assert data_card.version == "4.1.0"
+
+
+def test_list_cards(db_registries: Dict[str, CardRegistry]):
+    data_reg = db_registries["data"]
+
+    cards = data_reg.list_cards(limit=2)
+    assert len(cards) == 2
