@@ -155,7 +155,7 @@ class ServerRegistry(SQLRegistryBase):
             limit=limit,
         )
 
-        if name is not None:
+        if cleaned_name is not None:
             records = self._sort_by_version(records=records)
 
         if version is not None:
