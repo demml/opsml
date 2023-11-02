@@ -90,6 +90,7 @@ class QueryEngine:
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
+        limit: Optional[int] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -141,6 +142,9 @@ class QueryEngine:
 
         query = query.order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
 
+        if limit is not None:
+            query = query.limit(limit)
+
         return query
 
     def _parse_records(self, records: List[Any]) -> List[Dict[str, Any]]:
@@ -172,9 +176,17 @@ class QueryEngine:
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
+        limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         query = self._records_from_table_query(
-            table=table, uid=uid, name=name, team=team, version=version, max_date=max_date, tags=tags
+            table=table,
+            uid=uid,
+            name=name,
+            team=team,
+            version=version,
+            max_date=max_date,
+            tags=tags,
+            limit=limit,
         )
 
         with self.session() as sess:
