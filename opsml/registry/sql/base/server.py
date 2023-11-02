@@ -152,9 +152,11 @@ class ServerRegistry(SQLRegistryBase):
             uid=uid,
             max_date=max_date,
             tags=tags,
+            limit=limit,
         )
 
-        records = self._sort_by_version(records=records)
+        if cleaned_name is not None:
+            records = self._sort_by_version(records=records)
 
         if version is not None:
             if ignore_release_candidates:
@@ -166,7 +168,7 @@ class ServerRegistry(SQLRegistryBase):
         if version is None and ignore_release_candidates:
             records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
 
-        return records[:limit]
+        return records
 
     def check_uid(self, uid: str, table_to_check: str) -> bool:
         result = self.engine.get_uid(

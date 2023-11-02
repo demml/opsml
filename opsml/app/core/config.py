@@ -38,7 +38,7 @@ class OpsmlConfig:
 
     def __init__(self) -> None:
         self._proxy_root = os.environ.get("PROXY_ROOT")
-        self._is_proxy = False
+        self._is_proxy = True
 
     @property
     def proxy_root(self) -> Optional[str]:

@@ -188,7 +188,7 @@ def list_cards(
         "tags": tags,
         "table_name": registry_name,
     }
-    print(payload)
+
     cards = api_client.list_cards(payload=payload)
 
     table = Table(title=f"{registry_name} cards")
@@ -427,7 +427,6 @@ def compare_model_metrics(
     table.add_column("Challenger \nValue", justify="center")
     table.add_column("Challenger \nWin", justify="center")
 
-    # print(Text(report.get("challenger_win", "None")))
     for _, reports in battle_reports.items():
         for report in reports:
             champion_metric = report.get("champion_metric")
