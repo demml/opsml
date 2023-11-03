@@ -32,7 +32,7 @@ class VersionSplitting:
     """
 
     @staticmethod
-    def sqlite(query: Select, table: Type[REGISTRY_TABLES]):
+    def sqlite(query: Select, table: Type[REGISTRY_TABLES]) -> Select:
         return query.add_columns(  # type: ignore[attr-defined]
             sqa_func.cast(sqa_func.substr(table.version, 0, sqa_func.instr(table.version, ".")), Integer).label(
                 "major"
@@ -55,7 +55,7 @@ class VersionSplitting:
         )
 
     @staticmethod
-    def postgres(query: Select, table: Type[REGISTRY_TABLES]):
+    def postgres(query: Select, table: Type[REGISTRY_TABLES]) -> Select:
         return query.add_columns(  # type: ignore[attr-defined]
             sqa_func.cast(sqa_func.split_part(table.version, ".", 1), Integer).label("major"),
             sqa_func.cast(sqa_func.split_part(table.version, ".", 2), Integer).label("minor"),
@@ -63,7 +63,7 @@ class VersionSplitting:
         )
 
     @staticmethod
-    def mysql(query: Select, table: Type[REGISTRY_TABLES]):
+    def mysql(query: Select, table: Type[REGISTRY_TABLES]) -> Select:
         return query.add_columns(  # type: ignore[attr-defined]
             sqa_func.cast(sqa_func.substring_index(table.version, ".", 1), Integer).label("major"),
             sqa_func.cast(
