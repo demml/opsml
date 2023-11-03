@@ -12,7 +12,7 @@ from sqlalchemy.engine.url import make_url
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
-DEFAULT_POOL_SIZE = "5"
+DEFAULT_POOL_SIZE = "10"
 DEFAULT_OVERFLOW = "5"
 
 
@@ -73,6 +73,7 @@ class CloudSQLConnection(BaseSQLConnection):
         super().__init__(tracking_uri, credentials)
 
         # overwrite engine
+
         self._engine = sqlalchemy.create_engine(
             self._sqlalchemy_prefix,
             creator=self._conn,
@@ -113,16 +114,20 @@ class CloudSQLConnection(BaseSQLConnection):
         """Creates the mysql or postgres CloudSQL client"""
         from google.cloud.sql.connector import Connector
 
-        connector = Connector(credentials=self.credentials)
+        connector = Connector(
+            credentials=self.credentials,
+            ip_type=self._ip_type,
+        )
 
-        return connector.connect(
+        conn = connector.connect(
             instance_connection_string=self._connection_name,
             driver=self._python_db_type,
             user=self.connection_parts.username,
             password=self.connection_parts.password,
             db=self.connection_parts.database,
-            ip_type=self._ip_type,
         )
+
+        return conn
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:
