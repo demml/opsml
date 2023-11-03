@@ -18,6 +18,7 @@ from opsml.registry.cards import (
     Description,
 )
 from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.sql.sql_schema import DataSchema
 from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
@@ -1052,5 +1053,30 @@ def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
 def test_list_cards(db_registries: Dict[str, CardRegistry]):
     data_reg = db_registries["data"]
 
-    cards = data_reg.list_cards(limit=2)
-    assert len(cards) == 2
+    record = {
+        "uid": uuid.uuid4().hex,
+        "timestamp": 1,
+        "name": "list-test",
+        "team": "test_team",
+        "user_email": "test_email",
+        "version": "1.0.0",
+        "data_uri": "test_uri",
+        "data_type": "test_type",
+    }
+
+    for i in range(1, 25):
+        record["uid"] = uuid.uuid4().hex
+
+        if i > 20:
+            record["version"] = f"20.{i}.4"
+        else:
+            record["version"] = f"1.{i}.100"
+
+        with data_reg._registry.engine.session() as sess:
+            sess.add(DataSchema(**record))
+            sess.commit()
+
+    cards = data_reg.list_cards(name="list-test", limit=5)
+    assert cards[0]["version"] == "20.24.4"
+    assert cards[1]["version"] == "20.23.4"
+    assert cards[4]["version"] == "1.20.100"

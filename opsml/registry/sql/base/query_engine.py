@@ -4,9 +4,10 @@
 
 import datetime
 from functools import wraps
+from sqlalchemy import func
 from typing import Any, Dict, Iterable, Optional, Type, Union, cast, List, Iterator
 from contextlib import contextmanager
-from sqlalchemy import select
+from sqlalchemy import select, text, Integer
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
@@ -24,6 +25,10 @@ YEAR_MONTH_DATE = "%Y-%m-%d"
 class QueryEngine:
     def __init__(self):
         self.engine = settings.sql_engine
+
+    @property
+    def dialect(self) -> str:
+        return str(self.engine.url)
 
     @contextmanager
     def session(self) -> Iterator[Session]:
@@ -114,8 +119,45 @@ class QueryEngine:
         Returns
             Sqlalchemy Select statement
         """
+        query: Select = self._get_base_select_query(table=table)
 
-        query = self._get_base_select_query(table=table)
+        if "sqlite" in self.dialect:
+            query = query.add_columns(
+                func.cast(func.substr(table.version, 0, func.instr(table.version, ".")), Integer).label("major"),
+                func.cast(
+                    func.substr(
+                        func.substr(table.version, func.instr(table.version, ".") + 1),
+                        1,
+                        func.instr(func.substr(table.version, func.instr(table.version, ".") + 1), ".") - 1,
+                    ),
+                    Integer,
+                ).label("minor"),
+                func.cast(
+                    func.substr(
+                        func.substr(table.version, func.instr(table.version, ".") + 1),
+                        func.instr(func.substr(table.version, func.instr(table.version, ".") + 1), ".") + 1,
+                    ),
+                    Integer,
+                ).label("patch"),
+            )
+
+        elif "postgres" in self.dialect:
+            query = select(
+                table,
+                func.cast(func.split_part(table.version, ".", 1), Integer).label("major"),
+                func.cast(func.split_part(table.version, ".", 2), Integer).label("minor"),
+                func.cast(func.split_part(table.version, ".", 3), Integer).label("patch"),
+            )
+
+        elif "mysql" in self.dialect:
+            query = query.add_columns(
+                func.cast(func.substring_index(table.version, ".", 1), Integer).label("major"),
+                func.cast(func.substring_index(func.substring_index(table.version, ".", 2), ".", -1), Integer).label(
+                    "minor"
+                ),
+                func.cast(func.substring_index(table.version, ".", -1), Integer).label("patch"),
+            )
+
         if bool(uid):
             return query.filter(table.uid == uid)  # type: ignore
 
@@ -140,7 +182,13 @@ class QueryEngine:
         if bool(filters):
             query = query.filter(*filters)  # type: ignore
 
-        query = query.order_by(table.version.desc(), table.timestamp.desc())  # type: ignore
+        query = query.order_by(
+            text("major desc"),
+            text("minor desc"),
+            text("patch desc"),
+            # text("cast(minor as integer) desc"),
+            # text("cast(patch as integer) desc"),
+        )  # type: ignore
 
         if limit is not None:
             query = query.limit(limit)
