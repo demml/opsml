@@ -22,6 +22,57 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
+class VersionSplitting:
+    @staticmethod
+    def sqlite(query: Select, table: Type[REGISTRY_TABLES]):
+        return query.add_columns(
+            func.cast(func.substr(table.version, 0, func.instr(table.version, ".")), Integer).label("major"),
+            func.cast(
+                func.substr(
+                    func.substr(table.version, func.instr(table.version, ".") + 1),
+                    1,
+                    func.instr(func.substr(table.version, func.instr(table.version, ".") + 1), ".") - 1,
+                ),
+                Integer,
+            ).label("minor"),
+            func.cast(
+                func.substr(
+                    func.substr(table.version, func.instr(table.version, ".") + 1),
+                    func.instr(func.substr(table.version, func.instr(table.version, ".") + 1), ".") + 1,
+                ),
+                Integer,
+            ).label("patch"),
+        )
+
+    @staticmethod
+    def postgres(query: Select, table: Type[REGISTRY_TABLES]):
+        return query.add_columns(
+            func.cast(func.split_part(table.version, ".", 1), Integer).label("major"),
+            func.cast(func.split_part(table.version, ".", 2), Integer).label("minor"),
+            func.cast(func.split_part(table.version, ".", 3), Integer).label("patch"),
+        )
+
+    @staticmethod
+    def mysql(query: Select, table: Type[REGISTRY_TABLES]):
+        return query.add_columns(
+            func.cast(func.substring_index(table.version, ".", 1), Integer).label("major"),
+            func.cast(func.substring_index(func.substring_index(table.version, ".", 2), ".", -1), Integer).label(
+                "minor"
+            ),
+            func.cast(func.substring_index(table.version, ".", -1), Integer).label("patch"),
+        )
+
+    @staticmethod
+    def get_version_split_query(query: Select, table: Type[REGISTRY_TABLES], dialect: str) -> Select:
+        if "sqlite" in dialect:
+            return VersionSplitting.sqlite(query=query, table=table)
+        elif "postgres" in dialect:
+            return VersionSplitting.postgres(query=query, table=table)
+        elif "mysql" in dialect:
+            return VersionSplitting.mysql(query=query, table=table)
+        raise ValueError(f"Unsupported dialect: {dialect}")
+
+
 class QueryEngine:
     def __init__(self):
         self.engine = settings.sql_engine
@@ -120,43 +171,11 @@ class QueryEngine:
             Sqlalchemy Select statement
         """
         query: Select = self._get_base_select_query(table=table)
-
-        if "sqlite" in self.dialect:
-            query = query.add_columns(
-                func.cast(func.substr(table.version, 0, func.instr(table.version, ".")), Integer).label("major"),
-                func.cast(
-                    func.substr(
-                        func.substr(table.version, func.instr(table.version, ".") + 1),
-                        1,
-                        func.instr(func.substr(table.version, func.instr(table.version, ".") + 1), ".") - 1,
-                    ),
-                    Integer,
-                ).label("minor"),
-                func.cast(
-                    func.substr(
-                        func.substr(table.version, func.instr(table.version, ".") + 1),
-                        func.instr(func.substr(table.version, func.instr(table.version, ".") + 1), ".") + 1,
-                    ),
-                    Integer,
-                ).label("patch"),
-            )
-
-        elif "postgres" in self.dialect:
-            query = select(
-                table,
-                func.cast(func.split_part(table.version, ".", 1), Integer).label("major"),
-                func.cast(func.split_part(table.version, ".", 2), Integer).label("minor"),
-                func.cast(func.split_part(table.version, ".", 3), Integer).label("patch"),
-            )
-
-        elif "mysql" in self.dialect:
-            query = query.add_columns(
-                func.cast(func.substring_index(table.version, ".", 1), Integer).label("major"),
-                func.cast(func.substring_index(func.substring_index(table.version, ".", 2), ".", -1), Integer).label(
-                    "minor"
-                ),
-                func.cast(func.substring_index(table.version, ".", -1), Integer).label("patch"),
-            )
+        query = VersionSplitting.get_version_split_query(
+            query=query,
+            table=table,
+            dialect=self.dialect,
+        )
 
         if bool(uid):
             return query.filter(table.uid == uid)  # type: ignore
@@ -182,13 +201,7 @@ class QueryEngine:
         if bool(filters):
             query = query.filter(*filters)  # type: ignore
 
-        query = query.order_by(
-            text("major desc"),
-            text("minor desc"),
-            text("patch desc"),
-            # text("cast(minor as integer) desc"),
-            # text("cast(patch as integer) desc"),
-        )  # type: ignore
+        query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))  # type: ignore
 
         if limit is not None:
             query = query.limit(limit)
