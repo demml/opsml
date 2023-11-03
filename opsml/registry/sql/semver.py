@@ -4,8 +4,10 @@
 import re
 from enum import Enum
 from typing import List, Optional
+
 import semver
 from pydantic import BaseModel, model_validator
+
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 

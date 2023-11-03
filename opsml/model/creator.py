@@ -3,9 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Optional
 import textwrap
+from typing import Any, Dict, Optional
+
 import numpy as np
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data

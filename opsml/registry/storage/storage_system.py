@@ -43,12 +43,12 @@ from opsml.registry.storage.types import (
     ArtifactStorageSpecs,
     FilePath,
     GcsStorageClientSettings,
-    S3StorageClientSettings,
     MlFlowClientProto,
     MlflowInfo,
     MlflowModel,
     MlflowModelFlavor,
     MlflowModelInfo,
+    S3StorageClientSettings,
     StorageSettings,
 )
 

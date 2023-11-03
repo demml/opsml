@@ -8,8 +8,7 @@ from typing import Any, Dict, Optional, Union, cast
 import numpy as np
 import pandas as pd
 import polars as pl
-from pydantic import model_validator, field_validator, ConfigDict
-
+from pydantic import ConfigDict, field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
@@ -24,13 +23,10 @@ from opsml.model.types import (
 )
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
-from opsml.registry.sql.records import (
-    ModelRegistryRecord,
-    RegistryRecord,
-)
-from opsml.registry.utils.settings import settings
+from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client

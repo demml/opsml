@@ -6477,4 +6477,4 @@ server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar",
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "954e5fac556dd05acdac34f22d3c1e2de19c81e313fa799dc2655e1f973cfeba"
+content-hash = "ea5a61afece2040f0cd73e17b6e3cbdab771f3549bd1af5d1df3598eb6516d0d"

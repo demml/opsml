@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class DataHolder(BaseModel):

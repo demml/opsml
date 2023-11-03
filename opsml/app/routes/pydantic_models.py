@@ -4,6 +4,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, model_validator
+
 from opsml.model.challenger import BattleReport
 from opsml.registry.cards.types import METRICS
 from opsml.registry.sql.base.registry_base import VersionType
