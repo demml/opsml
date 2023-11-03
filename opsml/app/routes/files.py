@@ -13,11 +13,11 @@ from streaming_form_data.validators import MaxSizeValidator
 
 from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
+    DeleteFileRequest,
+    DeleteFileResponse,
     DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
-    DeleteFileResponse,
-    DeleteFileRequest,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,

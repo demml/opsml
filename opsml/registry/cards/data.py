@@ -2,33 +2,28 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Dict, List, Optional, Union, cast
 import os
+from typing import Dict, List, Optional, Union, cast
+
 import numpy as np
 import pandas as pd
 import polars as pl
 from pyarrow import Table
 from pydantic import field_validator
 
-
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import (
-    FindPath,
-)
+from opsml.helpers.utils import FindPath
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
-from opsml.registry.image import ImageDataset
-from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.data.formatter import check_data_schema
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.data.types import AllowedTableTypes
+from opsml.registry.image import ImageDataset
+from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
-from opsml.registry.sql.records import (
-    DataRegistryRecord,
-    RegistryRecord,
-)
+from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()

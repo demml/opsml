@@ -5,7 +5,8 @@ import json
 import os
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, field_validator, ValidationInfo
+from pydantic import BaseModel, ValidationInfo, field_validator
+
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()

@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, ConfigDict  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
 InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
