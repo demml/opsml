@@ -30,6 +30,24 @@ from pydantic import ValidationError
 from tests.conftest import FOURTEEN_DAYS_TS, FOURTEEN_DAYS_STR
 
 
+def test_registry_dialect(
+    db_registries: Dict[str, CardRegistry],
+    tracking_uri: str,
+):
+    registry = db_registries["data"]
+
+    if "postgres" in tracking_uri:
+        assert "postgres" in registry._registry.engine.dialect
+
+    elif "mysql" in tracking_uri:
+        assert "mysql" in registry._registry.engine.dialect
+
+    elif "sqlite" in tracking_uri:
+        assert "sqlite" in registry._registry.engine.dialect
+    else:
+        raise ValueError("Supported dialect not found")
+
+
 @pytest.mark.parametrize(
     "data_splits, test_data",
     [
@@ -46,10 +64,6 @@ def test_register_data(
 ):
     # create data card
     registry = db_registries["data"]
-
-    print(registry._registry.engine.dialect)
-    print(os.environ.get("OPSML_TRACKING_URI"))
-    assert "postgres" in registry._registry.engine.dialect
 
     data_card = DataCard(
         data=test_data,
