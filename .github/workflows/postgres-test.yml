@@ -77,12 +77,13 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+          --name=mysql-test
 
     steps:
       - uses: actions/checkout@v3
       - name: Change mysql sql_mode
         run: >
-          docker exec mysql -u root -e "SET GLOBAL sql_mode = '' innodb_strict_mode=0;"
+          docker exec mysql-test mysql -u root -e "SET GLOBAL sql_mode = '' ; innodb_strict_mode=0;"
           
       - name: Install poetry
         run: |
