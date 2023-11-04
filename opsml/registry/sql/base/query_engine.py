@@ -59,7 +59,10 @@ class VersionSplitting:
         return query.add_columns(  # type: ignore[attr-defined]
             sqa_func.cast(sqa_func.split_part(table.version, ".", 1), Integer).label("major"),
             sqa_func.cast(sqa_func.split_part(table.version, ".", 2), Integer).label("minor"),
-            sqa_func.cast(sqa_func.split_part(table.version, ".", 3), Integer).label("patch"),
+            sqa_func.cast(
+                sqa_func.regexp_replace(sqa_func.split_part(table.version, ".", 3), "[^0-9]+", "", "g"),
+                Integer,
+            ).label("patch"),
         )
 
     @staticmethod
@@ -69,7 +72,9 @@ class VersionSplitting:
             sqa_func.cast(
                 sqa_func.substring_index(sqa_func.substring_index(table.version, ".", 2), ".", -1), Integer
             ).label("minor"),
-            sqa_func.cast(sqa_func.substring_index(table.version, ".", -1), Integer).label("patch"),
+            sqa_func.cast(
+                sqa_func.regexp_replace(sqa_func.substring_index(table.version, ".", -1), "[^0-9]+", "", "g"), Integer
+            ).label("patch"),
         )
 
     @staticmethod
