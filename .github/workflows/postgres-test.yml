@@ -51,4 +51,4 @@ jobs:
       - run : make setup.project
       - run : make test.registry
         env:
-            OPSML_TEST_DB: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
+            OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
