@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 import pandas as pd
 import numpy as np
 import polars as pl
+import os
 from numpy.typing import NDArray
 import pyarrow as pa
 from os import path
@@ -45,6 +46,10 @@ def test_register_data(
 ):
     # create data card
     registry = db_registries["data"]
+
+    print(registry._registry.engine.dialect)
+    print(os.environ.get("OPSML_TRACKING_URI"))
+    assert "postgres" in registry._registry.engine.dialect
 
     data_card = DataCard(
         data=test_data,
