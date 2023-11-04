@@ -105,4 +105,4 @@ jobs:
       - run : make setup.project
       - run : make test.registry
         env:
-            OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5
+            OPSML_TRACKING_URI: mysql+pymysql://mysql:mysql@127.0.0.1:3306/mysql?connect_timeout=5
