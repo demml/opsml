@@ -81,7 +81,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install libcurl4-openssl-dev libmysqlclient-dev libgirepository1.0-dev
+          pipx install poetry==${{ matrix.poetry-version }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
