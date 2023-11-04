@@ -166,6 +166,11 @@ def mock_gcp_vars(gcp_cred_path):
     return mock_vars
 
 
+@pytest.fixture(scope="module")
+def tracking_uri():
+    return SQL_PATH
+
+
 @pytest.fixture(scope="function")
 def mock_gcp_creds(mock_gcp_vars):
     creds = GcpCreds(

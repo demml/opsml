@@ -45,12 +45,9 @@ class VersionSplitting:
                 ),
                 Integer,
             ).label("minor"),
-            sqa_func.cast(
-                sqa_func.substr(
-                    sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1),
-                    sqa_func.instr(sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1), ".") + 1,
-                ),
-                Integer,
+            sqa_func.substr(
+                sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1),
+                sqa_func.instr(sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1), ".") + 1,
             ).label("patch"),
         )
 
