@@ -9,7 +9,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, c
 
 from sqlalchemy import Integer
 from sqlalchemy import func as sqa_func
-from sqlalchemy import select, text
+from sqlalchemy import select, text, column
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
@@ -70,7 +70,7 @@ class VersionSplitting:
                 sqa_func.substring_index(sqa_func.substring_index(table.version, ".", 2), ".", -1), Integer
             ).label("minor"),
             sqa_func.cast(
-                sqa_func.regexp_replace(sqa_func.substring_index(table.version, ".", -1), "[^0-9]+", "", "g"), Integer
+                sqa_func.regexp_replace(sqa_func.substring_index(table.version, ".", -1), "[^0-9]+", ""), Integer
             ).label("patch"),
         )
 
