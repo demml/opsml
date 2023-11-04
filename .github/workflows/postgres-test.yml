@@ -61,28 +61,35 @@ jobs:
         python-version: ["3.11"]
         poetry-version: ["1.5.1"]
 
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_DATABASE: mysql
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-        ports:
-          - 3306:3306
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-          --name=mysql-test
+    #services:
+    #  mysql:
+    #    image: mysql:8
+    #    env:
+    #      MYSQL_DATABASE: mysql
+    #      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    #    ports:
+    #      - 3306:3306
+    #    # Set health checks to wait until postgres has started
+    #    options: >-
+    #      --health-cmd="mysqladmin ping"
+    #      --health-interval=10s
+    #      --health-timeout=5s
+    #      --health-retries=3
+    #      --name=mysql-test
 
     steps:
       - uses: actions/checkout@v3
-      - name: Change mysql sql_mode
-        run: >
-          docker exec mysql-test mysql -u root -e "SET GLOBAL sql_mode = '' ; SET GLOBAL innodb_strict_mode=OFF ;  SET GLOBAL innodb_page_size=32K;"
-          
+
+      - name: Set up MySQL
+        uses: cweinberger/github-actions-mysql@1.0.0
+        with:
+          version: 5.7 # Optional, default version is `latest`
+          hostPort: 3306 # Optional, default host port is `3306`
+          containerPort: 3306 # Optional, default container port is `3306`
+          user: mysql # Optional, default is `empty` (⚠️ required if you did not specify a root password)
+          password: mysql # Optional, default is `empty` (⚠️ required if you did specify a user)
+          database: mysql # Optional, default is `TestDatabase`
+            
       - name: Install poetry
         run: |
           sudo apt-get update
