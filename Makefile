@@ -68,6 +68,9 @@ test.unit:
 		--cov-report term \
 		--junitxml=./results.xml
 
+test.registry:
+	poetry run python -m pytest tests/test_registry.py
+
 
 test.doc_examples:
 	poetry run pytest tests/test_docs
