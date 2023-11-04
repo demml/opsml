@@ -1,4 +1,4 @@
-from typing import Any, Iterator
+from typing import Iterator
 import os
 import pathlib
 import warnings
@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 # setting initial env vars to override default sql db
 # these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
-SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
+SQL_PATH = os.environ.get("OPSML_TEST_DB", f"sqlite:///{DB_FILE_PATH}")
 STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 
 os.environ["APP_ENV"] = "production"
