@@ -1097,6 +1097,14 @@ def test_list_cards(db_registries: Dict[str, CardRegistry]):
             sess.add(DataSchema(**record))
             sess.commit()
 
+    # add rc
+    record["uid"] = uuid.uuid4().hex
+    record["version"] = f"1.15.0-rc.1"
+
+    with data_reg._registry.engine.session() as sess:
+        sess.add(DataSchema(**record))
+        sess.commit()
+
     cards = data_reg.list_cards(name="list-test", limit=5)
     assert cards[0]["version"] == "20.24.4"
     assert cards[1]["version"] == "20.23.4"
