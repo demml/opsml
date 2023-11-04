@@ -9,7 +9,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, c
 
 from sqlalchemy import Integer
 from sqlalchemy import func as sqa_func
-from sqlalchemy import select, text, column
+from sqlalchemy import select, text
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
