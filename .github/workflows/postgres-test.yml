@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Change mysql sql_mode
         run: >
-          docker exec mysql-test mysql -u mysql -e "SET GLOBAL sql_mode = '' ; innodb_strict_mode=0;"
+          docker exec mysql-test mysql -u mysql -p mysql -e "SET GLOBAL sql_mode = '' ; innodb_strict_mode=0;"
           
       - name: Install poetry
         run: |
