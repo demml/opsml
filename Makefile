@@ -69,7 +69,7 @@ test.unit:
 		--junitxml=./results.xml
 
 test.registry:
-	poetry run python -m pytest tests/test_registry.py
+	poetry run python -m pytest tests/test_registry/test_registry.py
 
 
 test.doc_examples:
