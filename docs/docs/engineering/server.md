@@ -61,13 +61,6 @@ Example:
 
 - `Opsml` comes pre-installed with `mlflow`.
 
-### DS Interfaces
-
-![](interfaces.png){ align=center }
-
-`Opsml` provides a few public interfaces for DSs to use while abstracting and hiding the underlying implementation details. These interfaces are the `ArtifactCard` (`DataCard`, `ModelCard`, `RunCard`, etc.) and the `CardRegistry`. Every `ArtifactCard` type is associated with a `CardRegistry` type. Upon instantiation, a DS provides a type to the `CardRegistry` in order to load the unique registry. Under the hood, each registry inherits from either a `Client` registry or a `Server` registry, which is dependent upon the local `OpsML` environment variables. If the `OPSML_TRACKING_URI` is set with an http or https uri corresponding to an `OpsML` server, then the registry will be a `Client` registry. If the `OPSML_TRACKING_URI` is set with a SQL connection string, then the registry will be a `Server` registry. The settings singleton is used to determine which parent registry to instantiate.
-
-
 ### Example pyproject.toml for an Opsml Server
 
 ```
