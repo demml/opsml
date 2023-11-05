@@ -30,6 +30,10 @@
 
 `OpsML` is an ML tooling library that simplifies the machine learning project lifecycle and provides process consistency.
 
+## Why?
+
+The end-result of a machine learning project is often an artifact that is used as a component in a production process. Because of this, ML artifacts must conform to and meet engineering specifications in order to provide businesses with service guarantees and customers with a consistent experience. Thus, the creation and use of ML artifacts is no different than a manufacturing process. With this in mind, `OpsML` aims to help DS and Eng teams by providing consistency and standardization across the entire ML workflow in the production of ML artifacts.
+
 ## Features
   
   - `Simple Design`: Standardized design that can easily be incorporated into existing workflows.
@@ -46,9 +50,6 @@
 
   - `Server`: Run `Opsml` as a server to provide a centralized location for ML artifacts and metadata. Easily setup on any system that supports Docker.
 
-## Why?
-
-The primary goal of `Opsml` is to **empower** data scientists and engineers by providing tooling that is intuitive and produces ML artifacts that meet engineering standards.
 
 ### Two sides of the same coin (dev as prod)
 
