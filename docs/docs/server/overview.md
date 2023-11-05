@@ -3,6 +3,11 @@
 In addition to using `Opsml` as a stand-alone python package, it can also be used as a server (`FastApi`) providing a proxy interface between data scientists and backend infrastructure (**recommended approach**). What this means for **data scientists**, is that they can use `Opsml` as they normally would without having to set any credentials apart from the http proxy uri. For **engineers**, this means that they can control the infrastucture, databases, and overall server setup based on their specifications and security requirements. More on this can be found [here](../engineering/ownership.md)
 
 
+## Registry Architecture
+![](opsml-registry-arch.png){ align=center }
+
+
+## Project Run Flow Architecture
 ![](server-proxy-arch.png){ align=center }
 
 ---
@@ -30,6 +35,22 @@ Example:
 
 `OPSML_STORAGE_URI=gs://my-google-cloud-bucket`
 
+#### OPSML_POOL_SIZE (optional)
+
+Default pool size to use with sqlalchemy engine. If not set, will default to 10.
+
+Example:
+
+`OPSML_POOL_SIZE=10`
+
+#### OPSML_MAX_OVERFLOW (optional)
+
+Default max overflow to use with sqlalchemy engine. If not set, will default to 5.
+
+Example:
+
+`OPSML_MAX_OVERFLOW=10`
+
 ### Run Command
 
 - During local development/testing, you can spin up and test the `Opsml` server via the **CLI** command `opsml-cli launch-uvicorn-app` which will launch a Uvicorn server.
@@ -39,6 +60,13 @@ Example:
 `gunicorn -k uvicorn.workers.UvicornWorker --config=./app/gunicorn_conf.py --bind=0.0.0.0:3000 "opsml.app.main:run_app(run_mlflow=True, login=False)"`
 
 - `Opsml` comes pre-installed with `mlflow`.
+
+### DS Interfaces
+
+![](interfaces.png){ align=center }
+
+`Opsml` provides a few public interfaces for DSs to use while abstracting and hiding the underlying implementation details. These interfaces are the `ArtifactCard` (`DataCard`, `ModelCard`, `RunCard`, etc.) and the `CardRegistry`. Every `ArtifactCard` type is associated with a `CardRegistry` type. Upon instantiation, a DS provides a type to the `CardRegistry` in order to load the unique registry. Under the hood, each registry inherits from either a `Client` registry or a `Server` registry, which is dependent upon the local `OpsML` environment variables. If the `OPSML_TRACKING_URI` is set with an http or https uri corresponding to an `OpsML` server, then the registry will be a `Client` registry. If the `OPSML_TRACKING_URI` is set with a SQL connection string, then the registry will be a `Server` registry. The settings singleton is used to determine which parent registry to instantiate.
+
 
 ### Example pyproject.toml for an Opsml Server
 
