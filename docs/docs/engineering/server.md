@@ -3,6 +3,11 @@
 In addition to using `Opsml` as a stand-alone python package, it can also be used as a server (`FastApi`) providing a proxy interface between data scientists and backend infrastructure (**recommended approach**). What this means for **data scientists**, is that they can use `Opsml` as they normally would without having to set any credentials apart from the http proxy uri. For **engineers**, this means that they can control the infrastucture, databases, and overall server setup based on their specifications and security requirements. More on this can be found [here](../engineering/ownership.md)
 
 
+## Registry Architecture
+![](opsml-registry-arch.png){ align=center }
+
+
+## Project Run Flow Architecture
 ![](server-proxy-arch.png){ align=center }
 
 ---
@@ -29,6 +34,22 @@ This is the storage uri of your storage backend (e.g. GCP, AWS).
 Example:
 
 `OPSML_STORAGE_URI=gs://my-google-cloud-bucket`
+
+#### OPSML_POOL_SIZE (optional)
+
+Default pool size to use with sqlalchemy engine. If not set, will default to 10.
+
+Example:
+
+`OPSML_POOL_SIZE=10`
+
+#### OPSML_MAX_OVERFLOW (optional)
+
+Default max overflow to use with sqlalchemy engine. If not set, will default to 5.
+
+Example:
+
+`OPSML_MAX_OVERFLOW=10`
 
 ### Run Command
 
