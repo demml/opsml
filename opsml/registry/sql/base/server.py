@@ -169,7 +169,8 @@ class ServerRegistry(SQLRegistryBase):
             limit=limit,
         )
 
-        records = self._sort_by_version(records=records)
+        if cleaned_name is not None:
+            records = self._sort_by_version(records=records)
 
         if version is not None:
             if ignore_release_candidates:

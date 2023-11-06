@@ -5,7 +5,7 @@
 import os
 from functools import cached_property
 from typing import Any, Dict
-
+from enum import Enum
 import sqlalchemy
 from sqlalchemy.engine.url import make_url
 
@@ -80,11 +80,11 @@ class CloudSQLConnection(BaseSQLConnection):
         )
 
     @property
-    def _ip_type(self) -> str:
+    def _ip_type(self) -> Enum:
         """Sets IP type for CloudSql"""
         from google.cloud.sql.connector import IPTypes
 
-        return IPTypes.PRIVATE.value if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC.value
+        return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
     @property
     def _connection_name(self) -> str:
