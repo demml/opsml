@@ -6,8 +6,14 @@ from enum import Enum
 from typing import Dict, List, Optional, Union, Any
 import datetime
 from pydantic import BaseModel, ConfigDict, field_validator
+
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import ApiDataSchemas, DataDict, ExtraOnnxArgs, OnnxModelDefinition
+from opsml.model.types import (
+    ApiDataSchemas,
+    DataDict,
+    ExtraOnnxArgs,
+    OnnxModelDefinition,
+)
 
 logger = ArtifactLogger.get_logger()
 

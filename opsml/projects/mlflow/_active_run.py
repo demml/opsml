@@ -1,9 +1,10 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Dict, Optional, Union, cast
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Dict, Optional, Union, cast
+
 from opsml.projects.base._active_run import ActiveRun
 from opsml.projects.mlflow.mlflow_utils import MlflowRunInfo
 from opsml.registry.cards.types import METRICS, PARAMS

@@ -57,7 +57,6 @@ def model_predict(model_and_data):
     "model_and_data",
     [
         lazy_fixture("lgb_classifier_calibrated"),
-        lazy_fixture("lgb_classifier_calibrated_pipeline"),
         lazy_fixture("linear_regression"),  # linear regress with numpy
         lazy_fixture("random_forest_classifier"),  # random forest with dataframe
         lazy_fixture("xgb_df_regressor"),  # xgb with dataframe
@@ -137,6 +136,7 @@ def model_predict(model_and_data):
         lazy_fixture("tweedie_regressor"),
         lazy_fixture("voting_classifier"),
         lazy_fixture("voting_regressor"),
+        lazy_fixture("lgb_classifier_calibrated_pipeline"),
     ],
 )
 def test_sklearn_models(model_and_data):

@@ -1,4 +1,4 @@
-from typing import Any, Iterator
+from typing import Iterator
 import os
 import pathlib
 import warnings
@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 # setting initial env vars to override default sql db
 # these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
-SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
+SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
 STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
 
 os.environ["APP_ENV"] = "production"
@@ -166,6 +166,11 @@ def mock_gcp_vars(gcp_cred_path):
         "gcsfs_creds": creds,
     }
     return mock_vars
+
+
+@pytest.fixture(scope="module")
+def tracking_uri():
+    return SQL_PATH
 
 
 @pytest.fixture(scope="function")
