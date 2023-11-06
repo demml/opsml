@@ -30,6 +30,10 @@
 
 `OpsML` is an ML tooling library that simplifies the machine learning project lifecycle and provides process consistency.
 
+## Why?
+
+The end-result of a machine learning project is often an artifact that is used as a component in a production process. Because of this, ML artifacts must conform to and meet engineering specifications in order to provide businesses with service guarantees and customers with a consistent experience. Thus, the creation and use of ML artifacts is no different than a manufacturing process. With this in mind, `OpsML` aims to help DS and Eng teams by providing consistency and standardization across the entire ML workflow in the production of ML artifacts.
+
 ## Features
   
   - `Simple Design`: Standardized design that can easily be incorporated into existing workflows.
@@ -46,9 +50,6 @@
 
   - `Server`: Run `Opsml` as a server to provide a centralized location for ML artifacts and metadata. Easily setup on any system that supports Docker.
 
-## Why?
-
-The primary goal of `Opsml` is to **empower** data scientists and engineers by providing tooling that is intuitive and produces ML artifacts that meet engineering standards.
 
 ### Two sides of the same coin (dev as prod)
 
@@ -83,6 +84,17 @@ Taking a data science project from ideation :bulb: to deployment :rocket: often 
 
 What `Opsml` aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from `development` and `production` processes and help teams go from ideation to deployment quicker :smile: with the added benefits of reproducibility and auditability.
 
+## Why Use OpsML vs other open source or vendor tooling?
+
+With the plethora of available ML tooling it can be difficult to decide which tooling to use. The following are some reasons why you might want to use `Opsml` and why we created it.
+
+- Need for a consistent and standardized ML workflow to use in your organization
+- Not enthusiastic about vendor lock-in or paying a vendor to use an SDK and UI but still need to create and maintain your own infrastructure
+- You want to use a tool that is open source and continually developed
+- You want all artifacts to be given the same priority (no more treating data as less of a priority than models)
+- Don't want to worry about implementation details (how to version, store and track artifacts)
+- You'd like to have auto-generated metadata that meets engineering standards and can be used in production
+- You want to be able to share artifacts and workflows across teams
 
 ## Example
 

@@ -264,11 +264,7 @@ class CardRegistry:
             team = team.lower()
 
         if all(not bool(var) for var in [name, team, version, uid, tags]):
-<<<<<<< HEAD
             limit = limit or 25
-=======
-            limit = limit or 50
->>>>>>> parent of 51bb3fc (Merge pull request #175 from shipt/revert-170-enhancement/auditcard)
 
         card_list = self._registry.list_cards(
             uid=uid,
