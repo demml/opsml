@@ -24,7 +24,7 @@ from opsml.app.routes.pydantic_models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml.app.routes.utils import replace_proxy_root, get_registry_type_from_table
+from opsml.app.routes.utils import get_registry_type_from_table, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 
