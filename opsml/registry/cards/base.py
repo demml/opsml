@@ -7,21 +7,12 @@ from typing import Dict, Optional, Union
 import numpy as np
 import pandas as pd
 import polars as pl
-from pydantic import BaseModel, model_validator, ConfigDict
-
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import (
-    clean_string,
-    validate_name_team_pattern,
-)
-
-from opsml.registry.cards.types import (
-    CardInfo,
-)
-from opsml.registry.sql.records import (
-    RegistryRecord,
-)
+from opsml.helpers.utils import clean_string, validate_name_team_pattern
+from opsml.registry.cards.types import CardInfo
+from opsml.registry.sql.records import RegistryRecord
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()

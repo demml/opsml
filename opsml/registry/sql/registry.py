@@ -2,10 +2,12 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
 import textwrap
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union, cast
+
 import pandas as pd
 from sqlalchemy.sql.expression import ColumnElement, FromClause
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
@@ -13,7 +15,6 @@ from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.storage.storage_system import StorageClientType
-
 
 logger = ArtifactLogger.get_logger()
 

@@ -27,12 +27,15 @@
 [![S3](https://img.shields.io/badge/aws_s3-grey?logo=amazons3)](https://aws.amazon.com/)
 
 ## Table of Contents
+- [Table of Contents](#table-of-contents)
 - [What is it?](#what-is-it)
-- [Features](#features)
-- [Installation](#installation)
+- [Features:](#features)
+- [Installation:](#installation)
+  - [Poetry](#poetry)
+  - [Pip](#pip)
 - [Usage](#usage)
-- [advanced-installation-scenarios](#advanced-installation-scenarios)
-- [Quickstart](#quickstart)
+- [Advanced Installation Scenarios](#advanced-installation-scenarios)
+- [QuickStart](#quickstart)
 - [Contributing](#contributing)
 
 ## What is it?
@@ -267,8 +270,3 @@ Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) and peo
 <a href="https://github.com/shipt/opsml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shipt/opsml" />
 </a>
-
-
-
-
-

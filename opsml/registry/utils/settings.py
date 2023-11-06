@@ -6,9 +6,10 @@ from functools import cached_property
 from typing import Any, Dict, Optional, cast
 
 import httpx
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import model_validator
 import sqlalchemy
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.types import OpsmlAuth, OpsmlUri
@@ -299,7 +300,6 @@ class DefaultSettings(BaseSettings):
     @cached_property
     def sql_engine(self) -> sqlalchemy.engine.base.Engine:
         """Retrieve sql engine"""
-
         return self.connection_client.sql_engine
 
     def set_storage(self, storage_settings: StorageSettings) -> None:

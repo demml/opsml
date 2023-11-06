@@ -3,8 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 import uuid
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
-from sqlalchemy.sql.expression import ColumnElement, FromClause
+
 from semver import VersionInfo
+from sqlalchemy.sql.expression import ColumnElement, FromClause
+
+from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.card_saver import save_card_artifacts
@@ -12,11 +15,10 @@ from opsml.registry.cards.types import RegistryType
 from opsml.registry.cards import ArtifactCard, DataCard, ModelCard, PipelineCard, RunCard, AuditCard
 from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.sql.records import LoadedRecordType, load_record
-from opsml.registry.sql.semver import CardVersion, VersionType, SemVerUtils
-from opsml.registry.utils.settings import settings
+from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
 from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
-from opsml.helpers.exceptions import VersionError
 from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 
