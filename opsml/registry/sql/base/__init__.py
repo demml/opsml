@@ -10,8 +10,8 @@ def get_registry():
 
     # initialize tables
     if settings.request_client is None:
-        from opsml.registry.sql.db_initializer import DBInitializer
         from opsml.registry.sql.base.server import ServerRegistry
+        from opsml.registry.sql.db_initializer import DBInitializer
         from opsml.registry.sql.sql_schema import RegistryTableNames
 
         db_initializer = DBInitializer(

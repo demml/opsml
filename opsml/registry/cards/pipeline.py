@@ -4,16 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 from typing import List, Optional
 
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import (
-    CardType,
-)
-from opsml.registry.sql.records import (
-    PipelineRegistryRecord,
-    RegistryRecord,
-)
+from opsml.registry.cards.types import CardType
+from opsml.registry.sql.records import PipelineRegistryRecord, RegistryRecord
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
