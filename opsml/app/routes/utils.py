@@ -2,14 +2,29 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from streaming_form_data.targets import FileTarget
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()
+
+
+def get_registry_type_from_table(table_name: Optional[str], registry_type: Optional[str]) -> str:
+    """
+    This is a hack to get the registry type from the table name.
+    This is needed to maintain backwards compatibility in V1
+    """
+
+    if table_name is not None:
+        for registry_type in RegistryType:
+            if registry_type.value in table_name:
+                return registry_type.value
+
+    return registry_type
 
 
 def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
