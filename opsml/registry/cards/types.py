@@ -3,11 +3,17 @@
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, field_validator
+
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import ApiDataSchemas, DataDict, ExtraOnnxArgs, OnnxModelDefinition
+from opsml.model.types import (
+    ApiDataSchemas,
+    DataDict,
+    ExtraOnnxArgs,
+    OnnxModelDefinition,
+)
 
 logger = ArtifactLogger.get_logger()
 

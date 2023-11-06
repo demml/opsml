@@ -3,13 +3,12 @@
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Union, Any, Mapping
+from typing import Any, Dict, Mapping, Optional, Union
 
 import numpy as np
 import pyarrow as pa
 from polars.datatypes.classes import DataType, DataTypeClass
 from pydantic import BaseModel, ConfigDict
-
 
 POLARS_SCHEMA = Mapping[str, Union[DataTypeClass, DataType]]  # pylint: disable=invalid-name
 
