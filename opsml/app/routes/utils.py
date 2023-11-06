@@ -13,7 +13,10 @@ from opsml.registry.storage.storage_system import LocalStorageClient, StorageCli
 logger = ArtifactLogger.get_logger()
 
 
-def get_registry_type_from_table(table_name: Optional[str], registry_type: Optional[str]) -> str:
+def get_registry_type_from_table(
+    table_name: Optional[str] = None,
+    registry_type: Optional[str] = None,
+) -> str:
     """
     This is a hack to get the registry type from the table name.
     This is needed to maintain backwards compatibility in V1
@@ -21,7 +24,7 @@ def get_registry_type_from_table(table_name: Optional[str], registry_type: Optio
 
     if table_name is not None:
         for registry_type in RegistryType:
-            if registry_type.value in table_name:
+            if registry_type.value.upper() in table_name:
                 return registry_type.value
 
     return registry_type
