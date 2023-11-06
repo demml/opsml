@@ -21,10 +21,9 @@ from opsml.model.types import (
     ModelReturn,
     OnnxModelDefinition,
 )
+from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
-from opsml.registry.cards.audit_deco import auditable
-from opsml.registry.utils.settings import settings
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType

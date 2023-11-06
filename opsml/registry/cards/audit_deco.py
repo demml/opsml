@@ -1,7 +1,7 @@
 from typing import Optional, Protocol, cast
 
-from opsml.registry.cards.types import CardType
 from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.types import CardType
 
 
 class AuditCard(Protocol):

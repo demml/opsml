@@ -11,7 +11,15 @@ import numpy as np
 import pyarrow as pa
 
 from opsml.model.types import ModelMetadata, OnnxAttr
-from opsml.registry.cards import ArtifactCard, DataCard, ModelCard, PipelineCard, ProjectCard, RunCard, AuditCard
+from opsml.registry.cards import (
+    ArtifactCard,
+    AuditCard,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    ProjectCard,
+    RunCard,
+)
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
 from opsml.registry.data.types import AllowedTableTypes
