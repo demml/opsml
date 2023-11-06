@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 from fastapi import APIRouter
 
-from opsml.app.routes import cards, data, files, healthcheck, models, settings, registry
+from opsml.app.routes import cards, data, files, healthcheck, models, registry, settings
 
 api_router = APIRouter(responses={404: {"description": "Not found"}})
 api_router.include_router(healthcheck.router, tags=["health"], prefix="/opsml")

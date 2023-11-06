@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Union, Optional
+from typing import Optional, Union
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
@@ -15,14 +15,14 @@ from opsml.app.routes.pydantic_models import (
     DeleteCardResponse,
     ListCardRequest,
     ListCardResponse,
+    NamesResponse,
+    TeamsResponse,
     UidExistsRequest,
     UidExistsResponse,
     UpdateCardRequest,
     UpdateCardResponse,
     VersionRequest,
     VersionResponse,
-    NamesResponse,
-    TeamsResponse,
 )
 from opsml.app.routes.utils import replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger

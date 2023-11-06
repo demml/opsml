@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.sql.base.query_engine import (  # type: ignore
     QueryEngine,
     log_card_change,
@@ -19,6 +18,7 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
+from opsml.registry.sql.sql_schema import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
