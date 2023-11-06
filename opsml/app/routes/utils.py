@@ -23,11 +23,14 @@ def get_registry_type_from_table(
     """
 
     if table_name is not None:
-        for registry_type in RegistryType:
-            if registry_type.value.upper() in table_name:
-                return registry_type.value
+        for _registry_type in RegistryType:
+            if _registry_type.value.upper() in table_name:
+                return _registry_type.value
 
-    return registry_type
+    if registry_type is not None:
+        return registry_type
+
+    raise ValueError("Could not determine registry type")
 
 
 def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
