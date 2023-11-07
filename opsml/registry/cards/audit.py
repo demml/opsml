@@ -166,8 +166,6 @@ class AuditCard(ArtifactCard):
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data, model or run")
 
         audit_registry = AuditCardRegistry(RegistryType.AUDIT.value)
-        if card.card_type.lower() not in [CardType.DATACARD.value, CardType.MODELCARD.value]:
-            raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data or model")
 
         if card.uid is None:
             raise ValueError(

@@ -4,7 +4,7 @@ In addition to using `Opsml` as a stand-alone python package, it can also be use
 
 
 ## Registry Architecture
-![](../../images/opsml-registry-arch.png){ align=center }
+![](opsml-registry-arch.png){ align=center }
 
 
 ## Project Run Flow Architecture
@@ -34,6 +34,22 @@ This is the storage uri of your storage backend (e.g. GCP, AWS).
 Example:
 
 `OPSML_STORAGE_URI=gs://my-google-cloud-bucket`
+
+#### OPSML_POOL_SIZE (optional)
+
+Default pool size to use with sqlalchemy engine. If not set, will default to 10.
+
+Example:
+
+`OPSML_POOL_SIZE=10`
+
+#### OPSML_MAX_OVERFLOW (optional)
+
+Default max overflow to use with sqlalchemy engine. If not set, will default to 5.
+
+Example:
+
+`OPSML_MAX_OVERFLOW=10`
 
 ### Run Command
 

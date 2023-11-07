@@ -300,7 +300,6 @@ class DefaultSettings(BaseSettings):
     @cached_property
     def sql_engine(self) -> sqlalchemy.engine.base.Engine:
         """Retrieve sql engine"""
-
         return self.connection_client.sql_engine
 
     def set_storage(self, storage_settings: StorageSettings) -> None:

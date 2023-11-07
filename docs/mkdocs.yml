@@ -53,14 +53,14 @@ nav:
         - 'cards/onnx.md'
       - 'cards/runcard.md'
       - 'cards/auditcard.md'
-  - Server:
-      - Setup: 'server/overview.md'
   - CLI:
       - Overview: 'cli/overview.md'
   - FAQ:
       - Common Questions: 'faq/common_questions.md'
   - Engineering:
       - Ownership: 'engineering/ownership.md'
+      - Server: 'engineering/server.md'
+      - How It Works: 'engineering/how-it-works.md'
   - Contributing:
       - Contributing: 'faq/contributing.md'
   - RoadMap:

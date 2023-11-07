@@ -14,6 +14,7 @@ from streaming_form_data.targets import FileTarget
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistries, CardRegistry, RunCard
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()
@@ -115,6 +116,26 @@ def error_to_500(func):
             )
 
     return wrapper
+
+
+def get_registry_type_from_table(
+    table_name: Optional[str] = None,
+    registry_type: Optional[str] = None,
+) -> str:
+    """
+    This is a hack to get the registry type from the table name.
+    This is needed to maintain backwards compatibility in V1
+    """
+
+    if table_name is not None:
+        for _registry_type in RegistryType:
+            if _registry_type.value.upper() in table_name:
+                return _registry_type.value
+
+    if registry_type is not None:
+        return registry_type
+
+    raise ValueError("Could not determine registry type")
 
 
 def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:

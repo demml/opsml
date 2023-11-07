@@ -5,7 +5,6 @@ from importlib.metadata import PackageNotFoundError, version
 
 PACKAGE_NAME = "opsml"
 
-
 def get_version(package_name: str):
     try:
         return version(package_name)

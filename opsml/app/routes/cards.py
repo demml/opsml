@@ -24,7 +24,7 @@ from opsml.app.routes.pydantic_models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml.app.routes.utils import replace_proxy_root
+from opsml.app.routes.utils import get_registry_type_from_table, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 
@@ -39,7 +39,13 @@ def check_uid(
     payload: UidExistsRequest = Body(...),
 ) -> UidExistsResponse:
     """Checks if a uid already exists in the database"""
-    registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+
+    registry_type = get_registry_type_from_table(
+        table_name=payload.table_name,
+        registry_type=payload.registry_type,
+    )
+
+    registry: CardRegistry = getattr(request.app.state.registries, registry_type)
 
     if registry._registry.check_uid(
         uid=payload.uid,
@@ -108,7 +114,13 @@ def set_version(
     payload: VersionRequest = Body(...),
 ) -> Union[VersionResponse, UidExistsResponse]:
     """Sets the version for an artifact card"""
-    registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+
+    registry_type = get_registry_type_from_table(
+        table_name=payload.table_name,
+        registry_type=payload.registry_type,
+    )
+
+    registry: CardRegistry = getattr(request.app.state.registries, registry_type)
 
     try:
         version = registry._registry.set_version(
@@ -136,7 +148,12 @@ def list_cards(
     """Lists a Card"""
 
     try:
-        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+        registry_type = get_registry_type_from_table(
+            table_name=payload.table_name,
+            registry_type=payload.registry_type,
+        )
+
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         logger.info("Listing cards with request: {}", payload.model_dump())
 
         cards = registry.list_cards(
@@ -183,7 +200,12 @@ def create_card(
     """Adds Card record to a registry"""
 
     try:
-        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+        registry_type = get_registry_type_from_table(
+            table_name=payload.table_name,
+            registry_type=payload.registry_type,
+        )
+
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
 
         logger.info("Creating card: {}", payload.model_dump())
 
@@ -210,7 +232,11 @@ def update_card(
     """Updates a specific artifact card"""
 
     try:
-        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+        registry_type = get_registry_type_from_table(
+            table_name=payload.table_name,
+            registry_type=payload.registry_type,
+        )
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         registry._registry.update_card_record(card=payload.card)
 
         logger.info("Updated card: {}", payload.model_dump())
@@ -237,7 +263,11 @@ def delete_card(
     """Deletes a specific artifact card"""
 
     try:
-        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+        registry_type = get_registry_type_from_table(
+            table_name=payload.table_name,
+            registry_type=payload.registry_type,
+        )
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         registry._registry.delete_card_record(card=payload.card)
         logger.info("Deleted card: {}", payload.model_dump())
 
