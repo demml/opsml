@@ -260,8 +260,6 @@ model registry output
 ]
 ```
 
-
-
 ## Contributing
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
 
