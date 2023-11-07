@@ -265,7 +265,7 @@ class CardRegistry:
             team = team.lower()
 
         if all(not bool(var) for var in [name, team, version, uid, tags]):
-            limit = limit or 50
+            limit = limit or 25
 
         card_list = self._registry.list_cards(
             uid=uid,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.7"
+version = "1.4.11"
 description = "A production MLOps tooling framework for python"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 readme = "README.md"
@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Software Developyent :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development",
@@ -126,6 +126,7 @@ types-protobuf = "^4.21.0.3"
 pylint = "^2.17.5"
 pylint-pydantic = "^0.2.4"
 types-pyyaml = "^6.0.12.12"
+isort = "^5.12.0"
 
 
 [tool.poetry.group.docs.dependencies]

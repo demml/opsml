@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
+from enum import Enum
 from functools import cached_property
 from typing import Any, Dict
 
@@ -12,7 +13,7 @@ from sqlalchemy.engine.url import make_url
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
-DEFAULT_POOL_SIZE = "5"
+DEFAULT_POOL_SIZE = "10"
 DEFAULT_OVERFLOW = "5"
 
 
@@ -73,6 +74,7 @@ class CloudSQLConnection(BaseSQLConnection):
         super().__init__(tracking_uri, credentials)
 
         # overwrite engine
+
         self._engine = sqlalchemy.create_engine(
             self._sqlalchemy_prefix,
             creator=self._conn,
@@ -80,11 +82,11 @@ class CloudSQLConnection(BaseSQLConnection):
         )
 
     @property
-    def _ip_type(self) -> str:
+    def _ip_type(self) -> Enum:
         """Sets IP type for CloudSql"""
         from google.cloud.sql.connector import IPTypes
 
-        return IPTypes.PRIVATE.value if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC.value
+        return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
     @property
     def _connection_name(self) -> str:
@@ -113,16 +115,20 @@ class CloudSQLConnection(BaseSQLConnection):
         """Creates the mysql or postgres CloudSQL client"""
         from google.cloud.sql.connector import Connector
 
-        connector = Connector(credentials=self.credentials)
+        connector = Connector(
+            credentials=self.credentials,
+            ip_type=self._ip_type,
+        )
 
-        return connector.connect(
+        conn = connector.connect(
             instance_connection_string=self._connection_name,
             driver=self._python_db_type,
             user=self.connection_parts.username,
             password=self.connection_parts.password,
             db=self.connection_parts.database,
-            ip_type=self._ip_type,
         )
+
+        return conn
 
     @staticmethod
     def validate_type(connector_type: str) -> bool:

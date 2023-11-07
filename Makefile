@@ -9,6 +9,8 @@ format.isort:
 	poetry run isort ${SOURCE_OBJECTS}
 format.ruff:
 	poetry run ruff check --silent --fix --exit-zero ${SOURCE_OBJECTS}
+format.isort:
+	poetry run isort ${SOURCE_OBJECTS}
 format: format.isort format.ruff format.black
 
 lints.format_check:
@@ -75,6 +77,9 @@ test.unit.missing:
 		--cov-report html:coverage \
 		--cov-report term-missing \
 		--junitxml=./results.xml
+
+test.registry:
+	poetry run python -m pytest tests/test_registry/test_registry.py
 
 test.doc_examples:
 	poetry run pytest tests/test_docs

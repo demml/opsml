@@ -30,14 +30,14 @@ class RegistryTableNames(str, Enum):
 
 @declarative_mixin
 class BaseMixin:
-    uid = Column("uid", String(512), primary_key=True, default=lambda: uuid.uuid4().hex)
-    date = Column("date", String(512), default=lambda: str(date.today()))
+    uid = Column("uid", String(64), primary_key=True, default=lambda: uuid.uuid4().hex)
+    date = Column("date", String(32), default=lambda: str(date.today()))
     timestamp = Column("timestamp", BigInteger)
-    app_env = Column("app_env", String(512), default=os.getenv("APP_ENV", "development"))
-    name = Column("name", String(512))
-    team = Column("team", String(512))
-    version = Column("version", String(512), nullable=False)
-    user_email = Column("user_email", String(512))
+    app_env = Column("app_env", String(32), default=os.getenv("APP_ENV", "development"))
+    name = Column("name", String(128))
+    team = Column("team", String(128))
+    version = Column("version", String(32), nullable=False)
+    user_email = Column("user_email", String(128))
     tags = Column("tags", JSON)
 
     @validates("team")
@@ -51,12 +51,12 @@ class BaseMixin:
 
 @declarative_mixin
 class DataMixin:
-    data_uri = Column("data_uri", String(2048))
-    data_type = Column("data_type", String(512))
-    runcard_uid = Column("runcard_uid", String(2048))
-    pipelinecard_uid = Column("pipelinecard_uid", String(2048))
-    datacard_uri = Column("datacard_uri", String(2048))
-    auditcard_uid = Column("auditcard_uid", String(2048))
+    data_uri = Column("data_uri", String(1024))
+    data_type = Column("data_type", String(1024))
+    runcard_uid = Column("runcard_uid", String(1024))
+    pipelinecard_uid = Column("pipelinecard_uid", String(1024))
+    datacard_uri = Column("datacard_uri", String(1024))
+    auditcard_uid = Column("auditcard_uid", String(1024))
     uris = Column("uris", JSON)
 
 
@@ -69,16 +69,16 @@ class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
 
 @declarative_mixin
 class ModelMixin:
-    modelcard_uri = Column("modelcard_uri", String(2048))
-    datacard_uid = Column("datacard_uid", String(2048))
-    trained_model_uri = Column("trained_model_uri", String(2048))
-    model_metadata_uri = Column("model_metadata_uri", String(2048))
-    sample_data_uri = Column("sample_data_uri", String(2048))
+    modelcard_uri = Column("modelcard_uri", String(1024))
+    datacard_uid = Column("datacard_uid", String(1024))
+    trained_model_uri = Column("trained_model_uri", String(1024))
+    model_metadata_uri = Column("model_metadata_uri", String(1024))
+    sample_data_uri = Column("sample_data_uri", String(1024))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
-    runcard_uid = Column("runcard_uid", String(2048))
-    pipelinecard_uid = Column("pipelinecard_uid", String(2048))
-    auditcard_uid = Column("auditcard_uid", String(2048))
+    runcard_uid = Column("runcard_uid", String(1024))
+    pipelinecard_uid = Column("pipelinecard_uid", String(1024))
+    auditcard_uid = Column("auditcard_uid", String(1024))
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
