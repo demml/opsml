@@ -23,6 +23,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.model import ModelMetadata
+from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
@@ -37,6 +38,7 @@ TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 router = APIRouter()
+model_route_helper = ModelRouteHelper()
 
 
 @router.get("/models/list/")
@@ -52,19 +54,7 @@ async def model_list_homepage(request: Request, team: Optional[str] = None):
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    registry: CardRegistry = request.app.state.registries.model
-
-    info = list_team_name_info(registry, team)
-
-    return templates.TemplateResponse(
-        "include/model/models.html",
-        {
-            "request": request,
-            "all_teams": info.teams,
-            "selected_team": info.selected_team,
-            "models": info.names,
-        },
-    )
+    return model_route_helper.get_homepage(request=request, team=team)
 
 
 @router.get("/models/versions/")
@@ -79,54 +69,17 @@ async def model_versions_page(
 
     registry: CardRegistry = request.app.state.registries.model
     versions = registry.list_cards(name=model, as_dataframe=False, limit=50)
-
     metadata = post_model_metadata(
         request=request,
         payload=CardRequest(name=model, version=version),
     )
 
-    if version is None:
-        selected_model = cast(ModelCard, registry.load_card(uid=versions[0]["uid"]))
-        version = selected_model.version
-
-    else:
-        selected_model = cast(ModelCard, registry.load_card(name=model, version=version))
-
-    if selected_model.metadata.runcard_uid is not None:
-        runcard = request.app.state.registries.run.load_card(uid=selected_model.metadata.runcard_uid)
-        project_num = request.app.state.mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
-
-    else:
-        runcard = None
-        project_num = None
-
-    max_dim = 0
-    if metadata.data_schema.model_data_schema.data_type == "NUMPY_ARRAY":
-        features = metadata.data_schema.model_data_schema.input_features
-        inputs = features.get("inputs")
-        if inputs is not None:
-            max_dim = max(inputs.shape)
-
-    # capping amount of sample data shown
-    if max_dim > 200:
-        metadata.sample_data = {"inputs": "Sample data is too large to load in ui"}
-
-    metadata_json = json.dumps(metadata.model_dump(), indent=4)
-    sample_data = json.dumps(metadata.sample_data, indent=4)
-
-    return templates.TemplateResponse(
-        "include/model/model_version.html",
-        {
-            "request": request,
-            "versions": versions,
-            "selected_model": selected_model,
-            "selected_version": version,
-            "project_num": project_num,
-            "metadata": metadata,
-            "sample_data": sample_data,
-            "runcard": runcard,
-            "metadata_json": metadata_json,
-        },
+    return model_route_helper.get_versions_page(
+        request=request,
+        name=model,
+        version=version,
+        versions=versions,
+        metadata=metadata,
     )
 
 
