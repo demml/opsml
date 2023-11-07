@@ -1,0 +1,45 @@
+name: Publish-PyPI-Release
+
+on:
+  push:
+    branches:
+      - release-candidate
+
+jobs:
+  Unit-Lint-Release-Candidate:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          python-version: ["3.11",]
+          poetry-version: ["1.5.1"]
+
+      steps:
+        - uses: actions/checkout@v3
+        - name: Install poetry
+          run: pipx install poetry==${{ matrix.poetry-version }}
+
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
+            cache: 'poetry'
+
+        - run : |
+                make setup.project
+                pip install -U twine
+                make lints.ci
+                make test.unit
+                make setup.project
+                if [[ "v$(poetry version --short)" == *"rc"* ]]; 
+                then
+                  poetry build
+                  twine check --strict dist/*
+                else
+                  exit 1
+                fi
+
+        - name: upload to pypi
+          run: twine upload dist/*
+          env:
+            TWINE_USERNAME: __token__
+            TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
