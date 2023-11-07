@@ -4,7 +4,9 @@ from fastapi import Request
 import json
 import tempfile
 from fastapi.templating import Jinja2Templates
-from opsml.registry import CardRegistry, AuditCard, DataCard
+from opsml.model.types import ModelMetadata
+from opsml.registry.cards import ArtifactCard, ModelCard
+from opsml.registry import CardRegistry, AuditCard, DataCard, RunCard
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
 from opsml.app.routes.pydantic_models import AuditReport
 from opsml.registry.cards.audit import AuditSections
@@ -34,6 +36,21 @@ class RouteHelper:
         uid: Optional[str] = None,
     ) -> Jinja2Templates.TemplateResponse:
         raise NotImplementedError
+
+    def _check_version(
+        self,
+        registry: CardRegistry,
+        name: str,
+        versions: List[Dict[str, Any]],
+        version: Optional[str] = None,
+    ) -> Tuple[ArtifactCard, str]:
+        if version is None:
+            selected_card = registry.load_card(uid=versions[0]["uid"])
+            version = selected_card.version
+
+            return selected_card, version
+
+        return registry.load_card(name=name, version=version), version
 
 
 class AuditRouteHelper(RouteHelper):
@@ -229,21 +246,6 @@ class DataRouteHelper(RouteHelper):
                 indent=4,
             )
 
-    def _check_data_version(
-        self,
-        registry: CardRegistry,
-        name: str,
-        versions: List[Dict[str, Any]],
-        version: Optional[str] = None,
-    ) -> Tuple[DataCard, str]:
-        if version is None:
-            selected_data = registry.load_card(uid=versions[0]["uid"])
-            version = selected_data.version
-
-            return selected_data, version
-
-        return registry.load_card(name=name, version=version), version
-
     def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool]:
         """If load_profile is True, attempts to load the data profile
 
@@ -281,7 +283,7 @@ class DataRouteHelper(RouteHelper):
 
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
-        datacard, version = self._check_data_version(registry, name, versions, version)
+        datacard, version = self._check_version(registry, name, versions, version)
 
         data_splits = self._check_splits(datacard)
         data_profile, render_profile = self._load_profile(request, load_profile, datacard)
@@ -332,5 +334,85 @@ class DataRouteHelper(RouteHelper):
                 "data_profile": data_profile,
                 "version": version,
                 "render": render,
+            },
+        )
+
+
+class ModelRouteHelper(RouteHelper):
+    """Route helper for DataCard pages"""
+
+    def get_homepage(self, request: Request, **kwargs) -> Jinja2Templates.TemplateResponse:
+        registry: CardRegistry = request.app.state.registries.model
+        team = kwargs.get("team")
+
+        info = list_team_name_info(registry, team)
+        return templates.TemplateResponse(
+            "include/model/models.html",
+            {
+                "request": request,
+                "all_teams": info.teams,
+                "selected_team": info.selected_team,
+                "models": info.names,
+            },
+        )
+
+    def _get_runcard(
+        self, request: Request, registry: CardRegistry, modelcard: ModelCard
+    ) -> Tuple[Optional[RunCard], Optional[str]]:
+        if modelcard.metadata.runcard_uid is not None:
+            runcard = registry.load_card(uid=modelcard.metadata.runcard_uid)
+            project_num = request.app.state.mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
+
+            return runcard, project_num
+
+        return None, None
+
+    def _check_data_dim(self, metadata: ModelMetadata) -> Tuple[str, str]:
+        """Checks if the data dimension is too large to load in the UI"""
+        max_dim = 0
+        if metadata.data_schema.model_data_schema.data_type == "NUMPY_ARRAY":
+            features = metadata.data_schema.model_data_schema.input_features
+            inputs = features.get("inputs")
+            if inputs is not None:
+                max_dim = max(inputs.shape)
+        # capping amount of sample data shown
+
+        if max_dim > 200:
+            metadata.sample_data = {"inputs": "Sample data is too large to load in ui"}
+
+        metadata_json = json.dumps(metadata.model_dump(), indent=4)
+        sample_data = json.dumps(metadata.sample_data, indent=4)
+
+        return metadata_json, sample_data
+
+    def get_versions_page(self, request: Request, name: str, **kwargs) -> Jinja2Templates.TemplateResponse:
+        """Given a data name, returns the data versions page"""
+        version = kwargs.get("version")
+        versions = cast(List[Dict[str, Any]], kwargs.get("versions"))
+        metadata = cast(ModelMetadata, kwargs.get("metadata"))
+
+        registry: CardRegistry = request.app.state.registries.model
+
+        modelcard, version = self._check_version(registry, name, versions, version)
+        runcard, project_num = self._get_runcard(
+            request=request,
+            registry=registry,
+            modelcard=modelcard,
+        )
+
+        metadata_json, sample_data = self._check_data_dim(metadata)
+
+        return templates.TemplateResponse(
+            "include/model/model_version.html",
+            {
+                "request": request,
+                "versions": versions,
+                "selected_model": name,
+                "selected_version": version,
+                "project_num": project_num,
+                "metadata": metadata,
+                "sample_data": sample_data,
+                "runcard": runcard,
+                "metadata_json": metadata_json,
             },
         )
