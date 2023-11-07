@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
-from opsml.app.routes.utils import error_to_500, list_team_name_info
+from opsml.app.routes.utils import error_to_500
 from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistry, DataCard
 from opsml.app.routes.route_helpers import DataRouteHelper
@@ -30,7 +30,7 @@ data_route_helper = DataRouteHelper()
 
 @router.get("/data/list/")
 @error_to_500
-async def data_list_homepage(request: Request, team: Optional[str] = None):
+async def data_list_homepage(request: Request, team: Optional[str] = None) -> Jinja2Templates.TemplateResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -52,7 +52,7 @@ async def data_versions_page(
     name: Optional[str] = None,
     version: Optional[str] = None,
     load_profile: Optional[bool] = False,
-):
+) -> Jinja2Templates.TemplateResponse:
     if name is None:
         return RedirectResponse(url="/opsml/data/list/")
 
@@ -69,7 +69,7 @@ async def data_versions_page(
 async def data_versions_uid_page(
     request: Request,
     uid: str,
-):
+) -> Jinja2Templates.TemplateResponse:
     registry: CardRegistry = request.app.state.registries.data
     selected_data = registry.list_cards(uid=uid)[0]
 
