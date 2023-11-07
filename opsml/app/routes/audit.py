@@ -5,10 +5,8 @@
 import codecs
 import csv
 import datetime
-import io
 import os
-import re
-from typing import Any, BinaryIO, Dict, List, Optional, Union
+from typing import Any, BinaryIO, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -19,10 +17,11 @@ from opsml.app.routes.pydantic_models import (
     AuditReport,
     CommentSaveRequest,
 )
-from opsml.app.routes.utils import error_to_500, get_names_teams_versions
+from opsml.app.routes.utils import error_to_500, get_names_teams_versions, AuditFormParser, write_records_to_csv
+from opsml.app.routes.route_helpers import AuditRouteHelper
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import AuditCard, CardRegistries
 from opsml.registry.cards.audit import AuditSections
+from opsml.registry import AuditCard
 
 logger = ArtifactLogger.get_logger()
 
@@ -34,6 +33,7 @@ AUDIT_FILE = "audit_file.csv"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 router = APIRouter()
+audit_route_helper = AuditRouteHelper()
 
 
 @router.get("/audit/")
@@ -67,221 +67,24 @@ async def audit_list_homepage(
     """
 
     if all(attr is None for attr in [uid, version, model, team]):
-        return templates.TemplateResponse(
-            "include/audit/audit.html",
-            {
-                "request": request,
-                "teams": request.app.state.registries.model._registry.unique_teams,
-                "models": None,
-                "selected_team": None,
-                "selected_model": None,
-                "version": None,
-                "audit_report": None,
-            },
-        )
+        return audit_route_helper.get_homepage(request=request)
 
     if team is not None and all(attr is None for attr in [version, model]):
-        teams = request.app.state.registries.model._registry.unique_teams
-        model_names = request.app.state.registries.model._registry.get_unique_card_names(team=team)
-        return templates.TemplateResponse(
-            "include/audit/audit.html",
-            {
-                "request": request,
-                "teams": teams,
-                "selected_team": team,
-                "models": model_names,
-                "versions": None,
-                "selected_model": None,
-                "version": None,
-                "audit_report": None,
-            },
-        )
+        return audit_route_helper.get_team_page(request=request, team=team)
 
     if team is not None and model is not None and version is None:
-        model_names, teams, versions = get_names_teams_versions(
-            registry=request.app.state.registries.model,
-            name=model,
-            team=team,
-        )
+        return audit_route_helper.get_versions_page(request=request, team=team, name=model)
 
-        return templates.TemplateResponse(
-            "include/audit/audit.html",
-            {
-                "request": request,
-                "teams": teams,
-                "selected_team": team,
-                "models": model_names,
-                "selected_model": model,
-                "versions": versions,
-                "version": None,
-                "audit_report": None,
-            },
-        )
+    if model is not None and team is not None and all(attr is None for attr in [uid, version]):
+        raise ValueError("Model name provided without either version or uid")
 
-    model_names, teams, versions = get_names_teams_versions(
-        registry=request.app.state.registries.model,
-        name=str(model),
+    return audit_route_helper.get_name_version_page(
+        request=request,
         team=str(team),
-    )
-    model_record = request.app.state.registries.model.list_cards(
-        name=model,
+        name=str(model),
         version=version,
         uid=uid,
-    )[0]
-
-    email = model_record.get("user_email") if email is None else email
-
-    auditcard_uid = model_record.get("auditcard_uid")
-
-    if auditcard_uid is None:
-        audit_report = AuditReport(
-            name=None,
-            team=None,
-            user_email=None,
-            version=None,
-            uid=None,
-            status=False,
-            audit=AuditSections().model_dump(),  # type: ignore
-            timestamp=None,
-            comments=[],
-        )
-
-    else:
-        audit_card: AuditCard = request.app.state.registries.audit.load_card(uid=auditcard_uid)
-
-        audit_report = AuditReport(
-            name=audit_card.name,
-            team=audit_card.team,
-            user_email=audit_card.user_email,
-            version=audit_card.version,
-            uid=audit_card.uid,
-            status=audit_card.approved,
-            audit=audit_card.audit.model_dump(),
-            timestamp=None,
-            comments=audit_card.comments,
-        )
-
-    return templates.TemplateResponse(
-        "include/audit/audit.html",
-        {
-            "request": request,
-            "teams": teams,
-            "selected_team": team,
-            "models": model_names,
-            "selected_model": model,
-            "selected_email": email,
-            "versions": versions,
-            "version": version,
-            "audit_report": audit_report.model_dump(),
-        },
     )
-
-
-class AuditFormParser:
-    def __init__(self, audit_form_dict: Dict[str, str], registries: CardRegistries):
-        """Instantiates parse for audit form data
-
-        Args:
-            audit_dict:
-                Dictionary of audit form data
-            registries:
-                `CardRegistries`
-        """
-        self.audit_form_dict = audit_form_dict
-        self.registries = registries
-
-    def _add_auditcard_to_modelcard(self, auditcard_uid: str) -> None:
-        """Adds registered AuditCard uid to ModelCard
-
-        Args:
-            auditcard_uid:
-                AuditCard uid to add to ModelCard
-        """
-        model_record = self.registries.model.list_cards(
-            name=self.audit_form_dict["selected_model_name"],
-            version=self.audit_form_dict["selected_model_version"],
-        )[0]
-
-        model_record["auditcard_uid"] = auditcard_uid
-        self.registries.model._registry.update_card_record(card=model_record)
-
-    def register_update_audit_card(self, audit_card: AuditCard) -> None:
-        """Register or update an AuditCard. This will always use server-side registration,
-        as the auditcard_uid is created/updated via form data
-
-        Args:
-            audit_card:
-                `AuditCard`
-
-        Returns:
-            None
-        """
-        # register/update audit
-        if audit_card.uid is not None:
-            return self.registries.audit.update_card(card=audit_card)
-        self.registries.audit.register_card(card=audit_card)
-        self._add_auditcard_to_modelcard(auditcard_uid=audit_card.uid)
-        return None
-
-    def get_audit_card(self) -> AuditCard:
-        """Gets or creates AuditCard to use with Form data
-
-        Returns:
-            `AuditCard`
-        """
-        if self.audit_form_dict["uid"] is not None:
-            # check first
-            records = self.registries.audit.list_cards(uid=self.audit_form_dict["uid"])
-
-            if bool(records):
-                audit_card: AuditCard = self.registries.audit.load_card(uid=self.audit_form_dict["uid"])
-
-            else:
-                logger.info("Invalid uid specified, defaulting to new AuditCard")
-                audit_card = AuditCard(
-                    name=self.audit_form_dict["name"],
-                    team=self.audit_form_dict["team"],
-                    user_email=self.audit_form_dict["email"],
-                )
-        else:
-            audit_card = AuditCard(
-                name=self.audit_form_dict["name"],
-                team=self.audit_form_dict["team"],
-                user_email=self.audit_form_dict["email"],
-            )
-
-        return audit_card
-
-    def parse_form_sections(self, audit_card: AuditCard) -> AuditCard:
-        """Parses form data into AuditCard
-
-        Args:
-            audit_card:
-                `AuditCard`
-
-        Returns:
-            `AuditCard`
-        """
-        audit_section = audit_card.audit.model_dump()
-        for question_key, response in self.audit_form_dict.items():
-            if bool(re.search(r"\d", question_key)) and response is not None:
-                splits = question_key.split("_")
-                section = "_".join(splits[:-1])
-                number = int(splits[-1])  # this will always be an int
-                audit_section[section][number]["response"] = response
-
-        # recreate section
-        audit_card.audit = AuditSections(**audit_section)
-        return audit_card
-
-    def parse_form(self) -> AuditCard:
-        """Parses form data into AuditCard"""
-
-        audit_card = self.get_audit_card()
-        audit_card = self.parse_form_sections(audit_card=audit_card)
-        self.register_update_audit_card(audit_card=audit_card)
-
-        return audit_card
 
 
 @router.post("/audit/save")
@@ -479,33 +282,6 @@ async def upload_audit_data(
     )
 
 
-def write_audit_to_csv(
-    audit_records: List[Dict[str, Optional[Union[str, int]]]],
-    field_names: List[str],
-) -> StreamingResponse:
-    """Writes audit data to csv and returns FileResponse
-
-    Args:
-        audit_records:
-            List of audit records
-        field_names:
-            List of field names for csv header
-
-    Returns:
-        FileResponse
-    """
-    buffer = io.StringIO()
-    writer = csv.DictWriter(buffer, fieldnames=field_names)
-    writer.writeheader()
-    writer.writerows(audit_records)
-
-    return StreamingResponse(
-        iter([buffer.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "filename=audit_file.csv"},
-    )
-
-
 @router.post("/audit/download", response_class=StreamingResponse)
 @error_to_500
 async def download_audit_data(
@@ -538,7 +314,7 @@ async def download_audit_data(
                 }
             )
 
-    response = write_audit_to_csv(
+    response = write_records_to_csv(
         audit_records=audit_records,
         field_names=field_names,
     )

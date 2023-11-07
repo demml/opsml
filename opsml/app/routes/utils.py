@@ -2,20 +2,24 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
+import io
+import re
+import csv
 import traceback
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from fastapi import Request
+from fastapi import Request, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from streaming_form_data.targets import FileTarget
 
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, CardRegistry, RunCard
+from opsml.registry import CardRegistries, CardRegistry, RunCard, AuditCard
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
+from opsml.registry.cards.audit import AuditSections
 
 logger = ArtifactLogger.get_logger()
 # Constants
@@ -226,4 +230,138 @@ def list_team_name_info(registry: CardRegistry, team: Optional[str] = None) -> L
         teams=all_teams,
         selected_team=team,
         names=names,
+    )
+
+
+class AuditFormParser:
+    def __init__(self, audit_form_dict: Dict[str, str], registries: CardRegistries):
+        """Instantiates parse for audit form data
+
+        Args:
+            audit_dict:
+                Dictionary of audit form data
+            registries:
+                `CardRegistries`
+        """
+        self.audit_form_dict = audit_form_dict
+        self.registries = registries
+
+    def _add_auditcard_to_modelcard(self, auditcard_uid: str) -> None:
+        """Adds registered AuditCard uid to ModelCard
+
+        Args:
+            auditcard_uid:
+                AuditCard uid to add to ModelCard
+        """
+        model_record = self.registries.model.list_cards(
+            name=self.audit_form_dict["selected_model_name"],
+            version=self.audit_form_dict["selected_model_version"],
+        )[0]
+
+        model_record["auditcard_uid"] = auditcard_uid
+        self.registries.model._registry.update_card_record(card=model_record)
+
+    def register_update_audit_card(self, audit_card: AuditCard) -> None:
+        """Register or update an AuditCard. This will always use server-side registration,
+        as the auditcard_uid is created/updated via form data
+
+        Args:
+            audit_card:
+                `AuditCard`
+
+        Returns:
+            None
+        """
+        # register/update audit
+        if audit_card.uid is not None:
+            return self.registries.audit.update_card(card=audit_card)
+        self.registries.audit.register_card(card=audit_card)
+        self._add_auditcard_to_modelcard(auditcard_uid=audit_card.uid)
+        return None
+
+    def get_audit_card(self) -> AuditCard:
+        """Gets or creates AuditCard to use with Form data
+
+        Returns:
+            `AuditCard`
+        """
+        if self.audit_form_dict["uid"] is not None:
+            # check first
+            records = self.registries.audit.list_cards(uid=self.audit_form_dict["uid"])
+
+            if bool(records):
+                audit_card: AuditCard = self.registries.audit.load_card(uid=self.audit_form_dict["uid"])
+
+            else:
+                logger.info("Invalid uid specified, defaulting to new AuditCard")
+                audit_card = AuditCard(
+                    name=self.audit_form_dict["name"],
+                    team=self.audit_form_dict["team"],
+                    user_email=self.audit_form_dict["email"],
+                )
+        else:
+            audit_card = AuditCard(
+                name=self.audit_form_dict["name"],
+                team=self.audit_form_dict["team"],
+                user_email=self.audit_form_dict["email"],
+            )
+
+        return audit_card
+
+    def parse_form_sections(self, audit_card: AuditCard) -> AuditCard:
+        """Parses form data into AuditCard
+
+        Args:
+            audit_card:
+                `AuditCard`
+
+        Returns:
+            `AuditCard`
+        """
+        audit_section = audit_card.audit.model_dump()
+        for question_key, response in self.audit_form_dict.items():
+            if bool(re.search(r"\d", question_key)) and response is not None:
+                splits = question_key.split("_")
+                section = "_".join(splits[:-1])
+                number = int(splits[-1])  # this will always be an int
+                audit_section[section][number]["response"] = response
+
+        # recreate section
+        audit_card.audit = AuditSections(**audit_section)
+        return audit_card
+
+    def parse_form(self) -> AuditCard:
+        """Parses form data into AuditCard"""
+
+        audit_card = self.get_audit_card()
+        audit_card = self.parse_form_sections(audit_card=audit_card)
+        self.register_update_audit_card(audit_card=audit_card)
+
+        return audit_card
+
+
+def write_records_to_csv(
+    records: List[Dict[str, Optional[Union[str, int]]]],
+    field_names: List[str],
+) -> StreamingResponse:
+    """Writes audit data to csv and returns FileResponse
+
+    Args:
+        audit_records:
+            List of audit records
+        field_names:
+            List of field names for csv header
+
+    Returns:
+        FileResponse
+    """
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=field_names)
+    writer.writeheader()
+    writer.writerows(records)
+
+    return StreamingResponse(
+        iter([buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "filename=audit_file.csv"},
     )
