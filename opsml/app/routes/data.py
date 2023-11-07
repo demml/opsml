@@ -87,34 +87,12 @@ async def data_versions_profile_page(
     name: str,
     version: str,
     profile_uri: Optional[str] = None,
-):
-    if profile_uri is None:
-        data_profile = "No profile found"
-        render = False
-    else:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            filepath = request.app.state.storage_client.download(profile_uri, tmp_dir)
-
-            stats = os.stat(filepath)
-
-            if stats.st_size / (1024 * 1024) <= 50:
-                with open(filepath, "r", encoding="utf-8") as html_file:
-                    data_profile = html_file.read()
-                    render = True
-
-            else:
-                data_profile = "Data profile too large to display. Please download to view."
-                render = False
-
-    return templates.TemplateResponse(
-        "include/data/data_profile.html",
-        {
-            "request": request,
-            "name": name,
-            "data_profile": data_profile,
-            "version": version,
-            "render": render,
-        },
+) -> Jinja2Templates.TemplateResponse:
+    return data_route_helper.get_data_profile_page(
+        request=request,
+        name=name,
+        version=version,
+        profile_uri=profile_uri,
     )
 
 

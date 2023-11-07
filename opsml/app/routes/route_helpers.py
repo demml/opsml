@@ -299,3 +299,38 @@ class DataRouteHelper(RouteHelper):
                 "load_profile": load_profile,
             },
         )
+
+    def get_data_profile_page(
+        self,
+        request: Request,
+        name: str,
+        version: str,
+        profile_uri: Optional[str] = None,
+    ) -> Jinja2Templates.TemplateResponse:
+        """Loads the data profile page"""
+        if profile_uri is None:
+            data_profile = "No profile found"
+            render = False
+        else:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                filepath = request.app.state.storage_client.download(profile_uri, tmp_dir)
+                stats = os.stat(filepath)
+                if stats.st_size / (1024 * 1024) <= 50:
+                    with open(filepath, "r", encoding="utf-8") as html_file:
+                        data_profile = html_file.read()
+                        render = True
+
+                else:
+                    data_profile = "Data profile too large to display. Please download to view."
+                    render = False
+
+        return templates.TemplateResponse(
+            "include/data/data_profile.html",
+            {
+                "request": request,
+                "name": name,
+                "data_profile": data_profile,
+                "version": version,
+                "render": render,
+            },
+        )
