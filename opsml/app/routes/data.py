@@ -14,6 +14,7 @@ from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistry, DataCard
+from opsml.app.routes.route_helpers import DataRouteHelper
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -24,6 +25,7 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 router = APIRouter()
 CHUNK_SIZE = 31457280
+data_route_helper = DataRouteHelper()
 
 
 @router.get("/data/list/")
@@ -40,19 +42,7 @@ async def data_list_homepage(request: Request, team: Optional[str] = None):
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    registry: CardRegistry = request.app.state.registries.data
-
-    info = list_team_name_info(registry, team)
-
-    return templates.TemplateResponse(
-        "include/data/data.html",
-        {
-            "request": request,
-            "all_teams": info.teams,
-            "selected_team": info.selected_team,
-            "data": info.names,
-        },
-    )
+    data_route_helper.get_homepage(request=request, team=team)
 
 
 @router.get("/data/versions/")
@@ -66,55 +56,11 @@ async def data_versions_page(
     if name is None:
         return RedirectResponse(url="/opsml/data/list/")
 
-    registry: CardRegistry = request.app.state.registries.data
-    versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
-
-    if version is None:
-        selected_data = cast(DataCard, registry.load_card(uid=versions[0]["uid"]))
-        version = selected_data.version
-    else:
-        selected_data = cast(DataCard, registry.load_card(name=name, version=version))
-
-    if len(selected_data.data_splits) > 0:
-        data_splits = json.dumps(
-            [split.model_dump() for split in selected_data.data_splits],
-            indent=4,
-        )
-    else:
-        data_splits = None
-
-    data_profile = None
-    render_profile = False
-
-    if load_profile:
-        if selected_data.metadata.uris.profile_html_uri is not None:
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                filepath = request.app.state.storage_client.download(
-                    selected_data.metadata.uris.profile_html_uri, tmp_dir
-                )
-
-                stats = os.stat(filepath)
-                if stats.st_size / (1024 * 1024) <= 50:
-                    with open(filepath, "r", encoding="utf-8") as html_file:
-                        data_profile = html_file.read()
-                        render_profile = True
-
-                else:
-                    data_profile = "Data profile too large to display. Please download to view."
-                    render_profile = False
-
-    return templates.TemplateResponse(
-        "include/data/data_version.html",
-        {
-            "request": request,
-            "versions": versions,
-            "selected_data": selected_data,
-            "selected_version": version,
-            "data_splits": data_splits,
-            "data_profile": data_profile,
-            "render_profile": render_profile,
-            "load_profile": load_profile,
-        },
+    return data_route_helper.get_versions_page(
+        request=request,
+        name=name,
+        version=version,
+        load_profile=load_profile,
     )
 
 
