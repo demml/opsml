@@ -10,11 +10,10 @@ from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import CardInfo, CardType
+from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.semver import VersionType
-from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger()
@@ -30,18 +29,22 @@ else:
 
 
 class DataCardRegistry(Registry):
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.DATA.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.DATA.value
+        return registry_name.lower() == RegistryType.DATA.value
 
 
 class ModelCardRegistry(Registry):
-    def _get_data_table_name(self) -> str:
-        return RegistryTableNames.DATA.value
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.MODEL.value
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        table_to_check = self._get_data_table_name()
-        exists = self.check_uid(uid=uid, table_to_check=table_to_check)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -99,28 +102,40 @@ class ModelCardRegistry(Registry):
 
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.MODEL.value
+        return registry_name.lower() == RegistryType.MODEL.value
 
 
 class RunCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.RUN.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.RUN.value
+        return registry_name.lower() == RegistryType.RUN.value
 
 
 class PipelineCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.PIPELINE.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PIPELINE.value
+        return registry_name.lower() == RegistryType.PIPELINE.value
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
 class ProjectCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.PROJECT.value
+
     @staticmethod
     def validate(registry_name: str):
-        return registry_name in RegistryTableNames.PROJECT.value
+        return registry_name.lower() == RegistryType.PROJECT.value
 
     def load_card(
         self,
@@ -134,6 +149,19 @@ class ProjectCardRegistry(Registry):  # type:ignore
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")
+
+
+class AuditCardRegistry(Registry):  # type:ignore
+    @property
+    def registry_type(self) -> str:
+        return RegistryType.AUDIT.value
+
+    def validate_uid(self, uid: str, registry_type: str) -> bool:
+        return self.check_uid(uid=uid, registry_type=registry_type)
+
+    @staticmethod
+    def validate(registry_name: str):
+        return registry_name.lower() == RegistryType.AUDIT.value
 
 
 # CardRegistry also needs to set a storage file system
@@ -156,6 +184,11 @@ class CardRegistry:
         self._registry = self._set_registry(registry_name=registry_name)
         self.table_name = self._registry._table.__tablename__
 
+    @property
+    def registry_type(self) -> str:
+        "Registry type for card registry"
+        return self._registry.registry_type
+
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
 
@@ -166,7 +199,6 @@ class CardRegistry:
             SQL Registry
         """
 
-        registry_name = RegistryTableNames[registry_name.upper()].value
         registry = next(
             registry
             for registry in Registry.__subclasses__()
@@ -175,7 +207,7 @@ class CardRegistry:
             )
         )
 
-        return registry(table_name=registry_name)
+        return registry(registry_type=registry_name)
 
     def list_cards(
         self,
@@ -383,8 +415,9 @@ class CardRegistries:
         self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
         self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
         self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
+        self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value)
 
     def set_storage_client(self, storage_client: StorageClientType):
-        for attr in ["data", "model", "run", "project", "pipeline"]:
+        for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
             registry: CardRegistry = getattr(self, attr)
             registry._registry.storage_client = storage_client

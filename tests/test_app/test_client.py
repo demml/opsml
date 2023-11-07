@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from requests.auth import HTTPBasicAuth
 
 from opsml.registry import (
+    AuditCard,
     DataCard,
     ModelCard,
     RunCard,
@@ -89,8 +90,30 @@ def test_register_data(
     df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-    with pytest.raises(AttributeError):
-        registry._registry.table_name = "no_table"
+
+def test_list_teams(
+    api_registries: CardRegistries,
+):
+    registry: CardRegistry = api_registries.data
+    teams = registry._registry.unique_teams
+    assert len(teams) == 1
+    assert teams[0] == "mlops"
+
+
+def test_list_card_names(
+    api_registries: CardRegistries,
+):
+    # create data card
+    registry = api_registries.data
+    names = registry._registry.get_unique_card_names(team="mlops")
+
+    assert len(names) == 1
+    assert names[0] == "test-df"
+
+    names = registry._registry.get_unique_card_names()
+
+    assert len(names) == 1
+    assert names[0] == "test-df"
 
 
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
@@ -325,8 +348,8 @@ def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame)
     registry = api_registries.data
 
     data_split = [
-        {"label": "train", "column": "year", "column_value": 2020},
-        {"label": "test", "column": "year", "column_value": 2021},
+        {"label": "train", "column_name": "year", "column_value": 2020},
+        {"label": "test", "column_name": "year", "column_value": 2021},
     ]
 
     data_card = DataCard(
@@ -583,7 +606,13 @@ def test_model_metrics(
     api_registries.run.register_card(runcard)
 
     #### Create DataCard
-    datacard = DataCard(data=data, info=card_info)
+    datacard = DataCard(
+        data=data,
+        name="profile_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    datacard.create_data_profile()
     api_registries.data.register_card(datacard)
 
     #### Create ModelCard
@@ -595,6 +624,10 @@ def test_model_metrics(
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
     )
     api_registries.model.register_card(modelcard)
+
+    auditcard = AuditCard(name="audit_card", team="team", user_email="test")
+    auditcard.add_card(card=modelcard)
+    api_registries.audit.register_card(auditcard)
 
     ### create second ModelCard
     #### Create ModelCard
@@ -694,7 +727,7 @@ def test_card_create_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/create",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -706,7 +739,7 @@ def test_card_update_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/update",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
     )
 
@@ -718,8 +751,17 @@ def test_card_list_fail(test_app: TestClient):
 
     response = test_app.post(
         "/opsml/cards/list",
-        json={"card": {"blah": "blah"}, "table_name": "blah"},
+        json={"card": {"blah": "blah"}, "registry_type": "blah"},
         headers={"X-Prod-Token": "test-token"},
+    )
+
+    assert response.status_code == 500
+
+
+def test_registry_name_fail(test_app: TestClient):
+    response = test_app.get(
+        "/opsml/registry/table",
+        params={"registry_type": "blah"},
     )
 
     assert response.status_code == 500

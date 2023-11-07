@@ -173,50 +173,51 @@ print(model_registry.list_cards(info=card_info, as_dataframe=False))
 
 Outputs:
 
+data registry output
 ```json
-# data registry output
 [
     {
-        "uid": "3fa6f762c5b74d4289b1e52bfd66f158",
-        "app_env": "development",
-        "team": "opsml",
-        "user_email": "user@email.com",
-        "datacard_uid": "873978bf4c3a49be819b9813f8d02ae8",
-        "onnx_model_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json",
-        "sample_data_type": "DataFrame",
-        "runcard_uid": None,
-        "timestamp": 1682622948628464,
-        "date": "2023-04-27",
         "name": "linnerrud",
         "version": "1.0.0",
-        "modelcard_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/modelcard.joblib",
-        "trained_model_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/trained-model.joblib",
-        "sample_data_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/sample-model-data.parquet",
-        "model_type": "sklearn_estimator",
-        "pipelinecard_uid": None,
+        "tags": {},
+        "data_type": "PandasDataFrame",
+        "pipelinecard_uid": null,
+        "date": "2023-10-29",
+        "timestamp": 1698622188318014,
+        "app_env": "development",
+        "uid": "07131023c60d4a6892092851eab0f86d",
+        "team": "opsml",
+        "user_email": "user@email.com",
+        "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
+        "runcard_uid": null,
+        "datacard_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/datacard.joblib",
     }
-]
 
-# model registry output
+]
+```
+
+model registry output
+```json
 [
     {
-        "uid": "3fa6f762c5b74d4289b1e52bfd66f158",
+        "uid": "1e68ef7851b34974bfaac764f348491d",
         "app_env": "development",
         "team": "opsml",
         "user_email": "user@email.com",
-        "datacard_uid": "873978bf4c3a49be819b9813f8d02ae8",
-        "onnx_model_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json",
-        "sample_data_type": "DataFrame",
-        "runcard_uid": None,
-        "timestamp": 1682622948628464,
-        "date": "2023-04-27",
-        "name": "linnerrud",
-        "version": "1.0.0",
-        "modelcard_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/modelcard.joblib",
-        "trained_model_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/trained-model.joblib",
-        "sample_data_uri": "/***/***/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/sample-model-data.parquet",
+        "modelcard_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/modelcard.joblib",
+        "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",
+        "sample_data_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/sample-model-data.parquet",
         "model_type": "sklearn_estimator",
-        "pipelinecard_uid": None,
+        "pipelinecard_uid": null,
+        "date": "2023-10-29",
+        "name": "linnerrud",
+        "timestamp": 1698622188320834,
+        "version": "1.0.0",
+        "tags": {},
+        "datacard_uid": "07131023c60d4a6892092851eab0f86d",
+        "model_metadata_uri": "***/OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model-metadata.json",
+        "sample_data_type": "PandasDataFrame",
+        "runcard_uid": null,
     }
 ]
 ```

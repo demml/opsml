@@ -13,6 +13,7 @@ import pyarrow as pa
 from opsml.model.types import ModelMetadata, OnnxAttr
 from opsml.registry.cards import (
     ArtifactCard,
+    AuditCard,
     DataCard,
     ModelCard,
     PipelineCard,
@@ -32,6 +33,7 @@ class SaveName(str, Enum):
     DATACARD = "datacard"
     RUNCARD = "runcard"
     MODELCARD = "modelcard"
+    AUDIT = "audit"
     PIPLELINECARD = "pipelinecard"
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
@@ -203,7 +205,6 @@ class DataCardArtifactSaver(CardArtifactSaver):
             artifact=profile_bytes,
             storage_client=self.storage_client,
         )
-
         self.card.metadata.uris.profile_uri = storage_path.uri
 
     def _save_profile_html(self):
@@ -392,6 +393,34 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         return CardType.MODELCARD.value in card_type
 
 
+class AuditCardArtifactSaver(CardArtifactSaver):
+    @cached_property
+    def card(self):
+        return cast(AuditCard, self._card)
+
+    def _save_audit(self):
+        self._set_storage_spec(
+            filename=SaveName.AUDIT,
+            uri=self.card.metadata.audit_uri,
+        )
+
+        storage_path = save_record_artifact_to_storage(
+            artifact=self.card.model_dump(),
+            storage_client=self.storage_client,
+        )
+
+        self.card.metadata.audit_uri = storage_path.uri
+
+    def save_artifacts(self) -> ArtifactCard:
+        self._save_audit()
+
+        return self.card
+
+    @staticmethod
+    def validate(card_type: str) -> bool:
+        return CardType.AUDITCARD.value in card_type
+
+
 class RunCardArtifactSaver(CardArtifactSaver):
     @cached_property
     def card(self):
@@ -412,20 +441,24 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     def _save_run_artifacts(self) -> None:
         """Saves all artifacts associated with RunCard to filesystem"""
-
         # check if artifacts have already been saved (Mlflow runs save artifacts during run)
         if self.card.artifact_uris is None:
             artifact_uris: Dict[str, str] = {}
+        else:
+            artifact_uris = self.card.artifact_uris
 
-            if self.card.artifacts is not None:
-                for name, artifact in self.card.artifacts.items():
-                    storage_path = save_record_artifact_to_storage(
-                        artifact=artifact,
-                        storage_client=self.storage_client,
-                    )
-                    artifact_uris[name] = storage_path.uri
+        if self.card.artifacts is not None:
+            for name, artifact in self.card.artifacts.items():
+                if name in artifact_uris:
+                    continue
 
-            self.card.artifact_uris = artifact_uris
+                storage_path = save_record_artifact_to_storage(
+                    artifact=artifact,
+                    storage_client=self.storage_client,
+                )
+                artifact_uris[name] = storage_path.uri
+
+        self.card.artifact_uris = artifact_uris
 
     def save_artifacts(self) -> ArtifactCard:
         self._save_run_artifacts()

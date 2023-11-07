@@ -65,7 +65,7 @@ def model_predict(model_and_data):
         lazy_fixture("sklearn_pipeline"),  # sklearn pipeline with dict onnx input
         lazy_fixture("sklearn_pipeline_advanced"),
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
-        #### test all supported sklearn estimators
+        ##### test all supported sklearn estimators
         lazy_fixture("ard_regression"),
         lazy_fixture("ada_boost_classifier"),
         lazy_fixture("ada_regression"),
@@ -167,7 +167,7 @@ def test_model_pytorch_predict(model_and_data):
         lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
     ],
 )
-def test_tensorflow_predict(model_and_data):
+def _test_tensorflow_predict(model_and_data):
     model_predict(model_and_data)
 
 

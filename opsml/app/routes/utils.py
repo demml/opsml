@@ -1,14 +1,36 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 from streaming_form_data.targets import FileTarget
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()
+
+
+def get_registry_type_from_table(
+    table_name: Optional[str] = None,
+    registry_type: Optional[str] = None,
+) -> str:
+    """
+    This is a hack to get the registry type from the table name.
+    This is needed to maintain backwards compatibility in V1
+    """
+
+    if table_name is not None:
+        for _registry_type in RegistryType:
+            if _registry_type.value.upper() in table_name:
+                return _registry_type.value
+
+    if registry_type is not None:
+        return registry_type
+
+    raise ValueError("Could not determine registry type")
 
 
 def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
@@ -76,7 +98,7 @@ class ExternalFileTarget(FileTarget):
 
     def _create_base_path(self):
         if isinstance(self.storage_client, LocalStorageClient):
-            self.storage_client._make_path(folder_path=self.write_path)  # pylint: disable=protected-access
+            Path(self.write_path).mkdir(parents=True, exist_ok=True)
 
     def on_start(self):
         self._fd = self.storage_client.open(self.filepath, self._mode)

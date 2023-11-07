@@ -5,7 +5,7 @@
 import base64
 import json
 import os
-from typing import Optional, Tuple, Union, cast
+from typing import Optional, Tuple, Union
 
 import google.auth
 from google.auth.credentials import Credentials
@@ -144,7 +144,7 @@ class GCSStorageClient(GCPService):
 
         return bucket, blob_path, filename
 
-    def delete_object_from_url(self, gcs_uri: str):
+    def delete_object_from_uri(self, gcs_uri: str):
         """Delete object from gcs
 
         Args:
@@ -194,26 +194,10 @@ class GCSStorageClient(GCPService):
 
     @staticmethod
     def valid_service_name(service_name: str):
-        return bool(service_name == "storage")
+        return service_name == "storage"
 
 
 ClientTypes = GCSStorageClient
-
-
-class GCPClient:
-    @staticmethod
-    def get_service(
-        service_name: str,
-        gcp_credentials: Optional[Credentials] = None,
-    ) -> ClientTypes:
-        service = next(
-            service
-            for service in GCPService.__subclasses__()
-            if service.valid_service_name(
-                service_name=service_name,
-            )
-        )
-        return cast(ClientTypes, service(gcp_credentials=gcp_credentials))
 
 
 class GcpCredsSetter:
