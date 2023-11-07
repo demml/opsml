@@ -45,7 +45,7 @@ async def audit_list_homepage(
     email: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
-):
+) -> Jinja2Templates.TemplateResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -89,7 +89,10 @@ async def audit_list_homepage(
 
 @router.post("/audit/save")
 @error_to_500
-async def save_audit_form(request: Request, form: AuditFormRequest = Depends(AuditFormRequest)):
+async def save_audit_form(
+    request: Request,
+    form: AuditFormRequest = Depends(AuditFormRequest),
+) -> Jinja2Templates.TemplateResponse:
     # collect all function arguments into a dictionary
 
     # base attr needed for html
@@ -135,7 +138,10 @@ async def save_audit_form(request: Request, form: AuditFormRequest = Depends(Aud
 
 @router.post("/audit/comment/save")
 @error_to_500
-async def save_audit_comment(request: Request, comment: CommentSaveRequest = Depends(CommentSaveRequest)):
+async def save_audit_comment(
+    request: Request,
+    comment: CommentSaveRequest = Depends(CommentSaveRequest),
+) -> Jinja2Templates.TemplateResponse:
     """Save comment to AuditCard
 
     Args:
@@ -224,7 +230,7 @@ async def upload_audit_data(
     request: Request,
     background_tasks: BackgroundTasks,
     form: AuditFormRequest = Depends(AuditFormRequest),
-):
+) -> Jinja2Templates.TemplateResponse:
     """Uploads audit data form file. If an audit_uid is provided, only the audit section will be updated."""
     uploader = AuditFormUploader(
         form=form,
