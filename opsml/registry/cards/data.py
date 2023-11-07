@@ -14,6 +14,7 @@ from pydantic import field_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath
 from opsml.profile.profile_data import DataProfiler, ProfileReport
+from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
@@ -32,6 +33,7 @@ storage_client = settings.storage_client
 ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
 
 
+@auditable
 class DataCard(ArtifactCard):
     """Create a DataCard from your data.
 

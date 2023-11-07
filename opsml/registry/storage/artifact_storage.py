@@ -1,4 +1,4 @@
-# pylint: disable=[import-outside-toplevel,import-error]
+# pylint: disable=[import-outside-toplevel,import-error,no-name-in-module]
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -14,7 +14,7 @@ import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
-from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
+from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
 
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.cards.types import StoragePath
@@ -114,16 +114,6 @@ class ArtifactStorage:
             recursive=recursive,
             **kwargs,
         )
-
-    def _list_files(self, storage_uri: str) -> FilePath:
-        """list files"""
-        files = self.storage_client.list_files(storage_uri=storage_uri)
-
-        if self.is_data:
-            if not self.is_storage_a_proxy:
-                return files
-            return files[0]
-        return files[0]
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         raise NotImplementedError

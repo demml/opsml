@@ -1,3 +1,4 @@
+from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard

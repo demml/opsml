@@ -163,7 +163,7 @@ class _RunManager:
             return cast(RunCard, runcard)
 
         return RunCard(
-            name=self._project_info.name,
+            name=self.run_name or self._project_info.name,
             team=self._project_info.team,
             user_email=self._project_info.user_email,
             uid=self.run_id,

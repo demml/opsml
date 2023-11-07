@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
 import datetime
 from contextlib import contextmanager
 from functools import wraps
@@ -178,6 +177,8 @@ class QueryEngine:
                 Optional card tags
             max_date:
                 Optional max date to search
+            limit:
+                Optional limit of records to return
 
         Returns
             Sqlalchemy Select statement
@@ -334,6 +335,39 @@ class QueryEngine:
             query = sess.query(table).filter(table.uid == record_uid)
             query.update(card)
             sess.commit()
+
+    def get_unique_teams(self, table: Type[REGISTRY_TABLES]) -> List[str]:
+        """Retrieves unique teams in a registry
+
+        Args:
+            table:
+                Registry table to query
+
+        Returns:
+            List of unique teams
+        """
+        team_col = cast(SqlTableType, table.team)
+        query = select(team_col).distinct()
+
+        with self.session() as sess:
+            results = sess.scalars(query).all()  # type: ignore[attr-defined]
+
+        return results
+
+    def get_unique_card_names(self, team: Optional[str], table: Type[REGISTRY_TABLES]) -> List[str]:
+        """Returns a list of unique card names"""
+        name_col = cast(SqlTableType, table.name)
+        query = select(name_col)
+
+        if team is not None:
+            query = query.filter(table.team == team).distinct()  # type: ignore[attr-defined]
+        else:
+            query = query.distinct()
+
+        with self.session() as sess:
+            results = sess.scalars(query).all()  # type: ignore[attr-defined]
+
+        return results
 
     def delete_card_record(
         self,
