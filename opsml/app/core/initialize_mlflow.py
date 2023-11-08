@@ -39,8 +39,8 @@ def initialize_mlflow() -> MlFlowConfig:
     backend_store_uri = config.MLFLOW_SERVER_FILE_STORE
     registry_store_uri = backend_store_uri  # yes, this is correct. the registry store default is the backend_store_uri
     default_artifact_root = config.MLFLOW_SERVER_ARTIFACT_ROOT
-
     default_artifact_root = resolve_default_artifact_root(True, default_artifact_root, backend_store_uri)
+
     try:
         initialize_backend_stores(backend_store_uri, registry_store_uri, default_artifact_root)
         return config
