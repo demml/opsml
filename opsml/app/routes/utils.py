@@ -1,25 +1,27 @@
+# pylint: disable=protected-access
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
-import io
-import re
 import csv
+import io
+import os
+import re
 import traceback
 from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from fastapi import Request, StreamingResponse
+from fastapi import Request
+from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 from streaming_form_data.targets import FileTarget
 
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistries, CardRegistry, RunCard, AuditCard
+from opsml.registry import AuditCard, CardRegistries, CardRegistry, RunCard
+from opsml.registry.cards.audit import AuditSections
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
-from opsml.registry.cards.audit import AuditSections
 
 logger = ArtifactLogger.get_logger()
 # Constants
@@ -347,7 +349,7 @@ def write_records_to_csv(
     """Writes audit data to csv and returns FileResponse
 
     Args:
-        audit_records:
+        records:
             List of audit records
         field_names:
             List of field names for csv header

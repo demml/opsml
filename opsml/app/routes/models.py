@@ -2,9 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import os
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
@@ -18,12 +17,12 @@ from opsml.app.routes.pydantic_models import (
     MetricResponse,
     RegisterModelRequest,
 )
-from opsml.app.routes.utils import error_to_500, list_team_name_info
+from opsml.app.routes.route_helpers import ModelRouteHelper
+from opsml.app.routes.utils import error_to_500
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
 from opsml.registry.cards.model import ModelMetadata
-from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
@@ -42,7 +41,7 @@ model_route_helper = ModelRouteHelper()
 
 
 @router.get("/models/list/")
-@error_to_500
+# @error_to_500
 async def model_list_homepage(request: Request, team: Optional[str] = None):
     """UI home for listing models in model registry
     Args:
@@ -58,7 +57,7 @@ async def model_list_homepage(request: Request, team: Optional[str] = None):
 
 
 @router.get("/models/versions/")
-@error_to_500
+# @error_to_500
 async def model_versions_page(
     request: Request,
     model: Optional[str] = None,

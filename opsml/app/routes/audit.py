@@ -9,7 +9,7 @@ import os
 from typing import Any, BinaryIO, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
@@ -17,11 +17,16 @@ from opsml.app.routes.pydantic_models import (
     AuditReport,
     CommentSaveRequest,
 )
-from opsml.app.routes.utils import error_to_500, get_names_teams_versions, AuditFormParser, write_records_to_csv
 from opsml.app.routes.route_helpers import AuditRouteHelper
+from opsml.app.routes.utils import (
+    AuditFormParser,
+    error_to_500,
+    get_names_teams_versions,
+    write_records_to_csv,
+)
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.audit import AuditSections
 from opsml.registry import AuditCard
+from opsml.registry.cards.audit import AuditSections
 
 logger = ArtifactLogger.get_logger()
 
@@ -36,8 +41,8 @@ router = APIRouter()
 audit_route_helper = AuditRouteHelper()
 
 
-@router.get("/audit/")
-@error_to_500
+@router.get("/audit/", response_class=HTMLResponse)
+# @error_to_500
 async def audit_list_homepage(
     request: Request,
     team: Optional[str] = None,
@@ -45,7 +50,7 @@ async def audit_list_homepage(
     email: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
-) -> Jinja2Templates.TemplateResponse:
+):
     """UI home for listing models in model registry
 
     Args:
@@ -82,17 +87,18 @@ async def audit_list_homepage(
         request=request,
         team=str(team),
         name=str(model),
+        email=email,
         version=version,
         uid=uid,
     )
 
 
-@router.post("/audit/save")
-@error_to_500
+@router.post("/audit/save", response_class=HTMLResponse)
+# @error_to_500
 async def save_audit_form(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
-) -> Jinja2Templates.TemplateResponse:
+):
     # collect all function arguments into a dictionary
 
     # base attr needed for html
@@ -136,12 +142,12 @@ async def save_audit_form(
     )
 
 
-@router.post("/audit/comment/save")
-@error_to_500
+@router.post("/audit/comment/save", response_class=HTMLResponse)
+# @error_to_500
 async def save_audit_comment(
     request: Request,
     comment: CommentSaveRequest = Depends(CommentSaveRequest),
-) -> Jinja2Templates.TemplateResponse:
+):
     """Save comment to AuditCard
 
     Args:
@@ -224,13 +230,13 @@ class AuditFormUploader:
         return audit_sections
 
 
-@router.post("/audit/upload")
-@error_to_500
+@router.post("/audit/upload", response_class=HTMLResponse)
+# @error_to_500
 async def upload_audit_data(
     request: Request,
     background_tasks: BackgroundTasks,
     form: AuditFormRequest = Depends(AuditFormRequest),
-) -> Jinja2Templates.TemplateResponse:
+):
     """Uploads audit data form file. If an audit_uid is provided, only the audit section will be updated."""
     uploader = AuditFormUploader(
         form=form,
@@ -289,7 +295,7 @@ async def upload_audit_data(
 
 
 @router.post("/audit/download", response_class=StreamingResponse)
-@error_to_500
+# @error_to_500
 async def download_audit_data(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
@@ -321,7 +327,7 @@ async def download_audit_data(
             )
 
     response = write_records_to_csv(
-        audit_records=audit_records,
+        records=audit_records,
         field_names=field_names,
     )
 

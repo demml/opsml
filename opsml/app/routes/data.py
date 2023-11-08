@@ -1,20 +1,18 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import json
 import os
-import tempfile
 from typing import Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
+from opsml.app.routes.route_helpers import DataRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistry, DataCard
-from opsml.app.routes.route_helpers import DataRouteHelper
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -28,9 +26,9 @@ CHUNK_SIZE = 31457280
 data_route_helper = DataRouteHelper()
 
 
-@router.get("/data/list/")
-@error_to_500
-async def data_list_homepage(request: Request, team: Optional[str] = None) -> Jinja2Templates.TemplateResponse:
+@router.get("/data/list/", response_class=HTMLResponse)
+# @error_to_500
+async def data_list_homepage(request: Request, team: Optional[str] = None):
     """UI home for listing models in model registry
 
     Args:
@@ -42,17 +40,17 @@ async def data_list_homepage(request: Request, team: Optional[str] = None) -> Ji
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    data_route_helper.get_homepage(request=request, team=team)
+    return data_route_helper.get_homepage(request=request, team=team)
 
 
-@router.get("/data/versions/")
-@error_to_500
+@router.get("/data/versions/", response_class=HTMLResponse)
+# @error_to_500
 async def data_versions_page(
     request: Request,
     name: Optional[str] = None,
     version: Optional[str] = None,
     load_profile: Optional[bool] = False,
-) -> Jinja2Templates.TemplateResponse:
+):
     if name is None:
         return RedirectResponse(url="/opsml/data/list/")
 
@@ -65,11 +63,11 @@ async def data_versions_page(
 
 
 @router.get("/data/versions/uid/")
-@error_to_500
+# @error_to_500
 async def data_versions_uid_page(
     request: Request,
     uid: str,
-) -> Jinja2Templates.TemplateResponse:
+):
     registry: CardRegistry = request.app.state.registries.data
     selected_data = registry.list_cards(uid=uid)[0]
 
@@ -80,14 +78,14 @@ async def data_versions_uid_page(
     )
 
 
-@router.get("/data/profile/view/")
-@error_to_500
+@router.get("/data/profile/view/", response_class=HTMLResponse)
+# @error_to_500
 async def data_versions_profile_page(
     request: Request,
     name: str,
     version: str,
     profile_uri: Optional[str] = None,
-) -> Jinja2Templates.TemplateResponse:
+):
     return data_route_helper.get_data_profile_page(
         request=request,
         name=name,

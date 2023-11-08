@@ -1,14 +1,21 @@
-import os
-from typing import Optional, cast, List, Dict, Any, Tuple
-from fastapi import Request
+# pylint: disable=protected-access
+# Copyright (c) Shipt, Inc.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import json
+import os
 import tempfile
+from typing import Any, Dict, List, Optional, Tuple, cast
+
+from fastapi import Request
 from fastapi.templating import Jinja2Templates
-from opsml.model.types import ModelMetadata
-from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry import CardRegistry, AuditCard, DataCard, RunCard
-from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
+
 from opsml.app.routes.pydantic_models import AuditReport
+from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
+from opsml.model.types import ModelMetadata
+from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
+from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
 
 # Constants
@@ -18,23 +25,10 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
 class RouteHelper:
-    def get_homepage(self, request: Request, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_homepage(self, request: Request, **kwargs):
         raise NotImplementedError
 
-    def get_team_page(self, request: Request, team: str) -> Jinja2Templates.TemplateResponse:
-        raise NotImplementedError
-
-    def get_versions_page(self, request: Request, name: str, **kwargs) -> Jinja2Templates.TemplateResponse:
-        raise NotImplementedError
-
-    def get_name_version_page(
-        self,
-        request: Request,
-        team: str,
-        name: str,
-        version: Optional[str] = None,
-        uid: Optional[str] = None,
-    ) -> Jinja2Templates.TemplateResponse:
+    def get_versions_page(self, request: Request, name: str, **kwargs):
         raise NotImplementedError
 
     def _check_version(
@@ -48,7 +42,7 @@ class RouteHelper:
             selected_card = registry.load_card(uid=versions[0]["uid"])
             version = selected_card.version
 
-            return selected_card, version
+            return selected_card, str(version)
 
         return registry.load_card(name=name, version=version), version
 
@@ -56,12 +50,14 @@ class RouteHelper:
 class AuditRouteHelper(RouteHelper):
     """Route helper for AuditCard pages"""
 
-    def get_homepage(request: Request, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_homepage(self, request: Request, **kwargs):
         """Returns default audit page when all parameters are None
 
         Args:
             request:
                 The incoming HTTP request.
+            kwargs:
+                Additional keyword arguments.
 
         Returns:
             `templates.TemplateResponse`
@@ -80,7 +76,7 @@ class AuditRouteHelper(RouteHelper):
             },
         )
 
-    def get_team_page(self, request: Request, team: str) -> Jinja2Templates.TemplateResponse:
+    def get_team_page(self, request: Request, team: str):
         """Returns audit page for a specific team"""
         teams = request.app.state.registries.model._registry.unique_teams
         model_names = request.app.state.registries.model._registry.get_unique_card_names(team=team)
@@ -98,7 +94,7 @@ class AuditRouteHelper(RouteHelper):
             },
         )
 
-    def get_version_page(self, request: Request, name: str, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_versions_page(self, request: Request, name: str, **kwargs):
         """Returns the audit page for a model name, team, and versions"""
         team = cast(str, kwargs.get("team"))
         model_names, teams, versions = get_names_teams_versions(
@@ -151,7 +147,7 @@ class AuditRouteHelper(RouteHelper):
                 comments=[],
             )
 
-        audit_card: AuditCard = audit_registry.load_card(uid=uid)
+        audit_card: AuditCard = audit_registry.load_card(uid=uid)  # type: ignore
         return AuditReport(
             name=audit_card.name,
             team=audit_card.team,
@@ -170,8 +166,9 @@ class AuditRouteHelper(RouteHelper):
         team: str,
         name: str,
         version: Optional[str] = None,
+        email: Optional[str] = None,
         uid: Optional[str] = None,
-    ) -> Jinja2Templates.TemplateResponse:
+    ):
         """Get audit information for model version
 
         Args:
@@ -185,7 +182,10 @@ class AuditRouteHelper(RouteHelper):
                 The model version.
             uid:
                 The model uid.
+            email:
+                The user email.
         """
+
         model_names, teams, versions = get_names_teams_versions(
             registry=request.app.state.registries.model,
             name=name,
@@ -224,7 +224,7 @@ class AuditRouteHelper(RouteHelper):
 class DataRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_homepage(self, request: Request, **kwargs):
         registry: CardRegistry = request.app.state.registries.data
         team = kwargs.get("team")
 
@@ -245,6 +245,7 @@ class DataRouteHelper(RouteHelper):
                 [split.model_dump() for split in card.data_splits],
                 indent=4,
             )
+        return None
 
     def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool]:
         """If load_profile is True, attempts to load the data profile
@@ -260,12 +261,12 @@ class DataRouteHelper(RouteHelper):
         Returns:
             `Tuple[str, bool]`
         """
-        if load_profile:
-            if datacard.metadata.uris.profile_html_uri is not None:
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    filepath = request.app.state.storage_client.download(
-                        datacard.metadata.uris.profile_html_uri, tmp_dir
-                    )
+        if load_profile and datacard.metadata.uris.profile_html_uri is not None:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                filepath = request.app.state.storage_client.download(
+                    datacard.metadata.uris.profile_html_uri,
+                    tmp_dir,
+                )
 
                 stats = os.stat(filepath)
                 if stats.st_size / (1024 * 1024) <= 50:
@@ -276,16 +277,18 @@ class DataRouteHelper(RouteHelper):
 
         return None, False
 
-    def get_versions_page(self, request: Request, name: str, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_versions_page(self, request: Request, name: str, **kwargs):
         """Given a data name, returns the data versions page"""
+
         version = kwargs.get("version")
-        load_profile = kwargs.get("load_profile")
+        load_profile = cast(bool, kwargs.get("load_profile"))
 
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
         datacard, version = self._check_version(registry, name, versions, version)
+        datacard = cast(DataCard, datacard)
 
-        data_splits = self._check_splits(datacard)
+        data_splits = self._check_splits(card=datacard)
         data_profile, render_profile = self._load_profile(request, load_profile, datacard)
 
         return templates.TemplateResponse(
@@ -308,7 +311,7 @@ class DataRouteHelper(RouteHelper):
         name: str,
         version: str,
         profile_uri: Optional[str] = None,
-    ) -> Jinja2Templates.TemplateResponse:
+    ):
         """Loads the data profile page"""
         if profile_uri is None:
             data_profile = "No profile found"
@@ -341,7 +344,7 @@ class DataRouteHelper(RouteHelper):
 class ModelRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_homepage(self, request: Request, **kwargs):
         registry: CardRegistry = request.app.state.registries.model
         team = kwargs.get("team")
 
@@ -360,7 +363,7 @@ class ModelRouteHelper(RouteHelper):
         self, request: Request, registry: CardRegistry, modelcard: ModelCard
     ) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
-            runcard = registry.load_card(uid=modelcard.metadata.runcard_uid)
+            runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
             project_num = request.app.state.mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
 
             return runcard, project_num
@@ -385,7 +388,7 @@ class ModelRouteHelper(RouteHelper):
 
         return metadata_json, sample_data
 
-    def get_versions_page(self, request: Request, name: str, **kwargs) -> Jinja2Templates.TemplateResponse:
+    def get_versions_page(self, request: Request, name: str, **kwargs):
         """Given a data name, returns the data versions page"""
         version = kwargs.get("version")
         versions = cast(List[Dict[str, Any]], kwargs.get("versions"))
@@ -397,7 +400,7 @@ class ModelRouteHelper(RouteHelper):
         runcard, project_num = self._get_runcard(
             request=request,
             registry=registry,
-            modelcard=modelcard,
+            modelcard=cast(ModelCard, modelcard),
         )
 
         metadata_json, sample_data = self._check_data_dim(metadata)
