@@ -11,7 +11,6 @@ from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
 from requests.auth import HTTPBasicAuth
-from mlflow.tracking import MlflowClient
 from opsml.registry import (
     AuditCard,
     DataCard,
@@ -25,7 +24,6 @@ from opsml.registry import (
     ModelCardMetadata,
 )
 from opsml.app.routes.utils import list_team_name_info, error_to_500
-from opsml.app.core.event_handlers import setup_mlflow_client
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.app.core import config
@@ -889,7 +887,7 @@ def test_audit(test_app: TestClient):
     response = test_app.get(f"/opsml/audit/?team=mlops&?model=pipeline_model")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops&?model=pipeline_model&version=1.0.0")
+    response = test_app.get(f"/opsml/audit/?team=mlops&model=pipeline_model&version=1.0.0")
     assert response.status_code == 200
 
     audit_form = AuditFormRequest(
@@ -897,6 +895,9 @@ def test_audit(test_app: TestClient):
         selected_model_team="mlops",
         selected_model_version="1.0.0",
         selected_model_email="mlops.com",
+        name="pipeline_audit",
+        team="mlops",
+        email="mlops.com",
     )
 
     response = test_app.post(
