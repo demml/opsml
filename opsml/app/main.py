@@ -85,7 +85,7 @@ class OpsmlApp:
     def add_static(self):
         """Add static files"""
 
-        self.app.mount("/static", StaticFiles(directory="opsml/app/static"), name="static")
+        self.app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
 
     def add_middleware(self):
         """Add rollbar middleware"""
