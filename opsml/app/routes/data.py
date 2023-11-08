@@ -5,7 +5,7 @@ import os
 from typing import Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
@@ -27,7 +27,7 @@ data_route_helper = DataRouteHelper()
 
 
 @router.get("/data/list/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def data_list_homepage(request: Request, team: Optional[str] = None):
     """UI home for listing models in model registry
 
@@ -44,12 +44,12 @@ async def data_list_homepage(request: Request, team: Optional[str] = None):
 
 
 @router.get("/data/versions/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def data_versions_page(
     request: Request,
+    load_profile: bool = False,
     name: Optional[str] = None,
     version: Optional[str] = None,
-    load_profile: Optional[bool] = False,
 ):
     if name is None:
         return RedirectResponse(url="/opsml/data/list/")
@@ -63,7 +63,7 @@ async def data_versions_page(
 
 
 @router.get("/data/versions/uid/")
-# @error_to_500
+@error_to_500
 async def data_versions_uid_page(
     request: Request,
     uid: str,
@@ -79,7 +79,7 @@ async def data_versions_uid_page(
 
 
 @router.get("/data/profile/view/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def data_versions_profile_page(
     request: Request,
     name: str,
