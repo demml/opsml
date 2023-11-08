@@ -4,7 +4,7 @@
 
 import os
 from typing import Any, Awaitable, Callable, Union
-
+import shutil
 import rollbar
 from fastapi import FastAPI, Response
 
@@ -30,7 +30,9 @@ initializer = DBInitializer(
 def setup_mlflow_client():
     from mlflow.tracking import MlflowClient
 
-    return MlflowClient(config.TRACKING_URI)
+    client = MlflowClient(config.TRACKING_URI)
+    shutil.rmtree("mlruns", ignore_errors=True)  # need this because mlflow loves to create random dirs
+    return client
 
 
 def _init_rollbar():

@@ -484,12 +484,11 @@ class ModelRouteHelper(RouteHelper):
         """
 
         registry: CardRegistry = request.app.state.registries.model
-
         modelcard, version = self._check_version(registry, name, versions, version)
 
         runcard, project_num = self._get_runcard(
             request=request,
-            registry=registry,
+            registry=request.app.state.registries.run,
             modelcard=cast(ModelCard, modelcard),
         )
 

@@ -79,8 +79,8 @@ class OpsmlApp:
             self.app.mount("/", WSGIMiddleware(BasicAuth(mlflow_flask)))
 
         else:
-            self.app.mount("/", WSGIMiddleware(mlflow_flask))
             self.app.mount("/mlflow", WSGIMiddleware(mlflow_flask))
+            self.app.mount("/", WSGIMiddleware(mlflow_flask))
 
     def add_static(self):
         """Add static files"""
@@ -97,7 +97,6 @@ class OpsmlApp:
 
         if self.run_mlflow:
             self.build_mlflow_app()
-
         self.add_startup()
         self.add_shutdown()
 

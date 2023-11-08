@@ -35,7 +35,7 @@
   <div id="VersionColumn">
     <div class="list-group">
       {% for version in versions %}
-        <a href="/opsml/models/versions/?model={{ selected_model["name"] }}&selected_version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
+        <a href="/opsml/models/versions/?model={{ selected_model["name"] }}&version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
       {% endfor %}
     </div>
   </div>

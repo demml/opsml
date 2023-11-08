@@ -834,6 +834,16 @@ def test_data_model_version(
     datacard.create_data_profile()
     api_registries.data.register_card(card=datacard)
 
+    run = RunCard(
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        datacard_uids=["test_uid"],
+    )
+    run.log_metric("test_metric", 10)
+    run.log_metrics({"test_metric2": 20})
+    api_registries.run.register_card(card=run)
+
     modelcard = ModelCard(
         trained_model=model,
         sample_input_data=data[0:1],
@@ -843,7 +853,7 @@ def test_data_model_version(
         tags={"id": "model1"},
         datacard_uid=datacard.uid,
     )
-
+    modelcard.metadata.runcard_uid = run.uid
     model_registry = api_registries.model
     model_registry.register_card(modelcard)
 
@@ -868,7 +878,6 @@ def test_data_model_version(
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
-
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
