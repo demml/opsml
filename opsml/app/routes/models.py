@@ -41,7 +41,7 @@ model_route_helper = ModelRouteHelper()
 
 
 @router.get("/models/list/")
-# @error_to_500
+@error_to_500
 async def model_list_homepage(request: Request, team: Optional[str] = None):
     """UI home for listing models in model registry
     Args:
@@ -57,7 +57,7 @@ async def model_list_homepage(request: Request, team: Optional[str] = None):
 
 
 @router.get("/models/versions/")
-# @error_to_500
+@error_to_500
 async def model_versions_page(
     request: Request,
     model: Optional[str] = None,
@@ -72,7 +72,6 @@ async def model_versions_page(
         request=request,
         payload=CardRequest(name=model, version=version),
     )
-
     return model_route_helper.get_versions_page(
         request=request,
         name=model,

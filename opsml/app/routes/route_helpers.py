@@ -25,12 +25,6 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
 class RouteHelper:
-    def get_homepage(self, request: Request, **kwargs):
-        raise NotImplementedError
-
-    def get_versions_page(self, request: Request, name: str, **kwargs):
-        raise NotImplementedError
-
     def _check_version(
         self,
         registry: CardRegistry,
@@ -38,6 +32,21 @@ class RouteHelper:
         versions: List[Dict[str, Any]],
         version: Optional[str] = None,
     ) -> Tuple[ArtifactCard, str]:
+        """Load card from version
+
+        Args:
+            registry:
+                The card registry.
+            name:
+                The card name.
+            versions:
+                The list of card versions.
+            version:
+                The card version.
+
+        Returns:
+            `ArtifactCard` and `str`
+        """
         if version is None:
             selected_card = registry.load_card(uid=versions[0]["uid"])
             version = selected_card.version
@@ -50,14 +59,12 @@ class RouteHelper:
 class AuditRouteHelper(RouteHelper):
     """Route helper for AuditCard pages"""
 
-    def get_homepage(self, request: Request, **kwargs):
+    def get_homepage(self, request: Request):
         """Returns default audit page when all parameters are None
 
         Args:
             request:
                 The incoming HTTP request.
-            kwargs:
-                Additional keyword arguments.
 
         Returns:
             `templates.TemplateResponse`
@@ -77,7 +84,14 @@ class AuditRouteHelper(RouteHelper):
         )
 
     def get_team_page(self, request: Request, team: str):
-        """Returns audit page for a specific team"""
+        """Returns audit page for a specific team
+
+        Args:
+            request:
+                The incoming HTTP request.
+            team:
+                The team name.
+        """
         teams = request.app.state.registries.model._registry.unique_teams
         model_names = request.app.state.registries.model._registry.get_unique_card_names(team=team)
         return templates.TemplateResponse(
@@ -94,9 +108,17 @@ class AuditRouteHelper(RouteHelper):
             },
         )
 
-    def get_versions_page(self, request: Request, name: str, **kwargs):
-        """Returns the audit page for a model name, team, and versions"""
-        team = cast(str, kwargs.get("team"))
+    def get_versions_page(self, request: Request, name: str, team: str):
+        """Returns the audit page for a model name, team, and versions
+
+        Args:
+            request:
+                The incoming HTTP request.
+            name:
+                The model name.
+            team:
+                The team name.
+        """
         model_names, teams, versions = get_names_teams_versions(
             registry=request.app.state.registries.model,
             name=name,
@@ -224,9 +246,16 @@ class AuditRouteHelper(RouteHelper):
 class DataRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, **kwargs):
+    def get_homepage(self, request: Request, team: Optional[str] = None):
+        """Retrieves homepage
+
+        Args:
+            request:
+                The incoming HTTP request.
+            team:
+                The team name.
+        """
         registry: CardRegistry = request.app.state.registries.data
-        team = kwargs.get("team")
 
         info = list_team_name_info(registry, team)
         return templates.TemplateResponse(
@@ -277,11 +306,25 @@ class DataRouteHelper(RouteHelper):
 
         return None, False
 
-    def get_versions_page(self, request: Request, name: str, **kwargs):
-        """Given a data name, returns the data versions page"""
+    def get_versions_page(
+        self,
+        request: Request,
+        name: str,
+        load_profile: bool,
+        version: Optional[str] = None,
+    ):
+        """Given a data name, returns the data versions page
 
-        version = kwargs.get("version")
-        load_profile = cast(bool, kwargs.get("load_profile"))
+        Args:
+            request:
+                The incoming HTTP request.
+            name:
+                The data name.
+            load_profile:
+                Whether to load the data profile.
+            version:
+                The data version.
+        """
 
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
@@ -312,7 +355,18 @@ class DataRouteHelper(RouteHelper):
         version: str,
         profile_uri: Optional[str] = None,
     ):
-        """Loads the data profile page"""
+        """Loads the data profile page
+
+        Args:
+            request:
+                The incoming HTTP request.
+            name:
+                The data name.
+            version:
+                The data version.
+            profile_uri:
+                The data profile uri.
+        """
         if profile_uri is None:
             data_profile = "No profile found"
             render = False
@@ -344,9 +398,16 @@ class DataRouteHelper(RouteHelper):
 class ModelRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, **kwargs):
+    def get_homepage(self, request: Request, team: Optional[str] = None):
+        """Retrieve homepage
+
+        Args:
+            request:
+                The incoming HTTP request.
+            team:
+                The team name.
+        """
         registry: CardRegistry = request.app.state.registries.model
-        team = kwargs.get("team")
 
         info = list_team_name_info(registry, team)
         return templates.TemplateResponse(
@@ -360,7 +421,10 @@ class ModelRouteHelper(RouteHelper):
         )
 
     def _get_runcard(
-        self, request: Request, registry: CardRegistry, modelcard: ModelCard
+        self,
+        request: Request,
+        registry: CardRegistry,
+        modelcard: ModelCard,
     ) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
@@ -371,7 +435,15 @@ class ModelRouteHelper(RouteHelper):
         return None, None
 
     def _check_data_dim(self, metadata: ModelMetadata) -> Tuple[str, str]:
-        """Checks if the data dimension is too large to load in the UI"""
+        """Checks if the data dimension is too large to load in the UI
+
+        Args:
+            metadata:
+                The model metadata.
+
+        Returns:
+            `Tuple[str, str]`
+        """
         max_dim = 0
         if metadata.data_schema.model_data_schema.data_type == "NUMPY_ARRAY":
             features = metadata.data_schema.model_data_schema.input_features
@@ -388,15 +460,33 @@ class ModelRouteHelper(RouteHelper):
 
         return metadata_json, sample_data
 
-    def get_versions_page(self, request: Request, name: str, **kwargs):
-        """Given a data name, returns the data versions page"""
-        version = kwargs.get("version")
-        versions = cast(List[Dict[str, Any]], kwargs.get("versions"))
-        metadata = cast(ModelMetadata, kwargs.get("metadata"))
+    def get_versions_page(
+        self,
+        request: Request,
+        name: str,
+        versions: List[Dict[str, Any]],
+        metadata: ModelMetadata,
+        version: Optional[str] = None,
+    ):
+        """Given a data name, returns the data versions page
+
+        Args:
+            request:
+                The incoming HTTP request.
+            name:
+                The data name.
+            versions:
+                The list of card versions.
+            metadata:
+                The model metadata.
+            version:
+                The data version.
+        """
 
         registry: CardRegistry = request.app.state.registries.model
 
         modelcard, version = self._check_version(registry, name, versions, version)
+
         runcard, project_num = self._get_runcard(
             request=request,
             registry=registry,
@@ -410,7 +500,7 @@ class ModelRouteHelper(RouteHelper):
             {
                 "request": request,
                 "versions": versions,
-                "selected_model": name,
+                "selected_model": modelcard,
                 "selected_version": version,
                 "project_num": project_num,
                 "metadata": metadata,

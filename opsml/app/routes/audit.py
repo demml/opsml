@@ -9,7 +9,7 @@ import os
 from typing import Any, BinaryIO, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
@@ -42,7 +42,7 @@ audit_route_helper = AuditRouteHelper()
 
 
 @router.get("/audit/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def audit_list_homepage(
     request: Request,
     team: Optional[str] = None,
@@ -94,7 +94,7 @@ async def audit_list_homepage(
 
 
 @router.post("/audit/save", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def save_audit_form(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
@@ -143,7 +143,7 @@ async def save_audit_form(
 
 
 @router.post("/audit/comment/save", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def save_audit_comment(
     request: Request,
     comment: CommentSaveRequest = Depends(CommentSaveRequest),
@@ -231,7 +231,7 @@ class AuditFormUploader:
 
 
 @router.post("/audit/upload", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def upload_audit_data(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -295,7 +295,7 @@ async def upload_audit_data(
 
 
 @router.post("/audit/download", response_class=StreamingResponse)
-# @error_to_500
+@error_to_500
 async def download_audit_data(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),

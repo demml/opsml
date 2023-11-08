@@ -868,6 +868,7 @@ def test_data_model_version(
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
+
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
