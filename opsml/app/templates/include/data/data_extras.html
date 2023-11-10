@@ -13,8 +13,10 @@
 {% if data_splits is not none %}
 <div class="card-body" id="Splits" style="display:none">
 <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Data Splits</font>
-  <button id="copy-button" class="btn btn-success" onclick="copyToClipboard('#DataSplitCode')">Copy</i> </button>
-
+  <clipboard-copy for="DataSplitCode">
+    Copy
+    <span class="notice" hidden>Copied!</span>
+  </clipboard-copy>
 </h5>
     <pre style="max-height: 500px; overflow: scroll;"><code id="DataSplitCode" class="json">{{data_splits}}</code></pre>
 </div>
@@ -112,7 +114,10 @@
     {% for name, query in selected_data.sql_logic.items() %}
 
     <h6><i style="color:#04b78a"></i> <font color="#999">{{name}}</font>
-      <button id="copy-button" class="btn btn-success" onclick="copyToClipboard('#{{name}}Code')">Copy</i> </button>
+      <clipboard-copy for="{{name}}Code">
+        Copy
+        <span class="notice" hidden>Copied!</span>
+      </clipboard-copy>
     </h6>
     <pre style="max-height: 500px; overflow: scroll;"><code id="{{name}}Code" class="sql">{{query}}</code></pre>
 
