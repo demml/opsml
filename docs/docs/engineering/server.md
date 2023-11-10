@@ -68,7 +68,7 @@ Example:
 name = "opsml-server"
 version = "0.1.0"
 description = ""
-authors = ["devops-ml"]
+authors = ["data-devops"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.11"
