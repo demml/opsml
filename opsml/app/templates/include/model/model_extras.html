@@ -46,9 +46,15 @@
   <div class="card-body" id="SampleData" style="display:none">
     
     <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Sample Data</font>
-    <button id="copy-button" class="btn btn-success" onclick="copyToClipboard('#SampleDataCode')">Copy</i> </button>
+        <clipboard-copy for="SampleDataCode">
+          Copy
+          <span class="notice" hidden>Copied!</span>
+        </clipboard-copy>
     </h5>
-      <pre style="max-height: 500px; overflow: scroll;"><code id="SampleDataCode" class="json">{{sample_data}}</code></pre>
+      <pre style="max-height: 500px; overflow: scroll;">
+        <code id="SampleDataCode" class="json">{{sample_data}}
+        </code>
+      </pre>
 
   </div>
   
@@ -108,7 +114,10 @@
   
   <div class="card-body" id="MetadataJson" style="display:none;">
     <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Metadata</font>
-      <button id="copy-button" class="btn btn-success" onclick="copyToClipboard('#MetadataCode')">Copy</i> </button>
+      <clipboard-copy for="MetadataCode">
+        Copy
+        <span class="notice" hidden>Copied!</span>
+      </clipboard-copy>
     </h5>
       <pre style="max-height: 500px; overflow: scroll;"><code id="MetadataCode" class="json">{{metadata_json}}</code></pre>
   </div>

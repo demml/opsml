@@ -417,31 +417,6 @@ p {
   border: 2px solid #5e0fb7;
 }
 
-
-#copy-button.btn-success {
-  font-size: 13px;
-  color: #5e0fb7;
-  letter-spacing: 1px;
-  line-height: 15px;
-  border: 2px solid #5e0fb7;
-  border-radius: 40px;
-  background: transparent;
-  transition: all 0.3s ease 0s;
-}
-
-#copy-button.btn-success:hover {
-  color: #FFF;
-  background: #5e0fb7;
-  border: 2px solid #5e0fb7;
-}
-
-#copy-button.btn-success:focus {
-  color: #FFF;
-  background: #5e0fb7;
-  border: 2px solid #5e0fb7;
-}
-
-
 #metric-button.btn-success {
   font-size: 13px;
   color: #04b78a;
@@ -708,4 +683,32 @@ p {
 
 .accordion-button.collapsed {
   box-shadow: none;
+}
+
+clipboard-copy {
+  -webkit-appearance: button;
+  -moz-appearance: button;
+  padding: 0.4em 0.6em;
+  font-size: 13px;
+  letter-spacing: 1px;
+  display: inline-block;
+  cursor: default;
+  color: #5e0fb7;
+  background: transparent;
+  border-radius: 40px;
+  border: 2px solid #5e0fb7;
+  box-shadow: rgba(31, 35, 40, 0.04) 0 1px 0 0, rgba(255, 255, 255, 0.25) 0 1 0 0 inset;
+}
+
+clipboard-copy:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+clipboard-copy:active {
+  background: #ffffff;
+}
+clipboard-copy:focus-visible {
+  outline: 2px solid #5e0fb7;
 }

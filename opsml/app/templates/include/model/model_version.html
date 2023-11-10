@@ -122,17 +122,6 @@ $('#CardTabBox > span').click(function() {
   $('#SummaryBox').toggle( ix === 1 );
 });
 
-function copyToClipboard(element) {
-  var $temp = $("<input>");
-  $("body").append($temp);
-  $temp.val($(element).text().trim()).select();
-  document.execCommand("copy");
-  $temp.remove();
-}
-
-
-
-
 
 </script>
 
