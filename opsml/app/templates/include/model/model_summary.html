@@ -5,9 +5,11 @@
 
   {% if model.metadata.description.summary is not none %}
 
-    <div id="SummaryText">
-        <p id="SummaryText">{{ model.metadata.description.summary }}</p>
-    </div> 
+      <zero-md>
+        <script type="text/markdown" data-dedent>
+          {{model.metadata.description.summary}}
+        </script>
+      </zero-md>
 
   {% else %}
     
@@ -18,22 +20,7 @@
   {% endif %}
 </div>
 
-<div class="card-body">
-  <a><button id="label-button" class="btn btn-success">Intended Use</button></a>
-  {% if model.metadata.description.intended_use is not none %}
-
-    <div id="SummaryText">
-        <p id="SummaryText">{{ model["metadata"]["description"]["intended_use"]}}</p>
-    </div>
-
-  {% else %}
-
-    <div id="SummaryText">
-        <p id="SummaryText">No use case provided</p>
-    </div>
-
-  {% endif %}
-</div>
+<hr id="version-spacer">
 
 <div class="card-body">
   <a><button id="label-button" class="btn btn-success">Sample Code</button></a>

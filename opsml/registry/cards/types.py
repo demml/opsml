@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import FindPath
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -123,9 +124,24 @@ class AuditCardMetadata(BaseModel):
 
 class Description(BaseModel):
     summary: Optional[str] = None
-    intended_use: Optional[str] = None
     sample_code: Optional[str] = None
     Notes: Optional[str] = None
+
+    @field_validator("summary", mode="before")
+    def load_sql(cls, summary):
+        if not bool(summary):
+            return summary
+
+        if ".md" in summary.lower():
+            try:
+                mkdwn_path = FindPath.find_filepath(name=summary)
+                with open(mkdwn_path, "r", encoding="utf-8") as file_:
+                    summary = file_.read()
+
+            except Exception as error:
+                raise ValueError(f"Could not load mkdwn file {mkdwn_path}. {error}") from error
+
+        return summary
 
 
 @dataclass
