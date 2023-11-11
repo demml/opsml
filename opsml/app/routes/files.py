@@ -15,9 +15,9 @@ from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     DeleteFileRequest,
     DeleteFileResponse,
+    DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
-    DownloadFileRequest,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,
