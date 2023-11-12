@@ -20,9 +20,8 @@ body {
     font-family: Boing;
     font-weight: normal;
     background: #fafafa;
-    padding-bottom: 500px;
-
 }
+
 
 #metadata-table {
   caption-side: top;
@@ -60,10 +59,6 @@ body {
   box-shadow: 0px 10px 20px rgba(150, 79, 201, 0.469);
 }
 
-#footer {
-    padding-bottom: 100px;
-  }
-
 
 #ModelPage {
     font-family: Boing;
@@ -83,6 +78,8 @@ body {
   background-attachment:fixed;
   background-position: right center;
   background-repeat: no-repeat;
+  padding-bottom: 50%;
+
 }
 
 #HomePage {
@@ -155,6 +152,20 @@ p {
   float:left;
   width:20%;
   padding-right: 1%;
+}
+
+.list-group {
+  -webkit-overflow-scrolling: touch;
+  overflow-y:scroll; 
+  height: 700px;
+}
+
+
+.list-group .active {
+    background-color: #5d0fb778;
+    border-color: #5e0fb7;
+    border: none;
+    color: white;
 }
 
 #MetadataColumn {
@@ -445,6 +456,11 @@ p {
   margin: 0px;
 }
 
+#page-spacer {
+  padding: 1%;
+  margin: 1%;
+}
+
 #version-spacer-metadata {
   padding: 0px;
   margin: 0px;
@@ -456,12 +472,7 @@ p {
   padding-right: 2.5%;
 }
 
-#VersionColumn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 20%;
-}
+
 
 #VersionRow {
   flex: 1;
@@ -575,17 +586,7 @@ p {
     background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1.0)'/></svg>");
 }
 
-.list-group {
-  overflow:scroll;
-  max-height: 10%;
-}
 
-.list-group .active {
-    background-color: #5d0fb778;
-    border-color: #5e0fb7;
-    border: none;
-    color: white;
-}
 
 /* ---------------------------------------------------
     CONTENT STYLE
@@ -681,6 +682,10 @@ p {
 
 .accordion-button.collapsed {
   box-shadow: none;
+}
+
+#split-spacer{
+  padding-bottom: 10%;
 }
 
 clipboard-copy {
