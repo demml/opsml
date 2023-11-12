@@ -67,6 +67,10 @@ class UidExistsResponse(BaseModel):
     uid_exists: bool
 
 
+class DownloadFileRequest(BaseModel):
+    read_path: Optional[str] = None
+
+
 class ListCardRequest(BaseModel):
     name: Optional[str] = None
     team: Optional[str] = None
