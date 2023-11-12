@@ -20,72 +20,78 @@
 </div>
 
 
+<div class"containter" id="split-column">
 
-<!---- Model version table -------->
-<div class="container-fluid" id="VersionContainer">
-  <div class="page-header">
-    <h2>{{selected_data.name}}</h2>
-  </div>
-</div>
-<br>
-
-<!---Create vesion tables ------>
-<div class="boxes" id="VersionContainer">
-
-  <div id="VersionColumn">
-    <div class="list-group">
-      {% for version in versions %}
-        <a href="/opsml/data/versions/?name={{ selected_data.name }}&selected_version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
-      {% endfor %}
+  <!---- Model version table -------->
+  <div class="container-fluid" id="VersionContainer">
+    <div class="page-header">
+      <h2>{{selected_data.name}}</h2>
     </div>
   </div>
+  <br>
 
-  <div id="MetadataColumn">
+  <!---Create vesion tables ------>
+  <div class="boxes" id="VersionContainer">
 
-    <div class="card border-0" style="width:100%; border-radius: 0%">
-      <div class="card-body">
-        <h4 >Data  </h4>
-        <div id="CardTabBox">
-          <span><button id="download-button" type="submit" class="btn btn-success" >Metadata</button></span>
-          <span><button id="download-button" type="submit" class="btn btn-success" >Summary</button></span>
-          <span><button id="download-button" type="submit" class="btn btn-success focus" >Data Profile</button></span>
-        </div>
+    <div id="VersionColumn">
+      <div class="list-group">
+        {% for version in versions %}
+          <a href="/opsml/data/versions/?name={{ selected_data.name }}&version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
+        {% endfor %}
       </div>
     </div>
 
-    <div id="CardBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
-      {% include "include/data/data_metadata.html" %}
-    </div>
+    <div id="MetadataColumn">
 
-    {% if selected_data.tags|length > 0 %}
-    <div id="TagBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
-      {% include "include/data/data_tags.html" %}
-    </div>
-    {% endif %}
+      <div class="card border-0" style="width:100%; border-radius: 0%">
+        <div class="card-body">
+          <h4 >Data  </h4>
+          <div id="CardTabBox">
+            <span><button id="download-button" type="submit" class="btn btn-success" >Metadata</button></span>
+            <span><button id="download-button" type="submit" class="btn btn-success" >Summary</button></span>
+            <span><button id="download-button" type="submit" class="btn btn-success focus" >Data Profile</button></span>
+          </div>
+        </div>
+      </div>
 
-    <div id="ExtraBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
-      {% include "include/data/data_extras.html" %}
-    </div>
+      <div id="CardBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% include "include/data/data_metadata.html" %}
+      </div>
 
-    <div id="SummaryBox" class="card border-0" style="display: None; width: 100%; border-radius: 0%;">
+      {% if selected_data.tags|length > 0 %}
+      <div id="TagBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% include "include/data/data_tags.html" %}
+      </div>
+      {% endif %}
+
+      <div id="ExtraBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% include "include/data/data_extras.html" %}
+      </div>
+
+      <div id="SummaryBox" class="card border-0" style="display: None; width: 100%; border-radius: 0%;">
+          {% with data=selected_data %}
+          {% include "include/data/data_summary.html" %}
+          {% endwith %}
+      </div>
+
+      <div id="ProfileBox" class="card border-0"  {% if load_profile == false %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
         {% with data=selected_data %}
-        {% include "include/data/data_summary.html" %}
+        {% include "include/data/data_profile.html" %}
         {% endwith %}
-    </div>
-
-    <div id="ProfileBox" class="card border-0"  {% if load_profile == false %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
-      {% with data=selected_data %}
-      {% include "include/data/data_profile.html" %}
-      {% endwith %}
+      </div>
     </div>
   </div>
+
 </div>
 
 
+<div class"containter" id="split-spacer">
+</div>
+
 </body>
 
-
 {% endblock %}
+
 
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
