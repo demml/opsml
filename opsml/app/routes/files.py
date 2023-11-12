@@ -15,6 +15,7 @@ from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     DeleteFileRequest,
     DeleteFileResponse,
+    DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
 )
@@ -101,6 +102,41 @@ async def upload_file(request: Request):
     return {
         "storage_uri": os.path.join(write_path, filename),
     }
+
+
+# remove version 2.0.0 - breaking change
+@router.post("/files/download", name="download_file_deprecated")
+def download_file_deprecated(
+    request: Request,
+    payload: DownloadFileRequest,
+) -> StreamingResponse:
+    """Downloads a file
+
+    Args:
+        request:
+            request object
+        payload:
+            `DownloadFileRequest`
+
+    Returns:
+        Streaming file response
+    """
+
+    try:
+        storage_client = request.app.state.storage_client
+        return StreamingResponse(
+            storage_client.iterfile(
+                file_path=payload.read_path,
+                chunk_size=CHUNK_SIZE,
+            ),
+            media_type="application/octet-stream",
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error downloading the file. {error}",
+        ) from error
 
 
 @router.get("/files/download", name="download_file")
