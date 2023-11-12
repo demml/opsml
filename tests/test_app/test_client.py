@@ -480,6 +480,13 @@ def test_metadata_download_and_registration(
     uri = response.json()
     assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}",
+        json={"read_path": model_card.metadata.uris.trained_model_uri},
+    )
+
+    assert response.status_code == 200
+
     # test register model (native)
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
