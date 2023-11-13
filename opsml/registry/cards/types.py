@@ -128,7 +128,7 @@ class Description(BaseModel):
     Notes: Optional[str] = None
 
     @field_validator("summary", mode="before")
-    def load_summary(cls, summary):
+    def load_summary(cls, summary) -> str:
         if not bool(summary):
             return summary
 
