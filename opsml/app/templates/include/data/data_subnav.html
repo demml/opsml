@@ -6,32 +6,13 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" aria-current="page" href="/opsml/data/list/" style="font-size: 20px;" id="data_available"> <i></i>Available</a>
+            <a class="nav-link {{data_name_subnav}}" aria-current="page" href="/opsml/data/list/" style="font-size: 20px;" id="data_available"> <i></i>Available</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" aria-current="page" href="/opsml/data/versions/" style="font-size: 20px;" id="data_versions"> <i></i>Versions</a>
+            <a class="nav-link {{data_version_subnav}}" aria-current="page" href="/opsml/data/versions/" style="font-size: 20px;" id="data_versions"> <i></i>Versions</a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
   
-  <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-  <script>
-     
-      $(function(){
-
-        if (window.location.href.includes("opsml/data/list")) {
-            $("#data_available").addClass('active'); 
-            $("#data_available").parents('li').addClass('active');
-        } else if (window.location.href.includes("opsml/data/versions")) {
-            $("#data_versions").addClass('active'); 
-            $("#data_versions").parents('li').addClass('active');
-        } else {
-                //pass
-          
-        }
-    });
-
-
-  </script>
