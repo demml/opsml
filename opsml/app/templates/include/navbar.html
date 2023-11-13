@@ -14,13 +14,13 @@
         <a class="nav-link" aria-current="page" href="/mlflow/" style="font-size: 20px; color:white;" id="home"> <i class="bi-house-door-fill"></i> MlFlow</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/opsml/models/list/" style="font-size: 20px; color:white;" id="models" ><i class="bi-lightbulb-fill"></i> Models</a>
+        <a class="nav-link {{model_status}}" href="/opsml/models/list/" style="font-size: 20px; color:white;" id="models" ><i class="bi-lightbulb-fill"></i> Models</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/opsml/data/list/" style="font-size: 20px; color:white;" id="data"><i class="bi-table"></i> Data</a>
+        <a class="nav-link {{data_status}}" href="/opsml/data/list/" style="font-size: 20px; color:white;" id="data"><i class="bi-table"></i> Data</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/opsml/audit/"style="font-size: 20px; color:white;" id="audit"><i class="bi-journal-text"></i> Audit</a>
+        <a class="nav-link {{audit_status}}" href="/opsml/audit/"style="font-size: 20px; color:white;" id="audit"><i class="bi-journal-text"></i> Audit</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="https://thorrester.github.io/opsml-ghpages/"style="font-size: 20px; color:white;"><i class="bi-journal-text"></i> Docs</a>
@@ -33,27 +33,3 @@
   
  
 
-
-<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script>
-    $(function(){
-
-        if (window.location.href.includes("opsml/models")) {
-            $("#models").addClass('active'); 
-            $("#models").parents('li').addClass('active');
-
-        } else if (window.location.href.includes("opsml/audit")) {
-          $("#audit").addClass('active'); 
-          $("#audit").parents('li').addClass('active');
-
-        } else if (window.location.href.includes("opsml/data")) {
-          $("#data").addClass('active'); 
-          $("#data").parents('li').addClass('active');
-        }
-        else {
-          $("#home").addClass('active'); 
-          $("#home").parents('li').addClass('active');
-        }
-      });
- 
-</script>

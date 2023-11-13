@@ -232,6 +232,14 @@ p {
     z-index: 4;
 }
 
+#MainNav .focus {
+  color:            #F8F8F8;
+  border-bottom: 1px solid rgb(26, 255, 163);
+  bottom: -10px;
+  z-index: 4;
+}
+
+
 
 #MetaSubnav {
     background: #fafafa;

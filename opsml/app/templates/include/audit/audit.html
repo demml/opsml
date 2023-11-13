@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
+{% set model_status = none %}
+{% set data_status = none %}
+{% set audit_status = 'active' %}
+{% include "include/navbar.html" %}
+
 {% block title %}
   <title>Model Audit</title>
 {% endblock %}
