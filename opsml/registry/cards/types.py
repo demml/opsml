@@ -139,7 +139,7 @@ class Description(BaseModel):
                     summary = file_.read()
 
             except Exception as error:
-                raise ValueError(f"Could not load mkdwn file {mkdwn_path}. {error}") from error
+                raise RuntimeError(f"Could not load markdown file {error}") from error
 
         return summary
 
