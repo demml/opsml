@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from typing import Dict, List, Optional, Union, cast
-from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -101,15 +101,14 @@ class DataCard(ArtifactCard):
 
         for name, query in sql_logic.items():
             if ".sql" in query:
-                if Path(query).is_file():
-                    try:
-                        sql_path = FindPath.find_filepath(name=query)
-                        with open(sql_path, "r", encoding="utf-8") as file_:
-                            query_ = file_.read()
-                        sql_logic[name] = query_
+                try:
+                    sql_path = FindPath.find_filepath(name=query)
+                    with open(sql_path, "r", encoding="utf-8") as file_:
+                        query_ = file_.read()
+                    sql_logic[name] = query_
 
-                    except Exception as error:
-                        raise ValueError(f"Could not load sql file {query}. {error}") from error
+                except Exception as error:
+                    raise ValueError(f"Could not load sql file {query}. {error}") from error
 
         return sql_logic
 

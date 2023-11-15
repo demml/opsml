@@ -5,7 +5,7 @@ import datetime
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from pathlib import Path
+
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -132,14 +132,14 @@ class Description(BaseModel):
         if not bool(summary):
             return summary
 
-        if Path(summary).is_file() and ".md" in summary.lower():
+        if ".md" in summary.lower():
             try:
                 mkdwn_path = FindPath.find_filepath(name=summary)
                 with open(mkdwn_path, "r", encoding="utf-8") as file_:
                     summary = file_.read()
 
-            except Exception as error:
-                raise RuntimeError(f"Could not load markdown file {error}") from error
+            except IndexError as idx_error:
+                logger.info(f"Could not load markdown file {idx_error}")
 
         return summary
 
