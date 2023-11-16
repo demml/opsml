@@ -607,6 +607,8 @@ class PyTorchOnnxModel(ModelConverter):
         import torch
 
         arg_data = self._get_torch_data()
+
+        print(arg_data)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
             self.model_info.model.eval()  # force model into evaluation mode
