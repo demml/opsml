@@ -581,6 +581,7 @@ class PyTorchOnnxModel(ModelConverter):
             onnx_preds=onnx_preds,
             model_preds=model_preds,
         ):
+            logger.error("Onnx prediction validation failed")
             raise ValueError("Model prediction validation failed")
 
         logger.info("Onnx model validated")
@@ -608,7 +609,6 @@ class PyTorchOnnxModel(ModelConverter):
 
         arg_data = self._get_torch_data()
 
-        print(arg_data)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
             self.model_info.model.eval()  # force model into evaluation mode
@@ -620,6 +620,7 @@ class PyTorchOnnxModel(ModelConverter):
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
+
         return model
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
