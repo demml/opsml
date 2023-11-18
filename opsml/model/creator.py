@@ -7,7 +7,7 @@ import textwrap
 from typing import Any, Dict, Optional
 
 import numpy as np
-
+import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data
@@ -104,7 +104,7 @@ class TrainedModelMetadataCreator(ModelCreator):
         )
 
         # pandas will use column names as features
-        if model_data.data_type != InputDataType.PANDAS_DATAFRAME:
+        if not isinstance(predictions, pd.DataFrame):
             model_data.features = ["outputs"]
 
         return model_data.feature_dict

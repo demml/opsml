@@ -112,10 +112,6 @@ class ModelData:
     def validate(data_type: type) -> bool:
         raise NotImplementedError
 
-    @property
-    def data_type(self) -> str:
-        raise NotImplementedError
-
 
 class NumpyData(ModelData):
     def __init__(self, input_data):
@@ -145,10 +141,6 @@ class NumpyData(ModelData):
     @staticmethod
     def validate(data_type: type) -> bool:
         return data_type == InputDataType.NUMPY_ARRAY.value
-
-    @property
-    def data_type(self) -> str:
-        raise InputDataType.NUMPY_ARRAY.value
 
 
 class PandasDataFrame(ModelData):
@@ -205,10 +197,6 @@ class PandasDataFrame(ModelData):
     def validate(data_type: type) -> bool:
         return data_type == InputDataType.PANDAS_DATAFRAME.value
 
-    @property
-    def data_type(self) -> str:
-        raise InputDataType.PANDAS_DATAFRAME.value
-
 
 class DataDictionary(ModelData):
     def __init__(self, input_data):
@@ -246,10 +234,6 @@ class DataDictionary(ModelData):
     @staticmethod
     def validate(data_type: type) -> bool:
         return data_type == InputDataType.DICT.value
-
-    @property
-    def data_type(self) -> str:
-        raise InputDataType.DICT.value
 
 
 def get_model_data(data_type: type, input_data: Any):
