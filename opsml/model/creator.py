@@ -103,7 +103,9 @@ class TrainedModelMetadataCreator(ModelCreator):
             data_type=type(predictions),
         )
 
-        model_data.features = ["outputs"]
+        # pandas will use column names as features
+        if model_data.data_type != InputDataType.PANDAS_DATAFRAME:
+            model_data.features = ["outputs"]
 
         return model_data.feature_dict
 
