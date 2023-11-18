@@ -1,10 +1,18 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.13"
+version = "1.4.14"
 description = "A production MLOps tooling framework for python"
 authors = ["Thorrester <48217609+thorrester@users.noreply.github.com>"]
 readme = "README.md"
 
+[project]
+name = "opsml"
+description = "A production MLOps tooling framework for python"
+authors = [
+    {name = 'Steven Forrester', email = 'steven.forrester@shipt.com'},
+    {name = 'Damon Allison', email = 'damon@shipt.com'},
+]
+license = 'MIT'
 classifiers = [
     "Environment :: Web Environment",
     "Development Status :: 5 - Production/Stable",
@@ -26,9 +34,11 @@ classifiers = [
     "Topic :: Software Development",
     "Typing :: Typed",
 ]
+requires-python = '>=3.9, <3.12'
 
 [project.urls]
-"Homepage" = "https://github.com/shipt/opsml"
+Homepage = "https://github.com/shipt/opsml"
+Source = "https://github.com/shipt/opsml"
 
 [tool.poetry.dependencies]
 
@@ -45,6 +55,7 @@ pyarrow = ">=8.0.0"
 pydantic = ">=2, <3"
 pydantic_settings = "^2"
 rich = "^13.3.5"
+rusty-logger = "^0.2.0"
 scikit-learn = ">=1.0"
 semver = "^2.13.0"
 skl2onnx = "1.14.1"
@@ -52,6 +63,7 @@ sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
 tf2onnx =">=1.13.0, <1.15.0"
 typer = "^0.9.0"
+ydata-profiling = "^4.6.1"
 zarr = ">2.12.0"
 
 # mlflow deps (remove this in the future if we create our own ui. mlflow has a good # of deps)
@@ -80,8 +92,6 @@ boto3 = {version="^1.28", optional = true}
 cloud-sql-python-connector = {version="^1.2.0", optional = true}
 pg8000 = {version="^1.29.4", optional = true}
 pymysql = {version="^1.0.2", optional = true}
-rusty-logger = "^0.2.0"
-ydata-profiling = "^4.6.1"
 
 [tool.poetry.extras]
 server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
