@@ -17,10 +17,9 @@
             "jinja": true,
             "justMyCode": true,
             "env": {
-                "OPSML_TRACKING_URI":"sqlite:///tmp.db",
-                "OPSML_STORAGE_URI":"./mlruns"
-
-              }
+                "OPSML_TRACKING_URI": "sqlite:///tmp.db",
+                "OPSML_STORAGE_URI": "./mlruns"
+            }
         }
     ]
 }
