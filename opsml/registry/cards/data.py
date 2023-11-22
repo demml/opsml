@@ -3,10 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict, List, Optional, Union, cast, Protocol, runtime_checkable
-
-
-from pyarrow import Table
+from typing import Dict, List, Optional, Union, cast
 from pydantic import field_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -23,7 +20,6 @@ from opsml.registry.data.types import (
     PandasDataFrame,
     PolarsDataFrame,
     PyarrowTable,
-    AllowedDataType,
     check_data_type,
 )
 from opsml.registry.image import ImageDataset
