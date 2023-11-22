@@ -4,15 +4,15 @@
 import os
 import uuid
 from datetime import date
-from enum import Enum
 from typing import Type, Union, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
-from opsml.registry.sql.table_names import RegistryTableNames
+
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
