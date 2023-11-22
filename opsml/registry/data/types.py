@@ -137,6 +137,7 @@ class PyarrowTypeChecker(DataTypeChecker):
 def check_data_type(data: ValidData) -> None:
     data_type = str(data.__class__)
     """Checks that the data type is one of the allowed types"""
+
     data_type_checker = next(
         (
             data_type_checker
@@ -152,3 +153,5 @@ def check_data_type(data: ValidData) -> None:
             polars dataframe, pyarrow table, or ImageDataset. Received {data_type}
             """
         )
+
+    data_type_checker(data=data).check_data_type()
