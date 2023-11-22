@@ -3,11 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast, Protocol, runtime_checkable
 
-import numpy as np
-import pandas as pd
-import polars as pl
+
 from pyarrow import Table
 from pydantic import field_validator
 
@@ -19,7 +17,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedTableTypes
+from opsml.registry.data.types import AllowedTableTypes, SupportedDataClasses
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -30,7 +28,18 @@ from opsml.registry.utils.settings import settings
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
 
-ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
+
+@runtime_checkable
+class DataFrame(Protocol):
+    ...
+
+
+@runtime_checkable
+class NDArray(Protocol):
+    ...
+
+
+ValidData = Union[NDArray, DataFrame, Table, ImageDataset]
 
 
 @auditable
@@ -72,8 +81,51 @@ class DataCard(ArtifactCard):
     data_profile: Optional[ProfileReport] = None
     metadata: DataCardMetadata = DataCardMetadata()
 
+    @field_validator("data", mode="before")
+    @classmethod
+    def check_data(cls, data: Optional[ValidData] = None) -> ValidData:
+        """Custom data validator to check data type"""
+        data_class = str(data.__class__)
+
+        if data is None:
+            return data
+
+        if "pandas" in data_class:
+            import pandas as pd
+
+            assert isinstance(data, pd.DataFrame), "Data must be a pandas dataframe"
+
+        elif "polars" in data_class:
+            import polars as pl
+
+            assert isinstance(data, pl.DataFrame), "Data must be a polars dataframe"
+
+        elif "numpy" in data_class:
+            import numpy as np
+
+            assert isinstance(data, np.ndarray), "Data must be a numpy array"
+
+        elif "pyarrow" in data_class:
+            import pyarrow as pa
+
+            assert isinstance(data, pa.Table), "Data must be a pyarrow table"
+
+        elif "opsml.registry.image" in data_class:
+            from opsml.registry.image import ImageDataset
+
+            assert isinstance(data, ImageDataset), "Data must be an ImageDataset"
+
+        else:
+            raise ValueError(
+                f"""Data must be one of the following types: numpy array, pandas dataframe, 
+                polars dataframe, pyarrow table, or ImageDataset. Received {data_class}
+                """
+            )
+
+        return data
+
     @field_validator("metadata", mode="before")
-    def check_data(cls, metadata, info):
+    def check_metadata(cls, metadata, info):
         # check data uri
         if isinstance(metadata, DataCardMetadata):
             data_uri = metadata.uris.data_uri

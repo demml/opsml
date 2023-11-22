@@ -2,11 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Dict, Optional, Union
-
-import numpy as np
-import pandas as pd
-import polars as pl
+from typing import Dict, Optional
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -17,8 +13,6 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
-
-SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
 
 
 class ArtifactCard(BaseModel):
