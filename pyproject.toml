@@ -59,7 +59,8 @@ scikit-learn = ">=1.0"
 semver = "^2.13.0"
 skl2onnx = "1.14.1"
 tenacity = "^8.2.2"
-tf2onnx =">=1.13.0, <1.15.0"
+tf2onnx = ">=1.13.0, <1.15.0"
+typer = "^0.9.0"
 ydata-profiling = "^4.6.1"
 zarr = ">2.12.0"
 
@@ -79,9 +80,6 @@ uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
 streaming-form-data = {version="^1.11.0", optional = true}
 sqlalchemy = {extras = ["mypy"], version = "^1.4.46", optional = true}
-
-# optional dependencies for cli
-typer = {version="^0.9.0",optional = true}
 
 # optional dependencies for gcp
 gcsfs = {version="^2023.5.0", optional = true}
@@ -103,7 +101,6 @@ s3 = ["s3fs", "boto3"]
 gcs = ["gcsfs"]
 postgres = ["psycopg2"]
 mysql = ["pymysql"]
-cli = ["typer"]
 
 [tool.poetry.group.dev]
 optional = true
