@@ -6,7 +6,6 @@ from functools import cached_property
 from typing import Any, Dict, Optional, cast
 
 import httpx
-import sqlalchemy
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -297,10 +296,10 @@ class DefaultSettings(BaseSettings):
             credentials=None,
         ).get_connector()
 
-    @cached_property
-    def sql_engine(self) -> sqlalchemy.engine.base.Engine:
-        """Retrieve sql engine"""
-        return self.connection_client.sql_engine
+    # @cached_property
+    # def sql_engine(self) -> sqlalchemy.engine.base.Engine:
+    #    """Retrieve sql engine"""
+    #    return self.connection_client.sql_engine
 
     def set_storage(self, storage_settings: StorageSettings) -> None:
         """
