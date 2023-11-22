@@ -17,7 +17,15 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedTableTypes, SupportedDataClasses
+from opsml.registry.data.types import (
+    AllowedTableTypes,
+    NDArray,
+    PandasDataFrame,
+    PolarsDataFrame,
+    PyarrowTable,
+    AllowedDataType,
+    check_data_type,
+)
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -29,17 +37,7 @@ logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
 
 
-@runtime_checkable
-class DataFrame(Protocol):
-    ...
-
-
-@runtime_checkable
-class NDArray(Protocol):
-    ...
-
-
-ValidData = Union[NDArray, DataFrame, Table, ImageDataset]
+ValidData = Union[NDArray, PandasDataFrame, PolarsDataFrame, PyarrowTable, ImageDataset]
 
 
 @auditable
@@ -85,42 +83,10 @@ class DataCard(ArtifactCard):
     @classmethod
     def check_data(cls, data: Optional[ValidData] = None) -> ValidData:
         """Custom data validator to check data type"""
-        data_class = str(data.__class__)
-
         if data is None:
             return data
 
-        if "pandas" in data_class:
-            import pandas as pd
-
-            assert isinstance(data, pd.DataFrame), "Data must be a pandas dataframe"
-
-        elif "polars" in data_class:
-            import polars as pl
-
-            assert isinstance(data, pl.DataFrame), "Data must be a polars dataframe"
-
-        elif "numpy" in data_class:
-            import numpy as np
-
-            assert isinstance(data, np.ndarray), "Data must be a numpy array"
-
-        elif "pyarrow" in data_class:
-            import pyarrow as pa
-
-            assert isinstance(data, pa.Table), "Data must be a pyarrow table"
-
-        elif "opsml.registry.image" in data_class:
-            from opsml.registry.image import ImageDataset
-
-            assert isinstance(data, ImageDataset), "Data must be an ImageDataset"
-
-        else:
-            raise ValueError(
-                f"""Data must be one of the following types: numpy array, pandas dataframe, 
-                polars dataframe, pyarrow table, or ImageDataset. Received {data_class}
-                """
-            )
+        check_data_type(data=data)
 
         return data
 
@@ -289,8 +255,7 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-
-        if isinstance(self.data, (pd.DataFrame, pl.DataFrame)):
+        if "pandas" or "polars" in self.data.__class__:
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
