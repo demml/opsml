@@ -70,7 +70,7 @@ class SQLRegistryBase:
                 CardRegistry table name
         """
         self.storage_client = settings.storage_client
-        self.table_name = RegistryTableNames[registry_type.upper()].value
+        self._table_name = RegistryTableNames[registry_type.upper()].value
 
     @property
     def unique_teams(self) -> List[str]:
@@ -78,6 +78,10 @@ class SQLRegistryBase:
 
     def get_unique_card_names(self, team: Optional[str] = None):
         raise NotImplementedError
+
+    @property
+    def table_name(self) -> str:
+        return self._table_name
 
     @property
     def supported_card(self) -> str:
