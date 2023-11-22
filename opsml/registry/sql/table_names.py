@@ -1,3 +1,7 @@
+import os
+from enum import Enum
+
+
 class RegistryTableNames(str, Enum):
     DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")

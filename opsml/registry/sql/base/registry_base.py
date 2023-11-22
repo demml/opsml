@@ -22,8 +22,8 @@ from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
 from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -70,8 +70,7 @@ class SQLRegistryBase:
                 CardRegistry table name
         """
         self.storage_client = settings.storage_client
-        table_name = RegistryTableNames[registry_type.upper()].value
-        self._table = TableSchema.get_table(table_name=table_name)
+        self.table_name = RegistryTableNames[registry_type.upper()].value
 
     @property
     def unique_teams(self) -> List[str]:
@@ -79,10 +78,6 @@ class SQLRegistryBase:
 
     def get_unique_card_names(self, team: Optional[str] = None):
         raise NotImplementedError
-
-    @property
-    def table_name(self) -> str:
-        return self._table.__tablename__
 
     @property
     def supported_card(self) -> str:
