@@ -11,21 +11,12 @@ from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
-
+from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 
 Base = declarative_base()
-
-
-class RegistryTableNames(str, Enum):
-    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
-    MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
-    RUN = os.getenv("ML_RUN_REGISTRY_NAME", "OPSML_RUN_REGISTRY")
-    PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
-    PROJECT = os.getenv("ML_PROJECT_REGISTRY_NAME", "OPSML_PROJECT_REGISTRY")
-    AUDIT = os.getenv("ML_AUDIT_REGISTRY_NAME", "OPSML_AUDIT_REGISTRY")
 
 
 @declarative_mixin
