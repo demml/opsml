@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,8 @@ import polars as pl
 import pyarrow as pa
 
 from .types import AllowedTableTypes, ArrowTable
+
+ValidArrowData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table]
 
 
 # changing input type to any to handle a variety of data types which may be optionally installed (polars)
@@ -151,13 +153,8 @@ class DataFormatter:
 
     @staticmethod
     def create_table_schema(
-        data: Union[
-            pa.Table,
-            np.ndarray,
-            pd.DataFrame,
-            pl.DataFrame,
-        ]
-    ) -> Union[Dict[str, Any], pl.type_aliases.SchemaDict]:
+        data: ValidArrowData,
+    ) -> Dict[str, Any]:
         """
         Generates a schema (column: type) from a py arrow table.
         Args:
@@ -169,7 +166,7 @@ class DataFormatter:
             return data.dtypes.to_dict()
 
         if isinstance(data, pl.DataFrame):
-            return data.schema
+            return cast(Dict[str, Any], data.schema)
 
         if isinstance(data, pa.Table):
             schema = data.schema
@@ -260,10 +257,7 @@ class PandasSchemaValidator(SchemaValidator):
         return isinstance(data, pd.DataFrame)
 
 
-def check_data_schema(
-    data: Union[pa.Table, pl.DataFrame, pd.DataFrame, np.ndarray],
-    schema: Dict[str, str],
-) -> Union[pa.Table, pl.DataFrame, pd.DataFrame, np.ndarray]:
+def check_data_schema(data: ValidArrowData, schema: Dict[str, str]) -> ValidArrowData:
     """Check if data schema matches schema
 
     Args:

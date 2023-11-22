@@ -4,6 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from typing import Dict, List, Optional, Union, cast
+
+import pandas as pd
+import polars as pl
 from pydantic import field_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -14,14 +17,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import (
-    AllowedTableTypes,
-    NDArray,
-    PandasDataFrame,
-    PolarsDataFrame,
-    PyarrowTable,
-    check_data_type,
-)
+from opsml.registry.data.types import AllowedTableTypes, ValidData, check_data_type
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -31,9 +27,6 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
-
-
-ValidData = Union[NDArray, PandasDataFrame, PolarsDataFrame, PyarrowTable, ImageDataset]
 
 
 @auditable
@@ -77,10 +70,14 @@ class DataCard(ArtifactCard):
 
     @field_validator("data", mode="before")
     @classmethod
-    def check_data(cls, data: Optional[ValidData] = None) -> ValidData:
+    def check_data(cls, data, values) -> ValidData:
         """Custom data validator to check data type"""
         if data is None:
             return data
+
+        # load image dataset
+        if isinstance(data, dict) and data.get("image_dir") is not None:
+            data = ImageDataset(**data)
 
         check_data_type(data=data)
 
@@ -251,7 +248,7 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        if "pandas" or "polars" in self.data.__class__:
+        if isinstance(self.data, (pd.DataFrame, pl.DataFrame)):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,

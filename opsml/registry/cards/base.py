@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Dict, Optional
+
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -33,7 +34,7 @@ class ArtifactCard(BaseModel):
     tags: Dict[str, str] = {}
 
     @model_validator(mode="before")
-    def validate(cls, env_vars):  # pylint: disable=arguments-renamed
+    def validate_args(cls, env_vars):  # pylint: disable=arguments-renamed
         """Validate base args and Lowercase name and team"""
 
         card_info = env_vars.get("info")
