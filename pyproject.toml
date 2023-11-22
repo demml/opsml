@@ -44,7 +44,6 @@ Source = "https://github.com/shipt/opsml"
 
 # required dependencies
 python = ">=3.9,<3.12"
-alembic = "^1.10.3"
 httpx ="^0.23.3"
 matplotlib= ">=3.7.0, <3.8.0"
 onnx = ">=1.14.0, <1.15.0"
@@ -59,10 +58,8 @@ rusty-logger = "^0.2.0"
 scikit-learn = ">=1.0"
 semver = "^2.13.0"
 skl2onnx = "1.14.1"
-sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
 tenacity = "^8.2.2"
 tf2onnx =">=1.13.0, <1.15.0"
-typer = "^0.9.0"
 ydata-profiling = "^4.6.1"
 zarr = ">2.12.0"
 
@@ -73,6 +70,7 @@ mlflow = ">=2.3.1, <=2.4"
 psycopg2 = {version="^2.9.6", optional = true}
 
 # optional dependencies for server
+alembic = {version= "^1.10.3", optional = true}
 fastapi = {version="^0.100.0", optional = true}
 gunicorn = {version="^20.1.0", optional = true}
 prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
@@ -80,6 +78,10 @@ rollbar = {version="^0.16.3", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
 streaming-form-data = {version="^1.11.0", optional = true}
+sqlalchemy = {extras = ["mypy"], version = "^1.4.46", optional = true}
+
+# optional dependencies for cli
+typer = {version="^0.9.0",optional = true}
 
 # optional dependencies for gcp
 gcsfs = {version="^2023.5.0", optional = true}
@@ -94,13 +96,14 @@ pg8000 = {version="^1.29.4", optional = true}
 pymysql = {version="^1.0.2", optional = true}
 
 [tool.poetry.extras]
-server = ["streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth"]
+server = ["alembic", "streaming-form-data", "fastapi", "uvicorn", "rollbar", "gunicorn", "prometheus-fastapi-instrumentator", "wsgi-basic-auth", "sqlalchemy"]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]
 s3 = ["s3fs", "boto3"]
 gcs = ["gcsfs"]
 postgres = ["psycopg2"]
 mysql = ["pymysql"]
+cli = ["typer"]
 
 [tool.poetry.group.dev]
 optional = true

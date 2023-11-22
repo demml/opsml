@@ -21,6 +21,13 @@ class AllowedTableTypes(str, Enum):
     IMAGE_DATASET = "ImageDataset"
 
 
+class SupportedDataClasses(str, Enum):
+    NDARRAY = "ndarray"
+    ARROW_TABLE = "Table"
+    DATAFRAME = "DataFrame"
+    IMAGE_DATASET = "ImageDataset"
+
+
 class ArrowTable(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
