@@ -31,6 +31,7 @@
                 "-k",
                 "uvicorn.workers.UvicornWorker",
                 "--bind=0.0.0:8000",
+                "--config=opsml/app/gunicorn_conf.py",
                 "opsml.app.main:run_app()"
             ],
             "env": {
