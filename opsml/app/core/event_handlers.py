@@ -22,7 +22,7 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 # set up db initializer
 initializer = DBInitializer(
-    engine=settings.sql_engine,
+    engine=settings.connection_client.sql_engine,
     registry_tables=list(RegistryTableNames),
 )
 

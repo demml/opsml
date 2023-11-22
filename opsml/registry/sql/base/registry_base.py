@@ -22,8 +22,8 @@ from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.sql.table_names import RegistryTableNames
+from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -121,7 +121,7 @@ class SQLRegistryBase:
         if not self._is_correct_card_type(card=card):
             raise ValueError(
                 f"""Card of type {card.__class__.__name__} is not supported by registry
-                {self._table.__tablename__}"""
+                {self.table_name}"""
             )
 
         if self.check_uid(uid=str(card.uid), registry_type=self.registry_type):

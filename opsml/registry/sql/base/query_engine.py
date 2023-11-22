@@ -85,7 +85,7 @@ class VersionSplitting:
 
 class QueryEngine:
     def __init__(self):
-        self.engine = settings.sql_engine
+        self.engine = settings.connection_client.sql_engine
 
     @property
     def dialect(self) -> str:

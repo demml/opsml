@@ -173,7 +173,7 @@ class CardRegistry:
         """
 
         self._registry = self._set_registry(registry_name=registry_name)
-        self.table_name = self._registry._table.__tablename__
+        self.table_name = self._registry.table_name
 
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards

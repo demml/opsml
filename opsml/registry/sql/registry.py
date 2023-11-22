@@ -179,7 +179,7 @@ class CardRegistry:
         """
 
         self._registry = self._set_registry(registry_name=registry_name)
-        self.table_name = self._registry._table.__tablename__
+        self.table_name = self._registry.table_name
 
     @property
     def registry_type(self) -> str:
