@@ -1,0 +1,45 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "cli-model-download",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/opsml/scripts/api_cli.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "download-model",
+                "--write-dir",
+                "/tmp/models",
+                "--name",
+                "mymodel",
+                "--team",
+                "myteam",
+                "--version",
+                "1.9.0"
+            ]
+        },
+        {
+            "name": "webserver",
+            "type": "python",
+            "request": "launch",
+            "module": "gunicorn",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-k",
+                "uvicorn.workers.UvicornWorker",
+                "--bind=0.0.0:8000",
+                "--config=opsml/app/gunicorn_conf.py",
+                "opsml.app.main:run_app()"
+            ],
+            "env": {
+                "OPSML_TRACKING_URI": "sqlite:///tmp.db",
+                "OPSML_STORAGE_URI": "./mlruns",
+                "OPSML_PROD_TOKEN": "prod",
+                "APP_ENV": "production",
+            }
+        },
+    ]
+}
