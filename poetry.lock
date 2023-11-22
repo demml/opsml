@@ -5845,6 +5845,17 @@ tests = ["autopep8", "flake8", "isort", "numpy", "pytest", "scipy (>=1.7.1)"]
 tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
+name = "tuna"
+version = "0.5.11"
+description = "Visualize Python performance profiles"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "tuna-0.5.11-py3-none-any.whl", hash = "sha256:ab352a6d836014ace585ecd882148f1f7c68be9ea4bf9e9298b7127594dab2ef"},
+    {file = "tuna-0.5.11.tar.gz", hash = "sha256:d47f3e39e80af961c8df016ac97d1643c3c60b5eb451299da0ab5fe411d8866c"},
+]
+
+[[package]]
 name = "typeguard"
 version = "4.1.5"
 description = "Run-time type checker for Python"
@@ -6533,4 +6544,4 @@ server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar",
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "0ede1767aa85013ba66d2be6371895c25ea4480de536c59eea8eb5da4d4f7e75"
+content-hash = "69d68d25ea1c2d728c00539c89cbf883d9f80d7c7495d25caa635eebd0c78ba1"

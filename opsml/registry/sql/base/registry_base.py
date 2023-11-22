@@ -2,10 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from semver import VersionInfo
-from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
@@ -28,10 +27,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-
-
-SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-
 
 table_name_card_map = {
     RegistryType.DATA.value: DataCard,
