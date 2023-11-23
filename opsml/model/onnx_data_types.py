@@ -4,20 +4,15 @@
 
 import warnings
 from typing import List, Tuple, Union
-
-# skl2onnx has an annoying warning < 1.16
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    from skl2onnx.common.data_types import (
-        DoubleTensorType,
-        FloatTensorType,
-        Int32TensorType,
-        Int64TensorType,
-        StringTensorType,
-        TensorType,
-    )
-
-from opsml.model.types import DataDtypes
+from opsml.model.types import (
+    DataDtypes,
+    TensorType,
+    FloatTensorType,
+    DoubleTensorType,
+    Int32TensorType,
+    Int64TensorType,
+    StringTensorType,
+)
 
 
 class BaseTensorType:
@@ -35,7 +30,10 @@ class BaseTensorType:
 
 class Float32Tensor(BaseTensorType):
     def get_tensor_type(self) -> FloatTensorType:
-        return FloatTensorType([None, *self.input_shape])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx.common import data_types
+        return data_types.FloatTensorType([None, *self.input_shape])
 
     @staticmethod
     def validate(dtype: str) -> bool:
@@ -44,7 +42,10 @@ class Float32Tensor(BaseTensorType):
 
 class Float64Tensor(BaseTensorType):
     def get_tensor_type(self) -> DoubleTensorType:
-        return DoubleTensorType([None, *self.input_shape])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx.common import data_types
+        return data_types.DoubleTensorType([None, *self.input_shape])
 
     @staticmethod
     def validate(dtype: str) -> bool:
@@ -53,7 +54,10 @@ class Float64Tensor(BaseTensorType):
 
 class Int32Tensor(BaseTensorType):
     def get_tensor_type(self) -> Int32TensorType:
-        return Int32TensorType([None, *self.input_shape])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx.common import data_types
+        return data_types.Int32TensorType([None, *self.input_shape])
 
     @staticmethod
     def validate(dtype: str) -> bool:
@@ -62,7 +66,10 @@ class Int32Tensor(BaseTensorType):
 
 class Int64Tensor(BaseTensorType):
     def get_tensor_type(self) -> Int64TensorType:
-        return Int64TensorType([None, *self.input_shape])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx.common import data_types
+        return data_types.Int64TensorType([None, *self.input_shape])
 
     @staticmethod
     def validate(dtype: str) -> bool:
@@ -71,7 +78,10 @@ class Int64Tensor(BaseTensorType):
 
 class StringTensor(BaseTensorType):
     def get_tensor_type(self) -> StringTensorType:
-        return StringTensorType([None, *self.input_shape])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            from skl2onnx.common import data_types
+        return data_types.StringTensorType([None, *self.input_shape])
 
     @staticmethod
     def validate(dtype: str) -> bool:

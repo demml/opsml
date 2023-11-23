@@ -13,12 +13,8 @@ from functools import reduce
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
-import onnx
-import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
-from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
-from sklearn.base import BaseEstimator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
@@ -30,16 +26,18 @@ from opsml.model.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
     ApiDataSchemas,
+    BaseEstimator,
     DataDict,
     ExtraOnnxArgs,
     Feature,
+    InferenceSession,
+    ModelProto,
     ModelReturn,
     OnnxDataProto,
     OnnxModelDefinition,
     OnnxModelType,
 )
 
-ONNX_VERSION = onnx.__version__
 logger = ArtifactLogger.get_logger()
 
 
@@ -67,7 +65,7 @@ class ModelConverter:
         """
         raise NotImplementedError
 
-    def convert_data(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for onnx
 
         Returns
@@ -159,10 +157,8 @@ class ModelConverter:
         model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
         logger.info("Validating converted onnx model")
-        sess = rt.InferenceSession(
-            path_or_bytes=onnx_model.SerializeToString(),
-            providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
-        )
+        sess = self._create_onnx_session(onnx_model=onnx_model)
+
         onnx_preds = sess.run(None, inputs)
         if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
             raise ValueError("Model prediction validation failed")
@@ -216,9 +212,10 @@ class ModelConverter:
             onnx_model:
                 Onnx model
         """
+        import onnx
 
         return OnnxModelDefinition(
-            onnx_version=ONNX_VERSION,
+            onnx_version=onnx.__version__,
             model_bytes=onnx_model.SerializeToString(),
         )
 
@@ -250,6 +247,8 @@ class ModelConverter:
         Returns:
             Tuple containing onnx model definition, input features, and output features
         """
+        import onnx
+
         onnx_model = onnx.load_from_string(model_def.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
@@ -262,7 +261,7 @@ class ModelConverter:
         Returns:
             ModelReturn object containing model definition and api data schema
         """
-        initial_types, data_schema = self.convert_data()
+        initial_types, data_schema = self.get_data_types()
 
         if self.model_info.onnx_model_def is None:
             model_def, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
@@ -279,6 +278,14 @@ class ModelConverter:
         )
 
         return ModelReturn(model_definition=model_def, api_data_schema=schema)
+
+    def _create_onnx_session(self, onnx_model: ModelProto) -> InferenceSession:
+        import onnxruntime as rt
+
+        return rt.InferenceSession(
+            path_or_bytes=onnx_model.SerializeToString(),
+            providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
+        )
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -393,10 +400,10 @@ class SklearnOnnxModel(ModelConverter):
         self.update_sklearn_onnx_registries()
         self._convert_data_for_onnx()
 
-    def convert_data(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for sklearn onnx models"""
         self.prepare_registries_and_data()
-        return super().convert_data()
+        return super().get_data_types()
 
     @property
     def options(self) -> Optional[Dict[str, Any]]:
@@ -568,12 +575,7 @@ class PyTorchOnnxModel(ModelConverter):
         model_preds = self._model_predict()
 
         logger.info("Validating converted onnx model")
-
-        model_string = onnx_model.SerializeToString()
-        sess = rt.InferenceSession(
-            path_or_bytes=model_string,
-            providers=rt.get_available_providers(),
-        )
+        sess = self._create_onnx_session(onnx_model=onnx_model)
 
         onnx_preds = sess.run(None, inputs)
 
@@ -605,6 +607,7 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_onnx_model(self) -> ModelProto:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
 
+        import onnx
         import torch
 
         arg_data = self._get_torch_data()
