@@ -7,7 +7,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Protocol, Union
 
 import numpy as np
 import pandas as pd
@@ -297,3 +297,71 @@ class ModelDownloadInfo(BaseModel):
     version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
+
+
+class BaseEstimator(Protocol):
+    ...
+
+
+### Onnx protocol stubs
+
+
+class Graph(Protocol):
+    @property
+    def output(self):
+        ...
+
+    @property
+    def input(self):
+        ...
+
+
+class ModelProto(Protocol):
+    ir_version: int
+    producer_name: str
+    producer_version: str
+    domain: str
+    model_version: int
+    doc_string: str
+
+    def SerializeToString(self):  # pylint: disable=invalid-name
+        ...
+
+    @property
+    def graph(self):
+        return Graph()
+
+
+class InferenceSession(Protocol):
+    def run(self, output_names, input_feed, run_options=None):
+        ...
+
+
+class DoubleTensorType(Protocol):
+    def __init__(self, shape=None, color_space=None, doc_string=""):
+        ...
+
+
+class FloatTensorType(Protocol):
+    def __init__(self, shape=None, color_space=None, doc_string="", denotation=None, channel_denotations=None):
+        ...
+
+
+class Int32TensorType(Protocol):
+    def __init__(self, shape=None, doc_string=""):
+        ...
+
+
+class Int64TensorType(Protocol):
+    def __init__(self, shape=None, doc_string=""):
+        ...
+
+
+class StringTensorType(Protocol):
+    def __init__(self, shape=None, doc_string=""):
+        ...
+
+
+class TensorType(Protocol):
+    def __init__(self, shape=None, doc_string=""):
+        ...
