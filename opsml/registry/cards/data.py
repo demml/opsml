@@ -3,11 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast, Any
 
 import pandas as pd
 import polars as pl
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath
@@ -27,6 +27,39 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
+
+
+class DataValidator:
+    @staticmethod
+    def check_metadata(
+        data: ValidData,
+        metadata: Union[Dict[str, Any], DataCardMetadata],
+        sql_logic: Dict[Optional[str], Optional[str]],
+    ) -> Optional[str]:
+        """Validates metadata
+
+        Args:
+            data:
+                Data to use for data card. Can be a pyarrow table, pandas dataframe, polars dataframe
+                or numpy array
+            metadata:
+                Metadata dictionary
+            sql_logic:
+                Dictionary of strings containing sql logic or sql files used to create the data
+
+        Returns:
+            Data uri if present
+        """
+
+        if isinstance(metadata, DataCardMetadata):
+            data_uri = metadata.uris.data_uri
+        else:
+            data_uri = metadata["uris"].get("data_uri")
+
+        if data is None and not bool(sql_logic):
+            if data_uri is None:
+                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
+        return data_uri
 
 
 @auditable
@@ -68,34 +101,33 @@ class DataCard(ArtifactCard):
     data_profile: Optional[ProfileReport] = None
     metadata: DataCardMetadata = DataCardMetadata()
 
-    @field_validator("data", mode="before")
-    @classmethod
-    def check_data(cls, data, values) -> ValidData:
-        """Custom data validator to check data type"""
-        if data is None:
-            return data
+    @model_validator(mode="before")
+    def check_data(cls, card_args) -> ValidData:
+        """Custom data validator to check data type.
 
-        # load image dataset
-        if isinstance(data, dict) and data.get("image_dir") is not None:
-            data = ImageDataset(**data)
+        Options for validation are:
+            - Card can provide data, a data_uri or sql_logic (and any combination)
+            - If a data_uri is present, data and sql_logic are not required (data has already been saved)
+            - If data is not present and sql_logic is present, validation passes
+            - If data is present, data types are checked
+        """
+
+        data = card_args.get("data")
+        metadata = card_args.get("metadata")
+        sql_logic = card_args.get("sql_logic")
+
+        if metadata is not None:
+            data_uri = DataValidator.check_metadata(data, metadata, sql_logic)
+
+            if data_uri is not None:
+                return card_args
+
+        if data is None and bool(sql_logic):
+            return card_args
 
         check_data_type(data=data)
 
-        return data
-
-    @field_validator("metadata", mode="before")
-    def check_metadata(cls, metadata, info):
-        # check data uri
-        if isinstance(metadata, DataCardMetadata):
-            data_uri = metadata.uris.data_uri
-        else:
-            data_uri = metadata["uris"].get("data_uri")
-
-        if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
-            if data_uri is None:
-                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
-
-        return metadata
+        return card_args
 
     @field_validator("data_profile", mode="before")
     def check_profile(cls, profile):
