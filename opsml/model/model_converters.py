@@ -480,6 +480,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
 
         import tf2onnx
 
+        print(initial_types)
         onnx_model, _ = tf2onnx.convert.from_keras(self.model_info.model, initial_types, opset=13)
         self.validate_model(onnx_model=onnx_model)
 
