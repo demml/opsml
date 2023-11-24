@@ -17,10 +17,10 @@ from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.model.data_converters import OnnxDataConverter
 from opsml.model.model_info import ModelInfo
 from opsml.model.model_types import ModelType
-from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.model.registry_updaters import OnnxRegistryUpdater
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -45,12 +45,12 @@ try:
     import onnx
     import onnxruntime as rt
 
-except ModuleNotFoundError as exec:
+except ModuleNotFoundError as import_error:
     logger.error(
         """Failed to import onnx and onnxruntime. Please install onnx and onnxruntime via opsml extras
         If you wish to convert your model to onnx"""
     )
-    raise exec
+    raise import_error
 
 
 class ModelConverter:
@@ -449,13 +449,13 @@ class SklearnOnnxModel(ModelConverter):
 
         try:
             return convert_sklearn(model=self.model_info.model, initial_types=initial_types, options=self.options)
-        except NameError as error:
+        except NameError as name_error:
             # There may be a small amount of instances where a sklearn classifier does
             # not support zipmap as a default option (LinearSVC). This catches those errors
-            if re.search("Option 'zipmap' not in", str(error), re.IGNORECASE):
+            if re.search("Option 'zipmap' not in", str(name_error), re.IGNORECASE):
                 logger.info("Zipmap not supported for classifier")
                 return convert_sklearn(model=self.model_info.model, initial_types=initial_types)
-            raise error
+            raise name_error
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""

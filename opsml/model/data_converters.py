@@ -19,12 +19,10 @@ from opsml.model.types import (
     OnnxModelDefinition,
     OnnxModelType,
 )
-from opsml.model.sklearn.skl2onnx_data_types import get_skl2onnx_onnx_tensor_spec
 
 # attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
 # this is checked during model conversion
 try:
-    import skl2onnx
     from opsml.model.sklearn.skl2onnx_data_types import get_skl2onnx_onnx_tensor_spec
 except ModuleNotFoundError:
     pass
@@ -343,7 +341,7 @@ class PyTorchOnnxDictConverter(DataConverter):
             self.model_data.dtypes,
         )
 
-        return list[zipped]
+        return list([zipped])
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         """Convert Pytorch dictionary sample to onnx format"""
