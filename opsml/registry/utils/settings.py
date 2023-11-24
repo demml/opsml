@@ -10,9 +10,9 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.types import OpsmlAuth, OpsmlUri
+from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.sql.connectors import BaseSQLConnection, SQLConnector
 from opsml.registry.storage.storage_system import (
     StorageClientGetter,

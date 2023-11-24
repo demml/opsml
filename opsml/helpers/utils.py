@@ -4,13 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import glob
+import importlib
 import os
 import re
 import string
 from functools import wraps
 from pathlib import Path
-from typing import Optional, Union, List
-import importlib
+from typing import List, Optional, Union
+
 from opsml.helpers.logging import ArtifactLogger
 
 from . import exceptions
@@ -213,6 +214,10 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
     Args:
         packages:
             List of packages to test
+        extras_expression:
+            Expression for installing extras
+        context:
+            Context for error message
 
     Returns:
         True if all packages can be imported, False otherwise
@@ -220,16 +225,16 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
     for package in packages:
         try:
             importlib.import_module(package)
-        except ModuleNotFoundError as exec:
-            packages = ", ".join(packages)
+        except ModuleNotFoundError as error:
+            package_str = ", ".join(packages)
             logger.error(
                 """Failed to import packages {}. Please install via opsml extras ({})
                 {}""",
-                packages,
+                package_str,
                 extras_expression,
                 context,
             )
-            raise exec
+            raise error
     return True
 
 
@@ -260,5 +265,5 @@ class OpsmlImportExceptions:
         try_import(
             ["sqlalchemy", "alembic"],
             "opsml[server]",
-            "If you wish to use use the server registry",
+            "If you wish to use the server registry",
         )
