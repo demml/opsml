@@ -4,15 +4,11 @@
 
 import warnings
 from typing import List, Tuple, Union
-from opsml.model.types import (
-    DataDtypes,
-    TensorType,
-    FloatTensorType,
-    DoubleTensorType,
-    Int32TensorType,
-    Int64TensorType,
-    StringTensorType,
-)
+from opsml.model.types import DataDtypes
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from skl2onnx.common import data_types
 
 
 class BaseTensorType:
@@ -20,7 +16,7 @@ class BaseTensorType:
         self.input_shape = input_shape
         self.dtype = dtype
 
-    def get_tensor_type(self) -> TensorType:
+    def get_tensor_type(self) -> data_types.TensorType:
         raise NotImplementedError
 
     @staticmethod
@@ -29,10 +25,7 @@ class BaseTensorType:
 
 
 class Float32Tensor(BaseTensorType):
-    def get_tensor_type(self) -> FloatTensorType:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            from skl2onnx.common import data_types
+    def get_tensor_type(self) -> data_types.FloatTensorType:
         return data_types.FloatTensorType([None, *self.input_shape])
 
     @staticmethod
@@ -41,10 +34,7 @@ class Float32Tensor(BaseTensorType):
 
 
 class Float64Tensor(BaseTensorType):
-    def get_tensor_type(self) -> DoubleTensorType:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            from skl2onnx.common import data_types
+    def get_tensor_type(self) -> data_types.DoubleTensorType:
         return data_types.DoubleTensorType([None, *self.input_shape])
 
     @staticmethod
@@ -53,10 +43,7 @@ class Float64Tensor(BaseTensorType):
 
 
 class Int32Tensor(BaseTensorType):
-    def get_tensor_type(self) -> Int32TensorType:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            from skl2onnx.common import data_types
+    def get_tensor_type(self) -> data_types.Int32TensorType:
         return data_types.Int32TensorType([None, *self.input_shape])
 
     @staticmethod
@@ -65,10 +52,7 @@ class Int32Tensor(BaseTensorType):
 
 
 class Int64Tensor(BaseTensorType):
-    def get_tensor_type(self) -> Int64TensorType:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            from skl2onnx.common import data_types
+    def get_tensor_type(self) -> data_types.Int64TensorType:
         return data_types.Int64TensorType([None, *self.input_shape])
 
     @staticmethod
@@ -77,10 +61,7 @@ class Int64Tensor(BaseTensorType):
 
 
 class StringTensor(BaseTensorType):
-    def get_tensor_type(self) -> StringTensorType:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            from skl2onnx.common import data_types
+    def get_tensor_type(self) -> data_types.StringTensorType:
         return data_types.StringTensorType([None, *self.input_shape])
 
     @staticmethod
@@ -88,10 +69,10 @@ class StringTensor(BaseTensorType):
         return dtype == DataDtypes.STRING
 
 
-def get_onnx_tensor_spec(
+def get_skl2onnx_onnx_tensor_spec(
     dtype: str,
     input_shape: Union[Tuple[int, ...], List[int]],
-) -> TensorType:
+) -> data_types.TensorType:
     """Takes a dtype and input shape and returns Onnx Tensor type proto to be
     used with Onnx model
 

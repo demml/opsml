@@ -10,7 +10,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from opsml.model.model_info import FloatTypeConverter, ModelData, ModelInfo
-from opsml.model.onnx_data_types import get_onnx_tensor_spec
 from opsml.model.types import (
     AVAILABLE_MODEL_TYPES,
     DataDtypes,
@@ -20,6 +19,15 @@ from opsml.model.types import (
     OnnxModelDefinition,
     OnnxModelType,
 )
+from opsml.model.sklearn.skl2onnx_data_types import get_skl2onnx_onnx_tensor_spec
+
+# attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
+# this is checked during model conversion
+try:
+    import skl2onnx
+    from opsml.model.sklearn.skl2onnx_data_types import get_skl2onnx_onnx_tensor_spec
+except ModuleNotFoundError:
+    pass
 
 ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
 
@@ -78,7 +86,7 @@ class DataConverter:
 
         inputs = []
         for key, val in self.model_data.feature_types:
-            spec = get_onnx_tensor_spec(dtype=str(val), input_shape=[1])
+            spec = get_skl2onnx_onnx_tensor_spec(dtype=str(val), input_shape=[1])
             inputs.append((key, spec))
         return inputs
 
@@ -106,7 +114,7 @@ class NumpyOnnxConverter(DataConverter):
 
         dtype = self.model_data.dtypes[0]
         shape = cast(Tuple[int, ...], self.model_data.shape[1:])
-        spec = get_onnx_tensor_spec(dtype=dtype, input_shape=shape)
+        spec = get_skl2onnx_onnx_tensor_spec(dtype=dtype, input_shape=shape)
 
         return [(self.input_name, spec)]
 
@@ -151,7 +159,7 @@ class PandasOnnxConverter(DataConverter):
         """
         input_shape = cast(Tuple[int, ...], self.model_data.shape[1:])
         dtype = self.model_data.dtypes[0]
-        spec = get_onnx_tensor_spec(dtype=dtype, input_shape=input_shape)
+        spec = get_skl2onnx_onnx_tensor_spec(dtype=dtype, input_shape=input_shape)
         return [(self.input_name, spec)]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
@@ -291,8 +299,8 @@ class PyTorchOnnxDataConverter(DataConverter):
 
         shape = cast(Tuple[int, ...], self.model_data.shape[1:])
         dtype = self.model_data.dtypes[0]
-        spec = get_onnx_tensor_spec(dtype=dtype, input_shape=shape)
-        return [(self.input_name, spec)]
+
+        return [(self.input_name, shape, dtype)]
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         return None
@@ -329,20 +337,13 @@ class PyTorchOnnxDictConverter(DataConverter):
         return None
 
     def get_onnx_data_types(self) -> List[Any]:
-        specs = []
-
         zipped = zip(
             self.input_names,
             self.model_data.shape,
             self.model_data.dtypes,
         )
 
-        for feature, shape, dtype in zipped:
-            shape = cast(Tuple[int, ...], shape)
-            spec = get_onnx_tensor_spec(dtype=dtype, input_shape=shape[1:])
-            specs.append((feature, spec))
-
-        return specs
+        return list[zipped]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         """Convert Pytorch dictionary sample to onnx format"""

@@ -65,4 +65,3 @@ def model_predict(model_and_data):
 )
 def test_tensorflow_predict(model_and_data):
     model_predict(model_and_data)
-    a
