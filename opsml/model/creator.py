@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data
 from opsml.model.model_types import ModelType, OnnxModelType
 from opsml.model.types import (
@@ -267,6 +266,7 @@ class OnnxModelCreator(ModelCreator):
         Returns
             `ModelReturn`
         """
+        from opsml.model.model_converters import OnnxModelConverter
 
         try:
             model_data = get_model_data(

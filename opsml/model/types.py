@@ -330,38 +330,3 @@ class ModelProto(Protocol):
     @property
     def graph(self):
         return Graph()
-
-
-class InferenceSession(Protocol):
-    def run(self, output_names, input_feed, run_options=None):
-        ...
-
-
-class DoubleTensorType(Protocol):
-    def __init__(self, shape=None, color_space=None, doc_string=""):
-        ...
-
-
-class FloatTensorType(Protocol):
-    def __init__(self, shape=None, color_space=None, doc_string="", denotation=None, channel_denotations=None):
-        ...
-
-
-class Int32TensorType(Protocol):
-    def __init__(self, shape=None, doc_string=""):
-        ...
-
-
-class Int64TensorType(Protocol):
-    def __init__(self, shape=None, doc_string=""):
-        ...
-
-
-class StringTensorType(Protocol):
-    def __init__(self, shape=None, doc_string=""):
-        ...
-
-
-class TensorType(Protocol):
-    def __init__(self, shape=None, doc_string=""):
-        ...

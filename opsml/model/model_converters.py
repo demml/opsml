@@ -20,6 +20,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
 from opsml.model.model_info import ModelInfo
 from opsml.model.model_types import ModelType
+from opsml.model.exception_tests import OpsmlOnnxExceptions
 from opsml.model.registry_updaters import OnnxRegistryUpdater
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -30,7 +31,6 @@ from opsml.model.types import (
     DataDict,
     ExtraOnnxArgs,
     Feature,
-    InferenceSession,
     ModelProto,
     ModelReturn,
     OnnxDataProto,
@@ -39,6 +39,18 @@ from opsml.model.types import (
 )
 
 logger = ArtifactLogger.get_logger()
+
+
+try:
+    import onnx
+    import onnxruntime as rt
+
+except ModuleNotFoundError as exec:
+    logger.error(
+        """Failed to import onnx and onnxruntime. Please install onnx and onnxruntime via opsml extras
+        If you wish to convert your model to onnx"""
+    )
+    raise exec
 
 
 class ModelConverter:
@@ -71,6 +83,13 @@ class ModelConverter:
         Returns
             Encrypted model definition
         """
+
+        if self.model_info.model_type in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
+            OpsmlOnnxExceptions.test_skl2onnx_imports()
+
+        elif self.model_info.model_type == OnnxModelType.TF_KERAS:
+            OpsmlOnnxExceptions.test_tf2onnx_imports()
+
         return self.data_converter.get_data_types()
 
     def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]):
@@ -212,7 +231,6 @@ class ModelConverter:
             onnx_model:
                 Onnx model
         """
-        import onnx
 
         return OnnxModelDefinition(
             onnx_version=onnx.__version__,
@@ -247,7 +265,6 @@ class ModelConverter:
         Returns:
             Tuple containing onnx model definition, input features, and output features
         """
-        import onnx
 
         onnx_model = onnx.load_from_string(model_def.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
@@ -279,9 +296,7 @@ class ModelConverter:
 
         return ModelReturn(model_definition=model_def, api_data_schema=schema)
 
-    def _create_onnx_session(self, onnx_model: ModelProto) -> InferenceSession:
-        import onnxruntime as rt
-
+    def _create_onnx_session(self, onnx_model: ModelProto) -> rt.InferenceSession:
         return rt.InferenceSession(
             path_or_bytes=onnx_model.SerializeToString(),
             providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
@@ -480,7 +495,6 @@ class TensorflowKerasOnnxModel(ModelConverter):
 
         import tf2onnx
 
-        print(initial_types)
         onnx_model, _ = tf2onnx.convert.from_keras(self.model_info.model, initial_types, opset=13)
         self.validate_model(onnx_model=onnx_model)
 
@@ -608,7 +622,6 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_onnx_model(self) -> ModelProto:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
 
-        import onnx
         import torch
 
         arg_data = self._get_torch_data()
