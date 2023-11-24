@@ -244,7 +244,7 @@ class OpsmlImportExceptions:
         """Attempts to import packages needed for onnx conversion of sklearn models"""
         try_import(
             ["skl2onnx", "onnxmltools"],
-            "opsml[skl2onnx]",
+            "opsml[sklearn_onnx]",
             "If you wish to convert your model to onnx",
         )
 
@@ -254,7 +254,7 @@ class OpsmlImportExceptions:
 
         try_import(
             ["tf2onnx"],
-            "opsml[tf2onnx]",
+            "opsml[tf_onnx]",
             "If you wish to convert your model to onnx",
         )
 

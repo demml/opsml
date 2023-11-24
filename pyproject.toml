@@ -46,20 +46,14 @@ Source = "https://github.com/shipt/opsml"
 python = ">=3.9,<3.12"
 httpx ="^0.23.3"
 matplotlib= ">=3.7.0, <3.8.0"
-onnx = ">=1.14.0, <1.15.0"
-onnxmltools = "^1.11.1"
-onnxruntime = "^1.13.0"
 polars = "^0.18.0"
 pyarrow = ">=8.0.0"
 pydantic = ">=2, <3"
 pydantic_settings = "^2"
 rich = "^13.3.5"
 rusty-logger = "^0.2.0"
-scikit-learn = ">=1.0"
 semver = "^2.13.0"
-skl2onnx = "1.14.1"
 tenacity = "^8.2.2"
-tf2onnx = ">=1.13.0, <1.15.0"
 typer = "^0.9.0"
 ydata-profiling = "^4.6.1"
 zarr = ">2.12.0"
@@ -69,6 +63,17 @@ mlflow = ">=2.3.1, <=2.4"
 
 # optional dependencies for sql
 psycopg2 = {version="^2.9.6", optional = true}
+
+# optional dependencies for onnx
+onnx = {version=">=1.14.0, <1.15.0", optional = true}
+onnxruntime = {version="^1.13.0", optional = true}
+
+# optional dependencies for sklearn onnx
+skl2onnx = {version="^1.14.1", optional = true}
+onnxmltools = {version="^1.11.1", optional = true}
+
+# optional dependencies for tensorflow onnx
+tf2onnx = {version=">=1.13.0, <1.15.0", optional = true}
 
 # optional dependencies for server
 alembic = {version= "^1.10.3", optional = true}
@@ -101,6 +106,9 @@ s3 = ["s3fs", "boto3"]
 gcs = ["gcsfs"]
 postgres = ["psycopg2"]
 mysql = ["pymysql"]
+tf_onnx = ["onnx", "onnxruntime", "tf2onnx",]
+sklearn_onnx = ["onnx", "onnxruntime", "skl2onnx", "onnxmltools"]
+torch_onnx = ["onnx", "onnxruntime"]
 
 [tool.poetry.group.dev]
 optional = true
