@@ -3,7 +3,7 @@ from opsml.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger()
 
 
-class OpsmlOnnxExceptions:
+class OpsmlImportExceptions:
     @staticmethod
     def test_skl2onnx_imports():
         try:
