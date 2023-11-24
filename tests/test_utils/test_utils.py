@@ -5,6 +5,7 @@ from opsml.helpers import utils
 from opsml.helpers import gcp_utils
 from google.oauth2.service_account import Credentials
 import json
+import pytest
 
 
 def test_find_path():
@@ -91,3 +92,8 @@ def test_gcp_default_creds(gcp_cred_path: str):
     creds, project = gcp_utils.GcpCredsSetter().get_base64_creds()
 
     assert isinstance(creds, Credentials)
+
+
+def test_import_exception():
+    with pytest.raises(ModuleNotFoundError):
+        utils.try_import("fail", "fail", "fail")
