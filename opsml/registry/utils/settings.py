@@ -10,6 +10,7 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.types import OpsmlAuth, OpsmlUri
 from opsml.registry.sql.connectors import BaseSQLConnection, SQLConnector
@@ -114,6 +115,8 @@ class DefaultAttrCreator:
         tracking_uri = self._env_vars.get(OpsmlUri.TRACKING_URI.lower(), BASE_LOCAL_SQL)
 
         if tracking_uri is BASE_LOCAL_SQL:
+            OpsmlImportExceptions.try_sql_import()
+
             logger.info("""No tracking url set. Defaulting to Sqlite""")
 
         self._env_vars[OpsmlUri.TRACKING_URI.lower()] = tracking_uri
