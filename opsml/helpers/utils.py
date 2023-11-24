@@ -9,8 +9,8 @@ import re
 import string
 from functools import wraps
 from pathlib import Path
-from typing import Optional, Union
-
+from typing import Optional, Union, List
+import importlib
 from opsml.helpers.logging import ArtifactLogger
 
 from . import exceptions
@@ -205,3 +205,60 @@ def all_subclasses(cls):
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)],
     )
+
+
+def try_import(packages: List[str], extras_expression: str, context: str) -> bool:
+    """Test if packages can be imported
+
+    Args:
+        packages:
+            List of packages to test
+
+    Returns:
+        True if all packages can be imported, False otherwise
+    """
+    for package in packages:
+        try:
+            importlib.import_module(package)
+        except ModuleNotFoundError as exec:
+            packages = ", ".join(packages)
+            logger.error(
+                """Failed to import packages {}. Please install via opsml extras ({})
+                {}""",
+                packages,
+                extras_expression,
+                context,
+            )
+            raise exec
+    return True
+
+
+class OpsmlImportExceptions:
+    @staticmethod
+    def try_skl2onnx_imports():
+        """Attempts to import packages needed for onnx conversion of sklearn models"""
+        try_import(
+            ["skl2onnx", "onnxmltools"],
+            "opsml[skl2onnx]",
+            "If you wish to convert your model to onnx",
+        )
+
+    @staticmethod
+    def try_tf2onnx_imports():
+        """Attempts to import packages needed for onnx conversion of tensorflow models"""
+
+        try_import(
+            ["tf2onnx"],
+            "opsml[tf2onnx]",
+            "If you wish to convert your model to onnx",
+        )
+
+    @staticmethod
+    def try_sql_import():
+        """Attempts to import packages needed for the server registry"""
+
+        try_import(
+            ["sqlalchemy", "alembic"],
+            "opsml[server]",
+            "If you wish to use use the server registry",
+        )
