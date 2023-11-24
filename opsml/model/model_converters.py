@@ -20,7 +20,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_converters import OnnxDataConverter
 from opsml.model.model_info import ModelInfo
 from opsml.model.model_types import ModelType
-from opsml.model.exception_tests import OpsmlOnnxExceptions
+from opsml.helpers.import_exceptions import OpsmlImportExceptions
 from opsml.model.registry_updaters import OnnxRegistryUpdater
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -85,10 +85,10 @@ class ModelConverter:
         """
 
         if self.model_info.model_type in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
-            OpsmlOnnxExceptions.test_skl2onnx_imports()
+            OpsmlImportExceptions.test_skl2onnx_imports()
 
         elif self.model_info.model_type == OnnxModelType.TF_KERAS:
-            OpsmlOnnxExceptions.test_tf2onnx_imports()
+            OpsmlImportExceptions.test_tf2onnx_imports()
 
         return self.data_converter.get_data_types()
 
