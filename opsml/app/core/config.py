@@ -5,9 +5,9 @@
 import os
 from typing import Optional
 
-BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
+BASE_LOCAL_SQL = f"sqlite:///{os.getcwd()}/tmp.db"
 TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", BASE_LOCAL_SQL)
-STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", "./mlruns")
+STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
 
 
 class MlFlowConfig:
