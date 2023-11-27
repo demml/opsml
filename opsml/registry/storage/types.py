@@ -2,10 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-import os
 from typing import Any, Dict, Generator, List, Optional, Protocol, Tuple, Union
 
 import pandas as pd
