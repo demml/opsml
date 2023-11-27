@@ -81,7 +81,7 @@ class OpsmlProject:
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
         """
-        Starts mlflow run for project
+        Starts a new run for the project
 
         Args:
             run_name:

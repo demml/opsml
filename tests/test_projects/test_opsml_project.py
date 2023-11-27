@@ -5,6 +5,7 @@ import pytest
 from sklearn import pipeline
 import os
 import numpy as np
+from opsml.app.core import config
 from opsml.registry import DataCard, ModelCard, AuditCard, CardRegistry
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
