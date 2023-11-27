@@ -71,10 +71,10 @@ class LocalSQLConnection(BaseSQLConnection):
     ):
         """
         Args:
-            new database named "opsml.db" will be created in the home user directory.
-            If the "opsml.db" already exists, a connection will be re-established (the
-            database will not be overwritten)
-            storage_backend (str): Which storage system to use. Defaults to local
+            new database will be created in current working directory. If the
+            database already exists, a connection will be re-established (the
+            database will not be overwritten) storage_backend (str): Which
+            storage system to use. Defaults to local
         Returns:
             Instantiated class with required SQLite arguments
         """
