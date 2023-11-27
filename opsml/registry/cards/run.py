@@ -2,6 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import os
 from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
@@ -69,6 +70,13 @@ class RunCard(ArtifactCard):
     tags: Dict[str, str] = {}
     project_id: Optional[str] = None
     runcard_uri: Optional[str] = None
+
+    @property
+    def artifact_root_uri(self) -> Optional[str]:
+        """Returns the root URI to which artifacts should be saved."""
+        if self.runcard_uri is None:
+            return None
+        return os.path.join(os.path.dirname(self.runcard_uri), "artifacts")
 
     def add_tag(self, key: str, value: str):
         """

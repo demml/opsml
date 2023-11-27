@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 from typing import Any, Dict, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger
@@ -188,7 +189,15 @@ class ActiveRun:
             artifact:
                 Artifact
         """
-        spec = ArtifactStorageSpecs(save_path="MISC", filename=name)
+        self._verify_active()
+
+        # Ensure the root URI is created. If the root_uri does not exist, the
+        # card was not created correctly by the run manager. The run manager
+        # should save the card and set the URI's when the run activates.
+
+        assert self.runcard.artifact_root_uri is not None
+
+        spec = ArtifactStorageSpecs(save_path=self.runcard.artifact_root_uri, filename=name)
         self._info.storage_client.storage_spec = spec
 
         storage_path = save_record_artifact_to_storage(
