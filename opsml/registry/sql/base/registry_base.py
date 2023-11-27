@@ -52,7 +52,7 @@ def load_card_from_record(
 
     Args:
         registry_type:
-            Registry type
+            Registry type string.
         record:
             Loaded record from backend database
 
@@ -71,8 +71,8 @@ class SQLRegistryBase:
         Base class for SQL Registries to inherit from
 
         Args:
-            table_name:
-                CardRegistry table name
+            registry_type:
+                Registry type
         """
         self.storage_client = settings.storage_client
         table_name = RegistryTableNames[registry_type.upper()].value

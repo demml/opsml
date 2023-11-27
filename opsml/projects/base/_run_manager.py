@@ -212,13 +212,16 @@ class _RunManager:
             run_name:
                 Optional run name
         """
-        # replace previous version if user is creating a run after finishing another
-        self._version = None
         if self._active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
-        self._set_active_run(run_name=run_name)
+        # replace previous version if user is creating a run after finishing another
+        self._version = None
+
         logger.info("starting run: {}", self.run_id)
+        self._set_active_run(run_name=run_name)
+        self.active_run.create_or_update_runcard()
+        self.version = cast(str, self.active_run.runcard.version)
 
     def _end_run(self) -> None:
         logger.info("ending run: {}", self.run_id)
