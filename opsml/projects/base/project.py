@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, Union, cast, Dict, Any
+from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler

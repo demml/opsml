@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 import datetime
 from contextlib import contextmanager
+from enum import Enum
 from functools import wraps
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, cast
 
@@ -17,7 +18,6 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
 from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 from opsml.registry.utils.settings import settings
-from enum import Enum
 
 logger = ArtifactLogger.get_logger()
 
