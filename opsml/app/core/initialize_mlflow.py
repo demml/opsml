@@ -15,7 +15,9 @@ logger = ArtifactLogger.get_logger()
 
 def initialize_mlflow() -> MlFlowConfig:
     """Initializes the mlflow server.
+
     This must be ran before HTTP serving begins. It simulates the cli launching the server.
+
     Raises:
         ValueError: One or more env vars is missing.
     """
