@@ -148,32 +148,28 @@ class StorageClient:
         file_suffix: Optional[str] = None,
         extra_path: Optional[str] = None,
     ) -> Tuple[str, str]:
-        filename = self.storage_spec.filename or uuid.uuid4().hex
+        base_path = os.path.join(self.base_path_prefix, self.storage_spec.save_path)
+        if extra_path is not None:
+            base_path = os.path.join(base_path, extra_path)
 
+        filename = self.storage_spec.filename or uuid.uuid4().hex
         if file_suffix is not None:
             filename = f"{filename}.{str(file_suffix)}"
 
-        if extra_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
-
-        else:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
-
-        return base_path + f"/{filename}", filename
+        return os.path.join(base_path, filename), filename
 
     def create_tmp_path(
         self,
         tmp_dir: str,
         extra_path: Optional[str] = None,
         file_suffix: Optional[str] = None,
-    ):
-        base_path, filename = self.create_save_path(
+    ) -> Tuple[str, str]:
+        """Returns the final storage_uri and the temp file local_path"""
+        storage_uri, filename = self.create_save_path(
             file_suffix=file_suffix,
             extra_path=extra_path,
         )
-        local_path = f"{tmp_dir}/{filename}"
-
-        return base_path, local_path
+        return storage_uri, os.path.join(tmp_dir, filename)
 
     @contextmanager
     def create_temp_save_path(
@@ -188,15 +184,6 @@ class StorageClient:
                 tmp_dir=tmpdirname,
             )
             yield storage_uri, local_path
-
-    @contextmanager
-    def create_named_tempfile(self, file_suffix: Optional[str]):
-        if file_suffix is not None:
-            if "." not in file_suffix:
-                file_suffix = f".{file_suffix}"
-
-        with tempfile.NamedTemporaryFile(suffix=file_suffix) as tmpfile:  # noqa
-            yield tmpfile
 
     def list_files(self, storage_uri: str) -> FilePath:
         raise NotImplementedError
