@@ -26,6 +26,20 @@ matplotlib.use("Agg")
 logger = ArtifactLogger.get_logger()
 
 
+def test_mlflow_artifact_storage(mlflow_project: MlflowProject) -> None:
+    with mlflow_project.run() as run:
+        run.log_artifact("test1", "hello, world")
+        run_id = run.run_id
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
+    proj = conftest.mock_mlflow_project(info)
+    proj.run_id = run_id
+    proj.download_artifacts(artifact_path="misc", local_path="test_path")
+
+    assert os.path.exists("test_path/misc/test1.joblib")
+
+
 def test_read_only(mlflow_project: MlflowProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""

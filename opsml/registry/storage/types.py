@@ -3,10 +3,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generator, List, Optional, Protocol, Tuple, Union
+from typing import Any, Dict, List, Optional, Protocol, Union
 
 import pandas as pd
 from numpy.typing import NDArray
@@ -76,55 +75,57 @@ class ArtifactStorageSpecs(BaseModel):
     dir_name: Optional[str] = None
 
 
-class StorageClientProto(Protocol):
-    backend: str
-    client: Any
-    base_path_prefix: str
-    _storage_spec: Any
+# TODO(@damon): Verify this protocol is needed. If so, use it. If not, delete it.
 
-    @property
-    def storage_spec(self) -> ArtifactStorageSpecs:
-        "storage metadata"
+# class StorageClientProto(Protocol):
+#     backend: str
+#     client: Any
+#     base_path_prefix: str
+#     _storage_spec: Any
 
-    @storage_spec.setter
-    def storage_spec(self, artifact_storage_spec):
-        "storage metadata"
+#     @property
+#     def storage_spec(self) -> ArtifactStorageSpecs:
+#         "storage metadata"
 
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        "Creates a save path"
+#     @storage_spec.setter
+#     def storage_spec(self, artifact_storage_spec):
+#         "storage metadata"
 
-    def create_tmp_path(
-        self,
-        tmp_dir: str,
-        file_suffix: Optional[str] = None,
-    ):
-        """Temp path"""
+#     def create_save_path(
+#         self,
+#         file_suffix: Optional[str] = None,
+#     ) -> Tuple[str, str]:
+#         "Creates a save path"
 
-    @contextmanager
-    def create_temp_save_path(
-        self,
-        file_suffix: Optional[str],
-    ) -> Generator[Tuple[Any, Any], None, None]:
-        """Context manager temp save path"""
+#     def create_tmp_path(
+#         self,
+#         tmp_dir: str,
+#         file_suffix: Optional[str] = None,
+#     ):
+#         """Temp path"""
 
-    def list_files(self, storage_uri: str) -> List[str]:
-        """List files"""
+#     @contextmanager
+#     def create_temp_save_path(
+#         self,
+#         file_suffix: Optional[str],
+#     ) -> Generator[Tuple[Any, Any], None, None]:
+#         """Context manager temp save path"""
 
-    def store(self, storage_uri: Union[List[str], str]) -> Any:
-        """store"""
+#     def list_files(self, storage_uri: str) -> List[str]:
+#         """List files"""
 
-    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
-        """Upload"""
+#     def store(self, storage_uri: Union[List[str], str]) -> Any:
+#         """store"""
 
-    def post_process(self, storage_uri: str) -> str:
-        """post process"""
+#     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
+#         """Upload"""
 
-    @staticmethod
-    def validate(storage_backend: str) -> bool:
-        """Validate"""
+#     def post_process(self, storage_uri: str) -> str:
+#         """post process"""
+
+#     @staticmethod
+#     def validate(storage_backend: str) -> bool:
+#         """Validate"""
 
 
 class MlFlowClientProto(Protocol):

@@ -58,7 +58,7 @@ class CardArtifactSaver:
         self.storage_client = storage_client
 
     @cached_property
-    def card(self):
+    def card(self) -> ArtifactCard:
         return self.card
 
     @property
@@ -441,7 +441,13 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     def _save_run_artifacts(self) -> None:
         """Saves all artifacts associated with RunCard to filesystem"""
-        # check if artifacts have already been saved (Mlflow runs save artifacts during run)
+        #
+        # TODO(@damon): See where `.artifacts` are used. When
+        # `ActiveRun.log_artifact` is called, the artifact is saved and *not*
+        # added to `artifacts` on the runcard. We probably want to do either one
+        # or the other - save the artifact when `log_artifact` is called *or*
+        # here when the card is saved,rather than support both.
+        #
         if self.card.artifact_uris is None:
             artifact_uris: Dict[str, str] = {}
         else:

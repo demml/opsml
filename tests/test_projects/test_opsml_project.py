@@ -18,6 +18,21 @@ from tests import conftest
 logger = ArtifactLogger.get_logger()
 
 
+def test_opsml_artifact_storage(opsml_project: OpsmlProject) -> None:
+    with opsml_project.run() as run:
+        run.log_artifact("test1", "hello, world")
+        run_id = run.run_id
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
+    proj = conftest.mock_opsml_project(info)
+    proj.run_id = run_id
+    runcard = proj.run_data
+    runcard.load_artifacts()
+    assert runcard.artifacts.get("test1") is not None
+    assert runcard.artifacts.get("test1") == "hello, world"
+
+
 def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
@@ -25,7 +40,6 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with opsml_project.run() as run:
         # Create metrics / params / cards
-        run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline

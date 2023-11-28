@@ -140,7 +140,7 @@ class StorageClient:
         return cast(ArtifactStorageSpecs, self._storage_spec)
 
     @storage_spec.setter
-    def storage_spec(self, artifact_storage_spec):
+    def storage_spec(self, artifact_storage_spec: ArtifactStorageSpecs):
         self._storage_spec = artifact_storage_spec
 
     def create_save_path(

@@ -422,7 +422,7 @@ def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
     return opsml_run
 
 
-def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
+def mock_opsml_project(info: ProjectInfo) -> OpsmlProject:
     info.tracking_uri = SQL_PATH
     opsml_run = OpsmlProject(info=info)
 
