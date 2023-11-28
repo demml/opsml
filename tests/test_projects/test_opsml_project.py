@@ -193,6 +193,9 @@ def test_run_fail(opsml_project: OpsmlProject) -> None:
     cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
     assert len(cards) == 1
 
+    print(len(proj.list_runs()))
+    a
+
 
 def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
     """verify we can save image dataset"""
