@@ -140,6 +140,8 @@ class ClientRegistry(SQLRegistryBase):
                 Places a limit on result list. Results are sorted by SemVer
             ignore_release_candidates:
                 If True, release candidates will be ignored
+            project_id:
+                Project ID to filter by
 
         Returns:
             Dictionary of card records
