@@ -5,7 +5,7 @@
 from rusty_logger import JsonConfig, LogConfig, Logger
 
 
-class ArtifactLogger(Logger):
+class ArtifactLogger(Logger):  # type: ignore
     @classmethod
     def get_logger(cls) -> Logger:
         return super().get_logger(
