@@ -508,3 +508,29 @@ class ModelRouteHelper(RouteHelper):
                 "metadata_json": metadata_json,
             },
         )
+
+
+# class RunRouteHelper(RouteHelper):
+#    """Route helper for DataCard pages"""
+#
+#    def get_homepage(self, request: Request, team: Optional[str] = None):
+#        """Retrieve homepage
+#
+#        Args:
+#            request:
+#                The incoming HTTP request.
+#            team:
+#                The team name.
+#        """
+#        # registry: CardRegistry = request.app.state.registries.
+#
+#        # info = list_team_name_info(registry, team)
+#        return templates.TemplateResponse(
+#            "include/model/models.html",
+#            {
+#                "request": request,
+#                "all_teams": info.teams,
+#                "selected_team": info.selected_team,
+#                "models": info.names,
+#            },
+#        )

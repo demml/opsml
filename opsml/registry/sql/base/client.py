@@ -118,6 +118,7 @@ class ClientRegistry(SQLRegistryBase):
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
+        project_id: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -155,6 +156,7 @@ class ClientRegistry(SQLRegistryBase):
                 "tags": tags,
                 "registry_type": self.registry_type,
                 "ignore_release_candidates": ignore_release_candidates,
+                "project_id": project_id,
             },
         )
 

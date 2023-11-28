@@ -80,6 +80,7 @@ class ListCardRequest(BaseModel):
     limit: Optional[int] = None
     tags: Optional[Dict[str, str]] = None
     ignore_release_candidates: bool = False
+    project_id: Optional[str] = None
     registry_type: Optional[str] = None
     table_name: Optional[str] = None
 

@@ -136,6 +136,7 @@ class ServerRegistry(SQLRegistryBase):
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
+        project_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -176,6 +177,7 @@ class ServerRegistry(SQLRegistryBase):
             max_date=max_date,
             tags=tags,
             limit=limit,
+            project_id=project_id,
         )
 
         if cleaned_name is not None:
