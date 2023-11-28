@@ -670,7 +670,7 @@ class LightGBMBooster(JoblibStorage):
         return artifact_type == ArtifactStorageType.BOOSTER
 
 
-def save_record_artifact_to_storage(
+def save_artifact_to_storage(
     artifact: Any,
     storage_client: StorageClientType,
     artifact_type: Optional[str] = None,

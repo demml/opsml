@@ -17,7 +17,7 @@ from opsml.registry import (
 )
 from opsml.registry.cards import ArtifactCard
 from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
-from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
+from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
@@ -200,7 +200,7 @@ class ActiveRun:
         artifact_path = os.path.relpath(self.runcard.artifact_root_uri, self._info.storage_client.base_path_prefix)
         self._info.storage_client.storage_spec = ArtifactStorageSpecs(save_path=artifact_path, filename=name)
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=artifact,
             storage_client=self._info.storage_client,
             artifact_type="joblib",
