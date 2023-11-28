@@ -200,6 +200,7 @@ class QueryEngine:
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -221,6 +222,8 @@ class QueryEngine:
                 Optional max date to search
             limit:
                 Optional limit of records to return
+            query_terms:
+                Optional query terms to search
 
         Returns
             Sqlalchemy Select statement
@@ -248,6 +251,10 @@ class QueryEngine:
         if tags is not None:
             for key, value in tags.items():
                 filters.append(table.tags[key].as_string() == value)  # type: ignore
+
+        if query_terms is not None:
+            for field, value in query_terms.items():
+                filters.append(getattr(table, field) == value)
 
         if bool(filters):
             query = query.filter(*filters)  # type: ignore
@@ -289,6 +296,7 @@ class QueryEngine:
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         query = self._records_from_table_query(
             table=table,
@@ -299,6 +307,7 @@ class QueryEngine:
             max_date=max_date,
             tags=tags,
             limit=limit,
+            query_terms=query_terms,
         )
 
         with self.session() as sess:
