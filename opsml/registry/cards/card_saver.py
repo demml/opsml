@@ -24,7 +24,7 @@ from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
 from opsml.registry.data.types import AllowedTableTypes
 from opsml.registry.image import ImageDataset
-from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
+from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
@@ -137,7 +137,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         if self.card.metadata.data_type != AllowedTableTypes.IMAGE_DATASET.value:
             exclude_attr.add("data")
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=self.card.model_dump(exclude=exclude_attr),
             storage_client=self.storage_client,
         )
@@ -166,7 +166,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         """
         self._set_storage_spec(filename=self.card.name, uri=self.card.metadata.uris.data_uri)
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=data,
             storage_client=self.storage_client,
         )
@@ -201,7 +201,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         # This is a requirement for loading with ydata-profiling
         profile_bytes = self.card.data_profile.dumps()
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=profile_bytes,
             storage_client=self.storage_client,
         )
@@ -276,7 +276,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.card._create_and_set_model_attr()  # pylint: disable=protected-access
 
         if self.card.to_onnx:
-            storage_path = save_record_artifact_to_storage(
+            storage_path = save_artifact_to_storage(
                 artifact=self.card.metadata.onnx_model_def.model_bytes,
                 artifact_type=ArtifactStorageType.ONNX.value,
                 storage_client=self.storage_client,
@@ -303,7 +303,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         model_metadata = self._get_model_metadata(onnx_attr=onnx_attr)
 
-        metadata_path = save_record_artifact_to_storage(
+        metadata_path = save_artifact_to_storage(
             artifact=model_metadata.model_dump_json(),
             artifact_type=ArtifactStorageType.JSON.value,
             storage_client=self.storage_client,
@@ -328,7 +328,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
         model_dump["metadata"].pop("onnx_model_def")
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=model_dump,
             storage_client=self.storage_client,
         )
@@ -345,7 +345,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.storage_spec.sample_data = self.card.sample_input_data
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=self.card.trained_model,
             artifact_type=self.card.metadata.model_type,
             storage_client=self.storage_client,
@@ -362,7 +362,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
 
         if isinstance(self.card.sample_input_data, dict):
-            storage_path = save_record_artifact_to_storage(
+            storage_path = save_artifact_to_storage(
                 artifact=self.card.sample_input_data,
                 storage_client=self.storage_client,
             )
@@ -370,7 +370,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         else:
             arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
-            storage_path = save_record_artifact_to_storage(
+            storage_path = save_artifact_to_storage(
                 artifact=arrow_table.table,
                 storage_client=self.storage_client,
             )
@@ -404,7 +404,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
             uri=self.card.metadata.audit_uri,
         )
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=self.card.model_dump(),
             storage_client=self.storage_client,
         )
@@ -433,7 +433,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
             uri=self.card.runcard_uri,
         )
 
-        storage_path = save_record_artifact_to_storage(
+        storage_path = save_artifact_to_storage(
             artifact=self.card.model_dump(exclude={"artifacts", "storage_client"}),
             storage_client=self.storage_client,
         )
@@ -458,7 +458,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
                 if name in artifact_uris:
                     continue
 
-                storage_path = save_record_artifact_to_storage(
+                storage_path = save_artifact_to_storage(
                     artifact=artifact,
                     storage_client=self.storage_client,
                 )
