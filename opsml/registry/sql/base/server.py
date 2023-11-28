@@ -159,6 +159,8 @@ class ServerRegistry(SQLRegistryBase):
                 Places a limit on result list. Results are sorted by SemVer
             ignore_release_candidates:
                 If True, will ignore release candidates when searching for versions
+            project_id:
+                Project ID to filter by
 
 
         Returns:

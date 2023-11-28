@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, Union, cast, Dict, Any
+from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler
@@ -131,7 +131,7 @@ class OpsmlProject:
             List of Runs
         """
 
-        return self._run_mgr.registries.run._registry.list_cards(
+        return self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
             project_id=self.project_id,
             limit=limit,
         )

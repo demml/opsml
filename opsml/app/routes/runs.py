@@ -7,9 +7,7 @@ import os
 from fastapi import APIRouter
 from fastapi.templating import Jinja2Templates
 
-
 from opsml.app.routes.route_helpers import ModelRouteHelper
-from opsml.app.routes.utils import error_to_500
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
