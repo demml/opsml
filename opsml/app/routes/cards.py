@@ -156,7 +156,7 @@ def list_cards(
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         logger.info("Listing cards with request: {}", payload.model_dump())
 
-        cards = registry.list_cards(
+        cards = registry._registry.list_cards(
             uid=payload.uid,
             name=payload.name,
             team=payload.team,
@@ -164,8 +164,8 @@ def list_cards(
             max_date=payload.max_date,
             limit=payload.limit,
             tags=payload.tags,
-            as_dataframe=False,
             ignore_release_candidates=payload.ignore_release_candidates,
+            project_id=payload.project_id,
         )
 
         if config.is_proxy:

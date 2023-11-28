@@ -107,6 +107,7 @@ server = [
     "gunicorn",
     "prometheus-fastapi-instrumentator",
     "wsgi-basic-auth",
+    "python-multipart",
 ]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]

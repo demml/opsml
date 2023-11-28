@@ -158,6 +158,7 @@ class QueryEngine:
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
+        project_id: Optional[str] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -211,6 +212,10 @@ class QueryEngine:
             for key, value in tags.items():
                 filters.append(table.tags[key].as_string() == value)  # type: ignore
 
+        # used only when searching runcards
+        if project_id is not None:
+            filters.append(table.project_id == project_id)
+
         if bool(filters):
             query = query.filter(*filters)  # type: ignore
 
@@ -251,6 +256,7 @@ class QueryEngine:
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
+        project_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         query = self._records_from_table_query(
             table=table,
@@ -261,6 +267,7 @@ class QueryEngine:
             max_date=max_date,
             tags=tags,
             limit=limit,
+            project_id=project_id,
         )
 
         with self.session() as sess:
