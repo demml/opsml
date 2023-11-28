@@ -75,59 +75,6 @@ class ArtifactStorageSpecs(BaseModel):
     dir_name: Optional[str] = None
 
 
-# TODO(@damon): Verify this protocol is needed. If so, use it. If not, delete it.
-
-# class StorageClientProto(Protocol):
-#     backend: str
-#     client: Any
-#     base_path_prefix: str
-#     _storage_spec: Any
-
-#     @property
-#     def storage_spec(self) -> ArtifactStorageSpecs:
-#         "storage metadata"
-
-#     @storage_spec.setter
-#     def storage_spec(self, artifact_storage_spec):
-#         "storage metadata"
-
-#     def create_save_path(
-#         self,
-#         file_suffix: Optional[str] = None,
-#     ) -> Tuple[str, str]:
-#         "Creates a save path"
-
-#     def create_tmp_path(
-#         self,
-#         tmp_dir: str,
-#         file_suffix: Optional[str] = None,
-#     ):
-#         """Temp path"""
-
-#     @contextmanager
-#     def create_temp_save_path(
-#         self,
-#         file_suffix: Optional[str],
-#     ) -> Generator[Tuple[Any, Any], None, None]:
-#         """Context manager temp save path"""
-
-#     def list_files(self, storage_uri: str) -> List[str]:
-#         """List files"""
-
-#     def store(self, storage_uri: Union[List[str], str]) -> Any:
-#         """store"""
-
-#     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> None:
-#         """Upload"""
-
-#     def post_process(self, storage_uri: str) -> str:
-#         """post process"""
-
-#     @staticmethod
-#     def validate(storage_backend: str) -> bool:
-#         """Validate"""
-
-
 class MlFlowClientProto(Protocol):
     def log_artifact(self, run_id: str, local_path: str, artifact_path: str):
         "log artifact"
