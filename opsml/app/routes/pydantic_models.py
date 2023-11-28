@@ -83,6 +83,7 @@ class ListCardRequest(BaseModel):
     project_id: Optional[str] = None
     registry_type: Optional[str] = None
     table_name: Optional[str] = None
+    query_terms: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="before")
     def update_limit(cls, env_vars: Dict[str, Optional[Union[str, int]]]):

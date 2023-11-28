@@ -165,7 +165,7 @@ def list_cards(
             limit=payload.limit,
             tags=payload.tags,
             ignore_release_candidates=payload.ignore_release_candidates,
-            project_id=payload.project_id,
+            query_terms=payload.query_terms,
         )
 
         if config.is_proxy:
