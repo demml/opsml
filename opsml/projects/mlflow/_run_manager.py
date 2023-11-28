@@ -133,13 +133,11 @@ class _MlflowRunManager(_RunManager):
         self.storage_client.artifact_path = mlflow_active_run.info.artifact_uri
 
     def end_run(self) -> None:
-        # need to switch back to original storage client in order to save/update runcard
-        # self.registries.set_storage_client(storage_client=settings.storage_client)
         self.mlflow_client.set_tag(run_id=self.run_id, key=Tags.MLFLOW_VERSION, value=self.version)
         self.mlflow_client.set_terminated(run_id=self.run_id)
 
         super().end_run()
-        # set to None
+
         self.storage_client.run_id = None
 
         # needed for when logging models (models are logged via fluent api)
