@@ -192,9 +192,7 @@ def test_run_fail(opsml_project: OpsmlProject) -> None:
     # Failed run should still exist
     cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
     assert len(cards) == 1
-
-    print(len(proj.list_runs()))
-    a
+    assert len(proj.list_runs()) == 5
 
 
 def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
