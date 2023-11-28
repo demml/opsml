@@ -17,6 +17,7 @@ from opsml.model.types import ModelMetadata
 from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
+from opsml.projects import OpsmlProject, ProjectInfo
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -510,27 +511,43 @@ class ModelRouteHelper(RouteHelper):
         )
 
 
-# class RunRouteHelper(RouteHelper):
-#    """Route helper for DataCard pages"""
-#
-#    def get_homepage(self, request: Request, team: Optional[str] = None):
-#        """Retrieve homepage
-#
-#        Args:
-#            request:
-#                The incoming HTTP request.
-#            team:
-#                The team name.
-#        """
-#        # registry: CardRegistry = request.app.state.registries.
-#
-#        # info = list_team_name_info(registry, team)
-#        return templates.TemplateResponse(
-#            "include/model/models.html",
-#            {
-#                "request": request,
-#                "all_teams": info.teams,
-#                "selected_team": info.selected_team,
-#                "models": info.names,
-#            },
-#        )
+class RunRouteHelper(RouteHelper):
+    """Route helper for DataCard pages"""
+
+    def get_homepage(self, request: Request, project: Optional[str] = None):
+        """Retrieve homepage
+
+        Args:
+            request:
+                The incoming HTTP request.
+            team:
+                The team name.
+        """
+        registry: CardRegistry = request.app.state.registries.project
+
+        projects = registry.list_cards()
+
+        unique_projects = list(set(f"{project['team']}:{project['name']}" for project in projects))
+
+        if project is None:
+            selected_project = unique_projects[0]
+        else:
+            selected_project = project
+
+        # get runs for a project
+        project_info = ProjectInfo(name=selected_project.split(":")[1], team=selected_project.split(":")[0])
+        project = OpsmlProject(project_info)
+
+        project_runs = project.list_runs()
+        
+        print(project_runs)
+
+        return templates.TemplateResponse(
+            "include/run/runs.html",
+            {
+                "request": request,
+                "all_projects": unique_projects,
+                "selected_project": selected_project,
+                "runs": None,
+            },
+        )

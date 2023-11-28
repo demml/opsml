@@ -16,7 +16,7 @@ from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
-from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema, RunSchema
+from opsml.registry.sql.sql_schema import REGISTRY_TABLES, TableSchema
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
