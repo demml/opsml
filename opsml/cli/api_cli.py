@@ -449,9 +449,9 @@ def compare_model_metrics(
 
 
 @app.command()
-def open_server():
+def open_server() -> int:
     """Opens OPSML_TRACKING_URI"""
-    typer.launch(TRACKING_URI)
+    return typer.launch(TRACKING_URI)
 
 
 @app.command()
@@ -459,7 +459,7 @@ def launch_uvicorn_app(
     run_mlflow: bool = typer.Option(default=True, help="Whether to start opsml with mlflow"),
     login: bool = typer.Option(default=False, help="Whether to use login credentials"),
     port: int = typer.Option(default=8888, help="Default port to use with the opsml server"),
-):
+) -> None:
     """
     Launches a Uvicorn Opsml server
 
