@@ -337,7 +337,7 @@ class SQLRegistryBase:
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
-        project_id: Optional[str] = None,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 

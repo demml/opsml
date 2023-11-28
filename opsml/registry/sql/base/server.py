@@ -136,7 +136,7 @@ class ServerRegistry(SQLRegistryBase):
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
-        project_id: Optional[str] = None,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -159,8 +159,8 @@ class ServerRegistry(SQLRegistryBase):
                 Places a limit on result list. Results are sorted by SemVer
             ignore_release_candidates:
                 If True, will ignore release candidates when searching for versions
-            project_id:
-                Project ID to filter by
+            query_terms:
+                Dictionary of query terms to filter by
 
 
         Returns:
@@ -179,7 +179,7 @@ class ServerRegistry(SQLRegistryBase):
             max_date=max_date,
             tags=tags,
             limit=limit,
-            project_id=project_id,
+            query_terms=query_terms,
         )
 
         if cleaned_name is not None:

@@ -125,15 +125,14 @@ class OpsmlProject:
 
     def list_runs(self, limit: int = 100) -> List[Dict[str, Any]]:
         """
-        List all runs associated with the current project
+        Lists all runs for the current project
 
         Returns:
-            List of Runs
+            List of RunCard
         """
-
         return self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
-            project_id=self.project_id,
             limit=limit,
+            query_terms={"project_id": self.project_id},
         )
 
     @property
