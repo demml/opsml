@@ -218,10 +218,6 @@ class StorageClient:
     def delete(self, read_path: str):
         raise ValueError("Storage class does not implement a delete method")
 
-    def post_process(self, storage_uri: str) -> str:
-        """Method that does post processing. Mainly used for mlflow work"""
-        return storage_uri
-
     @staticmethod
     def validate(storage_backend: str) -> bool:
         raise NotImplementedError
@@ -370,7 +366,7 @@ class LocalStorageClient(StorageClient):
         return save_path, filename
 
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> str:
-        """Uploads local_path to write_path
+        """Uploads (copies) local_path to write_path
 
         Args:
             local_path:
