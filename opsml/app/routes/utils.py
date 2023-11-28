@@ -216,7 +216,7 @@ class ExternalFileTarget(FileTarget):
 
 
 def list_team_name_info(registry: CardRegistry, team: Optional[str] = None) -> ListTeamNameInfo:
-    """Returns dictionary of items"""
+    """Returns dictionary of teams and info"""
 
     all_teams = registry._registry.unique_teams  # pylint: disable=protected-access
 
