@@ -1,9 +1,12 @@
 # opsml-artifacts
 mlruns/
 opsml/api/
-
-# vscode
-.vscode/
+test_scripts*
+tmp.db
+opsml_artifacts
+opsml/deploy/seldon/api_test.txt
+docs/site/
+expressions.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -114,12 +117,9 @@ notebooks/
 .local_integration/
 .test_local.py
 
-examples/.DS_Store
+# git
 **/*.orig
-test_scripts*
-tmp.db
-opsml_artifacts
-opsml/deploy/seldon/api_test.txt
-docs/site/
-expressions.txt
+
+# macOS
 .DS_Store
+**/.DS_Store
