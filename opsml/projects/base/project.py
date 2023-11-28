@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, Union, cast
+from typing import Dict, Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler
@@ -26,7 +26,7 @@ logger = ArtifactLogger.get_logger()
 class OpsmlProject:
     def __init__(self, info: ProjectInfo):
         """
-        Instantiates a project which log cards, metrics and params to
+        Instantiates a project which creates cards, metrics and params to
         the opsml registry via a "run" object.
 
         If info.run_id is set, that run_id will be loaded as read only. In read
@@ -34,12 +34,15 @@ class OpsmlProject:
         cannot write new data. If you wish to record data/create a new run, you will
         need to enter the run context.
 
+        In order to create new cards, you need to create a run using the `run`
+        context manager.
+
         Example:
 
-            project: OpsmlProject = get_project(
+            project: OpsmlProject = OpsmlProject(
                 ProjectInfo(
                     name="test-project",
-                    team="devops-ml",
+                    team="data-devops",
                     # If run_id is omitted, a new run is created.
                     run_id="123ab123kaj8u8naskdfh813",
                 )
@@ -123,15 +126,16 @@ class OpsmlProject:
             info=info,
         )
 
+    # TODO(@damon): Rename to run_card
     @property
-    def run_data(self):
+    def run_data(self) -> RunCard:
         return cast(RunCard, self._run_mgr.registries.run.load_card(uid=self.run_id))
 
     @property
     def metrics(self) -> METRICS:
         return self.run_data.metrics
 
-    def get_metric(self, name: str) -> Union[List[Metric], Metric]:  # type this later
+    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
         """
         Get metric by name
 
@@ -148,7 +152,7 @@ class OpsmlProject:
     def parameters(self) -> PARAMS:
         return self.run_data.parameters
 
-    def get_parameter(self, name: str) -> Union[List[Param], Param]:  # type this later
+    def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
         Get param by name
 
@@ -162,7 +166,7 @@ class OpsmlProject:
         return self.run_data.get_parameter(name=name)
 
     @property
-    def tags(self) -> dict[str, str]:
+    def tags(self) -> Dict[str, str]:
         return self.run_data.tags
 
     @property

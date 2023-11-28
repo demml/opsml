@@ -197,7 +197,12 @@ class ActiveRun:
 
         assert self.runcard.artifact_root_uri is not None
 
-        spec = ArtifactStorageSpecs(save_path=self.runcard.artifact_root_uri, filename=name)
+        # HACK: Create and restore the client's original "storage_spec" in order
+        #       to not use this new artifact-specific storage spec going forward
+        original_spec = self._info.storage_client.storage_spec
+
+        artifact_path = os.path.relpath(self.runcard.artifact_root_uri, self._info.storage_client.base_path_prefix)
+        spec = ArtifactStorageSpecs(save_path=artifact_path, filename=name)
         self._info.storage_client.storage_spec = spec
 
         storage_path = save_record_artifact_to_storage(
@@ -207,6 +212,8 @@ class ActiveRun:
         )
 
         self.runcard.add_artifact_uri(name=name, uri=storage_path.uri)
+
+        self._info.storage_client.storage_spec = original_spec
 
     def log_metric(
         self,

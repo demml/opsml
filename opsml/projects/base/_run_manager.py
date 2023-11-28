@@ -215,32 +215,32 @@ class _RunManager:
         if self._active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
-        # replace previous version if user is creating a run after finishing another
-        self._version = None
-
         logger.info("starting run: {}", self.run_id)
         self._set_active_run(run_name=run_name)
+
+        # Create the RunCard when the run is started to obtain a version and
+        # storage path for artifact stoarge to use.
         self.active_run.create_or_update_runcard()
         self.version = cast(str, self.active_run.runcard.version)
-
-    def _end_run(self) -> None:
-        logger.info("ending run: {}", self.run_id)
-        self.active_run.create_or_update_runcard()
-        self.version = cast(str, self.active_run.runcard.version)
-
-        if self.active_run is not None:
-            self.active_run._active = (  # pylint: disable=protected-access
-                False  # prevent use of detached run outside of context manager
-            )
-        self._active_run = None  # detach active run
-        # self.run_id = None  # set run manager run_id to None, so run is not accidently restarted
 
     def end_run(self):
         """Ends a Run"""
 
-        # Remove run id
-        self._end_run()
-        self.run_id = None  # set run manager run_id to None, so run is not accidently restarted
+        self.verify_active()
+
+        logger.info("ending run: {}", self.run_id)
+        self.active_run.create_or_update_runcard()
+
+        #
+        # Reset all active run state back to "not running" defaults
+        #
+        self.active_run._active = (  # pylint: disable=protected-access
+            False  # prevent use of detached run outside of context manager
+        )
+        self._active_run = None
+        self._run_id = None
+        self._run_name = None
+        self._version = None
 
     def _get_project_id(self) -> str:
         """
