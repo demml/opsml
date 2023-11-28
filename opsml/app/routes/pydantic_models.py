@@ -74,6 +74,7 @@ class ListCardRequest(BaseModel):
     ignore_release_candidates: bool = False
     registry_type: Optional[str] = None
     table_name: Optional[str] = None
+    query_terms: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="before")
     def update_limit(cls, env_vars: Dict[str, Optional[Union[str, int]]]):
