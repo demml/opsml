@@ -5,7 +5,6 @@ import pytest
 from sklearn import pipeline
 import os
 import numpy as np
-from opsml.app.core import config
 from opsml.registry import DataCard, ModelCard, AuditCard, CardRegistry
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
@@ -19,6 +18,7 @@ logger = ArtifactLogger.get_logger()
 
 
 def test_opsml_artifact_storage(opsml_project: OpsmlProject) -> None:
+    """Tests logging and retrieving artifacts"""
     with opsml_project.run() as run:
         run.log_artifact("test1", "hello, world")
         run_id = run.run_id
@@ -27,7 +27,7 @@ def test_opsml_artifact_storage(opsml_project: OpsmlProject) -> None:
 
     proj = conftest.mock_opsml_project(info)
     proj.run_id = run_id
-    runcard = proj.run_data
+    runcard = proj.run_card
     runcard.load_artifacts()
     assert runcard.artifacts.get("test1") is not None
     assert runcard.artifacts.get("test1") == "hello, world"
@@ -72,10 +72,11 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
         auditcard.add_card(card=model_card)
         run.register_card(card=auditcard)
 
-    # Retrieve the run and load projects without making the run active (read only mode)
+    # Retrieve the run and load artifacts without making the run active (read only mode)
+    # NOTE: info contains the run_id created in the above run.
     proj = conftest.mock_opsml_project(info)
 
-    runcard = proj.run_data
+    runcard = proj.run_card
     runcard.load_artifacts()
     assert (runcard.artifacts.get("array") == array).all()
 

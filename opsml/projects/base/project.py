@@ -126,14 +126,13 @@ class OpsmlProject:
             info=info,
         )
 
-    # TODO(@damon): Rename to run_card
     @property
-    def run_data(self) -> RunCard:
+    def run_card(self) -> RunCard:
         return cast(RunCard, self._run_mgr.registries.run.load_card(uid=self.run_id))
 
     @property
     def metrics(self) -> METRICS:
-        return self.run_data.metrics
+        return self.run_card.metrics
 
     def get_metric(self, name: str) -> Union[List[Metric], Metric]:
         """
@@ -146,11 +145,11 @@ class OpsmlProject:
             List of Metric or Metric
 
         """
-        return self.run_data.get_metric(name=name)
+        return self.run_card.get_metric(name=name)
 
     @property
     def parameters(self) -> PARAMS:
-        return self.run_data.parameters
+        return self.run_card.parameters
 
     def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
@@ -163,18 +162,18 @@ class OpsmlProject:
             List of Param or Param
 
         """
-        return self.run_data.get_parameter(name=name)
+        return self.run_card.get_parameter(name=name)
 
     @property
     def tags(self) -> Dict[str, str]:
-        return self.run_data.tags
+        return self.run_card.tags
 
     @property
     def datacard_uids(self) -> List[str]:
         """DataCards associated with the current run"""
-        return self.run_data.datacard_uids
+        return self.run_card.datacard_uids
 
     @property
     def modelcard_uids(self) -> List[str]:
         """ModelCards associated with the current run"""
-        return self.run_data.modelcard_uids
+        return self.run_card.modelcard_uids
