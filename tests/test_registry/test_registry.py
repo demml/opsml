@@ -21,7 +21,7 @@ from opsml.registry.cards import (
 )
 from opsml.registry.sql.registry import CardRegistry
 from opsml.registry.sql.sql_schema import DataSchema
-from opsml.registry.sql.base.query_engine import VersionSplitting
+from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
@@ -1142,14 +1142,14 @@ def test_sql_version_logic():
     select_query = select(DataSchema)
 
     # postgres
-    query = VersionSplitting.get_version_split_query(select_query, DataSchema, "postgres")
+    query = DialectHelper.get_dialect_logic(select_query, DataSchema, "postgres")
     assert all((col in query.columns.keys() for col in ["major", "minor", "patch"]))
 
     # mysql
-    query = VersionSplitting.get_version_split_query(select_query, DataSchema, "mysql")
+    query = DialectHelper.get_dialect_logic(select_query, DataSchema, "mysql")
     assert all((col in query.columns.keys() for col in ["major", "minor", "patch"]))
 
     with pytest.raises(ValueError) as ve:
-        VersionSplitting.get_version_split_query(select_query, DataSchema, "fail")
+        DialectHelper.get_dialect_logic(select_query, DataSchema, "fail")
 
     assert ve.match("Unsupported dialect: fail")
