@@ -511,10 +511,10 @@ class ModelRouteHelper(RouteHelper):
         )
 
 
-class RunRouteHelper(RouteHelper):
+class ProjectRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, project: Optional[str] = None):
+    def get_project_run(self, request: Request, project: Optional[str] = None, run_uid: Optional[str] = None):
         """Retrieve homepage
 
         Args:
@@ -523,9 +523,10 @@ class RunRouteHelper(RouteHelper):
             team:
                 The team name.
         """
-        registry: CardRegistry = request.app.state.registries.project
+        project_registry: CardRegistry = request.app.state.registries.project
+        run_registry: CardRegistry = request.app.state.registries.run
 
-        projects = registry.list_cards()
+        projects = project_registry.list_cards()
 
         unique_projects = list(set(f"{project['team']}:{project['name']}" for project in projects))
 
@@ -534,20 +535,24 @@ class RunRouteHelper(RouteHelper):
         else:
             selected_project = project
 
-        # get runs for a project
+        # get projects
         project_info = ProjectInfo(name=selected_project.split(":")[1], team=selected_project.split(":")[0])
         project = OpsmlProject(project_info)
-
         project_runs = project.list_runs()
-        
-        print(project_runs)
+
+        if run_uid is not None:
+            runcard = run_registry.load_card(uid=run_uid)
+
+        else:
+            runcard = run_registry.load_card(uid=project_runs[0]["uid"])
 
         return templates.TemplateResponse(
-            "include/run/runs.html",
+            "include/project/projects.html",
             {
                 "request": request,
                 "all_projects": unique_projects,
                 "selected_project": selected_project,
-                "runs": None,
+                "project_runs": project_runs,
+                "selected_run": runcard,
             },
         )
