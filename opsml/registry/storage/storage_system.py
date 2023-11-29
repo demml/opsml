@@ -11,7 +11,6 @@ import uuid
 import warnings
 from contextlib import contextmanager
 from enum import Enum
-from functools import wraps
 from pathlib import Path
 from typing import (
     IO,
@@ -87,25 +86,6 @@ class ModelArtifactNames(str, Enum):
 OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"
 
 
-def cleanup_files(func):
-    """Decorator for deleting files if needed"""
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        artifact, loadable_filepath = func(self, *args, **kwargs)
-
-        if isinstance(loadable_filepath, list):
-            loadable_filepath = loadable_filepath[0]
-
-        if isinstance(loadable_filepath, str):
-            if "temp" in loadable_filepath:  # make this better later
-                file_dir = "/".join(loadable_filepath.split("/")[:-1])
-                shutil.rmtree(file_dir, ignore_errors=True)
-        return artifact
-
-    return wrapper
-
-
 def extract_registry_name(string: str) -> Optional[str]:
     """Extracts registry name from string
 
@@ -143,47 +123,31 @@ class StorageClient:
     def storage_spec(self, artifact_storage_spec: ArtifactStorageSpecs):
         self._storage_spec = artifact_storage_spec
 
-    def create_save_path(
+    def extend_storage_spec(
         self,
-        file_suffix: Optional[str] = None,
+        spec: ArtifactStorageSpecs,
         extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        base_path = os.path.join(self.base_path_prefix, self.storage_spec.save_path)
+        file_suffix: Optional[str] = None,
+    ) -> ArtifactStorageSpecs:
+        """A utility function which extends the storage spec with an optional path and suffix."""
+        ret = spec.model_copy()
         if extra_path is not None:
-            base_path = os.path.join(base_path, extra_path)
+            ret.save_path = os.path.join(ret.save_path, extra_path)
 
-        filename = self.storage_spec.filename or uuid.uuid4().hex
+        ret.filename = ret.filename or uuid.uuid4().hex
         if file_suffix is not None:
-            filename = f"{filename}.{str(file_suffix)}"
-
-        return os.path.join(base_path, filename), filename
-
-    def create_tmp_path(
-        self,
-        tmp_dir: str,
-        extra_path: Optional[str] = None,
-        file_suffix: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        """Returns the final storage_uri and the temp file local_path"""
-        storage_uri, filename = self.create_save_path(
-            file_suffix=file_suffix,
-            extra_path=extra_path,
-        )
-        return storage_uri, os.path.join(tmp_dir, filename)
+            ret.filename = f"{ret.filename}.{file_suffix}"
+        return ret
 
     @contextmanager
-    def create_temp_save_path(
+    def create_temp_save_path_with_spec(
         self,
-        file_suffix: Optional[str],
-        extra_path: Optional[str],
-    ) -> Generator[Tuple[Any, Any], None, None]:
+        spec: ArtifactStorageSpecs,
+    ) -> Generator[Tuple[str, str], None, None]:
+        spec.filename = spec.filename or uuid.uuid4().hex
+        path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
         with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-            storage_uri, local_path = self.create_tmp_path(
-                file_suffix=file_suffix,
-                extra_path=extra_path,
-                tmp_dir=tmpdirname,
-            )
-            yield storage_uri, local_path
+            yield path, os.path.join(tmpdirname, spec.filename)
 
     def list_files(self, storage_uri: str) -> FilePath:
         raise NotImplementedError
@@ -351,20 +315,6 @@ class S3StorageClient(StorageClient):
 
 
 class LocalStorageClient(StorageClient):
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-        extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        save_path, filename = super().create_save_path(
-            file_suffix=file_suffix,
-            extra_path=extra_path,
-        )
-
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-
-        return save_path, filename
-
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> str:
         """Uploads (copies) local_path to write_path
 
@@ -469,24 +419,6 @@ class ApiStorageClient(LocalStorageClient):
 
         storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
-
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-        extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        filename = self.storage_spec.filename or uuid.uuid4().hex
-
-        if file_suffix is not None:
-            filename = f"{filename}.{str(file_suffix)}"
-
-        if extra_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
-
-        else:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
-
-        return base_path + f"/{filename}", filename
 
     def list_files(self, storage_uri: str) -> FilePath:
         response = self.api_client.post_request(
@@ -849,34 +781,6 @@ class MlflowStorageClient(StorageClient):
     @mlflow_client.setter
     def mlflow_client(self, mlflow_client: MlFlowClientProto):
         self._mlflow_client = mlflow_client
-
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-        extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        save_path, filename = super().create_save_path(
-            file_suffix=file_suffix,
-            extra_path=extra_path,
-        )
-
-        return save_path, filename
-
-    # def swap_proxy_root(self, rpath: str) -> str:
-    #    """Swaps the realpath with the expected mlflow proxy path"""
-    #    if "http" in self.mlflow_client.tracking_uri:
-    #        path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
-    #
-    #        mlflow_path = os.path.normpath(
-    #            os.path.join(
-    #                self.artifact_path,
-    #                path_to_file,
-    #            )
-    #        )
-    #
-    #        return mlflow_path
-    #
-    #    return rpath
 
     @staticmethod
     def swap_mlflow_root(base_path_prefix: str, rpath: str) -> str:
