@@ -21,6 +21,7 @@ from opsml.registry.cards.types import StoragePath
 from opsml.registry.image import ImageDataset
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
+    ArtifactStorageSpecs,
     MlflowStorageClient,
     StorageClientType,
     StorageSystem,
@@ -75,7 +76,7 @@ class ArtifactStorage:
         return StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL
 
     @property
-    def storage_filesystem(self):
+    def storage_filesystem(self) -> Any:
         return self.storage_client.client
 
     def _get_correct_storage_uri(self, storage_uri: str, tmp_uri: str) -> str:
@@ -122,10 +123,10 @@ class ArtifactStorage:
         """Saves an artifact"""
         raise NotImplementedError
 
-    def save_artifact(self, artifact: Any) -> StoragePath:
+    def save_artifact(self, artifact: Any, storage_spec: ArtifactStorageSpecs) -> StoragePath:
         with self.storage_client.create_temp_save_path_with_spec(
             self.storage_client.extend_storage_spec(
-                self.storage_client.storage_spec,
+                storage_spec,
                 extra_path=self.extra_path,
                 file_suffix=self.file_suffix,
             )
@@ -679,6 +680,7 @@ class LightGBMBooster(JoblibStorage):
 def save_artifact_to_storage(
     artifact: Any,
     storage_client: StorageClientType,
+    storage_spec: ArtifactStorageSpecs,
     artifact_type: Optional[str] = None,
     extra_path: Optional[str] = None,
 ) -> StoragePath:
@@ -699,7 +701,7 @@ def save_artifact_to_storage(
         storage_client=storage_client,
         artifact_type=_artifact_type,
         extra_path=extra_path,
-    ).save_artifact(artifact=artifact)
+    ).save_artifact(artifact=artifact, storage_spec=storage_spec)
 
 
 def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType, **kwargs):
