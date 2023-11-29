@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/opsml/scripts/api_cli.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": [
                 "download-model",
                 "--write-dir",
@@ -38,11 +38,10 @@
             "request": "launch",
             "module": "gunicorn",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": [
                 "-k",
                 "uvicorn.workers.UvicornWorker",
-                "--bind=0.0.0:8000",
                 "--config=opsml/app/gunicorn_conf.py",
                 "opsml.app.main:run_app()"
             ],
@@ -51,6 +50,30 @@
                 "OPSML_STORAGE_URI": "./mlruns",
                 "OPSML_PROD_TOKEN": "prod",
                 "APP_ENV": "production",
+            }
+        },
+        {
+            "name": "example",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/example.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [],
+            "env": {
+                "OPSML_TRACKING_URI": "http://127.0.0.1:8000",
+            }
+        },
+        {
+            "name": "example-opsml",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/example_opsml.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [],
+            "env": {
+                "OPSML_TRACKING_URI": "http://127.0.0.1:8000",
             }
         },
     ]
