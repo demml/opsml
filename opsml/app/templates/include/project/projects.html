@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+
+{% set model_status = none %}
+{% set data_status = none %}
+{% set runs_status = 'active' %}
+{% set audit_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Runs</title>
+{% endblock %}
+
+{% block content %}
+<body id="RunPage">
+<div class="container" style="padding-top:65px;">
+</div>
+
+<br>
+<h5 style="padding-top:10px; padding-left:40px;">Select a project to view available runs</h5>
+
+<div style="padding-top:2px; padding-left:40px;">
+   
+  <select class="dropdown" id="MetadataTeamSelect">
+    
+      {% if all_projects is not none %}
+
+        {% for project in all_projects %}
+        <option value="/opsml/projects/list/?project={{ project }}">{{ project }}</option>
+        {% endfor %}
+      {% else %}
+      <option value="None">No project found</option>
+      {% endif %}
+  </select>
+  
+</div>
+
+
+<!---- Model version table -------->
+<div class="container-fluid" id="VersionContainer">
+  <div class="page-header">
+    <h2>{{ selected_project }}</h2>
+  </div>
+</div>
+<br>
+
+
+<div class"containter" id="split-column">
+
+  <!---Create vesion tables ------>
+  <div class="boxes" id="VersionContainer">
+
+    <div id="VersionColumn">
+      <div class="list-group">
+        {% for run in project_runs %}
+          <a href="/opsml/projects/list/?project={{ selected_project }}&?run_uid={{ run["uid"] }}" class="list-group-item list-group-item-action {% if selected_run.uid ==  run["uid"] %}active {% endif %}">v{{ run["name"] }} -- {{ run["date"] }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  $('.list-group-item').click(function() {
+    $('.list-group-item').removeClass('active');
+    $(this).addClass('active');
+    var version_uid = $(this).attr('id');
+    alert(id);
+    // write javscript that will take the value of the active div on click and pass that value to another div
+ });
+
+  $(document).ready(function() {
+    $('#MetadataTeamSelect').select2();
+
+    $("#MetadataTeamSelect").on('select2:select', function(e){
+      window.location.href = e.params.data.id;
+    });
+});
+
+
+</script>
+
+
+{% endblock %}
+
+
+
+
+
+

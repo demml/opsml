@@ -178,6 +178,20 @@ p {
     color: white;
 }
 
+#VersionGroup {
+  -webkit-overflow-scrolling: touch;
+  overflow-y:scroll; 
+  height: 700px;
+}
+
+
+#VersionGroup .active {
+    background-color: #5d0fb778;
+    border-color: #5e0fb7;
+    border: none;
+    color: white;
+}
+
 #MetadataColumn {
   float:left;
   width:80%;
