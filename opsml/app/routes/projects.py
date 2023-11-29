@@ -14,6 +14,7 @@ from fastapi.templating import Jinja2Templates
 from opsml.app.routes.route_helpers import ProjectRouteHelper
 from opsml.helpers.logging import ArtifactLogger
 from opsml.app.routes.utils import error_to_500
+from opsml.registry import RunCard
 
 logger = ArtifactLogger.get_logger()
 
@@ -41,3 +42,25 @@ async def project_list_page(request: Request, project: Optional[str] = None, run
         with the list of models.
     """
     return project_route_helper.get_project_run(request=request, project=project, run_uid=run_uid)
+
+
+@router.get("/projects/runs/plot/", response_class=HTMLResponse)
+@error_to_500
+async def project_metric_page(
+    request: Request,
+    run_uid: str,
+    project: str,
+):
+    """UI home for listing models in model registry
+
+    Args:
+        request:
+            The incoming HTTP request.
+        team:
+            The team to query
+    Returns:
+        200 if the request is successful. The body will contain a JSON string
+        with the list of models.
+    """
+
+    return project_route_helper.get_run_metrics(request=request, run_uid=run_uid)

@@ -42,7 +42,7 @@
     <div id="VersionColumn">
       <div class="list-group">
         {% for run in project_runs %}
-          <a href="/opsml/projects/list/?project={{ selected_project }}&run_uid={{ run["uid"] }}" class="list-group-item list-group-item-action {% if runcard["uid"] ==  run["uid"] %}active {% endif %}">v{{ run["name"] }} -- {{ run["date"] }}</a>
+          <a href="/opsml/projects/list/?project={{ selected_project }}&run_uid={{ run["uid"] }}" class="list-group-item list-group-item-action {% if runcard["uid"] ==  run["uid"] %}active {% endif %}">{{ run["name"] }} -- {{ run["date"] }}</a>
         {% endfor %}
       </div>
     </div>
@@ -61,6 +61,23 @@
         {% include "include/project/run_metadata.html" %}
       </div>
 
+      {% if runcard["tags"]|length > 0 %}
+      <div class="card border-0" id="TagBox" style="width:100%;">
+        {% include "include/model/model_tags.html" %}
+      </div>
+      {% endif %}
+
+      <div class="card border-0" id="ExtraBox" style="width:100%;">
+        {% include "include/project/runcard_extras.html" %}
+      </div>
+
+
+      <div class="card border-0" id="PlotBox" style="width:100%;">
+        {% include "include/project/plot_extras.html" %}
+      </div>
+
+   
+
     </div>
 
   </div> 
@@ -73,6 +90,7 @@
 
 {% block scripts %}
 
+
 <script>
   $('.list-group-item').click(function() {
     $('.list-group-item').removeClass('active');
@@ -82,8 +100,6 @@
     // write javscript that will take the value of the active div on click and pass that value to another div
  });
 
- 
-
   $(document).ready(function() {
     $('#MetadataTeamSelect').select2();
 
@@ -91,6 +107,19 @@
       window.location.href = e.params.data.id;
     });
 });
+
+$( "#metric-button" ).on( "click", function() {
+  $( "#Metrics" ).toggle();
+} );
+
+$( "#param-button" ).on( "click", function() {
+  $( "#Params" ).toggle();
+} );
+
+$( "#artifact-button" ).on( "click", function() {
+  $( "#Artifacts" ).toggle();
+} );
+
 
 
 </script>

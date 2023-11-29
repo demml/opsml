@@ -514,6 +514,28 @@ class ModelRouteHelper(RouteHelper):
 class ProjectRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
+    def get_run_metrics(self, request: Request, run_uid: str):
+        """Retrieve homepage
+
+        Args:
+            request:
+                The incoming HTTP request.
+            team:
+                The team name.
+        """
+        run_registry: CardRegistry = request.app.state.registries.run
+        runcard = run_registry.load_card(uid=run_uid).model_dump()
+
+        print(runcard)
+
+        return templates.TemplateResponse(
+            "include/project/metric_page.html",
+            {
+                "request": request,
+                "runcard": runcard,
+            },
+        )
+
     def get_project_run(self, request: Request, project: Optional[str] = None, run_uid: Optional[str] = None):
         """Retrieve homepage
 

@@ -20,6 +20,7 @@ body {
     font-family: Boing;
     font-weight: normal;
     background: #fafafa;
+    min-height: 100vh;
 }
 
 
@@ -394,11 +395,30 @@ p {
   transition: all 0.3s ease 0s;
 }
 
+#CardDropdownSelect .dropdown-toggle {
+  font-size: 13px;
+  color: #04b78a;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #04b78a;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#CardDropdownSelect .dropdown-toggle:hover {
+  color: #FFF;
+  background: #04b78a;
+  border: 2px solid #04b78a;
+}
+
+
 #download-button.btn-success:hover {
   color: #FFF;
   background: #04b78a;
   border: 2px solid #04b78a;
 }
+
 
 #download-button.btn-success:active {
   color: #FFF;
@@ -449,10 +469,10 @@ p {
 
 #metric-button.btn-success {
   font-size: 13px;
-  color: #04b78a;
+  color: #5e0fb7;
   letter-spacing: 1px;
   line-height: 15px;
-  border: 2px solid #04b78a;
+  border: 2px solid #5e0fb7;
   border-radius: 40px;
   background: transparent;
   transition: all 0.3s ease 0s;
@@ -460,8 +480,61 @@ p {
 
 #metric-button.btn-success:hover {
   color: #FFF;
-  background: #04b78a;
-  border: 2px solid #04b78a;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#metric-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#param-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#param-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#param-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+
+#artifact-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#artifact-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#artifact-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
 }
 
 

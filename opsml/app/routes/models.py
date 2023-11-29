@@ -62,15 +62,22 @@ async def model_versions_page(
     request: Request,
     model: Optional[str] = None,
     version: Optional[str] = None,
+    uid: Optional[str] = None,
 ):
-    if model is None:
+    if model is None and uid is None:
         return RedirectResponse(url="/opsml/models/list/")
 
     registry: CardRegistry = request.app.state.registries.model
+
+    if uid is not None:
+        selected_model = registry.list_cards(uid=uid)
+        model = model or selected_model[0]["name"]
+        version = version or selected_model[0]["version"]
+
     versions = registry.list_cards(name=model, as_dataframe=False, limit=50)
     metadata = post_model_metadata(
         request=request,
-        payload=CardRequest(name=model, version=version),
+        payload=CardRequest(uid=uid, name=model, version=version),
     )
     return model_route_helper.get_versions_page(
         request=request,
