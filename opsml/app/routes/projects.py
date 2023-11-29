@@ -28,7 +28,7 @@ project_route_helper = ProjectRouteHelper()
 
 @router.get("/projects/list/", response_class=HTMLResponse)
 @error_to_500
-async def data_list_homepage(request: Request, project: Optional[str] = None, run_uid: Optional[str] = None):
+async def project_list_page(request: Request, project: Optional[str] = None, run_uid: Optional[str] = None):
     """UI home for listing models in model registry
 
     Args:
