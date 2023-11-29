@@ -14,7 +14,7 @@ from opsml.registry.storage.artifact_storage import (
     JSONStorage,
 )
 import tempfile
-from opsml.registry.storage.storage_system import LocalStorageClient
+from opsml.registry.storage.storage_system import StorageClient
 from opsml.helpers import utils
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
@@ -233,7 +233,7 @@ def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
-def test_local_paths(storage_client: LocalStorageClient):
+def test_local_paths(storage_client: StorageClient):
     FILENAME = "example.csv"
     file_path = utils.FindPath.find_filepath(name=FILENAME)
 
@@ -247,3 +247,12 @@ def test_local_paths(storage_client: LocalStorageClient):
         )
 
         storage_client.upload(local_path=dir_path, write_path=f"{tempdir}/assets")
+
+
+@pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
+def test_create_temp_save_path(storage_client: StorageClient) -> None:
+    s = ArtifactStorageSpecs(save_path="dir", filename="test.txt")
+    with storage_client.create_temp_save_path_with_spec(s) as (storage_uri, local_path):
+        assert storage_uri == os.path.join(storage_client.base_path_prefix, "dir", "test.txt")
+        assert not os.path.exists(local_path)
+        assert os.path.basename(local_path) == "test.txt"

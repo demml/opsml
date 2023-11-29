@@ -94,31 +94,3 @@ with project.run() as run:
     run.log_parameter("param1", 5)
     run.log_artifact("test1", "hello, world")
     # run.log_artifact_from_file("tests/assets/cats.jpg", "misc")
-
-# OPSML_DATA_REGISTRY
-#     team
-#         project
-#             data-card-name
-#                 v1.0.0
-#                     datacard.joblib
-#                     data.joblib
-# OPSML_MODEL_REGISTRY
-#     team
-#         project
-#             model-card-name
-#                 v1.0.0
-#                     model
-#                         trained-model.joblib
-#                     model-metadata.joblib
-#                     modelcard.joblib
-#                     onnx
-#                         model.onnx
-# OPSML_RUN_REGISTRY
-#     team
-#         project
-#             run-card-name
-#                 v1.0.0
-#                     artifacts
-#                         test.jpg
-#                     runcard.joblib
-#

@@ -11,9 +11,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from opsml.helpers.logging import ArtifactLogger
-
 from opsml.helpers import exceptions
+from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 

@@ -24,9 +24,9 @@ from opsml.registry.storage.storage_system import (
     MlflowStorageClient,
     StorageClientType,
     StorageSystem,
-    cleanup_files,
 )
 from opsml.registry.storage.types import ARTIFACT_TYPES, ArtifactStorageType, FilePath
+from opsml.registry.storage.utils import cleanup_files
 
 
 class ArtifactStorage:
@@ -123,7 +123,13 @@ class ArtifactStorage:
         raise NotImplementedError
 
     def save_artifact(self, artifact: Any) -> StoragePath:
-        with self.storage_client.create_temp_save_path(self.file_suffix, self.extra_path) as temp_output:
+        with self.storage_client.create_temp_save_path_with_spec(
+            self.storage_client.extend_storage_spec(
+                self.storage_client.storage_spec,
+                extra_path=self.extra_path,
+                file_suffix=self.file_suffix,
+            )
+        ) as temp_output:
             storage_uri, tmp_uri = temp_output
             storage_uri = self._save_artifact(
                 artifact=artifact,
