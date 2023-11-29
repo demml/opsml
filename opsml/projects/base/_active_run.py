@@ -198,11 +198,12 @@ class ActiveRun:
         assert self.runcard.artifact_root_uri is not None
 
         artifact_path = os.path.relpath(self.runcard.artifact_root_uri, self._info.storage_client.base_path_prefix)
-        self._info.storage_client.storage_spec = ArtifactStorageSpecs(save_path=artifact_path, filename=name)
+        spec = ArtifactStorageSpecs(save_path=artifact_path, filename=name)
 
         storage_path = save_artifact_to_storage(
             artifact=artifact,
             storage_client=self._info.storage_client,
+            storage_spec=spec,
             artifact_type="joblib",
         )
         self.runcard.add_artifact_uri(name=name, uri=storage_path.uri)
