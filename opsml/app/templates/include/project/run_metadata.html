@@ -33,27 +33,67 @@
       </tr>
 
 
-      <tr>
-        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
-        <td><font color="#999">Model:</font></td>
-        <td> #TODO: link to modelcard tab
-            <a href="/opsml/files/download?read_path={{metadata["model_uri"]}}" download={{metadata["model_uri"].split("/")[-1]}}>
-              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
-            </a>
-        </td>
-      </tr>
-
     
     
+      {% if runcard["datacard_uids"]|length > 0 %}
       <tr>
         <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
         <td><font color="#999">DataCard:</font></td>
-        <td>#TODO: link to datacard tab
-          <a href="/opsml/data/versions/uid/?uid={{selected_model.datacard_uid}}" >
+        <td>
+
+          {% if runcard["datacard_uids"]|length == 1 %}
+          <a href="/opsml/data/versions/uid/?uid={{runcard["datacard_uids"][0]}}" >
             <button id="download-button" type="submit" class="btn btn-success" >Link</button>
           </a>
+          {% else %}
+
+          <div class="btn-group">
+            <div class="dropdown" id="CardDropdownSelect">
+              <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-display="html" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
+                Link
+              </a>
+            
+              <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
+                  {% for datacard_uid in runcard["datacard_uids"] %}
+                    <a class="dropdown-item" href="/opsml/data/versions/uid/?uid={{datacard_uid}}">{{datacard_uid}}</a>
+                  {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
       </td>
       </tr>
+      {% endif %}
+
+      {% if runcard["modelcard_uids"]|length > 0 %}
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">ModelCard:</font></td>
+        <td>
+
+          {% if runcard["modelcard_uids"]|length == 1 %}
+          <a href="/opsml/models/versions/?uid={{runcard["modelcard_uids"][0]}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+          {% else %}
+
+          <div class="btn-group">
+            <div class="dropdown" id="CardDropdownSelect">
+              <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-display="html" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
+                Link
+              </a>
+            
+              <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
+                  {% for modelcard_uid in runcard["modelcard_uids"] %}
+                    <a class="dropdown-item" href="/opsml/models/versions/?uid={{modelcard_uid}}">{{modelcard_uid}}</a>
+                  {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+      </td>
+      </tr>
+      {% endif %}
 
 
     </tbody>
