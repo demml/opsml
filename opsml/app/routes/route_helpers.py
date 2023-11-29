@@ -542,7 +542,6 @@ class ProjectRouteHelper(RouteHelper):
 
         if run_uid is not None:
             runcard = run_registry.load_card(uid=run_uid)
-
         else:
             runcard = run_registry.load_card(uid=project_runs[0]["uid"])
 
@@ -553,6 +552,6 @@ class ProjectRouteHelper(RouteHelper):
                 "all_projects": unique_projects,
                 "selected_project": selected_project,
                 "project_runs": project_runs,
-                "selected_run": runcard,
+                "runcard": runcard,
             },
         )

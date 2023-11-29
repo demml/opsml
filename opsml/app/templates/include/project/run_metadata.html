@@ -1,0 +1,62 @@
+<hr id="version-spacer">
+<div class="card-body content" id="CardMetadata">
+<div class="table-responsive">
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+    <colgroup>
+      <col span="1" style="width: 5%;">
+      <col span="1" style="width: 15%;">
+      <col span="1" style="width: 59%;">
+  </colgroup>
+    <tbody>
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">ID:</font></td>
+        <td>{{ runcard["uid"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Name:</font></td>
+        <td>{{ runcard["name"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Version:</font></td>
+        <td>{{ runcard["version"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-users" style="color:#04b78a"></i></td>
+        <td><font color="#999">Team:</font></td>
+        <td>{{ runcard["team"] }}</td>
+      </tr>
+
+
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">Model:</font></td>
+        <td> #TODO: link to modelcard tab
+            <a href="/opsml/files/download?read_path={{metadata["model_uri"]}}" download={{metadata["model_uri"].split("/")[-1]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+      </tr>
+
+    
+    
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">DataCard:</font></td>
+        <td>#TODO: link to datacard tab
+          <a href="/opsml/data/versions/uid/?uid={{selected_model.datacard_uid}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+      </td>
+      </tr>
+
+
+    </tbody>
+  </table>
+</div>
+</div>

@@ -21,7 +21,7 @@
 
 <div style="padding-top:2px; padding-left:40px;">
    
-  <select class="dropdown" id="MetadataTeamSelect">
+  <select class="dropdown" id="MetadataTeamSelect" style="visibility:hidden;">
     
       {% if all_projects is not none %}
 
@@ -32,32 +32,38 @@
       <option value="None">No project found</option>
       {% endif %}
   </select>
-  
-</div>
 
-
-<!---- Model version table -------->
-<div class="container-fluid" id="VersionContainer">
-  <div class="page-header">
-    <h2>{{ selected_project }}</h2>
-  </div>
 </div>
-<br>
 
 
 <div class"containter" id="split-column">
-
-  <!---Create vesion tables ------>
   <div class="boxes" id="VersionContainer">
 
     <div id="VersionColumn">
       <div class="list-group">
         {% for run in project_runs %}
-          <a href="/opsml/projects/list/?project={{ selected_project }}&?run_uid={{ run["uid"] }}" class="list-group-item list-group-item-action {% if selected_run.uid ==  run["uid"] %}active {% endif %}">v{{ run["name"] }} -- {{ run["date"] }}</a>
+          <a href="/opsml/projects/list/?project={{ selected_project }}&run_uid={{ run["uid"] }}" class="list-group-item list-group-item-action {% if runcard["uid"] ==  run["uid"] %}active {% endif %}">v{{ run["name"] }} -- {{ run["date"] }}</a>
         {% endfor %}
       </div>
     </div>
-  </div>
+
+    <div id="MetadataColumn">
+
+      <div class="card" style="width:100%;">
+        <div class="card-body">
+          <h4>Run 
+            <div id="CardTabBox">
+            </div>
+          </h4>
+      </div>
+
+      <div class="card border-0" id="CardBox" style="width:100%;">
+        {% include "include/project/run_metadata.html" %}
+      </div>
+
+    </div>
+
+  </div> 
 
 </div>
 
@@ -75,6 +81,8 @@
     alert(id);
     // write javscript that will take the value of the active div on click and pass that value to another div
  });
+
+ 
 
   $(document).ready(function() {
     $('#MetadataTeamSelect').select2();
