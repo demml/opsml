@@ -49,7 +49,6 @@ async def project_list_page(request: Request, project: Optional[str] = None, run
 async def project_metric_page(
     request: Request,
     run_uid: str,
-    project: str,
 ):
     """UI home for listing models in model registry
 
