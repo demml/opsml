@@ -67,11 +67,14 @@
       {% include "include/model/model_metadata.html" %}
       </div>
   
-      {% if runcard["tags"]|length > 0 %}
-      <div class="card border-0" id="TagBox" style="width:100%;">
-        {% include "include/model/model_tags.html" %}
-      </div>
+      {% if runcard is not none %}  
+        {% if runcard["tags"]|length > 0 %}
+        <div class="card border-0" id="TagBox" style="width:100%;">
+          {% include "include/model/model_tags.html" %}
+        </div>
+        {% endif %}
       {% endif %}
+
       <hr id="version-spacer">
 
       <div class="card border-0" id="ExtraBox" style="width:100%;">
@@ -94,23 +97,34 @@
 {% block scripts %}
 
 <script>
-  $('.list-group-item').click(function() {
-    $('.list-group-item').removeClass('active');
-    $(this).addClass('active');
-    var version_uid = $(this).attr('id');
-    alert(id);
-    // write javscript that will take the value of the active div on click and pass that value to another div
- });
 
- $('#CardButtons > span').click(function() {
-  var ix = $(this).index();
-  
-  $('#Metrics').toggle( ix === 0 );
-  $('#SampleData').toggle( ix === 1 );
-  $('#Params').toggle( ix === 2 );
-  $('#Artifacts').toggle( ix === 3 );
-  $('#MetadataJson').toggle( ix === 4 );
+$('.list-group-item').click(function() {
+  $('.list-group-item').removeClass('active');
+  $(this).addClass('active');
+  var version_uid = $(this).attr('id');
+  alert(id);
+  // write javscript that will take the value of the active div on click and pass that value to another div
 });
+
+$( "#metadata-extra-button" ).on( "click", function() {
+  $( "#MetadataJson" ).toggle();
+  } );
+
+$( "#sample-data-button" ).on( "click", function() {
+  $( "#SampleData" ).toggle();
+  } );
+
+$( "#metric-button" ).on( "click", function() {
+  $( "#Metrics" ).toggle();
+  } );
+
+$( "#param-button" ).on( "click", function() {
+  $( "#Params" ).toggle();
+  } );
+
+$( "#artifact-button" ).on( "click", function() {
+  $( "#Artifacts" ).toggle();
+  } );
 
 
 $('#CardTabBox > span').click(function() {
