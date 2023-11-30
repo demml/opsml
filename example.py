@@ -4,14 +4,19 @@ import pandas as pd
 # os.environ["OPSML_TRACKING_URI"] = "http://0.0.0.0:8000"
 # os.environ["OPSML_TRACKING_URI"] = "https://opsml-api.ml.us-central1.staging.shipt.com/"
 
+from opsml.helpers.logging import ArtifactLogger
 
-print(os.environ["OPSML_TRACKING_URI"])
+logger = ArtifactLogger.get_logger()
+
+print(f"OPSML_TRACKING_URI: {os.environ['OPSML_TRACKING_URI']}")
 
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
 from opsml.projects import ProjectInfo
-from opsml.projects.mlflow import MlflowProject
+from opsml.projects import OpsmlProject
+
+# from opsml.projects.mlflow import MlflowProject
 from opsml.registry.cards import ModelCardMetadata, Description, DataCardMetadata, DataSplit
 from opsml.registry import DataCard, ModelCard, CardRegistries
 
@@ -37,7 +42,7 @@ info = ProjectInfo(
     team="devops-ml",
     user_email="test_email",
 )
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 
 with project.run() as run:
     X, y = fake_data()
@@ -90,4 +95,5 @@ with project.run() as run:
     for i in range(0, 10):
         run.log_metric(f"mae{i}", 5)
     run.log_parameter("param1", 5)
+    run.log_artifact("test1", "hello, world")
     # run.log_artifact_from_file("tests/assets/cats.jpg", "misc")
