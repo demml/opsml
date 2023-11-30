@@ -163,6 +163,7 @@ p {
   float:left;
   width:20%;
   padding-right: 1%;
+  box-shadow: .5px 0 0 #000;
 }
 
 .list-group {
@@ -185,6 +186,27 @@ p {
   width:80%;
   padding-right: 1%;
 }
+
+#MetricSelectColumn {
+  float:left;
+  width:14%;
+  padding-right: 1%;
+  border: 2px solid #5e0fb7;
+  border-radius: 25px;
+}
+
+#PlotColumn {
+  float:left;
+  padding-left: 1%;
+  width:80%;
+  padding-right: 5%;
+}
+
+#MetricChart {
+  height:60%;
+}
+
+
 
 #CardBox{
   float:left;
@@ -682,6 +704,26 @@ p {
     border-color: #5e0fb7;
     border: none;
     background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1.0)'/></svg>");
+}
+
+.form-check-input:checked {
+  background-color: #5e0fb7;
+  border-color: #5e0fb7;
+}
+
+#plot-button {
+  background-color: #f44336;
+}
+
+#project-button.btn-success {
+  font-size: 13px;
+  color: #ffffff;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: #5e0fb7;
+  transition: all 0.3s ease 0s;
 }
 
 
