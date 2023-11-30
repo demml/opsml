@@ -29,6 +29,7 @@ def test_opsml_artifact_storage(opsml_project: OpsmlProject) -> None:
     proj.run_id = run_id
     runcard = proj.run_card
     runcard.load_artifacts()
+
     assert runcard.artifacts.get("test1") is not None
     assert runcard.artifacts.get("test1") == "hello, world"
 
