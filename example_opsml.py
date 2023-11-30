@@ -6,7 +6,7 @@ import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
 
-logger = ArtifactLogger().get_logger(nane=__name__)
+logger = ArtifactLogger.get_logger()
 
 print(f"OPSML_TRACKING_URI: {os.environ['OPSML_TRACKING_URI']}")
 
