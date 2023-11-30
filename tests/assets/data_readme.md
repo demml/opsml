@@ -1,6 +1,6 @@
 ## My model
 
-This is an example sumary for a model
+This is an example summary for a model
 
 ### Features:
 - Feature 1

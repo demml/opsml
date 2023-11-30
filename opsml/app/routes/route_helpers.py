@@ -14,10 +14,10 @@ from fastapi.templating import Jinja2Templates
 from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
 from opsml.model.types import ModelMetadata
+from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
-from opsml.projects import OpsmlProject, ProjectInfo
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -520,8 +520,8 @@ class ProjectRouteHelper(RouteHelper):
         Args:
             request:
                 The incoming HTTP request.
-            team:
-                The team name.
+            run_uid:
+                The run uid.
         """
         run_registry: CardRegistry = request.app.state.registries.run
         runcard = run_registry.load_card(uid=run_uid).model_dump()
@@ -534,21 +534,52 @@ class ProjectRouteHelper(RouteHelper):
             },
         )
 
-    def get_project_run(self, request: Request, project: Optional[str] = None, run_uid: Optional[str] = None):
+    def get_unique_projects(self, project_registry: CardRegistry) -> List[str]:
+        """Get unique projects
+
+        Args:
+            project_registry:
+                The project registry.
+        """
+
+        projects = project_registry.list_cards()
+        return list(set(f"{project['team']}:{project['name']}" for project in projects))
+
+    def get_project_runs(self, selected_project: str) -> List[Dict[str, Any]]:
+        """Get runs for a project
+
+        Args:
+            selected_project:
+                The selected project.
+        """
+        # get projects
+        project_info = ProjectInfo(
+            name=selected_project.split(":")[1],
+            team=selected_project.split(":")[0],
+        )
+        project = OpsmlProject(project_info)
+        return project.list_runs()
+
+    def get_project_run(
+        self,
+        request: Request,
+        project: Optional[str] = None,
+        run_uid: Optional[str] = None,
+    ):
         """Retrieve homepage
 
         Args:
             request:
                 The incoming HTTP request.
-            team:
-                The team name.
+            project:
+                The project name.
+            run_uid:
+                The run uid.
         """
         project_registry: CardRegistry = request.app.state.registries.project
         run_registry: CardRegistry = request.app.state.registries.run
 
-        projects = project_registry.list_cards()
-
-        unique_projects = list(set(f"{project['team']}:{project['name']}" for project in projects))
+        unique_projects = self.get_unique_projects(project_registry)
 
         if project is None:
             selected_project = unique_projects[0]
@@ -556,9 +587,7 @@ class ProjectRouteHelper(RouteHelper):
             selected_project = project
 
         # get projects
-        project_info = ProjectInfo(name=selected_project.split(":")[1], team=selected_project.split(":")[0])
-        project = OpsmlProject(project_info)
-        project_runs = project.list_runs()
+        project_runs = self.get_project_runs(selected_project)
 
         if run_uid is not None:
             runcard = run_registry.load_card(uid=run_uid)
