@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
@@ -81,7 +81,7 @@ async def model_versions_page(
     )
     return model_route_helper.get_versions_page(
         request=request,
-        name=model,
+        name=cast(str, model),
         version=version,
         versions=versions,
         metadata=metadata,

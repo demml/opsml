@@ -15,6 +15,7 @@ from opsml.registry.model.registrar import ModelRegistrar
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.registry import CardRegistries
 from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.storage.types import MlFlowClientProto
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -28,7 +29,7 @@ initializer = DBInitializer(
 )
 
 
-def setup_mlflow_client():
+def setup_mlflow_client() -> MlFlowClientProto:
     from mlflow.tracking import MlflowClient
 
     client = MlflowClient(config.TRACKING_URI)
