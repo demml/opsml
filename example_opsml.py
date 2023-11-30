@@ -4,8 +4,10 @@ import pandas as pd
 # os.environ["OPSML_TRACKING_URI"] = "http://0.0.0.0:8000"
 # os.environ["OPSML_TRACKING_URI"] = "https://opsml-api.ml.us-central1.staging.shipt.com/"
 
+from opsml.helpers.logging import ArtifactLogger
 
-print(os.environ["OPSML_TRACKING_URI"])
+logger = ArtifactLogger().get_logger(nane=__name__)
+print(f"OPSML_TRACKING_URI: {os.environ['OPSML_TRACKING_URI']}")
 
 from sklearn.linear_model import LinearRegression
 import numpy as np

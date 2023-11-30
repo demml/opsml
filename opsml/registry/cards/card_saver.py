@@ -95,6 +95,7 @@ class CardArtifactSaver:
         spec.filename = filename
         return spec
 
+    # TODO(@damon): Replace this with pathlib.Path.resolve()
     def resolve_path(self, uri: str) -> str:
         """
         Resolve a file dir uri for card updates
@@ -103,7 +104,7 @@ class CardArtifactSaver:
             uri:
                 path to file
         Returns
-            Resolved path string
+            Resolved path string relative to the card
         """
 
         dir_path = os.path.dirname(uri)

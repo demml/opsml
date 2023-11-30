@@ -195,10 +195,6 @@ class OnnxStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _write_onnx(self, artifact: Any, file_path: FilePath) -> None:
-        with open(str(file_path), "wb") as file_:
-            file_.write(artifact)
-
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """
         Writes the onnx artifact to onnx file
@@ -217,16 +213,13 @@ class OnnxStorage(ArtifactStorage):
         """
 
         file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        self._write_onnx(artifact=artifact, file_path=file_path)
+        _ = Path(str(file_path)).write_bytes(artifact)
         return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> ModelProto:
         from onnx import load
 
-        with open(str(file_path), "rb") as file_:
-            onnx_model = load(file_)
-
-        return onnx_model
+        return load(Path(str(file_path)).open(mode="rb"))
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -329,7 +322,7 @@ class ImageDataStorage(ArtifactStorage):
         return self.storage_client.upload(
             local_path=artifact.image_dir,
             write_path=storage_path,
-            **{"is_dir": True},
+            is_dir=True,
         )
 
     def _load_artifact(self, file_path: FilePath) -> None:
@@ -341,7 +334,7 @@ class ImageDataStorage(ArtifactStorage):
             rpath=storage_uri,
             lpath=str(kwargs.get("image_dir")),
             recursive=kwargs.get("recursive", False),
-            **{"files": files},
+            files=files,
         )
 
         return None, loadable_filepath  # type: ignore
@@ -664,7 +657,7 @@ class PyTorchModelStorage(ArtifactStorage):
         return artifact_type == ArtifactStorageType.PYTORCH
 
 
-class LightGBMBooster(JoblibStorage):
+class LightGBMBoosterStorage(JoblibStorage):
     """Helper class only to be used with MLFLow"""
 
     def _load_artifact(self, file_path: FilePath) -> Any:
