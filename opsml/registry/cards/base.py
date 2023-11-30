@@ -45,6 +45,10 @@ class ArtifactCard(BaseModel):
         card_info = env_vars.get("info")
 
         for key in ["name", "team", "user_email", "version", "uid"]:
+            # TODO(@damon): Revisit.
+            # env vars take priority over card values? This doesn't seem right
+            # as we'd only want to apply env vars on *new* cards being created, not
+            # cards being retrieved loaded from storage.
             val = env_vars.get(key)
 
             if card_info is not None:
