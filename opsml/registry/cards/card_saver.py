@@ -5,6 +5,7 @@ import os
 import tempfile
 from enum import Enum
 from functools import cached_property
+from pathlib import Path
 from typing import Dict, Optional, Union, cast
 
 import numpy as np
@@ -61,39 +62,24 @@ class CardArtifactSaver:
     def card(self) -> ArtifactCard:
         return self.card
 
-    @property
-    def storage_spec(self) -> ArtifactStorageSpecs:
-        return self.storage_client.storage_spec
-
     def save_artifacts(self) -> ArtifactCard:
         raise NotImplementedError
-
-    @property
-    def save_path(self) -> str:
-        return self.storage_client.storage_spec.save_path
-
-    @save_path.setter
-    def save_path(self, save_path: str) -> None:
-        self.storage_client.storage_spec.save_path = save_path
 
     def _get_storage_spec(self, filename: str, uri: Optional[str] = None) -> ArtifactStorageSpecs:
         """
         Gets storage spec for saving
 
         Args:
+            uri:
+                Base URI to write the file to
             filename:
                 Name of file
-            uri:
-                Optional uri. Assumes a card is being update if provided
 
         """
-        # TODO(@damon): Remove `.save_path`
-        if uri is not None:
-            self.save_path = self.resolve_path(uri=uri)
+        if uri is None:
+            return ArtifactStorageSpecs(save_path=str(self.card.uri), filename=filename)
 
-        spec = self.storage_client.storage_spec.model_copy()
-        spec.filename = filename
-        return spec
+        return ArtifactStorageSpecs(save_path=self.resolve_path(uri), filename=filename)
 
     # TODO(@damon): Replace this with pathlib.Path.resolve()
     def resolve_path(self, uri: str) -> str:
@@ -165,7 +151,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
         storage_path = save_artifact_to_storage(
             artifact=data,
             storage_client=self.storage_client,
-            storage_spec=self._get_storage_spec(filename=self.card.name, uri=self.card.metadata.uris.data_uri),
+            storage_spec=self._get_storage_spec(
+                filename=self.card.name,
+                uri=self.card.metadata.uris.data_uri,
+            ),
         )
 
         return storage_path
@@ -211,16 +200,12 @@ class DataCardArtifactSaver(CardArtifactSaver):
             filename=filename,
             uri=self.card.metadata.uris.profile_html_uri,
         )
-        # TODO(@damon): remove me
-        self.storage_client.storage_spec = spec
-
         with tempfile.TemporaryDirectory() as tmp_dir:
-            filepath = f"{tmp_dir}/{filename}"
-
-            write_path = f"{self.storage_client.base_path_prefix}/{self.save_path}/{filename}"
-            self.card.data_profile.to_file(filepath)
+            tmp_path = f"{tmp_dir}/{filename}"
+            write_path = str(Path(self.storage_client.base_path_prefix).joinpath(spec.save_path))
+            self.card.data_profile.to_file(tmp_path)
             storage_uri = self.storage_client.upload(
-                local_path=filepath,
+                local_path=tmp_path,
                 write_path=write_path,
             )
 
@@ -332,8 +317,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_trained_model(self):
         """Saves trained model associated with ModelCard to filesystem"""
-
-        self.storage_spec.sample_data = self.card.sample_input_data
 
         storage_path = save_artifact_to_storage(
             artifact=self.card.trained_model,
@@ -451,15 +434,15 @@ class RunCardArtifactSaver(CardArtifactSaver):
             for name, artifact in self.card.artifacts.items():
                 if name in artifact_uris:
                     continue
-
                 storage_path = save_artifact_to_storage(
                     artifact=artifact,
                     storage_client=self.storage_client,
-                    storage_spec=self.storage_client.storage_spec,
+                    storage_spec=ArtifactStorageSpecs(save_path=str(self.card.artifact_uri), filename=name),
                 )
                 artifact_uris[name] = storage_path.uri
 
-        self.card.artifact_uris = artifact_uris
+        run_card = cast(RunCard, self.card)
+        run_card.artifact_uris = artifact_uris
 
     def save_artifacts(self) -> ArtifactCard:
         self._save_run_artifacts()

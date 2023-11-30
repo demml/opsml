@@ -113,15 +113,6 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
-        self._storage_spec: Optional[ArtifactStorageSpecs] = None
-
-    @property
-    def storage_spec(self) -> ArtifactStorageSpecs:
-        return cast(ArtifactStorageSpecs, self._storage_spec)
-
-    @storage_spec.setter
-    def storage_spec(self, artifact_storage_spec: ArtifactStorageSpecs):
-        self._storage_spec = artifact_storage_spec
 
     def extend_storage_spec(
         self,
@@ -740,7 +731,6 @@ class MlflowStorageClient(StorageClient):
         self._run_id: Optional[str] = None
         self._artifact_path: str = "mlflow-artifacts:/"
         self._mlflow_client: Optional[MlFlowClientProto] = None
-        self._storage_spec = ArtifactStorageSpecs(save_path=self.base_path_prefix)
         self._opsml_storage_client: Optional[StorageClient] = None
 
     @property
@@ -837,7 +827,7 @@ class MlflowStorageClient(StorageClient):
         _logger = model_logger(
             model=mlflow_info.model,
             model_type=model_type,
-            sample_data=self.storage_spec.sample_data,  # type: ignore
+            sample_data={"not_necessary": "mlflow is going away"},
             artifact_path=mlflow_info.artifact_path,
             run_id=self.run_id,
             root_path=self.artifact_path,
