@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 import pandas as pd
 import numpy as np
 import polars as pl
@@ -73,8 +73,6 @@ def test_register_data(
         data_splits=data_splits,
     )
 
-    splits = data_card.split_data()
-
     registry.register_card(card=data_card)
 
     # test idempotency
@@ -112,19 +110,57 @@ def test_register_data(
     assert len(cards) == 1
 
 
-def test_list_teams(db_registries: Dict[str, CardRegistry]):
+@pytest.mark.parametrize(
+    "test_splits, test_data",
+    [
+        (lazy_fixture("test_split_array"), lazy_fixture("test_array")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
+        (lazy_fixture("test_split_array"), lazy_fixture("test_arrow_table")),
+        (lazy_fixture("test_polars_split"), lazy_fixture("test_polars_dataframe")),
+    ],
+)
+def test_register_data(
+    db_registries: Dict[str, CardRegistry],
+    test_data: tuple[pd.DataFrame, NDArray, pa.Table],
+    test_splits: List[Dict[str, str]],
+) -> None:
     # create data card
     registry = db_registries["data"]
+    data_card = DataCard(
+        data=test_data,
+        name="test_df",
+        team="mlops_test",
+        user_email="mlops.com",
+        data_splits=test_splits,
+    )
+
+    registry.register_card(card=data_card)
+
     teams = registry._registry.unique_teams
     assert len(teams) == 1
-    assert teams[0] == "mlops"
+    # NOTE: opsml replaces "_" with "-" in team name
+    assert teams[0] == "mlops-test"
 
 
-def test_list_card_names(db_registries: Dict[str, CardRegistry]):
+def test_list_card_names(
+    db_registries: Dict[str, CardRegistry],
+    test_array: np.ndarray[Any, np.float64],
+    test_split_array: List[DataSplit],
+) -> None:
     # create data card
     registry = db_registries["data"]
+    data_card = DataCard(
+        data=test_array,
+        name="test_df",
+        team="mlops",
+        user_email="mlops.com",
+        data_splits=test_split_array,
+    )
+    registry.register_card(data_card)
+
     names = registry._registry.get_unique_card_names(team="mlops")
     assert len(names) == 1
+    # NOTE: opsml replaces "_" with "-" in card name name
     assert names[0] == "test-df"
 
     names = registry._registry.get_unique_card_names()
@@ -146,6 +182,8 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     registry.register_card(card=data_card)
     loaded_card: DataCard = registry.load_card(uid=data_card.uid)
     assert loaded_card.sql_logic.get("test") is not None
+    assert data_card.name == "test-sql"
+    assert data_card.team == "mlops"
     assert data_card.version == "1.0.0"
 
 

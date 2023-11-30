@@ -1,5 +1,6 @@
-from typing import Iterator
 import os
+from pathlib import Path
+from typing import Any, Iterator, List
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -148,8 +149,10 @@ def gcp_cred_path():
     return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
 
 
-def save_path():
-    return f"blob/{uuid.uuid4().hex}"
+def save_path() -> str:
+    p = Path(f"blob/{uuid.uuid4().hex}")
+    p.mkdir(parents=True, exist_ok=True)
+    return str(p)
 
 
 @pytest.fixture(scope="function")
@@ -421,6 +424,7 @@ def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
     opsml_run._run_mgr.registries = api_registries
     return opsml_run
 
+
 @pytest.fixture(scope="function")
 def opsml_project_2(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
     opsml_run = OpsmlProject(
@@ -433,6 +437,7 @@ def opsml_project_2(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
     )
     opsml_run._run_mgr.registries = api_registries
     return opsml_run
+
 
 def mock_opsml_project(info: ProjectInfo) -> OpsmlProject:
     info.tracking_uri = SQL_PATH
@@ -496,8 +501,10 @@ def mock_local_engine():
     return
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def db_registries():
+    cleanup()
+
     # force opsml to use CardRegistry with SQL connection (non-proxy)
     from opsml.registry.sql.registry import CardRegistry
     from opsml.registry.sql.base.query_engine import QueryEngine
@@ -568,20 +575,22 @@ def mock_gcs(test_df):
 
 
 ######### Data for registry tests
+
+
 @pytest.fixture(scope="function")
-def test_array():
+def test_array() -> np.ndarray[Any, np.float64]:
     data = np.random.rand(10, 100)
     return data
 
 
 @pytest.fixture(scope="function")
-def test_split_array():
+def test_split_array() -> List[DataSplit]:
     indices = np.array([0, 1, 2])
     return [DataSplit(label="train", indices=indices)]
 
 
 @pytest.fixture(scope="function")
-def test_df():
+def test_df() -> pd.DataFrame:
     df = pd.DataFrame(
         {
             "year": [2020, 2022, 2019, 2021],

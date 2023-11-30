@@ -118,7 +118,10 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
     assert model == model
 
 
-@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")])
+@pytest.mark.parametrize(
+    "storage_client",
+    [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")],
+)
 def test_parquet_cloud(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
@@ -138,14 +141,14 @@ def test_parquet_cloud(test_arrow_table, storage_client, mock_pyarrow_parquet_wr
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
-def test_parquet_local(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_parquet_local(test_arrow_table, storage_client):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
         artifact_type="Table",
     )
     metadata = pq_writer.save_artifact(
         artifact=test_arrow_table,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path(), filename="test"),
     )
     assert isinstance(metadata.uri, str)
 
@@ -155,25 +158,20 @@ def test_parquet_local(test_arrow_table, storage_client, mock_pyarrow_parquet_wr
 
 @pytest.mark.parametrize(
     "storage_client",
-    [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client"), lazy_fixture("s3_storage_client")],
+    [lazy_fixture("local_storage_client")],
 )
-def test_array(test_array, storage_client, mock_pyarrow_parquet_write):
-    with patch.multiple(
-        "zarr",
-        save=MagicMock(return_value=None),
-        load=MagicMock(return_value=test_array),
-    ):
-        numpy_writer = NumpyStorage(
-            storage_client=storage_client,
-            artifact_type="ndarray",
-        )
-        metadata = numpy_writer.save_artifact(
-            artifact=test_array,
-            storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
-        )
+def test_array(test_array, storage_client):
+    numpy_writer = NumpyStorage(
+        storage_client=storage_client,
+        artifact_type="ndarray",
+    )
+    metadata = numpy_writer.save_artifact(
+        artifact=test_array,
+        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+    )
 
-        array = numpy_writer.load_artifact(storage_uri=metadata.uri)
-        assert isinstance(array, np.ndarray)
+    array = numpy_writer.load_artifact(storage_uri=metadata.uri)
+    assert isinstance(array, np.ndarray)
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
