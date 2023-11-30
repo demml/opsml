@@ -8,6 +8,7 @@ opsml/deploy/seldon/api_test.txt
 docs/site/
 expressions.txt
 test.png
+blob/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

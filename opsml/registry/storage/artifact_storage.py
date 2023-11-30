@@ -69,7 +69,7 @@ class ArtifactStorage:
 
     @property
     def is_storage_a_proxy(self):
-        return self.storage_client.backend not in [StorageSystem.GCS, StorageSystem.LOCAL]
+        return self.storage_client.backend not in [StorageSystem.GCS, StorageSystem.LOCAL, StorageSystem.S3]
 
     @property
     def is_storage_local(self):
@@ -78,18 +78,6 @@ class ArtifactStorage:
     @property
     def storage_filesystem(self) -> Any:
         return self.storage_client.client
-
-    def _get_correct_storage_uri(self, storage_uri: str, tmp_uri: str) -> str:
-        """Sets the correct storage uri based on the backend storage client"""
-
-        if self.is_storage_local:
-            return storage_uri
-
-        # data artifacts need special handling since they use file systems directly
-        if self.is_data and not self.is_storage_a_proxy:
-            return storage_uri
-
-        return tmp_uri
 
     def _upload_artifact(
         self,
@@ -105,9 +93,6 @@ class ArtifactStorage:
             storage_uri(str): Storage Uri. Can be the same as file_path
             recursive (bool): Whether to recursively upload all files and folder in a given path
         """
-
-        if self.is_storage_local:
-            return storage_uri
 
         return self.storage_client.upload(
             local_path=file_path,
@@ -212,9 +197,8 @@ class OnnxStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        _ = Path(str(file_path)).write_bytes(artifact)
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+        _ = Path(str(tmp_uri)).write_bytes(artifact)
+        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> ModelProto:
         from onnx import load
@@ -243,22 +227,6 @@ class JoblibStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _write_joblib(self, artifact: Any, file_path: FilePath):
-        joblib.dump(artifact, file_path)
-
-    def _write_artifact(self, artifact: Any, file_path: str, storage_uri: str):
-        # hack for mlflow
-        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
-            return self._upload_artifact(
-                file_path=file_path,
-                storage_uri=storage_uri,
-                **{"model": artifact, "model_type": self.artifact_type},
-            )
-
-        self._write_joblib(artifact=artifact, file_path=file_path)
-
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
-
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """
         Writes the artifact as a joblib file to a storage_uri
@@ -276,8 +244,15 @@ class JoblibStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        return self._write_artifact(artifact=artifact, file_path=file_path, storage_uri=storage_uri)
+        joblib.dump(artifact, tmp_uri)
+        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
+            return self._upload_artifact(
+                file_path=tmp_uri,
+                storage_uri=storage_uri,
+                **{"model": artifact, "model_type": self.artifact_type},
+            )
+
+        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         return joblib.load(file_path)
@@ -377,23 +352,13 @@ class ParquetStorage(ArtifactStorage):
         Returns:
             Storage path
         """
+        pq.write_table(table=artifact, where=tmp_uri, filesystem=self.storage_filesystem)
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-
-        pq.write_table(
-            table=artifact,
-            where=file_path,
-            filesystem=self.storage_filesystem,
+        return self.storage_client.upload(
+            local_path=tmp_uri,
+            write_path=storage_uri,
+            **{"is_dir": False},
         )
-
-        if self.is_storage_a_proxy:
-            return self.storage_client.upload(
-                local_path=file_path,
-                write_path=storage_uri,
-                **{"is_dir": False},
-            )
-
-        return file_path
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         """
@@ -462,18 +427,14 @@ class NumpyStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        store = self.storage_client.store(storage_uri=file_path)
+        store = self.storage_client.store(storage_uri=tmp_uri)
         zarr.save(store, artifact)
 
-        if self.is_storage_a_proxy:
-            return self.storage_client.upload(
-                local_path=file_path,
-                write_path=storage_uri,
-                **{"is_dir": True},
-            )
-
-        return file_path
+        return self.storage_client.upload(
+            local_path=tmp_uri,
+            write_path=storage_uri,
+            **{"is_dir": True},
+        )
 
     def _load_artifact(self, file_path: FilePath) -> np.ndarray:
         store = self.storage_client.store(
@@ -504,12 +465,6 @@ class JSONStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _write_json(self, artifact: Any, file_path: FilePath):
-        path_to_create = str(file_path)
-        _path = Path(path_to_create)
-        with _path.open("w", encoding="utf-8") as file_:
-            file_.write(artifact)
-
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """Writes the artifact as a json file to a storage_uri
 
@@ -525,9 +480,8 @@ class JSONStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-        self._write_json(artifact=artifact, file_path=file_path)
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+        Path(tmp_uri).write_text(artifact, encoding="utf-8")
+        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         with open(str(file_path), encoding="utf-8") as json_file:
@@ -573,18 +527,16 @@ class TensorflowModelStorage(ArtifactStorage):
             Storage path
         """
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
+        artifact.save(tmp_uri)
         if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
             return self._upload_artifact(
-                file_path=file_path,
+                file_path=tmp_uri,
                 storage_uri=storage_uri,
                 **{"model": artifact, "model_type": self.artifact_type},
             )
 
-        artifact.save(file_path)
-
         return self._upload_artifact(
-            file_path=file_path,
+            file_path=tmp_uri,
             storage_uri=storage_uri,
             recursive=True,
             **{"is_dir": True},
@@ -634,18 +586,15 @@ class PyTorchModelStorage(ArtifactStorage):
         """
         import torch
 
-        file_path = self._get_correct_storage_uri(storage_uri=storage_uri, tmp_uri=tmp_uri)
-
+        torch.save(artifact, tmp_uri)
         if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
             return self._upload_artifact(
-                file_path=file_path,
+                file_path=tmp_uri,
                 storage_uri=storage_uri,
                 **{"model": artifact, "model_type": self.artifact_type},
             )
 
-        torch.save(artifact, file_path)
-
-        return self._upload_artifact(file_path=file_path, storage_uri=storage_uri)
+        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath):
         import torch
