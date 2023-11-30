@@ -2,6 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from pathlib import Path
 from typing import Dict, Optional, Union
 
 import numpy as np
@@ -12,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_team_pattern
 from opsml.registry.cards.types import CardInfo
+from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.sql.records import RegistryRecord
 from opsml.registry.utils.settings import settings
 
@@ -74,6 +76,14 @@ class ArtifactCard(BaseModel):
 
     def add_tag(self, key: str, value: str):
         self.tags[key] = str(value)
+
+    @property
+    def uri(self) -> Path:
+        """The base URI to use forthe card and it's artifacts.."""
+        if self.version is None:
+            raise ValueError("Could not create card uri - version is not set")
+
+        return Path(RegistryTableNames.from_str(self.card_type), self.team, self.name, self.version)
 
     @property
     def card_type(self) -> str:

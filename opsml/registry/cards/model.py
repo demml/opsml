@@ -139,12 +139,10 @@ class ModelCard(ArtifactCard):
         if self.metadata.sample_data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri)
-
-        storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=self.metadata.sample_data_type,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
         self.sample_input_data = sample_data
 
@@ -162,23 +160,20 @@ class ModelCard(ArtifactCard):
             if self.metadata.model_type is None:
                 raise ValueError("Cannot load trained model - model_type is not set")
 
-            storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri)
-            storage_client.storage_spec = storage_spec
-
             trained_model = load_record_artifact_from_storage(
-                storage_client=storage_client,
                 artifact_type=self.metadata.model_type,
+                storage_client=storage_client,
+                storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
             )
             self.trained_model = trained_model
 
     @property
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
-        storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri)
-        storage_client.storage_spec = storage_spec
         model_metadata = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ArtifactStorageType.JSON.value,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
         )
 
         return ModelMetadata.model_validate(model_metadata)
@@ -193,10 +188,10 @@ class ModelCard(ArtifactCard):
         if metadata.onnx_uri is None:
             raise ValueError("Onnx uri is not specified")
 
-        storage_client.storage_spec.save_path = metadata.onnx_uri
         onnx_model = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ArtifactStorageType.ONNX.value,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=metadata.onnx_uri),
         )
 
         return onnx_model
