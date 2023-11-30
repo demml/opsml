@@ -26,7 +26,7 @@
       {% if all_projects is not none %}
 
         {% for project in all_projects %}
-        <option value="/opsml/projects/list/?project={{ project }}">{{ project }}</option>
+        <option value="/opsml/projects/list/?project={{ project }}" {% if project == selected_project %} selected="selected" {% endif %}>{{ project }}</option>
         {% endfor %}
       {% else %}
       <option value="None">No project found</option>
@@ -51,7 +51,7 @@
 
       <div class="card" style="width:100%;">
         <div class="card-body">
-          <h4>Run 
+          <h4>Run: {{ runcard["name"] }}
             <div id="CardTabBox">
             </div>
           </h4>

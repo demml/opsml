@@ -526,8 +526,6 @@ class ProjectRouteHelper(RouteHelper):
         run_registry: CardRegistry = request.app.state.registries.run
         runcard = run_registry.load_card(uid=run_uid).model_dump()
 
-        print(runcard)
-
         return templates.TemplateResponse(
             "include/project/metric_page.html",
             {
