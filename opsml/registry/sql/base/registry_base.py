@@ -142,6 +142,7 @@ class SQLRegistryBase:
             """
             )
 
+    # TODO(@damon): Remove this
     def _set_artifact_storage_spec(self, card: ArtifactCard) -> None:
         """Creates artifact storage info to associate with artifacts"""
 
