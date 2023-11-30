@@ -580,6 +580,121 @@ p {
   border: 2px solid #5e0fb7;
 }
 
+#split-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#split-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#split-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#dep-var-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#dep-var-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#dep-var-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#feature-map-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#feature-map-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#feature-map-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#feature-desc-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#feature-desc-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#feature-desc-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#sql-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#sql-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#sql-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
 
 #artifact-button.btn-success {
   font-size: 13px;
@@ -606,7 +721,7 @@ p {
 
 
 #MetadataTeamSelect .dropdown-toggle {
-    background:#038767;
+    background:#04b78a;
     color:#fffefe !important;
   }
 
@@ -759,6 +874,8 @@ p {
 #plot-button {
   background-color: #f44336;
 }
+
+
 
 #project-button.btn-success {
   font-size: 13px;

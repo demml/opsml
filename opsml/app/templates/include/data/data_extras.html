@@ -1,14 +1,14 @@
 
 <hr id="version-spacer">
-<div class="card-body" id="toggle">
 
-    <span><button id="version-button" type="submit" class="btn btn-success" >Splits</button></span>
-    <span><button id="version-button" type="submit" class="btn btn-success" >Dependent Vars</button></span>
-    <span><button id="version-button" type="submit" class="btn btn-success" >Feature Map</button></span>
-    <span><button id="version-button" type="submit" class="btn btn-success" >Feature Descriptions</button></span>
-    <span><button id="version-button" type="submit" class="btn btn-success" >SQL</button></span>
-
+<div class="card-body" id="CardButtons" >
+  <button id="split-button" type="submit" class="btn btn-success" >Splits</button>
+  <button id="dep-var-button" type="submit" class="btn btn-success" >Dependent Vars</button>
+  <button id="feature-map-button" type="submit" class="btn btn-success" >Feature Map</button>
+  <button id="feature-desc-button" type="submit" class="btn btn-success" >Feature Descriptions</button>
+  <button id="sql-button" type="submit" class="btn btn-success" >SQL</button>
 </div>
+
 
 {% if data_splits is not none %}
 <div class="card-body" id="Splits" style="display:none">
