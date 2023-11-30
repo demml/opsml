@@ -124,15 +124,26 @@
   $('#ProfileBox').toggle( ix === 2 );
 });
 
- $('#toggle > span').click(function() {
-  var ix = $(this).index();
-  
-  $('#Splits').toggle( ix === 0 );
-  $('#DependentVars').toggle( ix === 1 );
-  $('#FeatureMap').toggle( ix === 2 );
-  $('#FeatureDescriptions').toggle( ix === 3 );
-  $('#SQL').toggle( ix === 4 );
-});
+
+$( "#split-button" ).on( "click", function() {
+  $( "#Splits" ).toggle();
+  } );
+
+$( "#dep-var-button" ).on( "click", function() {
+  $( "#DependentVars" ).toggle();
+  } );
+
+$( "#feature-map-button" ).on( "click", function() {
+  $( "#FeatureMap" ).toggle();
+  } );
+
+$( "#feature-desc-button" ).on( "click", function() {
+  $( "#FeatureDescriptions" ).toggle();
+  } );
+
+$( "#sql-button" ).on( "click", function() {
+  $( "#SQL" ).toggle();
+  } );
 
 </script>
 
