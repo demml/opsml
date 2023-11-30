@@ -133,8 +133,11 @@ class ModelCard(ArtifactCard):
             return self.metadata.data_schema.input_data_schema
         raise ValueError("Model input data schema has not been set or is not needed for this model")
 
-    def load_sample_data(self):
+    def load_sample_data(self) -> None:
         """Loads sample data associated with original non-onnx model"""
+
+        if self.metadata.sample_data_type is None:
+            raise ValueError("Cannot load sample data - sample_data_type is not set")
 
         storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri)
 
@@ -143,10 +146,9 @@ class ModelCard(ArtifactCard):
             storage_client=storage_client,
             artifact_type=self.metadata.sample_data_type,
         )
+        self.sample_input_data = sample_data
 
-        setattr(self, "sample_input_data", sample_data)
-
-    def load_trained_model(self):
+    def load_trained_model(self) -> None:
         """Loads original trained model"""
 
         if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
@@ -156,6 +158,10 @@ class ModelCard(ArtifactCard):
 
         if self.trained_model is None:
             self.load_sample_data()
+
+            if self.metadata.model_type is None:
+                raise ValueError("Cannot load trained model - model_type is not set")
+
             storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri)
             storage_client.storage_spec = storage_spec
 
@@ -163,8 +169,7 @@ class ModelCard(ArtifactCard):
                 storage_client=storage_client,
                 artifact_type=self.metadata.model_type,
             )
-
-            setattr(self, "trained_model", trained_model)
+            self.trained_model = trained_model
 
     @property
     def model_metadata(self) -> ModelMetadata:
@@ -185,16 +190,16 @@ class ModelCard(ArtifactCard):
             metadata:
                 `ModelMetadata`
         """
-        if metadata.onnx_uri is not None:
-            storage_client.storage_spec.save_path = metadata.onnx_uri
-            onnx_model = load_record_artifact_from_storage(
-                storage_client=storage_client,
-                artifact_type=ArtifactStorageType.ONNX.value,
-            )
+        if metadata.onnx_uri is None:
+            raise ValueError("Onnx uri is not specified")
 
-            return onnx_model
+        storage_client.storage_spec.save_path = metadata.onnx_uri
+        onnx_model = load_record_artifact_from_storage(
+            storage_client=storage_client,
+            artifact_type=ArtifactStorageType.ONNX.value,
+        )
 
-        raise ValueError("Onnx uri is not specified")
+        return onnx_model
 
     def load_onnx_model_definition(self) -> None:
         """Loads the onnx model definition"""
@@ -209,8 +214,7 @@ class ModelCard(ArtifactCard):
             onnx_version=metadata.onnx_version,
             model_bytes=onnx_model.SerializeToString(),
         )
-
-        setattr(self.metadata, "onnx_model_def", model_def)
+        self.metadata.onnx_model_def = model_def
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
