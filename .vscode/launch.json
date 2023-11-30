@@ -64,17 +64,5 @@
                 "OPSML_TRACKING_URI": "http://127.0.0.1:8000",
             }
         },
-        {
-            "name": "example-opsml",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/example_opsml.py",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "args": [],
-            "env": {
-                "OPSML_TRACKING_URI": "http://127.0.0.1:8000",
-            }
-        },
     ]
 }
