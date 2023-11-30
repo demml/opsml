@@ -279,11 +279,10 @@ class RunCard(ArtifactCard):
     def load_artifacts(self) -> None:
         if bool(self.artifact_uris):
             for name, uri in self.artifact_uris.items():
-                storage_spec = ArtifactStorageSpecs(save_path=uri)
-                storage_client.storage_spec = storage_spec
                 self.artifacts[name] = load_record_artifact_from_storage(
-                    storage_client=storage_client,
                     artifact_type=ARBITRARY_ARTIFACT_TYPE,
+                    storage_client=storage_client,
+                    storage_spec=ArtifactStorageSpecs(save_path=uri),
                 )
             return None
 

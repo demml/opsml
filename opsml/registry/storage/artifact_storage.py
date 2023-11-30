@@ -697,8 +697,13 @@ def save_artifact_to_storage(
     ).save_artifact(artifact=artifact, storage_spec=storage_spec)
 
 
-def load_record_artifact_from_storage(artifact_type: str, storage_client: StorageClientType, **kwargs):
-    if not bool(storage_client.storage_spec.save_path):
+def load_record_artifact_from_storage(
+    artifact_type: str,
+    storage_client: StorageClientType,
+    storage_spec: ArtifactStorageSpecs,
+    **kwargs,
+) -> Optional[Any]:
+    if not bool(storage_spec.save_path):
         return None
 
     storage_type = next(
@@ -711,4 +716,4 @@ def load_record_artifact_from_storage(artifact_type: str, storage_client: Storag
     return storage_type(
         artifact_type=artifact_type,
         storage_client=storage_client,
-    ).load_artifact(storage_uri=storage_client.storage_spec.save_path, **kwargs)
+    ).load_artifact(storage_uri=storage_spec.save_path, **kwargs)
