@@ -19,6 +19,9 @@ from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
 from opsml.registry.utils.settings import settings
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger()
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -598,6 +601,8 @@ class ProjectRouteHelper(RouteHelper):
 
         unique_projects = self.get_unique_projects(project_registry)
 
+        logger.info(f"unique_projects: {unique_projects}")
+
         if len(unique_projects) == 0:
             return templates.TemplateResponse(
                 "include/project/no_projects.html",
@@ -615,6 +620,16 @@ class ProjectRouteHelper(RouteHelper):
         if run_uid is not None:
             runcard = run_registry.load_card(uid=run_uid)
         else:
+            if len(project_runs) == 0:
+                return templates.TemplateResponse(
+                    "include/project/projects.html",
+                    {
+                        "request": request,
+                        "all_projects": unique_projects,
+                        "selected_project": selected_project,
+                        "project_runs": project_runs,
+                    },
+                )
             runcard = run_registry.load_card(uid=project_runs[0]["uid"])
 
         runcard = self.remove_old_mlflow_path(
