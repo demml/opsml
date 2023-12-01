@@ -15,7 +15,7 @@ def get_project_id_from_registry(project_registry: CardRegistry, info: ProjectIn
         as_dataframe=False,
     )
     if bool(projects):
-        return projects[0]["project_id"]
+        return f'{projects[0]["team"]}:{projects[0]["name"]}'
 
     card = ProjectCard(
         name=info.name,
