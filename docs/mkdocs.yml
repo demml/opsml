@@ -52,6 +52,7 @@ nav:
         - 'cards/model_metadata.md'
         - 'cards/onnx.md'
       - 'cards/runcard.md'
+      - 'cards/auditcard.md'
   - CLI:
       - Overview: 'cli/overview.md'
   - FAQ:

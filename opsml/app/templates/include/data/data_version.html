@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% set model_status = none %}
+{% set data_status = 'active' %}
+{% set audit_status = none %}
+{% set runs_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Version</title>
+{% endblock %}
+
+{% block content %}
+<body id="DataVersionPage">
+  <div class="container" style="padding-top:65px;">
+  </div>
+
+{% set data_name_subnav = none %}
+{% set data_version_subnav = 'active' %}
+{% include "include/data/data_subnav.html" %}
+
+<br>
+
+<div class="container-fluid" style="padding-top:50px;" id="VersionContainer">
+  <div class="row">
+    <h5 class="display-8">Available Data Versions</h5>
+  </div>
+</div>
+
+
+<div class"containter" id="split-column">
+
+  <!---- Model version table -------->
+  <div class="container-fluid" id="VersionContainer">
+    <div class="page-header">
+      <h2>{{selected_data.name}}</h2>
+    </div>
+  </div>
+  <br>
+
+  <!---Create vesion tables ------>
+  <div class="boxes" id="VersionContainer">
+
+    <div id="VersionColumn">
+      <div class="list-group">
+        {% for version in versions %}
+          <a href="/opsml/data/versions/?name={{ selected_data.name }}&version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="MetadataColumn">
+
+      <div class="card border-0" style="width:100%; border-radius: 0%">
+        <div class="card-body">
+          <h4 >Data  </h4>
+          <div id="CardTabBox">
+            <span><button id="download-button" type="submit" class="btn btn-success" >Metadata</button></span>
+            <span><button id="download-button" type="submit" class="btn btn-success" >Summary</button></span>
+            <span><button id="download-button" type="submit" class="btn btn-success focus" >Data Profile</button></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="CardBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% include "include/data/data_metadata.html" %}
+      </div>
+
+      {% if selected_data.tags|length > 0 %}
+      <div id="TagBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% include "include/data/data_tags.html" %}
+      </div>
+      {% endif %}
+
+      <div id="ExtraBox" class="card border-0" {% if load_profile == true %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% include "include/data/data_extras.html" %}
+      </div>
+
+      <div id="SummaryBox" class="card border-0" style="display: None; width: 100%; border-radius: 0%;">
+          {% with data=selected_data %}
+          {% include "include/data/data_summary.html" %}
+          {% endwith %}
+      </div>
+
+      <div id="ProfileBox" class="card border-0"  {% if load_profile == false %} style="display: None; width: 100%; border-radius: 0%;" {% else %} style="width: 100%; border-radius: 0%;" {% endif %}>
+        {% with data=selected_data %}
+        {% include "include/data/data_profile.html" %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<div class"containter" id="split-spacer">
+</div>
+
+</body>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script>
+  $('.list-group-item').click(function() {
+    $('.list-group-item').removeClass('active');
+    $(this).addClass('active');
+    var version_uid = $(this).attr('id');
+    alert(id);
+    // write javscript that will take the value of the active div on click and pass that value to another div
+ });
+
+ $('#CardTabBox > span').click(function() {
+  var ix = $(this).index();
+  
+  $('#CardBox').toggle( ix === 0 );
+  $('#TagBox').toggle( ix === 0 );
+  $('#ExtraBox').toggle( ix === 0 );
+  $('#SummaryBox').toggle( ix === 1 );
+  $('#ProfileBox').toggle( ix === 2 );
+});
+
+
+$( "#split-button" ).on( "click", function() {
+  $( "#Splits" ).toggle();
+  } );
+
+$( "#dep-var-button" ).on( "click", function() {
+  $( "#DependentVars" ).toggle();
+  } );
+
+$( "#feature-map-button" ).on( "click", function() {
+  $( "#FeatureMap" ).toggle();
+  } );
+
+$( "#feature-desc-button" ).on( "click", function() {
+  $( "#FeatureDescriptions" ).toggle();
+  } );
+
+$( "#sql-button" ).on( "click", function() {
+  $( "#SQL" ).toggle();
+  } );
+
+</script>
+
+
+{% endblock %}

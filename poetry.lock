@@ -4168,6 +4168,20 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "python-multipart"
+version = "0.0.6"
+description = "A streaming multipart parser for Python"
+optional = true
+python-versions = ">=3.7"
+files = [
+    {file = "python_multipart-0.0.6-py3-none-any.whl", hash = "sha256:ee698bab5ef148b0a760751c261902cd096e57e10558e11aca17646b74ee1c18"},
+    {file = "python_multipart-0.0.6.tar.gz", hash = "sha256:e9925a80bb668529f1b67c7fdb0a5dacdd7cbfc6fb0bff3ea443fe22bdd62132"},
+]
+
+[package.extras]
+dev = ["atomicwrites (==1.2.1)", "attrs (==19.2.0)", "coverage (==6.5.0)", "hatch", "invoke (==1.7.3)", "more-itertools (==4.3.0)", "pbr (==4.3.0)", "pluggy (==1.0.0)", "py (==1.11.0)", "pytest (==7.2.0)", "pytest-cov (==4.0.0)", "pytest-timeout (==2.1.0)", "pyyaml (==5.1)"]
+
+[[package]]
 name = "pytz"
 version = "2023.3.post1"
 description = "World timezone definitions, modern and historical"
@@ -6544,9 +6558,9 @@ gcs = ["gcsfs"]
 mysql = ["pymysql"]
 postgres = ["psycopg2"]
 s3 = ["boto3", "s3fs"]
-server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
+server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "python-multipart", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "0ede1767aa85013ba66d2be6371895c25ea4480de536c59eea8eb5da4d4f7e75"
+content-hash = "5e77c80f2a07673cfa442c61e10222455ac7eabfad6d40f4dfa56c88a99ef927"

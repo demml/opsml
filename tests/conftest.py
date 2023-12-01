@@ -242,6 +242,25 @@ def mock_s3fs():
         yield mocked_s3fs
 
 
+@pytest.fixture(scope="session", autouse=True)
+def mock_mlflow_client():
+    class Experiment:
+        def __init__(self, name: str, experiment_id: str):
+            self.name = name
+            self.experiment_id = experiment_id
+
+    class MockMlflowClient:
+        def __init__(self, tracking_uri: str):
+            self.tracking_uri = tracking_uri
+
+        def get_experiment_by_name(self, name: str):
+            return Experiment(name=name, experiment_id="test")
+
+    with patch("opsml.app.core.event_handlers.setup_mlflow_client") as mock_:
+        mock_.return_value = MockMlflowClient("test")
+        yield mock_
+
+
 @pytest.fixture(scope="function")
 def mock_pathlib():
     with patch.multiple(

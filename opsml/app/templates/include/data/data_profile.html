@@ -1,0 +1,15 @@
+
+
+<hr id="version-spacer">
+<div class="card-body" style="min-height:1000px;">
+  {% if data_profile is none%}
+    <span><a href="/opsml/data/versions/?name={{ selected_data.name }}&version={{ selected_version }}&load_profile=true" id="download-button" type="submit" class="btn btn-success" >Load Profile</a></span>
+  {% else %}
+    {% if render_profile %}
+      <iframe style="min-height:950px;" class="html-iframe" srcdoc="{{data_profile}}" width="100%" height="100%" frameborder="0" class></iframe>
+    {% else %}
+      <p>{{data_profile}}</p>
+    {% endif %}
+  {% endif %}
+</div>
+  
