@@ -19,7 +19,6 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
-from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 
@@ -433,9 +432,8 @@ class ModelRouteHelper(RouteHelper):
     ) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
-            project_num = request.app.state.mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
-
-            return runcard, project_num
+            # TODO(@thorresterr): 🤷🏻
+            return runcard, runcard.project_id
 
         return None, None
 
@@ -564,22 +562,6 @@ class ProjectRouteHelper(RouteHelper):
         project = OpsmlProject(project_info)
         return project.list_runs()
 
-    def remove_old_mlflow_path(self, runcard: RunCard) -> RunCard:
-        """Method use to remove old mlflow paths
-
-        Args:
-            runcard:
-                The run card.
-
-        Returns:
-            `RunCard`
-        """
-
-        for key, val in runcard.artifact_uris.items():
-            new_val = val.replace("mlflow-artifacts:", settings.storage_settings.storage_uri)
-            runcard.artifact_uris[key] = new_val
-        return runcard
-
     def get_project_run(
         self,
         request: Request,
@@ -631,10 +613,6 @@ class ProjectRouteHelper(RouteHelper):
                     },
                 )
             runcard = run_registry.load_card(uid=project_runs[0]["uid"])
-
-        runcard = self.remove_old_mlflow_path(
-            runcard=cast(RunCard, runcard),
-        )
 
         return templates.TemplateResponse(
             "include/project/projects.html",

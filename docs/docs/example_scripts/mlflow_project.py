@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-from opsml.projects import ProjectInfo
-from opsml.projects.mlflow import MlflowProject
+from opsml.projects import ProjectInfo, OpsmlProject
 from opsml.registry import DataCard, ModelCard
 
 
@@ -25,7 +24,7 @@ def fake_data():
 
 
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 
 with project.run(run_name="test-run") as run:
     X, y = fake_data()

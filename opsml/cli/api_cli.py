@@ -456,7 +456,6 @@ def open_server() -> int:
 
 @app.command()
 def launch_uvicorn_app(
-    run_mlflow: bool = typer.Option(default=True, help="Whether to start opsml with mlflow"),
     login: bool = typer.Option(default=False, help="Whether to use login credentials"),
     port: int = typer.Option(default=8888, help="Default port to use with the opsml server"),
 ) -> None:
@@ -464,8 +463,6 @@ def launch_uvicorn_app(
     Launches a Uvicorn Opsml server
 
     Args:
-        run_mlflow:
-            Whether to launch with mlflow
         login:
             Whether to use login credentials
         port:
@@ -474,7 +471,7 @@ def launch_uvicorn_app(
 
     from opsml.app.main import OpsmlApp  # pylint: disable=import-outside-toplevel
 
-    model_api = OpsmlApp(run_mlflow=run_mlflow, port=port, login=login)
+    model_api = OpsmlApp(port=port, login=login)
     model_api.build_app()
     model_api.run()
 
