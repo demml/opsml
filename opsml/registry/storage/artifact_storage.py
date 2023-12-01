@@ -22,7 +22,6 @@ from opsml.registry.image import ImageDataset
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
     ArtifactStorageSpecs,
-    MlflowStorageClient,
     StorageClientType,
     StorageSystem,
 )
@@ -239,13 +238,6 @@ class JoblibStorage(ArtifactStorage):
         """
 
         joblib.dump(artifact, tmp_uri)
-        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
-            return self._upload_artifact(
-                file_path=tmp_uri,
-                storage_uri=storage_uri,
-                **{"model": artifact, "model_type": self.artifact_type},
-            )
-
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
@@ -562,13 +554,6 @@ class TensorflowModelStorage(ArtifactStorage):
         """
 
         artifact.save(tmp_uri)
-        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
-            return self._upload_artifact(
-                file_path=tmp_uri,
-                storage_uri=storage_uri,
-                **{"model": artifact, "model_type": self.artifact_type},
-            )
-
         return self._upload_artifact(
             file_path=tmp_uri,
             storage_uri=storage_uri,
@@ -621,13 +606,6 @@ class PyTorchModelStorage(ArtifactStorage):
         import torch
 
         torch.save(artifact, tmp_uri)
-        if isinstance(self.storage_client, MlflowStorageClient) and "trained-model" in storage_uri:
-            return self._upload_artifact(
-                file_path=tmp_uri,
-                storage_uri=storage_uri,
-                **{"model": artifact, "model_type": self.artifact_type},
-            )
-
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath):
@@ -641,7 +619,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
 
 class LightGBMBoosterStorage(JoblibStorage):
-    """Helper class only to be used with MLFLow"""
+    """Saves a LGBM booster model"""
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         import lightgbm as lgb

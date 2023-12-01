@@ -3,9 +3,9 @@ from opsml.registry.cards.types import RegistryType
 
 
 def test_replace_proxy():
-    fake_url = "mlflow-artifacts:/1/blah/"
+    fake_url = "artifacts:/1/blah/"
     storage_root = "gs://bucket"
-    proxy_root = "mlflow-artifacts:/"
+    proxy_root = "artifacts:/"
 
     record = {"name": "test", "modelcard_uri": fake_url}
     new_record = replace_proxy_root(card=record, storage_root=storage_root, proxy_root=proxy_root)
