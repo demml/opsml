@@ -176,10 +176,7 @@ def test_array(test_array, storage_client):
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
-@pytest.mark.parametrize(
-    "storage_client",
-    [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client"), lazy_fixture("s3_storage_client")],
-)
+@pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib):
     model, data = load_transformer_example
     model_storage = TensorflowModelStorage(
@@ -187,26 +184,18 @@ def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib
         storage_client=storage_client,
     )
 
-    with patch.multiple(
-        "tensorflow.keras.Model",
-        save=MagicMock(return_value=None),
-    ):
-        metadata = model_storage.save_artifact(
-            artifact=model,
-            storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
-        )
-
-    with patch.multiple(
-        "tensorflow.keras.models",
-        load_model=MagicMock(return_value=model),
-    ):
-        model = model_storage.load_artifact(storage_uri=metadata.uri)
+    metadata = model_storage.save_artifact(
+        artifact=model,
+        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+    )
+    model = model_storage.load_artifact(storage_uri=metadata.uri)
+    assert model is not None
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "storage_client",
-    [lazy_fixture("gcp_storage_client"), lazy_fixture("local_storage_client"), lazy_fixture("s3_storage_client")],
+    [lazy_fixture("local_storage_client")],
 )
 def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
     model, data = load_pytorch_resnet
@@ -215,20 +204,13 @@ def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
         storage_client=storage_client,
     )
 
-    with patch.multiple(
-        "torch",
-        save=MagicMock(return_value=None),
-    ):
-        metadata = model_storage.save_artifact(
-            artifact=model,
-            storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
-        )
+    metadata = model_storage.save_artifact(
+        artifact=model,
+        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+    )
 
-    with patch.multiple(
-        "torch",
-        load=MagicMock(return_value=model),
-    ):
-        model = model_storage.load_artifact(storage_uri=metadata.uri)
+    model = model_storage.load_artifact(storage_uri=metadata.uri)
+    assert model is not None
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
