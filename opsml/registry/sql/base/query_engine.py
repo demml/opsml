@@ -4,7 +4,7 @@
 import datetime
 from contextlib import contextmanager
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, cast
-
+from enum import Enum
 from sqlalchemy import Integer
 from sqlalchemy import func as sqa_func
 from sqlalchemy import select, text
@@ -23,64 +23,105 @@ SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 YEAR_MONTH_DATE = "%Y-%m-%d"
 
 
-class VersionSplitting:
-    """
-    Class containing logic for splitting version into major, minor, patch
-    depending on sql dialect
-    """
+class SqlDialect(str, Enum):
+    SQLITE = "sqlite"
+    POSTGRES = "postgres"
+    MYSQL = "mysql"
+
+
+class DialectHelper:
+    def __init__(self, query: Select, table: Type[REGISTRY_TABLES]):
+        """Instantiates a dialect helper"""
+        self.query = query
+        self.table = table
+
+    def get_version_split_logic(self) -> Select:
+        """Defines dialect specific logic to split version into major, minor, patch"""
+        raise NotImplementedError
 
     @staticmethod
-    def sqlite(query: Select, table: Type[REGISTRY_TABLES]) -> Select:
-        return query.add_columns(  # type: ignore[attr-defined]
-            sqa_func.cast(sqa_func.substr(table.version, 0, sqa_func.instr(table.version, ".")), Integer).label(
-                "major"
+    def validate_dialect(dialect: str) -> bool:
+        raise NotImplementedError
+
+    @staticmethod
+    def get_dialect_logic(query: Select, table: Type[REGISTRY_TABLES], dialect: str) -> Select:
+        helper = next(
+            (
+                dialect_helper
+                for dialect_helper in DialectHelper.__subclasses__()
+                if dialect_helper.validate_dialect(dialect)
             ),
+            None,
+        )
+
+        if helper is None:
+            raise ValueError(f"Unsupported dialect: {dialect}")
+
+        helper_instance = helper(query=query, table=table)
+
+        return helper_instance.get_version_split_logic()
+
+
+class SqliteHelper(DialectHelper):
+    def get_version_split_logic(self) -> Select:
+        return self.query.add_columns(  # type: ignore[attr-defined]
+            sqa_func.cast(
+                sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer
+            ).label("major"),
             sqa_func.cast(
                 sqa_func.substr(
-                    sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1),
+                    sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
                     1,
-                    sqa_func.instr(sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1), ".") - 1,
+                    sqa_func.instr(
+                        sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), "."
+                    )
+                    - 1,
                 ),
                 Integer,
             ).label("minor"),
             sqa_func.substr(
-                sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1),
-                sqa_func.instr(sqa_func.substr(table.version, sqa_func.instr(table.version, ".") + 1), ".") + 1,
+                sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
+                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".")
+                + 1,
             ).label("patch"),
         )
 
     @staticmethod
-    def postgres(query: Select, table: Type[REGISTRY_TABLES]) -> Select:
-        return query.add_columns(  # type: ignore[attr-defined]
-            sqa_func.cast(sqa_func.split_part(table.version, ".", 1), Integer).label("major"),
-            sqa_func.cast(sqa_func.split_part(table.version, ".", 2), Integer).label("minor"),
+    def validate_dialect(dialect: str) -> bool:
+        return SqlDialect.SQLITE in dialect
+
+
+class PostgresHelper(DialectHelper):
+    def get_version_split_logic(self) -> Select:
+        return self.query.add_columns(  # type: ignore[attr-defined]
+            sqa_func.cast(sqa_func.split_part(self.table.version, ".", 1), Integer).label("major"),
+            sqa_func.cast(sqa_func.split_part(self.table.version, ".", 2), Integer).label("minor"),
             sqa_func.cast(
-                sqa_func.regexp_replace(sqa_func.split_part(table.version, ".", 3), "[^0-9]+", "", "g"),
+                sqa_func.regexp_replace(sqa_func.split_part(self.table.version, ".", 3), "[^0-9]+", "", "g"),
                 Integer,
             ).label("patch"),
         )
 
     @staticmethod
-    def mysql(query: Select, table: Type[REGISTRY_TABLES]) -> Select:
-        return query.add_columns(  # type: ignore[attr-defined]
-            sqa_func.cast(sqa_func.substring_index(table.version, ".", 1), Integer).label("major"),
+    def validate_dialect(dialect: str) -> bool:
+        return SqlDialect.POSTGRES in dialect
+
+
+class MySQLHelper(DialectHelper):
+    def get_version_split_logic(self) -> Select:
+        return self.query.add_columns(  # type: ignore[attr-defined]
+            sqa_func.cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
             sqa_func.cast(
-                sqa_func.substring_index(sqa_func.substring_index(table.version, ".", 2), ".", -1), Integer
+                sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
             ).label("minor"),
             sqa_func.cast(
-                sqa_func.regexp_replace(sqa_func.substring_index(table.version, ".", -1), "[^0-9]+", ""), Integer
+                sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""), Integer
             ).label("patch"),
         )
 
     @staticmethod
-    def get_version_split_query(query: Select, table: Type[REGISTRY_TABLES], dialect: str) -> Select:
-        if "sqlite" in dialect:
-            return VersionSplitting.sqlite(query=query, table=table)
-        if "postgres" in dialect:
-            return VersionSplitting.postgres(query=query, table=table)
-        if "mysql" in dialect:
-            return VersionSplitting.mysql(query=query, table=table)
-        raise ValueError(f"Unsupported dialect: {dialect}")
+    def validate_dialect(dialect: str) -> bool:
+        return SqlDialect.MYSQL in dialect
 
 
 class QueryEngine:
@@ -157,6 +198,7 @@ class QueryEngine:
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> Select:
         """
         Creates a sql query based on table, uid, name, team and version
@@ -178,16 +220,14 @@ class QueryEngine:
                 Optional max date to search
             limit:
                 Optional limit of records to return
+            query_terms:
+                Optional query terms to search
 
         Returns
             Sqlalchemy Select statement
         """
         query: Select = self._get_base_select_query(table=table)
-        query = VersionSplitting.get_version_split_query(
-            query=query,
-            table=table,
-            dialect=self.dialect,
-        )
+        query = DialectHelper.get_dialect_logic(query=query, table=table, dialect=self.dialect)
 
         if bool(uid):
             return query.filter(table.uid == uid)  # type: ignore
@@ -209,6 +249,10 @@ class QueryEngine:
         if tags is not None:
             for key, value in tags.items():
                 filters.append(table.tags[key].as_string() == value)  # type: ignore
+
+        if query_terms is not None:
+            for field, value in query_terms.items():
+                filters.append(getattr(table, field) == value)
 
         if bool(filters):
             query = query.filter(*filters)  # type: ignore
@@ -250,6 +294,7 @@ class QueryEngine:
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         query = self._records_from_table_query(
             table=table,
@@ -260,6 +305,7 @@ class QueryEngine:
             max_date=max_date,
             tags=tags,
             limit=limit,
+            query_terms=query_terms,
         )
 
         with self.session() as sess:

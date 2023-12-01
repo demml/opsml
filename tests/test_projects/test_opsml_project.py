@@ -5,6 +5,7 @@ import pytest
 from sklearn import pipeline
 import os
 import numpy as np
+from opsml.app.core import config
 from opsml.registry import DataCard, ModelCard, AuditCard, CardRegistry
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
@@ -191,6 +192,22 @@ def test_run_fail(opsml_project: OpsmlProject) -> None:
     # Failed run should still exist
     cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
     assert len(cards) == 1
+    assert len(proj.list_runs()) == 5
+
+
+def test_opsml_project_list_runs(
+    opsml_project_2: OpsmlProject,
+) -> None:
+    """verify that we can read artifacts / metrics / cards without making a run
+    active."""
+
+    with opsml_project_2.run() as run:
+        # Create metrics / params / cards
+        run = cast(ActiveRun, run)
+        run.log_metric(key="m1", value=1.1)
+        run.log_parameter(key="m1", value="apple")
+
+    assert len(opsml_project_2.list_runs()) == 1
 
 
 def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
@@ -218,3 +235,7 @@ def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
         assert os.path.isdir(loaded_card.data.image_dir)
         meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
         assert os.path.exists(meta_path)
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    proj = conftest.mock_opsml_project(info)
+    assert len(proj.list_runs()) == 6

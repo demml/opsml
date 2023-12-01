@@ -118,6 +118,7 @@ class ClientRegistry(SQLRegistryBase):
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
+        query_terms: Optional[Dict[str, Any]] = None,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -139,6 +140,8 @@ class ClientRegistry(SQLRegistryBase):
                 Places a limit on result list. Results are sorted by SemVer
             ignore_release_candidates:
                 If True, release candidates will be ignored
+            query_terms:
+                Dictionary of query terms to filter by
 
         Returns:
             Dictionary of card records
@@ -155,6 +158,7 @@ class ClientRegistry(SQLRegistryBase):
                 "tags": tags,
                 "registry_type": self.registry_type,
                 "ignore_release_candidates": ignore_release_candidates,
+                "query_terms": query_terms,
             },
         )
 

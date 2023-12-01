@@ -1,10 +1,13 @@
-# pylint: disable=protected-access
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List
+
+import os
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -14,6 +17,8 @@ from opsml.app.routes.pydantic_models import (
     MetricResponse,
     RegisterModelRequest,
 )
+from opsml.app.routes.route_helpers import ModelRouteHelper
+from opsml.app.routes.utils import error_to_500
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
@@ -26,12 +31,66 @@ from opsml.registry.model.registrar import (
 
 logger = ArtifactLogger.get_logger()
 
+# Constants
+PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
+
 router = APIRouter()
+model_route_helper = ModelRouteHelper()
+
+
+@router.get("/models/list/")
+@error_to_500
+async def model_list_homepage(request: Request, team: Optional[str] = None):
+    """UI home for listing models in model registry
+    Args:
+        request:
+            The incoming HTTP request.
+        team:
+            The team to query
+    Returns:
+        200 if the request is successful. The body will contain a JSON string
+        with the list of models.
+    """
+    return model_route_helper.get_homepage(request=request, team=team)
+
+
+@router.get("/models/versions/")
+@error_to_500
+async def model_versions_page(
+    request: Request,
+    model: Optional[str] = None,
+    version: Optional[str] = None,
+    uid: Optional[str] = None,
+):
+    if model is None and uid is None:
+        return RedirectResponse(url="/opsml/models/list/")
+
+    registry: CardRegistry = request.app.state.registries.model
+
+    if uid is not None:
+        selected_model = registry.list_cards(uid=uid)
+        model = model or selected_model[0]["name"]
+        version = version or selected_model[0]["version"]
+
+    versions = registry.list_cards(name=model, as_dataframe=False, limit=50)
+    metadata = post_model_metadata(
+        request=request,
+        payload=CardRequest(uid=uid, name=model, version=version),
+    )
+    return model_route_helper.get_versions_page(
+        request=request,
+        name=cast(str, model),
+        version=version,
+        versions=versions,
+        metadata=metadata,
+    )
 
 
 @router.post("/models/register", name="model_register")
 def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
-    """Registers a model to a known GCS location.
+    """Registers a model to a known cloud storage location.
 
        This is used from within our CI/CD infrastructure to ensure a known good
        GCS location exists for the onnx model.

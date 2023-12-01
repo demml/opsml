@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, Union, cast
+from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base._active_run import ActiveRun, CardHandler
@@ -81,7 +81,7 @@ class OpsmlProject:
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
         """
-        Starts mlflow run for project
+        Starts a new run for the project
 
         Args:
             run_name:
@@ -122,6 +122,22 @@ class OpsmlProject:
             registry_name=card_type,
             info=info,
         )
+
+    def list_runs(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Lists all runs for the current project, sorted by timestamp
+
+        Returns:
+            List of RunCard
+        """
+        logger.info("Listing runs for project {}", self.project_id)
+
+        project_runs = self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
+            limit=limit,
+            query_terms={"project_id": self.project_id},
+        )
+
+        return sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
 
     @property
     def run_data(self):
