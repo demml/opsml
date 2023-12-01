@@ -92,20 +92,20 @@
 
 
 <script>
-  $('.list-group-item').click(function() {
-    $('.list-group-item').removeClass('active');
-    $(this).addClass('active');
-    var version_uid = $(this).attr('id');
-    alert(id);
+$('.list-group-item').click(function() {
+  $('.list-group-item').removeClass('active');
+  $(this).addClass('active');
+  var version_uid = $(this).attr('id');
+  alert(id);
     // write javscript that will take the value of the active div on click and pass that value to another div
  });
 
-  $(document).ready(function() {
-    $('#MetadataTeamSelect').select2();
+$(document).ready(function() {
+  $('#MetadataTeamSelect').select2();
 
-    $("#MetadataTeamSelect").on('select2:select', function(e){
-      window.location.href = e.params.data.id;
-    });
+  $("#MetadataTeamSelect").on('select2:select', function(e){
+    window.location.href = e.params.data.id;
+  });
 });
 
 $( "#metric-button" ).on( "click", function() {
@@ -119,7 +119,6 @@ $( "#param-button" ).on( "click", function() {
 $( "#artifact-button" ).on( "click", function() {
   $( "#Artifacts" ).toggle();
 } );
-
 
 
 </script>

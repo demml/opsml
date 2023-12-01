@@ -18,6 +18,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
+from opsml.registry.utils.settings import settings
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -560,6 +561,22 @@ class ProjectRouteHelper(RouteHelper):
         project = OpsmlProject(project_info)
         return project.list_runs()
 
+    def remove_old_mlflow_path(self, runcard: RunCard) -> RunCard:
+        """Method use to remove old mlflow paths
+
+        Args:
+            runcard:
+                The run card.
+
+        Returns:
+            `RunCard`
+        """
+
+        for key, val in runcard.artifact_uris.items():
+            new_val = val.replace("mlflow-artifacts:", settings.storage_settings.storage_uri)
+            runcard.artifact_uris[key] = new_val
+        return runcard
+
     def get_project_run(
         self,
         request: Request,
@@ -581,6 +598,12 @@ class ProjectRouteHelper(RouteHelper):
 
         unique_projects = self.get_unique_projects(project_registry)
 
+        if len(unique_projects) == 0:
+            return templates.TemplateResponse(
+                "include/project/no_projects.html",
+                {"request": request},
+            )
+
         if project is None:
             selected_project = unique_projects[0]
         else:
@@ -593,6 +616,10 @@ class ProjectRouteHelper(RouteHelper):
             runcard = run_registry.load_card(uid=run_uid)
         else:
             runcard = run_registry.load_card(uid=project_runs[0]["uid"])
+
+        runcard = self.remove_old_mlflow_path(
+            runcard=cast(RunCard, runcard),
+        )
 
         return templates.TemplateResponse(
             "include/project/projects.html",

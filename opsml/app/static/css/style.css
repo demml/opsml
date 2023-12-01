@@ -89,8 +89,18 @@ body {
   background-attachment:fixed;
   background-position: right center;
   background-repeat: no-repeat;
-  padding-bottom: 50%;
 
+}
+
+#DataVersionPage {
+  font-family: Boing;
+  font-weight: medium;
+  background: #fafafa;
+  background-image: url(/static/images/machine-learning.png);
+  background-attachment:fixed;
+  background-position: right center;
+  background-repeat: no-repeat;
+  padding-bottom: 50%;
 }
 
 #HomePage {
@@ -103,7 +113,6 @@ body {
     background-position: right center;
     background-repeat: no-repeat;
     overflow: hidden;
-
 }
 
 
@@ -725,11 +734,17 @@ p {
     color:#fffefe !important;
   }
 
-  #ProjectSelect .dropdown-toggle {
-    color: #FFF;
-    background: #04b78a;
-    border: 2px solid #04b78a;
+.dropdown-item:active {
+  background-color: #04b78a;
   }
+
+
+
+#ProjectSelect .dropdown-toggle {
+  color: #FFF;
+  background: #04b78a;
+  border: 2px solid #04b78a;
+}
 
 #version-spacer {
   padding: 0px;
