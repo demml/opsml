@@ -1,8 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
-import tempfile
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -40,7 +38,7 @@ class SaveName(str, Enum):
     TRAINED_MODEL = "trained-model"
     ONNX_MODEL = "model"
     SAMPLE_MODEL_DATA = "sample-model-data"
-    DATA_PROFILE = "data_profile"
+    DATA_PROFILE = "data-profile"
 
 
 class CardArtifactSaver:
@@ -79,10 +77,9 @@ class CardArtifactSaver:
         if uri is None:
             return ArtifactStorageSpecs(save_path=str(self.card.uri), filename=filename)
 
-        return ArtifactStorageSpecs(save_path=self.resolve_path(uri), filename=filename)
+        return ArtifactStorageSpecs(save_path=self._resolve_dir(uri), filename=filename)
 
-    # TODO(@damon): Replace this with pathlib.Path.resolve()
-    def resolve_path(self, uri: str) -> str:
+    def _resolve_dir(self, uri: str) -> str:
         """
         Resolve a file dir uri for card updates
 
@@ -90,11 +87,11 @@ class CardArtifactSaver:
             uri:
                 path to file
         Returns
-            Resolved path string relative to the card
+            Resolved uri *directory* relative to the card.
         """
-
-        dir_path = os.path.dirname(uri)
-        return dir_path.split(f"{self.storage_client.base_path_prefix}/")[1]
+        base_path = Path(self.storage_client.base_path_prefix)
+        uri_path = Path(uri).parent
+        return str(uri_path.relative_to(base_path))
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -161,6 +158,8 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
     def _save_data(self) -> None:
         """Saves DataCard data to file system"""
+        if self.card.data is None:
+            return
 
         if isinstance(self.card.data, ImageDataset):
             self.card.data.convert_metadata()
@@ -175,8 +174,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
             self.card.metadata.feature_map = arrow_table.feature_map
             self.card.metadata.data_type = arrow_table.table_type
 
-    def _save_profile(self):
+    def _save_profile(self) -> None:
         """Saves a datacard data profile"""
+        if self.card.data_profile is None:
+            return
 
         # profile report needs to be dumped to bytes and saved in joblib/pickle format
         # This is a requirement for loading with ydata-profiling
@@ -192,34 +193,30 @@ class DataCardArtifactSaver(CardArtifactSaver):
         )
         self.card.metadata.uris.profile_uri = storage_path.uri
 
-    def _save_profile_html(self):
+    def _save_profile_html(self) -> None:
         """Saves a profile report to file system"""
+        if self.card.data_profile is None:
+            return
 
-        filename = f"{self.card.name}-{self.card.version}-profile.html"
-        spec = self._get_storage_spec(
-            filename=filename,
-            uri=self.card.metadata.uris.profile_html_uri,
+        profile_html = self.card.data_profile.to_html()
+
+        storage_path = save_artifact_to_storage(
+            artifact=profile_html,
+            artifact_type=ArtifactStorageType.HTML.value,
+            storage_client=self.storage_client,
+            storage_spec=self._get_storage_spec(
+                filename=SaveName.DATA_PROFILE.value,
+                uri=self.card.metadata.uris.profile_html_uri,
+            ),
         )
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = f"{tmp_dir}/{filename}"
-            write_path = str(Path(self.storage_client.base_path_prefix).joinpath(spec.save_path))
-            self.card.data_profile.to_file(tmp_path)
-            storage_uri = self.storage_client.upload(
-                local_path=tmp_path,
-                write_path=write_path,
-            )
-
-        self.card.metadata.uris.profile_html_uri = storage_uri
+        self.card.metadata.uris.profile_html_uri = storage_path.uri
 
     def save_artifacts(self):
         """Saves artifacts from a DataCard"""
 
-        if self.card.data is not None:
-            self._save_data()
-
-        if self.card.data_profile is not None:
-            self._save_profile()
-            self._save_profile_html()
+        self._save_data()
+        self._save_profile()
+        self._save_profile_html()
 
         self._save_datacard()
 

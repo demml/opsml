@@ -20,6 +20,7 @@ class ArtifactStorageType(str, Enum):
     PANDAS_DATAFRAME = "PandasDataFrame"
     POLARS_DATAFRAME = "PolarsDataFrame"
     ARROW_TABLE = "Table"
+    HTML = "html"
     NDARRAY = "ndarray"
     TF_MODEL = "keras"
     PYTORCH = "pytorch"
