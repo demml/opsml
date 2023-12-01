@@ -189,7 +189,7 @@ class _RunManager:
 
     def _set_active_run(self, run_name: Optional[str] = None) -> None:
         """
-        Resolves and sets the active run for mlflow
+        Resolves and sets the active run for opsml
 
         Args:
             run_name:
@@ -215,11 +215,11 @@ class _RunManager:
         if self._active_run is not None:
             raise ValueError("Could not start run. Another run is currently active")
 
-        logger.info("starting run: {}", self.run_id)
         self._set_active_run(run_name=run_name)
+        logger.info("starting run: {}", self.run_id)
 
         # Create the RunCard when the run is started to obtain a version and
-        # storage path for artifact stoarge to use.
+        # storage path for artifact storage to use.
         self.active_run.create_or_update_runcard()
         self.version = cast(str, self.active_run.runcard.version)
 
