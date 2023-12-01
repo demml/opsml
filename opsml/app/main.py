@@ -12,6 +12,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from opsml.app.core.config import config
 from opsml.app.core.event_handlers import start_app_handler, stop_app_handler
+from opsml.app.core.login import get_current_username
 from opsml.app.core.middleware import rollbar_middleware
 from opsml.app.routes.router import api_router
 from opsml.helpers.logging import ArtifactLogger
@@ -35,50 +36,28 @@ class OpsmlApp:
             dependencies=self.get_login(),
         )
 
-    # TODO(@damon): fix importss
     def get_login(self) -> Optional[List[Any]]:
         """Sets the login dependency for an app if specified"""
 
         if self.login:
-            from opsml.app.core.login import get_current_username
-
             return [Depends(get_current_username)]
         return None
 
-    # TODO(@damon): move to lifecycle events
-    def add_startup(self):
-        self.app.add_event_handler("startup", start_app_handler(app=self.app))
-
-    def add_shutdown(self):
-        self.app.add_event_handler("shutdown", stop_app_handler(app=self.app))
-
-    def add_instrument(self):
-        instrumentator.instrument(self.app).expose(self.app)
-
-    def add_static(self):
-        """Add static files"""
-
+    def build_app(self) -> None:
+        self.app.include_router(api_router)
         self.app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
 
-    def add_middleware(self):
-        """Add rollbar middleware"""
+        self.app.add_event_handler("startup", start_app_handler(app=self.app))
+        self.app.add_event_handler("shutdown", stop_app_handler(app=self.app))
+
+        instrumentator.instrument(self.app).expose(self.app)
         self.app.middleware("http")(rollbar_middleware)
 
-    def build_app(self):
-        self.app.include_router(api_router)
-        self.add_static()
-
-        self.add_startup()
-        self.add_shutdown()
-
-        self.add_middleware()
-        self.add_instrument()
-
-    def run(self):
+    def run(self) -> None:
         """Run FastApi App"""
         uvicorn.run(self.app, host="0.0.0.0", port=self.port)
 
-    def get_app(self):
+    def get_app(self) -> FastAPI:
         """Returns app for when using directly with gunicorn"""
         self.build_app()
 
