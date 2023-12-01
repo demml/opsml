@@ -75,7 +75,7 @@ from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem, StorageClientType
 
-from opsml.projects.base.types import ProjectInfo
+from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.registry.cards.types import ModelCardUris
 from opsml.projects import OpsmlProject
