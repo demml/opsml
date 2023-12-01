@@ -253,4 +253,4 @@ def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     proj = conftest.mock_opsml_project(info)
-    assert len(proj.list_runs()) == 6
+    assert len(proj.list_runs()) == 7
