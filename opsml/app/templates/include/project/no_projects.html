@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+
+{% set model_status = none %}
+{% set data_status = none %}
+{% set runs_status = 'active' %}
+{% set audit_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Runs</title>
+{% endblock %}
+
+{% block content %}
+<body id="RunPage">
+<div class="container" style="padding-top:65px;">
+</div>
+
+<br>
+<h5 style="padding-top:10px; padding-left:40px;">No projects found. Please create a run to populate (<a style="color:#5e0fb7;" href="https://thorrester.github.io/opsml-ghpages/cards/runcard/">Docs</a>)</h5>
+
+</body>
+
+{% endblock %}
