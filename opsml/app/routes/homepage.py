@@ -25,7 +25,5 @@ async def opsml_homepage(request: Request):
 
 
 @router.get("/")
-async def homepage(request: Request, mlflow: bool = False):
-    if not mlflow:
-        return RedirectResponse("/opsml")
-    return RedirectResponse("/mlflow/")
+async def homepage(request: Request):
+    return RedirectResponse("/opsml")
