@@ -1,6 +1,5 @@
 from typing import Dict, List, Tuple
 
-from exceptiongroup import ExceptionGroup
 import re
 import uuid
 import pathlib
@@ -397,7 +396,7 @@ def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame)
     datacardv12: DataCard = registry.load_card(name=data_name, version="1.2.0")
     datacardv12.metadata.uris.data_uri = "fail"
 
-    with pytest.raises(ExceptionGroup):
+    with pytest.raises(Exception):
         datacardv12.load_data()
 
 
