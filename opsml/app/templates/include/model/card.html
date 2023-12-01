@@ -1,0 +1,15 @@
+<div class="card text-left rounded m-1" style="width: 14rem;" id="model-card">
+    <div class="card-body">
+
+      <div class="row">
+        <div class="col-sm-8">
+          <h5 class="card-title">{{model}}</h5>
+          <a href="/opsml/models/versions/?model={{model}}" class="stretched-link" name="model" value={{model}}></a>
+        </div>
+        <div class="col-sm-4" id="model-card-img">
+          <img src="{{ url_for('static', path='/images/chip.png') }}" alt="" width="40" height="40"  class="center-block">
+
+        </div>
+      </div>
+    </div>
+  </div>

@@ -112,7 +112,7 @@ class FindPath:
         try:
             file_path = paths[0]
         except IndexError as error:
-            raise ValueError(f"No path found for file {name}. {error}") from error
+            raise IndexError(f"No path found for file {name}. {error}") from error
 
         if file_path is not None:
             return file_path

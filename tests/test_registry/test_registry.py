@@ -17,6 +17,8 @@ from opsml.registry.cards import (
     DataCardMetadata,
     ModelCardMetadata,
     Description,
+    CardInfo,
+    Description,
 )
 from opsml.registry.sql.registry import CardRegistry
 from opsml.registry.sql.sql_schema import DataSchema
@@ -128,6 +130,9 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
         user_email="mlops.com",
         sql_logic={"test": "select * from test_table"},
         feature_descriptions={"test": "test_description"},
+        metadata=DataCardMetadata(
+            description=Description(summary="data_readme.md"),
+        ),
     )
 
     registry.register_card(card=data_card)
@@ -257,7 +262,7 @@ def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArra
     assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
     ### Test add failure
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         data_card.add_sql(name="fail", filename="fail.sql")
 
     with pytest.raises(ValueError):

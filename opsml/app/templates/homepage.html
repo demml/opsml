@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}
+  <title>HomePage</title>
+{% endblock %}
+
+{% block content %}
+<body id="HomePage">
+<div class="container" style="padding-top:65px;">
+</div>
+<br>
+
+
+
+
+<div class="container" id="homepage-container">
+
+    <div class="card d-flex" id="mlflow-card" style="width: 28rem; margin: 130px auto;">
+        <div class="card-body align-items-center d-flex justify-content-center">
+            <img src="{{ url_for('static', path='/images/mlflow.png') }}" width="375" height="92" >
+            <a href="/mlflow/" class="stretched-link" name="model"></a>
+        </div>
+        </div>
+    </div>
+
+
+
+    <div class="card d-flex" style="width: 28rem; margin: 30px auto;" id="opsml-card">
+        <div class="card-body align-items-center d-flex justify-content-center">
+            <img src="{{ url_for('static', path='/images/opsml_word.png') }}" alt="" width="375" height="128" >
+            <a href="/opsml/models/list/" class="stretched-link" name="opsml"></a>
+        </div>
+        </div>
+    </div>
+</div>
+
+
+{% include "include/footer.html" %}
+
+</body>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+{% endblock %}
+
