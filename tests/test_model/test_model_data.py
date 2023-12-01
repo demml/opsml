@@ -1,9 +1,25 @@
-from opsml.model.model_info import FloatTypeConverter, get_model_data
+from opsml.model.model_info import FloatTypeConverter, get_model_data, ModelData
 import pytest
 from numpy.typing import NDArray
 import pandas as pd
 
 # most methods are tested as part of other unit tests
+
+
+def test_model_data_base(test_array: NDArray):
+    model_data = ModelData(input_data=test_array)
+
+    with pytest.raises(NotImplementedError):
+        model_data.dtypes
+
+    with pytest.raises(NotImplementedError):
+        model_data.shape
+
+    with pytest.raises(NotImplementedError):
+        model_data.num_dtypes
+
+    with pytest.raises(NotImplementedError):
+        model_data.feature_dict
 
 
 def test_dataframe(test_df: pd.DataFrame):
@@ -13,6 +29,7 @@ def test_dataframe(test_df: pd.DataFrame):
     assert isinstance(pd_data.shape, tuple)
     assert isinstance(pd_data.dtypes, list)
     assert isinstance(pd_data.feature_dict, dict)
+    assert isinstance(pd_data.feature_types, zip)
 
 
 def test_numpy(test_array: NDArray):

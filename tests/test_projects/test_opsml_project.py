@@ -250,3 +250,7 @@ def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
         assert os.path.isdir(loaded_card.data.image_dir)
         meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
         assert os.path.exists(meta_path)
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    proj = conftest.mock_opsml_project(info)
+    assert len(proj.list_runs()) == 7
