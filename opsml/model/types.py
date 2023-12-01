@@ -299,13 +299,12 @@ class ModelDownloadInfo(BaseModel):
     uid: Optional[str] = None
 
 
+### Sklearn protocol stub
 class BaseEstimator(Protocol):
     ...
 
 
 ### Onnx protocol stubs
-
-
 class Graph(Protocol):
     @property
     def output(self):
