@@ -64,7 +64,7 @@ class OpsmlApp:
         return self.app
 
 
-def run_app(login: bool = False) -> OpsmlApp:
+def run_app(login: bool = False) -> FastAPI:
     return OpsmlApp(login=login).get_app()
 
 
