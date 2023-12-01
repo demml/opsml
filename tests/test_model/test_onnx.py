@@ -145,6 +145,7 @@ def test_sklearn_models(model_and_data):
     model_predict(model_and_data)
 
 
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "model_and_data",
     [
