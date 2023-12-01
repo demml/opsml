@@ -16,7 +16,6 @@ import numpy as np
 from opsml.projects import ProjectInfo
 from opsml.projects import OpsmlProject
 
-# from opsml.projects.mlflow import MlflowProject
 from opsml.registry.cards import ModelCardMetadata, Description, DataCardMetadata, DataSplit
 from opsml.registry import DataCard, ModelCard, CardRegistries
 

@@ -1,4 +1,11 @@
-from opsml.registry.cards import AuditCard, DataCard, ModelCard, PipelineCard, RunCard
+from opsml.registry.cards import (
+    AuditCard,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    ProjectCard,
+    RunCard,
+)
 from opsml.registry.cards.types import (
     CardInfo,
     DataCardMetadata,

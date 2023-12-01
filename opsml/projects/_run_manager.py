@@ -7,13 +7,10 @@ import uuid
 from typing import Optional, cast
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects.base._active_run import ActiveRun, RunInfo
-from opsml.projects.base.types import ProjectInfo, Tags
-from opsml.projects.base.utils import (
-    get_project_id_from_registry,
-    verify_runcard_project_match,
-)
-from opsml.registry import CardRegistries, CardRegistry, RunCard
+from opsml.projects._active_run import ActiveRun, RunInfo
+from opsml.projects.types import ProjectInfo
+from opsml.projects.types import Tags
+from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -254,14 +251,48 @@ class _RunManager:
         """
 
         if self.run_id is not None:
-            verify_runcard_project_match(
+            self._verify_runcard_project_match(
                 project_id=self._project_info.project_id,
                 run_id=self.run_id,
                 runcard_registry=self.registries.run,
             )
             return self._project_info.project_id
 
-        return get_project_id_from_registry(
+        return self._get_project_id_from_registry(
             project_registry=self.registries.project,
             info=self._project_info,
         )
+
+    def _get_project_id_from_registry(self, project_registry: CardRegistry, info: ProjectInfo) -> str:
+        projects = project_registry.list_cards(
+            name=info.name,
+            team=info.team,
+            as_dataframe=False,
+        )
+        if bool(projects):
+            return f"{info.team}:{info.name}"
+
+        card = ProjectCard(
+            name=info.name,
+            team=info.team,
+            user_email=info.user_email,
+        )
+        project_registry.register_card(card=card)
+
+        return str(card.project_id)
+
+    def _verify_runcard_project_match(
+        self,
+        project_id: str,
+        run_id: str,
+        runcard_registry: CardRegistry,
+    ):
+        run = runcard_registry.list_cards(uid=run_id, as_dataframe=False)[0]
+
+        if run.get("project_id") != project_id:
+            raise ValueError(
+                f"""
+                Run id {run_id} is not associated with project {project_id}.
+                Expected project {run.get("project_id")}.
+                """
+            )

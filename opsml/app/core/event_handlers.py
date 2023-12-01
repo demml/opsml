@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-import shutil
 from typing import Any, Awaitable, Callable, Union
 
 import rollbar
@@ -15,7 +14,6 @@ from opsml.registry.model.registrar import ModelRegistrar
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.registry import CardRegistries
 from opsml.registry.sql.sql_schema import RegistryTableNames
-from opsml.registry.storage.types import MlFlowClientProto
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -27,14 +25,6 @@ initializer = DBInitializer(
     engine=settings.sql_engine,
     registry_tables=list(RegistryTableNames),
 )
-
-
-def setup_mlflow_client() -> MlFlowClientProto:
-    from mlflow.tracking import MlflowClient
-
-    client = MlflowClient(config.TRACKING_URI)
-    shutil.rmtree("mlruns", ignore_errors=True)  # need this because mlflow loves to create random dirs
-    return client
 
 
 def _init_rollbar():
@@ -49,7 +39,6 @@ def _init_registries(app: FastAPI):
     app.state.registries = CardRegistries()
     app.state.storage_client = settings.storage_client
     app.state.model_registrar = ModelRegistrar(settings.storage_client)
-    app.state.mlflow_client = setup_mlflow_client()
 
     # initialize dbs
     initializer.initialize()

@@ -92,10 +92,6 @@ with project.run(run_name="test-run") as run:
         run.log_metric("mape", i, step=i)
 ```
 
-## Server UI
-
-Currently, Opsml serves 2 UIs. 1 is the `mlflow` UI and the other is the `opsml` UI. **Note** that `mlflow` will be removed in `opsml` v2.0.0.
-
 
 ## Opsml UI
 
@@ -122,20 +118,21 @@ Show data by version
 </p>
 
 
-## Mlflow UI
-
 ### Project UI
 
 Project UI lists all projects and recent runs
 
+
+TODO(@thorrester): opsml image
 <p align="center">
-  <img src="../images/mlflow_ui.png"  width="1512" height="402" alt="mlflow"/>
+  <img src="../images/opsml_ui.png"  width="1512" height="402" alt="opsml"/>
 </p>
 
 ### Run UI
 
 Within the run UI, you will see the various auto-recorded artifacts from your `Cards` and `Run`
 
+TODO(@thorrester): opsml image
 <p align="center">
-  <img src="../images/mlflow_run.png"  width="1841" height="792" alt="mlflow run"/>
+  <img src="../images/opsml_run.png"  width="1841" height="792" alt="opsml run"/>
 </p>

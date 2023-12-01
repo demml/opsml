@@ -41,7 +41,7 @@ class RunInfo:
 
 
 class CardHandler:
-    """DRY helper class for ActiveRun and MlflowProject"""
+    """DRY helper class for ActiveRun and OpsmlProject"""
 
     @staticmethod
     def register_card(
@@ -83,12 +83,12 @@ class ActiveRun:
 
     @property
     def run_id(self) -> str:
-        """Run id for current mlflow run"""
+        """Id for current run"""
         return self._info.run_id
 
     @property
     def run_name(self) -> Optional[str]:
-        """Run id for current mlflow run"""
+        """Name for current run"""
         return self._info.run_name
 
     @property
