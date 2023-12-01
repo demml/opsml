@@ -51,17 +51,11 @@ class ArtifactStorage:
 
         """
 
-        self.file_suffix = None
+        self.file_suffix = file_suffix
         self.extra_path = extra_path
         self.artifact_type = artifact_type
         self.storage_client = storage_client
         self.artifact_class = artifact_class
-
-        if file_suffix is not None:
-            self.file_suffix = str(file_suffix)
-
-        if artifact_class is not None:
-            self.artifact_class = str(artifact_class)
 
     @property
     def is_data(self):
@@ -448,6 +442,49 @@ class NumpyStorage(ArtifactStorage):
         return artifact_type == ArtifactStorageType.NDARRAY
 
 
+class HTMLStorage(ArtifactStorage):
+    """Class that saves and loads an html object"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            file_suffix="html",
+            artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
+        )
+
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+        """Writes the artifact as a json file to a storage_uri
+
+        Args:
+            artifact:
+                Artifact to write to json
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used or some storage client.
+
+        Returns:
+            Storage path
+        """
+
+        Path(tmp_uri).write_text(artifact, encoding="utf-8")
+        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+
+    def _load_artifact(self, file_path: FilePath) -> Any:
+        return Path(str(file_path)).read_text(encoding="utf-8")
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == ArtifactStorageType.HTML
+
+
 class JSONStorage(ArtifactStorage):
     """Class that saves and loads a joblib object"""
 
@@ -486,9 +523,6 @@ class JSONStorage(ArtifactStorage):
     def _load_artifact(self, file_path: FilePath) -> Any:
         with open(str(file_path), encoding="utf-8") as json_file:
             return json.load(json_file)
-
-    def _list_files(self, storage_uri: str) -> FilePath:
-        return self.storage_client.list_files(storage_uri=storage_uri)[0]
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
