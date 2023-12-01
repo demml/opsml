@@ -143,7 +143,7 @@ You can now log into the `Opsml` server and see your recent run and associated m
         show_source: true
         heading_level: 3
 
-::: opsml.projects.base.OpsmlProject
+::: opsml.projects.OpsmlProject
     options:
         show_root_heading: true
         show_source: true
