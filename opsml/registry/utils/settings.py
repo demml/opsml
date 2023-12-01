@@ -27,8 +27,8 @@ from opsml.registry.storage.types import (
     StorageSettings,
 )
 
-BASE_LOCAL_SQL = f"sqlite:///{os.path.expanduser('~')}/opsml_database.db"
-STORAGE_URI = f"{os.path.expanduser('~')}/opsml_artifacts"
+BASE_LOCAL_SQL = f"sqlite:///{os.getcwd()}/tmp.db"
+STORAGE_URI = f"{os.getcwd()}/opsml_artifacts"
 
 
 logger = ArtifactLogger.get_logger()

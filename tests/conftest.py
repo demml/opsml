@@ -1,6 +1,5 @@
 from typing import Iterator
 import os
-import pathlib
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -8,9 +7,9 @@ warnings.filterwarnings("ignore")
 
 # setting initial env vars to override default sql db
 # these must be set prior to importing opsml since they establish their
-DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
+DB_FILE_PATH = f"{os.getcwd()}/tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
-STORAGE_PATH = str(pathlib.Path.home().joinpath("mlruns"))
+STORAGE_PATH = f"{os.getcwd()}/mlruns"
 
 os.environ["APP_ENV"] = "production"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
@@ -239,6 +238,25 @@ def mock_s3fs():
         yield mocked_s3fs
 
 
+@pytest.fixture(scope="session", autouse=True)
+def mock_mlflow_client():
+    class Experiment:
+        def __init__(self, name: str, experiment_id: str):
+            self.name = name
+            self.experiment_id = experiment_id
+
+    class MockMlflowClient:
+        def __init__(self, tracking_uri: str):
+            self.tracking_uri = tracking_uri
+
+        def get_experiment_by_name(self, name: str):
+            return Experiment(name=name, experiment_id="test")
+
+    with patch("opsml.app.core.event_handlers.setup_mlflow_client") as mock_:
+        mock_.return_value = MockMlflowClient("test")
+        yield mock_
+
+
 @pytest.fixture(scope="function")
 def mock_pathlib():
     with patch.multiple(
@@ -422,6 +440,18 @@ def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
     opsml_run._run_mgr.registries = api_registries
     return opsml_run
 
+@pytest.fixture(scope="function")
+def opsml_project_2(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
+    opsml_run = OpsmlProject(
+        info=ProjectInfo(
+            name="opsml_project",
+            team="devops",
+            user_email="test",
+            tracking_uri=SQL_PATH,
+        )
+    )
+    opsml_run._run_mgr.registries = api_registries
+    return opsml_run
 
 def mock_opsml_project(info: ProjectInfo) -> MlflowProject:
     info.tracking_uri = SQL_PATH

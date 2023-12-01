@@ -141,7 +141,7 @@ class ModelConverter:
         self,
         onnx_preds: List[Union[float, int, NDArray]],
         model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
-    ) -> bool:
+    ) -> bool:  # pragma: no cover
         """Checks if model and onnx predictions are close
 
         Args:

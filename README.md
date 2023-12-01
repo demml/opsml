@@ -203,7 +203,6 @@ model_registry.register_card(card=modelcard)
 # >{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
 # >{"level": "INFO", "message": "OPSML_MODEL_REGISTRY: linnerrud, version:1.0.0 registered", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
 
-
 print(data_registry.list_cards(info=card_info, as_dataframe=False))
 print(model_registry.list_cards(info=card_info, as_dataframe=False))
 ```
