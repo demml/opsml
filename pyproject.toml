@@ -192,7 +192,7 @@ extension-pkg-whitelist = ["pydantic"]
 # This section is just a doc placeholder..see setup.cfg
 max-complexity = 10
 format = "pylint"
-statistics = "True"
+statistics = true
 max-line-length = 125
 # ignore non-PEP8 lints
 ignore = ["E203", "W503", "W0511"]
@@ -210,6 +210,9 @@ python_version = "3.9"
 platform = "linux"
 mypy_path = "stubs"
 ignore_missing_imports = true
+# TODO: enable
+# strict = true
+
 plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",

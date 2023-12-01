@@ -4,7 +4,7 @@
 import os
 import uuid
 from datetime import date
-from enum import Enum
+from enum import Enum, unique
 from typing import Type, Union, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, String
@@ -19,6 +19,7 @@ logger = ArtifactLogger.get_logger()
 Base = declarative_base()
 
 
+@unique
 class RegistryTableNames(str, Enum):
     DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
     MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
@@ -26,6 +27,23 @@ class RegistryTableNames(str, Enum):
     PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
     PROJECT = os.getenv("ML_PROJECT_REGISTRY_NAME", "OPSML_PROJECT_REGISTRY")
     AUDIT = os.getenv("ML_AUDIT_REGISTRY_NAME", "OPSML_AUDIT_REGISTRY")
+
+    @staticmethod
+    def from_str(name: str) -> "RegistryTableNames":
+        l_name = name.strip().lower()
+        if l_name == "data":
+            return RegistryTableNames.DATA
+        if l_name == "model":
+            return RegistryTableNames.MODEL
+        if l_name == "run":
+            return RegistryTableNames.RUN
+        if l_name == "pipeline":
+            return RegistryTableNames.PIPELINE
+        if l_name == "project":
+            return RegistryTableNames.PROJECT
+        if l_name == "audit":
+            return RegistryTableNames.AUDIT
+        raise NotImplementedError()
 
 
 @declarative_mixin
@@ -41,11 +59,11 @@ class BaseMixin:
     tags = Column("tags", JSON)
 
     @validates("team")
-    def lower_team(self, key, team):
+    def lower_team(self, key: str, team: str) -> str:
         return team.lower().replace("_", "-")
 
     @validates("name")
-    def lower_name(self, key, name):
+    def lower_name(self, key: str, name: str) -> str:
         return name.lower().replace("_", "-")
 
 
@@ -60,10 +78,10 @@ class DataMixin:
     uris = Column("uris", JSON)
 
 
-class DataSchema(Base, BaseMixin, DataMixin):  # type: ignore
+class DataSchema(Base, BaseMixin, DataMixin):
     __tablename__ = RegistryTableNames.DATA.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SqlMetric({self.__tablename__}"
 
 
@@ -81,10 +99,10 @@ class ModelMixin:
     auditcard_uid = Column("auditcard_uid", String(1024))
 
 
-class ModelSchema(Base, BaseMixin, ModelMixin):  # type: ignore
+class ModelSchema(Base, BaseMixin, ModelMixin):
     __tablename__ = RegistryTableNames.MODEL.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SqlMetric({self.__tablename__}"
 
 
@@ -98,10 +116,10 @@ class RunMixin:
     runcard_uri = Column("runcard_uri", String(512))
 
 
-class RunSchema(Base, BaseMixin, RunMixin):  # type: ignore
+class RunSchema(Base, BaseMixin, RunMixin):
     __tablename__ = RegistryTableNames.RUN.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SqlMetric({self.__tablename__}"
 
 
@@ -114,10 +132,10 @@ class AuditMixin:
     runcards = Column("runcard_uids", JSON)
 
 
-class AuditSchema(Base, BaseMixin, AuditMixin):  # type: ignore
+class AuditSchema(Base, BaseMixin, AuditMixin):
     __tablename__ = RegistryTableNames.AUDIT.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SqlMetric({self.__tablename__}"
 
 
@@ -129,10 +147,10 @@ class PipelineMixin:
     runcard_uids = Column("runcard_uids", JSON)
 
 
-class PipelineSchema(Base, BaseMixin, PipelineMixin):  # type: ignore
+class PipelineSchema(Base, BaseMixin, PipelineMixin):
     __tablename__ = RegistryTableNames.PIPELINE.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SqlMetric({self.__tablename__}"
 
 
@@ -160,7 +178,7 @@ REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
 
 class TableSchema:
     @staticmethod
-    def get_table(table_name: str) -> Type[REGISTRY_TABLES]:  # type: ignore
+    def get_table(table_name: str) -> Type[REGISTRY_TABLES]:
         for table_schema in Base.__subclasses__():
             if table_name == table_schema.__tablename__:  # type: ignore
                 return cast(Type[REGISTRY_TABLES], table_schema)
