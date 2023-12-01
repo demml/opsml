@@ -155,6 +155,7 @@ def test_model_pytorch_predict(model_and_data):
     model_predict(model_and_data)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", sys.version_info < (3, 11), reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize(
     "model_and_data",
@@ -225,6 +226,7 @@ def test_byo_onnx(model_and_data):
     pred_orig = predictor.predict_with_model(model, record)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", sys.version_info < (3, 11), reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "model_and_data",
     [
