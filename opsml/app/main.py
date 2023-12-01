@@ -104,12 +104,12 @@ class OpsmlApp:
         return self.app
 
 
-def run_app(run_mlflow: bool = True, login: bool = False):
+def run_app(run_mlflow: bool = True, login: bool = False) -> OpsmlApp:
     return OpsmlApp(run_mlflow=run_mlflow, login=login).get_app()
 
 
 if __name__ == "__main__":
-    run_app()
+    _ = run_app()
 
 # TODO (steven) - figure out cli stuff later.
 # Gunicorn currently blocks mlflow from running when run as a cli (or maybe its me :) )

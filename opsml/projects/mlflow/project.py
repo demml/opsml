@@ -35,7 +35,7 @@ class MlflowProject(OpsmlProject):
         Example:
 
             ```python
-            project: MlFlowProject = get_project(
+            project: MlFlowProject = MlflowProject(
                 ProjectInfo(
                     name="test-project",
                     team="devops-ml",

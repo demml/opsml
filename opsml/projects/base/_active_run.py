@@ -16,7 +16,7 @@ from opsml.registry import (
 )
 from opsml.registry.cards import ArtifactCard
 from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
-from opsml.registry.storage.artifact_storage import save_record_artifact_to_storage
+from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
@@ -178,9 +178,8 @@ class ActiveRun:
 
     def log_artifact(self, name: str, artifact: Any) -> None:
         """
-        Append any artifact associated with your run to
-        an ActiveRun. Artifact must be pickleable
-        (saved with joblib)
+        Append any artifact associated with your run to an ActiveRun. Artifact
+        must be pickleable (saved with joblib)
 
         Args:
             name:
@@ -188,15 +187,16 @@ class ActiveRun:
             artifact:
                 Artifact
         """
-        spec = ArtifactStorageSpecs(save_path="MISC", filename=name)
-        self._info.storage_client.storage_spec = spec
+        self._verify_active()
 
-        storage_path = save_record_artifact_to_storage(
+        spec = ArtifactStorageSpecs(save_path=str(self.runcard.artifact_uri), filename=name)
+
+        storage_path = save_artifact_to_storage(
             artifact=artifact,
             storage_client=self._info.storage_client,
+            storage_spec=spec,
             artifact_type="joblib",
         )
-
         self.runcard.add_artifact_uri(name=name, uri=storage_path.uri)
 
     def log_metric(

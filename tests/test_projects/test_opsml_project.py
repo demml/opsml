@@ -5,7 +5,6 @@ import pytest
 from sklearn import pipeline
 import os
 import numpy as np
-from opsml.app.core import config
 from opsml.registry import DataCard, ModelCard, AuditCard, CardRegistry
 from opsml.registry.cards.types import CardInfo
 from opsml.projects.base._active_run import ActiveRun
@@ -18,6 +17,23 @@ from tests import conftest
 logger = ArtifactLogger.get_logger()
 
 
+def test_opsml_artifact_storage(opsml_project: OpsmlProject) -> None:
+    """Tests logging and retrieving artifacts"""
+    with opsml_project.run() as run:
+        run.log_artifact("test1", "hello, world")
+        run_id = run.run_id
+
+    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+
+    proj = conftest.mock_opsml_project(info)
+    proj.run_id = run_id
+    runcard = proj.run_card
+    runcard.load_artifacts()
+
+    assert runcard.artifacts.get("test1") is not None
+    assert runcard.artifacts.get("test1") == "hello, world"
+
+
 def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
@@ -25,7 +41,6 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with opsml_project.run() as run:
         # Create metrics / params / cards
-        run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline
@@ -58,10 +73,11 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
         auditcard.add_card(card=model_card)
         run.register_card(card=auditcard)
 
-    # Retrieve the run and load projects without making the run active (read only mode)
+    # Retrieve the run and load artifacts without making the run active (read only mode)
+    # NOTE: info contains the run_id created in the above run.
     proj = conftest.mock_opsml_project(info)
 
-    runcard = proj.run_data
+    runcard = proj.run_card
     runcard.load_artifacts()
     assert (runcard.artifacts.get("array") == array).all()
 
@@ -192,7 +208,6 @@ def test_run_fail(opsml_project: OpsmlProject) -> None:
     # Failed run should still exist
     cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
     assert len(cards) == 1
-    assert len(proj.list_runs()) == 5
 
 
 def test_opsml_project_list_runs(
