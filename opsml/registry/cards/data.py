@@ -28,7 +28,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-storage_client = settings.storage_client
 
 ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
 
@@ -171,7 +170,7 @@ class DataCard(ArtifactCard):
         download_object(
             card=self,
             artifact_type=self.metadata.data_type,
-            storage_client=storage_client,
+            storage_client=settings.storage_client,
         )
 
     def create_registry_record(self) -> RegistryRecord:
