@@ -249,25 +249,3 @@ def test_byo_pytorch_onnx(model_and_data):
     record = {input_name: sample_data[0, :].tolist()}
     pred_onnx = predictor.predict(record)
     pred_orig = predictor.predict_with_model(model, record)
-
-
-# for random testing of definitions
-
-# filename = "sklearn_pipeline"
-#    with open(f"{filename}-v1-0-0.onnx", "wb") as file_:
-#        file_.write(model_card.onnx_model_def.model_bytes)
-#
-#    model_def = ModelApiDef(
-#        model_name=model_card.name,
-#        model_type=model_card.model_type,
-#        onnx_version=predictor.onnx_version,
-#        model_version=predictor.model_version,
-#        onnx_uri=f"{filename}-v1-0-0.onnx",
-#        data_schema=predictor.data_schema,
-#        sample_data=model_card._get_sample_data_for_api(),
-#    )
-#
-#    import json
-#
-#    with open(f"{filename}_model_def.json", "w") as file_:
-#        json.dump(model_def.model_dump(), file_)
