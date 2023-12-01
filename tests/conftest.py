@@ -8,10 +8,11 @@ warnings.filterwarnings("ignore")
 
 # setting initial env vars to override default sql db
 # these must be set prior to importing opsml since they establish their
-DB_FILE_PATH = f"{os.getcwd()}/tmp.db"
+DB_FILE_PATH = "tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
 STORAGE_PATH = f"{os.getcwd()}/mlruns"
 
+# TODO(@damon): Do *not* run under production just as a safety precaution.
 os.environ["APP_ENV"] = "production"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = SQL_PATH

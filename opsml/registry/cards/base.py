@@ -15,10 +15,8 @@ from opsml.helpers.utils import clean_string, validate_name_team_pattern
 from opsml.registry.cards.types import CardInfo
 from opsml.registry.sql.records import RegistryRecord
 from opsml.registry.sql.sql_schema import RegistryTableNames
-from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-storage_client = settings.storage_client
 
 SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
 
