@@ -17,7 +17,7 @@ import onnx
 import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
-from onnx.onnx_ml_pb2 import ModelProto  # pylint: disable=no-name-in-module
+from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
 from sklearn.base import BaseEstimator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -124,7 +124,7 @@ class ModelConverter:
         self,
         onnx_preds: List[Union[float, int, NDArray]],
         model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
-    ) -> bool:
+    ) -> bool:  # pragma: no cover
         """Checks if model and onnx predictions are close
 
         Args:

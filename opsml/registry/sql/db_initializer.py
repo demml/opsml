@@ -55,6 +55,7 @@ class DBInitializer:
 
     def initialize(self) -> None:
         """Create tables if they don't exist and update"""
+
         if not self.registry_tables_exist():
             self.create_tables()
         self.update_tables()

@@ -75,6 +75,17 @@ def test_card_version_fail():
         assert version.patch == "0"
 
 
+def test_version_splits_fail():
+    version = "1.0"
+
+    version = CardVersion(version=version)
+
+    with pytest.raises(AssertionError) as ve:
+        version._validate_partial_semver(["1", "a"])
+
+    assert ve.match("Version 1.a is not a valid semver")
+
+
 def test_tags():
     version = SemVerUtils.add_tags(
         version="1.0.0",

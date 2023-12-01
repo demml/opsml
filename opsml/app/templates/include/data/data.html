@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% set model_status = none %}
+{% set data_status = 'active' %}
+{% set audit_status = none %}
+{% set runs_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Data</title>
+{% endblock %}
+
+{% block content %}
+<body id="DataPage">
+<div class="container" style="padding-top:65px;">
+</div>
+
+{% set data_name_subnav = 'active' %}
+{% set data_version_subnav = none %}
+{% include "include/data/data_subnav.html" %}
+
+<br>
+<div class="container" style="padding-top:50px;">
+    <div class="row">
+      <h5 class="display-8">Select a team to view available data</h5>
+</div>
+
+
+<div class="btn-group">
+  <div class="dropdown" id="MetadataTeamSelect">
+    <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
+      
+      {% if selected_team is not none %}
+        {{selected_team}}
+      {% else %}
+        Select Team
+      {% endif %}
+
+    </a>
+  
+    <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
+      {% if all_teams is not none %}
+
+        {% for team in all_teams %}
+          <a class="dropdown-item" href="/opsml/data/list/?team={{team}}">{{team}}</a>
+        {% endfor %}
+        
+      {% else %}
+      <a class="dropdown-item" href="#">No Team Found</a>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+
+
+  <br>
+<!---- Form for selecting model -------->
+<div class="container">
+    <div class="page-header">
+      <h2>{{selected_team}}</h2>
+    </div>
+</div>
+<br>
+<div class="model-container">
+  <div class="row row-cols-md-5">
+      {% for datum in data %}
+        <div class="col-12">
+          {% with datum=datum %}
+      		{% include "include/data/card.html" %}
+    	    {% endwith %}
+        </div>
+      {% endfor %}
+    </div>
+</div>
+</body>
+
+
+{% endblock %}
