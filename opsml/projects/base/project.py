@@ -125,15 +125,19 @@ class OpsmlProject:
 
     def list_runs(self, limit: int = 100) -> List[Dict[str, Any]]:
         """
-        Lists all runs for the current project
+        Lists all runs for the current project, sorted by timestamp
 
         Returns:
             List of RunCard
         """
-        return self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
+        logger.info("Listing runs for project {}", self.project_id)
+
+        project_runs = self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
             limit=limit,
             query_terms={"project_id": self.project_id},
         )
+
+        return sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
 
     @property
     def run_data(self):

@@ -1,0 +1,102 @@
+<hr id="version-spacer">
+<div class="card-body content" id="CardMetadata">
+<div class="table-responsive">
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+    <colgroup>
+      <col span="1" style="width: 5%;">
+      <col span="1" style="width: 15%;">
+      <col span="1" style="width: 59%;">
+  </colgroup>
+    <tbody>
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">ID:</font></td>
+        <td>{{ selected_model["uid"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Name:</font></td>
+        <td>{{ metadata["model_name"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Version:</font></td>
+        <td>{{ metadata["model_version"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-users" style="color:#04b78a"></i></td>
+        <td><font color="#999">Team:</font></td>
+        <td>{{ metadata["model_team"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-file" style="color:#04b78a"></i></td>
+        <td><font color="#999">Type:</font></td>
+        <td>{{metadata["model_type"]}}</td>
+      </tr>
+
+      {% if metadata["onnx_uri"] is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Onnx Model:</font></td>
+          <td>
+            <a href="/opsml/files/download?read_path={{metadata["onnx_uri"]}}" download={{metadata["onnx_uri"].split("/")[-1]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+
+
+      {% endif %}
+
+      <tr>
+        <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+        <td><font color="#999">Trained Model:</font></td>
+        <td>
+            <a href="/opsml/files/download?read_path={{metadata["model_uri"]}}" download={{metadata["model_uri"].split("/")[-1]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+      </tr>
+
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">AuditCard:</font></td>
+        <td>
+          <a href="/opsml/audit/?team={{selected_model.team}}&model={{selected_model.name}}&version={{selected_model.version}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+      </td>
+      </tr>
+
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">DataCard:</font></td>
+        <td>
+          <a href="/opsml/data/versions/uid/?uid={{selected_model.datacard_uid}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+      </td>
+      </tr>
+
+      {% if runcard is not none %} 
+        <tr>
+          <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+          <td><font color="#999">RunCard:</font></td>
+          <td>
+            <a href="/opsml/projects/list/?project={{ runcard["project_id"] }}&run_uid={{ runcard["uid"] }}" >
+              <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+
+    </tbody>
+  </table>
+</div>
+</div>
+

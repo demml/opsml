@@ -1,0 +1,21 @@
+
+<hr id="version-spacer">
+<div class="card-body" id="CardTags">
+  <h5><i class="fa-solid fa-tag" style="color:#04b78a"></i> <font color="#999">Tags</font></h5>
+      <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+          <colgroup>
+          <col span="1" style="width: 30%;">
+          <col span="1" style="width: 60%;">
+  
+      </colgroup>
+          <tbody>
+          {% for tag_name, tag_value in runcard["tags"].items() %}
+              <tr>  
+                  <td><font color="#999">{{tag_name}}:</font></td>
+                  <td>{{tag_value}}</td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+  </div>
+

@@ -167,7 +167,7 @@ def test_model_pytorch_predict(model_and_data):
         lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
     ],
 )
-def _test_tensorflow_predict(model_and_data):
+def test_tensorflow_predict(model_and_data):
     model_predict(model_and_data)
 
 
