@@ -94,7 +94,35 @@ with project.run(run_name="test-run") as run:
 
 ## Server UI
 
-Since we are using Mlflow as a UI, when you click the uri link, you should see something similar to the following.
+Currently, Opsml serves 2 UIs. 1 is the `mlflow` UI and the other is the `opsml` UI. **Note** that `mlflow` will be removed in `opsml` v2.0.0.
+
+
+## Opsml UI
+
+### Models
+
+List models by team
+
+<p align="left">
+  <img src="../images/list-models.png"  width="449" height="413"/>
+</p>
+
+List models by version
+
+<p align="left">
+  <img src="../images/model-screen.png" width="540" height="508"/>
+</p>
+
+### Data
+
+Show data by version
+
+<p align="left">
+  <img src="../images/data-screen.png" width="612" height="508"/>
+</p>
+
+
+## Mlflow UI
 
 ### Project UI
 

@@ -11,7 +11,6 @@ from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
 from requests.auth import HTTPBasicAuth
-
 from opsml.registry import (
     AuditCard,
     DataCard,
@@ -24,7 +23,10 @@ from opsml.registry import (
     DataCardMetadata,
     ModelCardMetadata,
 )
+from opsml.app.routes.utils import list_team_name_info, error_to_500
+from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.helpers.request_helpers import ApiRoutes
+from opsml.projects import OpsmlProject
 from opsml.app.core import config
 from tests.conftest import TODAY_YMD
 from unittest.mock import patch, MagicMock
@@ -78,7 +80,7 @@ def test_register_data(
         user_email="mlops.com",
         data_splits=data_splits,
     )
-
+    data_card.create_data_profile()
     registry.register_card(card=data_card)
 
     df = registry.list_cards(name=data_card.name, team=data_card.team, max_date=TODAY_YMD, as_dataframe=True)
@@ -114,6 +116,18 @@ def test_list_card_names(
 
     assert len(names) == 1
     assert names[0] == "test-df"
+
+
+def test_list_team_info(
+    api_registries: CardRegistries,
+):
+    registry = api_registries.data
+    info = list_team_name_info(registry=registry, team="mlops")
+    assert info.names[0] == "test-df"
+    assert info.teams[0] == "mlops"
+
+    info = list_team_name_info(registry=registry)
+    assert info.names[0] == "test-df"
 
 
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
@@ -663,6 +677,26 @@ def test_model_metrics(
 
     assert response.status_code == 500
 
+    comment = CommentSaveRequest(
+        uid=auditcard.uid,
+        name=auditcard.name,
+        team=auditcard.team,
+        email=auditcard.user_email,
+        selected_model_name=modelcard.name,
+        selected_model_version=modelcard.version,
+        selected_model_team=modelcard.team,
+        selected_model_email=modelcard.user_email,
+        comment_name="test",
+        comment_text="test",
+    )
+
+    # test auditcard comment
+    response = test_app.post(
+        f"/opsml/audit/comment/save",
+        data=comment.model_dump(),
+    )
+    assert response.status_code == 200
+
 
 def test_model_metric_failure(
     test_app: TestClient,
@@ -763,6 +797,224 @@ def test_card_list_fail(test_app: TestClient):
     )
 
     assert response.status_code == 500
+
+
+##### Test ui routes
+def test_homepage(test_app: TestClient):
+    """Test settings"""
+
+    response = test_app.get(f"/opsml")
+    assert response.status_code == 200
+
+
+##### Test list models
+def test_model_list(test_app: TestClient):
+    """Test settings"""
+
+    response = test_app.get(f"/opsml/models/list/")
+    assert response.status_code == 200
+
+
+##### Test list models
+def test_data_list(test_app: TestClient):
+    """Test settings"""
+
+    response = test_app.get(f"/opsml/data/list/")
+    assert response.status_code == 200
+
+
+##### Test list data
+def test_data_model_version(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    opsml_project: OpsmlProject,
+    sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
+):
+    """Test settings"""
+
+    model, data = sklearn_pipeline
+
+    with opsml_project.run() as run:
+        datacard = DataCard(
+            data=data,
+            name="test_data",
+            team="mlops",
+            user_email="mlops.com",
+        )
+        datacard.create_data_profile()
+        run.register_card(card=datacard)
+        run.log_metric("test_metric", 10)
+        run.log_metrics({"test_metric2": 20})
+
+        modelcard = ModelCard(
+            trained_model=model,
+            sample_input_data=data[0:1],
+            name="pipeline_model",
+            team="mlops",
+            user_email="mlops.com",
+            tags={"id": "model1"},
+            datacard_uid=datacard.uid,
+        )
+        run.register_card(modelcard)
+
+    response = test_app.get(f"/opsml/data/versions/")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/data/versions/?name=test_data")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
+    assert response.status_code == 200
+
+    response = test_app.get(
+        f"/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/models/versions/")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/projects/list/?project=test:test-exp")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/projects/list/?project=test:test-exp&run_uid={run.runcard.uid}")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/projects/runs/plot/?run_uid={run.runcard.uid}")
+    assert response.status_code == 200
+
+
+##### Test audit
+def test_audit(test_app: TestClient):
+    """Test settings"""
+
+    response = test_app.get(f"/opsml/audit/")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/audit/?team=mlops")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/audit/?team=mlops&?model=pipeline_model")
+    assert response.status_code == 200
+
+    response = test_app.get(f"/opsml/audit/?team=mlops&model=pipeline_model&version=1.0.0")
+    assert response.status_code == 200
+
+    audit_form = AuditFormRequest(
+        selected_model_name="pipeline_model",
+        selected_model_team="mlops",
+        selected_model_version="1.0.0",
+        selected_model_email="mlops.com",
+        name="pipeline_audit",
+        team="mlops",
+        email="mlops.com",
+    )
+
+    response = test_app.post(
+        f"/opsml/audit/save",
+        data=audit_form.model_dump(),
+    )
+
+    assert response.status_code == 200
+
+
+def test_error_wrapper():
+    @error_to_500
+    async def fail(request):
+        raise ValueError("Fail")
+
+    fail("fail")
+
+
+def test_audit_upload(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
+):
+    model, data = sklearn_pipeline
+
+    #### Create DataCard
+    datacard = DataCard(
+        data=data,
+        name="pipeline_data",
+        team="mlops",
+        user_email="mlops.com",
+    )
+    api_registries.data.register_card(datacard)
+
+    #### Create ModelCard
+    modelcard = ModelCard(
+        name="pipeline_model",
+        team="mlops",
+        user_email="mlops.com",
+        trained_model=model,
+        sample_input_data=data[0:1],
+        datacard_uid=datacard.uid,
+    )
+    api_registries.model.register_card(modelcard)
+
+    file_ = "tests/assets/audit_file.csv"
+
+    audit_form = AuditFormRequest(
+        name="pipeline_audit",
+        team="mlops",
+        email="mlops.com",
+        selected_model_name="pipeline_model",
+        selected_model_team="mlops",
+        selected_model_version="1.0.0",
+        selected_model_email="mlops.com",
+    )
+
+    # save audit card
+    response = test_app.post(
+        f"/opsml/audit/save",
+        data=audit_form.model_dump(),
+    )
+    auditcard = api_registries.audit.list_cards()[0]
+
+    # without uid
+    response = test_app.post(
+        f"/opsml/audit/upload",
+        data=audit_form.model_dump(),
+        files={"audit_file": open(file_, "rb")},
+    )
+    assert response.status_code == 200
+
+    # with uid
+
+    audit_form = AuditFormRequest(
+        name="pipeline_audit",
+        team="mlops",
+        email="mlops.com",
+        selected_model_name="pipeline_model",
+        selected_model_team="mlops",
+        selected_model_version="1.0.0",
+        selected_model_email="mlops.com",
+        uid=auditcard["uid"],
+    )
+
+    response = test_app.post(
+        f"/opsml/audit/upload",
+        data=audit_form.model_dump(),
+        files={"audit_file": open(file_, "rb")},
+    )
+    assert response.status_code == 200
+
+    # test downloading audit file
+    response = test_app.post(
+        f"/opsml/audit/download",
+        data=audit_form.model_dump(),
+    )
+    assert response.status_code == 200
 
 
 def test_registry_name_fail(test_app: TestClient):
