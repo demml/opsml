@@ -174,10 +174,9 @@ def test_array(test_array, storage_client):
     assert isinstance(array, np.ndarray)
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
-def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib):
+def test_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
     model_storage = TensorflowModelStorage(
         artifact_type="keras",
@@ -192,12 +191,11 @@ def test_tensorflow_model(storage_client, load_transformer_example, mock_pathlib
     assert model is not None
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "storage_client",
     [lazy_fixture("local_storage_client")],
 )
-def test_pytorch_model(storage_client, load_pytorch_resnet, mock_pathlib):
+def test_pytorch_model(storage_client, load_pytorch_resnet):
     model, data = load_pytorch_resnet
     model_storage = PyTorchModelStorage(
         artifact_type="pytorch",
