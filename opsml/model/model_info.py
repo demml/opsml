@@ -141,8 +141,6 @@ class PandasDataFrameData(ModelData):
     def __init__(self, input_data):
         super().__init__(input_data=input_data)
 
-        import pandas as pd
-
         self.data = cast(pd.DataFrame, self.data)
 
         if self.has_category:
@@ -293,7 +291,7 @@ class FloatTypeConverter:
         if isinstance(data, np.ndarray):
             return self._convert_array(data=data)
 
-        return self._convert_dict(data=data)
+        return self._convert_dict(data=cast(Dict[str, NDArray], data))
 
 
 @dataclass

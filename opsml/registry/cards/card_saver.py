@@ -134,10 +134,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             data=self.card.data,
             data_type=self.card.metadata.data_type,
         )
-        arrow_table.feature_map = DataFormatter.create_table_schema(
-            data=self.card.data,
-            data_type=self.card.metadata.data_type,
-        )
+        arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
     def _save_data_to_storage(self, data: Union[pa.Table, np.ndarray, ImageDataset]) -> StoragePath:
