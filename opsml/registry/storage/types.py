@@ -9,25 +9,29 @@ from typing import Any, List, Optional, Union
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.request_helpers import ApiClient
+from opsml.registry.data.types import AllowedDataType
 
 FilePath = Union[List[str], str]
 
 
 class ArtifactStorageType(str, Enum):
-    PANDAS_DATAFRAME = "PandasDataFrame"
-    POLARS_DATAFRAME = "PolarsDataFrame"
-    ARROW_TABLE = "Table"
     HTML = "html"
-    NDARRAY = "ndarray"
     TF_MODEL = "keras"
     PYTORCH = "pytorch"
     JSON = "json"
     BOOSTER = "booster"
     ONNX = "onnx"
-    IMAGE_DATASET = "ImageDataset"
 
 
-ARTIFACT_TYPES = list(ArtifactStorageType)
+ARTIFACT_TYPES = [
+    *list(ArtifactStorageType),
+    *[
+        AllowedDataType.NUMPY,
+        AllowedDataType.PANDAS,
+        AllowedDataType.POLARS,
+        AllowedDataType.IMAGE,
+    ],
+]
 
 
 class StorageClientSettings(BaseModel):
