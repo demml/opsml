@@ -190,7 +190,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             model_data_schema=DataDict(
                 input_features=input_features,
                 output_features=output_features,
-                data_type=AllowedDataType(self.input_data_type).name,
+                data_type=self.input_data_type,
             )
         )
 

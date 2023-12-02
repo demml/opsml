@@ -4,14 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, List, Union, cast
+from typing import Any, List, Union
+import pandas as pd
+import polars as pl
 
-from opsml.registry.data.types import (
-    AllowedDataType,
-    PandasDataFrame,
-    PolarsDataFrame,
-    get_class_name,
-)
 
 DIR_PATH = os.path.dirname(__file__)
 ProfileReport = Any  # custom runtime check in DataCard
@@ -20,7 +16,7 @@ ProfileReport = Any  # custom runtime check in DataCard
 class DataProfiler:
     @staticmethod
     def create_profile_report(
-        data: Union[PandasDataFrame, PolarsDataFrame],
+        data: Union[pd.DataFrame, pl.DataFrame],
         name: str,
         sample_perc: float = 1,
     ) -> ProfileReport:
@@ -42,21 +38,17 @@ class DataProfiler:
 
         kwargs = {"title": f"Profile report for {name}"}
 
-        if AllowedDataType.POLARS == get_class_name(data):
-            import polars as pl
-
-            polars_data = cast(pl.DataFrame, data)
-
+        if isinstance(data, pl.DataFrame):
             if sample_perc < 1:
                 return ProfileReport(
-                    df=polars_data.sample(fraction=sample_perc, with_replacement=False, shuffle=True).to_pandas(),
+                    df=data.sample(fraction=sample_perc, with_replacement=False, shuffle=True).to_pandas(),
                     config_file=os.path.join(DIR_PATH, "profile_config.yml"),
                     lazy=False,
                     **kwargs,
                 )
 
             return ProfileReport(
-                df=polars_data.to_pandas(),
+                df=data.to_pandas(),
                 config_file=os.path.join(DIR_PATH, "profile_config.yml"),
                 lazy=False,
                 **kwargs,
