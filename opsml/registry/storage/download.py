@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard
-from opsml.registry.cards.types import DataCardUris, DataCardMetadata
+from opsml.registry.cards.types import DataCardMetadata, DataCardUris
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image import ImageDataset

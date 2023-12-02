@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, cast
 
 import numpy as np
 from pydantic import ConfigDict, field_validator, model_validator
@@ -24,7 +24,6 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.data.types import (
     AllowedDataType,
-    PandasDataFrame,
     PolarsDataFrame,
     get_class_name,
 )

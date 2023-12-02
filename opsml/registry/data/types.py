@@ -5,11 +5,12 @@
 
 import sys
 from enum import Enum
-from typing import Any, Dict, Mapping, Optional, Protocol, Union, List
+from typing import Any, Dict, List, Mapping, Optional, Protocol, Union
 
 import numpy as np
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
+
 from opsml.registry.image import ImageDataset
 
 if sys.version_info >= (3, 10):
@@ -18,14 +19,12 @@ else:
     from typing_extensions import TypeAlias
 
 
-class Feature(object):
+class Feature:
     ...
 
 
 # DataCard data type hints
 class PandasDataFrame(Protocol):
-    ...
-
     def sample(self, frac: float, replace: bool):
         ...
 
@@ -48,8 +47,6 @@ class PandasDataFrame(Protocol):
 
 
 class PolarsDataFrame(Protocol):
-    ...
-
     def sample(self, frac: float, replace: bool):
         ...
 
