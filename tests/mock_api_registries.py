@@ -12,7 +12,7 @@ from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.data.types import PandasDataFrame
+import pandas as pd
 
 logger = ArtifactLogger.get_logger()
 
@@ -207,7 +207,7 @@ class CardRegistry:
         limit: Optional[int] = None,
         as_dataframe: bool = False,
         ignore_release_candidates: bool = False,
-    ) -> Union[List[Dict[str, Any]], PandasDataFrame]:
+    ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """Retrieves records from registry
 
         Args:
