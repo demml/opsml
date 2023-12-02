@@ -7,14 +7,11 @@ from typing import Any, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import pandas as pd
+import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from opsml.registry.data.types import (
-    AllowedDataType,
-    PandasDataFrame,
-    PandasTimestamp,
-    PolarsDataFrame,
-)
+from opsml.registry.data.types import AllowedDataType
 
 
 class DataHolder(BaseModel):
@@ -25,8 +22,8 @@ class DataHolder(BaseModel):
 
 @dataclass
 class Data:
-    X: Union[PolarsDataFrame, PandasDataFrame, pa.Table, np.ndarray]
-    y: Optional[Union[PolarsDataFrame, PandasDataFrame, pa.Table, np.ndarray]] = None
+    X: Union[pl.DataFrame, pd.DataFrame, pa.Table, np.ndarray]
+    y: Optional[Union[pl.DataFrame, pd.DataFrame, pa.Table, np.ndarray]] = None
 
 
 class DataSplit(BaseModel):
@@ -34,7 +31,7 @@ class DataSplit(BaseModel):
 
     label: str
     column_name: Optional[str] = None
-    column_value: Optional[Union[str, float, int, PandasTimestamp]] = None
+    column_value: Optional[Union[str, float, int, pd.Timestamp]] = None
     inequality: Optional[str] = None
     start: Optional[int] = None
     stop: Optional[int] = None
@@ -118,35 +115,31 @@ class DataSplitterBase:
 class PolarsColumnSplitter(DataSplitterBase):
     """Column splitter for Polars dataframe"""
 
-    def create_split(self, data: PolarsDataFrame) -> Tuple[str, Data]:
-        import polars as pl
-
-        polars_data = cast(pl.DataFrame, data)
-
+    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         if self.split.inequality is None:
-            polars_data = polars_data.filter(pl.col(self.column_name) == self.column_value)
+            data = data.filter(pl.col(self.column_name) == self.column_value)
 
         elif self.split.inequality == ">":
-            polars_data = polars_data.filter(pl.col(self.column_name) > self.column_value)
+            data = data.filter(pl.col(self.column_name) > self.column_value)
 
         elif self.split.inequality == ">=":
-            polars_data = polars_data.filter(pl.col(self.column_name) >= self.column_value)
+            data = data.filter(pl.col(self.column_name) >= self.column_value)
 
         elif self.split.inequality == "<":
-            polars_data = polars_data.filter(pl.col(self.column_name) < self.column_value)
+            data = data.filter(pl.col(self.column_name) < self.column_value)
 
         else:
-            polars_data = polars_data.filter(pl.col(self.column_name) <= self.column_value)
+            data = data.filter(pl.col(self.column_name) <= self.column_value)
 
         if self.dependent_vars is not None:
-            x_cols = self.get_x_cols(columns=polars_data.columns, dependent_vars=self.dependent_vars)
+            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
-                X=polars_data.select(x_cols),
-                y=polars_data.select(self.dependent_vars),
+                X=data.select(x_cols),
+                y=data.select(self.dependent_vars),
             )
 
-        return self.split.label, Data(X=polars_data)
+        return self.split.label, Data(X=data)
 
     @staticmethod
     def validate(data_type: str, split: DataSplit):
@@ -156,7 +149,7 @@ class PolarsColumnSplitter(DataSplitterBase):
 class PolarsIndexSplitter(DataSplitterBase):
     """Split Polars DataFrame by rows index"""
 
-    def create_split(self, data: PolarsDataFrame) -> Tuple[str, Data]:
+    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         # slice
         data = data[self.indices]
 
@@ -178,7 +171,7 @@ class PolarsIndexSplitter(DataSplitterBase):
 class PolarsRowsSplitter(DataSplitterBase):
     """Split Polars DataFrame by rows slice"""
 
-    def create_split(self, data: PolarsDataFrame) -> Tuple[str, Data]:
+    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
         # slice
         data = data[self.start : self.stop]
 
@@ -198,16 +191,12 @@ class PolarsRowsSplitter(DataSplitterBase):
 
 
 class PandasIndexSplitter(DataSplitterBase):
-    def create_split(self, data: PandasDataFrame) -> Tuple[str, Data]:
-        import pandas as pd
-
-        pandas_data = cast(pd.DataFrame, data)
-
-        pandas_data = pandas_data.iloc[self.indices]
+    def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
+        data = data.iloc[self.indices]
 
         if self.dependent_vars is not None:
-            x = pandas_data[pandas_data.columns[~pandas_data.columns.isin(self.dependent_vars)]]
-            y = pandas_data[pandas_data.columns[pandas_data.columns.isin(self.dependent_vars)]]
+            x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
+            y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
             return self.split.label, Data(X=x, y=y)
 
@@ -219,16 +208,13 @@ class PandasIndexSplitter(DataSplitterBase):
 
 
 class PandasRowSplitter(DataSplitterBase):
-    def create_split(self, data: PandasDataFrame) -> Tuple[str, Data]:
-        import pandas as pd
-
-        pandas_data = cast(pd.DataFrame, data)
+    def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         # slice
-        pandas_data = pandas_data[self.start : self.stop]
+        data = data[self.start : self.stop]
 
         if self.dependent_vars is not None:
-            x = pandas_data[pandas_data.columns[~pandas_data.columns.isin(self.dependent_vars)]]
-            y = pandas_data[pandas_data.columns[pandas_data.columns.isin(self.dependent_vars)]]
+            x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
+            y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
             return self.split.label, Data(X=x, y=y)
 
@@ -240,30 +226,26 @@ class PandasRowSplitter(DataSplitterBase):
 
 
 class PandasColumnSplitter(DataSplitterBase):
-    def create_split(self, data: PandasDataFrame) -> Tuple[str, Data]:
-        import pandas as pd
-
-        pandas_data = cast(pd.DataFrame, data)
-
+    def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         if self.split.inequality is None:
-            pandas_data = pandas_data[pandas_data[self.column_name] == self.column_value]
+            data = data[data[self.column_name] == self.column_value]
 
         elif self.split.inequality == ">":
-            pandas_data = pandas_data[pandas_data[self.column_name] > self.column_value]
+            data = data[data[self.column_name] > self.column_value]
 
         elif self.split.inequality == ">=":
-            pandas_data = pandas_data[pandas_data[self.column_name] >= self.column_value]
+            data = data[data[self.column_name] >= self.column_value]
 
         elif self.split.inequality == "<":
-            pandas_data = pandas_data[pandas_data[self.column_name] < self.column_value]
+            data = data[data[self.column_name] < self.column_value]
 
         else:
-            pandas_data = pandas_data[pandas_data[self.column_name] <= self.column_value]
+            data = data[data[self.column_name] <= self.column_value]
 
         if self.dependent_vars is not None:
             return self.split.label, Data(
-                X=pandas_data[pandas_data.columns[~pandas_data.columns.isin(self.dependent_vars)]],
-                y=pandas_data[pandas_data.columns[pandas_data.columns.isin(self.dependent_vars)]],
+                X=data[data.columns[~data.columns.isin(self.dependent_vars)]],
+                y=data[data.columns[data.columns.isin(self.dependent_vars)]],
             )
 
         data_split = Data(X=data)
@@ -306,7 +288,7 @@ class DataSplitter:
     @staticmethod
     def split(
         split: DataSplit,
-        data: Union[PandasDataFrame, np.ndarray, PolarsDataFrame],
+        data: Union[pd.DataFrame, np.ndarray, pl.DataFrame],
         data_type: str,
         dependent_vars: Optional[List[Union[int, str]]] = None,
     ):

@@ -11,6 +11,7 @@ from typing import Any, Optional, Tuple
 import joblib
 import numpy as np
 import pyarrow as pa
+import polars as pl
 import pyarrow.parquet as pq
 import zarr
 
@@ -367,8 +368,6 @@ class ParquetStorage(ArtifactStorage):
             return pa_table.to_pandas()
 
         if self.artifact_type == AllowedDataType.POLARS:
-            import polars as pl
-
             return pl.from_arrow(data=pa_table)
 
         return pa_table

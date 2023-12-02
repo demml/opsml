@@ -5,99 +5,17 @@
 
 import sys
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Protocol, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pyarrow as pa
+import pandas as pd
+import polars as pl
 from pydantic import BaseModel, ConfigDict
 
 from opsml.registry.image import ImageDataset
 
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
-
-
-class Feature:
-    ...
-
-
-# DataCard data type hints
-class PandasDataFrame(Protocol):
-    def sample(self, frac: float, replace: bool):
-        ...
-
-    def __iter__(self):
-        ...
-
-    def __getitem__(self, key):
-        ...
-
-    @property
-    def columns(self) -> List[str]:
-        ...
-
-    @property
-    def dtypes(self) -> List[Feature]:
-        ...
-
-    def astype(self, dtype: Dict[str, Any]) -> "PandasDataFrame":
-        ...
-
-
-class PolarsDataFrame(Protocol):
-    def sample(self, frac: float, replace: bool):
-        ...
-
-    @property
-    def columns(self) -> List[str]:
-        ...
-
-    def __getitem__(self, key):
-        ...
-
-    def select(self, data: Any) -> "PolarsDataFrame":
-        ...
-
-    def to_pandas(self) -> PandasDataFrame:
-        ...
-
-
-class DataTypeClass(type):
-    ...
-
-
-class DataType(type):
-    ...
-
-
-class PandasTimestamp(Protocol):
-    ...
-
-
-ValidData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table, ImageDataset]
-
-
-PolarsDataType: TypeAlias = Union["DataTypeClass", "DataType"]
-PolarsSchemaDict: TypeAlias = Mapping[str, PolarsDataType]
-
-
-def get_class_name(object_: ValidData) -> str:
-    """Parses object to get the fully qualified class name.
-    Used during type checking to avoid unnecessary imports.
-
-    Args:
-        object_:
-            object to parse
-    Returns:
-        fully qualified class name
-    """
-    klass = object_.__class__
-    module = klass.__module__
-    if module == "builtins":
-        return klass.__qualname__  # avoid outputs like 'builtins.str'
-    return module + "." + klass.__qualname__
+ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]
 
 
 class AllowedDataType(str, Enum):
@@ -117,70 +35,6 @@ class ArrowTable(BaseModel):
     feature_map: Optional[Dict[str, Any]] = None
 
 
-class DataTypeChecker:
-    @staticmethod
-    def check_data_type(data: ValidData) -> None:
-        raise NotImplementedError
-
-    @staticmethod
-    def validate_type(data_type: str) -> bool:
-        raise NotImplementedError
-
-
-class PandasTypeChecker(DataTypeChecker):
-    @staticmethod
-    def check_data_type(data: ValidData) -> None:
-        import pandas as pd
-
-        assert isinstance(data, pd.DataFrame), "Data must be a pandas dataframe"
-
-    @staticmethod
-    def validate_type(data_type: str) -> bool:
-        return AllowedDataType.PANDAS == data_type
-
-
-class PolarsTypeChecker(DataTypeChecker):
-    @staticmethod
-    def check_data_type(data: ValidData) -> None:
-        import polars as pl
-
-        assert isinstance(data, pl.DataFrame), "Data must be a polars dataframe"
-
-    @staticmethod
-    def validate_type(data_type: str) -> bool:
-        return AllowedDataType.POLARS == data_type
-
-
-class NumpyTypeChecker(DataTypeChecker):
-    @staticmethod
-    def check_data_type(data: ValidData) -> None:
-        assert isinstance(data, np.ndarray), "Data must be a numpy array"
-
-    @staticmethod
-    def validate_type(data_type: str) -> bool:
-        return AllowedDataType.NUMPY == data_type
-
-
-class PyarrowTypeChecker(DataTypeChecker):
-    @staticmethod
-    def check_data_type(data: ValidData) -> None:
-        assert isinstance(data, pa.Table), "Data must be a pyarrow table"
-
-    @staticmethod
-    def validate_type(data_type: str) -> bool:
-        return AllowedDataType.PYARROW == data_type
-
-
-class ImageTypeChecker(DataTypeChecker):
-    @staticmethod
-    def check_data_type(data: ValidData) -> None:
-        assert isinstance(data, ImageDataset), "Data must be an ImageDataset"
-
-    @staticmethod
-    def validate_type(data_type: str) -> bool:
-        return AllowedDataType.IMAGE in data_type
-
-
 def check_data_type(data: ValidData) -> str:
     """Checks that the data type is one of the allowed types
 
@@ -191,24 +45,19 @@ def check_data_type(data: ValidData) -> str:
     Returns:
         data type
     """
-    data_type = get_class_name(data)
+    if isinstance(data, dict):
+        return AllowedDataType.DICT
+    if isinstance(data, ImageDataset):
+        return AllowedDataType.IMAGE
+    if isinstance(data, np.ndarray):
+        return AllowedDataType.NUMPY
+    if isinstance(data, pd.DataFrame):
+        return AllowedDataType.PANDAS
+    if isinstance(data, pl.DataFrame):
+        return AllowedDataType.POLARS
 
-    data_type_checker = next(
-        (
-            data_type_checker
-            for data_type_checker in DataTypeChecker.__subclasses__()
-            if data_type_checker.validate_type(data_type)
-        ),
-        None,
+    raise ValueError(
+        f"""Data must be one of the following types: numpy array, pandas dataframe, 
+        polars dataframe, pyarrow table, or ImageDataset. Received {str(type(data))}
+        """
     )
-
-    if data_type_checker is None:
-        raise ValueError(
-            f"""Data must be one of the following types: numpy array, pandas dataframe, 
-            polars dataframe, pyarrow table, or ImageDataset. Received {data_type}
-            """
-        )
-
-    data_type_checker.check_data_type(data)
-
-    return data_type

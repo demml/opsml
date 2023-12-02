@@ -3,11 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional, cast, Union
 
 import numpy as np
 from pydantic import ConfigDict, field_validator, model_validator
-
+import polars as pl
+import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
@@ -22,11 +23,7 @@ from opsml.model.types import (
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
-from opsml.registry.data.types import (
-    AllowedDataType,
-    PolarsDataFrame,
-    get_class_name,
-)
+from opsml.registry.data.types import AllowedDataType, check_data_type
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -91,11 +88,13 @@ class ModelCard(ArtifactCard):
         metadata = values.get("metadata")
 
         if metadata is None:
-            values["metadata"] = ModelCardMetadata(
-                sample_data_type=get_class_name(
-                    values["sample_input_data"],
+            data_type = check_data_type(values["sample_input_data"])
+            if data_type in [AllowedDataType.IMAGE]:
+                raise ValueError(
+                    f"""Invalid model data input type. Accepted types are a pandas dataframe, 
+                                 numpy array and dictionary of numpy arrays. Received {data_type}""",
                 )
-            )
+            values["metadata"] = ModelCardMetadata(sample_data_type=data_type)
         return values
 
     @field_validator("sample_input_data", mode="before")
@@ -105,12 +104,9 @@ class ModelCard(ArtifactCard):
         if input_data is None:
             return input_data
 
-        data_type = get_class_name(input_data)
-
         if not isinstance(input_data, dict):
-            if data_type == AllowedDataType.POLARS:
-                polars_data = cast(PolarsDataFrame, input_data)
-                input_data = polars_data.to_pandas()
+            if isinstance(input_data, pl.DataFrame):
+                input_data = input_data.to_pandas()
 
             return input_data[0:1]
 
@@ -277,24 +273,21 @@ class ModelCard(ArtifactCard):
         if self.sample_input_data is None:
             self.load_sample_data()
 
-        data_type = get_class_name(self.sample_input_data)
+        sample_data = cast(
+            Union[pd.DataFrame, np.ndarray, Dict[str, Any]],
+            self.sample_input_data,
+        )
 
-        if isinstance(self.sample_input_data, np.ndarray):
+        if isinstance(sample_data, np.ndarray):
             model_data = self.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
-            return {input_name: self.sample_input_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
+            return {input_name: sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
 
-        if data_type == AllowedDataType.PANDAS:
-            import pandas as pd
-
-            sample_data = cast(pd.DataFrame, self.sample_input_data)
+        if isinstance(sample_data, pd.DataFrame):
             record = list(sample_data[0:1].T.to_dict().values())[0]  # pylint: disable=unsubscriptable-object
             return record
 
-        if data_type == AllowedDataType.POLARS:
-            import polars as pl
-
-            sample_data = cast(pl.DataFrame, self.sample_input_data)
+        if isinstance(sample_data, pl.DataFrame):
             record = list(sample_data.to_pandas()[0:1].T.to_dict().values())[0]
             return record
 

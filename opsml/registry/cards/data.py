@@ -6,6 +6,8 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
+import pandas as pd
+import polars as pl
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -18,8 +20,6 @@ from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.data.types import (
     AllowedDataType,
-    PandasDataFrame,
-    PolarsDataFrame,
     ValidData,
     check_data_type,
 )
@@ -208,7 +208,7 @@ class DataCard(ArtifactCard):
                 label, data = DataSplitter.split(
                     split=data_split,
                     dependent_vars=self.dependent_vars,
-                    data=cast(Union[np.ndarray, PandasDataFrame, PolarsDataFrame], self.data),
+                    data=self.data,
                     data_type=self.metadata.data_type,
                 )
                 setattr(data_holder, label, data)
@@ -289,16 +289,10 @@ class DataCard(ArtifactCard):
 
         """
 
-        if any(
-            allowed_type == self.metadata.data_type
-            for allowed_type in [
-                AllowedDataType.PANDAS,
-                AllowedDataType.POLARS,
-            ]
-        ):
+        if isinstance(self.data, (pl.DataFrame, pd.DataFrame)):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
-                    data=cast(Union[PandasDataFrame, PolarsDataFrame], self.data),
+                    data=self.data,
                     name=self.name,
                     sample_perc=min(sample_perc, 1),  # max of 1
                 )

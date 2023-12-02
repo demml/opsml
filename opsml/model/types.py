@@ -10,12 +10,12 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol, Union
 
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-from opsml.registry.data.types import PandasDataFrame
 
-ValidModelInput = Union[PandasDataFrame, NDArray, Dict[str, NDArray]]
+ValidModelInput = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
 
 class DataDtypes(str, Enum):
@@ -193,8 +193,6 @@ class DictBase(Base):
         return feats
 
     def to_dataframe(self):
-        import pandas as pd
-
         return pd.DataFrame(self.model_dump(), index=[0])
 
 
