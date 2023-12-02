@@ -2,12 +2,20 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union, cast
-from opsml.registry.data.types import AllowedTableTypes, PandasDataFrame, PolarsDataFrame
+from typing import Any, Dict, Union, cast, Mapping
+from opsml.registry.data.types import (
+    AllowedTableTypes,
+    PandasDataFrame,
+    PolarsDataFrame,
+    AllowedDataType,
+    PolarsSchemaDict,
+)
 import numpy as np
 import pyarrow as pa
 
+
 from .types import AllowedTableTypes, ArrowTable
+
 
 ValidArrowData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table]
 
@@ -22,7 +30,7 @@ class ArrowFormatter(ABC):
 
     @staticmethod
     @abstractmethod
-    def validate_data(data: Any) -> bool:
+    def validate_data(data_type: str) -> bool:
         """Validate data to formatter"""
         raise NotImplementedError
 
@@ -46,13 +54,13 @@ class PolarsFormatter(ArrowFormatter):
         )
 
     @staticmethod
-    def validate_data(data: PandasDataFrame) -> bool:
-        return isinstance(data, pl.DataFrame)
+    def validate_data(data_type: str) -> bool:
+        return AllowedDataType.POLARS == data_type
 
 
 class PandasFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: pd.DataFrame) -> ArrowTable:
+    def convert(data: PandasDataFrame) -> ArrowTable:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -71,8 +79,8 @@ class PandasFormatter(ArrowFormatter):
         )
 
     @staticmethod
-    def validate_data(data: pd.DataFrame) -> bool:
-        return isinstance(data, pd.DataFrame)
+    def validate_data(data_type: str) -> bool:
+        return AllowedDataType.PANDAS == data_type
 
 
 class NumpyFormatter(ArrowFormatter):
@@ -94,8 +102,8 @@ class NumpyFormatter(ArrowFormatter):
         )
 
     @staticmethod
-    def validate_data(data: np.ndarray) -> bool:
-        return isinstance(data, np.ndarray)
+    def validate_data(data_type: str):
+        return AllowedDataType.NUMPY == data_type
 
 
 class ArrowTableFormatter(ArrowFormatter):
@@ -116,8 +124,8 @@ class ArrowTableFormatter(ArrowFormatter):
         )
 
     @staticmethod
-    def validate_data(data: pa.Table):
-        return isinstance(data, pa.Table)
+    def validate_data(data_type: str):
+        return AllowedDataType.PYARROW == data_type
 
 
 # Run tests for data formatter
@@ -129,12 +137,16 @@ class DataFormatter:
             PandasDataFrame,
             PolarsDataFrame,
             np.ndarray,
-        ]
+        ],
+        data_type: str,
     ) -> ArrowTable:
         """
         Converts a pandas dataframe or numpy array into a py arrow table.
         Args:
-            data: Pandas dataframe or numpy array.
+            data:
+                Pandas dataframe or numpy array.
+            data_type:
+                Data type of data.
         Returns:
             py arrow table
         """
@@ -143,7 +155,7 @@ class DataFormatter:
             (
                 arrow_formatter
                 for arrow_formatter in ArrowFormatter.__subclasses__()
-                if arrow_formatter.validate_data(data=data)
+                if arrow_formatter.validate_data(data_type=data_type)
             )
         )
 
@@ -152,6 +164,7 @@ class DataFormatter:
     @staticmethod
     def create_table_schema(
         data: ValidArrowData,
+        data_type: str,
     ) -> Dict[str, Any]:
         """
         Generates a schema (column: type) from a py arrow table.
@@ -160,10 +173,16 @@ class DataFormatter:
         Returns:
             schema: Dict[str,str]
         """
-        if isinstance(data, pd.DataFrame):
+        if data_type == AllowedDataType.PANDAS:
+            import pandas as pd
+
+            data = cast(pd.DataFrame, data)
             return data.dtypes.to_dict()
 
-        if isinstance(data, pl.DataFrame):
+        if data_type == AllowedDataType.POLARS:
+            import polars as pl
+
+            data = cast(pl.DataFrame, data)
             return cast(Dict[str, Any], data.schema)
 
         if isinstance(data, pa.Table):
@@ -199,8 +218,8 @@ class SchemaValidator:
 class PolarsSchemaValidator(SchemaValidator):
     def __init__(
         self,
-        data: pl.DataFrame,
-        schema: pl.type_aliases.SchemaDict,
+        data: PolarsDataFrame,
+        schema: PolarsSchemaDict,
     ):
         """Instantiates schema validator for Polars dataframes
 
@@ -213,8 +232,9 @@ class PolarsSchemaValidator(SchemaValidator):
 
         super().__init__(data=data, schema=schema)
 
-    def validate_schema(self) -> pl.DataFrame:
+    def validate_schema(self) -> PolarsDataFrame:
         """Validate polars schema. Columns are converted if schema does not match"""
+        import polars as pl
 
         if self.data.schema != self.schema:
             self.data = self.data.with_columns([pl.col(col).cast(self.schema[col]) for col in self.data.columns])
@@ -222,14 +242,14 @@ class PolarsSchemaValidator(SchemaValidator):
         return self.data
 
     @staticmethod
-    def validate_data(data: pl.DataFrame) -> bool:
-        return isinstance(data, pl.DataFrame)
+    def validate_data(data_type: str) -> bool:
+        return AllowedDataType.POLARS == data_type
 
 
 class PandasSchemaValidator(SchemaValidator):
     def __init__(
         self,
-        data: pd.DataFrame,
+        data: PandasDataFrame,
         schema: Dict[str, str],
     ):
         """Instantiates schema validator for Polars dataframes
@@ -242,20 +262,25 @@ class PandasSchemaValidator(SchemaValidator):
         """
         super().__init__(data=data, schema=schema)
 
-    def validate_schema(self) -> pd.DataFrame:
+    def validate_schema(self) -> PandasDataFrame:
         """Validate pandas schema. Columns are converted if schema does not match"""
 
         if self.data.dtypes.to_dict() != self.schema:
             for col in self.data.columns:
                 self.data[col] = self.data[col].astype(self.schema[col])
-        return self.data
+
+        return cast(PandasDataFrame, self.data)
 
     @staticmethod
-    def validate_data(data: pd.DataFrame) -> bool:
-        return isinstance(data, pd.DataFrame)
+    def validate_data(data_type: str) -> bool:
+        return AllowedDataType.PANDAS == data_type
 
 
-def check_data_schema(data: ValidArrowData, schema: Dict[str, str]) -> ValidArrowData:
+def check_data_schema(
+    data: ValidArrowData,
+    schema: Dict[str, str],
+    data_type: str,
+) -> ValidArrowData:
     """Check if data schema matches schema
 
     Args:
@@ -263,9 +288,18 @@ def check_data_schema(data: ValidArrowData, schema: Dict[str, str]) -> ValidArro
             Data to check schema
         schema:
             Schema to check
+        data_type:
+            Data type of data
     """
     validator = next(
-        (validator for validator in SchemaValidator.__subclasses__() if validator.validate_data(data=data)), None
+        (
+            validator
+            for validator in SchemaValidator.__subclasses__()
+            if validator.validate_data(
+                data_type=data_type,
+            )
+        ),
+        None,
     )
 
     if validator is None:

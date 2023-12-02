@@ -130,7 +130,9 @@ class DataCardArtifactSaver(CardArtifactSaver):
         Returns:
             arrow table model
         """
-        arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.data)
+        arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
+            data=self.card.data, data_type=self.card.metadata.daeta_type
+        )
         arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
