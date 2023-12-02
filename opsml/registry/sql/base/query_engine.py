@@ -347,9 +347,7 @@ class QueryEngine:
         query = self._uid_exists_query(uid=uid, table_to_check=table_to_check)
 
         with self.session() as sess:
-            results = sess.execute(query).first()
-
-        return results
+            return sess.execute(query).first()
 
     def add_and_commit_card(
         self,
@@ -395,9 +393,7 @@ class QueryEngine:
         query = select(team_col).distinct()
 
         with self.session() as sess:
-            results = sess.scalars(query).all()  # type: ignore[attr-defined]
-
-        return results
+            return sess.scalars(query).all()  # type: ignore[attr-defined]
 
     def get_unique_card_names(self, team: Optional[str], table: Type[REGISTRY_TABLES]) -> List[str]:
         """Returns a list of unique card names"""
@@ -410,15 +406,13 @@ class QueryEngine:
             query = query.distinct()
 
         with self.session() as sess:
-            results = sess.scalars(query).all()  # type: ignore[attr-defined]
-
-        return results
+            return sess.scalars(query).all()  # type: ignore[attr-defined]
 
     def delete_card_record(
         self,
         table: Type[REGISTRY_TABLES],
         card: Dict[str, Any],
-    ):
+    ) -> None:
         record_uid = cast(str, card.get("uid"))
         with self.session() as sess:
             query = sess.query(table).filter(table.uid == record_uid)

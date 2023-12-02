@@ -14,7 +14,7 @@ import numpy as np
 
 # Opsml
 from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
-from opsml.projects import ProjectInfo, MlflowProject
+from opsml.projects import ProjectInfo, OpsmlProject
 from opsml.model.challenger import ModelChallenger
 
 ###################### Create data
@@ -44,7 +44,7 @@ data_reg.register_card(card=datacard)
 
 ###################### Create 1st model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lin-reg") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
@@ -70,7 +70,7 @@ with project.run(run_name="challenger-lin-reg") as run:
 
 ###################### Create 2nd model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lasso") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
@@ -96,7 +96,7 @@ with project.run(run_name="challenger-lasso") as run:
 
 ###################### Create 3rd model
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenger-poisson") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()

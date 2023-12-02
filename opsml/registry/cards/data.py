@@ -26,7 +26,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-storage_client = settings.storage_client
 
 
 class DataValidator:
@@ -214,7 +213,7 @@ class DataCard(ArtifactCard):
         download_object(
             card=self,
             artifact_type=self.metadata.data_type,
-            storage_client=storage_client,
+            storage_client=settings.storage_client,
         )
 
     def create_registry_record(self) -> RegistryRecord:
@@ -324,13 +323,12 @@ class DataDownloader(Downloader):
             logger.info("Data already exists")
             return
 
-        self.storage_client.storage_spec = ArtifactStorageSpecs(
-            save_path=self.card.metadata.uris.data_uri,
-        )
-
         data = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
             artifact_type=cast(str, self.card.metadata.data_type),
+            storage_client=self.storage_client,
+            storage_spec=ArtifactStorageSpecs(
+                save_path=self.card.metadata.uris.data_uri,
+            ),
         )
 
         data = check_data_schema(data, cast(Dict[str, str], self.card.metadata.feature_map))
@@ -359,15 +357,17 @@ class ImageDownloader(Downloader):
             return
 
         kwargs = {"image_dir": data.image_dir}
-        self.storage_client.storage_spec = ArtifactStorageSpecs(
-            save_path=self.card.metadata.uris.data_uri,
-        )
 
-        data = load_record_artifact_from_storage(
-            storage_client=self.storage_client,
+        record = load_record_artifact_from_storage(
             artifact_type=cast(str, self.card.metadata.data_type),
+            storage_client=self.storage_client,
+            storage_spec=ArtifactStorageSpecs(
+                save_path=self.card.metadata.uris.data_uri,
+            ),
             **kwargs,
         )
+        assert record is not None
+        data = cast(ImageDataset, record)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

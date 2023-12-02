@@ -61,9 +61,6 @@ tenacity = "^8.2.2"
 ydata-profiling = "^4.6.1"
 zarr = ">2.12.0"
 
-# mlflow deps (remove this in the future if we create our own ui. mlflow has a good # of deps)
-mlflow = ">=2.3.1, <=2.4"
-
 # optional dependencies for sql
 psycopg2 = { version = "^2.9.6", optional = true }
 
@@ -200,7 +197,7 @@ extension-pkg-whitelist = ["pydantic"]
 # This section is just a doc placeholder..see setup.cfg
 max-complexity = 10
 format = "pylint"
-statistics = "True"
+statistics = true
 max-line-length = 125
 # ignore non-PEP8 lints
 ignore = ["E203", "W503", "W0511"]
@@ -218,6 +215,9 @@ python_version = "3.9"
 platform = "linux"
 mypy_path = "stubs"
 ignore_missing_imports = true
+# TODO: enable
+# strict = true
+
 plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",

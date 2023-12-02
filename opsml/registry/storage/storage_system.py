@@ -11,43 +11,19 @@ import uuid
 import warnings
 from contextlib import contextmanager
 from enum import Enum
-from functools import wraps
 from pathlib import Path
-from typing import (
-    IO,
-    Any,
-    Dict,
-    Generator,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import IO, Any, Generator, Iterator, List, Optional, Tuple, Union, cast
 
-import pandas as pd
-from numpy.typing import NDArray
 from pyarrow.fs import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.helpers.utils import all_subclasses
-from opsml.model.types import (
-    LIGHTGBM_SUPPORTED_MODEL_TYPES,
-    SKLEARN_SUPPORTED_MODEL_TYPES,
-    OnnxModelType,
-)
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
     ArtifactStorageSpecs,
     FilePath,
     GcsStorageClientSettings,
-    MlFlowClientProto,
-    MlflowInfo,
-    MlflowModel,
-    MlflowModelFlavor,
-    MlflowModelInfo,
     S3StorageClientSettings,
     StorageSettings,
 )
@@ -62,7 +38,6 @@ class StorageSystem(str, Enum):
     GCS = "gcs"
     S3 = "s3"
     LOCAL = "local"
-    MLFLOW = "mlflow"
     API = "api"
 
 
@@ -85,25 +60,6 @@ class ModelArtifactNames(str, Enum):
 
 
 OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"
-
-
-def cleanup_files(func):
-    """Decorator for deleting files if needed"""
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        artifact, loadable_filepath = func(self, *args, **kwargs)
-
-        if isinstance(loadable_filepath, list):
-            loadable_filepath = loadable_filepath[0]
-
-        if isinstance(loadable_filepath, str):
-            if "temp" in loadable_filepath:  # make this better later
-                file_dir = "/".join(loadable_filepath.split("/")[:-1])
-                shutil.rmtree(file_dir, ignore_errors=True)
-        return artifact
-
-    return wrapper
 
 
 def extract_registry_name(string: str) -> Optional[str]:
@@ -133,70 +89,32 @@ class StorageClient:
         self.client = client
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
-        self._storage_spec: Optional[ArtifactStorageSpecs] = None
 
-    @property
-    def storage_spec(self) -> ArtifactStorageSpecs:
-        return cast(ArtifactStorageSpecs, self._storage_spec)
-
-    @storage_spec.setter
-    def storage_spec(self, artifact_storage_spec):
-        self._storage_spec = artifact_storage_spec
-
-    def create_save_path(
+    def extend_storage_spec(
         self,
-        file_suffix: Optional[str] = None,
+        spec: ArtifactStorageSpecs,
         extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        filename = self.storage_spec.filename or uuid.uuid4().hex
-
-        if file_suffix is not None:
-            filename = f"{filename}.{str(file_suffix)}"
-
+        file_suffix: Optional[str] = None,
+    ) -> ArtifactStorageSpecs:
+        """A utility function which extends the storage spec with an optional path and suffix."""
+        ret = spec.model_copy()
         if extra_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
+            ret.save_path = os.path.join(ret.save_path, extra_path)
 
-        else:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
-
-        return base_path + f"/{filename}", filename
-
-    def create_tmp_path(
-        self,
-        tmp_dir: str,
-        extra_path: Optional[str] = None,
-        file_suffix: Optional[str] = None,
-    ):
-        base_path, filename = self.create_save_path(
-            file_suffix=file_suffix,
-            extra_path=extra_path,
-        )
-        local_path = f"{tmp_dir}/{filename}"
-
-        return base_path, local_path
-
-    @contextmanager
-    def create_temp_save_path(
-        self,
-        file_suffix: Optional[str],
-        extra_path: Optional[str],
-    ) -> Generator[Tuple[Any, Any], None, None]:
-        with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
-            storage_uri, local_path = self.create_tmp_path(
-                file_suffix=file_suffix,
-                extra_path=extra_path,
-                tmp_dir=tmpdirname,
-            )
-            yield storage_uri, local_path
-
-    @contextmanager
-    def create_named_tempfile(self, file_suffix: Optional[str]):
+        ret.filename = ret.filename or uuid.uuid4().hex
         if file_suffix is not None:
-            if "." not in file_suffix:
-                file_suffix = f".{file_suffix}"
+            ret.filename = f"{ret.filename}.{file_suffix}"
+        return ret
 
-        with tempfile.NamedTemporaryFile(suffix=file_suffix) as tmpfile:  # noqa
-            yield tmpfile
+    @contextmanager
+    def create_temp_save_path_with_spec(
+        self,
+        spec: ArtifactStorageSpecs,
+    ) -> Generator[Tuple[str, str], None, None]:
+        spec.filename = spec.filename or uuid.uuid4().hex
+        path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
+        with tempfile.TemporaryDirectory() as tmpdirname:  # noqa
+            yield path, os.path.join(tmpdirname, spec.filename)
 
     def list_files(self, storage_uri: str) -> FilePath:
         raise NotImplementedError
@@ -230,10 +148,6 @@ class StorageClient:
 
     def delete(self, read_path: str):
         raise ValueError("Storage class does not implement a delete method")
-
-    def post_process(self, storage_uri: str) -> str:
-        """Method that does post processing. Mainly used for mlflow work"""
-        return storage_uri
 
     @staticmethod
     def validate(storage_backend: str) -> bool:
@@ -368,22 +282,8 @@ class S3StorageClient(StorageClient):
 
 
 class LocalStorageClient(StorageClient):
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-        extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        save_path, filename = super().create_save_path(
-            file_suffix=file_suffix,
-            extra_path=extra_path,
-        )
-
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-
-        return save_path, filename
-
     def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs) -> str:
-        """Uploads local_path to write_path
+        """Uploads (copies) local_path to write_path
 
         Args:
             local_path:
@@ -486,24 +386,6 @@ class ApiStorageClient(LocalStorageClient):
 
         storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
-
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-        extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        filename = self.storage_spec.filename or uuid.uuid4().hex
-
-        if file_suffix is not None:
-            filename = f"{filename}.{str(file_suffix)}"
-
-        if extra_path is not None:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}/{extra_path}"
-
-        else:
-            base_path = f"{self.base_path_prefix}/{self.storage_spec.save_path}"
-
-        return base_path + f"/{filename}", filename
 
     def list_files(self, storage_uri: str) -> FilePath:
         response = self.api_client.post_request(
@@ -657,409 +539,10 @@ class ApiStorageClient(LocalStorageClient):
         return storage_backend == StorageSystem.API
 
 
-class MlflowModelSaver:
-    def __init__(
-        self,
-        model: Any,
-        model_type: str,
-        sample_data: Union[pd.DataFrame, NDArray, Dict[str, NDArray]],
-        artifact_path: str,
-        run_id: str,
-        root_path: str,
-        base_path_prefix: str,
-        opsml_storage_client: StorageClient,
-        mlflow_client: MlFlowClientProto,
-    ):
-        self.model = model
-        self.model_type = model_type
-        self.sample_data = sample_data
-        self.artifact_path = artifact_path
-        self.run_id = run_id
-        self.root_path = root_path
-        self.base_path_prefix = base_path_prefix
-        self.opsml_storage_client = opsml_storage_client
-        self.mlflow_client = mlflow_client
-
-    def _get_model_signature(self):
-        from mlflow.models.signature import infer_signature
-
-        signature = infer_signature(model_input=self.sample_data)
-
-        return signature
-
-    def _upload_model_dir(self, local_dir: str) -> None:
-        """Uploads model directory to storage
-
-        Args:
-            local_dir:
-                Local directory to upload
-        """
-        write_path = os.path.join(self.root_path, self.artifact_path)
-        write_path = MlflowStorageClient.swap_mlflow_root(
-            base_path_prefix=self.base_path_prefix,
-            rpath=write_path,
-        )
-        self.opsml_storage_client.upload(
-            local_path=local_dir,
-            write_path=write_path,
-            recursive=True,
-        )
-
-    def _save_model(self, flavor: MlflowModelFlavor, local_dir: str, **kwargs) -> MlflowModel:
-        """Saves model to local directory
-
-        Args:
-            flavor:
-                Mlflow flavor to save model with
-
-        Returns:
-            Mlflow model
-        """
-        from mlflow.models import Model
-
-        mlflow_model = Model(artifact_path=self.artifact_path, run_id=self.run_id)
-        flavor.save_model(
-            mlflow_model=mlflow_model,
-            path=local_dir,
-            signature=self._get_model_signature(),
-            **kwargs,
-        )
-
-        return mlflow_model
-
-    def _log_model(self, flavor: MlflowModelFlavor, **kwargs) -> MlflowModelInfo:
-        """
-        This code reproduces the mlflow.log_model function for most flavors. Function will
-        save an mlflow model to a temp directory and then stream the directory to the
-        appropriate storage location using the opsml storage client.
-
-        Returns:
-            filename:
-                Name of the model file
-        """
-        # import
-        with tempfile.TemporaryDirectory() as local_dir:
-            mlflow_model = self._save_model(flavor=flavor, local_dir=local_dir, **kwargs)
-            self._upload_model_dir(local_dir=local_dir)
-
-        # record logged model
-        self.mlflow_client._record_logged_model(self.run_id, mlflow_model)
-
-        return mlflow_model.get_model_info()
-
-    def log_model(self) -> str:
-        raise NotImplementedError
-
-    @staticmethod
-    def validate(model_type: str) -> bool:
-        raise NotImplementedError
-
-
-class MlFlowSklearn(MlflowModelSaver):
-    def log_model(self) -> str:
-        "Log a sklearn model to mlflow"
-        import mlflow
-
-        model_info = self._log_model(flavor=mlflow.sklearn, sk_model=self.model)
-        filename = model_info.flavors["python_function"]["model_path"]
-        return filename
-
-    @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type in SKLEARN_SUPPORTED_MODEL_TYPES
-
-
-class MlFlowLightGBM(MlflowModelSaver):
-    def log_model(self) -> str:
-        "Log a lightgbm model to mlflow"
-        import mlflow
-
-        model_info = self._log_model(flavor=mlflow.lightgbm, lgb_model=self.model)
-        filename = model_info.flavors["lightgbm"]["data"]
-
-        return filename
-
-    @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type in LIGHTGBM_SUPPORTED_MODEL_TYPES
-
-
-class MlFlowPytorch(MlflowModelSaver):
-    def log_model(self) -> str:
-        """Log a pytorch model to mlflow"""
-        import mlflow
-
-        model_info = self._log_model(flavor=mlflow.pytorch, pytorch_model=self.model)
-        dir_name = model_info.flavors["pytorch"]["model_data"]
-        return f"{dir_name}/model.pth"
-
-    @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type in [OnnxModelType.TRANSFORMER, OnnxModelType.PYTORCH]
-
-
-class MlFlowTensorflow(MlflowModelSaver):
-    def log_model(self) -> str:
-        "Log a tensorflow model to mlflow"
-        import mlflow
-
-        model_info = self._log_model(flavor=mlflow.tensorflow, model=self.model)
-        dir_name = model_info.flavors["tensorflow"]["data"]
-        return f"{dir_name}/model"
-
-    @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type == OnnxModelType.TF_KERAS
-
-
-class MlflowStorageClient(StorageClient):
-    def __init__(
-        self,
-        storage_settings: StorageSettings,
-    ):
-        super().__init__(
-            storage_settings=storage_settings,
-            backend=StorageSystem.MLFLOW.value,
-        )
-
-        self._run_id: Optional[str] = None
-        self._artifact_path: str = "mlflow-artifacts:/"
-        self._mlflow_client: Optional[MlFlowClientProto] = None
-        self._storage_spec = ArtifactStorageSpecs(save_path=self.base_path_prefix)
-        self._opsml_storage_client: Optional[StorageClient] = None
-
-    @property
-    def opsml_storage_client(self) -> StorageClient:
-        if self._opsml_storage_client is not None:
-            return self._opsml_storage_client
-        raise ValueError("No storage client found")
-
-    @opsml_storage_client.setter
-    def opsml_storage_client(self, storage_client: StorageClient) -> None:
-        self._opsml_storage_client = storage_client
-
-    def open(self, filename: str, mode: str):
-        """not used"""
-
-    @property
-    def run_id(self) -> str:
-        if self._run_id is None:
-            raise ValueError("No run_id set")
-        return self._run_id
-
-    @run_id.setter
-    def run_id(self, run_id: str):
-        self._run_id = run_id
-
-    @property
-    def artifact_path(self):
-        return str(self._artifact_path)
-
-    @artifact_path.setter
-    def artifact_path(self, artifact_path: str):
-        self._artifact_path = artifact_path
-
-    @property
-    def mlflow_client(self):
-        return cast(MlFlowClientProto, self._mlflow_client)
-
-    @mlflow_client.setter
-    def mlflow_client(self, mlflow_client: MlFlowClientProto):
-        self._mlflow_client = mlflow_client
-
-    def create_save_path(
-        self,
-        file_suffix: Optional[str] = None,
-        extra_path: Optional[str] = None,
-    ) -> Tuple[str, str]:
-        save_path, filename = super().create_save_path(
-            file_suffix=file_suffix,
-            extra_path=extra_path,
-        )
-
-        return save_path, filename
-
-    # def swap_proxy_root(self, rpath: str) -> str:
-    #    """Swaps the realpath with the expected mlflow proxy path"""
-    #    if "http" in self.mlflow_client.tracking_uri:
-    #        path_to_file = "/".join(rpath.split(self.base_path_prefix)[1:]).lstrip("/")
-    #
-    #        mlflow_path = os.path.normpath(
-    #            os.path.join(
-    #                self.artifact_path,
-    #                path_to_file,
-    #            )
-    #        )
-    #
-    #        return mlflow_path
-    #
-    #    return rpath
-
-    @staticmethod
-    def swap_mlflow_root(base_path_prefix: str, rpath: str) -> str:
-        """Swaps mlflow path with storage path (used for onnx proto path)"""
-
-        if "mlflow-artifacts:/" in rpath:
-            path_to_file = "/".join(rpath.split("mlflow-artifacts:/")[1:])
-            rpath = os.path.join(base_path_prefix, path_to_file)
-
-        return rpath
-
-    def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs) -> Optional[str]:
-        temp_path = lpath
-        if not recursive:
-            filename = os.path.basename(rpath)
-            temp_path = f"{temp_path}/{filename}"
-        abs_temp_path = temp_path
-        file_path = self.opsml_storage_client.download(rpath, abs_temp_path, recursive, **kwargs)
-
-        return file_path
-
-    def _log_artifact(self, mlflow_info: MlflowInfo) -> str:
-        write_path = f"{self.artifact_path}/{mlflow_info.artifact_path}/{mlflow_info.filename}"
-        write_path = MlflowStorageClient.swap_mlflow_root(
-            base_path_prefix=self.base_path_prefix,
-            rpath=write_path,
-        )
-
-        self.opsml_storage_client.upload(
-            local_path=mlflow_info.local_path,
-            write_path=write_path,
-        )
-
-        return mlflow_info.filename
-
-    def _log_model(self, mlflow_info: MlflowInfo) -> str:
-        model_type = str(mlflow_info.model_type)
-        model_logger = next(
-            (
-                model_logger
-                for model_logger in MlflowModelSaver.__subclasses__()
-                if model_logger.validate(
-                    model_type=model_type,
-                )
-            ),
-            None,
-        )
-
-        if model_logger is None:
-            raise ValueError(
-                f"Failed to find appropriate mlflow model type saver for {mlflow_info.model_type}",
-            )
-
-        _logger = model_logger(
-            model=mlflow_info.model,
-            model_type=model_type,
-            sample_data=self.storage_spec.sample_data,  # type: ignore
-            artifact_path=mlflow_info.artifact_path,
-            run_id=self.run_id,
-            root_path=self.artifact_path,
-            base_path_prefix=self.base_path_prefix,
-            opsml_storage_client=self.opsml_storage_client,
-            mlflow_client=self.mlflow_client,
-        )
-
-        return _logger.log_model()
-
-    def log_artifact(self, mlflow_info: MlflowInfo) -> str:
-        if mlflow_info.model is not None:
-            return self._log_model(mlflow_info=mlflow_info)
-        return self._log_artifact(mlflow_info=mlflow_info)
-
-    def upload(
-        self,
-        local_path: str,
-        write_path: str,
-        recursive: bool = False,
-        **kwargs,
-    ) -> str:
-        """
-        Uploads local artifact to mlflow
-
-        Args:
-            local_path:
-                local path to file
-            write_path:
-                path to write to in mlflow
-            recursive:
-                whether to recursively upload a directory
-            kwargs:
-                additional kwargs to pass to upload
-        """
-
-        mlflow_write_dir = self._get_mlflow_dir(filename=write_path)
-
-        mlflow_info = MlflowInfo(
-            local_path=local_path,
-            artifact_path=mlflow_write_dir,
-            model=kwargs.get("model"),
-            model_type=kwargs.get("model_type"),
-            filename=write_path.split("/")[-1],
-        )
-
-        filename = self.log_artifact(mlflow_info=mlflow_info)
-
-        # need to re-write storage path for saving to ArtifactCard
-        storage_uri = f"{self.artifact_path}/{mlflow_info.artifact_path}/{filename}"
-
-        if ModelArtifactNames.ONNX or ModelArtifactNames.TRAINED_MODEL in storage_uri:
-            storage_uri = MlflowStorageClient.swap_mlflow_root(
-                base_path_prefix=self.base_path_prefix,
-                rpath=storage_uri,
-            )
-
-        return storage_uri
-
-    def _get_mlflow_dir(self, filename: str) -> str:
-        "Sets individual directories for all mlflow artifacts"
-
-        if "OPSML" in filename and "REGISTRY" in filename:
-            # OPSML save paths always follow table/team/name/version/file save format
-
-            file_splits = filename.split("/")
-            try:
-                # attempt to get parent and child directories
-                for idx, split in enumerate(file_splits):
-                    registry_name = extract_registry_name(split)
-
-                    if registry_name is not None:
-                        parent_dir = registry_name.lower()
-                        parent_idx = idx
-
-                if len(file_splits[parent_idx:]) > 1:
-                    # attempt to get the card name
-                    write_dir = os.path.normpath(f"{parent_dir}/" + "/".join(file_splits[parent_idx + 1 : -1]))
-
-                else:
-                    # default to unique id
-                    write_dir = f"{parent_dir}/{uuid.uuid4().hex}"
-
-            except Exception as error:  # pylint: disable=broad-exception-caught
-                logger.error("Failed to retrieve parent and child save paths. Defaulting to random. {}", error)
-                write_dir = f"misc/{uuid.uuid4().hex}"
-
-            return write_dir.lower()
-
-        return "misc"
-
-    def list_files(self, storage_uri: str) -> FilePath:
-        return self.opsml_storage_client.list_files(storage_uri)
-        # return [storage_uri]
-
-    def store(self, storage_uri: str, **kwargs):
-        """Wrapper method needed for working with data artifacts and mlflow"""
-        return storage_uri
-
-    @staticmethod
-    def validate(storage_backend: str) -> bool:
-        return storage_backend == StorageSystem.MLFLOW
-
-
 StorageClientType = Union[
     LocalStorageClient,
     GCSFSStorageClient,
     S3StorageClient,
-    MlflowStorageClient,
     ApiStorageClient,
 ]
 

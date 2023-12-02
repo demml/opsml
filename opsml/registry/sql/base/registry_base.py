@@ -22,8 +22,7 @@ from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.sql.table_names import RegistryTableNames
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -47,7 +46,7 @@ def load_card_from_record(
 
     Args:
         registry_type:
-            Registry type
+            Registry type string.
         record:
             Loaded record from backend database
 
@@ -66,8 +65,8 @@ class SQLRegistryBase:
         Base class for SQL Registries to inherit from
 
         Args:
-            table_name:
-                CardRegistry table name
+            registry_type:
+                Registry type
         """
         self.storage_client = settings.storage_client
         self._table_name = RegistryTableNames[registry_type.upper()].value
@@ -135,18 +134,6 @@ class SQLRegistryBase:
             If registering a new Card, create a new Card of the correct type.
             """
             )
-
-    def _set_artifact_storage_spec(self, card: ArtifactCard) -> None:
-        """Creates artifact storage info to associate with artifacts"""
-
-        save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
-
-        artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
-        self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
-
-    def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):
-        """Updates storage metadata"""
-        self.storage_client.storage_spec = storage_specdata
 
     def _validate_semver(self, name: str, team: str, version: CardVersion) -> None:
         """
@@ -306,7 +293,6 @@ class SQLRegistryBase:
             build_tag=build_tag,
         )
         self._set_card_uid(card=card)
-        self._set_artifact_storage_spec(card=card)
         self._create_registry_record(card=card)
 
     def update_card(self, card: ArtifactCard) -> None:

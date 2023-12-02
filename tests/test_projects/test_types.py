@@ -1,7 +1,7 @@
 import pydantic
 import pytest
 
-from opsml.projects.base import types
+from opsml.projects import types
 
 
 def test_project_id() -> None:
@@ -19,5 +19,6 @@ def test_project_id() -> None:
 
     info = types.ProjectInfo(name="a", team="a", tracking_uri="test")
     assert info.project_id == "a:a"
+
     info = types.ProjectInfo(name="A", team="A", tracking_uri="test")
     assert info.project_id == "a:a"

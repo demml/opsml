@@ -205,16 +205,13 @@ class LoadedDataRecord(LoadRecord):
 
     @staticmethod
     def load_data_profile(data_profile_uri: str, storage_client: StorageClientType) -> ProfileReport:
-        storage_spec = ArtifactStorageSpecs(save_path=data_profile_uri)
-
-        storage_client.storage_spec = storage_spec
         profile_bytes = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=data_profile_uri),
         )
-
-        profile = DataProfiler.load_profile(data=profile_bytes)
-        return profile
+        assert profile_bytes is not None
+        return DataProfiler.load_profile(data=cast(bytes, profile_bytes))
 
     @classmethod
     def load_datacard_definition(
@@ -227,16 +224,13 @@ class LoadedDataRecord(LoadRecord):
         Returns:
             Dictionary to be parsed by DataCard.model_validate()
         """
-
-        storage_spec = ArtifactStorageSpecs(save_path=save_path)
-        storage_client.storage_spec = storage_spec
-
         datacard_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=save_path),
         )
-
-        return datacard_definition
+        assert datacard_definition is not None
+        return cast(Dict[str, Any], datacard_definition)
 
     @staticmethod
     def validate_table(registry_type: str) -> bool:
@@ -283,16 +277,13 @@ class LoadedModelRecord(LoadRecord):
         Returns:
             Dictionary to be parsed by ModelCard.parse_obj()
         """
-
-        storage_spec = ArtifactStorageSpecs(save_path=values["modelcard_uri"])
-
-        storage_client.storage_spec = storage_spec
         model_card_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
         )
-
-        return model_card_definition
+        assert model_card_definition is not None
+        return cast(Dict[str, Any], model_card_definition)
 
     @classmethod
     def convert_model_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
@@ -340,15 +331,13 @@ class LoadedAuditRecord(LoadRecord):
             Audit dictionary
         """
 
-        storage_spec = ArtifactStorageSpecs(save_path=audit_uri)
-
-        storage_client.storage_spec = storage_spec
         audit_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
         )
-
-        return audit_definition
+        assert audit_definition is not None
+        return cast(Dict[str, Any], audit_definition)
 
     @staticmethod
     def validate_table(registry_type: str) -> bool:
@@ -393,15 +382,13 @@ class LoadedRunRecord(LoadRecord):
             Dictionary to be parsed by RunCard.model_validate()
         """
 
-        storage_spec = ArtifactStorageSpecs(save_path=runcard_uri)
-
-        storage_client.storage_spec = storage_spec
         runcard_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
         )
-
-        return runcard_definition
+        assert runcard_definition is not None
+        return cast(Dict[str, Any], runcard_definition)
 
     @staticmethod
     def validate_table(registry_type: str) -> bool:
