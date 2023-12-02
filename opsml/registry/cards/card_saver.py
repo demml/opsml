@@ -165,7 +165,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             self.card.data.convert_metadata()
             storage_path = self._save_data_to_storage(data=self.card.data)
             self.card.metadata.uris.data_uri = storage_path.uri
-            self.card.metadata.data_type = AllowedTableTypes.IMAGE_DATASET.value
+            self.card.metadata.data_type = AllowedTableTypes.IMAGE_DATASET
 
         else:
             arrow_table: ArrowTable = self._convert_data_to_arrow()

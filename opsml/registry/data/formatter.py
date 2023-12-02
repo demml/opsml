@@ -3,15 +3,13 @@
 # LICENSE file in the root directory of this source tree.
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Union, cast
-
+from opsml.registry.data.types import AllowedTableTypes, PandasDataFrame, PolarsDataFrame
 import numpy as np
-import pandas as pd
-import polars as pl
 import pyarrow as pa
 
 from .types import AllowedTableTypes, ArrowTable
 
-ValidArrowData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table]
+ValidArrowData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table]
 
 
 # changing input type to any to handle a variety of data types which may be optionally installed (polars)
@@ -31,7 +29,7 @@ class ArrowFormatter(ABC):
 
 class PolarsFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: pl.DataFrame) -> ArrowTable:
+    def convert(data: PolarsDataFrame) -> ArrowTable:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -48,7 +46,7 @@ class PolarsFormatter(ArrowFormatter):
         )
 
     @staticmethod
-    def validate_data(data: pl.DataFrame) -> bool:
+    def validate_data(data: PandasDataFrame) -> bool:
         return isinstance(data, pl.DataFrame)
 
 
@@ -128,8 +126,8 @@ class DataFormatter:
     def convert_data_to_arrow(
         data: Union[
             pa.Table,
-            pl.DataFrame,
-            pd.DataFrame,
+            PandasDataFrame,
+            PolarsDataFrame,
             np.ndarray,
         ]
     ) -> ArrowTable:

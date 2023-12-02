@@ -7,7 +7,8 @@ from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
-import polars as pl
+
+pd.DataFrame
 from pydantic import ConfigDict, field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -28,11 +29,12 @@ from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 from opsml.registry.utils.settings import settings
+from opsml.registry.data.types import PolarsDataFrame, PandasDataFrame, AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
 
-SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
+SampleModelData = Optional[Union[PandasDataFrame, np.ndarray, Dict[str, np.ndarray], PolarsDataFrame]]
 
 
 @auditable
@@ -96,8 +98,10 @@ class ModelCard(ArtifactCard):
         if input_data is None:
             return input_data
 
-        if not isinstance(input_data, InputDataType.DICT.value):
-            if isinstance(input_data, InputDataType.POLARS_DATAFRAME.value):
+        data_type = input_data.__class__
+
+        if not data_type == AllowedDataType.DICT:
+            if data_type == AllowedDataType.POLARS:
                 input_data = input_data.to_pandas()
 
             return input_data[0:1]
@@ -264,8 +268,10 @@ class ModelCard(ArtifactCard):
         if self.sample_input_data is None:
             self.load_sample_data()
 
+        data_type = self.sample_input_data.__class__
+
         sample_data = cast(
-            Union[pd.DataFrame, np.ndarray, Dict[str, Any]],
+            Union[PandasDataFrame, PolarsDataFrame, np.ndarray, Dict[str, Any]],
             self.sample_input_data,
         )
 

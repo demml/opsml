@@ -24,6 +24,23 @@ class PolarsDataFrame(Protocol):
 ValidData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table, ImageDataset]
 
 
+def get_class_name(object_: ValidData) -> str:
+    """Parses object to get the fully qualified class name.
+    Used during type checking to avoid unnecessary imports.
+
+    Args:
+        object_:
+            object to parse
+    Returns:
+        fully qualified class name
+    """
+    klass = object_.__class__
+    module = object_.__module
+    if module == "builtins":
+        return klass.__qualname__  # avoid outputs like 'builtins.str'
+    return module + "." + klass.__qualname__
+
+
 class AllowedTableTypes(str, Enum):
     NDARRAY = "ndarray"
     ARROW_TABLE = "Table"
@@ -112,12 +129,20 @@ class ImageTypeChecker(DataTypeChecker):
 
     @staticmethod
     def validate_type(data_type: str) -> bool:
-        return AllowedDataType.IMAGE == data_type
+        return AllowedDataType.IMAGE in data_type
 
 
-def check_data_type(data: ValidData) -> None:
-    """Checks that the data type is one of the allowed types"""
-    data_type = data.__class__.__module__
+def check_data_type(data: ValidData) -> str:
+    """Checks that the data type is one of the allowed types
+
+    Args:
+        data:
+            data to check
+
+    Returns:
+        data type
+    """
+    data_type = get_class_name(data)
 
     data_type_checker = next(
         (
@@ -136,3 +161,5 @@ def check_data_type(data: ValidData) -> None:
         )
 
     data_type_checker.check_data_type(data)
+
+    return data_type
