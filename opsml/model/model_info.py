@@ -13,8 +13,8 @@ from opsml.model.types import (
     DataDtypes,
     ExtraOnnxArgs,
     Feature,
-    ValidModelInput,
     OnnxModelDefinition,
+    ValidModelInput,
 )
 from opsml.registry.data.types import AllowedDataType, PandasDataFrame
 

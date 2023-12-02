@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import Enum
-from typing import Any, Dict, Optional, Union, Protocol
+from typing import Any, Dict, Optional, Protocol, Union
 
 import numpy as np
 import pyarrow as pa

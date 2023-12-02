@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from opsml.registry.data.types import AllowedDataType
+
 from opsml.model.model_info import FloatTypeConverter, ModelData, ModelInfo
 from opsml.model.types import (
     AVAILABLE_MODEL_TYPES,
@@ -18,6 +18,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     OnnxModelType,
 )
+from opsml.registry.data.types import AllowedDataType
 
 # attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
 # this is checked during model conversion

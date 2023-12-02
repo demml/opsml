@@ -5,7 +5,6 @@
 import os
 from typing import Any, Dict, List, Optional, Union, cast
 
-
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -16,7 +15,12 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedTableTypes, ValidData, check_data_type, AllowedDataType
+from opsml.registry.data.types import (
+    AllowedDataType,
+    AllowedTableTypes,
+    ValidData,
+    check_data_type,
+)
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage

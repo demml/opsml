@@ -3,8 +3,9 @@
 # LICENSE file in the root directory of this source tree.
 import datetime
 from contextlib import contextmanager
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, cast
 from enum import Enum
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, cast
+
 from sqlalchemy import Integer
 from sqlalchemy import func as sqa_func
 from sqlalchemy import select, text

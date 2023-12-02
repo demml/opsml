@@ -8,10 +8,12 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol, Union
-from opsml.registry.data.types import PandasDataFrame
+
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
+
+from opsml.registry.data.types import PandasDataFrame
 
 ValidModelInput = Union[PandasDataFrame, NDArray, Dict[str, NDArray]]
 

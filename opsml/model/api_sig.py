@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 from pydantic import conlist, create_model
-from opsml.registry.data.types import AllowedDataType
+
 from opsml.model.types import (
     ApiDataSchemas,
     ApiSigTypes,
@@ -19,6 +19,7 @@ from opsml.model.types import (
     NumpyBase,
     OnnxModelType,
 )
+from opsml.registry.data.types import AllowedDataType
 
 PydanticFields = Dict[str, Tuple[Any, ...]]
 PredictFunc = Callable[[Dict[str, Any]], Any]

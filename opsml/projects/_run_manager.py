@@ -8,8 +8,7 @@ from typing import Optional, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._active_run import ActiveRun, RunInfo
-from opsml.projects.types import ProjectInfo
-from opsml.projects.types import Tags
+from opsml.projects.types import ProjectInfo, Tags
 from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
 from opsml.registry.utils.settings import settings
 
