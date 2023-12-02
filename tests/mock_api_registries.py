@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Optional, Union, cast
 import textwrap
-import pandas as pd
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
@@ -12,7 +12,7 @@ from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
-
+from opsml.registry.data.types import PandasDataFrame
 
 logger = ArtifactLogger.get_logger()
 
@@ -207,7 +207,7 @@ class CardRegistry:
         limit: Optional[int] = None,
         as_dataframe: bool = False,
         ignore_release_candidates: bool = False,
-    ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
+    ) -> Union[List[Dict[str, Any]], PandasDataFrame]:
         """Retrieves records from registry
 
         Args:
@@ -265,6 +265,8 @@ class CardRegistry:
         )
 
         if as_dataframe:
+            import pandas as pd
+
             return pd.DataFrame(card_list)
 
         return card_list
