@@ -21,11 +21,16 @@ from opsml.model.types import (
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
+from opsml.registry.data.types import (
+    AllowedDataType,
+    PandasDataFrame,
+    PolarsDataFrame,
+    get_class_name,
+)
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 from opsml.registry.utils.settings import settings
-from opsml.registry.data.types import PolarsDataFrame, PandasDataFrame, AllowedDataType, get_class_name
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
@@ -260,6 +265,7 @@ class ModelCard(ArtifactCard):
         model_return = create_model(
             model=self.trained_model,
             input_data=self.sample_input_data,
+            input_data_type=self.metadata.sample_data_type,
             additional_onnx_args=self.metadata.additional_onnx_args,
             to_onnx=self.to_onnx,
             onnx_model_def=self.metadata.onnx_model_def,

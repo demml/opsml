@@ -208,6 +208,7 @@ class OnnxModelCreator(ModelCreator):
         self,
         model: Any,
         input_data: ValidModelInput,
+        input_data_type: str,
         additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
@@ -228,6 +229,7 @@ class OnnxModelCreator(ModelCreator):
         super().__init__(
             model=model,
             input_data=input_data,
+            input_data_type=input_data_type,
             additional_onnx_args=additional_onnx_args,
             onnx_model_def=onnx_model_def,
         )
@@ -321,6 +323,8 @@ def create_model(
                 Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
             input_data:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
+            input_data_type:
+                Data type of input data
             additional_onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
             to_onnx:

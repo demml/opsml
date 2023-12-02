@@ -2,18 +2,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
 from enum import Enum
-from typing import Any, Dict, Optional, Protocol, Union, Mapping
+from typing import Any, Dict, Mapping, Optional, Protocol, Union
 
 import numpy as np
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
-import sys
 
 if sys.version_info >= (3, 10):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
+
 from opsml.registry.image import ImageDataset
 
 
@@ -62,15 +63,6 @@ def get_class_name(object_: ValidData) -> str:
     return module + "." + klass.__qualname__
 
 
-class AllowedTableTypes(str, Enum):
-    NDARRAY = "ndarray"
-    ARROW_TABLE = "Table"
-    PANDAS_DATAFRAME = "PandasDataFrame"
-    POLARS_DATAFRAME = "PolarsDataFrame"
-    DICTIONARY = "Dictionary"
-    IMAGE_DATASET = "ImageDataset"
-
-
 class AllowedDataType(str, Enum):
     PANDAS = "pandas.core.frame.DataFrame"
     PYARROW = "pyarrow.lib.Table"
@@ -84,7 +76,6 @@ class ArrowTable(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     table: Union[pa.Table, np.ndarray]
-    table_type: AllowedTableTypes
     storage_uri: Optional[str] = None
     feature_map: Optional[Dict[str, Any]] = None
 

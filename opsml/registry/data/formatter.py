@@ -2,19 +2,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union, cast, Mapping
-from opsml.registry.data.types import (
-    AllowedTableTypes,
-    PandasDataFrame,
-    PolarsDataFrame,
-    AllowedDataType,
-    PolarsSchemaDict,
-)
+from typing import Any, Dict, Union, cast
+
 import numpy as np
 import pyarrow as pa
 
-
-from .types import AllowedTableTypes, ArrowTable
+from opsml.registry.data.types import (
+    AllowedDataType,
+    PandasDataFrame,
+    PolarsDataFrame,
+    PolarsSchemaDict,
+    ArrowTable,
+)
 
 
 ValidArrowData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table]
@@ -48,10 +47,7 @@ class PolarsFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        return ArrowTable(
-            table=data.to_arrow(),
-            table_type=AllowedTableTypes.POLARS_DATAFRAME,
-        )
+        return ArrowTable(table=data.to_arrow())
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
@@ -73,10 +69,7 @@ class PandasFormatter(ArrowFormatter):
 
         pa_table = pa.Table.from_pandas(data, preserve_index=False)
 
-        return ArrowTable(
-            table=pa_table,
-            table_type=AllowedTableTypes.PANDAS_DATAFRAME,
-        )
+        return ArrowTable(table=pa_table)
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
@@ -96,10 +89,7 @@ class NumpyFormatter(ArrowFormatter):
             Numpy array
         """
 
-        return ArrowTable(
-            table=data,
-            table_type=AllowedTableTypes.NDARRAY,
-        )
+        return ArrowTable(table=data)
 
     @staticmethod
     def validate_data(data_type: str):
@@ -118,10 +108,7 @@ class ArrowTableFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        return ArrowTable(
-            table=data,
-            table_type=AllowedTableTypes.ARROW_TABLE,
-        )
+        return ArrowTable(table=data)
 
     @staticmethod
     def validate_data(data_type: str):

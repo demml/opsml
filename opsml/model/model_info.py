@@ -16,7 +16,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidModelInput,
 )
-from opsml.registry.data.types import AllowedDataType, PandasDataFrame, get_class_name
+from opsml.registry.data.types import AllowedDataType, PandasDataFrame
 
 logger = ArtifactLogger.get_logger()
 
@@ -136,7 +136,7 @@ class NumpyData(ModelData):
         return data_type == AllowedDataType.NUMPY
 
 
-class PandasDataFrame(ModelData):
+class PandasDataFrameData(ModelData):
     def __init__(self, input_data):
         super().__init__(input_data=input_data)
 
