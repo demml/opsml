@@ -20,7 +20,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidModelInput,
 )
-from opsml.registry.data.types import AllowedDataType
+from opsml.registry.data.types import AllowedDataType, get_class_name
 
 logger = ArtifactLogger.get_logger()
 
@@ -100,7 +100,7 @@ class TrainedModelMetadataCreator(ModelCreator):
     def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
         model_data = get_model_data(
             input_data=predictions,
-            data_type=type(predictions),
+            data_type=get_class_name(predictions),
         )
 
         # pandas will use column names as features

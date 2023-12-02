@@ -9,12 +9,11 @@ import pyarrow as pa
 
 from opsml.registry.data.types import (
     AllowedDataType,
+    ArrowTable,
     PandasDataFrame,
     PolarsDataFrame,
     PolarsSchemaDict,
-    ArrowTable,
 )
-
 
 ValidArrowData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table]
 
@@ -46,8 +45,11 @@ class PolarsFormatter(ArrowFormatter):
         Returns
             ArrowTable pydantic class containing table and table type
         """
+        import polars as pl
 
-        return ArrowTable(table=data.to_arrow())
+        return ArrowTable(
+            table=cast(pl.DataFrame, data).to_arrow(),
+        )
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
@@ -156,7 +158,11 @@ class DataFormatter:
         """
         Generates a schema (column: type) from a py arrow table.
         Args:
-            data: py arrow table.
+            data:
+                py arrow table
+            data_type:
+                Data type of data
+
         Returns:
             schema: Dict[str,str]
         """
@@ -197,7 +203,7 @@ class SchemaValidator:
         raise NotImplementedError
 
     @staticmethod
-    def validate_data(data: Any) -> bool:
+    def validate_data(data_type: str) -> bool:
         """Validate data to formatter"""
         raise NotImplementedError
 

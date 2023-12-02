@@ -102,7 +102,7 @@ class ModelData:
         return Feature(feature_type="STR", shape=shape)
 
     @staticmethod
-    def validate(data_type: type) -> bool:
+    def validate(data_type: str) -> bool:
         raise NotImplementedError
 
 
@@ -132,7 +132,7 @@ class NumpyData(ModelData):
         return feature_dict
 
     @staticmethod
-    def validate(data_type: type) -> bool:
+    def validate(data_type: str) -> bool:
         return data_type == AllowedDataType.NUMPY
 
 
@@ -189,7 +189,7 @@ class PandasDataFrameData(ModelData):
         return {col: self.data[col].values for col in self.features}
 
     @staticmethod
-    def validate(data_type: type) -> bool:
+    def validate(data_type: str) -> bool:
         return data_type == AllowedDataType.PANDAS
 
 
@@ -227,7 +227,7 @@ class DataDictionary(ModelData):
         self._features = features
 
     @staticmethod
-    def validate(data_type: type) -> bool:
+    def validate(data_type: str) -> bool:
         return data_type == AllowedDataType.DICT
 
 
@@ -266,6 +266,7 @@ class FloatTypeConverter:
                     data = data.astype({feature: np.float32})
             else:
                 data = data.astype({feature: np.float32})
+
         return data
 
     def _convert_array(self, data: NDArray) -> NDArray:
@@ -287,10 +288,11 @@ class FloatTypeConverter:
 
     def convert_to_float(self, data: ValidModelInput, data_type: str) -> ValidModelInput:
         if data_type == AllowedDataType.PANDAS:
-            return self._convert_dataframe(data=data)
+            return self._convert_dataframe(data=cast(PandasDataFrame, data))
         if isinstance(data, np.ndarray):
             return self._convert_array(data=data)
-        return self._convert_dict(data=data)
+
+        return self._convert_dict(data=cast(Dict[str, NDArray], data))
 
 
 @dataclass

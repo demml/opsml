@@ -17,6 +17,7 @@ from opsml.model.types import (
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
+    ValidModelInput,
 )
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
@@ -34,8 +35,6 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
-
-SampleModelData = Optional[Union[PandasDataFrame, np.ndarray, Dict[str, np.ndarray], PolarsDataFrame]]
 
 
 @auditable
@@ -73,10 +72,10 @@ class ModelCard(ArtifactCard):
     )
 
     trained_model: Optional[Any] = None
-    sample_input_data: SampleModelData = None
+    sample_input_data: Optional[ValidModelInput] = None
     datacard_uid: Optional[str] = None
     to_onnx: bool = True
-    metadata: ModelCardMetadata = ModelCardMetadata()
+    metadata: ModelCardMetadata
 
     @model_validator(mode="before")
     def _check_args(cls, values: Dict[str, Any]):
@@ -101,7 +100,7 @@ class ModelCard(ArtifactCard):
         return values
 
     @field_validator("sample_input_data", mode="before")
-    def _get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
+    def _get_one_sample(cls, input_data: Optional[ValidModelInput]) -> Optional[ValidModelInput]:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
         if input_data is None:
@@ -111,11 +110,8 @@ class ModelCard(ArtifactCard):
 
         if not isinstance(input_data, dict):
             if data_type == AllowedDataType.POLARS:
-                import polars as pl
-
-                input_data = cast(pl.DataFrame, input_data)
-
-                input_data = input_data.to_pandas()
+                polars_data = cast(PolarsDataFrame, input_data)
+                input_data = polars_data.to_pandas()
 
             return input_data[0:1]
 
@@ -264,7 +260,7 @@ class ModelCard(ArtifactCard):
 
         model_return = create_model(
             model=self.trained_model,
-            input_data=self.sample_input_data,
+            input_data=cast(ValidModelInput, self.sample_input_data),
             input_data_type=self.metadata.sample_data_type,
             additional_onnx_args=self.metadata.additional_onnx_args,
             to_onnx=self.to_onnx,
@@ -287,7 +283,7 @@ class ModelCard(ArtifactCard):
         if isinstance(self.sample_input_data, np.ndarray):
             model_data = self.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
-            return {input_name: self.sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
+            return {input_name: self.sample_input_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
 
         if data_type == AllowedDataType.PANDAS:
             import pandas as pd

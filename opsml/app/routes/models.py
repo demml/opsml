@@ -74,7 +74,10 @@ async def model_versions_page(
         model = model or selected_model[0]["name"]
         version = version or selected_model[0]["version"]
 
-    versions = registry.list_cards(name=model, as_dataframe=False, limit=50)
+    versions = cast(
+        List[Dict[str, Any]],
+        registry.list_cards(name=model, as_dataframe=False, limit=50),
+    )
     metadata = post_model_metadata(
         request=request,
         payload=CardRequest(uid=uid, name=model, version=version),

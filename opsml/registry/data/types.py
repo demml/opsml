@@ -1,30 +1,70 @@
+# pylint: disable=protected-access
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
 import sys
 from enum import Enum
-from typing import Any, Dict, Mapping, Optional, Protocol, Union
+from typing import Any, Dict, Mapping, Optional, Protocol, Union, List
 
 import numpy as np
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
+from opsml.registry.image import ImageDataset
 
 if sys.version_info >= (3, 10):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
 
-from opsml.registry.image import ImageDataset
+
+class Feature(object):
+    ...
 
 
 # DataCard data type hints
 class PandasDataFrame(Protocol):
     ...
 
+    def sample(self, frac: float, replace: bool):
+        ...
+
+    def __iter__(self):
+        ...
+
+    def __getitem__(self, key):
+        ...
+
+    @property
+    def columns(self) -> List[str]:
+        ...
+
+    @property
+    def dtypes(self) -> List[Feature]:
+        ...
+
+    def astype(self, dtype: Dict[str, Any]) -> "PandasDataFrame":
+        ...
+
 
 class PolarsDataFrame(Protocol):
     ...
+
+    def sample(self, frac: float, replace: bool):
+        ...
+
+    @property
+    def columns(self) -> List[str]:
+        ...
+
+    def __getitem__(self, key):
+        ...
+
+    def select(self, data: Any) -> "PolarsDataFrame":
+        ...
+
+    def to_pandas(self) -> PandasDataFrame:
+        ...
 
 
 class DataTypeClass(type):
@@ -57,7 +97,7 @@ def get_class_name(object_: ValidData) -> str:
         fully qualified class name
     """
     klass = object_.__class__
-    module = object_.__module
+    module = klass.__module__
     if module == "builtins":
         return klass.__qualname__  # avoid outputs like 'builtins.str'
     return module + "." + klass.__qualname__

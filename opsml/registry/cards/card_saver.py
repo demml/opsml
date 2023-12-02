@@ -134,7 +134,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
             data=self.card.data,
             data_type=self.card.metadata.data_type,
         )
-        arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
+        arrow_table.feature_map = DataFormatter.create_table_schema(
+            data=self.card.data,
+            data_type=self.card.metadata.data_type,
+        )
         return arrow_table
 
     def _save_data_to_storage(self, data: Union[pa.Table, np.ndarray, ImageDataset]) -> StoragePath:
@@ -174,7 +177,6 @@ class DataCardArtifactSaver(CardArtifactSaver):
             storage_path = self._save_data_to_storage(data=arrow_table.table)
             self.card.metadata.uris.data_uri = storage_path.uri
             self.card.metadata.feature_map = arrow_table.feature_map
-            self.card.metadata.data_type = arrow_table.table_type
 
     def _save_profile(self) -> None:
         """Saves a datacard data profile"""
@@ -345,7 +347,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             )
 
         else:
-            arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
+            arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
+                data=self.card.sample_input_data,
+                data_type=self.card.metadata.data_type,
+            )
             storage_path = save_artifact_to_storage(
                 artifact=arrow_table.table,
                 storage_client=self.storage_client,

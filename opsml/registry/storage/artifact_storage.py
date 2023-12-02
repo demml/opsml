@@ -377,8 +377,8 @@ class ParquetStorage(ArtifactStorage):
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
             AllowedDataType.PYARROW,
-            AllowedDataType.PANDAS_DATAFRAME,
             AllowedDataType.PANDAS,
+            AllowedDataType.POLARS,
         ]
 
 
