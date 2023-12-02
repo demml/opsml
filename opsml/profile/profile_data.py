@@ -6,7 +6,12 @@
 import os
 from typing import Any, List, Union, cast
 
-from opsml.registry.data.types import AllowedDataType, PandasDataFrame, PolarsDataFrame, get_class_name
+from opsml.registry.data.types import (
+    AllowedDataType,
+    PandasDataFrame,
+    PolarsDataFrame,
+    get_class_name,
+)
 
 DIR_PATH = os.path.dirname(__file__)
 ProfileReport = Any  # custom runtime check in DataCard
