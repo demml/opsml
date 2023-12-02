@@ -1,10 +1,9 @@
 from typing import Tuple
-from typer.testing import CliRunner
 from sklearn import linear_model
 import pandas as pd
 from opsml.registry import DataCard, ModelCard, CardRegistries, RunCard, CardInfo, ModelCardMetadata
 import tempfile
-from opsml.cli.api_cli import app
+from opsml.cli.launch_server import launch_uvicorn_app
 from sklearn import pipeline
 
 
