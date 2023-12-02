@@ -62,7 +62,10 @@ class DataConverter:
         """
         self.model_data.data = FloatTypeConverter(
             convert_all=convert_all,
-        ).convert_to_float(data=self.model_data.data, data_types=self.model_info.data_type)
+        ).convert_to_float(
+            data=self.model_data.data,
+            data_type=self.model_info.data_type,
+        )
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         """Gets schema from data.

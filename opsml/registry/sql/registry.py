@@ -5,14 +5,13 @@
 import textwrap
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
+from opsml.registry.data.types import PandasDataFrame
 from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.data.types import PandasDataFrame
 
 logger = ArtifactLogger.get_logger()
 

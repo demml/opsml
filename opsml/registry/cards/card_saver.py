@@ -21,7 +21,7 @@ from opsml.registry.cards import (
 )
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
-from opsml.registry.data.types import AllowedTableTypes, AllowedDataType
+from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image import ImageDataset
 from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -168,7 +168,6 @@ class DataCardArtifactSaver(CardArtifactSaver):
             self.card.data.convert_metadata()
             storage_path = self._save_data_to_storage(data=self.card.data)
             self.card.metadata.uris.data_uri = storage_path.uri
-            self.card.metadata.data_type = AllowedTableTypes.IMAGE_DATASET
 
         else:
             arrow_table: ArrowTable = self._convert_data_to_arrow()
@@ -344,7 +343,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 storage_client=self.storage_client,
                 storage_spec=storage_spec,
             )
-            self.card.metadata.sample_data_type = AllowedTableTypes.DICTIONARY.value
 
         else:
             arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(data=self.card.sample_input_data)
@@ -353,7 +351,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 storage_client=self.storage_client,
                 storage_spec=storage_spec,
             )
-            self.card.metadata.sample_data_type = arrow_table.table_type
 
         self.card.metadata.uris.sample_data_uri = storage_path.uri
 

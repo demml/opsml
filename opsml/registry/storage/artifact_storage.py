@@ -15,7 +15,9 @@ import pyarrow.parquet as pq
 import zarr
 
 from opsml.helpers.utils import all_subclasses
+from opsml.model.types import ModelProto
 from opsml.registry.cards.types import StoragePath
+from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image import ImageDataset
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
@@ -23,10 +25,8 @@ from opsml.registry.storage.storage_system import (
     StorageClientType,
     StorageSystem,
 )
-from opsml.registry.data.types import AllowedDataType
 from opsml.registry.storage.types import ARTIFACT_TYPES, ArtifactStorageType, FilePath
 from opsml.registry.storage.utils import cleanup_files
-from opsml.model.types import ModelProto
 
 
 class ArtifactStorage:

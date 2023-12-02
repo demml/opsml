@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 import numpy as np
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import ApiDataSchemas, Base, InputDataType, OnnxModelType
+from opsml.model.types import ApiDataSchemas, Base, OnnxModelType
 
 
 # need to build response object for prediction
@@ -137,7 +137,7 @@ class OnnxModelPredictor:
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
 
-            if self.data_type == InputDataType.DICT:
+            if isinstance(feed_data, dict):
                 data_for_pred = {
                     name: torch.from_numpy(value) for name, value in feed_data.items()  # pylint: disable=no-member
                 }

@@ -7,7 +7,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard
 from opsml.registry.cards.types import DataCardUris
 from opsml.registry.data.formatter import check_data_schema
-from opsml.registry.data.types import AllowedTableTypes
+from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image import ImageDataset
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -62,11 +62,11 @@ class DataDownloader(Downloader):
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
-            AllowedTableTypes.NDARRAY.value,
-            AllowedTableTypes.PANDAS_DATAFRAME.value,
-            AllowedTableTypes.POLARS_DATAFRAME.value,
-            AllowedTableTypes.ARROW_TABLE.value,
-            AllowedTableTypes.DICTIONARY.value,
+            AllowedDataType.NUMPY,
+            AllowedDataType.PANDAS,
+            AllowedDataType.POLARS,
+            AllowedDataType.PYARROW,
+            AllowedDataType.DICT,
         ]
 
 
@@ -96,7 +96,7 @@ class ImageDownloader(Downloader):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == AllowedTableTypes.IMAGE_DATASET.value
+        return AllowedDataType.IMAGE in artifact_type
 
 
 def download_object(card: ArtifactCard, artifact_type: str, storage_client: StorageClientType) -> None:

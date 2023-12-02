@@ -4,10 +4,17 @@
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple, Union, cast
-from opsml.registry.data.types import PandasDataFrame, PolarsDataFrame, PandasTimestamp, AllowedDataType
+
 import numpy as np
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, field_validator
+
+from opsml.registry.data.types import (
+    AllowedDataType,
+    PandasDataFrame,
+    PandasTimestamp,
+    PolarsDataFrame,
+)
 
 
 class DataHolder(BaseModel):
