@@ -257,7 +257,7 @@ class DataCardMetadata(BaseModel):
 
     description: Description = Description()
     feature_map: Optional[Dict[str, Optional[Any]]] = None
-    data_type: Optional[str] = None
+    data_type: str
     feature_descriptions: Dict[str, str] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None

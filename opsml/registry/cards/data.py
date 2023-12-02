@@ -15,12 +15,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import (
-    AllowedDataType,
-    AllowedTableTypes,
-    ValidData,
-    check_data_type,
-)
+from opsml.registry.data.types import AllowedDataType, AllowedTableTypes, ValidData, check_data_type, get_class_name
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -127,7 +122,10 @@ class DataCard(ArtifactCard):
         if data is None and bool(sql_logic):
             return card_args
 
-        check_data_type(data=data)
+        data_type = check_data_type(data=data)
+
+        if metadata is None:
+            card_args["metadata"] = DataCardMetadata(data_type=data_type)
 
         return card_args
 
@@ -282,10 +280,9 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        data_type = self.data.__class__.__module__
 
         if any(
-            allowed_type == data_type
+            allowed_type == self.data.metadata.data_type
             for allowed_type in [
                 AllowedDataType.PANDAS,
                 AllowedDataType.POLARS,
@@ -348,11 +345,11 @@ class DataDownloader(Downloader):
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
-            AllowedTableTypes.NDARRAY.value,
-            AllowedTableTypes.PANDAS_DATAFRAME.value,
-            AllowedTableTypes.POLARS_DATAFRAME.value,
-            AllowedTableTypes.ARROW_TABLE.value,
-            AllowedTableTypes.DICTIONARY.value,
+            AllowedTableTypes.NDARRAY,
+            AllowedTableTypes.PANDAS_DATAFRAME,
+            AllowedTableTypes.POLARS_DATAFRAME,
+            AllowedTableTypes.ARROW_TABLE,
+            AllowedTableTypes.DICTIONARY,
         ]
 
 
@@ -382,7 +379,7 @@ class ImageDownloader(Downloader):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == AllowedTableTypes.IMAGE_DATASET.value
+        return artifact_type == AllowedTableTypes.IMAGE_DATASET
 
 
 def download_object(
