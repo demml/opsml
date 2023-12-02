@@ -72,7 +72,7 @@ class ArtifactCard(BaseModel):
 
     @property
     def uri(self) -> Path:
-        """The base URI to use forthe card and it's artifacts.."""
+        """The base URI to use for the card and it's artifacts.."""
         if self.version is None:
             raise ValueError("Could not create card uri - version is not set")
         return Path(RegistryTableNames.from_str(self.card_type).value, self.team, self.name, f"v{self.version}")

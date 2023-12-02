@@ -16,7 +16,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidModelInput,
 )
-from opsml.registry.data.types import AllowedDataType, PandasDataFrame
+from opsml.registry.data.types import AllowedDataType, PandasDataFrame, get_class_name
 
 logger = ArtifactLogger.get_logger()
 
@@ -286,8 +286,6 @@ class FloatTypeConverter:
         return data
 
     def convert_to_float(self, data: ValidModelInput) -> ValidModelInput:
-        import pandas as pd
-
         if isinstance(data, pd.DataFrame):
             return self._convert_dataframe(data=data)
         if isinstance(data, np.ndarray):
