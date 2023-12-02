@@ -34,6 +34,10 @@ class DataType(type):
     ...
 
 
+class PandasTimestamp(Protocol):
+    ...
+
+
 ValidData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table, ImageDataset]
 
 
