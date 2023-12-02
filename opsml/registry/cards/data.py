@@ -15,7 +15,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedDataType, AllowedTableTypes, ValidData, check_data_type
+from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -130,7 +130,7 @@ class DataCard(ArtifactCard):
         return card_args
 
     @field_validator("data_profile", mode="before")
-    def check_profile(cls, profile):
+    def _check_profile(cls, profile):
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
 
@@ -138,7 +138,7 @@ class DataCard(ArtifactCard):
         return profile
 
     @field_validator("sql_logic", mode="before")
-    def load_sql(cls, sql_logic):
+    def _load_sql(cls, sql_logic):
         if not bool(sql_logic):
             return sql_logic
 
