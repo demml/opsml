@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opsml"
-version = "1.4.14"
+version = "2.0.0"
 description = "A production MLOps tooling framework for python"
 authors = [
     "Steven Forrester <steven.forrester@shipt.com>",
@@ -49,6 +49,7 @@ Source = "https://github.com/shipt/opsml"
 python = ">=3.9,<3.12"
 httpx ="^0.23.3"
 matplotlib= ">=3.7.0, <3.8.0"
+opsml-cli = "^0.2.1"
 polars = "^0.18.0"
 pyarrow = ">=8.0.0"
 pydantic = ">=2, <3"
@@ -57,7 +58,6 @@ rich = "^13.3.5"
 rusty-logger = "^0.2.0"
 semver = "^2.13.0"
 tenacity = "^8.2.2"
-typer = "^0.9.0"
 ydata-profiling = "^4.6.1"
 zarr = ">2.12.0"
 
@@ -83,6 +83,7 @@ alembic = {version= "^1.10.3", optional = true}
 fastapi = {version="^0.100.0", optional = true}
 gunicorn = {version="^20.1.0", optional = true}
 prometheus-fastapi-instrumentator = {version="^5.8.1", optional = true}
+python-multipart = { version = "^0.0.6", optional = true }
 rollbar = {version="^0.16.3", optional = true}
 uvicorn = {version="^0.20.0", optional = true}
 wsgi-basic-auth = {version="^1.1.0", optional = true}
@@ -103,7 +104,6 @@ pymysql = { version = "^1.0.2", optional = true }
 
 [tool.poetry.extras]
 server = [
-    "alembic",
     "streaming-form-data",
     "fastapi",
     "uvicorn",
@@ -111,8 +111,8 @@ server = [
     "gunicorn",
     "prometheus-fastapi-instrumentator",
     "wsgi-basic-auth",
-    "sqlalchemy"
-    ]
+    "python-multipart",
+]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]
 s3 = ["s3fs", "boto3"]
@@ -165,9 +165,7 @@ mkdocstrings = { extras = ["python"], version = "^0.21.2" }
 
 
 [tool.poetry.scripts]
-opsml-uvicorn-server = 'opsml.app.main:opsml_uvicorn_server'
-opsml-gunicorn-server = 'opsml.app.main:opsml_gunicorn_server'
-opsml-cli = "opsml.cli.api_cli:app"
+opsml-uvicorn-server = 'opsml.cli.launch_server:cli'
 
 [tool.isort]
 profile = "black"
