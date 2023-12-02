@@ -48,7 +48,6 @@ Source = "https://github.com/shipt/opsml"
 # required dependencies
 python = ">=3.9,<3.12"
 httpx ="^0.23.3"
-matplotlib= ">=3.7.0, <3.8.0"
 opsml-cli = "^0.2.1"
 polars = "^0.18.0"
 pyarrow = ">=8.0.0"
