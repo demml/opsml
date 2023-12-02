@@ -277,7 +277,7 @@ files = [
 name = "attrs"
 version = "23.1.0"
 description = "Classes Without Boilerplate"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "attrs-23.1.0-py3-none-any.whl", hash = "sha256:1f28b4522cdc2fb4256ac1a020c78acf9cba2c6b461ccd2c126f3aa8e8335d04"},
@@ -675,7 +675,7 @@ cron = ["capturer (>=2.4)"]
 name = "contourpy"
 version = "1.2.0"
 description = "Python library for calculating contours of 2D quadrilateral grids"
-optional = false
+optional = true
 python-versions = ">=3.9"
 files = [
     {file = "contourpy-1.2.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0274c1cb63625972c0c007ab14dd9ba9e199c36ae1a231ce45d725cbcbfd10a8"},
@@ -848,7 +848,7 @@ test-randomorder = ["pytest-randomly"]
 name = "cycler"
 version = "0.12.1"
 description = "Composable style cycles"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30"},
@@ -863,7 +863,7 @@ tests = ["pytest", "pytest-cov", "pytest-xdist"]
 name = "dacite"
 version = "1.8.1"
 description = "Simple creation of data classes from dictionaries."
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "dacite-1.8.1-py3-none-any.whl", hash = "sha256:cc31ad6fdea1f49962ea42db9421772afe01ac5442380d9a99fcf3d188c61afe"},
@@ -972,7 +972,7 @@ files = [
 name = "fonttools"
 version = "4.45.1"
 description = "Tools to manipulate font files"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "fonttools-4.45.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:45fa321c458ea29224067700954ec44493ae869b47e7c5485a350a149a19fb53"},
@@ -1645,7 +1645,7 @@ numpy = ">=1.17.3"
 name = "htmlmin"
 version = "0.1.12"
 description = "An HTML Minifier"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "htmlmin-0.1.12.tar.gz", hash = "sha256:50c1ef4630374a5d723900096a961cff426dff46b48f34d194a81bbe14eca178"},
@@ -1757,7 +1757,7 @@ files = [
 name = "imagehash"
 version = "4.3.1"
 description = "Image Hashing library"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "ImageHash-4.3.1-py2.py3-none-any.whl", hash = "sha256:5ad9a5cde14fe255745a8245677293ac0d67f09c330986a351f34b614ba62fb5"},
@@ -1793,7 +1793,7 @@ testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs
 name = "importlib-resources"
 version = "6.1.1"
 description = "Read resources from Python packages"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "importlib_resources-6.1.1-py3-none-any.whl", hash = "sha256:e8bf90d8213b486f428c9c39714b920041cb02c184686a3dee24905aaa8105d6"},
@@ -1922,7 +1922,7 @@ files = [
 name = "kiwisolver"
 version = "1.4.5"
 description = "A fast implementation of the Cassowary constraint solver"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "kiwisolver-1.4.5-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:05703cf211d585109fcd72207a31bb170a0f22144d68298dc5e61b3c946518af"},
@@ -2131,7 +2131,7 @@ files = [
 name = "llvmlite"
 version = "0.41.1"
 description = "lightweight wrapper around basic LLVM functionality"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "llvmlite-0.41.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:c1e1029d47ee66d3a0c4d6088641882f75b93db82bd0e6178f7bd744ebce42b9"},
@@ -2284,7 +2284,7 @@ files = [
 name = "matplotlib"
 version = "3.7.3"
 description = "Python plotting package"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "matplotlib-3.7.3-cp310-cp310-macosx_10_12_universal2.whl", hash = "sha256:085c33b27561d9c04386789d5aa5eb4a932ddef43cfcdd0e01735f9a6e85ce0c"},
@@ -2649,7 +2649,7 @@ files = [
 name = "multimethod"
 version = "1.10"
 description = "Multiple argument dispatching."
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "multimethod-1.10-py3-none-any.whl", hash = "sha256:afd84da9c3d0445c84f827e4d63ad42d17c6d29b122427c6dee9032ac2d2a0d4"},
@@ -2736,7 +2736,7 @@ test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
 name = "numba"
 version = "0.58.1"
 description = "compiling Python code using LLVM"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "numba-0.58.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:07f2fa7e7144aa6f275f27260e73ce0d808d3c62b30cff8906ad1dec12d87bbe"},
@@ -3203,7 +3203,7 @@ files = [
 name = "pandas"
 version = "2.0.3"
 description = "Powerful data structures for data analysis, time series, and statistics"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "pandas-2.0.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e4c7c9f27a4185304c7caf96dc7d91bc60bc162221152de697c98eb0b2648dd8"},
@@ -3281,7 +3281,7 @@ files = [
 name = "patsy"
 version = "0.5.4"
 description = "A Python package for describing statistical models and for building design matrices."
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "patsy-0.5.4-py2.py3-none-any.whl", hash = "sha256:0486413077a527db51ddea8fa94a5234d0feb17a4f4dc01b59b6086c58a70f80"},
@@ -3314,7 +3314,7 @@ scramp = ">=1.4.4"
 name = "phik"
 version = "0.12.3"
 description = "Phi_K correlation analyzer library"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "phik-0.12.3-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:e877b647af1b0b5a8f0134085b2047c7a20d1e4d05f1701a33bed6d3720d4d0a"},
@@ -3892,7 +3892,7 @@ rsa = ["cryptography"]
 name = "pyparsing"
 version = "3.1.1"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-optional = false
+optional = true
 python-versions = ">=3.6.8"
 files = [
     {file = "pyparsing-3.1.1-py3-none-any.whl", hash = "sha256:32c7c0b711493c72ff18a981d24f28aaf9c1fb7ed5e9667c9e84e3db623bdbfb"},
@@ -4013,7 +4013,7 @@ dev = ["atomicwrites (==1.2.1)", "attrs (==19.2.0)", "coverage (==6.5.0)", "hatc
 name = "pytz"
 version = "2023.3.post1"
 description = "World timezone definitions, modern and historical"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
@@ -4024,7 +4024,7 @@ files = [
 name = "pywavelets"
 version = "1.5.0"
 description = "PyWavelets, wavelet transform module"
-optional = false
+optional = true
 python-versions = ">=3.9"
 files = [
     {file = "pywavelets-1.5.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:05723b35191ceb7d0c0bc2898a9ff391c0f20e8ed9b75d30211464872efcac95"},
@@ -4695,7 +4695,7 @@ asn1crypto = ">=1.5.1"
 name = "seaborn"
 version = "0.12.2"
 description = "Statistical data visualization"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "seaborn-0.12.2-py3-none-any.whl", hash = "sha256:ebf15355a4dba46037dfd65b7350f014ceb1f13c05e814eda2c9f5fd731afc08"},
@@ -4743,7 +4743,7 @@ testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jar
 name = "setuptools-scm"
 version = "8.0.4"
 description = "the blessed package to manage your versions by scm tags"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "setuptools-scm-8.0.4.tar.gz", hash = "sha256:b5f43ff6800669595193fd09891564ee9d1d7dcb196cab4b2506d53a2e1c95c7"},
@@ -4931,7 +4931,7 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 name = "statsmodels"
 version = "0.14.0"
 description = "Statistical computations and models for Python"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "statsmodels-0.14.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:16bfe0c96a53b20fa19067e3b6bd2f1d39e30d4891ea0d7bc20734a0ae95942d"},
@@ -5024,7 +5024,7 @@ mpmath = ">=0.19"
 name = "tangled-up-in-unicode"
 version = "0.2.0"
 description = "Access to the Unicode Character Database (UCD)"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "tangled_up_in_unicode-0.2.0-py3-none-any.whl", hash = "sha256:154be12605b1687a17133aa741ae951cf9ee531c48a0c19f98d83ec5cb3cc7be"},
@@ -5617,7 +5617,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 name = "typeguard"
 version = "4.1.5"
 description = "Run-time type checker for Python"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "typeguard-4.1.5-py3-none-any.whl", hash = "sha256:8923e55f8873caec136c892c3bed1f676eae7be57cdb94819281b3d3bc9c0953"},
@@ -5719,7 +5719,7 @@ files = [
 name = "tzdata"
 version = "2023.3"
 description = "Provider of IANA time zone data"
-optional = false
+optional = true
 python-versions = ">=2"
 files = [
     {file = "tzdata-2023.3-py2.py3-none-any.whl", hash = "sha256:7e65763eef3120314099b6939b5546db7adce1e7d6f2e179e3df563c70511eda"},
@@ -5781,7 +5781,7 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 name = "visions"
 version = "0.7.5"
 description = "Visions"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "visions-0.7.5-py3-none-any.whl", hash = "sha256:1e57219715255282a909cfb93d25d6e453535aa0c26640a0d6f03e40be6263d7"},
@@ -5895,7 +5895,7 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 name = "wordcloud"
 version = "1.9.2"
 description = "A little word cloud generator"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "wordcloud-1.9.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:67a83ad05b7a08db64e99cf734ba4394855e78c9e3c6e3a6104f80c64f090d2f"},
@@ -6185,7 +6185,7 @@ multidict = ">=4.0"
 name = "ydata-profiling"
 version = "4.6.2"
 description = "Generate profile report for pandas DataFrame"
-optional = false
+optional = true
 python-versions = ">=3.7, <3.12"
 files = [
     {file = "ydata-profiling-4.6.2.tar.gz", hash = "sha256:7218855ac1c57838637f81341db27e35256f317c0c317996ceb8dfb8136a43d1"},
@@ -6260,8 +6260,9 @@ gcp-postgres = ["cloud-sql-python-connector", "gcsfs", "pg8000"]
 gcs = ["gcsfs"]
 mysql = ["pymysql"]
 postgres = ["psycopg2"]
+profiling = ["ydata-profiling"]
 s3 = ["boto3", "s3fs"]
-server = ["fastapi", "gunicorn", "prometheus-fastapi-instrumentator", "python-multipart", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
+server = ["fastapi", "gunicorn", "jinja2", "prometheus-fastapi-instrumentator", "python-multipart", "rollbar", "streaming-form-data", "uvicorn", "wsgi-basic-auth"]
 sklearn-onnx = ["onnx", "onnxmltools", "onnxruntime", "skl2onnx"]
 tf-onnx = ["onnx", "onnxruntime", "tf2onnx"]
 torch-onnx = ["onnx", "onnxruntime"]
@@ -6269,4 +6270,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "9fe4b48f19440cf2e197cd18bac3678b13027bbb450b28e74859d0636fc8488b"
+content-hash = "a31d47834e6f2c13d96dd0f089ddde2bc605f848d4cedba371cb9d7590ea6a4c"
