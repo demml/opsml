@@ -1,10 +1,4 @@
-from typing import Tuple
-from sklearn import linear_model
-import pandas as pd
-from opsml.registry import DataCard, ModelCard, CardRegistries, RunCard, CardInfo, ModelCardMetadata
-import tempfile
 from opsml.cli.launch_server import launch_uvicorn_app
-from sklearn import pipeline
 
 
 runner = CliRunner()

@@ -17,11 +17,11 @@ from opsml.model.types import (
     DataDict,
     ExtraOnnxArgs,
     Feature,
-    InputData,
-    InputDataType,
+    ValidModelInput,
     ModelReturn,
     OnnxModelDefinition,
 )
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -30,7 +30,7 @@ class ModelCreator:
     def __init__(
         self,
         model: Any,
-        input_data: InputData,
+        input_data: ValidModelInput,
         additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
@@ -50,7 +50,7 @@ class ModelCreator:
         self.model_class = self._get_model_class_name()
         self.additional_model_args = additional_onnx_args
         self.onnx_model_def = onnx_model_def
-        self.input_data_type = type(self.input_data)
+        self.input_data_type = self.input_data.__class__
         self.model_type = self.get_model_type()
 
     def _get_model_class_name(self):
@@ -190,7 +190,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             model_data_schema=DataDict(
                 input_features=input_features,
                 output_features=output_features,
-                data_type=InputDataType(type(self.input_data)).name,
+                data_type=Allow(type(self.input_data)).name,
             )
         )
 
@@ -207,7 +207,7 @@ class OnnxModelCreator(ModelCreator):
     def __init__(
         self,
         model: Any,
-        input_data: InputData,
+        input_data: ValidModelInput,
         additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
@@ -231,18 +231,14 @@ class OnnxModelCreator(ModelCreator):
             additional_onnx_args=additional_onnx_args,
             onnx_model_def=onnx_model_def,
         )
-        self.onnx_data_type = self.get_onnx_data_type(input_data=input_data)
+        self.onnx_data_type = self.get_onnx_data_type()
 
-    def get_onnx_data_type(self, input_data: Any) -> str:
+    def get_onnx_data_type(self) -> str:
         """
         Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
         All others support numpy arrays. This is needed for API signature
         creation when loading model predictors.
-
-        Args:
-            input_data:
-                Sample of data used to train model
 
         Returns:
             data type
@@ -255,9 +251,9 @@ class OnnxModelCreator(ModelCreator):
             OnnxModelType.TF_KERAS,
             OnnxModelType.PYTORCH,
         ]:
-            return InputDataType(type(input_data)).name
+            return AllowedDataType(self.input_data_type).name
 
-        return InputDataType.NUMPY_ARRAY.name
+        return AllowedDataType.NUMPY.name
 
     def create_model(self) -> ModelReturn:
         """
@@ -311,7 +307,7 @@ class OnnxModelCreator(ModelCreator):
 
 def create_model(
     model: Any,
-    input_data: InputData,
+    input_data: ValidModelInput,
     to_onnx: bool,
     additional_onnx_args: Optional[ExtraOnnxArgs] = None,
     onnx_model_def: Optional[OnnxModelDefinition] = None,

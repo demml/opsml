@@ -8,14 +8,12 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol, Union
-
+from opsml.registry.data.types import PandasDataFrame
 import numpy as np
-import pandas as pd
-import polars as pl
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
+ValidModelInput = Union[PandasDataFrame, NDArray, Dict[str, NDArray]]
 
 
 class DataDtypes(str, Enum):
@@ -61,15 +59,6 @@ UPDATE_REGISTRY_MODELS = [
 ]
 
 AVAILABLE_MODEL_TYPES = list(OnnxModelType)
-
-
-class InputDataType(Enum):
-    """Input put data associated with model"""
-
-    PANDAS_DATAFRAME = pd.DataFrame
-    NUMPY_ARRAY = np.ndarray
-    DICT = dict
-    POLARS_DATAFRAME = pl.DataFrame
 
 
 class OnnxDataProto(Enum):
@@ -202,6 +191,8 @@ class DictBase(Base):
         return feats
 
     def to_dataframe(self):
+        import pandas as pd
+
         return pd.DataFrame(self.model_dump(), index=[0])
 
 

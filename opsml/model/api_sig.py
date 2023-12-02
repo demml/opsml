@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 from pydantic import conlist, create_model
-
+from opsml.registry.data.types import AllowedDataType
 from opsml.model.types import (
     ApiDataSchemas,
     ApiSigTypes,
@@ -16,7 +16,6 @@ from opsml.model.types import (
     DeepLearningNumpyBase,
     DictBase,
     Feature,
-    InputDataType,
     NumpyBase,
     OnnxModelType,
 )
@@ -129,8 +128,6 @@ class ApiSigCreator:
         Creates an API signature from model metadata
 
         Args:
-            data_dict:
-                Data dict of data_type, input features, and outputs from model
             model_type:
                 Type of model
             data_schema:
@@ -253,7 +250,7 @@ class SklearnSigCreator(ApiSigCreator):
         models
         """
         if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
-            if self.data_type == InputDataType.PANDAS_DATAFRAME.name:
+            if self.data_type == AllowedDataType.PANDAS:
                 return DictBase  # onnx sklearn pipelines can accept dictionaries
         return NumpyBase
 
@@ -288,7 +285,7 @@ class SklearnSigCreator(ApiSigCreator):
 class DeepLearningSigCreator(ApiSigCreator):
     def _get_pydantic_base(self):
         """Gets pydantic base for deep learning models"""
-        if self.data_type == InputDataType.DICT.name:
+        if self.data_type == AllowedDataType.DICT:
             return DeepLearningDictBase
         return DeepLearningNumpyBase
 

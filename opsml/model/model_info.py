@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
-import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
@@ -14,10 +13,10 @@ from opsml.model.types import (
     DataDtypes,
     ExtraOnnxArgs,
     Feature,
-    InputData,
-    InputDataType,
+    ValidModelInput,
     OnnxModelDefinition,
 )
+from opsml.registry.data.types import AllowedDataType, PandasDataFrame
 
 logger = ArtifactLogger.get_logger()
 
@@ -25,7 +24,7 @@ logger = ArtifactLogger.get_logger()
 class ModelData:
     def __init__(
         self,
-        input_data: InputData,
+        input_data: ValidModelInput,
     ):
         """Base helper class for storing input/sample data associated with a trained model.
         This class is used with OnnxModelConverter
@@ -134,12 +133,14 @@ class NumpyData(ModelData):
 
     @staticmethod
     def validate(data_type: type) -> bool:
-        return data_type == InputDataType.NUMPY_ARRAY.value
+        return data_type == AllowedDataType.NUMPY
 
 
 class PandasDataFrame(ModelData):
     def __init__(self, input_data):
         super().__init__(input_data=input_data)
+
+        import pandas as pd
 
         self.data = cast(pd.DataFrame, self.data)
 
@@ -189,7 +190,7 @@ class PandasDataFrame(ModelData):
 
     @staticmethod
     def validate(data_type: type) -> bool:
-        return data_type == InputDataType.PANDAS_DATAFRAME.value
+        return data_type == AllowedDataType.PANDAS
 
 
 class DataDictionary(ModelData):
@@ -227,10 +228,10 @@ class DataDictionary(ModelData):
 
     @staticmethod
     def validate(data_type: type) -> bool:
-        return data_type == InputDataType.DICT.value
+        return data_type == AllowedDataType.DICT
 
 
-def get_model_data(data_type: type, input_data: Any):
+def get_model_data(data_type: str, input_data: Any):
     """Sets the appropriate ModelData subclass depending
     on data_type passed
 
@@ -258,7 +259,7 @@ class FloatTypeConverter:
         """
         self.convert_all = convert_all
 
-    def _convert_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _convert_dataframe(self, data: PandasDataFrame) -> PandasDataFrame:
         for feature, feature_type in zip(data.columns, data.dtypes):
             if not self.convert_all:
                 if DataDtypes.FLOAT64 in str(feature_type):
@@ -284,7 +285,9 @@ class FloatTypeConverter:
                     data[key] = value.astype(np.float32, copy=False)
         return data
 
-    def convert_to_float(self, data: InputData) -> InputData:
+    def convert_to_float(self, data: ValidModelInput) -> ValidModelInput:
+        import pandas as pd
+
         if isinstance(data, pd.DataFrame):
             return self._convert_dataframe(data=data)
         if isinstance(data, np.ndarray):
@@ -307,7 +310,7 @@ class ModelInfo:
         model_class:
             Model class
         data_type:
-            Data type
+            Data type (data.__class__)
         additional_model_args:
             Optional args to include with Torch model
         onnx_model_def:
@@ -318,6 +321,6 @@ class ModelInfo:
     model_data: ModelData
     model_type: str
     model_class: str
-    data_type: type
+    data_type: str
     additional_model_args: Optional[ExtraOnnxArgs] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None

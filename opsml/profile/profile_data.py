@@ -5,9 +5,8 @@
 
 import os
 from typing import Any, List, Union
+from opsml.registry.data.types import AllowedDataType, PandasDataFrame, PolarsDataFrame
 
-import pandas as pd
-import polars as pl
 
 DIR_PATH = os.path.dirname(__file__)
 ProfileReport = Any  # custom runtime check in DataCard
@@ -16,7 +15,7 @@ ProfileReport = Any  # custom runtime check in DataCard
 class DataProfiler:
     @staticmethod
     def create_profile_report(
-        data: Union[pl.DataFrame, pd.DataFrame],
+        data: Union[PandasDataFrame, PolarsDataFrame],
         name: str,
         sample_perc: float = 1,
     ) -> ProfileReport:
@@ -38,7 +37,7 @@ class DataProfiler:
 
         kwargs = {"title": f"Profile report for {name}"}
 
-        if isinstance(data, pl.DataFrame):
+        if AllowedDataType.POLARS == data.__class__:
             if sample_perc < 1:
                 return ProfileReport(
                     df=data.sample(fraction=sample_perc, with_replacement=False, shuffle=True).to_pandas(),

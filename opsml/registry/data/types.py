@@ -3,20 +3,25 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import Enum
-from typing import Any, Dict, Mapping, Optional, Union
+from typing import Any, Dict, Optional, Union, Protocol
 
 import numpy as np
-import pandas as pd
-import polars as pl
 import pyarrow as pa
-from polars.datatypes.classes import DataType, DataTypeClass
 from pydantic import BaseModel, ConfigDict
 
 from opsml.registry.image import ImageDataset
 
-POLARS_SCHEMA = Mapping[str, Union[DataTypeClass, DataType]]  # pylint: disable=invalid-name
 
-ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]
+# DataCard data type hints
+class PandasDataFrame(Protocol):
+    ...
+
+
+class PolarsDataFrame(Protocol):
+    ...
+
+
+ValidData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table, ImageDataset]
 
 
 class AllowedTableTypes(str, Enum):
@@ -29,11 +34,12 @@ class AllowedTableTypes(str, Enum):
 
 
 class AllowedDataType(str, Enum):
-    PANDAS = "pandas"
-    PYARROW = "pyarrow"
-    POLARS = "polars"
-    NUMPY = "numpy"
+    PANDAS = "pandas.core.frame.DataFrame"
+    PYARROW = "pyarrow.lib.Table"
+    POLARS = "polars.dataframe.frame.DataFrame"
+    NUMPY = "numpy.ndarray"
     IMAGE = "ImageDataset"
+    DICT = "dict"
 
 
 class ArrowTable(BaseModel):
@@ -58,21 +64,25 @@ class DataTypeChecker:
 class PandasTypeChecker(DataTypeChecker):
     @staticmethod
     def check_data_type(data: ValidData) -> None:
+        import pandas as pd
+
         assert isinstance(data, pd.DataFrame), "Data must be a pandas dataframe"
 
     @staticmethod
     def validate_type(data_type: str) -> bool:
-        return AllowedDataType.PANDAS in data_type
+        return AllowedDataType.PANDAS == data_type
 
 
 class PolarsTypeChecker(DataTypeChecker):
     @staticmethod
     def check_data_type(data: ValidData) -> None:
+        import polars as pl
+
         assert isinstance(data, pl.DataFrame), "Data must be a polars dataframe"
 
     @staticmethod
     def validate_type(data_type: str) -> bool:
-        return AllowedDataType.POLARS in data_type
+        return AllowedDataType.POLARS == data_type
 
 
 class NumpyTypeChecker(DataTypeChecker):
@@ -82,7 +92,7 @@ class NumpyTypeChecker(DataTypeChecker):
 
     @staticmethod
     def validate_type(data_type: str) -> bool:
-        return AllowedDataType.NUMPY in data_type
+        return AllowedDataType.NUMPY == data_type
 
 
 class PyarrowTypeChecker(DataTypeChecker):
@@ -92,7 +102,7 @@ class PyarrowTypeChecker(DataTypeChecker):
 
     @staticmethod
     def validate_type(data_type: str) -> bool:
-        return AllowedDataType.PYARROW in data_type
+        return AllowedDataType.PYARROW == data_type
 
 
 class ImageTypeChecker(DataTypeChecker):
@@ -102,12 +112,12 @@ class ImageTypeChecker(DataTypeChecker):
 
     @staticmethod
     def validate_type(data_type: str) -> bool:
-        return AllowedDataType.IMAGE in data_type
+        return AllowedDataType.IMAGE == data_type
 
 
 def check_data_type(data: ValidData) -> None:
     """Checks that the data type is one of the allowed types"""
-    data_type = str(data.__class__)
+    data_type = data.__class__.__module__
 
     data_type_checker = next(
         (
