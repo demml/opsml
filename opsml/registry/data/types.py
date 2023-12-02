@@ -17,6 +17,23 @@ from opsml.registry.image import ImageDataset
 ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]
 
 
+def get_class_name(object_: object) -> str:
+    """Parses object to get the fully qualified class name.
+    Used during type checking to avoid unnecessary imports.
+
+    Args:
+        object_:
+            object to parse
+    Returns:
+        fully qualified class name
+    """
+    klass = object_.__class__
+    module = klass.__module__
+    if module == "builtins":
+        return klass.__qualname__  # avoid outputs like 'builtins.str'
+    return module + "." + klass.__qualname__
+
+
 class AllowedDataType(str, Enum):
     PANDAS = "pandas.core.frame.DataFrame"
     PYARROW = "pyarrow.lib.Table"
