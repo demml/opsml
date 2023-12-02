@@ -31,6 +31,7 @@ class ModelCreator:
         self,
         model: Any,
         input_data: ValidModelInput,
+        input_data_type: str,
         additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
@@ -50,7 +51,7 @@ class ModelCreator:
         self.model_class = self._get_model_class_name()
         self.additional_model_args = additional_onnx_args
         self.onnx_model_def = onnx_model_def
-        self.input_data_type = self.input_data.__class__
+        self.input_data_type = self.input_data_type
         self.model_type = self.get_model_type()
 
     def _get_model_class_name(self):
@@ -190,7 +191,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             model_data_schema=DataDict(
                 input_features=input_features,
                 output_features=output_features,
-                data_type=AllowedDataType(self.input_data.__class__).name,
+                data_type=AllowedDataType(self.input_data_type).name,
             )
         )
 
@@ -308,6 +309,7 @@ class OnnxModelCreator(ModelCreator):
 def create_model(
     model: Any,
     input_data: ValidModelInput,
+    input_data_type: str,
     to_onnx: bool,
     additional_onnx_args: Optional[ExtraOnnxArgs] = None,
     onnx_model_def: Optional[OnnxModelDefinition] = None,
@@ -342,6 +344,7 @@ def create_model(
     return creator(
         model=model,
         input_data=input_data,
+        input_data_type=input_data_type,
         additional_onnx_args=additional_onnx_args,
         onnx_model_def=onnx_model_def,
     ).create_model()

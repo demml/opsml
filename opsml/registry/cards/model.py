@@ -6,9 +6,6 @@ from functools import cached_property
 from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
-import pandas as pd
-
-pd.DataFrame
 from pydantic import ConfigDict, field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -17,7 +14,6 @@ from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
-    InputDataType,
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
@@ -29,7 +25,7 @@ from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 from opsml.registry.utils.settings import settings
-from opsml.registry.data.types import PolarsDataFrame, PandasDataFrame, AllowedDataType
+from opsml.registry.data.types import PolarsDataFrame, PandasDataFrame, AllowedDataType, get_class_name
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
@@ -78,7 +74,7 @@ class ModelCard(ArtifactCard):
     metadata: ModelCardMetadata = ModelCardMetadata()
 
     @model_validator(mode="before")
-    def check_args(cls, values: Dict[str, Any]):
+    def _check_args(cls, values: Dict[str, Any]):
         """Converts trained model to modelcard"""
 
         if all([values.get("uid"), values.get("version")]):
@@ -89,19 +85,31 @@ class ModelCard(ArtifactCard):
                 """trained_model and sample_input_data are required for instantiating a ModelCard""",
             )
 
+        metadata = values.get("metadata")
+
+        if metadata is None:
+            values["metadata"] = ModelCardMetadata(
+                sample_data_type=get_class_name(
+                    values["sample_input_data"],
+                )
+            )
         return values
 
     @field_validator("sample_input_data", mode="before")
-    def get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
+    def _get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
         if input_data is None:
             return input_data
 
-        data_type = input_data.__class__
+        data_type = get_class_name(input_data)
 
-        if not data_type == AllowedDataType.DICT:
+        if not isinstance(input_data, dict):
             if data_type == AllowedDataType.POLARS:
+                import polars as pl
+
+                input_data = cast(pl.DataFrame, input_data)
+
                 input_data = input_data.to_pandas()
 
             return input_data[0:1]
@@ -268,23 +276,24 @@ class ModelCard(ArtifactCard):
         if self.sample_input_data is None:
             self.load_sample_data()
 
-        data_type = self.sample_input_data.__class__
+        data_type = get_class_name(self.sample_input_data)
 
-        sample_data = cast(
-            Union[PandasDataFrame, PolarsDataFrame, np.ndarray, Dict[str, Any]],
-            self.sample_input_data,
-        )
-
-        if isinstance(sample_data, np.ndarray):
+        if isinstance(self.sample_input_data, np.ndarray):
             model_data = self.model_data_schema
             input_name = next(iter(model_data.input_features.keys()))
-            return {input_name: sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
+            return {input_name: self.sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
 
-        if isinstance(sample_data, pd.DataFrame):
+        if data_type == AllowedDataType.PANDAS:
+            import pandas as pd
+
+            sample_data = cast(pd.DataFrame, self.sample_input_data)
             record = list(sample_data[0:1].T.to_dict().values())[0]  # pylint: disable=unsubscriptable-object
             return record
 
-        if isinstance(sample_data, pl.DataFrame):
+        if data_type == AllowedDataType.POLARS:
+            import polars as pl
+
+            sample_data = cast(pl.DataFrame, self.sample_input_data)
             record = list(sample_data.to_pandas()[0:1].T.to_dict().values())[0]
             return record
 

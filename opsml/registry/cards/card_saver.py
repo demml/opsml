@@ -21,7 +21,7 @@ from opsml.registry.cards import (
 )
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
-from opsml.registry.data.types import AllowedTableTypes
+from opsml.registry.data.types import AllowedTableTypes, AllowedDataType
 from opsml.registry.image import ImageDataset
 from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -109,7 +109,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         exclude_attr = {"data_profile", "storage_client"}
 
         # ImageDataSets use pydantic models for data
-        if self.card.metadata.data_type != AllowedTableTypes.IMAGE_DATASET.value:
+        if AllowedDataType.IMAGE not in self.card.metadata.data_type:
             exclude_attr.add("data")
 
         spec = self._get_storage_spec(
@@ -131,7 +131,8 @@ class DataCardArtifactSaver(CardArtifactSaver):
             arrow table model
         """
         arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
-            data=self.card.data, data_type=self.card.metadata.daeta_type
+            data=self.card.data,
+            data_type=self.card.metadata.data_type,
         )
         arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
