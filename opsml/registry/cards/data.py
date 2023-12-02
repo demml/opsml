@@ -15,7 +15,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedDataType, AllowedTableTypes, ValidData, check_data_type, get_class_name
+from opsml.registry.data.types import AllowedDataType, AllowedTableTypes, ValidData, check_data_type
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -319,6 +319,7 @@ class Downloader:
         raise NotImplementedError
 
 
+# TODO: use this impl or one in registry/storage
 class DataDownloader(Downloader):
     """Class for downloading data from storage"""
 
@@ -332,24 +333,28 @@ class DataDownloader(Downloader):
             return
 
         data = load_record_artifact_from_storage(
-            artifact_type=cast(str, self.card.metadata.data_type),
+            artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.data_uri,
             ),
         )
 
-        data = check_data_schema(data, cast(Dict[str, str], self.card.metadata.feature_map))
+        data = check_data_schema(
+            data,
+            cast(Dict[str, str], self.card.metadata.feature_map),
+            self.card.metadata.data_type,
+        )
         setattr(self.card, "data", data)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
-            AllowedTableTypes.NDARRAY,
-            AllowedTableTypes.PANDAS_DATAFRAME,
-            AllowedTableTypes.POLARS_DATAFRAME,
-            AllowedTableTypes.ARROW_TABLE,
-            AllowedTableTypes.DICTIONARY,
+            AllowedDataType.NUMPY,
+            AllowedDataType.PANDAS,
+            AllowedDataType.POLARS,
+            AllowedDataType.PYARROW,
+            AllowedDataType.DICT,
         ]
 
 
@@ -367,7 +372,7 @@ class ImageDownloader(Downloader):
         kwargs = {"image_dir": data.image_dir}
 
         record = load_record_artifact_from_storage(
-            artifact_type=cast(str, self.card.metadata.data_type),
+            artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.data_uri,
@@ -379,7 +384,7 @@ class ImageDownloader(Downloader):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == AllowedTableTypes.IMAGE_DATASET
+        return AllowedDataType.IMAGE in artifact_type
 
 
 def download_object(

@@ -3,12 +3,17 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import Enum
-from typing import Any, Dict, Optional, Protocol, Union
+from typing import Any, Dict, Optional, Protocol, Union, Mapping
 
 import numpy as np
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
+import sys
 
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 from opsml.registry.image import ImageDataset
 
 
@@ -21,7 +26,19 @@ class PolarsDataFrame(Protocol):
     ...
 
 
+class DataTypeClass(type):
+    ...
+
+
+class DataType(type):
+    ...
+
+
 ValidData = Union[np.ndarray, PandasDataFrame, PolarsDataFrame, pa.Table, ImageDataset]
+
+
+PolarsDataType: TypeAlias = Union["DataTypeClass", "DataType"]
+PolarsSchemaDict: TypeAlias = Mapping[str, PolarsDataType]
 
 
 def get_class_name(object_: ValidData) -> str:
