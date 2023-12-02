@@ -10,11 +10,9 @@ from typing import Any, Optional, Tuple
 
 import joblib
 import numpy as np
-import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
-from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
 
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.cards.types import StoragePath
@@ -25,8 +23,10 @@ from opsml.registry.storage.storage_system import (
     StorageClientType,
     StorageSystem,
 )
+from opsml.registry.data.types import AllowedDataType
 from opsml.registry.storage.types import ARTIFACT_TYPES, ArtifactStorageType, FilePath
 from opsml.registry.storage.utils import cleanup_files
+from opsml.model.types import ModelProto
 
 
 class ArtifactStorage:
@@ -302,7 +302,7 @@ class ImageDataStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.IMAGE_DATASET
+        return AllowedDataType.IMAGE in artifact_type
 
 
 class ParquetStorage(ArtifactStorage):
@@ -363,10 +363,12 @@ class ParquetStorage(ArtifactStorage):
             filesystem=self.storage_filesystem,
         ).read()
 
-        if self.artifact_type == ArtifactStorageType.PANDAS_DATAFRAME:
+        if self.artifact_type == AllowedDataType.PANDAS:
             return pa_table.to_pandas()
 
-        if self.artifact_type == ArtifactStorageType.POLARS_DATAFRAME:
+        if self.artifact_type == AllowedDataType.POLARS:
+            import polars as pl
+
             return pl.from_arrow(data=pa_table)
 
         return pa_table
@@ -374,9 +376,9 @@ class ParquetStorage(ArtifactStorage):
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
-            ArtifactStorageType.ARROW_TABLE,
-            ArtifactStorageType.PANDAS_DATAFRAME,
-            ArtifactStorageType.POLARS_DATAFRAME,
+            AllowedDataType.PYARROW,
+            AllowedDataType.PANDAS_DATAFRAME,
+            AllowedDataType.PANDAS,
         ]
 
 
@@ -431,7 +433,7 @@ class NumpyStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.NDARRAY
+        return artifact_type == AllowedDataType.NUMPY
 
 
 class HTMLStorage(ArtifactStorage):
