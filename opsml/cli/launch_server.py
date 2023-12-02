@@ -6,8 +6,6 @@ def launch_uvicorn_app(login: bool = False, port: int = 8888):
     Launches a Uvicorn Opsml server
 
     Args:
-        run_mlflow:
-            Whether to launch with mlflow
         login:
             Whether to use login credentials
         port:

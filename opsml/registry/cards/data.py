@@ -6,7 +6,7 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import field_validator, model_validator
-
+import numpy as np
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath
 from opsml.profile.profile_data import DataProfiler, ProfileReport
@@ -15,7 +15,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
+from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type, PandasDataFrame, PolarsDataFrame
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -96,7 +96,7 @@ class DataCard(ArtifactCard):
     dependent_vars: Optional[List[Union[int, str]]] = None
     sql_logic: Dict[Optional[str], Optional[str]] = {}
     data_profile: Optional[ProfileReport] = None
-    metadata: DataCardMetadata = DataCardMetadata()
+    metadata: DataCardMetadata
 
     @model_validator(mode="before")
     def check_data(cls, card_args) -> ValidData:
@@ -201,7 +201,8 @@ class DataCard(ArtifactCard):
                 label, data = DataSplitter.split(
                     split=data_split,
                     dependent_vars=self.dependent_vars,
-                    data=self.data,
+                    data=cast(Union[np.ndarray, PandasDataFrame, PolarsDataFrame], self.data),
+                    data_type=self.metadata.data_type,
                 )
                 setattr(data_holder, label, data)
 
@@ -282,7 +283,7 @@ class DataCard(ArtifactCard):
         """
 
         if any(
-            allowed_type == self.data.metadata.data_type
+            allowed_type == self.metadata.data_type
             for allowed_type in [
                 AllowedDataType.PANDAS,
                 AllowedDataType.POLARS,
@@ -290,7 +291,7 @@ class DataCard(ArtifactCard):
         ):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
-                    data=self.data,
+                    data=cast(Union[PandasDataFrame, PolarsDataFrame], self.data),
                     name=self.name,
                     sample_perc=min(sample_perc, 1),  # max of 1
                 )

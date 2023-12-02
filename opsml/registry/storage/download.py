@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard
-from opsml.registry.cards.types import DataCardUris
+from opsml.registry.cards.types import DataCardUris, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image import ImageDataset
@@ -21,6 +21,7 @@ class DataCardProto(BaseModel):
     feature_map: Dict[str, str]
     data_type: str
     uris: DataCardUris = DataCardUris()
+    metadata: DataCardMetadata
 
 
 class Downloader:
@@ -56,7 +57,11 @@ class DataDownloader(Downloader):
             ),
         )
 
-        data = check_data_schema(data, self.card.feature_map)
+        data = check_data_schema(
+            data,
+            self.card.feature_map,
+            self.card.metadata.data_type,
+        )
         setattr(self.card, "data", data)
 
     @staticmethod
