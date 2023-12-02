@@ -5,9 +5,9 @@
 
 import os
 from typing import Any, List, Union
+
 import pandas as pd
 import polars as pl
-
 
 DIR_PATH = os.path.dirname(__file__)
 ProfileReport = Any  # custom runtime check in DataCard

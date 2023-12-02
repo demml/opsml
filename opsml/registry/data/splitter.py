@@ -3,12 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple, Union, cast
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
-import pyarrow as pa
 import pandas as pd
 import polars as pl
+import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.registry.data.types import AllowedDataType

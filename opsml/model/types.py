@@ -14,7 +14,6 @@ import pandas as pd
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-
 ValidModelInput = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
 
 

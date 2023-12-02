@@ -5,7 +5,6 @@
 import os
 from typing import Any, Dict, List, Optional, Union, cast
 
-import numpy as np
 import pandas as pd
 import polars as pl
 from pydantic import field_validator, model_validator
@@ -18,11 +17,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import (
-    AllowedDataType,
-    ValidData,
-    check_data_type,
-)
+from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage

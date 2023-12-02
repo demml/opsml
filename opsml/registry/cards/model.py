@@ -3,12 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from typing import Any, Dict, Optional, cast, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
-from pydantic import ConfigDict, field_validator, model_validator
-import polars as pl
 import pandas as pd
+import polars as pl
+from pydantic import ConfigDict, field_validator, model_validator
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (

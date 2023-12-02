@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
@@ -16,7 +17,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidModelInput,
 )
-from opsml.registry.data.types import AllowedDataType, PandasDataFrame
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -259,7 +260,7 @@ class FloatTypeConverter:
         """
         self.convert_all = convert_all
 
-    def _convert_dataframe(self, data: PandasDataFrame) -> PandasDataFrame:
+    def _convert_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
         for feature, feature_type in zip(data.columns, data.dtypes):
             if not self.convert_all:
                 if DataDtypes.FLOAT64 in str(feature_type):
@@ -286,13 +287,13 @@ class FloatTypeConverter:
                     data[key] = value.astype(np.float32, copy=False)
         return data
 
-    def convert_to_float(self, data: ValidModelInput, data_type: str) -> ValidModelInput:
-        if data_type == AllowedDataType.PANDAS:
-            return self._convert_dataframe(data=cast(PandasDataFrame, data))
+    def convert_to_float(self, data: ValidModelInput) -> ValidModelInput:
+        if isinstance(data, pd.DataFrame):
+            return self._convert_dataframe(data=data)
         if isinstance(data, np.ndarray):
             return self._convert_array(data=data)
 
-        return self._convert_dict(data=cast(Dict[str, NDArray], data))
+        return self._convert_dict(data=data)
 
 
 @dataclass

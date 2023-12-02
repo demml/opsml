@@ -3,14 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
 import numpy as np
-import pyarrow as pa
 import pandas as pd
 import polars as pl
+import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
 
 from opsml.registry.image import ImageDataset

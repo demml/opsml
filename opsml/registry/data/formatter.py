@@ -2,16 +2,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union, cast
+from typing import Any, Dict, Union
 
 import numpy as np
-import pyarrow as pa
-import polars as pl
 import pandas as pd
-from opsml.registry.data.types import (
-    AllowedDataType,
-    ArrowTable,
-)
+import polars as pl
+import pyarrow as pa
+
+from opsml.registry.data.types import AllowedDataType, ArrowTable
 
 ValidArrowData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table]
 

@@ -60,10 +60,9 @@ class DataConverter:
                 Boolean indicating whether to convert all columns to Float32
 
         """
-        self.model_data.data = FloatTypeConverter(convert_all=convert_all,).convert_to_float(
-            data=self.model_data.data,
-            data_type=self.model_info.data_type,
-        )
+        self.model_data.data = FloatTypeConverter(
+            convert_all=convert_all,
+        ).convert_to_float(data=self.model_data.data)
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         """Gets schema from data.
