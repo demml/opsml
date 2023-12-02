@@ -17,9 +17,9 @@ from opsml.model.types import (
     DataDict,
     ExtraOnnxArgs,
     Feature,
-    ValidModelInput,
     ModelReturn,
     OnnxModelDefinition,
+    ValidModelInput,
 )
 from opsml.registry.data.types import AllowedDataType
 
