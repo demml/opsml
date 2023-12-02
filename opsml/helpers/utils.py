@@ -10,11 +10,10 @@ import re
 import string
 from functools import wraps
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
+from opsml.helpers import exceptions
 from opsml.helpers.logging import ArtifactLogger
-
-from . import exceptions
 
 logger = ArtifactLogger.get_logger()
 
@@ -23,11 +22,11 @@ REMOVE_CHARS = re.escape(PUNCTUATION)
 NAME_TEAM_PATTERN = r"^[a-z0-9]+([-a-z0-9]+)*:[-a-z0-9]+$"
 
 
-def experimental_feature(func):
+def experimental_feature(func: Callable[..., None]) -> Callable[..., None]:
     """Decorator for experimental features"""
 
     @wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Any, *args: List[Any], **kwargs: Dict[Any, Any]) -> None:
         class_name = self.__class__.__name__
 
         logger.warning("Class {} and it's features are experimental and may not work as intended", class_name)
@@ -78,13 +77,13 @@ def validate_name_team_pattern(name: str, team: str) -> None:
 
 class TypeChecker:
     @staticmethod
-    def check_metric_type(metric: Union[int, float]):
+    def check_metric_type(metric: Union[int, float]) -> Union[int, float]:
         if isinstance(metric, (int, float)):
             return metric
         raise ValueError("Metric is not of valid type (int, float)")
 
     @staticmethod
-    def check_param_type(param: Union[int, float, str]):
+    def check_param_type(param: Union[int, float, str]) -> Union[int, float, str]:
         if isinstance(param, (int, float, str)):
             return param
         raise ValueError("Param is not of valid type (int, float, str)")
@@ -127,11 +126,7 @@ class FindPath:
         )
 
     @staticmethod
-    def find_dirpath(
-        dir_name: str,
-        path: str,
-        anchor_file: str,
-    ):
+    def find_dirpath(dir_name: str, path: str, anchor_file: str) -> str:
         """Finds the dir path of a given file.
 
         Args:
@@ -149,7 +144,6 @@ class FindPath:
         paths = glob.glob(f"{path}/**/{anchor_file}", recursive=True)
 
         if len(paths) <= 1:
-            new_path: Union[list, str] = []
             dirs = paths[0].split("/")[:-1]
 
             try:
@@ -161,9 +155,7 @@ class FindPath:
                      Error: {error}
                      """
                 )
-
-            new_path = "/".join(dirs[: dir_idx + 1])
-            return new_path
+            return "/".join(dirs[: dir_idx + 1])
 
         raise exceptions.MoreThanOnePath(
             f"""More than one path was found for the trip configuration file.
@@ -173,10 +165,7 @@ class FindPath:
         )
 
     @staticmethod
-    def find_source_dir(
-        path: str,
-        runner_file: str,
-    ):
+    def find_source_dir(path: str, runner_file: str) -> Tuple[str, str]:
         """Finds the dir path of a given of the pipeline
         runner file.
 
@@ -185,7 +174,7 @@ class FindPath:
             runner_file (str): Name of pipeline runner file
 
         Returns:
-            dirpath (str)
+            tuple(dir, name)
         """
         paths = glob.glob(f"{path}/**/{runner_file}", recursive=True)
         if len(paths) <= 1:
@@ -201,7 +190,7 @@ class FindPath:
         )
 
 
-def all_subclasses(cls):
+def all_subclasses(cls: Any) -> Set[Any]:
     """Gets all subclasses associated with parent class"""
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)],

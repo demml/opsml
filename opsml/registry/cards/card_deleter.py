@@ -9,13 +9,14 @@ from opsml.registry.storage.storage_system import StorageClientType
 class CardArtifactDeleter:
     def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
         """
-        Parent class for saving artifacts belonging to cards
+        Parent class for deleting artifacts belonging to cards
 
         Args:
             card:
-                ArtifactCard with artifacts to save
-            card_storage_info:
-                Extra info to use with artifact storage
+                ArtifactCard with artifacts to delete
+
+            storage_client:
+                The client which will perform the actual deletion
         """
 
         self._card = card
@@ -30,6 +31,7 @@ class CardArtifactDeleter:
 
     def _delete_artifacts(self, read_path: str) -> None:
         """Find common directory from path and delete files"""
+
         path_split = read_path.split("/")
         version_index = path_split.index(f"v{self.card.version}")
         dir_path = "/".join(path_split[: version_index + 1])

@@ -72,8 +72,8 @@ print(run.runcard.get_parameter("alpha"))
 
 ```
 
-### Creating A Run with MlFlow
-If an `Opsml` server has been setup to use `Mlflow`, you can also associate an `MlflowProject` with a `RunCard`. The process is the same as above
+### Creating A Run with an OpsmlProject
+If an `Opsml` server has been setup, you can also associate an `OpsmlProject` with a `RunCard`. The process is the same as above
 
 ```python
 
@@ -81,9 +81,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 import pandas as pd
 
-from opsml.projects import ProjectInfo
-
-from opsml.projects.mlflow import MlflowProject
+from opsml.projects import ProjectInfo, OpsmlProject
 
 from opsml.registry.cards import CardInfo
 from opsml.registry import DataCard, ModelCard, CardRegistry
@@ -102,12 +100,12 @@ def fake_data():
 
 
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email",)
-project = MlflowProject(info=info)
-with project.run(run_name="mlflow-test") as run:
+project = OpsmlProject(info=info)
+with project.run(run_name="opsml-test") as run:
 
     X, y = fake_data()
     reg = LinearRegression().fit(X.to_numpy(), y)
-    
+
     data_card = DataCard(
         data=X,
         name="pipeline-data",
@@ -145,7 +143,7 @@ You can now log into the `Opsml` server and see your recent run and associated m
         show_source: true
         heading_level: 3
 
-::: opsml.projects.mlflow.project.MlflowProject
+::: opsml.projects.OpsmlProject
     options:
         show_root_heading: true
         show_source: true

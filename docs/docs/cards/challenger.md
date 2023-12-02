@@ -26,7 +26,7 @@ import numpy as np
 
 # Opsml
 from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
-from opsml.projects import ProjectInfo, MlflowProject
+from opsml.projects import ProjectInfo, OpsmlProject
 from opsml.model.challenger import ModelChallenger
 ```
 
@@ -68,7 +68,7 @@ We will now train a linear regression model and score it with the test dataset
 ```python
 
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lin-reg") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
@@ -100,7 +100,7 @@ Train a Lasso regression model
 ```python
 
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lasso") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
@@ -133,7 +133,7 @@ Train a Poisson regression model
 ```python
 
 info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenger-poisson") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
@@ -239,9 +239,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
 import numpy as np
 
-from opsml.projects import ProjectInfo
+from opsml.projects import ProjectInfo, OpsmlProject
 
-from opsml.projects.mlflow import MlflowProject
 from opsml.registry import DataCard, ModelCard
 from opsml.model.challenger import ModelChallenger
 
@@ -265,7 +264,7 @@ info = ProjectInfo(
     team="devops",
     user_email="test_email",
 )
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="create-model") as run:
     X, y = fake_data()
     reg = LinearRegression().fit(X.to_numpy(), y)
@@ -302,7 +301,7 @@ info = ProjectInfo(
     team="devops",
     user_email="test_email",
 )
-project = MlflowProject(info=info)
+project = OpsmlProject(info=info)
 with project.run(run_name="challenge-model") as run:
     X, y = fake_data()
     reg = LinearRegression().fit(X.to_numpy(), y)

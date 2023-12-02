@@ -283,6 +283,7 @@ class ModelMetadata(BaseModel):
     model_type: str
     onnx_uri: Optional[str] = None
     onnx_version: Optional[str] = None
+    onnx_model_def: Optional[OnnxModelDefinition] = None
     model_uri: str
     model_version: str
     model_team: str

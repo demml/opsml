@@ -25,11 +25,6 @@
 - [Contributors](https://github.com/projectdiscovery/httpx/graphs/contributors)
 ---
 
-### [mlflow/mlflow](https://github.com/mlflow/mlflow)
-- [License-Apache](https://github.com/mlflow/mlflow/blob/master/LICENSE.txt)
-- [Contributors](https://github.com/mlflow/mlflow/contributors)
----
-
 ### [onnx/onnx](https://github.com/onnx/onnx)
 - [License-Apache](https://github.com/onnx/onnx/blob/main/LICENSE)
 - [Contributors](https://github.com/onnx/onnx/graphs/contributors)

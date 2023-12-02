@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 import re
 from enum import Enum
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import semver
 from pydantic import BaseModel, model_validator
@@ -29,7 +29,8 @@ class CardVersion(BaseModel):
     is_full_semver: bool = False
 
     @model_validator(mode="before")
-    def validate_inputs(cls, values):
+    @classmethod
+    def validate_inputs(cls, values: Any) -> Any:
         """Validates a user-supplied version"""
         version = values.get("version")
         splits = version.split(".")

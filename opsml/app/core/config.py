@@ -10,24 +10,6 @@ TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", BASE_LOCAL_SQL)
 STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
 
 
-class MlFlowConfig:
-    MLFLOW_SERVER_ARTIFACT_DESTINATION = os.getenv("_MLFLOW_SERVER_ARTIFACT_DESTINATION", STORAGE_URI)
-    MLFLOW_SERVER_ARTIFACT_ROOT = os.getenv("_MLFLOW_SERVER_ARTIFACT_ROOT", "mlflow-artifacts:/")
-    MLFLOW_SERVER_FILE_STORE = os.getenv("_MLFLOW_SERVER_FILE_STORE", TRACKING_URI)
-    MLFLOW_SERVER_SERVE_ARTIFACTS = bool(os.getenv("_MLFLOW_SERVER_SERVE_ARTIFACTS", "true"))
-
-    def __init__(self) -> None:
-        self._set_mlflow_vars()
-
-    def _set_mlflow_vars(self) -> None:
-        """Ensures mlflow environment variables exist"""
-
-        os.environ["_MLFLOW_SERVER_ARTIFACT_DESTINATION"] = self.MLFLOW_SERVER_ARTIFACT_DESTINATION
-        os.environ["_MLFLOW_SERVER_ARTIFACT_ROOT"] = self.MLFLOW_SERVER_ARTIFACT_ROOT
-        os.environ["_MLFLOW_SERVER_FILE_STORE"] = self.MLFLOW_SERVER_FILE_STORE
-        os.environ["_MLFLOW_SERVER_SERVE_ARTIFACTS"] = str(self.MLFLOW_SERVER_SERVE_ARTIFACTS).lower()
-
-
 class OpsmlConfig:
     APP_NAME = "OPSML-API"
     APP_ENV = os.environ.get("APP_ENV", "development")
