@@ -3,11 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple, Union
-
+from typing import Any, List, Optional, Tuple, Union, cast
+from opsml.registry.data.types import PandasDataFrame, PolarsDataFrame, PandasTimestamp, AllowedDataType
 import numpy as np
-import pandas as pd
-import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -20,8 +18,8 @@ class DataHolder(BaseModel):
 
 @dataclass
 class Data:
-    X: Union[pd.DataFrame, pa.Table, np.ndarray]
-    y: Optional[Union[pd.DataFrame, pa.Table, np.ndarray]] = None
+    X: Union[PolarsDataFrame, PandasDataFrame, pa.Table, np.ndarray]
+    y: Optional[Union[PolarsDataFrame, PandasDataFrame, pa.Table, np.ndarray]] = None
 
 
 class DataSplit(BaseModel):
@@ -29,7 +27,7 @@ class DataSplit(BaseModel):
 
     label: str
     column_name: Optional[str] = None
-    column_value: Optional[Union[str, float, int, pd.Timestamp]] = None
+    column_value: Optional[Union[str, float, int, PandasTimestamp]] = None
     inequality: Optional[str] = None
     start: Optional[int] = None
     stop: Optional[int] = None
@@ -106,14 +104,18 @@ class DataSplitterBase:
         raise NotImplementedError
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
+    def validate(data_type: str, split: DataSplit):
         raise NotImplementedError
 
 
 class PolarsColumnSplitter(DataSplitterBase):
     """Column splitter for Polars dataframe"""
 
-    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
+    def create_split(self, data: PolarsDataFrame) -> Tuple[str, Data]:
+        import polars as pl
+
+        data = cast(pl.DataFrame, data)
+
         if self.split.inequality is None:
             data = data.filter(pl.col(self.column_name) == self.column_value)
 
@@ -140,15 +142,18 @@ class PolarsColumnSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == pl.DataFrame and split.column_name is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.POLARS and split.column_name is not None
 
 
 class PolarsIndexSplitter(DataSplitterBase):
     """Split Polars DataFrame by rows index"""
 
-    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
+    def create_split(self, data: PolarsDataFrame) -> Tuple[str, Data]:
         # slice
+        import polars as pl
+
+        data = cast(pl.DataFrame, data)
 
         data = data[self.indices]
 
@@ -164,13 +169,17 @@ class PolarsIndexSplitter(DataSplitterBase):
 
     @staticmethod
     def validate(data_type: type, split: DataSplit):
-        return data_type == pl.DataFrame and split.indices is not None
+        return data_type == AllowedDataType.POLARS and split.indices is not None
 
 
 class PolarsRowsSplitter(DataSplitterBase):
     """Split Polars DataFrame by rows slice"""
 
-    def create_split(self, data: pl.DataFrame) -> Tuple[str, Data]:
+    def create_split(self, data: PolarsDataFrame) -> Tuple[str, Data]:
+        import polars as pl
+
+        data = cast(pl.DataFrame, data)
+
         # slice
         data = data[self.start : self.stop]
 
@@ -185,13 +194,16 @@ class PolarsRowsSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == pl.DataFrame and split.start is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.POLARS and split.start is not None
 
 
 class PandasIndexSplitter(DataSplitterBase):
-    def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
-        # slice
+    def create_split(self, data: PandasDataFrame) -> Tuple[str, Data]:
+        import pandas as pd
+
+        data = cast(pd.DataFrame, data)
+
         data = data.iloc[self.indices]
 
         if self.dependent_vars is not None:
@@ -203,12 +215,15 @@ class PandasIndexSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == pd.DataFrame and split.indices is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.PANDAS and split.indices is not None
 
 
 class PandasRowSplitter(DataSplitterBase):
-    def create_split(self, data: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
+    def create_split(self, data: PandasDataFrame) -> Tuple[str, Data]:
+        import pandas as pd
+
+        data = cast(pd.DataFrame, data)
         # slice
         data = data[self.start : self.stop]
 
@@ -221,12 +236,16 @@ class PandasRowSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == pd.DataFrame and split.start is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.PANDAS and split.start is not None
 
 
 class PandasColumnSplitter(DataSplitterBase):
-    def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
+    def create_split(self, data: PandasDataFrame) -> Tuple[str, Data]:
+        import pandas as pd
+
+        data = cast(pd.DataFrame, data)
+
         if self.split.inequality is None:
             data = data[data[self.column_name] == self.column_value]
 
@@ -252,8 +271,8 @@ class PandasColumnSplitter(DataSplitterBase):
         return self.split.label, data_split
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == pd.DataFrame and split.column_name is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.PANDAS and split.column_name is not None
 
 
 class PyArrowIndexSplitter(DataSplitterBase):
@@ -261,8 +280,8 @@ class PyArrowIndexSplitter(DataSplitterBase):
         return self.split.label, Data(X=data.take(self.indices))
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == pa.Table and split.indices is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.PYARROW and split.indices is not None
 
 
 class NumpyIndexSplitter(DataSplitterBase):
@@ -270,8 +289,8 @@ class NumpyIndexSplitter(DataSplitterBase):
         return self.split.label, Data(X=data[self.indices])
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == np.ndarray and split.indices is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.NUMPY and split.indices is not None
 
 
 class NumpyRowSplitter(DataSplitterBase):
@@ -280,15 +299,15 @@ class NumpyRowSplitter(DataSplitterBase):
         return self.split.label, Data(X=data_split)
 
     @staticmethod
-    def validate(data_type: type, split: DataSplit):
-        return data_type == np.ndarray and split.start is not None
+    def validate(data_type: str, split: DataSplit):
+        return data_type == AllowedDataType.NUMPY and split.start is not None
 
 
 class DataSplitter:
     @staticmethod
     def split(
         split: DataSplit,
-        data: Union[pd.DataFrame, np.ndarray, pl.DataFrame],
+        data: Union[PandasDataFrame, np.ndarray, PolarsDataFrame],
         dependent_vars: Optional[List[Union[int, str]]] = None,
     ):
         data_splitter = next(

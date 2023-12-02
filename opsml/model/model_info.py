@@ -285,8 +285,8 @@ class FloatTypeConverter:
                     data[key] = value.astype(np.float32, copy=False)
         return data
 
-    def convert_to_float(self, data: ValidModelInput) -> ValidModelInput:
-        if isinstance(data, pd.DataFrame):
+    def convert_to_float(self, data: ValidModelInput, data_type: str) -> ValidModelInput:
+        if data_type == AllowedDataType.PANDAS:
             return self._convert_dataframe(data=data)
         if isinstance(data, np.ndarray):
             return self._convert_array(data=data)
