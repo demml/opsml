@@ -5,8 +5,7 @@
 import os
 from typing import Any, Dict, List, Optional, Union, cast
 
-import pandas as pd
-import polars as pl
+
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -17,7 +16,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedTableTypes, ValidData, check_data_type
+from opsml.registry.data.types import AllowedTableTypes, ValidData, check_data_type, AllowedDataType
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -279,7 +278,15 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        if isinstance(self.data, (pd.DataFrame, pl.DataFrame)):
+        data_type = self.data.__class__.__module__
+
+        if any(
+            allowed_type == data_type
+            for allowed_type in [
+                AllowedDataType.PANDAS,
+                AllowedDataType.POLARS,
+            ]
+        ):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
