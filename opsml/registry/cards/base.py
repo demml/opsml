@@ -34,6 +34,7 @@ class ArtifactCard(BaseModel):
     tags: Dict[str, str] = {}
 
     @model_validator(mode="before")
+    @classmethod
     def validate_args(cls, env_vars):  # pylint: disable=arguments-renamed
         """Validate base args and Lowercase name and team"""
 

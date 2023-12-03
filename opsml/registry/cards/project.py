@@ -24,6 +24,7 @@ class ProjectCard(ArtifactCard):
     project_id: Optional[str] = None
 
     @field_validator("project_id", mode="before")
+    @classmethod
     def create_project_id(cls, value, info: ValidationInfo, **kwargs):
         data = info.data  # type: ignore
         return f'{data.get("team")}:{data.get("name")}'

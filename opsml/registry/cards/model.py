@@ -71,10 +71,11 @@ class ModelCard(ArtifactCard):
     trained_model: Optional[Any] = None
     sample_input_data: Optional[ValidModelInput] = None
     datacard_uid: Optional[str] = None
-    to_onnx: bool = True
+    to_onnx: bool = False
     metadata: ModelCardMetadata
 
     @model_validator(mode="before")
+    @classmethod
     def _check_args(cls, values: Dict[str, Any]):
         """Converts trained model to modelcard"""
 
@@ -99,6 +100,7 @@ class ModelCard(ArtifactCard):
         return values
 
     @field_validator("sample_input_data", mode="before")
+    @classmethod
     def _get_one_sample(cls, input_data: Optional[ValidModelInput]) -> Optional[ValidModelInput]:
         """Parses input data and returns a single record to be used during ONNX conversion and validation"""
 
