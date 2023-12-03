@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -151,7 +151,7 @@ class DataFormatter:
             pd.DataFrame,
             pl.DataFrame,
         ]
-    ) -> Union[Dict[str, Any], pl.type_aliases.SchemaDict]:
+    ) -> Dict[str, Any]:
         """
         Generates a schema (column: type) from a py arrow table.
         Args:
@@ -163,7 +163,7 @@ class DataFormatter:
             return data.dtypes.to_dict()
 
         if isinstance(data, pl.DataFrame):
-            return data.schema
+            return cast(Dict[str, Any], data.schema)
 
         if isinstance(data, pa.Table):
             schema = data.schema
