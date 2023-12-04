@@ -4,21 +4,21 @@
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union, cast
+from typing import Dict, Optional, Tuple, Union, cast, Any
 
 import numpy as np
 import pyarrow as pa
 
 from opsml.model.types import ModelMetadata, OnnxAttr, ValidSavedSample
-from opsml.registry.cards import (
-    ArtifactCard,
-    AuditCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    ProjectCard,
-    RunCard,
-)
+
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.audit import AuditCard
+from opsml.registry.cards.data import DataCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.pipeline import PipelineCard
+from opsml.registry.cards.run import RunCard
+from opsml.registry.cards.project import ProjectCard
+
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import ArrowTable, DataFormatter
 from opsml.registry.data.types import AllowedDataType
@@ -60,7 +60,7 @@ class CardArtifactSaver:
     def card(self) -> ArtifactCard:
         return self.card
 
-    def save_artifacts(self) -> ArtifactCard:
+    def save_artifacts(self) -> Any:
         raise NotImplementedError
 
     def _get_storage_spec(self, filename: str, uri: Optional[str] = None) -> ArtifactStorageSpecs:
@@ -100,10 +100,10 @@ class CardArtifactSaver:
 
 class DataCardArtifactSaver(CardArtifactSaver):
     @cached_property
-    def card(self):
+    def card(self) -> DataCard:
         return cast(DataCard, self._card)
 
-    def _save_datacard(self):
+    def _save_datacard(self) -> None:
         """Saves a datacard to file system"""
 
         exclude_attr = {"data_profile", "storage_client"}
@@ -213,7 +213,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         )
         self.card.metadata.uris.profile_html_uri = storage_path.uri
 
-    def save_artifacts(self):
+    def save_artifacts(self) -> DataCard:
         """Saves artifacts from a DataCard"""
 
         self._save_data()
@@ -231,7 +231,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
 class ModelCardArtifactSaver(CardArtifactSaver):
     @cached_property
-    def card(self):
+    def card(self) -> ModelCard:
         return cast(ModelCard, self._card)
 
     def _get_model_metadata(self, onnx_attr: OnnxAttr) -> ModelMetadata:
@@ -272,7 +272,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             )
         return OnnxAttr()
 
-    def _save_model_metadata(self):
+    def _save_model_metadata(self) -> None:
         onnx_attr = self._save_onnx_model()
         self._save_trained_model()
         self._save_sample_data()
@@ -291,7 +291,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.card.metadata.uris.model_metadata_uri = metadata_path.uri
 
-    def _save_modelcard(self):
+    def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""
 
         model_dump = self.card.model_dump(
@@ -314,7 +314,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.card.metadata.uris.modelcard_uri = storage_path.uri
 
-    def _save_trained_model(self):
+    def _save_trained_model(self) -> None:
         """Saves trained model associated with ModelCard to filesystem"""
 
         storage_path = save_artifact_to_storage(
@@ -362,7 +362,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.card.metadata.uris.sample_data_uri = storage_path.uri
 
-    def save_artifacts(self):
+    def save_artifacts(self) -> ModelCard:
         """Save model artifacts associated with ModelCard"""
 
         if self.card.metadata.uris.model_metadata_uri is None:
@@ -379,10 +379,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
 class AuditCardArtifactSaver(CardArtifactSaver):
     @cached_property
-    def card(self):
+    def card(self) -> AuditCard:
         return cast(AuditCard, self._card)
 
-    def _save_audit(self):
+    def _save_audit(self) -> None:
         storage_path = save_artifact_to_storage(
             artifact=self.card.model_dump(),
             storage_client=self.storage_client,
@@ -394,7 +394,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
 
         self.card.metadata.audit_uri = storage_path.uri
 
-    def save_artifacts(self) -> ArtifactCard:
+    def save_artifacts(self) -> AuditCard:
         self._save_audit()
 
         return self.card
@@ -409,7 +409,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def card(self):
         return cast(RunCard, self._card)
 
-    def _save_runcard(self):
+    def _save_runcard(self) -> None:
         """Saves a runcard"""
         storage_path = save_artifact_to_storage(
             artifact=self.card.model_dump(exclude={"artifacts", "storage_client"}),
@@ -462,10 +462,10 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
 class PipelineCardArtifactSaver(CardArtifactSaver):
     @cached_property
-    def card(self):
+    def card(self) -> PipelineCard:
         return cast(PipelineCard, self._card)
 
-    def save_artifacts(self):
+    def save_artifacts(self) -> PipelineCard:
         return self.card
 
     @staticmethod
@@ -475,10 +475,10 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
 
 class ProjectCardArtifactSaver(CardArtifactSaver):
     @cached_property
-    def card(self):
+    def card(self) -> ProjectCard:
         return cast(ProjectCard, self._card)
 
-    def save_artifacts(self):
+    def save_artifacts(self) -> ProjectCard:
         return self.card
 
     @staticmethod

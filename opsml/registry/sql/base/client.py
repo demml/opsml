@@ -10,7 +10,8 @@ import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
-from opsml.registry.sql.base.registry_base import SQLRegistryBase, settings
+from opsml.registry.sql.base.registry_base import SQLRegistryBase
+from opsml.registry.utils.settings import settings
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import CardVersion, VersionType
 
@@ -32,7 +33,7 @@ class ClientRegistry(SQLRegistryBase):
             params={"registry_type": self.registry_type},
         )
 
-        return data["table_name"]
+        return cast(str, data["table_name"])
 
     @property
     def unique_teams(self) -> List[str]:
@@ -42,7 +43,7 @@ class ClientRegistry(SQLRegistryBase):
             params={"registry_type": self.registry_type},
         )
 
-        return data["teams"]
+        return cast(List[str], data["teams"])
 
     def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
         """Returns a list of unique card names
@@ -65,7 +66,7 @@ class ClientRegistry(SQLRegistryBase):
             params=params,
         )
 
-        return data["names"]
+        return cast(List[str], data["names"])
 
     def _get_session(self) -> ApiClient:
         """Gets the requests session for connecting to the opsml api"""

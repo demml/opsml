@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards import ArtifactCard, ModelCard
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.semver import VersionType
@@ -32,7 +33,7 @@ class DataCardRegistry(Registry):
         return RegistryType.DATA.value
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.DATA.value
 
 
@@ -107,40 +108,40 @@ class ModelCardRegistry(Registry):
             )
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.MODEL.value
 
 
-class RunCardRegistry(Registry):  # type:ignore
+class RunCardRegistry(Registry):
     @property
     def registry_type(self) -> str:
         return RegistryType.RUN.value
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value
 
 
-class PipelineCardRegistry(Registry):  # type:ignore
+class PipelineCardRegistry(Registry):
     @property
     def registry_type(self) -> str:
         return RegistryType.PIPELINE.value
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PIPELINE.value
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
-class ProjectCardRegistry(Registry):  # type:ignore
+class ProjectCardRegistry(Registry):
     @property
     def registry_type(self) -> str:
         return RegistryType.PROJECT.value
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
 
     def load_card(
@@ -157,7 +158,7 @@ class ProjectCardRegistry(Registry):  # type:ignore
         raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
-class AuditCardRegistry(Registry):  # type:ignore
+class AuditCardRegistry(Registry):
     @property
     def registry_type(self) -> str:
         return RegistryType.AUDIT.value
@@ -166,7 +167,7 @@ class AuditCardRegistry(Registry):  # type:ignore
         return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.AUDIT.value
 
 
@@ -414,7 +415,7 @@ class CardRegistry:
 
 
 class CardRegistries:
-    def __init__(self):
+    def __init__(self) -> None:
         """Instantiates class that contains all registries"""
         self.data = CardRegistry(registry_name=CardType.DATACARD.value)
         self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
@@ -423,7 +424,7 @@ class CardRegistries:
         self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
         self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value)
 
-    def set_storage_client(self, storage_client: StorageClientType):
+    def set_storage_client(self, storage_client: StorageClientType) -> None:
         for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
             registry: CardRegistry = getattr(self, attr)
             registry._registry.storage_client = storage_client

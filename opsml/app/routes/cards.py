@@ -26,7 +26,7 @@ from opsml.app.routes.pydantic_models import (
 )
 from opsml.app.routes.utils import get_registry_type_from_table, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistry
+from opsml.registry.sql.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
@@ -83,7 +83,7 @@ def card_names(
     request: Request,
     registry_type: str,
     team: Optional[str] = None,
-):
+) -> NamesResponse:
     """Get all names associated with a registry
 
     Args:

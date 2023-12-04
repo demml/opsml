@@ -4,11 +4,11 @@ from typing import Any, Dict, cast
 from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards import ArtifactCard
+from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import DataCardMetadata, DataCardUris
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.types import AllowedDataType
-from opsml.registry.image import ImageDataset
+from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -29,7 +29,7 @@ class Downloader:
         self.storage_client = storage_client
         self._card = card
 
-    def download(self):
+    def download(self) -> None:
         raise NotImplementedError
 
     @staticmethod

@@ -119,7 +119,7 @@ class NumpyOnnxConverter(DataConverter):
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         return None
 
-    def convert_data_to_onnx(self) -> Dict[str, NDArray]:
+    def convert_data_to_onnx(self) -> Dict[str, NDArray[Any]]:
         return {self.input_name: self.model_data.data}
 
     @staticmethod
@@ -371,7 +371,7 @@ class OnnxDataConverter:
         self.model_info = model_info
         self.converter = self._get_converter()
 
-    def _get_converter(self):
+    def _get_converter(self) -> DataConverter:
         converter = next(
             (
                 converter

@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Any, Optional, Tuple
 
 import joblib
-import numpy as np
 import polars as pl
 import pyarrow as pa
+from numpy.typing import NDArray
 import pyarrow.parquet as pq
 import zarr
 
@@ -423,7 +423,7 @@ class NumpyStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-    def _load_artifact(self, file_path: FilePath) -> np.ndarray:
+    def _load_artifact(self, file_path: FilePath) -> NDArray[Any]:
         store = self.storage_client.store(
             storage_uri=str(file_path),
             **{"store_type": "download"},

@@ -142,7 +142,7 @@ def model_predict(model_and_data):
         lazy_fixture("lgb_classifier_calibrated_pipeline"),
     ],
 )
-def _test_sklearn_models(model_and_data):
+def test_sklearn_models(model_and_data):
     model_predict(model_and_data)
 
 
@@ -151,8 +151,8 @@ def _test_sklearn_models(model_and_data):
     "model_and_data",
     [
         lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
-        # lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
-        # lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
+        lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
+        lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
 def test_model_pytorch_predict(model_and_data):
@@ -168,7 +168,7 @@ def test_model_pytorch_predict(model_and_data):
         lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
     ],
 )
-def _test_tensorflow_predict(model_and_data):
+def test_tensorflow_predict(model_and_data):
     model_predict(model_and_data)
 
 
@@ -178,7 +178,7 @@ def _test_tensorflow_predict(model_and_data):
         lazy_fixture("linear_regression"),  # linear regress with numpy
     ],
 )
-def _test_byo_onnx(model_and_data):
+def test_byo_onnx(model_and_data):
     model, data = model_and_data
 
     if isinstance(data, dict):
@@ -239,7 +239,7 @@ def _test_byo_onnx(model_and_data):
         lazy_fixture("pytorch_onnx_byo"),  # linear regress with numpy
     ],
 )
-def _test_byo_pytorch_onnx(model_and_data):
+def test_byo_pytorch_onnx(model_and_data):
     model_def, model, sample_data = model_and_data
 
     # create model def first

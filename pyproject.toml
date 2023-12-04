@@ -225,7 +225,7 @@ platform = "linux"
 mypy_path = "stubs"
 ignore_missing_imports = true
 # TODO: enable
-# strict = true
+strict = true
 
 plugins = [
     "numpy.typing.mypy_plugin",

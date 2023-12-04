@@ -85,7 +85,7 @@ class ModelData:
     def feature_dict(self) -> Dict[str, Feature]:
         raise NotImplementedError
 
-    def to_numpy(self) -> NDArray:
+    def to_numpy(self) -> NDArray[Any]:
         raise ValueError("This method is not implemented for this Data type")
 
     def dataframe_record(self):
@@ -111,7 +111,7 @@ class NumpyData(ModelData):
     def __init__(self, input_data):
         super().__init__(input_data=input_data)
 
-        self.data = cast(NDArray, self.data)
+        self.data = cast(NDArray[Any], self.data)
 
     @property
     def dtypes(self) -> List[str]:
@@ -174,7 +174,7 @@ class PandasDataFrameData(ModelData):
     def features(self, features: List[str]) -> None:
         self._features = features
 
-    def to_numpy(self) -> NDArray:
+    def to_numpy(self) -> NDArray[Any]:
         return self.data.to_numpy()
 
     def convert_dataframe_column(self, column_type: str, convert_column_type: str):
@@ -196,7 +196,7 @@ class DataDictionary(ModelData):
     def __init__(self, input_data):
         super().__init__(input_data=input_data)
 
-        self.data = cast(Dict[str, NDArray], self.data)
+        self.data = cast(Dict[str, NDArray[Any]], self.data)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -268,13 +268,13 @@ class FloatTypeConverter:
 
         return data
 
-    def _convert_array(self, data: NDArray) -> NDArray:
+    def _convert_array(self, data: NDArray[Any]) -> NDArray[Any]:
         dtype = str(data.dtype)
         if dtype != DataDtypes.STRING:
             return data.astype(np.float32, copy=False)
         return data
 
-    def _convert_dict(self, data: Dict[str, NDArray]) -> Dict[str, NDArray]:
+    def _convert_dict(self, data: Dict[str, NDArray[Any]]) -> Dict[str, NDArray[Any]]:
         for key, value in data.items():
             dtype = str(value.dtype)
             if not self.convert_all:
@@ -291,7 +291,7 @@ class FloatTypeConverter:
         if isinstance(data, np.ndarray):
             return self._convert_array(data=data)
 
-        return self._convert_dict(data=cast(Dict[str, NDArray], data))
+        return self._convert_dict(data=cast(Dict[str, NDArray[Any]], data))
 
 
 @dataclass

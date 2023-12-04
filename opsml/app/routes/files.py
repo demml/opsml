@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-
+from typing import Dict
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -27,13 +27,12 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
-
-router = APIRouter()
 CHUNK_SIZE = 31457280
 
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
+router = APIRouter()
 
 
 def verify_path(path: str) -> str:
@@ -59,7 +58,7 @@ def verify_path(path: str) -> str:
 
 # upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
-async def upload_file(request: Request):  # pragma: no cover
+async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     """Uploads files in chunks to storage destination"""
 
     filename = request.headers.get("Filename")

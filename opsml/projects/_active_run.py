@@ -3,18 +3,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import (
-    CardRegistries,
-    CardRegistry,
-    DataCard,
-    ModelCard,
-    RunCard,
-    VersionType,
-)
-from opsml.registry.cards import ArtifactCard
+from opsml.registry.sql.registry import CardRegistry, CardRegistries
+from opsml.registry.cards.data import DataCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.run import RunCard
+from opsml.registry.sql.semver import VersionType
+from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
 from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -95,7 +92,7 @@ class ActiveRun:
     def active(self) -> bool:
         return self._active
 
-    def _verify_active(self):
+    def _verify_active(self) -> None:
         if not self.active:
             raise ValueError("""Run is not active""")
 
@@ -111,7 +108,7 @@ class ActiveRun:
         """
         self.runcard.add_tag(key=key, value=value)
 
-    def add_tags(self, tags: Dict[str, str]) -> None:
+    def add_tags(self, tags: Dict[str, Union[str, Optional[str]]]) -> None:
         """
         Adds a tag to the current run
 
@@ -121,9 +118,9 @@ class ActiveRun:
 
         """
         for key, value in tags.items():
-            self.add_tag(key=key, value=value)
+            self.add_tag(key=key, value=cast(str, value))
 
-    def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR):
+    def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR) -> None:
         """
         Register a given artifact card.
 
@@ -232,7 +229,7 @@ class ActiveRun:
         self,
         metrics: Dict[str, Union[float, int]],
         step: Optional[int] = None,
-    ):
+    ) -> None:
         """Logs a collection of metrics for a run
 
         Args:
@@ -259,7 +256,7 @@ class ActiveRun:
         self._verify_active()
         self.runcard.log_parameter(key=key, value=value)
 
-    def create_or_update_runcard(self):
+    def create_or_update_runcard(self) -> None:
         """Creates or updates an active RunCard"""
 
         self._verify_active()

@@ -12,9 +12,9 @@ import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
 
-from opsml.registry.image import ImageDataset
+from opsml.registry.image.dataset import ImageDataset
 
-ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]
+ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]  # type: ignore
 
 
 def get_class_name(object_: object) -> str:
@@ -47,7 +47,7 @@ class AllowedDataType(str, Enum):
 class ArrowTable(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    table: Union[pa.Table, np.ndarray]
+    table: Union[pa.Table, np.ndarray]  # type: ignore
     storage_uri: Optional[str] = None
     feature_map: Optional[Dict[str, Any]] = None
 

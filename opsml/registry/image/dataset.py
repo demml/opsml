@@ -81,13 +81,15 @@ class ImageDataset(BaseModel):
     metadata: Union[str, ImageMetadata]
 
     @field_validator("image_dir", mode="before")
-    def check_dir(cls, value):
+    @classmethod
+    def check_dir(cls, value: str) -> str:
         assert os.path.isdir(value), "image_dir must be a directory"
 
         return value
 
     @field_validator("metadata", mode="before")
-    def check_metadata(cls, value, info: ValidationInfo):
+    @classmethod
+    def check_metadata(cls, value: Union[str, ImageMetadata], info: ValidationInfo) -> Union[str, ImageMetadata]:
         """Validates if metadata is a jsonl file and if each record is valid"""
         if isinstance(value, str):
             # check metadata file is valid
@@ -106,7 +108,7 @@ class ImageDataset(BaseModel):
 
         return value
 
-    def convert_metadata(self):
+    def convert_metadata(self) -> None:
         """Converts metadata to jsonl file if metadata is an ImageMetadata object"""
 
         if isinstance(self.metadata, ImageMetadata):

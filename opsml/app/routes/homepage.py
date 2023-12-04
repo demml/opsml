@@ -6,7 +6,7 @@
 import os
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 # Constants
@@ -20,10 +20,10 @@ router = APIRouter()
 
 
 @router.get("/opsml")
-async def opsml_homepage(request: Request):
+async def opsml_homepage(request: Request) -> HTMLResponse:  # type: ignore[return-value]
     return templates.TemplateResponse("homepage.html", {"request": request})
 
 
 @router.get("/")
-async def homepage(request: Request):
+async def homepage(request: Request) -> RedirectResponse:  # type: ignore[return-value]
     return RedirectResponse("/opsml")
