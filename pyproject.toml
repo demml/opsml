@@ -114,6 +114,8 @@ server = [
     "wsgi-basic-auth",
     "python-multipart",
     "jinja2",
+    "sqlalchemy",
+    "alembic",
 ]
 gcp_mysql = ["cloud-sql-python-connector", "pymysql", "gcsfs"]
 gcp_postgres = ["cloud-sql-python-connector", "pg8000", "gcsfs"]

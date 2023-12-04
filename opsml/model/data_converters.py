@@ -147,7 +147,8 @@ class PandasOnnxConverter(DataConverter):
     def get_onnx_data_types(self) -> List[Any]:
         """
         Creates a single type spec for a pandas dataframe.
-        This is used for models that supply a dataframe, but are trained with an array.
+        This is used for models that supply a dataframe, but are trained with a numpy array.
+        Onnx will expect an array.
 
         Example:
             # X_train is a dataframe

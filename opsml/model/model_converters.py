@@ -175,9 +175,6 @@ class ModelConverter:
         inputs = self.data_converter.convert_data()
         model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
-        print(model_preds)
-        print(inputs)
-
         logger.info("Validating converted onnx model")
         sess = self._create_onnx_session(onnx_model=onnx_model)
 
