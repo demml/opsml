@@ -22,7 +22,7 @@ from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -97,7 +97,7 @@ class SQLRegistryBase:
     ) -> str:
         raise NotImplementedError
 
-    def _is_correct_card_type(self, card: ArtifactCard) -> str:
+    def _is_correct_card_type(self, card: ArtifactCard) -> bool:
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 

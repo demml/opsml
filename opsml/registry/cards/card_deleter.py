@@ -83,7 +83,7 @@ class ModelArtifactDeleter(CardArtifactDeleter):
 
 class RunCardArtifactDeleter(CardArtifactDeleter):
     @cached_property
-    def card(self):
+    def card(self) -> RunCard:
         return cast(RunCard, self._card)
 
     def delete_artifacts(self) -> None:
@@ -91,7 +91,7 @@ class RunCardArtifactDeleter(CardArtifactDeleter):
         Delete artifacts for a RunCard
         """
 
-        self._delete_artifacts(read_path=self.card.runcard_uri)
+        self._delete_artifacts(read_path=cast(str, self.card.runcard_uri))
 
     @staticmethod
     def validate(card_type: str) -> bool:
