@@ -6,10 +6,11 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union, cast, Any
 
-import numpy as np
+
+from numpy.typing import NDArray
 import pyarrow as pa
 
-from opsml.model.types import ModelMetadata, OnnxAttr, ValidSavedSample
+from opsml.model.types import ModelMetadata, OnnxAttr, ValidSavedSample, OnnxModelDefinition
 
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.audit import AuditCard
@@ -20,9 +21,9 @@ from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.project import ProjectCard
 
 from opsml.registry.cards.types import CardType, StoragePath
-from opsml.registry.data.formatter import ArrowTable, DataFormatter
-from opsml.registry.data.types import AllowedDataType
-from opsml.registry.image import ImageDataset
+from opsml.registry.data.formatter import DataFormatter
+from opsml.registry.data.types import AllowedDataType, ArrowTable
+from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.artifact_storage import save_artifact_to_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -137,7 +138,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
-    def _save_data_to_storage(self, data: Union[pa.Table, np.ndarray, ImageDataset]) -> StoragePath:
+    def _save_data_to_storage(self, data: Union[pa.Table, NDArray[Any], ImageDataset]) -> StoragePath:
         """Saves pyarrow table to file system
 
         Args:
@@ -253,8 +254,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.card._create_and_set_model_attr()  # pylint: disable=protected-access
 
         if self.card.to_onnx:
+            model_def = cast(OnnxModelDefinition, self.card.metadata.onnx_model_def)
+
             storage_path = save_artifact_to_storage(
-                artifact=self.card.metadata.onnx_model_def.model_bytes,
+                artifact=model_def.model_bytes,
                 artifact_type=ArtifactStorageType.ONNX.value,
                 storage_client=self.storage_client,
                 storage_spec=self._get_storage_spec(
@@ -268,7 +271,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
             return OnnxAttr(
                 onnx_path=storage_path.uri,
-                onnx_version=self.card.metadata.onnx_model_def.onnx_version,
+                onnx_version=model_def.onnx_version,
             )
         return OnnxAttr()
 
@@ -406,7 +409,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
 
 class RunCardArtifactSaver(CardArtifactSaver):
     @cached_property
-    def card(self):
+    def card(self) -> RunCard:
         return cast(RunCard, self._card)
 
     def _save_runcard(self) -> None:
@@ -453,7 +456,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
         self._save_run_artifacts()
         self._save_runcard()
 
-        return self.card
+        return self.card  # type: ignore
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -507,4 +510,4 @@ def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -
 
     saver = card_saver(card=card, storage_client=storage_client)
 
-    return saver.save_artifacts() #type: ignore
+    return saver.save_artifacts()  # type: ignore

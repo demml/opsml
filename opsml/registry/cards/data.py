@@ -18,7 +18,7 @@ from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
-from opsml.registry.image import ImageDataset
+from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -227,12 +227,12 @@ class DataCard(ArtifactCard):
                     data=self.data,
                     data_type=self.metadata.data_type,
                 )
-                setattr(data_holder, label, data)
+                setattr(data_holder, label, data)  # type:ignore
 
             return data_holder
         raise ValueError("No data splits provided")
 
-    def load_data(self):
+    def load_data(self) -> None:
         """Loads DataCard data from storage"""
 
         download_object(
@@ -270,7 +270,7 @@ class DataCard(ArtifactCard):
         name: str,
         query: Optional[str] = None,
         filename: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Adds a query or query from file to the sql_logic dictionary. Either a query or
         a filename pointing to a sql file are required in addition to a name.
@@ -329,7 +329,7 @@ class Downloader:
         self.storage_client = storage_client
         self._card = card
 
-    def download(self):
+    def download(self) -> None:
         raise NotImplementedError
 
     @staticmethod

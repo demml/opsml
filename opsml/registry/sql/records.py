@@ -25,7 +25,7 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
 
-def get_timestamp():
+def get_timestamp() -> int:
     return int(round(time.time() * 1_000_000))
 
 
@@ -244,7 +244,8 @@ class LoadedModelRecord(LoadRecord):
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
-    def load_model_attr(cls, values) -> Dict[str, Any]:
+    @classmethod
+    def load_model_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
@@ -302,7 +303,8 @@ class LoadedAuditRecord(LoadRecord):
     metadata: AuditCardMetadata
 
     @model_validator(mode="before")
-    def load_audit_attr(cls, values) -> Dict[str, Any]:
+    @classmethod
+    def load_audit_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
         audit = cls._load_audit(
@@ -357,7 +359,8 @@ class LoadedRunRecord(LoadRecord):
     runcard_uri: str
 
     @model_validator(mode="before")
-    def load_run_attr(cls, values) -> Dict[str, Any]:
+    @classmethod
+    def load_run_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
         runcard_definition = cls.load_runcard_definition(

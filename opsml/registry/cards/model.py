@@ -6,6 +6,7 @@ from functools import cached_property
 from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
 import polars as pl
 from pydantic import ConfigDict, model_validator
@@ -323,7 +324,7 @@ class ModelCard(ArtifactCard):
             self.load_sample_data()
 
         sample_data = cast(
-            Union[pd.DataFrame, np.ndarray, Dict[str, Any]],
+            Union[pd.DataFrame, NDArray[Any], Dict[str, Any]],
             self.sample_input_data,
         )
 
@@ -334,16 +335,16 @@ class ModelCard(ArtifactCard):
 
         if isinstance(sample_data, pd.DataFrame):
             record = list(sample_data[0:1].T.to_dict().values())[0]  # pylint: disable=unsubscriptable-object
-            return record
+            return cast(Dict[str, Any], record)
 
         if isinstance(sample_data, pl.DataFrame):
             record = list(sample_data.to_pandas()[0:1].T.to_dict().values())[0]
-            return record
+            return cast(Dict[str, Any], record)
 
         record = {}
         for feat, val in sample_data.items():
             record[feat] = np.ravel(val).tolist()
-        return record
+        return cast(Dict[str, Any], record)
 
     def onnx_model(self, start_onnx_runtime: bool = True) -> OnnxModelPredictor:
         """

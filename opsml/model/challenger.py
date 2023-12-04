@@ -49,7 +49,8 @@ class ChallengeInputs(BaseModel):
         return cast(List[bool], self.lower_is_better)
 
     @field_validator("metric_name")
-    def convert_name(cls, name) -> List[str]:
+    @classmethod
+    def convert_name(cls, name: Union[List[str], str]) -> List[str]:
         if not isinstance(name, list):
             return [name]
         return name

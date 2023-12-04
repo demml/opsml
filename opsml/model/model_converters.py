@@ -382,7 +382,7 @@ class SklearnOnnxModel(ModelConverter):
             return self._update_onnx_registries_stacking()
 
         if self._is_calibrated_classifier:
-            return self._update_onnx_registries_calibrated_classifier()
+            return self._update_onnx_registries_calibrated_classifier()  # type: ignore
 
         return self.update_onnx_registries()
 
@@ -398,15 +398,16 @@ class SklearnOnnxModel(ModelConverter):
         if self.model_info.model_data.all_features_float32:
             return None
 
-        if self._is_stacking_estimator:
+        elif self._is_stacking_estimator:
             logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
-            return self.data_converter.converter.convert_to_float(convert_all=True)
+            self.data_converter.converter.convert_to_float(convert_all=True)
 
-        if not self._is_pipeline and self.model_info.model_data.num_dtypes > 1:
-            return self.data_converter.converter.convert_to_float(convert_all=True)
+        elif not self._is_pipeline and self.model_info.model_data.num_dtypes > 1:
+            self.data_converter.converter.convert_to_float(convert_all=True)
 
-        logger.warning("Converting all float64 data to float32")
-        return self.data_converter.converter.convert_to_float(convert_all=False)
+        else:
+            logger.warning("Converting all float64 data to float32")
+            return self.data_converter.converter.convert_to_float(convert_all=False)
 
     def prepare_registries_and_data(self):
         """Updates sklearn onnx registries and convert data to float32"""
@@ -447,7 +448,10 @@ class SklearnOnnxModel(ModelConverter):
             from skl2onnx import convert_sklearn
 
         try:
-            return convert_sklearn(model=self.model_info.model, initial_types=initial_types, options=self.options)
+            return cast(
+                ModelProto,
+                convert_sklearn(model=self.model_info.model, initial_types=initial_types, options=self.options),
+            )
         except NameError as name_error:
             # There may be a small amount of instances where a sklearn classifier does
             # not support zipmap as a default option (LinearSVC). This catches those errors
@@ -477,7 +481,7 @@ class LightGBMBoosterOnnxModel(ModelConverter):
         onnx_model = convert_lightgbm(model=self.model_info.model, initial_types=initial_types)
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model
+        return cast(ModelProto, onnx_model)
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -556,17 +560,17 @@ class PyTorchOnnxModel(ModelConverter):
         """Parse pytorch predictions"""
 
         if hasattr(predictions, "logits"):
-            return predictions.logits.detach().numpy()
+            return predictions.logits.detach().numpy()  # type: ignore
         if hasattr(predictions, "detach"):
-            return predictions.detach().numpy()
+            return predictions.detach().numpy()  # type: ignore
         if hasattr(predictions, "last_hidden_state"):
-            return predictions.last_hidden_state.detach().numpy()
+            return predictions.last_hidden_state.detach().numpy()  # type: ignore
 
         # for vision model
         if isinstance(predictions, OrderedDict):
-            return predictions["out"].detach().numpy()
+            return predictions["out"].detach().numpy()  # type: ignore
 
-        return predictions.numpy()
+        return predictions.numpy()  # type: ignore
 
     def _model_predict(self) -> NDArray[Any]:
         """Generate prediction for pytorch model using sample data"""

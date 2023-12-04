@@ -119,10 +119,10 @@ class StorageClient:
     def list_files(self, storage_uri: str) -> FilePath:
         raise NotImplementedError
 
-    def store(self, storage_uri: str, **kwargs):
+    def store(self, storage_uri: str, **kwargs: Any) -> Any:
         raise NotImplementedError
 
-    def open(self, filename: str, mode: str):
+    def open(self, filename: str, mode: str) -> IO:
         raise NotImplementedError
 
     def iterfile(self, file_path: str, chunk_size: int) -> Iterator[bytes]:
@@ -244,7 +244,7 @@ class S3StorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        return self.client.copy(read_path, write_path, recursive=True)
+        return cast(Optional[str], self.client.copy(read_path, write_path, recursive=True))
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path

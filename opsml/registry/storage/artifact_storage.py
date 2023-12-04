@@ -6,7 +6,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 
 import joblib
 import polars as pl
@@ -58,15 +58,15 @@ class ArtifactStorage:
         self.artifact_class = artifact_class
 
     @property
-    def is_data(self):
+    def is_data(self) -> bool:
         return self.artifact_class == ArtifactClass.DATA
 
     @property
-    def is_storage_a_proxy(self):
+    def is_storage_a_proxy(self) -> bool:
         return self.storage_client.backend not in [StorageSystem.GCS, StorageSystem.LOCAL, StorageSystem.S3]
 
     @property
-    def is_storage_local(self):
+    def is_storage_local(self) -> bool:
         return StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL
 
     @property
@@ -98,7 +98,7 @@ class ArtifactStorage:
     def _load_artifact(self, file_path: FilePath) -> Any:
         raise NotImplementedError
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str):
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """Saves an artifact"""
         raise NotImplementedError
 
@@ -197,7 +197,7 @@ class OnnxStorage(ArtifactStorage):
     def _load_artifact(self, file_path: FilePath) -> ModelProto:
         from onnx import load
 
-        return load(Path(str(file_path)).open(mode="rb"))
+        return cast(ModelProto, load(Path(str(file_path)).open(mode="rb")))
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -290,7 +290,7 @@ class ImageDataStorage(ArtifactStorage):
     def _load_artifact(self, file_path: FilePath) -> None:
         """Not implemented"""
 
-    def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
+    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)
         loadable_filepath = self.storage_client.download(
             rpath=storage_uri,

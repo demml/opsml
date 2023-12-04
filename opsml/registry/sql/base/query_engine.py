@@ -126,7 +126,7 @@ class MySQLHelper(DialectHelper):
 
 
 class QueryEngine:
-    def __init__(self):
+    def __init__(self) -> None:
         self.engine = settings.connection_client.sql_engine
 
     @property
