@@ -104,7 +104,7 @@ class TrainedModelMetadataCreator(ModelCreator):
         )
 
         # pandas will use column names as features
-        if self.input_data_type == AllowedDataType.PANDAS:
+        if self.input_data_type != AllowedDataType.PANDAS:
             model_data.features = ["outputs"]
 
         return model_data.feature_dict
