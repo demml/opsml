@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-
+import os
 import re
 import uuid
 import pathlib
@@ -1036,3 +1036,20 @@ def test_registry_name_fail(test_app: TestClient):
     )
 
     assert response.status_code == 500
+
+
+def test_upload_fail(test_app: TestClient):
+    headers = {
+        "Filename": "blah:",
+        "WritePath": "fake",
+        "X-Prod-Token": "test-token",
+    }
+    files = {"file": open("tests/assets/cats.jpg", "rb")}
+
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.UPLOAD}",
+        files=files,
+        headers=headers,
+    )
+
+    assert response.status_code == 422

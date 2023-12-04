@@ -25,6 +25,7 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
 )
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -44,6 +45,14 @@ async def upload_file(request: Request):  # pragma: no cover
     filename = request.headers.get("Filename")
     write_path = request.headers.get("WritePath")
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
+
+    # prevent arbitrary file uploads to random dirs
+    # Files can only be uploaded to paths that have a registry dir name
+    if not any(table_name in write_path for table_name in RegistryTableNames):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid write path",
+        )
 
     if filename is None:
         raise HTTPException(
