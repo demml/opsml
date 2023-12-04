@@ -15,7 +15,6 @@ from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     DeleteFileRequest,
     DeleteFileResponse,
-    DownloadFileRequest,
     ListFileRequest,
     ListFileResponse,
 )
@@ -67,10 +66,6 @@ async def upload_file(request: Request):  # pragma: no cover
     write_path = request.headers.get("WritePath")
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
-    # prevent arbitrary file uploads to random dirs
-    # Files can only be uploaded to paths that have a registry dir name
-    verify_path(path=write_path)
-
     if filename is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -82,6 +77,10 @@ async def upload_file(request: Request):  # pragma: no cover
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="No write path provided",
         )
+
+    # prevent arbitrary file uploads to random dirs
+    # Files can only be uploaded to paths that have a registry dir name
+    verify_path(path=write_path)
 
     try:
         file_ = ExternalFileTarget(
