@@ -13,6 +13,7 @@ from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.utils.utils import check_package_exists
 
 logger = ArtifactLogger.get_logger()
 
@@ -83,6 +84,14 @@ class ModelCardRegistry(Registry):
 
         else:
             model_card = cast(ModelCard, card)
+
+            if model_card.to_onnx:
+                if not check_package_exists("onnx"):
+                    raise ModuleNotFoundError(
+                        """To convert a model to onnx, please install onnx via one of the extras
+                        (opsml[sklearn_onnx], opsml[tf_onnx], opsml[torch_onnx]) or set to_onnx to False.
+                        """
+                    )
 
             if not self._has_datacard_uid(uid=model_card.datacard_uid):
                 raise ValueError("""ModelCard must be associated with a valid DataCard uid""")

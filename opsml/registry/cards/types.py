@@ -198,7 +198,7 @@ class ModelCardMetadata(BaseModel):
     description: Description = Description()
     onnx_model_data: Optional[DataDict] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None
-    sample_data_type: str
+    sample_data_type: str = "undefined"
     model_type: Optional[str] = None
     additional_onnx_args: Optional[ExtraOnnxArgs] = None
     data_schema: Optional[ApiDataSchemas] = None
@@ -257,7 +257,7 @@ class DataCardMetadata(BaseModel):
 
     description: Description = Description()
     feature_map: Optional[Dict[str, Optional[Any]]] = None
-    data_type: str
+    data_type: str = "undefined"
     feature_descriptions: Dict[str, str] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None

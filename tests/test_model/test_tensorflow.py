@@ -31,6 +31,7 @@ def model_predict(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uids=["test_uid"],
+        to_onnx=True,
     )
     predictor = model_card.onnx_model()
 

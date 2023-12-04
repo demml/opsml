@@ -42,6 +42,7 @@ def test_challenger_no_previous_version(
             sample_input_data=data[0:1],
             info=model_info,
             datacard_uid=data_card.uid,
+            to_onnx=True,
         )
         run.log_metric("mape", 100)
         run.register_card(card=model_card)
@@ -67,6 +68,7 @@ def test_challenger(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pipelin
             sample_input_data=data[0:1],
             info=model_info,
             datacard_uid=data_card.uid,
+            to_onnx=True,
         )
 
         run.log_metric("mape", 50)
@@ -153,6 +155,7 @@ def test_challenger_fail_no_runcard(
         sample_input_data=data[0:1],
         info=model_info,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     opsml_project._run_mgr.registries.model.register_card(card=modelcard)
 

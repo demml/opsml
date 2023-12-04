@@ -33,6 +33,7 @@ def model_predict(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uids=["test_uid"],
+        to_onnx=True,
     )
     predictor = model_card.onnx_model()
 
@@ -193,6 +194,7 @@ def test_byo_onnx(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uid="test_uid",
+        to_onnx=True,
     )
     predictor = modelcard.onnx_model()
     model_def = modelcard.metadata.onnx_model_def
@@ -206,6 +208,7 @@ def test_byo_onnx(model_and_data):
         user_email="test_email",
         datacard_uid="test_uid",
         metadata=ModelCardMetadata(onnx_model_def=model_def),
+        to_onnx=True,
     )
     predictor = new_modelcard.onnx_model()
     assert new_modelcard.metadata.data_schema is not None
@@ -248,6 +251,7 @@ def test_byo_pytorch_onnx(model_and_data):
         user_email="test_email",
         datacard_uid="test_uid",
         metadata=ModelCardMetadata(onnx_model_def=model_def),
+        to_onnx=True,
     )
     predictor = modelcard.onnx_model()
     input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))

@@ -271,6 +271,7 @@ def test_register_model(
         user_email="mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry = api_registries.model
@@ -291,6 +292,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(card=model_card_custom)
@@ -303,6 +305,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=None,
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -315,6 +318,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid="test_uid",
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -328,6 +332,7 @@ def test_register_model(
             team="mlops",
             user_email="mlops.com",
             datacard_uid="test_uid",
+            to_onnx=True,
         )
 
     # test card tags
@@ -347,6 +352,7 @@ def test_register_model(
         team="new-team",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
     with pytest.raises(ValueError) as ve:
         model_registry.register_card(card=model_card_dup)
@@ -467,6 +473,7 @@ def test_metadata_download_and_registration(
         team=team,
         user_email=user_email,
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(model_card)
@@ -643,6 +650,7 @@ def test_model_metrics(
         info=card_info,
         datacard_uid=datacard.uid,
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -658,6 +666,7 @@ def test_model_metrics(
         info=card_info,
         datacard_uid=datacard.uid,
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard_2)
 
@@ -720,6 +729,7 @@ def test_model_metric_failure(
         sample_input_data=data[0:1],
         info=card_info,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -854,6 +864,7 @@ def test_data_model_version(
             user_email="mlops.com",
             tags={"id": "model1"},
             datacard_uid=datacard.uid,
+            to_onnx=True,
         )
         run.register_card(modelcard)
 
@@ -959,6 +970,7 @@ def test_audit_upload(
         trained_model=model,
         sample_input_data=data[0:1],
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 

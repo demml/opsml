@@ -77,6 +77,7 @@ def test_audit_card_add_uids(
         trained_model=reg,
         sample_input_data=data,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     model_registry = db_registries["model"]
     model_registry.register_card(card=modelcard)
@@ -90,7 +91,11 @@ def test_audit_card_add_uids(
     ### These should fail
     with pytest.raises(ValueError):
         modelcard = ModelCard(
-            name="model_card", team="team", user_email="test", trained_model=reg, sample_input_data=data
+            name="model_card",
+            team="team",
+            user_email="test",
+            trained_model=reg,
+            sample_input_data=data,
         )
         modelcard.add_to_auditcard(auditcard_uid=auditcard.uid)
 
