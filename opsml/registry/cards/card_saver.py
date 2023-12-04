@@ -449,7 +449,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
         run_card = cast(RunCard, self.card)
         run_card.artifact_uris = artifact_uris
 
-    def save_artifacts(self) -> ArtifactCard:
+    def save_artifacts(self) -> RunCard:
         self._save_run_artifacts()
         self._save_runcard()
 
@@ -507,4 +507,4 @@ def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -
 
     saver = card_saver(card=card, storage_client=storage_client)
 
-    return saver.save_artifacts()
+    return saver.save_artifacts() #type: ignore
