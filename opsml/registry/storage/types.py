@@ -30,6 +30,7 @@ ARTIFACT_TYPES = [
         AllowedDataType.PANDAS,
         AllowedDataType.POLARS,
         AllowedDataType.IMAGE,
+        AllowedDataType.PYARROW,
     ],
 ]
 

@@ -41,6 +41,7 @@ class AllowedDataType(str, Enum):
     NUMPY = "numpy.ndarray"
     IMAGE = "ImageDataset"
     DICT = "dict"
+    SQL = "sql"
 
 
 class ArrowTable(BaseModel):
@@ -62,15 +63,17 @@ def check_data_type(data: ValidData) -> str:
         data type
     """
     if isinstance(data, dict):
-        return AllowedDataType.DICT
+        return AllowedDataType.DICT.value
     if isinstance(data, ImageDataset):
-        return AllowedDataType.IMAGE
+        return AllowedDataType.IMAGE.value
     if isinstance(data, np.ndarray):
-        return AllowedDataType.NUMPY
+        return AllowedDataType.NUMPY.value
     if isinstance(data, pd.DataFrame):
-        return AllowedDataType.PANDAS
+        return AllowedDataType.PANDAS.value
     if isinstance(data, pl.DataFrame):
-        return AllowedDataType.POLARS
+        return AllowedDataType.POLARS.value
+    if isinstance(data, pa.Table):
+        return AllowedDataType.PYARROW.value
 
     raise ValueError(
         f"""Data must be one of the following types: numpy array, pandas dataframe, 

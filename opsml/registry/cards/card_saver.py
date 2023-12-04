@@ -4,12 +4,12 @@
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
 
-from opsml.model.types import ModelMetadata, OnnxAttr
+from opsml.model.types import ModelMetadata, OnnxAttr, ValidSavedSample
 from opsml.registry.cards import (
     ArtifactCard,
     AuditCard,
@@ -155,6 +155,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
                 filename=self.card.name,
                 uri=self.card.metadata.uris.data_uri,
             ),
+            artifact_type=self.card.metadata.data_type,
         )
 
         return storage_path
@@ -328,6 +329,21 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
         self.card.metadata.uris.trained_model_uri = storage_path.uri
 
+    def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
+        """Get artifact and artifact type to save"""
+
+        if self.card.metadata.sample_data_type == AllowedDataType.DICT:
+            return self.card.sample_input_data, AllowedDataType.DICT
+
+        if self.card.metadata.sample_data_type in [AllowedDataType.PYARROW.value, AllowedDataType.PANDAS.value]:
+            arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
+                data=self.card.sample_input_data,
+                data_type=self.card.metadata.sample_data_type,
+            )
+            return arrow_table.table, AllowedDataType.PYARROW.value
+
+        return self.card.sample_input_data, AllowedDataType.NUMPY.value
+
     def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
 
@@ -335,24 +351,14 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             filename=SaveName.SAMPLE_MODEL_DATA.value,
             uri=self.card.metadata.uris.sample_data_uri,
         )
+        artifact, artifact_type = self._get_artifact_and_type()
 
-        if isinstance(self.card.sample_input_data, dict):
-            storage_path = save_artifact_to_storage(
-                artifact=self.card.sample_input_data,
-                storage_client=self.storage_client,
-                storage_spec=storage_spec,
-            )
-
-        else:
-            arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
-                data=self.card.sample_input_data,
-                data_type=self.card.metadata.data_type,
-            )
-            storage_path = save_artifact_to_storage(
-                artifact=arrow_table.table,
-                storage_client=self.storage_client,
-                storage_spec=storage_spec,
-            )
+        storage_path = save_artifact_to_storage(
+            artifact=artifact,
+            storage_client=self.storage_client,
+            storage_spec=storage_spec,
+            artifact_type=artifact_type,
+        )
 
         self.card.metadata.uris.sample_data_uri = storage_path.uri
 

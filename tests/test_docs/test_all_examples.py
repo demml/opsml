@@ -62,6 +62,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
             user_email="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
@@ -85,6 +86,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
             user_email="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
@@ -108,6 +110,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
             user_email="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
@@ -323,6 +326,7 @@ def test_modelcard(db_registries):
         trained_model=linreg,
         sample_input_data=X_train,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
 
     onnx_predictor = modelcard.onnx_model()
@@ -448,6 +452,7 @@ def test_custom_onnx(db_registries):
         sample_input_data=datacard.data[0:1],
         onnx_model_def=model_def,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
 
     # remove final registration line due to pytest module-level save issues
@@ -475,6 +480,7 @@ def test_overview_list(
         user_email="mlops.com",
         datacard_uid=data_card.uid,
         version="1.0.0",
+        to_onnx=True,
     )
     model_registry = db_registries["model"]
     model_registry.register_card(card=model_card)
@@ -562,6 +568,7 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
             sample_input_data=X,
             datacard_uid=data_card.uid,
             info=card_info,
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
@@ -629,6 +636,7 @@ def test_index_example(db_registries):
         trained_model=linreg,
         sample_input_data=X_train,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(card=modelcard)
@@ -687,6 +695,7 @@ def test_quickstart(opsml_project: OpsmlProject):
             user_email="mlops.com",
             datacard_uid=data_card.uid,
             tags={"name": "model_tag"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 

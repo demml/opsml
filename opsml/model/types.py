@@ -11,10 +11,13 @@ from typing import Any, Dict, List, Optional, Protocol, Union
 
 import numpy as np
 import pandas as pd
+import polars as pl
+import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-ValidModelInput = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
+ValidModelInput = Union[pd.DataFrame, NDArray, Dict[str, NDArray], pl.DataFrame]
+ValidSavedSample = Union[pa.Table, NDArray, Dict[str, NDArray]]
 
 
 class DataDtypes(str, Enum):

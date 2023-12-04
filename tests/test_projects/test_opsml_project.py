@@ -58,6 +58,7 @@ def test_opsml_read_only(opsml_project: OpsmlProject, sklearn_pipeline: tuple[pi
             team="mlops",
             user_email="mlops.com",
             datacard_uid=data_card.uid,
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
