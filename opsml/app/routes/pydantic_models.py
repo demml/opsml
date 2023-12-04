@@ -189,7 +189,7 @@ class NamesResponse(BaseModel):
 
 
 class ListFileRequest(BaseModel):
-    read_path: Optional[str] = None
+    read_path: str
 
 
 class ListFileResponse(BaseModel):
