@@ -19,6 +19,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.audit import AuditSections
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -448,7 +449,7 @@ class ModelRouteHelper(RouteHelper):
             `Tuple[str, str]`
         """
         max_dim = 0
-        if metadata.data_schema.model_data_schema.data_type == "NUMPY_ARRAY":
+        if metadata.data_schema.model_data_schema.data_type == AllowedDataType.NUMPY:
             features = metadata.data_schema.model_data_schema.input_features
             inputs = features.get("inputs")
             if inputs is not None:

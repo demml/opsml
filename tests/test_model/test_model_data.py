@@ -1,4 +1,5 @@
 from opsml.model.model_info import FloatTypeConverter, get_model_data, ModelData
+from opsml.registry.data.types import AllowedDataType
 import pytest
 from numpy.typing import NDArray
 import pandas as pd
@@ -24,7 +25,7 @@ def test_model_data_base(test_array: NDArray):
 
 def test_dataframe(test_df: pd.DataFrame):
     """Test ModelData for pandas dataframe"""
-    pd_data = get_model_data(input_data=test_df, data_type=type(test_df))
+    pd_data = get_model_data(input_data=test_df, data_type=AllowedDataType.PANDAS)
 
     assert isinstance(pd_data.shape, tuple)
     assert isinstance(pd_data.dtypes, list)
@@ -36,7 +37,7 @@ def test_numpy(test_array: NDArray):
     """Test ModelData for numpy array"""
     numpy_data = get_model_data(
         input_data=test_array,
-        data_type=type(test_array),
+        data_type=AllowedDataType.NUMPY,
     )
 
     assert isinstance(numpy_data.feature_dict, dict)
@@ -54,7 +55,7 @@ def test_dictionary(test_array: NDArray):
     data = {"test": test_array}
     dict_data = get_model_data(
         input_data=data,
-        data_type=type(data),
+        data_type=AllowedDataType.DICT,
     )
 
     assert isinstance(dict_data.feature_dict, dict)
