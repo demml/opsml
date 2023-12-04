@@ -175,6 +175,9 @@ class ModelConverter:
         inputs = self.data_converter.convert_data()
         model_preds = self.model_info.model.predict(self.model_info.model_data.data)
 
+        print(model_preds)
+        print(inputs)
+
         logger.info("Validating converted onnx model")
         sess = self._create_onnx_session(onnx_model=onnx_model)
 
@@ -461,6 +464,7 @@ class SklearnOnnxModel(ModelConverter):
         """Converts sklearn model to ONNX ModelProto"""
 
         onnx_model = self._convert_sklearn(initial_types=initial_types)
+
         self.validate_model(onnx_model=onnx_model)
         return onnx_model
 
@@ -675,4 +679,5 @@ class OnnxModelConverter:
                 if converter.validate(model_type=self.model_info.model_type)
             )
         )
+
         return converter(model_info=self.model_info).convert()

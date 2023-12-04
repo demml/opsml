@@ -253,9 +253,9 @@ class OnnxModelCreator(ModelCreator):
             OnnxModelType.TF_KERAS,
             OnnxModelType.PYTORCH,
         ]:
-            return AllowedDataType(self.input_data_type).name
+            return AllowedDataType(self.input_data_type).value
 
-        return AllowedDataType.NUMPY.name
+        return AllowedDataType.NUMPY.value
 
     def create_model(self) -> ModelReturn:
         """
@@ -280,6 +280,7 @@ class OnnxModelCreator(ModelCreator):
                 additional_model_args=self.additional_model_args,
                 onnx_model_def=self.onnx_model_def,
             )
+
 
             onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
             onnx_model_return.model_type = self.model_type
