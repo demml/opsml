@@ -37,6 +37,27 @@ MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 
 
+def verify_path(path: str) -> str:
+    """Verifies path only contains registry dir names. This is to prevent arbitrary file
+    uploads, downloads, lists and deletes.
+
+    Args:
+        path:
+            path to file
+
+    Returns:
+        path
+    """
+
+    if not any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="No path provided",
+        )
+
+    return path
+
+
 # upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
 async def upload_file(request: Request):  # pragma: no cover
@@ -48,11 +69,7 @@ async def upload_file(request: Request):  # pragma: no cover
 
     # prevent arbitrary file uploads to random dirs
     # Files can only be uploaded to paths that have a registry dir name
-    if not any(table_name in write_path for table_name in RegistryTableNames):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid write path",
-        )
+    verify_path(path=write_path)
 
     if filename is None:
         raise HTTPException(
@@ -113,41 +130,6 @@ async def upload_file(request: Request):  # pragma: no cover
     }
 
 
-# remove version 2.0.0 - breaking change
-@router.post("/files/download", name="download_file_deprecated")
-def download_file_deprecated(
-    request: Request,
-    payload: DownloadFileRequest,
-) -> StreamingResponse:
-    """Downloads a file
-
-    Args:
-        request:
-            request object
-        payload:
-            `DownloadFileRequest`
-
-    Returns:
-        Streaming file response
-    """
-
-    try:
-        storage_client = request.app.state.storage_client
-        return StreamingResponse(
-            storage_client.iterfile(
-                file_path=payload.read_path,
-                chunk_size=CHUNK_SIZE,
-            ),
-            media_type="application/octet-stream",
-        )
-
-    except Exception as error:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"There was an error downloading the file. {error}",
-        ) from error
-
-
 @router.get("/files/download", name="download_file")
 def download_file(
     request: Request,
@@ -164,6 +146,11 @@ def download_file(
     Returns:
         Streaming file response
     """
+
+    # prevent arbitrary file downloads
+    # Files can only be downloaded from registry paths
+    verify_path(path=read_path)
+
     try:
         storage_client = request.app.state.storage_client
         return StreamingResponse(
@@ -198,9 +185,12 @@ def list_files(
         `ListFileResponse`
     """
 
+    read_path = payload.read_path
+    verify_path(path=read_path)
+
     try:
         storage_client = request.app.state.storage_client
-        files = storage_client.list_files(payload.read_path)
+        files = storage_client.list_files(read_path)
         return ListFileResponse(files=files)
 
     except Exception as error:
@@ -210,7 +200,7 @@ def list_files(
         ) from error
 
 
-@router.post("/files/delete", name="delete_files")
+@router.post("/files/delete", name="delete_files", dependencies=[Depends(verify_token)])
 def delete_files(
     request: Request,
     payload: DeleteFileRequest,
@@ -226,6 +216,11 @@ def delete_files(
     Returns:
         `DeleteFileResponse`
     """
+
+    # prevent arbitrary lists
+    # Files can only be listed from pre-defined registry paths
+    read_path = payload.read_path
+    verify_path(path=read_path)
 
     try:
         storage_client = request.app.state.storage_client

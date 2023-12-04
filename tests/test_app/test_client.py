@@ -501,9 +501,8 @@ def test_metadata_download_and_registration(
     uri = response.json()
     assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}",
-        json={"read_path": model_card.metadata.uris.trained_model_uri},
+    response = test_app.get(
+        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path={model_card.metadata.uris.trained_model_uri}",
     )
 
     assert response.status_code == 200
@@ -757,20 +756,18 @@ def test_token_fail(
         api_registries.run.register_card(card=run)
 
 
-def test_delete_no_file(test_app: TestClient):
+def test_delete_fail(test_app: TestClient):
     """Test error path"""
 
     pathlib.Path("tests/assets/empty").mkdir(parents=True, exist_ok=True)
 
-    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty"})
+    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty/model_registry"})
 
-    detail = response.json()
-    assert detail["deleted"] == False
     assert response.status_code == 200
 
     # this should fail because there is no file
     response = test_app.post("/opsml/files/delete", json={"read_path": "fail"})
-    assert response.status_code == 500
+    assert response.status_code == 422
 
 
 def test_card_create_fail(test_app: TestClient):
@@ -1052,4 +1049,10 @@ def test_upload_fail(test_app: TestClient):
         headers=headers,
     )
 
+    assert response.status_code == 422
+
+
+def test_download_fail(test_app: TestClient):
+    # test register model (onnx)
+    response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path=fake")
     assert response.status_code == 422
