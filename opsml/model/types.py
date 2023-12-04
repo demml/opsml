@@ -7,7 +7,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol, Union
+from typing import Any, Dict, List, Optional, Protocol, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -16,8 +16,8 @@ import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-ValidModelInput = Union[pd.DataFrame, NDArray, Dict[str, NDArray], pl.DataFrame]
-ValidSavedSample = Union[pa.Table, NDArray, Dict[str, NDArray]]
+ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]  # type: ignore
+ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
 
 
 class DataDtypes(str, Enum):
@@ -89,7 +89,7 @@ class OnnxDataProto(Enum):
 
 class Feature(BaseModel):
     feature_type: str
-    shape: list
+    shape: List[Any]
 
 
 class DataDict(BaseModel):
@@ -146,13 +146,13 @@ class ExtraOnnxArgs(BaseModel):
 class Base(BaseModel):
     model_config = ConfigDict(frozen=False)
 
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         raise NotImplementedError
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
-    def to_numpy(self, type_: str, values: Any):
+    def to_numpy(self, type_: str, values: Any) -> NDArray[Any]:
         if type_ == OnnxDataProto.DOUBLE.name:
             return np.array(values, np.float64)
 
@@ -169,44 +169,44 @@ class Base(BaseModel):
 
 
 class NumpyBase(Base):
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         values = list(self.model_dump().values())
-        for _, feature in self.feature_map.items():  # there can only be one
+        for _, feature in self.feature_map.items():  # type: ignore[attr-defined]
             array = self.to_numpy(
                 type_=feature.feature_type,
                 values=values,
             )
-            return {"predict": array.reshape(1, -1)}
+        return {"predict": array.reshape(1, -1)}
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
 
 class DictBase(Base):
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
 
         for feat, feat_val in self:
             array = self.to_numpy(
-                type_=self.feature_map[feat].feature_type,
+                type_=self.feature_map[feat].feature_type,  # type: ignore[attr-defined]
                 values=feat_val,
             )
             feats[feat] = array.reshape(1, -1)
         return feats
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.model_dump(), index=[0])
 
 
 class DeepLearningNumpyBase(Base):
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
             feats[feat] = np.expand_dims(array, axis=0)
         return feats
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
 
@@ -215,15 +215,15 @@ class DeepLearningDictBase(Base):
     Multi-input models typically allow for a dictionary of arrays
     """
 
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
             feats[feat] = np.expand_dims(array, axis=0)
 
         return feats
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
 
@@ -280,7 +280,7 @@ class ModelMetadata(BaseModel):
     model_uri: str
     model_version: str
     model_team: str
-    sample_data: dict
+    sample_data: Dict[str, Any]
     data_schema: ApiDataSchemas
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
@@ -299,13 +299,13 @@ class BaseEstimator(Protocol):
 
 
 ### Onnx protocol stubs
-class Graph(Protocol):
+class Graph:
     @property
-    def output(self):
+    def output(self) -> Any:
         ...
 
     @property
-    def input(self):
+    def input(self) -> Any:
         ...
 
 
@@ -317,9 +317,9 @@ class ModelProto(Protocol):
     model_version: int
     doc_string: str
 
-    def SerializeToString(self):  # pylint: disable=invalid-name
+    def SerializeToString(self) -> bytes:  # pylint: disable=invalid-name
         ...
 
     @property
-    def graph(self):
+    def graph(self) -> Graph:
         return Graph()

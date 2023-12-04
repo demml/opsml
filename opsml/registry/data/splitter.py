@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
+from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.registry.data.types import AllowedDataType
@@ -38,7 +39,8 @@ class DataSplit(BaseModel):
     indices: Optional[List[int]] = None
 
     @field_validator("indices", mode="before")
-    def convert_to_list(cls, value):
+    @classmethod
+    def convert_to_list(cls, value: Optional[List[int]]):
         """Pre to convert indices to list if not None"""
 
         if value is not None and not isinstance(value, list):
@@ -47,7 +49,8 @@ class DataSplit(BaseModel):
         return value
 
     @field_validator("inequality", mode="before")
-    def trim_whitespace(cls, value):
+    @classmethod
+    def trim_whitespace(cls, value: str):
         """Trims whitespace from inequality signs"""
 
         if value is not None:
@@ -104,11 +107,11 @@ class DataSplitterBase:
 
         return columns
 
-    def create_split(self, data):
+    def create_split(self, data) -> Tuple[str, Data]:
         raise NotImplementedError
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         raise NotImplementedError
 
 
@@ -142,7 +145,7 @@ class PolarsColumnSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.POLARS and split.column_name is not None
 
 
@@ -164,7 +167,7 @@ class PolarsIndexSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.POLARS and split.indices is not None
 
 
@@ -186,7 +189,7 @@ class PolarsRowsSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.POLARS and split.start is not None
 
 
@@ -203,7 +206,7 @@ class PandasIndexSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.PANDAS and split.indices is not None
 
 
@@ -221,7 +224,7 @@ class PandasRowSplitter(DataSplitterBase):
         return self.split.label, Data(X=data)
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.PANDAS and split.start is not None
 
 
@@ -252,7 +255,7 @@ class PandasColumnSplitter(DataSplitterBase):
         return self.split.label, data_split
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.PANDAS and split.column_name is not None
 
 
@@ -261,26 +264,26 @@ class PyArrowIndexSplitter(DataSplitterBase):
         return self.split.label, Data(X=data.take(self.indices))
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.PYARROW and split.indices is not None
 
 
 class NumpyIndexSplitter(DataSplitterBase):
-    def create_split(self, data: np.ndarray) -> Tuple[str, Data]:
+    def create_split(self, data: NDArray[Any]) -> Tuple[str, Data]:
         return self.split.label, Data(X=data[self.indices])
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.NUMPY and split.indices is not None
 
 
 class NumpyRowSplitter(DataSplitterBase):
-    def create_split(self, data: np.ndarray) -> Tuple[str, Data]:
+    def create_split(self, data: NDArray[Any]) -> Tuple[str, Data]:
         data_split = data[self.start : self.stop]
         return self.split.label, Data(X=data_split)
 
     @staticmethod
-    def validate(data_type: str, split: DataSplit):
+    def validate(data_type: str, split: DataSplit) -> bool:
         return data_type == AllowedDataType.NUMPY and split.start is not None
 
 
@@ -291,7 +294,7 @@ class DataSplitter:
         data: Union[pd.DataFrame, np.ndarray, pl.DataFrame],
         data_type: str,
         dependent_vars: Optional[List[Union[int, str]]] = None,
-    ):
+    ) -> None:
         data_splitter = next(
             (
                 data_splitter

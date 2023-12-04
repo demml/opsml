@@ -229,7 +229,7 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
 
 class OpsmlImportExceptions:
     @staticmethod
-    def try_skl2onnx_imports():
+    def try_skl2onnx_imports() -> None:
         """Attempts to import packages needed for onnx conversion of sklearn models"""
         try_import(
             ["skl2onnx", "onnxmltools"],
@@ -238,7 +238,7 @@ class OpsmlImportExceptions:
         )
 
     @staticmethod
-    def try_tf2onnx_imports():
+    def try_tf2onnx_imports() -> None:
         """Attempts to import packages needed for onnx conversion of tensorflow models"""
 
         try_import(
@@ -248,7 +248,7 @@ class OpsmlImportExceptions:
         )
 
     @staticmethod
-    def try_sql_import():
+    def try_sql_import() -> None:
         """Attempts to import packages needed for the server registry"""
 
         try_import(

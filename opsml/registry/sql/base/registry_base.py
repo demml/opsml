@@ -2,21 +2,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from semver import VersionInfo
 
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.cards import (
-    ArtifactCard,
-    AuditCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    RunCard,
-)
+
+from opsml.registry.cards.audit import AuditCard
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.data import DataCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.pipeline import PipelineCard
+from opsml.registry.cards.run import RunCard
+
 from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
@@ -56,7 +56,7 @@ def load_card_from_record(
 
     card = table_name_card_map[registry_type]
 
-    return card(**record.model_dump())
+    return cast(ArtifactCard, card(**record.model_dump()))
 
 
 class SQLRegistryBase:
@@ -75,7 +75,7 @@ class SQLRegistryBase:
     def unique_teams(self) -> List[str]:
         raise NotImplementedError
 
-    def get_unique_card_names(self, team: Optional[str] = None):
+    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
         raise NotImplementedError
 
     @property
@@ -97,7 +97,7 @@ class SQLRegistryBase:
     ) -> str:
         raise NotImplementedError
 
-    def _is_correct_card_type(self, card: ArtifactCard):
+    def _is_correct_card_type(self, card: ArtifactCard) -> str:
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
@@ -119,7 +119,7 @@ class SQLRegistryBase:
     def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
-    def _validate_card_type(self, card: ArtifactCard):
+    def _validate_card_type(self, card: ArtifactCard) -> None:
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
@@ -182,7 +182,7 @@ class SQLRegistryBase:
         version_type: VersionType,
         pre_tag: str,
         build_tag: str,
-    ):
+    ) -> None:
         """Sets a given card's version and uid
 
         Args:

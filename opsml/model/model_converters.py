@@ -64,7 +64,7 @@ class ModelConverter:
 
         from sklearn.base import is_classifier
 
-        return is_classifier(self.model_info.model)
+        return cast(bool, is_classifier(self.model_info.model))
 
     def update_onnx_registries(self) -> bool:
         return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
@@ -100,7 +100,7 @@ class ModelConverter:
             """
         )
 
-    def _validate_pred_arrays(self, onnx_preds: NDArray, model_preds: NDArray) -> bool:
+    def _validate_pred_arrays(self, onnx_preds: NDArray[Any], model_preds: NDArray[Any]) -> bool:
         """
         Validates onnx and original model predictions. Checks whether average diff between model and onnx
         is <= .001.
@@ -139,8 +139,8 @@ class ModelConverter:
 
     def _predictions_close(
         self,
-        onnx_preds: List[Union[float, int, NDArray]],
-        model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
+        onnx_preds: List[Union[float, int, NDArray[Any]]],
+        model_preds: Union[List[Union[float, int]], Union[float, int], NDArray[Any]],
     ) -> bool:  # pragma: no cover
         """Checks if model and onnx predictions are close
 
@@ -166,7 +166,6 @@ class ModelConverter:
                 return self._validate_pred_arrays(onnx_pred, model_preds)
             raise ValueError("Model and onnx predictions should both be of type NDArray")
 
-        model_preds = cast(Union[float, int], model_preds)
         valid_list = [np.sum(np.abs(onnx_preds[0] - model_preds)) <= 0.001]
         return all(valid_list)
 
@@ -187,7 +186,7 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer):
+    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer):  # type: ignore[type-arg]
         feature_dict = {}
 
         for sig in signature:
@@ -267,7 +266,7 @@ class ModelConverter:
         """
 
         onnx_model = onnx.load_from_string(model_def.model_bytes)
-        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
+        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=cast(ModelProto, onnx_model))
 
         return model_def, input_onnx_features, output_onnx_features
 
@@ -509,7 +508,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
 class PytorchArgBuilder:
     def __init__(
         self,
-        input_data: Union[NDArray, Dict[str, NDArray]],
+        input_data: Union[NDArray[Any], Dict[str, NDArray[Any]]],
     ):
         self.input_data = input_data
 
@@ -553,7 +552,7 @@ class PyTorchOnnxModel(ModelConverter):
             return PytorchArgBuilder(input_data=input_data).get_args()
         return additional_onnx_args
 
-    def _post_process_prediction(self, predictions: Any) -> NDArray:
+    def _post_process_prediction(self, predictions: Any) -> NDArray[Any]:
         """Parse pytorch predictions"""
 
         if hasattr(predictions, "logits"):
@@ -569,7 +568,7 @@ class PyTorchOnnxModel(ModelConverter):
 
         return predictions.numpy()
 
-    def _model_predict(self) -> NDArray:
+    def _model_predict(self) -> NDArray[Any]:
         """Generate prediction for pytorch model using sample data"""
 
         torch_data = self._get_torch_data()
