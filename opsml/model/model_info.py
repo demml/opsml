@@ -3,8 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
+from typing import Any, Dict, List, Optional, Tuple, Union, cast, Iterator
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -65,7 +64,7 @@ class ModelData:
         self._features = features
 
     @property
-    def feature_types(self):
+    def feature_types(self) -> Iterator[Tuple[str, str]]:
         """Creates feature, type mapping"""
         return zip(self.features, self.dtypes)
 
@@ -91,7 +90,7 @@ class ModelData:
     def dataframe_record(self) -> Dict[str, Any]:
         raise ValueError("This method is not implemented for this Data type")
 
-    def convert_dataframe_column(self, column_type: str, convert_column_type: str):
+    def convert_dataframe_column(self, column_type: str, convert_column_type: type) -> None:
         raise ValueError("This method is not implemented for this Data type")
 
     @staticmethod
@@ -123,7 +122,7 @@ class NumpyData(ModelData):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return self.data.shape
+        return cast(Tuple[int, ...], self.data.shape)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -230,7 +229,7 @@ class DataDictionary(ModelData):
         return data_type == AllowedDataType.DICT
 
 
-def get_model_data(data_type: str, input_data: Any):
+def get_model_data(data_type: str, input_data: Any) -> ModelData:
     """Sets the appropriate ModelData subclass depending
     on data_type passed
 

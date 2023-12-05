@@ -88,7 +88,7 @@ class NumpyFormatter(ArrowFormatter):
         return ArrowTable(table=data)
 
     @staticmethod
-    def validate_data(data_type: str):
+    def validate_data(data_type: str) -> bool:
         return AllowedDataType.NUMPY == data_type
 
 
