@@ -1,7 +1,5 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
-# L# Copyright (c) Shipt, Inc.
-# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -18,16 +16,21 @@ from opsml.registry.utils.settings import settings
 logger = ArtifactLogger.get_logger()
 
 
+# TODO(@damon): Move registry_type to SQLRegistryBase, make registry_type an enum
 class ClientRegistry(SQLRegistryBase):
+    """A registry that retrieves data from an opsml server instance."""
+
     def __init__(self, registry_type: str):
         super().__init__(registry_type)
 
-        self._session = self._get_session()
+        assert isinstance(settings.request_client, ApiClient)
+        self._session: ApiClient = cast(ApiClient, settings.request_client)
+
         self._registry_type = registry_type
 
     @cached_property
     def table_name(self) -> str:
-        """Returns a list of unique teams"""
+        """Returns the table name for this registry type"""
         data = self._session.get_request(
             route=api_routes.TABLE_NAME,
             params={"registry_type": self.registry_type},
@@ -67,10 +70,6 @@ class ClientRegistry(SQLRegistryBase):
         )
 
         return cast(List[str], data["names"])
-
-    def _get_session(self) -> ApiClient:
-        """Gets the requests session for connecting to the opsml api"""
-        return cast(ApiClient, settings.request_client)
 
     def check_uid(self, uid: str, registry_type: str) -> bool:
         data = self._session.post_request(
@@ -165,6 +164,7 @@ class ClientRegistry(SQLRegistryBase):
 
         return data["cards"]
 
+    # TODO(@damon): rename to add()
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
@@ -179,6 +179,7 @@ class ClientRegistry(SQLRegistryBase):
             return card, "registered"
         raise ValueError("Failed to register card")
 
+    # TODO(@damon): Rename to update()
     @log_card_change
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
@@ -193,6 +194,7 @@ class ClientRegistry(SQLRegistryBase):
             return card, "updated"
         raise ValueError("Failed to update card")
 
+    # TODO(@damon): Rename to delete()
     @log_card_change
     def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(

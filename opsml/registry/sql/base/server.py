@@ -23,6 +23,8 @@ logger = ArtifactLogger.get_logger()
 
 
 class ServerRegistry(SQLRegistryBase):
+    """A registry that retrieves data from a database."""
+
     def __init__(self, registry_type: str):
         super().__init__(registry_type)
 
