@@ -19,10 +19,9 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.model.data_converters import OnnxDataConverter
+from opsml.model.data_helper import ModelDataHelper
 from opsml.model.model_types import ModelType
 from opsml.model.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.cards.model import ModelCard
-from opsml.model.data_helper import ModelDataHelper
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -38,6 +37,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TrainedModelType,
 )
+from opsml.registry.cards.model import ModelCard
 
 logger = ArtifactLogger.get_logger()
 
@@ -274,9 +274,7 @@ class ModelConverter:
 
         return model_def, input_onnx_features, output_onnx_features
 
-    def _load_onnx_model(
-        self, model_def: OnnxModelDefinition
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _load_onnx_model(self) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """
         Loads onnx model from model definition
 
@@ -284,10 +282,10 @@ class ModelConverter:
             Tuple containing onnx model definition, input features, and output features
         """
 
-        onnx_model = onnx.load_from_string(model_def.model_bytes)
+        onnx_model = onnx.load_from_string(self.onnx_model_def.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=cast(ModelProto, onnx_model))
 
-        return model_def, input_onnx_features, output_onnx_features
+        return self.onnx_model_def, input_onnx_features, output_onnx_features
 
     def convert(self) -> ModelReturn:
         """Converts model to onnx model, validates it, and creates an
@@ -302,7 +300,7 @@ class ModelConverter:
             model_def, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
 
         else:
-            model_def, input_onnx_features, output_onnx_features = self._load_onnx_model(self.onnx_model_def)
+            model_def, input_onnx_features, output_onnx_features = self._load_onnx_model()
 
         schema = ApiDataSchemas(
             model_data_schema=DataDict(
@@ -681,7 +679,7 @@ class PyTorchOnnxModel(ModelConverter):
 
 class OnnxModelConverter:
     @staticmethod
-    def convert_model(self, modelcard: ModelCard, model_data_helper: ModelDataHelper) -> ModelReturn:
+    def convert_model(modelcard: ModelCard, model_data_helper: ModelDataHelper) -> ModelReturn:
         """
         Instantiates a helper class to convert machine learning models and their input
         data to onnx format for interoperability.
@@ -703,4 +701,7 @@ class OnnxModelConverter:
             )
         )
 
-        return converter(modelcard=modelcard, model_data_helper=model_data_helper).convert()
+        return converter(
+            modelcard=modelcard,
+            model_data_helper=model_data_helper,
+        ).convert()

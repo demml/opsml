@@ -12,8 +12,8 @@ from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.model_types import ModelType
+from opsml.model.predictor import OnnxModelPredictor
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -21,8 +21,8 @@ from opsml.model.types import (
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
-    ValidModelInput,
     TrainedModelType,
+    ValidModelInput,
 )
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
@@ -207,7 +207,7 @@ class ModelCard(ArtifactCard):
 
         values["sample_input_data"] = card_validator.get_sample()
         values["metadata"] = card_validator.get_metadata()
-        
+
         return values
 
     @property
