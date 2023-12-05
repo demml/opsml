@@ -64,13 +64,9 @@ class ModelCardValidator:
 
         return str(self.trained_model.__class__.__name__)
 
-    def get_sample(self) -> None:
+    def get_sample(self) -> Optional[Union[pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
         """Check sample data and returns one record to be used
         during ONNX conversion and validation
-
-        Args:
-            sample_data:
-                Sample data used to train the model
 
         Returns:
             Sample data with only one record
@@ -105,13 +101,6 @@ class ModelCardValidator:
 
     def get_metadata(self) -> ModelCardMetadata:
         """Checks metadata for valid values
-
-        Args:
-            sample_data:
-                Sample data used to train the model
-            metadata:
-                `ModelCardMetadata` associated with the model
-
         Returns:
             `ModelCardMetadata` with updated sample_data_type
         """
@@ -335,14 +324,7 @@ class ModelCard(ArtifactCard):
             create_model,
         )
 
-        model_return = create_model(
-            model=self.trained_model,
-            input_data=cast(ValidModelInput, self.sample_input_data),
-            input_data_type=self.metadata.sample_data_type,
-            additional_onnx_args=self.metadata.additional_onnx_args,
-            to_onnx=self.to_onnx,
-            onnx_model_def=self.metadata.onnx_model_def,
-        )
+        model_return = create_model(modelcard=self)
 
         self._set_model_attributes(model_return=model_return)
 

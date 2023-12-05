@@ -14,10 +14,10 @@ from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
+    ModelCard,
     ModelReturn,
     TrainedModelType,
 )
-from opsml.registry.cards.model import ModelCard
 from opsml.registry.data.types import AllowedDataType, get_class_name
 
 logger = ArtifactLogger.get_logger()
@@ -226,9 +226,9 @@ class OnnxModelCreator(ModelCreator):
 
             onnx_model_return = OnnxModelConverter.convert_model(
                 modelcard=self.card,
-                model_data=model_data,
+                data_helper=model_data,
             )
-            onnx_model_return.model_type = self.model_type
+            onnx_model_return.model_type = self.card.metadata.model_type
             onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
 
             # add onnx version
@@ -238,14 +238,15 @@ class OnnxModelCreator(ModelCreator):
             raise ValueError(
                 textwrap.dedent(
                     f"""
-                Failed to convert model to onnx format. If you'd like to turn onnx conversion off
-                set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition, 
-                please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md. 
-                Error: {exc}
-                """
+               Failed to convert model to onnx format. If you'd like to turn onnx conversion off
+               set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition,
+               please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md.
+               Error: {exc}
+               """
                 )
             ) from exc
 
+    #
     @staticmethod
     def validate(to_onnx: bool) -> bool:
         if to_onnx:
@@ -267,4 +268,4 @@ def create_model(modelcard: ModelCard) -> ModelReturn:
 
     creator = next(creator for creator in ModelCreator.__subclasses__() if creator.validate(to_onnx=modelcard.to_onnx))
 
-    return creator(modelcard=ModelCard).create_model()
+    return creator(modelcard=modelcard).create_model()

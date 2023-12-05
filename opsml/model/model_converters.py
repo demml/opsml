@@ -31,13 +31,13 @@ from opsml.model.types import (
     DataDict,
     ExtraOnnxArgs,
     Feature,
+    ModelCard,
     ModelProto,
     ModelReturn,
     OnnxDataProto,
     OnnxModelDefinition,
     TrainedModelType,
 )
-from opsml.registry.cards.model import ModelCard
 
 logger = ArtifactLogger.get_logger()
 
@@ -55,12 +55,12 @@ except ModuleNotFoundError as import_error:
 
 
 class ModelConverter:
-    def __init__(self, modelcard: ModelCard, model_data_helper: ModelDataHelper):
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
         self.card = modelcard
-        self.data_helper = model_data_helper
+        self.data_helper = data_helper
         self.data_converter = OnnxDataConverter(
             modelcard=modelcard,
-            model_data_helper=model_data_helper,
+            data_helper=data_helper,
         )
 
     @property
@@ -81,7 +81,7 @@ class ModelConverter:
 
         from sklearn.base import is_classifier
 
-        return cast(bool, is_classifier(self.trained_model))
+        return bool(is_classifier(self.trained_model))
 
     def update_onnx_registries(self) -> bool:
         return OnnxRegistryUpdater.update_onnx_registry(
@@ -281,7 +281,7 @@ class ModelConverter:
         Returns:
             Tuple containing onnx model definition, input features, and output features
         """
-
+        assert isinstance(self.onnx_model_def, OnnxModelDefinition)
         onnx_model = onnx.load_from_string(self.onnx_model_def.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=cast(ModelProto, onnx_model))
 
@@ -559,12 +559,12 @@ class PytorchArgBuilder:
 
 
 class PyTorchOnnxModel(ModelConverter):
-    def __init__(self, modelcard: ModelCard, model_data_helper: ModelDataHelper):
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
         modelcard.metadata.additional_onnx_args = self._get_additional_model_args(
             additional_onnx_args=modelcard.metadata.additional_onnx_args,
-            input_data=model_data_helper.data,
+            input_data=data_helper.data,
         )
-        super().__init__(modelcard=modelcard, model_data_helper=model_data_helper)
+        super().__init__(modelcard=modelcard, data_helper=data_helper)
 
     def _get_additional_model_args(
         self,
@@ -649,6 +649,7 @@ class PyTorchOnnxModel(ModelConverter):
 
         arg_data = self._get_torch_data()
 
+        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
             self.trained_model.eval()  # force model into evaluation mode
@@ -681,7 +682,7 @@ class PyTorchOnnxModel(ModelConverter):
 
 class OnnxModelConverter:
     @staticmethod
-    def convert_model(modelcard: ModelCard, model_data_helper: ModelDataHelper) -> ModelReturn:
+    def convert_model(modelcard: ModelCard, data_helper: ModelDataHelper) -> ModelReturn:
         """
         Instantiates a helper class to convert machine learning models and their input
         data to onnx format for interoperability.
@@ -690,7 +691,7 @@ class OnnxModelConverter:
         Args:
             modelcard:
                 ModelCard class containing model-specific information for Onnx conversion
-            model_data_helper:
+            data_helper:
                 ModelDataHelper class containing model-specific information for Onnx conversion
 
         """
@@ -705,5 +706,5 @@ class OnnxModelConverter:
 
         return converter(
             modelcard=modelcard,
-            model_data_helper=model_data_helper,
+            data_helper=data_helper,
         ).convert()
