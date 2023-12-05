@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from functools import cached_property
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import numpy as np
 
@@ -55,16 +55,16 @@ class OnnxModelPredictor:
         )
 
     @property
-    def data_type(self):
-        return self.data_schema.model_data_schema.data_type
+    def data_type(self) -> str:
+        return str(self.data_schema.model_data_schema.data_type)
 
     @cached_property
     def input_sig(self) -> Base:
-        return self.sig_creator.input_sig
+        return cast(Base, self.sig_creator.input_sig)
 
     @cached_property
     def output_sig(self) -> Base:
-        return self.sig_creator.output_sig
+        return cast(Base, self.sig_creator.output_sig)
 
     def predict(self, data: Dict[str, Any]) -> Any:
         """
@@ -155,7 +155,7 @@ class OnnxModelPredictor:
 
         return prediction
 
-    def _create_onnx_session(self, model_definition: bytes):
+    def _create_onnx_session(self, model_definition: bytes) -> Any:
         import onnxruntime as rt  # pylint: disable=import-outside-toplevel
 
         return rt.InferenceSession(

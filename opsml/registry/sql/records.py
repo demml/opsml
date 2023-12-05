@@ -48,9 +48,10 @@ class DataRegistryRecord(SaveRecord):
     datacard_uri: str
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
-        uris = metadata.get("uris")
+    @classmethod
+    def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = values["metadata"]
+        uris: Dict[str, Any] = metadata["uris"]
 
         values["data_uri"] = uris["data_uri"]
         values["datacard_uri"] = uris["datacard_uri"]
@@ -78,8 +79,10 @@ class ModelRegistryRecord(SaveRecord):
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
+    @classmethod
+    def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = values["metadata"]
+
         values["modelcard_uri"] = metadata["uris"]["modelcard_uri"]
         values["trained_model_uri"] = metadata["uris"]["trained_model_uri"]
         values["model_metadata_uri"] = metadata["uris"]["model_metadata_uri"]
@@ -131,8 +134,9 @@ class AuditRegistryRecord(SaveRecord):
     timestamp: int = get_timestamp()
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
+    @classmethod
+    def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = values["metadata"]
         values["audit_uri"] = metadata["audit_uri"]
         values["datacards"] = metadata["datacards"]
         values["modelcards"] = metadata["modelcards"]
@@ -172,7 +176,8 @@ class LoadedDataRecord(LoadRecord):
     metadata: DataCardMetadata
 
     @model_validator(mode="before")
-    def load_attributes(cls, values):
+    @classmethod
+    def load_attributes(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
         datacard_definition = cls.load_datacard_definition(
@@ -308,10 +313,10 @@ class LoadedAuditRecord(LoadRecord):
         storage_client = cast(StorageClientType, values["storage_client"])
 
         audit = cls._load_audit(
-            audit_uri=values.get("audit_uri"),
+            audit_uri=values["audit_uri"],
             storage_client=storage_client,
         )
-        audit["metadata"]["audit_uri"] = values.get("audit_uri")
+        audit["metadata"]["audit_uri"] = values["audit_uri"]
 
         return audit
 
@@ -364,7 +369,7 @@ class LoadedRunRecord(LoadRecord):
         storage_client = cast(StorageClientType, values["storage_client"])
 
         runcard_definition = cls.load_runcard_definition(
-            runcard_uri=values.get("runcard_uri"),
+            runcard_uri=values["runcard_uri"],
             storage_client=storage_client,
         )
 

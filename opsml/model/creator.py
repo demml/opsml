@@ -4,13 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.model_info import ModelInfo, get_model_data
-from opsml.model.model_types import ModelType, OnnxModelType
+from opsml.model.types import OnnxModelType
+from opsml.model.model_types import ModelType
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -53,7 +54,7 @@ class ModelCreator:
         self.input_data_type = input_data_type
         self.model_type = self.get_model_type()
 
-    def _get_model_class_name(self):
+    def _get_model_class_name(self) -> str:
         """Gets class name from model"""
 
         if "keras.engine" in str(self.model):
@@ -66,7 +67,7 @@ class ModelCreator:
         if "transformers.models" in str(self.model.__class__.__bases__):
             return OnnxModelType.TRANSFORMER.value
 
-        return self.model.__class__.__name__
+        return str(self.model.__class__.__name__)
 
     def get_model_type(self) -> str:
         model_type = next(
@@ -95,7 +96,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             input_data=self.input_data,
         )
 
-        return model_data.feature_dict
+        return cast(Dict[str, Feature], model_data.feature_dict)
 
     def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
         model_data = get_model_data(
@@ -107,7 +108,7 @@ class TrainedModelMetadataCreator(ModelCreator):
         if self.input_data_type != AllowedDataType.PANDAS:
             model_data.features = ["outputs"]
 
-        return model_data.feature_dict
+        return cast(Dict[str, Feature], model_data.feature_dict)
 
     def _predict_prediction(self) -> Dict[str, Feature]:
         """Test default predict method leveraged by most ml libraries"""

@@ -20,10 +20,10 @@ router = APIRouter()
 
 
 @router.get("/opsml")
-async def opsml_homepage(request: Request) -> HTMLResponse:  # type: ignore[return-value]
-    return templates.TemplateResponse("homepage.html", {"request": request})
+async def opsml_homepage(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse("homepage.html", {"request": request})  # type: ignore
 
 
 @router.get("/")
-async def homepage(request: Request) -> RedirectResponse:  # type: ignore[return-value]
+async def homepage(request: Request) -> RedirectResponse:
     return RedirectResponse("/opsml")

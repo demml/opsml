@@ -10,7 +10,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 security = HTTPBasic()
 
 
-def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
+def get_current_username(credentials: HTTPBasicCredentials = Depends(security)) -> str:
     username = os.environ["OPSML_USERNAME"].encode("utf-8")
     password = os.environ["OPSML_PASSWORD"].encode("utf-8")
     current_username_bytes = credentials.username.encode("utf8")

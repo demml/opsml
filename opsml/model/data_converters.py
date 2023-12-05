@@ -50,7 +50,7 @@ class DataConverter:
     def model_data(self) -> ModelData:
         return self.model_info.model_data
 
-    def convert_to_float(self, convert_all: bool):
+    def convert_to_float(self, convert_all: bool) -> None:
         """
         Converts either all non-float32 numeric types to Float32 or
         converts Float64 types to Float32. Skl2Onnx does not support Float64 for some estimator types.

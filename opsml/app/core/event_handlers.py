@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, Awaitable, Callable, Union
+from typing import Any, Awaitable, Callable, Union, cast
 
 import rollbar
 from fastapi import FastAPI, Response
@@ -15,6 +15,7 @@ from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.registry import CardRegistries
 from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.utils.settings import settings
+from sqlalchemy.engine.base import Engine
 
 logger = ArtifactLogger.get_logger()
 
@@ -22,7 +23,7 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 # set up db initializer
 initializer = DBInitializer(
-    engine=settings.connection_client.sql_engine,
+    engine=cast(Engine, settings.connection_client.sql_engine),
     registry_tables=list(RegistryTableNames),
 )
 

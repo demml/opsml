@@ -70,7 +70,7 @@ class RunCard(ArtifactCard):
     project_id: Optional[str] = None
     runcard_uri: Optional[str] = None
 
-    def add_tag(self, key: str, value: str):
+    def add_tag(self, key: str, value: str) -> None:
         """
         Logs params to current RunCard
 
@@ -194,7 +194,7 @@ class RunCard(ArtifactCard):
 
         return RunRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
-    def add_artifact_uri(self, name: str, uri: str):
+    def add_artifact_uri(self, name: str, uri: str) -> None:
         """
         Adds an artifact_uri to the runcard
 

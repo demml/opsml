@@ -92,7 +92,7 @@ class ModelConverter:
 
         return self.data_converter.get_data_types()
 
-    def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]):
+    def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]) -> None:
         raise ValueError(
             f"""Onnx and model prediction shape mismatch. \n
                 Onnx prediction shape: {onnx_shape} \n
@@ -186,7 +186,7 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return sig.type.tensor_type.elem_type
 
-    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer):  # type: ignore[type-arg]
+    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer) -> Dict[str, Feature]:  # type: ignore[type-arg]
         feature_dict = {}
 
         for sig in signature:
@@ -232,7 +232,7 @@ class ModelConverter:
         """
 
         return OnnxModelDefinition(
-            onnx_version=onnx.__version__,
+            onnx_version=onnx.__version__,  # type: ignore
             model_bytes=onnx_model.SerializeToString(),
         )
 
@@ -320,7 +320,7 @@ class SklearnOnnxModel(ModelConverter):
     def _is_pipeline(self) -> bool:
         return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
 
-    def _update_onnx_registries_pipelines(self):
+    def _update_onnx_registries_pipelines(self) -> bool:
         updated = False
 
         for model_step in self.model_info.model.steps:
@@ -337,7 +337,7 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
-    def _update_onnx_registries_stacking(self):
+    def _update_onnx_registries_stacking(self) -> bool:
         updated = False
         for estimator in [
             *self.model_info.model.estimators_,
@@ -351,7 +351,7 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
-    def _update_onnx_registries_calibrated_classifier(self, estimator: Optional[BaseEstimator] = None):
+    def _update_onnx_registries_calibrated_classifier(self, estimator: Optional[BaseEstimator] = None) -> bool:
         updated = False
 
         if estimator is None:
@@ -382,7 +382,7 @@ class SklearnOnnxModel(ModelConverter):
             return self._update_onnx_registries_stacking()
 
         if self._is_calibrated_classifier:
-            return self._update_onnx_registries_calibrated_classifier()  # type: ignore
+            return self._update_onnx_registries_calibrated_classifier()
 
         return self.update_onnx_registries()
 
@@ -407,9 +407,9 @@ class SklearnOnnxModel(ModelConverter):
 
         else:
             logger.warning("Converting all float64 data to float32")
-            return self.data_converter.converter.convert_to_float(convert_all=False)
+            self.data_converter.converter.convert_to_float(convert_all=False)
 
-    def prepare_registries_and_data(self):
+    def prepare_registries_and_data(self) -> None:
         """Updates sklearn onnx registries and convert data to float32"""
 
         self.update_sklearn_onnx_registries()
@@ -457,7 +457,7 @@ class SklearnOnnxModel(ModelConverter):
             # not support zipmap as a default option (LinearSVC). This catches those errors
             if re.search("Option 'zipmap' not in", str(name_error), re.IGNORECASE):
                 logger.info("Zipmap not supported for classifier")
-                return convert_sklearn(model=self.model_info.model, initial_types=initial_types)
+                return cast(ModelProto, convert_sklearn(model=self.model_info.model, initial_types=initial_types))
             raise name_error
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
@@ -489,7 +489,7 @@ class LightGBMBoosterOnnxModel(ModelConverter):
 
 
 class TensorflowKerasOnnxModel(ModelConverter):
-    def _get_onnx_model_from_tuple(self, model: Any):
+    def _get_onnx_model_from_tuple(self, model: Any) -> Any:
         if isinstance(model, tuple):
             return model[0]
         return model
@@ -642,7 +642,7 @@ class PyTorchOnnxModel(ModelConverter):
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
 
-        return model
+        return cast(ModelProto, model)
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""

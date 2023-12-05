@@ -23,8 +23,8 @@ class DataHolder(BaseModel):
 
 @dataclass
 class Data:
-    X: Union[pl.DataFrame, pd.DataFrame, pa.Table, np.ndarray]
-    y: Optional[Union[pl.DataFrame, pd.DataFrame, pa.Table, np.ndarray]] = None
+    X: Union[pl.DataFrame, pd.DataFrame, pa.Table, NDArray[Any]]
+    y: Optional[Union[pl.DataFrame, pd.DataFrame, pa.Table, NDArray[Any]]] = None
 
 
 class DataSplit(BaseModel):
@@ -40,7 +40,7 @@ class DataSplit(BaseModel):
 
     @field_validator("indices", mode="before")
     @classmethod
-    def convert_to_list(cls, value: Optional[List[int]]):
+    def convert_to_list(cls, value: Optional[List[int]]) -> Optional[List[int]]:
         """Pre to convert indices to list if not None"""
 
         if value is not None and not isinstance(value, list):
@@ -50,7 +50,7 @@ class DataSplit(BaseModel):
 
     @field_validator("inequality", mode="before")
     @classmethod
-    def trim_whitespace(cls, value: str):
+    def trim_whitespace(cls, value: str) -> str:
         """Trims whitespace from inequality signs"""
 
         if value is not None:
@@ -63,7 +63,7 @@ class DataSplitterBase:
     def __init__(
         self,
         split: DataSplit,
-        dependent_vars: Optional[List[Union[int, str]]] = None,
+        dependent_vars: List[Union[int, str]],
     ):
         self.split = split
         self.dependent_vars = dependent_vars
@@ -107,7 +107,7 @@ class DataSplitterBase:
 
         return columns
 
-    def create_split(self, data) -> Tuple[str, Data]:
+    def create_split(self, data: Any) -> Tuple[str, Data]:
         raise NotImplementedError
 
     @staticmethod
@@ -134,7 +134,7 @@ class PolarsColumnSplitter(DataSplitterBase):
         else:
             data = data.filter(pl.col(self.column_name) <= self.column_value)
 
-        if self.dependent_vars is not None:
+        if bool(self.dependent_vars):
             x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
@@ -156,7 +156,7 @@ class PolarsIndexSplitter(DataSplitterBase):
         # slice
         data = data[self.indices]
 
-        if self.dependent_vars is not None:
+        if bool(self.dependent_vars):
             x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
@@ -178,7 +178,7 @@ class PolarsRowsSplitter(DataSplitterBase):
         # slice
         data = data[self.start : self.stop]
 
-        if self.dependent_vars is not None:
+        if bool(self.dependent_vars):
             x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
 
             return self.split.label, Data(
@@ -197,7 +197,7 @@ class PandasIndexSplitter(DataSplitterBase):
     def create_split(self, data: pd.DataFrame) -> Tuple[str, Data]:
         data = data.iloc[self.indices]
 
-        if self.dependent_vars is not None:
+        if bool(self.dependent_vars):
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
             y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
@@ -215,7 +215,7 @@ class PandasRowSplitter(DataSplitterBase):
         # slice
         data = data[self.start : self.stop]
 
-        if self.dependent_vars is not None:
+        if bool(self.dependent_vars):
             x = data[data.columns[~data.columns.isin(self.dependent_vars)]]
             y = data[data.columns[data.columns.isin(self.dependent_vars)]]
 
@@ -245,7 +245,7 @@ class PandasColumnSplitter(DataSplitterBase):
         else:
             data = data[data[self.column_name] <= self.column_value]
 
-        if self.dependent_vars is not None:
+        if bool(self.dependent_vars):
             return self.split.label, Data(
                 X=data[data.columns[~data.columns.isin(self.dependent_vars)]],
                 y=data[data.columns[data.columns.isin(self.dependent_vars)]],
@@ -291,10 +291,10 @@ class DataSplitter:
     @staticmethod
     def split(
         split: DataSplit,
-        data: Union[pd.DataFrame, np.ndarray, pl.DataFrame],
+        data: Union[pd.DataFrame, NDArray[Any], pl.DataFrame],
         data_type: str,
-        dependent_vars: Optional[List[Union[int, str]]] = None,
-    ) -> None:
+        dependent_vars: List[Union[int, str]],
+    ) -> Tuple[str, Data]:
         data_splitter = next(
             (
                 data_splitter

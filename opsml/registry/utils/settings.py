@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from functools import cached_property
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional, cast, Type
 
 import httpx
 from pydantic import model_validator
@@ -13,7 +13,8 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.types import OpsmlAuth, OpsmlUri
 from opsml.helpers.utils import OpsmlImportExceptions
-from opsml.registry.sql.connectors import BaseSQLConnection, SQLConnector
+from opsml.registry.sql.connectors.base import BaseSQLConnection
+from opsml.registry.sql.connectors.connector import SQLConnector
 from opsml.registry.storage.storage_system import (
     StorageClientGetter,
     StorageClientType,
@@ -112,7 +113,7 @@ class DefaultAttrCreator:
 
         """
 
-        tracking_uri = self._env_vars.get(OpsmlUri.TRACKING_URI.lower(), BASE_LOCAL_SQL)
+        tracking_uri: str = self._env_vars.get(OpsmlUri.TRACKING_URI.lower(), BASE_LOCAL_SQL)
 
         if tracking_uri is BASE_LOCAL_SQL:
             OpsmlImportExceptions.try_sql_import()
@@ -224,7 +225,7 @@ class DefaultAttrCreator:
         raise ValueError("Missing OPSML_STORAGE_URI env variable")
 
     @property
-    def env_vars(self):
+    def env_vars(self) -> Dict[str, Any]:
         """Return dictionary are key value pairings for DefaultSettings"""
         return self._env_vars
 
@@ -251,18 +252,21 @@ class DefaultConnector:
 
         return connector_type
 
-    def _get_sql_connector(self, connector_type: str):
+    def _get_sql_connector(self, connector_type: str) -> Type[BaseSQLConnection]:
         """Gets the sql connection given a connector type"""
         return SQLConnector.get_connector(connector_type=connector_type)
 
-    def get_connector(self) -> BaseSQLConnection:
+    def get_connector(self) -> Type[BaseSQLConnection]:
         """Gets the sql connector to use when running opsml locally (without api proxy)"""
         connector_type = self._get_connector_type()
         connector = self._get_sql_connector(connector_type=connector_type)
 
-        return connector(
-            tracking_uri=self.tracking_uri,
-            credentials=self.credentials,
+        return cast(
+            Type[BaseSQLConnection],
+            connector(
+                tracking_uri=self.tracking_uri,
+                credentials=self.credentials,
+            ),
         )
 
 
@@ -283,14 +287,15 @@ class DefaultSettings(BaseSettings):
     request_client: Optional[ApiClient] = None
 
     @model_validator(mode="before")
-    def set_base_settings(cls, env_vars) -> Dict[str, Any]:
+    @classmethod
+    def set_base_settings(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:
         """Sets tracking url if it doesn't exist and sets storage
         client-related vars
         """
-        return DefaultAttrCreator(env_vars=env_vars).env_vars
+        return DefaultAttrCreator(env_vars=card_args).env_vars
 
     @cached_property
-    def connection_client(self) -> BaseSQLConnection:
+    def connection_client(self) -> Type[BaseSQLConnection]:
         """Retrieve sql connection client.
         Connection client is only used in the Registry class.
         """
