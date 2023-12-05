@@ -14,7 +14,6 @@ from opsml.registry.data.splitter import DataSplit
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.sql.semver import VersionType
 
-
 __all__ = [
     "AuditCard",
     "DataCard",
