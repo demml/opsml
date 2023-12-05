@@ -402,12 +402,12 @@ class QueryEngine:
         query = select(name_col)
 
         if team is not None:
-            query = query.filter(table.team == team).distinct()  # type: ignore[attr-defined]
+            query = query.filter(table.team == team).distinct()  # type: ignore[no-any-return]
         else:
             query = query.distinct()
 
         with self.session() as sess:
-            return sess.scalars(query).all()  # type: ignore[attr-defined]
+            return sess.scalars(query).all()  # type: ignore[no-any-return]
 
     def delete_card_record(
         self,

@@ -26,7 +26,7 @@ class ProjectCard(ArtifactCard):
     @field_validator("project_id", mode="before")
     @classmethod
     def create_project_id(cls, value, info: ValidationInfo, **kwargs):
-        data = info.data  # type: ignore
+        data = info.data
         return f'{data.get("team")}:{data.get("name")}'
 
     def create_registry_record(self) -> RegistryRecord:
