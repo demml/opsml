@@ -228,9 +228,11 @@ class OnnxModelCreator(ModelCreator):
                 data_type=self.card.metadata.sample_data_type,
                 input_data=self.card.sample_input_data,
             )
-            model_info = ModelInfo(modelcard=self.card, model_data=model_data)
 
-            onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
+            onnx_model_return = OnnxModelConverter.convert_model(
+                modelcard=self.card,
+                model_data=model_data,
+            )
             onnx_model_return.model_type = self.model_type
             onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
 
