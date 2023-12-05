@@ -428,16 +428,11 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     def _save_run_artifacts(self) -> None:
         """Saves all artifacts associated with RunCard to filesystem"""
-        #
-        # TODO(@damon): See where `.artifacts` are used. When
-        # `ActiveRun.log_artifact` is called, the artifact is saved and *not*
-        # added to `artifacts` on the runcard. We probably want to do either one
-        # or the other - save the artifact when `log_artifact` is called *or*
-        # here when the card is saved,rather than support both.
-        #
-        if self.card.artifact_uris is None:
-            artifact_uris: Dict[str, str] = {}
-        else:
+        artifact_uris: Dict[str, str] = {}
+
+        if self.card.artifact_uris is not None:
+            # some cards have already been saved and thus have URIs already.
+            # include them
             artifact_uris = self.card.artifact_uris
 
         if self.card.artifacts is not None:

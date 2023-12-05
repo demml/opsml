@@ -590,8 +590,6 @@ def test_index_example(db_registries):
     from opsml.registry import CardInfo, DataCard, ModelCard, DataSplit
 
     # set up registries
-    # data_registry = CardRegistry(registry_name="data")
-    # model_registry = CardRegistry(registry_name="model")
     data_registry = db_registries["data"]
     model_registry = db_registries["model"]
 

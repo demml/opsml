@@ -739,6 +739,7 @@ def test_token_fail(
     api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,
 ):
+    monkeypatch.setattr(config.config, "APP_ENV", "production")
     monkeypatch.setattr(config.config, "PROD_TOKEN", "fail")
 
     run = RunCard(

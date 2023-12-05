@@ -6,7 +6,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import joblib
 import polars as pl
@@ -31,7 +31,6 @@ from opsml.registry.storage.types import (
     ArtifactStorageType,
     FilePath,
 )
-from opsml.registry.storage.utils import cleanup_files
 
 
 class ArtifactStorage:
@@ -141,8 +140,7 @@ class ArtifactStorage:
 
         return loadable_path or tmp_path
 
-    @cleanup_files
-    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Tuple[Any, str]:
+    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Any:
         files = self.storage_client.list_files(storage_uri=storage_uri)
         with tempfile.TemporaryDirectory() as tmpdirname:
             loadable_filepath = self._download_artifacts(
@@ -153,7 +151,7 @@ class ArtifactStorage:
 
             artifact = self._load_artifact(file_path=loadable_filepath, **kwargs)
 
-        return artifact, loadable_filepath
+        return artifact
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -294,16 +292,14 @@ class ImageDataStorage(ArtifactStorage):
     def _load_artifact(self, file_path: FilePath) -> None:
         """Not implemented"""
 
-    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Tuple[Any, str]:
+    def load_artifact(self, storage_uri: str, **kwargs: Any) -> None:
         files = self.storage_client.list_files(storage_uri=storage_uri)
-        loadable_filepath = self.storage_client.download(
+        self.storage_client.download(
             rpath=storage_uri,
             lpath=str(kwargs.get("image_dir")),
             recursive=kwargs.get("recursive", False),
             files=files,
         )
-
-        return None, loadable_filepath  # type: ignore
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -333,7 +329,7 @@ class ParquetStorage(ArtifactStorage):
 
         Args:
             artifact:
-                Parquet table to write
+                Parquet gctable to write
             storage_uri:
                 Path to write to
             tmp_uri:

@@ -171,7 +171,7 @@ class GCSFSStorageClient(StorageClient):
     ):
         import gcsfs
 
-        storage_settings = cast(GcsStorageClientSettings, storage_settings)
+        assert isinstance(storage_settings, GcsStorageClientSettings)
         client = gcsfs.GCSFileSystem(
             project=storage_settings.gcp_project,
             token=storage_settings.credentials,
@@ -207,12 +207,11 @@ class GCSFSStorageClient(StorageClient):
         return cast(BinaryIO, self.client.open(filename, mode))
 
     def list_files(self, storage_uri: str) -> FilePath:
-        files = ["gs://" + path for path in self.client.ls(path=storage_uri)]
-        return files
+        return [f"gs://{path}" for path in self.client.ls(path=storage_uri)]
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
         """Create store for use with Zarr arrays"""
-        import gcsfs  # pylint: disable=import-outside-toplevel
+        import gcsfs
 
         return gcsfs.GCSMap(storage_uri, gcs=self.client, check=False)
 
@@ -236,7 +235,7 @@ class S3StorageClient(StorageClient):
     ):
         import s3fs
 
-        storage_settings = cast(S3StorageClientSettings, storage_settings)
+        assert isinstance(storage_settings, S3StorageClientSettings)
         client = s3fs.S3FileSystem()
 
         super().__init__(
@@ -269,12 +268,11 @@ class S3StorageClient(StorageClient):
         return cast(BinaryIO, self.client.open(filename, mode))
 
     def list_files(self, storage_uri: str) -> FilePath:
-        files = ["s3://" + path for path in self.client.ls(path=storage_uri)]
-        return files
+        return [f"s3://{path}" for path in self.client.ls(path=storage_uri)]
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
         """Create store for use with Zarr arrays"""
-        import s3fs  # pylint: disable=import-outside-toplevel
+        import s3fs
 
         return s3fs.S3Map(storage_uri, s3=self.client, check=False)
 
@@ -392,12 +390,12 @@ class LocalStorageClient(StorageClient):
 
 class ApiStorageClient(LocalStorageClient):
     def __init__(self, storage_settings: StorageSettings):
+        assert isinstance(storage_settings, ApiStorageClientSettings)
         super().__init__(
             storage_settings=storage_settings,
             backend=StorageSystem.API.value,
         )
 
-        storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
 
     def list_files(self, storage_uri: str) -> FilePath:
@@ -560,18 +558,16 @@ StorageClientType = Union[
 ]
 
 
-class StorageClientGetter:
-    @staticmethod
-    def get_storage_client(
-        storage_settings: StorageSettings,
-    ) -> StorageClientType:
-        storage_client = next(
-            (
-                storage_client
-                for storage_client in all_subclasses(StorageClient)
-                if storage_client.validate(storage_backend=storage_settings.storage_type)
-            ),
-            LocalStorageClient,
-        )
+def get_storage_client(
+    storage_settings: StorageSettings,
+) -> StorageClientType:
+    storage_client = next(
+        (
+            storage_client
+            for storage_client in all_subclasses(StorageClient)
+            if storage_client.validate(storage_backend=storage_settings.storage_type)
+        ),
+        LocalStorageClient,
+    )
 
-        return storage_client(storage_settings=storage_settings)
+    return storage_client(storage_settings=storage_settings)

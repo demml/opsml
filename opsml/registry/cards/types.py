@@ -28,6 +28,23 @@ class RegistryType(str, Enum):
     AUDIT = "audit"
     PROJECT = "project"
 
+    @staticmethod
+    def from_str(name: str) -> "RegistryType":
+        l_name = name.strip().lower()
+        if l_name == "data":
+            return RegistryType.DATA
+        if l_name == "model":
+            return RegistryType.MODEL
+        if l_name == "run":
+            return RegistryType.RUN
+        if l_name == "pipeline":
+            return RegistryType.PIPELINE
+        if l_name == "project":
+            return RegistryType.PROJECT
+        if l_name == "audit":
+            return RegistryType.AUDIT
+        raise NotImplementedError()
+
 
 class Metric(BaseModel):
     name: str
