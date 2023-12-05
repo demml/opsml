@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from opsml.model.model_info import FloatTypeConverter, ModelData, ModelInfo
+from opsml.model.data_helper import FloatTypeConverter, ModelDataHelper
 from opsml.model.types import (
     AVAILABLE_MODEL_TYPES,
     DataDtypes,
@@ -19,6 +19,7 @@ from opsml.model.types import (
     TrainedModelType,
 )
 from opsml.registry.data.types import AllowedDataType
+from opsml.registry.cards.model import ModelCard
 
 # attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
 # this is checked during model conversion
@@ -34,7 +35,7 @@ ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dic
 # sklearn pipeline needs to be converted to float32 (some features)
 # stacking regressor needs to be converted to float32 (all features)
 class DataConverter:
-    def __init__(self, model_info: ModelInfo):
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
         """
         DataConverter for for Numpy arrays and non deep-learning estimators
 
@@ -43,12 +44,9 @@ class DataConverter:
                 `ModelInfo` class containing model-related information
 
         """
-        self.model_info = model_info
+        self.data_helper = data_helper
+        self.card = modelcard
         self.input_name = "predict"
-
-    @property
-    def model_data(self) -> ModelData:
-        return self.model_info.model_data
 
     def convert_to_float(self, convert_all: bool) -> None:
         """
@@ -60,9 +58,9 @@ class DataConverter:
                 Boolean indicating whether to convert all columns to Float32
 
         """
-        self.model_data.data = FloatTypeConverter(
+        self.data_helper.data = FloatTypeConverter(
             convert_all=convert_all,
-        ).convert_to_float(data=self.model_data.data)
+        ).convert_to_float(data=self.data_helper.data)
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         """Gets schema from data.
@@ -83,7 +81,7 @@ class DataConverter:
         """Creates an Onnx feature spec from a pandas dataframe"""
 
         inputs = []
-        for key, val in self.model_data.feature_types:
+        for key, val in self.data_helper.feature_types:
             spec = get_skl2onnx_onnx_tensor_spec(dtype=str(val), input_shape=[1])
             inputs.append((key, spec))
         return inputs
@@ -92,8 +90,8 @@ class DataConverter:
         """Creates feature dictionary based on dataframe schema"""
 
         feature_dict: Dict[str, Feature] = {}
-        for feature, feature_type in self.model_data.feature_types:
-            feature_dict[feature] = self.model_data.get_feature_info(
+        for feature, feature_type in self.data_helper.feature_types:
+            feature_dict[feature] = self.data_helper.get_feature_info(
                 type_=str(feature_type),
                 shape=[None, 1],
             )
@@ -101,7 +99,7 @@ class DataConverter:
         return feature_dict
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
+    def validate(data_type: str, model_type: str) -> bool:
         """Validate data and model types"""
         raise NotImplementedError
 
@@ -123,9 +121,9 @@ class NumpyOnnxConverter(DataConverter):
         return {self.input_name: self.model_data.data}
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        if model_info.data_type == AllowedDataType.NUMPY:
-            if model_info.model_type in AVAILABLE_MODEL_TYPES and model_info.model_type not in [
+    def validate(data_type: str, model_type: str) -> bool:
+        if data_type == AllowedDataType.NUMPY:
+            if model_type in AVAILABLE_MODEL_TYPES and model_type not in [
                 TrainedModelType.TF_KERAS,
                 TrainedModelType.PYTORCH,
                 TrainedModelType.TRANSFORMER,
@@ -156,20 +154,17 @@ class PandasOnnxConverter(DataConverter):
             reg.fit(X_train.to_numpy(), y_train)
 
         """
-        input_shape = cast(Tuple[int, ...], self.model_data.shape[1:])
-        dtype = self.model_data.dtypes[0]
+        input_shape = cast(Tuple[int, ...], self.data_helper.shape[1:])
+        dtype = self.data_helper.dtypes[0]
         spec = get_skl2onnx_onnx_tensor_spec(dtype=dtype, input_shape=input_shape)
         return [(self.input_name, spec)]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.model_data.to_numpy()}
+        return {self.input_name: self.data_helper.to_numpy()}
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        return (
-            model_info.data_type == AllowedDataType.PANDAS
-            and model_info.model_type != TrainedModelType.SKLEARN_PIPELINE
-        )
+    def validate(data_type: str, model_type: str) -> bool:
+        return data_type == AllowedDataType.PANDAS and model_type != TrainedModelType.SKLEARN_PIPELINE
 
 
 class PandasPipelineOnnxConverter(DataConverter):
@@ -187,11 +182,11 @@ class PandasPipelineOnnxConverter(DataConverter):
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         """Converts pandas dataframe associated with SKLearn pipeline"""
 
-        rows_shape = self.model_data.shape[0]
-        inputs = self.model_data.dataframe_record()
+        rows_shape = self.data_helper.shape[0]
+        inputs = self.data_helper.dataframe_record()
 
         # refactor later
-        for col, col_type in self.model_data.feature_types:
+        for col, col_type in self.data_helper.feature_types:
             if DataDtypes.INT32 in col_type:
                 inputs[col] = inputs[col].astype(np.int32)
             elif DataDtypes.INT64 in col_type:
@@ -207,11 +202,8 @@ class PandasPipelineOnnxConverter(DataConverter):
         return inputs
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        return (
-            model_info.data_type == AllowedDataType.PANDAS
-            and model_info.model_type == TrainedModelType.SKLEARN_PIPELINE
-        )
+    def validate(data_type: str, model_type: str) -> bool:
+        return data_type == AllowedDataType.PANDAS and model_type == TrainedModelType.SKLEARN_PIPELINE
 
 
 class TensorflowDictOnnxConverter(DataConverter):
@@ -229,7 +221,7 @@ class TensorflowDictOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        model = cast(tf.keras.Model, self.model_info.model)
+        model = cast(tf.keras.Model, self.trained_model)
         spec = []
         for input_ in model.inputs:
             shape_, dtype = list(input_.shape), input_.dtype
@@ -241,13 +233,13 @@ class TensorflowDictOnnxConverter(DataConverter):
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         onnx_data = {}
-        for key, val in self.model_data.data.items():
+        for key, val in self.data_helper.data.items():
             onnx_data[key] = val.astype(np.float32)
         return onnx_data
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == AllowedDataType.DICT and model_info.model_type == TrainedModelType.TF_KERAS
+    def validate(data_type: str, model_type: str) -> bool:
+        return data_type == AllowedDataType.DICT and model_type == TrainedModelType.TF_KERAS
 
 
 class TensorflowNumpyOnnxConverter(DataConverter):
@@ -263,7 +255,7 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        model = cast(tf.keras.Model, self.model_info.model)
+        model = cast(tf.keras.Model, self.card.trained_model)
         input_ = model.inputs[0]
         shape_, dtype = list(input_.shape), input_.dtype
         shape_[0] = None
@@ -272,30 +264,30 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         return [tf.TensorSpec(shape_, dtype, name=self.input_name)]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.model_data.data.astype(np.float32)}
+        return {self.input_name: self.data_helper.data.astype(np.float32)}
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == AllowedDataType.NUMPY and model_info.model_type == TrainedModelType.TF_KERAS
+    def validate(data_type: str, model_type: str) -> bool:
+        return data_type == AllowedDataType.NUMPY and model_type == TrainedModelType.TF_KERAS
 
 
 class PyTorchOnnxDataConverter(DataConverter):
     """DataConverter for Pytorch models trained with arrays"""
 
-    def __init__(self, model_info: ModelInfo):
-        super().__init__(model_info=model_info)
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
+        super().__init__(modelcard=modelcard, data_helper=data_helper)
 
         self.input_name = self._get_input_name()
 
     def _get_input_name(self) -> str:
-        args = cast(ExtraOnnxArgs, self.model_info.additional_model_args)
+        args = cast(ExtraOnnxArgs, self.card.metadata.additional_onnx_args)
         return args.input_names[0]
 
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
 
-        shape = cast(Tuple[int, ...], self.model_data.shape[1:])
-        dtype = self.model_data.dtypes[0]
+        shape = cast(Tuple[int, ...], self.data_helper.shape[1:])
+        dtype = self.data_helper.dtypes[0]
 
         return [(self.input_name, shape, dtype)]
 
@@ -303,11 +295,11 @@ class PyTorchOnnxDataConverter(DataConverter):
         return None
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
-        return {self.input_name: self.model_data.data}
+        return {self.input_name: self.data_helper.data}
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == AllowedDataType.NUMPY and model_info.model_type in [
+    def validate(data_type: str, model_type: str) -> bool:
+        return data_type == AllowedDataType.NUMPY and model_type in [
             TrainedModelType.PYTORCH,
             TrainedModelType.TRANSFORMER,
         ]
@@ -321,13 +313,13 @@ class PyTorchOnnxDictConverter(DataConverter):
     attention_mask.
     """
 
-    def __init__(self, model_info: ModelInfo):
-        super().__init__(model_info=model_info)
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
+        super().__init__(modelcard=modelcard, data_helper=data_helper)
 
         self.input_names = self._get_input_names()
 
     def _get_input_names(self) -> List[str]:
-        args = cast(ExtraOnnxArgs, self.model_info.additional_model_args)
+        args = cast(ExtraOnnxArgs, self.card.metadata.additional_model_args)
         return args.input_names
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
@@ -346,7 +338,7 @@ class PyTorchOnnxDictConverter(DataConverter):
         """Convert Pytorch dictionary sample to onnx format"""
 
         onnx_data = {}
-        for key, val in self.model_data.data.items():
+        for key, val in self.data_helper.data.items():
             dtype = str(val.dtype)
 
             if DataDtypes.INT32 in dtype:
@@ -361,28 +353,30 @@ class PyTorchOnnxDictConverter(DataConverter):
         return onnx_data
 
     @staticmethod
-    def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == AllowedDataType.DICT and model_info.model_type in [
+    def validate(data_type: str, model_type: str) -> bool:
+        return data_type == AllowedDataType.DICT and model_type in [
             TrainedModelType.PYTORCH,
             TrainedModelType.TRANSFORMER,
         ]
 
 
 class OnnxDataConverter:
-    def __init__(self, model_info: ModelInfo):
-        self.model_info = model_info
-        self.converter = self._get_converter()
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
+        self.converter = self._get_converter(modelcard=modelcard, data_helper=data_helper)
 
-    def _get_converter(self) -> DataConverter:
+    def _get_converter(self, modelcard: ModelCard, data_helper: ModelDataHelper) -> DataConverter:
         converter = next(
             (
                 converter
                 for converter in DataConverter.__subclasses__()
-                if converter.validate(model_info=self.model_info)
+                if converter.validate(
+                    model_type=modelcard.metadata.model_type,
+                    data_type=modelcard.metadata.sample_data_type,
+                )
             )
         )
 
-        return converter(model_info=self.model_info)
+        return converter(modelcard=modelcard, data_helper=data_helper)
 
     def convert_data(self) -> Dict[str, Any]:
         """Takes input data sample and model type and converts data to onnx format"""

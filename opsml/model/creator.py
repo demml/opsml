@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.model_info import ModelInfo, get_model_data
+from opsml.model.data_helper import get_model_data
 from opsml.model.types import TrainedModelType
 from opsml.model.model_types import ModelType
 from opsml.model.types import (
@@ -225,18 +225,10 @@ class OnnxModelCreator(ModelCreator):
 
         try:
             model_data = get_model_data(
-                data_type=self.input_data_type,
-                input_data=self.input_data,
+                data_type=self.card.metadata.sample_data_type,
+                input_data=self.card.sample_input_data,
             )
-            model_info = ModelInfo(
-                model=self.model,
-                model_data=model_data,
-                model_type=self.model_type,
-                model_class=self.model_class,
-                data_type=self.input_data_type,
-                additional_model_args=self.additional_model_args,
-                onnx_model_def=self.onnx_model_def,
-            )
+            model_info = ModelInfo(modelcard=self.card, model_data=model_data)
 
             onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
             onnx_model_return.model_type = self.model_type
