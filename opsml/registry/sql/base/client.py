@@ -1,7 +1,5 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
-# L# Copyright (c) Shipt, Inc.
-# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -10,6 +8,7 @@ import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import CardVersion, VersionType
@@ -19,18 +18,22 @@ logger = ArtifactLogger.get_logger()
 
 
 class ClientRegistry(SQLRegistryBase):
-    def __init__(self, registry_type: str):
+    """A registry that retrieves data from an opsml server instance."""
+
+    def __init__(self, registry_type: RegistryType):
         super().__init__(registry_type)
 
-        self._session = self._get_session()
+        assert isinstance(settings.request_client, ApiClient)
+        self._session: ApiClient = settings.request_client
+
         self._registry_type = registry_type
 
     @cached_property
     def table_name(self) -> str:
-        """Returns a list of unique teams"""
+        """Returns the table name for this registry type"""
         data = self._session.get_request(
             route=api_routes.TABLE_NAME,
-            params={"registry_type": self.registry_type},
+            params={"registry_type": self.registry_type.value},
         )
 
         return cast(str, data["table_name"])
@@ -40,7 +43,7 @@ class ClientRegistry(SQLRegistryBase):
         """Returns a list of unique teams"""
         data = self._session.get_request(
             route=api_routes.TEAM_CARDS,
-            params={"registry_type": self.registry_type},
+            params={"registry_type": self.registry_type.value},
         )
 
         return cast(List[str], data["teams"])
@@ -56,7 +59,7 @@ class ClientRegistry(SQLRegistryBase):
             List of unique card names
         """
 
-        params = {"registry_type": self.registry_type}
+        params = {"registry_type": self.registry_type.value}
 
         if team is not None:
             params["team"] = team
@@ -68,14 +71,10 @@ class ClientRegistry(SQLRegistryBase):
 
         return cast(List[str], data["names"])
 
-    def _get_session(self) -> ApiClient:
-        """Gets the requests session for connecting to the opsml api"""
-        return cast(ApiClient, settings.request_client)
-
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         data = self._session.post_request(
             route=api_routes.CHECK_UID,
-            json={"uid": uid, "registry_type": registry_type},
+            json={"uid": uid, "registry_type": registry_type.value},
         )
 
         return bool(data.get("uid_exists"))
@@ -101,7 +100,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version_to_send,
                 "version_type": version_type,
-                "registry_type": self.registry_type,
+                "registry_type": self._registry_type.value,
                 "pre_tag": pre_tag,
                 "build_tag": build_tag,
             },
@@ -157,7 +156,7 @@ class ClientRegistry(SQLRegistryBase):
                 "max_date": max_date,
                 "limit": limit,
                 "tags": tags,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
                 "ignore_release_candidates": ignore_release_candidates,
                 "query_terms": query_terms,
             },
@@ -171,7 +170,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.CREATE_CARD,
             json={
                 "card": card,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
             },
         )
 
@@ -185,7 +184,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.UPDATE_CARD,
             json={
                 "card": card,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
             },
         )
 
@@ -199,7 +198,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.DELETE_CARD,
             json={
                 "card": card,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
             },
         )
 

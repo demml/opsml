@@ -16,9 +16,9 @@ from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.sql.connectors.base import BaseSQLConnection
 from opsml.registry.sql.connectors.connector import SQLConnector
 from opsml.registry.storage.storage_system import (
-    StorageClientGetter,
     StorageClientType,
     StorageSystem,
+    get_storage_client,
 )
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
@@ -133,7 +133,7 @@ class DefaultAttrCreator:
         if isinstance(storage_settings, ApiStorageClientSettings):
             storage_settings.client = self._env_vars["request_client"]
 
-        self._env_vars["storage_client"] = StorageClientGetter.get_storage_client(
+        self._env_vars["storage_client"] = get_storage_client(
             storage_settings=storage_settings,
         )
 
@@ -318,7 +318,7 @@ class DefaultSettings(BaseSettings):
                 StorageClientSettings pydantic Model
         """
 
-        storage_client = StorageClientGetter.get_storage_client(storage_settings=storage_settings)
+        storage_client = get_storage_client(storage_settings=storage_settings)
 
         setattr(self, "storage_settings", storage_settings)
         setattr(self, "storage_client", storage_client)
