@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
@@ -23,7 +24,9 @@ logger = ArtifactLogger.get_logger()
 
 
 class ServerRegistry(SQLRegistryBase):
-    def __init__(self, registry_type: str):
+    """A registry that retrieves data from a database."""
+
+    def __init__(self, registry_type: RegistryType):
         super().__init__(registry_type)
 
         self.engine = QueryEngine()
@@ -198,10 +201,10 @@ class ServerRegistry(SQLRegistryBase):
 
         return records
 
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         result = self.engine.get_uid(
             uid=uid,
-            table_to_check=RegistryTableNames[registry_type.upper()].value,
+            table_to_check=RegistryTableNames[registry_type.value.upper()].value,
         )
         return bool(result)
 

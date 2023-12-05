@@ -9,9 +9,7 @@ from typing import Dict, Optional, Union, cast
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._active_run import ActiveRun, RunInfo
 from opsml.projects.types import ProjectInfo, Tags
-from opsml.registry.cards.project import ProjectCard
-from opsml.registry.cards.run import RunCard
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
+from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.utils.settings import settings
 

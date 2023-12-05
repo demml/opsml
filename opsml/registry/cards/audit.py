@@ -167,15 +167,15 @@ class AuditCard(ArtifactCard):
         ]:
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data, model or run")
 
-        audit_registry = AuditCardRegistry(RegistryType.AUDIT.value)
+        audit_registry = AuditCardRegistry(RegistryType.AUDIT)
 
         if card.uid is None:
             raise ValueError(
-                f"""Card uid must be provided for {card.card_type}. 
+                f"""Card uid must be provided for {card.card_type}.
                 Uid must be registered prior to adding to AuditCard."""
             )
 
-        if not audit_registry.validate_uid(card.uid, card.card_type):
+        if not audit_registry.validate_uid(card.uid, RegistryType.from_str(card.card_type)):
             raise ValueError(f"""Card uid {card.uid} not found in {card.card_type} registry""")
 
         card_list = getattr(self.metadata, f"{card.card_type.lower()}cards")
