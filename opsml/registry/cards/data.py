@@ -335,7 +335,7 @@ class ImageDownloader(Downloader):
 
         kwargs = {"image_dir": data.image_dir}
 
-        record = load_record_artifact_from_storage(
+        load_record_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
@@ -343,8 +343,6 @@ class ImageDownloader(Downloader):
             ),
             **kwargs,
         )
-        assert record is not None
-        data = cast(ImageDataset, record)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

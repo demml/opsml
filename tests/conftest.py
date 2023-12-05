@@ -12,8 +12,7 @@ DB_FILE_PATH = "tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
 STORAGE_PATH = f"{os.getcwd()}/mlruns"
 
-# TODO(@damon): Do *not* run under production just as a safety precaution.
-os.environ["APP_ENV"] = "production"
+os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = SQL_PATH
 os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
@@ -73,7 +72,7 @@ from opsml.registry.storage.types import StorageClientSettings, GcsStorageClient
 from opsml.registry.sql.sql_schema import BaseMixin, Base, RegistryTableNames
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.storage.storage_system import StorageClientGetter, StorageClientType
+from opsml.registry.storage.storage_system import get_storage_client, StorageClientType
 
 from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries
@@ -192,7 +191,7 @@ def gcp_storage_client(mock_gcp_vars):
         credentials=mock_gcp_vars["gcp_creds"],
         gcp_project=mock_gcp_vars["gcp_project"],
     )
-    storage_client = StorageClientGetter.get_storage_client(storage_settings=gcs_settings)
+    storage_client = get_storage_client(storage_settings=gcs_settings)
     return storage_client
 
 
@@ -202,13 +201,13 @@ def s3_storage_client():
         storage_type="s3",
         storage_uri="s3://test",
     )
-    storage_client = StorageClientGetter.get_storage_client(storage_settings=s3_settings)
+    storage_client = get_storage_client(storage_settings=s3_settings)
     return storage_client
 
 
 @pytest.fixture(scope="function")
 def local_storage_client():
-    storage_client = StorageClientGetter.get_storage_client(storage_settings=StorageClientSettings())
+    storage_client = get_storage_client(storage_settings=StorageClientSettings())
     return storage_client
 
 
@@ -682,6 +681,7 @@ def pytorch_onnx_byo():
     # Initialize model with the pretrained weights
     def map_location(storage, loc):
         return storage
+
     if torch.cuda.is_available():
         map_location = None
     torch_model.load_state_dict(model_zoo.load_url(model_url, map_location=map_location))

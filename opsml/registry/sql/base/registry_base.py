@@ -35,7 +35,7 @@ table_name_card_map = {
 
 
 def load_card_from_record(
-    registry_type: str,
+    registry_type: RegistryType,
     record: LoadedRecordType,
 ) -> ArtifactCard:
     """
@@ -52,13 +52,13 @@ def load_card_from_record(
         `ArtifactCard`
     """
 
-    card = table_name_card_map[registry_type]
+    card = table_name_card_map[registry_type.value]
 
     return cast(ArtifactCard, card(**record.model_dump()))
 
 
 class SQLRegistryBase:
-    def __init__(self, registry_type: str):
+    def __init__(self, registry_type: RegistryType):
         """
         Base class for SQL Registries to inherit from
 
@@ -67,7 +67,7 @@ class SQLRegistryBase:
                 Registry type
         """
         self.storage_client = settings.storage_client
-        self._table_name = RegistryTableNames[registry_type.upper()].value
+        self._table_name = RegistryTableNames[registry_type.value.upper()].value
 
     @property
     def unique_teams(self) -> List[str]:
@@ -100,7 +100,7 @@ class SQLRegistryBase:
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
     @property
-    def registry_type(self) -> str:
+    def registry_type(self) -> RegistryType:
         """Registry type"""
         raise NotImplementedError
 
@@ -319,7 +319,7 @@ class SQLRegistryBase:
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         raise NotImplementedError
 
     def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
