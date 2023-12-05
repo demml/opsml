@@ -172,7 +172,6 @@ class GCSFSStorageClient(StorageClient):
         import gcsfs
 
         assert isinstance(storage_settings, GcsStorageClientSettings)
-        storage_settings = cast(GcsStorageClientSettings, storage_settings)
         client = gcsfs.GCSFileSystem(
             project=storage_settings.gcp_project,
             token=storage_settings.credentials,
@@ -397,7 +396,6 @@ class ApiStorageClient(LocalStorageClient):
             backend=StorageSystem.API.value,
         )
 
-        storage_settings = cast(ApiStorageClientSettings, storage_settings)
         self.api_client = storage_settings.api_client
 
     def list_files(self, storage_uri: str) -> FilePath:

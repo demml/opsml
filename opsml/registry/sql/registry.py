@@ -19,11 +19,10 @@ from opsml.registry.utils.utils import check_package_exists
 
 logger = ArtifactLogger.get_logger()
 
-
-SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-
-
-Registry = ServerRegistry
+if TYPE_CHECKING:
+    Registry = ServerRegistry
+else:
+    Registry = OpsmlRegistry
 
 
 class DataCardRegistry(Registry):

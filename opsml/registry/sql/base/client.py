@@ -24,7 +24,7 @@ class ClientRegistry(SQLRegistryBase):
         super().__init__(registry_type)
 
         assert isinstance(settings.request_client, ApiClient)
-        self._session: ApiClient = cast(ApiClient, settings.request_client)
+        self._session: ApiClient = settings.request_client
 
         self._registry_type = registry_type
 
