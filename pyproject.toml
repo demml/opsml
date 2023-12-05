@@ -186,7 +186,7 @@ ignore-paths = ["opsml/.local_tests/*", "opsml/registry/sql/migration/*"]
 load-plugins = ["pylint_pydantic", "pylint.extensions.docparams"]
 
 [tool.pylint.messages_control]
-max-line-length = 120
+max-line-length = 130
 disable = [
     "too-few-public-methods",
     "design",
@@ -253,7 +253,7 @@ fail_under = 80
 
 
 [tool.ruff]
-line-length = 120
+line-length = 130
 
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F"]

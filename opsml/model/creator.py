@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -19,6 +19,7 @@ from opsml.model.types import (
     Feature,
     ModelReturn,
     OnnxModelDefinition,
+    OnnxModelType,
     ValidModelInput,
 )
 from opsml.registry.data.types import AllowedDataType, get_class_name
@@ -59,7 +60,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             input_data=self.card.sample_input_data,
         )
 
-        return cast(Dict[str, Feature], model_data.feature_dict)
+        return model_data.feature_dict
 
     def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
         model_data = get_model_data(

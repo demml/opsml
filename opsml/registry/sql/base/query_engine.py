@@ -9,10 +9,10 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, c
 from sqlalchemy import Integer
 from sqlalchemy import func as sqa_func
 from sqlalchemy import select, text
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
-from sqlalchemy.engine.base import Engine
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
@@ -66,26 +66,31 @@ class DialectHelper:
 
 class SqliteHelper(DialectHelper):
     def get_version_split_logic(self) -> Select:
-        return self.query.add_columns(  # type: ignore[attr-defined]
-            sqa_func.cast(
-                sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer
-            ).label("major"),
-            sqa_func.cast(
+        return cast(
+            Select,
+            self.query.add_columns(  # type: ignore[attr-defined]
+                sqa_func.cast(
+                    sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer
+                ).label("major"),
+                sqa_func.cast(
+                    sqa_func.substr(
+                        sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
+                        1,
+                        sqa_func.instr(
+                            sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), "."
+                        )
+                        - 1,
+                    ),
+                    Integer,
+                ).label("minor"),
                 sqa_func.substr(
                     sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
-                    1,
                     sqa_func.instr(
                         sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), "."
                     )
-                    - 1,
-                ),
-                Integer,
-            ).label("minor"),
-            sqa_func.substr(
-                sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
-                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".")
-                + 1,
-            ).label("patch"),
+                    + 1,
+                ).label("patch"),
+            ),
         )
 
     @staticmethod
@@ -95,13 +100,16 @@ class SqliteHelper(DialectHelper):
 
 class PostgresHelper(DialectHelper):
     def get_version_split_logic(self) -> Select:
-        return self.query.add_columns(  # type: ignore[attr-defined]
-            sqa_func.cast(sqa_func.split_part(self.table.version, ".", 1), Integer).label("major"),
-            sqa_func.cast(sqa_func.split_part(self.table.version, ".", 2), Integer).label("minor"),
-            sqa_func.cast(
-                sqa_func.regexp_replace(sqa_func.split_part(self.table.version, ".", 3), "[^0-9]+", "", "g"),
-                Integer,
-            ).label("patch"),
+        return cast(
+            Select,
+            self.query.add_columns(  # type: ignore[attr-defined]
+                sqa_func.cast(sqa_func.split_part(self.table.version, ".", 1), Integer).label("major"),
+                sqa_func.cast(sqa_func.split_part(self.table.version, ".", 2), Integer).label("minor"),
+                sqa_func.cast(
+                    sqa_func.regexp_replace(sqa_func.split_part(self.table.version, ".", 3), "[^0-9]+", "", "g"),
+                    Integer,
+                ).label("patch"),
+            ),
         )
 
     @staticmethod
@@ -111,14 +119,18 @@ class PostgresHelper(DialectHelper):
 
 class MySQLHelper(DialectHelper):
     def get_version_split_logic(self) -> Select:
-        return self.query.add_columns(  # type: ignore[attr-defined]
-            sqa_func.cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
-            sqa_func.cast(
-                sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
-            ).label("minor"),
-            sqa_func.cast(
-                sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""), Integer
-            ).label("patch"),
+        return cast(
+            Select,
+            self.query.add_columns(  # type: ignore[attr-defined]
+                sqa_func.cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
+                sqa_func.cast(
+                    sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
+                ).label("minor"),
+                sqa_func.cast(
+                    sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""),
+                    Integer,
+                ).label("patch"),
+            ),
         )
 
     @staticmethod
@@ -188,7 +200,7 @@ class QueryEngine:
         with self.session() as sess:
             results = sess.scalars(query).all()  # type: ignore[attr-defined]
 
-        return results
+        return cast(List[Any], results)
 
     def _records_from_table_query(
         self,
@@ -257,7 +269,7 @@ class QueryEngine:
                 filters.append(getattr(table, field) == value)
 
         if bool(filters):
-            query = query.filter(*filters)
+            query = query.filter(*filters)  # type:ignore
 
         query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))
 
@@ -315,7 +327,7 @@ class QueryEngine:
 
         return self._parse_records(results)
 
-    def _get_epoch_time_to_search(self, max_date: str):
+    def _get_epoch_time_to_search(self, max_date: str) -> int:
         """
         Creates timestamp that represents the max epoch time to limit records to
 
@@ -395,7 +407,7 @@ class QueryEngine:
         query = select(team_col).distinct()
 
         with self.session() as sess:
-            return cast(List[str], sess.scalars(query).all())
+            return cast(List[str], sess.scalars(query).all())  # type:ignore
 
     def get_unique_card_names(self, team: Optional[str], table: Type[REGISTRY_TABLES]) -> List[str]:
         """Returns a list of unique card names"""
@@ -403,12 +415,12 @@ class QueryEngine:
         query = select(name_col)
 
         if team is not None:
-            query = query.filter(table.team == team).distinct()
+            query = query.filter(table.team == team).distinct()  # type:ignore
         else:
             query = query.distinct()
 
         with self.session() as sess:
-            return sess.scalars(query).all()
+            return sess.scalars(query).all()  # type:ignore
 
     def delete_card_record(
         self,
