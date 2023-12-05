@@ -278,6 +278,7 @@ class _RunManager:
             name=info.name,
             team=info.team,
             user_email=info.user_email,
+            project_id=f"{info.team}:{info.name}",
         )
         project_registry.register_card(card=card)
 

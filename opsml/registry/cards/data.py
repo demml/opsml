@@ -33,7 +33,7 @@ class CardValidator:
     def check_metadata(
         data: ValidData,
         metadata: Union[Dict[str, Any], DataCardMetadata],
-        sql_logic: Dict[Optional[str], Optional[str]],
+        sql_logic: Dict[str, str],
     ) -> Optional[str]:
         """Validates metadata
 
@@ -114,8 +114,8 @@ class DataCard(ArtifactCard):
 
     data: Optional[ValidData] = None
     data_splits: List[DataSplit] = []
-    dependent_vars: Optional[List[Union[int, str]]] = None
-    sql_logic: Dict[Optional[str], Optional[str]] = {}
+    dependent_vars: List[Union[int, str]] = []
+    sql_logic: Dict[str, str] = {}
     data_profile: Optional[ProfileReport] = None
     metadata: DataCardMetadata
 
@@ -133,7 +133,7 @@ class DataCard(ArtifactCard):
 
         data = card_args.get("data")
         metadata = card_args.get("metadata")
-        sql_logic = card_args.get("sql_logic")
+        sql_logic: Dict[str, str] = card_args.get("sql_logic", {})
 
         if metadata is not None:
             data_uri = CardValidator.check_metadata(data, metadata, sql_logic)
@@ -152,7 +152,7 @@ class DataCard(ArtifactCard):
 
     @field_validator("data_profile", mode="before")
     @classmethod
-    def _check_profile(cls, profile: Optional[ProfileReport]):
+    def _check_profile(cls, profile: Optional[ProfileReport]) -> Optional[ProfileReport]:
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
 
@@ -161,7 +161,7 @@ class DataCard(ArtifactCard):
 
     @field_validator("sql_logic", mode="before")
     @classmethod
-    def _load_sql(cls, sql_logic: Dict[Optional[str], Optional[str]]):
+    def _load_sql(cls, sql_logic: Dict[str, str]) -> Dict[str, str]:
         if not bool(sql_logic):
             return sql_logic
 
@@ -227,7 +227,7 @@ class DataCard(ArtifactCard):
                     data=self.data,
                     data_type=self.metadata.data_type,
                 )
-                setattr(data_holder, label, data)  # type:ignore
+                setattr(data_holder, label, data)
 
             return data_holder
         raise ValueError("No data splits provided")

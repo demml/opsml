@@ -151,7 +151,7 @@ class ModelCard(ArtifactCard):
 
     @model_validator(mode="before")
     @classmethod
-    def _check_args(cls, values: Dict[str, Any]):
+    def _check_args(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Converts trained model to modelcard"""
 
         uid = values.get("uid")

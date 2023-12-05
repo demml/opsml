@@ -11,12 +11,14 @@ def get_registry():  # type: ignore
 
     # initialize tables
     if settings.request_client is None:
+        from typing import cast
         from opsml.registry.sql.base.server import ServerRegistry
         from opsml.registry.sql.db_initializer import DBInitializer
         from opsml.registry.sql.table_names import RegistryTableNames
+        from sqlalchemy.engine.base import Engine
 
         db_initializer = DBInitializer(
-            engine=settings.connection_client.sql_engine,
+            engine=cast(Engine, settings.connection_client.sql_engine),
             registry_tables=list(RegistryTableNames),
         )
         db_initializer.initialize()
@@ -28,4 +30,4 @@ def get_registry():  # type: ignore
     return None, ClientRegistry
 
 
-initializer, OpsmlRegistry = get_registry()
+initializer, OpsmlRegistry = get_registry()  # type:ignore

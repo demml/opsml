@@ -19,10 +19,10 @@ from opsml.helpers.utils import all_subclasses
 from opsml.model.types import ModelProto
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
-from opsml.registry.image import ImageDataset
+from opsml.registry.image.dataset import ImageDataset
+from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
-    ArtifactStorageSpecs,
     StorageClientType,
     StorageSystem,
 )
@@ -78,7 +78,7 @@ class ArtifactStorage:
         file_path: str,
         storage_uri: str,
         recursive: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Carries out post processing for proxy clients
 
@@ -138,7 +138,7 @@ class ArtifactStorage:
         return loadable_path or tmp_path
 
     @cleanup_files
-    def load_artifact(self, storage_uri: str, **kwargs) -> Tuple[Any, str]:
+    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Tuple[Any, str]:
         files = self.storage_client.list_files(storage_uri=storage_uri)
         with tempfile.TemporaryDirectory() as tmpdirname:
             loadable_filepath = self._download_artifacts(
@@ -428,7 +428,7 @@ class NumpyStorage(ArtifactStorage):
             storage_uri=str(file_path),
             **{"store_type": "download"},
         )
-        return zarr.load(store)
+        return zarr.load(store)  # type: ignore
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -562,7 +562,7 @@ class TensorflowModelStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-    def _load_artifact(self, file_path: FilePath):
+    def _load_artifact(self, file_path: FilePath):  # type: ignore
         import tensorflow as tf
 
         return tf.keras.models.load_model(file_path)
@@ -609,7 +609,7 @@ class PyTorchModelStorage(ArtifactStorage):
         torch.save(artifact, tmp_uri)
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
-    def _load_artifact(self, file_path: FilePath):
+    def _load_artifact(self, file_path: FilePath):  # type: ignore
         import torch
 
         return torch.load(str(file_path))
@@ -663,7 +663,7 @@ def load_record_artifact_from_storage(
     artifact_type: str,
     storage_client: StorageClientType,
     storage_spec: ArtifactStorageSpecs,
-    **kwargs,
+    **kwargs: Any,
 ) -> Optional[Any]:
     if not bool(storage_spec.save_path):
         return None

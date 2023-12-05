@@ -88,7 +88,7 @@ class ModelData:
     def to_numpy(self) -> NDArray[Any]:
         raise ValueError("This method is not implemented for this Data type")
 
-    def dataframe_record(self):
+    def dataframe_record(self) -> Dict[str, Any]:
         raise ValueError("This method is not implemented for this Data type")
 
     def convert_dataframe_column(self, column_type: str, convert_column_type: str):
@@ -108,7 +108,7 @@ class ModelData:
 
 
 class NumpyData(ModelData):
-    def __init__(self, input_data):
+    def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
         self.data = cast(NDArray[Any], self.data)
@@ -138,7 +138,7 @@ class NumpyData(ModelData):
 
 
 class PandasDataFrameData(ModelData):
-    def __init__(self, input_data):
+    def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
         self.data = cast(pd.DataFrame, self.data)
@@ -156,7 +156,7 @@ class PandasDataFrameData(ModelData):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return self.data.shape
+        return cast(Tuple[int, ...], self.data.shape)
 
     @property
     def dtypes(self) -> List[str]:
@@ -168,16 +168,16 @@ class PandasDataFrameData(ModelData):
 
     @property
     def features(self) -> List[str]:
-        return self.data.columns
+        return cast(List[str], self.data.columns)
 
     @features.setter
     def features(self, features: List[str]) -> None:
         self._features = features
 
     def to_numpy(self) -> NDArray[Any]:
-        return self.data.to_numpy()
+        return cast(NDArray[Any], self.data.to_numpy())
 
-    def convert_dataframe_column(self, column_type: str, convert_column_type: str):
+    def convert_dataframe_column(self, column_type: str, convert_column_type: type) -> None:
         """Helper for converting pandas dataframe column to a new type"""
 
         for feature_name, feature_type in self.feature_types:
@@ -193,7 +193,7 @@ class PandasDataFrameData(ModelData):
 
 
 class DataDictionary(ModelData):
-    def __init__(self, input_data):
+    def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
         self.data = cast(Dict[str, NDArray[Any]], self.data)

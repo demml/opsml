@@ -6,12 +6,13 @@ from typing import Any, Dict, Union, cast
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 import polars as pl
 import pyarrow as pa
 
 from opsml.registry.data.types import AllowedDataType, ArrowTable
 
-ValidArrowData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table]
+ValidArrowData = Union[NDArray[Any], pd.DataFrame, pl.DataFrame, pa.Table]
 
 
 # changing input type to any to handle a variety of data types which may be optionally installed (polars)
@@ -73,7 +74,7 @@ class PandasFormatter(ArrowFormatter):
 
 class NumpyFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: np.ndarray) -> ArrowTable:
+    def convert(data: NDArray[Any]) -> ArrowTable:
         """Convert numpy array to pyarrow table
 
         Args:
@@ -106,7 +107,7 @@ class ArrowTableFormatter(ArrowFormatter):
         return ArrowTable(table=data)
 
     @staticmethod
-    def validate_data(data_type: str):
+    def validate_data(data_type: str) -> bool:
         return AllowedDataType.PYARROW == data_type
 
 
@@ -118,7 +119,7 @@ class DataFormatter:
             pa.Table,
             pd.DataFrame,
             pl.DataFrame,
-            np.ndarray,
+            NDArray[Any],
         ],
         data_type: str,
     ) -> ArrowTable:
@@ -147,7 +148,7 @@ class DataFormatter:
     def create_table_schema(
         data: Union[
             pa.Table,
-            np.ndarray,
+            NDArray[Any],
             pd.DataFrame,
             pl.DataFrame,
         ]
@@ -160,7 +161,7 @@ class DataFormatter:
             schema: Dict[str,str]
         """
         if isinstance(data, pd.DataFrame):
-            return data.dtypes.to_dict()
+            return cast(Dict[str, Any], data.dtypes.to_dict())
 
         if isinstance(data, pl.DataFrame):
             return cast(Dict[str, Any], data.schema)
@@ -218,7 +219,7 @@ class PolarsSchemaValidator(SchemaValidator):
         if self.data.schema != self.schema:
             self.data = self.data.with_columns([pl.col(col).cast(self.schema[col]) for col in self.data.columns])
 
-        return self.data
+        return cast(pl.DataFrame, self.data)
 
     @staticmethod
     def validate_data(data_type: str) -> bool:

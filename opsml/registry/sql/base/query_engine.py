@@ -12,6 +12,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
+from sqlalchemy.engine.base import Engine
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
@@ -127,7 +128,7 @@ class MySQLHelper(DialectHelper):
 
 class QueryEngine:
     def __init__(self) -> None:
-        self.engine = settings.connection_client.sql_engine
+        self.engine = cast(Engine, settings.connection_client.sql_engine)
 
     @property
     def dialect(self) -> str:
@@ -256,9 +257,9 @@ class QueryEngine:
                 filters.append(getattr(table, field) == value)
 
         if bool(filters):
-            query = query.filter(*filters)  # type: ignore
+            query = query.filter(*filters)
 
-        query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))  # type: ignore
+        query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))
 
         if limit is not None:
             query = query.limit(limit)
@@ -335,20 +336,20 @@ class QueryEngine:
 
     def _get_base_select_query(self, table: Type[REGISTRY_TABLES]) -> Select:
         sql_table = cast(SqlTableType, table)
-        return cast(Select, select(sql_table))
+        return select(sql_table)
 
     def _uid_exists_query(self, uid: str, table_to_check: str) -> Select:
         table = TableSchema.get_table(table_name=table_to_check)
         query = self._get_base_select_query(table=table.uid)  # type: ignore
         query = query.filter(table.uid == uid)  # type: ignore
 
-        return cast(Select, query)
+        return query
 
-    def get_uid(self, uid: str, table_to_check: str) -> List[Any]:
+    def get_uid(self, uid: str, table_to_check: str) -> List[str]:
         query = self._uid_exists_query(uid=uid, table_to_check=table_to_check)
 
         with self.session() as sess:
-            return sess.execute(query).first()
+            return cast(List[str], sess.execute(query).first())
 
     def add_and_commit_card(
         self,
@@ -373,7 +374,7 @@ class QueryEngine:
         self,
         table: Type[REGISTRY_TABLES],
         card: Dict[str, Any],
-    ):
+    ) -> None:
         record_uid = cast(str, card.get("uid"))
         with self.session() as sess:
             query = sess.query(table).filter(table.uid == record_uid)
@@ -394,7 +395,7 @@ class QueryEngine:
         query = select(team_col).distinct()
 
         with self.session() as sess:
-            return sess.scalars(query).all()  # type: ignore[attr-defined]
+            return cast(List[str], sess.scalars(query).all())
 
     def get_unique_card_names(self, team: Optional[str], table: Type[REGISTRY_TABLES]) -> List[str]:
         """Returns a list of unique card names"""
@@ -402,12 +403,12 @@ class QueryEngine:
         query = select(name_col)
 
         if team is not None:
-            query = query.filter(table.team == team).distinct()  # type: ignore[no-any-return]
+            query = query.filter(table.team == team).distinct()
         else:
             query = query.distinct()
 
         with self.session() as sess:
-            return sess.scalars(query).all()  # type: ignore[no-any-return]
+            return sess.scalars(query).all()
 
     def delete_card_record(
         self,

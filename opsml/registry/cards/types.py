@@ -50,7 +50,7 @@ class Comment(BaseModel):
     comment: str
     timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # type: ignore
         return self.__dict__ == other.__dict__
 
 
@@ -128,8 +128,9 @@ class Description(BaseModel):
     Notes: Optional[str] = None
 
     @field_validator("summary", mode="before")
-    def load_summary(cls, summary) -> str:
-        if not bool(summary):
+    @classmethod
+    def load_summary(cls, summary: Optional[str]) -> str:
+        if summary is None:
             return summary
 
         if ".md" in summary.lower():

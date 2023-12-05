@@ -87,7 +87,7 @@ class ApiClient:
         )
 
         if response.status_code == 200:
-            return response.json()
+            return cast(Dict[str, Any], response.json())
 
         detail = response.json().get("detail")
         raise ValueError(f"""Failed to to make server call for post request Url: {route}, {detail}""")
@@ -97,7 +97,7 @@ class ApiClient:
         response = self.client.get(url=f"{self._base_url}/{route}", params=params)
 
         if response.status_code == 200:
-            return response.json()
+            return cast(Dict[str, Any], response.json())
 
         raise ValueError(f"""Failed to to make server call for get request Url: {route}""")
 
