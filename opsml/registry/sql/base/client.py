@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
 
-from opsml.registry.cards.types import RegistryType
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import CardVersion, VersionType

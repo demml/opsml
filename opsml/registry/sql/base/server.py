@@ -4,9 +4,9 @@
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from opsml.registry.cards.types import RegistryType
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change

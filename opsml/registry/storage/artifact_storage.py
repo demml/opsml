@@ -6,7 +6,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import joblib
 import polars as pl
