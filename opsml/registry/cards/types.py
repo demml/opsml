@@ -277,3 +277,5 @@ class DataCardMetadata(BaseModel):
 
 
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]
+
+AuditSectionType = Dict[str, Dict[int, Dict[str, str]]]

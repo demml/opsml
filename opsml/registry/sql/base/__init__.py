@@ -5,14 +5,15 @@
 from opsml.registry.utils.settings import settings
 
 
-def get_registry():
+# no typing in order to prevent imports before they're needed
+def get_registry():  # type: ignore
     """Get the registry object based on the settings"""
 
     # initialize tables
     if settings.request_client is None:
         from opsml.registry.sql.base.server import ServerRegistry
         from opsml.registry.sql.db_initializer import DBInitializer
-        from opsml.registry.sql.sql_schema import RegistryTableNames
+        from opsml.registry.sql.table_names import RegistryTableNames
 
         db_initializer = DBInitializer(
             engine=settings.connection_client.sql_engine,

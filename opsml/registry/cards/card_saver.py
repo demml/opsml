@@ -449,14 +449,13 @@ class RunCardArtifactSaver(CardArtifactSaver):
                 )
                 artifact_uris[name] = storage_path.uri
 
-        run_card = cast(RunCard, self.card)
-        run_card.artifact_uris = artifact_uris
+        self.card.artifact_uris = artifact_uris
 
     def save_artifacts(self) -> RunCard:
         self._save_run_artifacts()
         self._save_runcard()
 
-        return self.card  # type: ignore
+        return self.card
 
     @staticmethod
     def validate(card_type: str) -> bool:

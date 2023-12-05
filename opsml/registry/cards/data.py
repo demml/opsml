@@ -121,7 +121,7 @@ class DataCard(ArtifactCard):
 
     @model_validator(mode="before")
     @classmethod
-    def check_data(cls, card_args) -> ValidData:
+    def check_data(cls, card_args: Dict[str, Any]) -> ValidData:
         """Custom data validator to check data type.
 
         Options for validation are:
@@ -152,7 +152,7 @@ class DataCard(ArtifactCard):
 
     @field_validator("data_profile", mode="before")
     @classmethod
-    def _check_profile(cls, profile):
+    def _check_profile(cls, profile: Optional[ProfileReport]):
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
 
@@ -161,7 +161,7 @@ class DataCard(ArtifactCard):
 
     @field_validator("sql_logic", mode="before")
     @classmethod
-    def _load_sql(cls, sql_logic):
+    def _load_sql(cls, sql_logic: Dict[Optional[str], Optional[str]]):
         if not bool(sql_logic):
             return sql_logic
 

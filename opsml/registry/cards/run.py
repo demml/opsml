@@ -82,7 +82,7 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**{key: value}, **self.tags}
 
-    def add_tags(self, tags: Dict[str, str]):
+    def add_tags(self, tags: Dict[str, str]) -> None:
         """
         Logs params to current RunCard
 
@@ -92,7 +92,7 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**tags, **self.tags}
 
-    def log_parameters(self, params: Dict[str, Union[float, int, str]]):
+    def log_parameters(self, params: Dict[str, Union[float, int, str]]) -> None:
         """
         Logs params to current RunCard
 
@@ -105,7 +105,7 @@ class RunCard(ArtifactCard):
             # check key
             self.log_parameter(key, value)
 
-    def log_parameter(self, key: str, value: Union[int, float, str]):
+    def log_parameter(self, key: str, value: Union[int, float, str]) -> None:
         """
         Logs params to current RunCard
 
@@ -183,9 +183,8 @@ class RunCard(ArtifactCard):
                 Artifact
         """
 
-        curr_artifacts = cast(Dict[str, Any], self.artifacts)
         new_artifact = {name: artifact}
-        self.artifacts = {**new_artifact, **curr_artifacts}
+        self.artifacts = {**new_artifact, **self.artifacts}
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
     def create_registry_record(self) -> RegistryRecord:
