@@ -5,7 +5,6 @@
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple, Union
 
-import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa

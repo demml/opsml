@@ -16,8 +16,8 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.sql.sql_schema import TableSchema
+from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 

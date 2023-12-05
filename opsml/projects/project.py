@@ -12,7 +12,6 @@ from opsml.projects._run_manager import _RunManager
 from opsml.projects.types import ProjectInfo
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.run import RunCard
-
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,

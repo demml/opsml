@@ -12,10 +12,12 @@ def get_registry():  # type: ignore
     # initialize tables
     if settings.request_client is None:
         from typing import cast
+
+        from sqlalchemy.engine.base import Engine
+
         from opsml.registry.sql.base.server import ServerRegistry
         from opsml.registry.sql.db_initializer import DBInitializer
         from opsml.registry.sql.table_names import RegistryTableNames
-        from sqlalchemy.engine.base import Engine
 
         db_initializer = DBInitializer(
             engine=cast(Engine, settings.connection_client.sql_engine),

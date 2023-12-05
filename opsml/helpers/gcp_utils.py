@@ -5,7 +5,7 @@
 import base64
 import json
 import os
-from typing import Optional, Tuple, Union, Any, cast
+from typing import Any, Optional, Tuple, Union, cast
 
 import google.auth
 from google.auth.credentials import Credentials

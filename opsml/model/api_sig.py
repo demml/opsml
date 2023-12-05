@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from functools import cached_property
-from typing import Any, Callable, Dict, List, Tuple, Union, Type, cast
+from typing import Any, Callable, Dict, List, Tuple, Type, Union, cast
 
 from pydantic import conlist, create_model
 

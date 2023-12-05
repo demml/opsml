@@ -5,7 +5,7 @@
 import os
 from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import sqlalchemy
 from sqlalchemy.engine.url import make_url

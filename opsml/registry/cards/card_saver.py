@@ -4,22 +4,24 @@
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union, cast, Any
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
-
-from numpy.typing import NDArray
 import pyarrow as pa
+from numpy.typing import NDArray
 
-from opsml.model.types import ModelMetadata, OnnxAttr, ValidSavedSample, OnnxModelDefinition
-
-from opsml.registry.cards.base import ArtifactCard
+from opsml.model.types import (
+    ModelMetadata,
+    OnnxAttr,
+    OnnxModelDefinition,
+    ValidSavedSample,
+)
 from opsml.registry.cards.audit import AuditCard
+from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
-from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.project import ProjectCard
-
+from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.data.types import AllowedDataType, ArrowTable

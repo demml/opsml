@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from functools import cached_property
-from typing import Any, Dict, Optional, cast, Type
+from typing import Any, Dict, Optional, Type, cast
 
 import httpx
 from pydantic import model_validator
