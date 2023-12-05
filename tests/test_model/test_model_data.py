@@ -1,4 +1,4 @@
-from opsml.model.model_info import FloatTypeConverter, get_model_data, ModelData
+from opsml.model.data_helper import FloatTypeConverter, get_model_data, ModelData
 from opsml.registry.data.types import AllowedDataType
 import pytest
 from numpy.typing import NDArray
