@@ -19,9 +19,10 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.model.data_converters import OnnxDataConverter
-from opsml.model.model_info import ModelInfo
 from opsml.model.model_types import ModelType
 from opsml.model.registry_updaters import OnnxRegistryUpdater
+from opsml.registry.cards.model import ModelCard
+from opsml.model.data_helper import ModelDataHelper
 from opsml.model.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -54,7 +55,7 @@ except ModuleNotFoundError as import_error:
 
 
 class ModelConverter:
-    def __init__(self, model_info: ModelInfo):
+    def __init__(self, modelcard: ModelCard, model_data_helper: ModelDataHelper):
         self.model_info = model_info
         self.data_converter = OnnxDataConverter(model_info=model_info)
 
@@ -661,22 +662,26 @@ class PyTorchOnnxModel(ModelConverter):
 
 
 class OnnxModelConverter:
-    def __init__(self, model_info: ModelInfo):
-        """Instantiates a helper class to convert machine learning models and their input data
-        to onnx format for interoperability.
+    @staticmethod
+    def convert_model(self, modelcard: ModelCard, model_data_helper: ModelDataHelper) -> ModelReturn:
+        """
+        Instantiates a helper class to convert machine learning models and their input
+        data to onnx format for interoperability.
+
 
         Args:
-            model_info (ModelInfo): ModelInfo class containing model-specific information for Onnx conversion
+            modelcard:
+                ModelCard class containing model-specific information for Onnx conversion
+            model_data_helper:
+                ModelDataHelper class containing model-specific information for Onnx conversion
 
         """
-        self.model_info = model_info
 
-    def convert_model(self) -> ModelReturn:
         converter = next(
             (
                 converter
                 for converter in ModelConverter.__subclasses__()
-                if converter.validate(model_type=self.model_info.model_type)
+                if converter.validate(model_type=modelcard.metadata.model_type)
             )
         )
 

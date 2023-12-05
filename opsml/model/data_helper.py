@@ -12,9 +12,7 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import (
     DataDtypes,
-    ExtraOnnxArgs,
     Feature,
-    OnnxModelDefinition,
     ValidModelInput,
 )
 from opsml.registry.data.types import AllowedDataType
@@ -22,7 +20,7 @@ from opsml.registry.data.types import AllowedDataType
 logger = ArtifactLogger.get_logger()
 
 
-class ModelData:
+class ModelDataHelper:
     def __init__(
         self,
         input_data: ValidModelInput,
@@ -107,7 +105,7 @@ class ModelData:
         raise NotImplementedError
 
 
-class NumpyData(ModelData):
+class NumpyData(ModelDataHelper):
     def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
@@ -137,7 +135,7 @@ class NumpyData(ModelData):
         return data_type == AllowedDataType.NUMPY
 
 
-class PandasDataFrameData(ModelData):
+class PandasDataFrameData(ModelDataHelper):
     def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
@@ -192,7 +190,7 @@ class PandasDataFrameData(ModelData):
         return data_type == AllowedDataType.PANDAS
 
 
-class DataDictionary(ModelData):
+class DataDictionary(ModelDataHelper):
     def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
@@ -230,7 +228,7 @@ class DataDictionary(ModelData):
         return data_type == AllowedDataType.DICT
 
 
-def get_model_data(data_type: str, input_data: Any) -> ModelData:
+def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
     """Sets the appropriate ModelData subclass depending
     on data_type passed
 
@@ -240,7 +238,7 @@ def get_model_data(data_type: str, input_data: Any) -> ModelData:
     """
     model_data = next(
         data_class
-        for data_class in ModelData.__subclasses__()
+        for data_class in ModelDataHelper.__subclasses__()
         if data_class.validate(
             data_type=data_type,
         )
@@ -292,34 +290,3 @@ class FloatTypeConverter:
             return self._convert_array(data=data)
 
         return self._convert_dict(data=cast(Dict[str, NDArray[Any]], data))
-
-
-@dataclass
-class ModelInfo:
-    """Helper class to be used with OnnxModelConverter.
-    Contains metadata needed for conversion of trained model to onnx format.
-
-    Args:
-        model:
-            Trained model (sklearn, tf, keras, pytorch)
-        input_data:
-            Sample data use to train model
-        model_type:
-            Model type
-        model_class:
-            Model class
-        data_type:
-            Data type (data.__class__)
-        additional_model_args:
-            Optional args to include with Torch model
-        onnx_model_def:
-            Optional `OnnxModelDefinition`
-    """
-
-    model: Any
-    model_data: ModelData
-    model_type: str
-    model_class: str
-    data_type: str
-    additional_model_args: Optional[ExtraOnnxArgs] = None
-    onnx_model_def: Optional[OnnxModelDefinition] = None
