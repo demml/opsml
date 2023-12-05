@@ -145,7 +145,7 @@ def gcp_cred_path():
 
 
 def save_path() -> str:
-    p = Path(f"blob/{uuid.uuid4().hex}")
+    p = Path(f"mlruns/OPSML_MODEL_REGISTRY/{uuid.uuid4().hex}")
     p.mkdir(parents=True, exist_ok=True)
     return str(p)
 
