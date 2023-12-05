@@ -35,7 +35,7 @@ from opsml.model.types import (
     ModelReturn,
     OnnxDataProto,
     OnnxModelDefinition,
-    OnnxModelType,
+    TrainedModelType,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -87,7 +87,7 @@ class ModelConverter:
         if self.model_info.model_type in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
             OpsmlImportExceptions.try_skl2onnx_imports()
 
-        elif self.model_info.model_type == OnnxModelType.TF_KERAS:
+        elif self.model_info.model_type == TrainedModelType.TF_KERAS:
             OpsmlImportExceptions.try_tf2onnx_imports()
 
         return self.data_converter.get_data_types()
@@ -310,15 +310,15 @@ class ModelConverter:
 class SklearnOnnxModel(ModelConverter):
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
+        return self.model_info.model_type == TrainedModelType.STACKING_ESTIMATOR
 
     @property
     def _is_calibrated_classifier(self) -> bool:
-        return self.model_info.model_class.lower() == OnnxModelType.CALIBRATED_CLASSIFIER
+        return self.model_info.model_class.lower() == TrainedModelType.CALIBRATED_CLASSIFIER
 
     @property
     def _is_pipeline(self) -> bool:
-        return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
+        return self.model_info.model_type == TrainedModelType.SKLEARN_PIPELINE
 
     def _update_onnx_registries_pipelines(self) -> bool:
         updated = False
@@ -326,7 +326,7 @@ class SklearnOnnxModel(ModelConverter):
         for model_step in self.model_info.model.steps:
             estimator_name = model_step[1].__class__.__name__.lower()
 
-            if estimator_name == OnnxModelType.CALIBRATED_CLASSIFIER:
+            if estimator_name == TrainedModelType.CALIBRATED_CLASSIFIER:
                 updated = self._update_onnx_registries_calibrated_classifier(estimator=model_step[1].estimator)
 
             # check if estimator is calibrated
@@ -506,7 +506,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
 
     @staticmethod
     def validate(model_type: str) -> bool:
-        return model_type in OnnxModelType.TF_KERAS
+        return model_type in TrainedModelType.TF_KERAS
 
 
 class PytorchArgBuilder:
@@ -655,8 +655,8 @@ class PyTorchOnnxModel(ModelConverter):
     @staticmethod
     def validate(model_type: str) -> bool:
         return model_type in [
-            OnnxModelType.PYTORCH,
-            OnnxModelType.TRANSFORMER,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
         ]
 
 

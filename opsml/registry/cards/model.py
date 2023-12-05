@@ -13,6 +13,7 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
+from opsml.model.model_types import ModelType
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -21,6 +22,7 @@ from opsml.model.types import (
     ModelReturn,
     OnnxModelDefinition,
     ValidModelInput,
+    TrainedModelType,
 )
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
@@ -36,18 +38,32 @@ storage_client = settings.storage_client
 
 
 class ModelCardValidator:
-    @staticmethod
-    def required_args_present(values: Dict[str, Any]) -> bool:
-        return all(
-            values.get(var_) is not None
-            for var_ in [
-                "trained_model",
-                "sample_input_data",
-            ]
-        )
+    def __init__(
+        self,
+        sample_data: ValidModelInput,
+        trained_model: Any,
+        metadata: Optional[ModelCardMetadata] = None,
+    ) -> None:
+        self.sample_data = sample_data
+        self.trained_model = trained_model
+        self.metadata = metadata
 
-    @staticmethod
-    def check_sample(sample_data: Optional[ValidModelInput] = None) -> ValidModelInput:
+    def _get_model_class_name(self) -> str:
+        """Gets class name from model"""
+
+        if "keras.engine" in str(self.model):
+            return TrainedModelType.TF_KERAS.value
+
+        if "torch" in str(self.model.__class__.__bases__):
+            return TrainedModelType.PYTORCH.value
+
+        # for transformer models from huggingface
+        if "transformers.models" in str(self.model.__class__.__bases__):
+            return TrainedModelType.TRANSFORMER.value
+
+        return str(self.model.__class__.__name__)
+
+    def get_sample(self) -> None:
         """Check sample data and returns one record to be used
         during ONNX conversion and validation
 
@@ -76,11 +92,17 @@ class ModelCardValidator:
 
         raise ValueError("Provided sample data is not a valid type")
 
-    @staticmethod
-    def check_metadata(
-        sample_data: ValidModelInput,
-        metadata: Optional[ModelCardMetadata] = None,
-    ) -> Optional[ModelCardMetadata]:
+    def get_model_type(self) -> str:
+        model_type = next(
+            (
+                model_type
+                for model_type in ModelType.__subclasses__()
+                if model_type.validate(model_class_name=self.model_class)
+            )
+        )
+        return model_type.get_type()
+
+    def get_metadata(self) -> ModelCardMetadata:
         """Checks metadata for valid values
 
         Args:
@@ -93,18 +115,26 @@ class ModelCardValidator:
             `ModelCardMetadata` with updated sample_data_type
         """
 
+        model_class = self._get_model_class_name()
+        model_type = self.get_model_type()
+        data_type = check_data_type(self.sample_data)
+
         if metadata is None:
-            data_type = check_data_type(sample_data)
             if data_type in [AllowedDataType.IMAGE]:
                 raise ValueError(
                     f"""Invalid model data input type. Accepted types are a pandas dataframe, 
                                  numpy array and dictionary of numpy arrays. Received {data_type}""",
                 )
-            metadata = ModelCardMetadata(sample_data_type=data_type)
+            metadata = ModelCardMetadata(
+                sample_data_type=data_type,
+                model_class=model_class,
+                model_type=model_type,
+            )
 
         elif metadata is not None:
-            data_type = check_data_type(sample_data)
             metadata.sample_data_type = data_type
+            metadata.model_type = model_type
+            metadata.model_class = model_class
 
         return metadata
 
@@ -156,27 +186,28 @@ class ModelCard(ArtifactCard):
 
         uid = values.get("uid")
         version = values.get("version")
+        trained_model: Optional[Any] = values.get("trained_model")
+        sample_data: Optional[ValidModelInput] = values.get("sample_input_data")
+        metadata: Optional[ModelCardMetadata] = values.get("metadata")
 
         # no need to check if already registered
         if all([uid, version]):
             return values
 
-        if not ModelCardValidator.required_args_present(values=values):
+        if trained_model is None or sample_data is None:
             raise ValueError(
                 """trained_model and sample_input_data are required for instantiating a ModelCard""",
             )
 
-        sample_data = ModelCardValidator.check_sample(
-            sample_data=values["sample_input_data"],
-        )
-
-        metadata = ModelCardValidator.check_metadata(
+        card_validator = ModelCardValidator(
             sample_data=sample_data,
-            metadata=values.get("metadata"),
+            trained_model=trained_model,
+            metadata=metadata,
         )
-        values["metadata"] = metadata
-        values["sample_input_data"] = sample_data
 
+        values["sample_input_data"] = card_validator.get_sample()
+        values["metadata"] = card_validator.get_metadata()
+        
         return values
 
     @property

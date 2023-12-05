@@ -9,7 +9,7 @@ from typing import Any, Dict, List, cast
 import numpy as np
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import ApiDataSchemas, Base, OnnxModelType
+from opsml.model.types import ApiDataSchemas, Base, TrainedModelType
 from opsml.registry.data.types import AllowedDataType
 
 
@@ -127,13 +127,13 @@ class OnnxModelPredictor:
 
         pred_data = self.sig_creator.input_sig(**data)
 
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+        if self.model_type == TrainedModelType.SKLEARN_PIPELINE:
             data_for_pred = pred_data.to_dataframe()
 
-        elif self.model_type == OnnxModelType.TF_KERAS:
+        elif self.model_type == TrainedModelType.TF_KERAS:
             data_for_pred = pred_data.to_onnx()
 
-        elif self.model_type in [OnnxModelType.PYTORCH, OnnxModelType.TRANSFORMER]:
+        elif self.model_type in [TrainedModelType.PYTORCH, TrainedModelType.TRANSFORMER]:
             import torch
 
             feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
