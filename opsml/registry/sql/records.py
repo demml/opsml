@@ -167,7 +167,7 @@ class LoadRecord(BaseModel):
     storage_client: Optional[StorageClientType] = None
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
+    def validate_table(registry_type: RegistryType) -> bool:
         raise NotImplementedError
 
 
@@ -238,8 +238,8 @@ class LoadedDataRecord(LoadRecord):
         return cast(Dict[str, Any], datacard_definition)
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.DATA.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.DATA
 
 
 class LoadedModelRecord(LoadRecord):
@@ -297,8 +297,8 @@ class LoadedModelRecord(LoadRecord):
         return ModelCardMetadata(**card_def).model_dump()
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.MODEL.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.MODEL
 
 
 class LoadedAuditRecord(LoadRecord):
@@ -347,8 +347,8 @@ class LoadedAuditRecord(LoadRecord):
         return cast(Dict[str, Any], audit_definition)
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.AUDIT.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.AUDIT
 
 
 class LoadedRunRecord(LoadRecord):
@@ -399,8 +399,8 @@ class LoadedRunRecord(LoadRecord):
         return cast(Dict[str, Any], runcard_definition)
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.RUN.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.RUN
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -411,8 +411,8 @@ class LoadedPipelineRecord(LoadRecord):
     runcard_uids: Optional[List[str]] = None
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.PIPELINE.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.PIPELINE
 
 
 LoadedRecordType = Union[
@@ -425,7 +425,7 @@ LoadedRecordType = Union[
 
 
 def load_record(
-    registry_type: str,
+    registry_type: RegistryType,
     record_data: Dict[str, Any],
     storage_client: StorageClientType,
 ) -> LoadedRecordType:

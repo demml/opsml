@@ -27,8 +27,8 @@ else:
 
 class DataCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.DATA.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.DATA
 
     @staticmethod
     def validate(registry_name: str) -> bool:
@@ -37,11 +37,11 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.MODEL.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.MODEL
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -112,8 +112,8 @@ class ModelCardRegistry(Registry):
 
 class RunCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.RUN.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.RUN
 
     @staticmethod
     def validate(registry_name: str) -> bool:
@@ -122,8 +122,8 @@ class RunCardRegistry(Registry):
 
 class PipelineCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PIPELINE.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PIPELINE
 
     @staticmethod
     def validate(registry_name: str) -> bool:
@@ -135,8 +135,8 @@ class PipelineCardRegistry(Registry):
 
 class ProjectCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PROJECT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PROJECT
 
     @staticmethod
     def validate(registry_name: str) -> bool:
@@ -158,10 +158,10 @@ class ProjectCardRegistry(Registry):
 
 class AuditCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.AUDIT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.AUDIT
 
-    def validate_uid(self, uid: str, registry_type: str) -> bool:
+    def validate_uid(self, uid: str, registry_type: RegistryType) -> bool:
         return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
@@ -190,7 +190,7 @@ class CardRegistry:
         self.table_name = self._registry.table_name
 
     @property
-    def registry_type(self) -> str:
+    def registry_type(self) -> RegistryType:
         "Registry type for card registry"
         return self._registry.registry_type
 
@@ -212,7 +212,7 @@ class CardRegistry:
             )
         )
 
-        return registry(registry_type=registry_name)
+        return registry(registry_type=RegistryType.from_str(registry_name))
 
     def list_cards(
         self,

@@ -21,8 +21,8 @@ Registry = ClientRegistry
 
 class DataCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.DATA.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.DATA
 
     @staticmethod
     def validate(registry_name: str):
@@ -31,11 +31,11 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.MODEL.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.MODEL
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -68,8 +68,8 @@ class ModelCardRegistry(Registry):
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )
@@ -96,20 +96,20 @@ class ModelCardRegistry(Registry):
         return registry_name.lower() == RegistryType.MODEL.value
 
 
-class RunCardRegistry(Registry):  # type:ignore
+class RunCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.RUN.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.RUN
 
     @staticmethod
     def validate(registry_name: str):
         return registry_name.lower() == RegistryType.RUN.value
 
 
-class PipelineCardRegistry(Registry):  # type:ignore
+class PipelineCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PIPELINE.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PIPELINE
 
     @staticmethod
     def validate(registry_name: str):
@@ -119,10 +119,10 @@ class PipelineCardRegistry(Registry):  # type:ignore
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
-class ProjectCardRegistry(Registry):  # type:ignore
+class ProjectCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PROJECT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PROJECT
 
     @staticmethod
     def validate(registry_name: str):
@@ -142,12 +142,12 @@ class ProjectCardRegistry(Registry):  # type:ignore
         raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
-class AuditCardRegistry(Registry):  # type:ignore
+class AuditCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.AUDIT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.AUDIT
 
-    def validate_uid(self, uid: str, registry_type: str) -> bool:
+    def validate_uid(self, uid: str, registry_type: RegistryType) -> bool:
         return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
@@ -157,6 +157,7 @@ class AuditCardRegistry(Registry):  # type:ignore
 
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
+    # TODO(@damon): Turn this into registry_type
     def __init__(self, registry_name: str):
         """
         Interface for connecting to any of the ArtifactCard registries
@@ -193,7 +194,7 @@ class CardRegistry:
             )
         )
 
-        return registry(registry_type=registry_name)
+        return registry(registry_type=RegistryType.from_str(registry_name))
 
     def list_cards(
         self,
@@ -343,8 +344,8 @@ class CardRegistry:
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
 
+from opsml.registry.cards.types import RegistryType
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
@@ -20,7 +21,7 @@ logger = ArtifactLogger.get_logger()
 class ClientRegistry(SQLRegistryBase):
     """A registry that retrieves data from an opsml server instance."""
 
-    def __init__(self, registry_type: str):
+    def __init__(self, registry_type: RegistryType):
         super().__init__(registry_type)
 
         assert isinstance(settings.request_client, ApiClient)
@@ -33,7 +34,7 @@ class ClientRegistry(SQLRegistryBase):
         """Returns the table name for this registry type"""
         data = self._session.get_request(
             route=api_routes.TABLE_NAME,
-            params={"registry_type": self.registry_type},
+            params={"registry_type": self.registry_type.value},
         )
 
         return cast(str, data["table_name"])
@@ -43,7 +44,7 @@ class ClientRegistry(SQLRegistryBase):
         """Returns a list of unique teams"""
         data = self._session.get_request(
             route=api_routes.TEAM_CARDS,
-            params={"registry_type": self.registry_type},
+            params={"registry_type": self.registry_type.value},
         )
 
         return cast(List[str], data["teams"])
@@ -59,7 +60,7 @@ class ClientRegistry(SQLRegistryBase):
             List of unique card names
         """
 
-        params = {"registry_type": self.registry_type}
+        params = {"registry_type": self.registry_type.value}
 
         if team is not None:
             params["team"] = team
@@ -71,10 +72,10 @@ class ClientRegistry(SQLRegistryBase):
 
         return cast(List[str], data["names"])
 
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         data = self._session.post_request(
             route=api_routes.CHECK_UID,
-            json={"uid": uid, "registry_type": registry_type},
+            json={"uid": uid, "registry_type": registry_type.value},
         )
 
         return bool(data.get("uid_exists"))
@@ -100,7 +101,7 @@ class ClientRegistry(SQLRegistryBase):
                 "team": team,
                 "version": version_to_send,
                 "version_type": version_type,
-                "registry_type": self.registry_type,
+                "registry_type": self._registry_type.value,
                 "pre_tag": pre_tag,
                 "build_tag": build_tag,
             },
@@ -156,7 +157,7 @@ class ClientRegistry(SQLRegistryBase):
                 "max_date": max_date,
                 "limit": limit,
                 "tags": tags,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
                 "ignore_release_candidates": ignore_release_candidates,
                 "query_terms": query_terms,
             },
@@ -164,14 +165,13 @@ class ClientRegistry(SQLRegistryBase):
 
         return data["cards"]
 
-    # TODO(@damon): rename to add()
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
             route=api_routes.CREATE_CARD,
             json={
                 "card": card,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
             },
         )
 
@@ -179,14 +179,13 @@ class ClientRegistry(SQLRegistryBase):
             return card, "registered"
         raise ValueError("Failed to register card")
 
-    # TODO(@damon): Rename to update()
     @log_card_change
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
             route=api_routes.UPDATE_CARD,
             json={
                 "card": card,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
             },
         )
 
@@ -194,14 +193,13 @@ class ClientRegistry(SQLRegistryBase):
             return card, "updated"
         raise ValueError("Failed to update card")
 
-    # TODO(@damon): Rename to delete()
     @log_card_change
     def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         data = self._session.post_request(
             route=api_routes.DELETE_CARD,
             json={
                 "card": card,
-                "registry_type": self.registry_type,
+                "registry_type": self.registry_type.value,
             },
         )
 
