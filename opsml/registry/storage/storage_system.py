@@ -100,7 +100,7 @@ class StorageClient:
         self.backend = backend
         self.base_path_prefix = storage_settings.storage_uri
 
-    def extend_storage_spec(
+    def _extend_storage_spec(
         self,
         spec: ArtifactStorageSpecs,
         extra_path: Optional[str] = None,
