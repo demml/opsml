@@ -329,7 +329,7 @@ class ParquetStorage(ArtifactStorage):
 
         Args:
             artifact:
-                Parquet table to write
+                Parquet gctable to write
             storage_uri:
                 Path to write to
             tmp_uri:
