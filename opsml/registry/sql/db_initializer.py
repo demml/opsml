@@ -8,6 +8,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import inspect
 from sqlalchemy.engine.base import Engine
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.sql_schema import Base
 

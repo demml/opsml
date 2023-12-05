@@ -129,7 +129,7 @@ class Description(BaseModel):
 
     @field_validator("summary", mode="before")
     @classmethod
-    def load_summary(cls, summary: Optional[str]) -> str:
+    def load_summary(cls, summary: Optional[str]) -> Optional[str]:
         if summary is None:
             return summary
 
@@ -268,14 +268,16 @@ class DataCardMetadata(BaseModel):
     uris: DataCardUris = DataCardUris()
 
     @field_validator("feature_descriptions", mode="before")
-    def lower_descriptions(cls, feature_descriptions):
+    @classmethod
+    def lower_descriptions(cls, feature_descriptions: Dict[str, str]) -> Dict[str, str]:
         if not bool(feature_descriptions):
             return feature_descriptions
 
         feat_dict = {}
         for feature, description in feature_descriptions.items():
             feat_dict[feature.lower()] = description.lower()
-            return feat_dict
+
+        return feat_dict
 
 
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]

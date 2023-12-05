@@ -11,22 +11,26 @@ from typing import Any, Optional, Tuple, cast
 import joblib
 import polars as pl
 import pyarrow as pa
-from numpy.typing import NDArray
 import pyarrow.parquet as pq
 import zarr
+from numpy.typing import NDArray
 
 from opsml.helpers.utils import all_subclasses
 from opsml.model.types import ModelProto
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.storage.storage_system import (
     ArtifactClass,
     StorageClientType,
     StorageSystem,
 )
-from opsml.registry.storage.types import ARTIFACT_TYPES, ArtifactStorageType, FilePath
+from opsml.registry.storage.types import (
+    ARTIFACT_TYPES,
+    ArtifactStorageSpecs,
+    ArtifactStorageType,
+    FilePath,
+)
 from opsml.registry.storage.utils import cleanup_files
 
 

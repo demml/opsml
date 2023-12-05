@@ -12,7 +12,17 @@ import warnings
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generator, Iterator, List, Optional, Tuple, Union, cast, BinaryIO
+from typing import (
+    Any,
+    BinaryIO,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from pyarrow.fs import LocalFileSystem
 
@@ -356,7 +366,7 @@ class LocalStorageClient(StorageClient):
             return cast(Optional[str], self.copy(read_path=str(filepath), write_path=lpath))
 
         # check if trying to copy single file to directory
-        elif read_path.is_file():
+        if read_path.is_file():
             lpath = str(local_path / read_path.name)
             return cast(Optional[str], self.copy(read_path=rpath, write_path=lpath))
 

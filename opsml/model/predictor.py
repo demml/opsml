@@ -7,6 +7,7 @@ from functools import cached_property
 from typing import Any, Dict, List, cast
 
 import numpy as np
+from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
 from opsml.model.types import ApiDataSchemas, Base, TrainedModelType
@@ -136,7 +137,7 @@ class OnnxModelPredictor:
         elif self.model_type in [TrainedModelType.PYTORCH, TrainedModelType.TRANSFORMER]:
             import torch
 
-            feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
+            feed_data: Dict[str, NDArray[Any]] = pred_data.to_onnx()
 
             if self.data_type == AllowedDataType.DICT:
                 data_for_pred = {

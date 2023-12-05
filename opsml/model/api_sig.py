@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from functools import cached_property
-from typing import Any, Callable, Dict, List, Tuple, Union, Type, cast
+from typing import Any, Callable, Dict, List, Tuple, Type, Union, cast
 
 from pydantic import conlist, create_model
 
@@ -106,7 +106,7 @@ class PydanticFeatureGenerator:
         for _ in range(shape_len):
             feature_type = conlist(feature_type)
 
-        return feature_type
+        return cast(List[Any], feature_type)
 
     def _get_field_from_feature(self, feature: Feature) -> Union[List[Any], str, int, float]:
         """Infer field type and shape from feature"""

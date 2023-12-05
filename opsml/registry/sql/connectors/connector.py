@@ -105,7 +105,7 @@ class LocalSQLConnection(BaseSQLConnection):
         return kwargs
 
     @cached_property
-    def _sqlalchemy_prefix(self):
+    def _sqlalchemy_prefix(self) -> str:
         return self.tracking_uri
 
     @staticmethod

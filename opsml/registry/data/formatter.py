@@ -6,9 +6,9 @@ from typing import Any, Dict, Union, cast
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 import polars as pl
 import pyarrow as pa
+from numpy.typing import NDArray
 
 from opsml.registry.data.types import AllowedDataType, ArrowTable
 
@@ -88,7 +88,7 @@ class NumpyFormatter(ArrowFormatter):
         return ArrowTable(table=data)
 
     @staticmethod
-    def validate_data(data_type: str):
+    def validate_data(data_type: str) -> bool:
         return AllowedDataType.NUMPY == data_type
 
 

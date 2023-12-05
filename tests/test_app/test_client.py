@@ -759,7 +759,7 @@ def test_token_fail(
 def test_delete_fail(test_app: TestClient):
     """Test error path"""
 
-    pathlib.Path("tests/assets/empty").mkdir(parents=True, exist_ok=True)
+    pathlib.Path("tests/assets/empty/model_registry").mkdir(parents=True, exist_ok=True)
 
     response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty/model_registry"})
 
