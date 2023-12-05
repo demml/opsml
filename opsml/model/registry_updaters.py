@@ -5,7 +5,7 @@
 
 """Code for generating Onnx Models"""
 import warnings
-from typing import Callable, Any, Optional, Dict, Tuple, cast
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 # Get logger
 from opsml.helpers.logging import ArtifactLogger

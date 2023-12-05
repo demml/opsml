@@ -396,7 +396,7 @@ class SklearnOnnxModel(ModelConverter):
         """
 
         if self.model_info.model_data.all_features_float32:
-            return None
+            pass
 
         elif self._is_stacking_estimator:
             logger.warning("Converting all numeric data to float32 for Sklearn Stacking")

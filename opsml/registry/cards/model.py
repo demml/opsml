@@ -6,9 +6,9 @@ from functools import cached_property
 from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
-from numpy.typing import NDArray
 import pandas as pd
 import polars as pl
+from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger

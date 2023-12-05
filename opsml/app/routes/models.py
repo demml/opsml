@@ -6,7 +6,7 @@ import os
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
@@ -21,16 +21,16 @@ from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
-from opsml.registry.cards.types import CardInfo
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
+from opsml.model.types import ModelMetadata
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.run import RunCard
-from opsml.model.types import ModelMetadata
+from opsml.registry.cards.types import CardInfo
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
     RegistrationRequest,
 )
+from opsml.registry.sql.registry import CardRegistries, CardRegistry
 
 logger = ArtifactLogger.get_logger()
 

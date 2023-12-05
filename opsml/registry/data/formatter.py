@@ -6,9 +6,9 @@ from typing import Any, Dict, Union, cast
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 import polars as pl
 import pyarrow as pa
+from numpy.typing import NDArray
 
 from opsml.registry.data.types import AllowedDataType, ArrowTable
 

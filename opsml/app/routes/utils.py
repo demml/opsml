@@ -9,7 +9,7 @@ import re
 import traceback
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from fastapi import Request
 from fastapi.responses import StreamingResponse
@@ -18,13 +18,11 @@ from streaming_form_data.targets import FileTarget
 
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.audit import AuditCard
+from opsml.registry.cards.audit import AuditCard, AuditSections
 from opsml.registry.cards.run import RunCard
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.cards.audit import AuditSections
 from opsml.registry.cards.types import RegistryType
+from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
-from starlette.templating import _TemplateResponse
 
 logger = ArtifactLogger.get_logger()
 # Constants

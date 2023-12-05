@@ -11,9 +11,9 @@ import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
-from opsml.registry.utils.settings import settings
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import CardVersion, VersionType
+from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 

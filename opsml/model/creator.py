@@ -4,13 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.model_info import ModelInfo, get_model_data
-from opsml.model.types import OnnxModelType
 from opsml.model.model_types import ModelType
 from opsml.model.types import (
     ApiDataSchemas,
@@ -19,6 +18,7 @@ from opsml.model.types import (
     Feature,
     ModelReturn,
     OnnxModelDefinition,
+    OnnxModelType,
     ValidModelInput,
 )
 from opsml.registry.data.types import AllowedDataType, get_class_name
