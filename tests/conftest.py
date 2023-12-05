@@ -12,8 +12,7 @@ DB_FILE_PATH = "tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
 STORAGE_PATH = f"{os.getcwd()}/mlruns"
 
-# TODO(@damon): Do *not* run under production just as a safety precaution.
-os.environ["APP_ENV"] = "production"
+os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = SQL_PATH
 os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
