@@ -325,6 +325,8 @@ class ModelConverter:
 
 
 class SklearnOnnxModel(ModelConverter):
+    """Class for converting sklearn models to onnx format"""
+
     @property
     def _is_stacking_estimator(self) -> bool:
         return self.model_type == TrainedModelType.STACKING_ESTIMATOR
