@@ -4,13 +4,15 @@
 # LICENSE file in the root directory of this source tree.
 
 import uuid
-from typing import Optional, cast
+from typing import Dict, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._active_run import ActiveRun, RunInfo
-from opsml.projects.types import ProjectInfo
-from opsml.projects.types import Tags
-from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
+from opsml.projects.types import ProjectInfo, Tags
+from opsml.registry.cards.project import ProjectCard
+from opsml.registry.cards.run import RunCard
+from opsml.registry.sql.registry import CardRegistries, CardRegistry
+from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -56,11 +58,11 @@ class _RunManager:
         return self._project_id
 
     @property
-    def storage_client(self):
+    def storage_client(self) -> StorageClientType:
         return self._storage_client
 
     @property
-    def base_tags(self):
+    def base_tags(self) -> Dict[str, Union[str, Optional[str]]]:
         return {
             Tags.NAME: self._project_info.name,
             Tags.TEAM: self._project_info.team,
@@ -70,11 +72,11 @@ class _RunManager:
     @property
     def active_run(self) -> ActiveRun:
         if self._active_run is not None:
-            return cast(ActiveRun, self._active_run)
+            return self._active_run
         raise ValueError("No active run has been set")
 
     @active_run.setter
-    def active_run(self, active_run: ActiveRun):
+    def active_run(self, active_run: ActiveRun) -> None:
         """Sets the active run"""
         self._active_run = active_run
 
@@ -96,7 +98,7 @@ class _RunManager:
         return self._run_id
 
     @run_id.setter
-    def run_id(self, run_id: str):
+    def run_id(self, run_id: str) -> None:
         """Set Run id"""
         self._run_id = run_id
 
@@ -137,10 +139,10 @@ class _RunManager:
             if not bool(card):
                 raise ValueError("Invalid run_id")
 
-    def _create_active_opsml_run(self):
+    def _create_active_opsml_run(self) -> None:
         # Create opsml active run
         run_info = RunInfo(
-            run_id=self.run_id,
+            run_id=cast(str, self.run_id),
             storage_client=self.storage_client,
             run_name=self.run_name,
             registries=self.registries,
@@ -201,7 +203,7 @@ class _RunManager:
         if self.active_run is None:
             raise ValueError("No ActiveRun has been set")
 
-    def start_run(self, run_name: Optional[str] = None):
+    def start_run(self, run_name: Optional[str] = None) -> None:
         """
         Starts a project run
 
@@ -218,9 +220,9 @@ class _RunManager:
         # Create the RunCard when the run is started to obtain a version and
         # storage path for artifact storage to use.
         self.active_run.create_or_update_runcard()
-        self.version = cast(str, self.active_run.runcard.version)
+        self.version = self.active_run.runcard.version
 
-    def end_run(self):
+    def end_run(self) -> None:
         """Ends a Run"""
 
         self.verify_active()
@@ -276,6 +278,7 @@ class _RunManager:
             name=info.name,
             team=info.team,
             user_email=info.user_email,
+            project_id=f"{info.team}:{info.name}",
         )
         project_registry.register_card(card=card)
 
@@ -286,7 +289,7 @@ class _RunManager:
         project_id: str,
         run_id: str,
         runcard_registry: CardRegistry,
-    ):
+    ) -> None:
         run = runcard_registry.list_cards(uid=run_id, as_dataframe=False)[0]
 
         if run.get("project_id") != project_id:

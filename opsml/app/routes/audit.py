@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -25,8 +26,7 @@ from opsml.app.routes.utils import (
     write_records_to_csv,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import AuditCard
-from opsml.registry.cards.audit import AuditSections
+from opsml.registry.cards.audit import AuditCard, AuditSections
 
 logger = ArtifactLogger.get_logger()
 
@@ -37,8 +37,8 @@ AUDIT_FILE = "audit_file.csv"
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-router = APIRouter()
 audit_route_helper = AuditRouteHelper()
+router = APIRouter()
 
 
 @router.get("/audit/", response_class=HTMLResponse)
@@ -50,7 +50,7 @@ async def audit_list_homepage(
     email: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
-):
+) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -72,18 +72,18 @@ async def audit_list_homepage(
     """
 
     if all(attr is None for attr in [uid, version, model, team]):
-        return audit_route_helper.get_homepage(request=request)
+        return audit_route_helper.get_homepage(request=request)  # type: ignore[return-value]
 
     if team is not None and all(attr is None for attr in [version, model]):
-        return audit_route_helper.get_team_page(request=request, team=team)
+        return audit_route_helper.get_team_page(request=request, team=team)  # type: ignore[return-value]
 
     if team is not None and model is not None and version is None:
-        return audit_route_helper.get_versions_page(request=request, team=team, name=model)
+        return audit_route_helper.get_versions_page(request=request, team=team, name=model)  # type: ignore[return-value]
 
     if model is not None and team is not None and all(attr is None for attr in [uid, version]):
         raise ValueError("Model name provided without either version or uid")
 
-    return audit_route_helper.get_name_version_page(
+    return audit_route_helper.get_name_version_page(  # type: ignore[return-value]
         request=request,
         team=str(team),
         name=str(model),
@@ -98,7 +98,7 @@ async def audit_list_homepage(
 async def save_audit_form(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
-):
+) -> HTMLResponse:
     # collect all function arguments into a dictionary
 
     # base attr needed for html
@@ -126,7 +126,7 @@ async def save_audit_form(
         comments=audit_card.comments,
     )
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(  # type: ignore[return-value]
         "include/audit/audit.html",
         {
             "request": request,
@@ -147,7 +147,7 @@ async def save_audit_form(
 async def save_audit_comment(
     request: Request,
     comment: CommentSaveRequest = Depends(CommentSaveRequest),
-):
+) -> HTMLResponse:
     """Save comment to AuditCard
 
     Args:
@@ -184,7 +184,7 @@ async def save_audit_comment(
         comments=audit_card.comments,
     )
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(  # type: ignore[return-value]
         "include/audit/audit.html",
         {
             "request": request,
@@ -236,7 +236,7 @@ async def upload_audit_data(
     request: Request,
     background_tasks: BackgroundTasks,
     form: AuditFormRequest = Depends(AuditFormRequest),
-):
+) -> HTMLResponse:
     """Uploads audit data form file. If an audit_uid is provided, only the audit section will be updated."""
     uploader = AuditFormUploader(
         form=form,
@@ -278,7 +278,7 @@ async def upload_audit_data(
         team=form.selected_model_team,
     )
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(  # type: ignore[return-value]
         "include/audit/audit.html",
         {
             "request": request,

@@ -1,8 +1,9 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
 import os
-from typing import Optional, cast
+from typing import Iterator, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -12,7 +13,8 @@ from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
 from opsml.app.routes.route_helpers import DataRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.profile.profile_data import DataProfiler
-from opsml.registry import CardRegistry, DataCard
+from opsml.registry.cards.data import DataCard
+from opsml.registry.sql.registry import CardRegistry
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -21,14 +23,14 @@ TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-router = APIRouter()
 CHUNK_SIZE = 31457280
 data_route_helper = DataRouteHelper()
+router = APIRouter()
 
 
 @router.get("/data/list/", response_class=HTMLResponse)
 @error_to_500
-async def data_list_homepage(request: Request, team: Optional[str] = None):
+async def data_list_homepage(request: Request, team: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -40,7 +42,7 @@ async def data_list_homepage(request: Request, team: Optional[str] = None):
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return data_route_helper.get_homepage(request=request, team=team)
+    return data_route_helper.get_homepage(request=request, team=team)  # type: ignore[return-value]
 
 
 @router.get("/data/versions/", response_class=HTMLResponse)
@@ -50,11 +52,11 @@ async def data_versions_page(
     load_profile: bool = False,
     name: Optional[str] = None,
     version: Optional[str] = None,
-):
+) -> HTMLResponse:
     if name is None:
-        return RedirectResponse(url="/opsml/data/list/")
+        return RedirectResponse(url="/opsml/data/list/")  # type: ignore[return-value]
 
-    return data_route_helper.get_versions_page(
+    return data_route_helper.get_versions_page(  # type: ignore[return-value]
         request=request,
         name=name,
         version=version,
@@ -67,11 +69,11 @@ async def data_versions_page(
 async def data_versions_uid_page(
     request: Request,
     uid: str,
-):
+) -> HTMLResponse:
     registry: CardRegistry = request.app.state.registries.data
     selected_data = registry.list_cards(uid=uid)[0]
 
-    return await data_versions_page(
+    return await data_versions_page(  # type: ignore
         request=request,
         name=selected_data["name"],
         version=selected_data["version"],
@@ -85,8 +87,8 @@ async def data_versions_profile_page(
     name: str,
     version: str,
     profile_uri: Optional[str] = None,
-):
-    return data_route_helper.get_data_profile_page(
+) -> HTMLResponse:
+    return data_route_helper.get_data_profile_page(  # type: ignore[return-value]
         request=request,
         name=name,
         version=version,
@@ -134,7 +136,7 @@ def download_data_profile(
         ) from error
 
 
-def iterfile(file_path: str):
+def iterfile(file_path: str) -> Iterator[bytes]:
     with open(file_path, mode="rb") as file_like:  #
         yield from file_like
     os.remove(file_path)

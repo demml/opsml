@@ -17,7 +17,11 @@ class AuditCard(Protocol):
         ...
 
 
-def add_to_auditcard(self, auditcard: Optional[AuditCard] = None, auditcard_uid: Optional[str] = None) -> None:
+def add_to_auditcard(  # type: ignore
+    self,
+    auditcard: Optional[AuditCard] = None,
+    auditcard_uid: Optional[str] = None,
+) -> None:
     """Add card uid to auditcard
 
     Args:
@@ -52,6 +56,6 @@ def add_to_auditcard(self, auditcard: Optional[AuditCard] = None, auditcard_uid:
     return None
 
 
-def auditable(cls_):
+def auditable(cls_):  # type: ignore
     setattr(cls_, "add_to_auditcard", add_to_auditcard)
     return cls_

@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import glob
+import importlib
 import os
 import re
 import string
@@ -194,3 +195,64 @@ def all_subclasses(cls: Any) -> Set[Any]:
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)],
     )
+
+
+def try_import(packages: List[str], extras_expression: str, context: str) -> bool:
+    """Test if packages can be imported
+
+    Args:
+        packages:
+            List of packages to test
+        extras_expression:
+            Expression for installing extras
+        context:
+            Context for error message
+
+    Returns:
+        True if all packages can be imported, False otherwise
+    """
+    for package in packages:
+        try:
+            importlib.import_module(package)
+        except ModuleNotFoundError as error:
+            package_str = ", ".join(packages)
+            logger.error(
+                """Failed to import packages {}. Please install via opsml extras ({})
+                {}""",
+                package_str,
+                extras_expression,
+                context,
+            )
+            raise error
+    return True
+
+
+class OpsmlImportExceptions:
+    @staticmethod
+    def try_skl2onnx_imports() -> None:
+        """Attempts to import packages needed for onnx conversion of sklearn models"""
+        try_import(
+            ["skl2onnx", "onnxmltools"],
+            "opsml[sklearn_onnx]",
+            "If you wish to convert your model to onnx",
+        )
+
+    @staticmethod
+    def try_tf2onnx_imports() -> None:
+        """Attempts to import packages needed for onnx conversion of tensorflow models"""
+
+        try_import(
+            ["tf2onnx"],
+            "opsml[tf_onnx]",
+            "If you wish to convert your model to onnx",
+        )
+
+    @staticmethod
+    def try_sql_import() -> None:
+        """Attempts to import packages needed for the server registry"""
+
+        try_import(
+            ["sqlalchemy", "alembic"],
+            "opsml[server]",
+            "If you wish to use the server registry",
+        )

@@ -26,7 +26,9 @@ project_route_helper = ProjectRouteHelper()
 
 @router.get("/projects/list/", response_class=HTMLResponse)
 @error_to_500
-async def project_list_page(request: Request, project: Optional[str] = None, run_uid: Optional[str] = None):
+async def project_list_page(
+    request: Request, project: Optional[str] = None, run_uid: Optional[str] = None
+) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -41,7 +43,7 @@ async def project_list_page(request: Request, project: Optional[str] = None, run
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return project_route_helper.get_project_run(request=request, project=project, run_uid=run_uid)
+    return project_route_helper.get_project_run(request=request, project=project, run_uid=run_uid)  # type: ignore[return-value]
 
 
 @router.get("/projects/runs/plot/", response_class=HTMLResponse)
@@ -49,7 +51,7 @@ async def project_list_page(request: Request, project: Optional[str] = None, run
 async def project_metric_page(
     request: Request,
     run_uid: str,
-):
+) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -62,4 +64,4 @@ async def project_metric_page(
         with the list of models.
     """
 
-    return project_route_helper.get_run_metrics(request=request, run_uid=run_uid)
+    return project_route_helper.get_run_metrics(request=request, run_uid=run_uid)  # type: ignore[return-value]

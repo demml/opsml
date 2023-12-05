@@ -3,13 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
-import numpy as np
 import pandas as pd
 import polars as pl
-from pyarrow import Table
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FindPath
@@ -19,8 +17,8 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedTableTypes
-from opsml.registry.image import ImageDataset
+from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
+from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
@@ -29,7 +27,57 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 
-ValidData = Union[np.ndarray, pd.DataFrame, Table, pl.DataFrame, ImageDataset]
+
+class CardValidator:
+    @staticmethod
+    def check_metadata(
+        data: ValidData,
+        metadata: Union[Dict[str, Any], DataCardMetadata],
+        sql_logic: Dict[str, str],
+    ) -> Optional[str]:
+        """Validates metadata
+
+        Args:
+            data:
+                Data to use for data card. Can be a pyarrow table, pandas dataframe, polars dataframe
+                or numpy array
+            metadata:
+                Metadata dictionary
+            sql_logic:
+                Dictionary of strings containing sql logic or sql files used to create the data
+
+        Returns:
+            Data uri if present
+        """
+
+        if isinstance(metadata, DataCardMetadata):
+            data_uri = metadata.uris.data_uri
+        else:
+            data_uri = metadata["uris"].get("data_uri")
+
+        if data is None and not bool(sql_logic):
+            if data_uri is None:
+                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
+        return data_uri
+
+    @staticmethod
+    def set_data_type(
+        card_args: Dict[str, Any],
+        data_type: str,
+        metadata: Optional[Union[Dict[str, Any], DataCardMetadata]] = None,
+    ) -> Dict[str, Any]:
+        if metadata is None:
+            card_args["metadata"] = DataCardMetadata(data_type=data_type)
+
+        elif isinstance(metadata, DataCardMetadata):
+            metadata.data_type = data_type
+            card_args["metadata"] = metadata
+
+        elif isinstance(metadata, dict):
+            metadata["data_type"] = data_type
+            card_args["metadata"] = metadata
+
+        return card_args
 
 
 @auditable
@@ -66,27 +114,45 @@ class DataCard(ArtifactCard):
 
     data: Optional[ValidData] = None
     data_splits: List[DataSplit] = []
-    dependent_vars: Optional[List[Union[int, str]]] = None
-    sql_logic: Dict[Optional[str], Optional[str]] = {}
+    dependent_vars: List[Union[int, str]] = []
+    sql_logic: Dict[str, str] = {}
     data_profile: Optional[ProfileReport] = None
-    metadata: DataCardMetadata = DataCardMetadata()
+    metadata: DataCardMetadata
 
-    @field_validator("metadata", mode="before")
-    def check_data(cls, metadata, info):
-        # check data uri
-        if isinstance(metadata, DataCardMetadata):
-            data_uri = metadata.uris.data_uri
+    @model_validator(mode="before")
+    @classmethod
+    def check_data(cls, card_args: Dict[str, Any]) -> ValidData:
+        """Custom data validator to check data type.
+
+        Options for validation are:
+            - Card can provide data, a data_uri or sql_logic (and any combination)
+            - If a data_uri is present, data and sql_logic are not required (data has already been saved)
+            - If data is not present and sql_logic is present, validation passes
+            - If data is present, data types are checked
+        """
+
+        data = card_args.get("data")
+        metadata = card_args.get("metadata")
+        sql_logic: Dict[str, str] = card_args.get("sql_logic", {})
+
+        if metadata is not None:
+            data_uri = CardValidator.check_metadata(data, metadata, sql_logic)
+
+            if data_uri is not None:
+                return card_args
+
+        if data is None and bool(sql_logic):
+            data_type = AllowedDataType.SQL.value
         else:
-            data_uri = metadata["uris"].get("data_uri")
+            data_type = check_data_type(data=data)
 
-        if info.data.get("data") is None and not bool(info.data.get("sql_logic")):
-            if data_uri is None:
-                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
+        card_args = CardValidator.set_data_type(card_args, data_type, metadata)
 
-        return metadata
+        return card_args
 
     @field_validator("data_profile", mode="before")
-    def check_profile(cls, profile):
+    @classmethod
+    def _check_profile(cls, profile: Optional[ProfileReport]) -> Optional[ProfileReport]:
         if profile is not None:
             from ydata_profiling import ProfileReport as ydata_profile
 
@@ -94,7 +160,8 @@ class DataCard(ArtifactCard):
         return profile
 
     @field_validator("sql_logic", mode="before")
-    def load_sql(cls, sql_logic):
+    @classmethod
+    def _load_sql(cls, sql_logic: Dict[str, str]) -> Dict[str, str]:
         if not bool(sql_logic):
             return sql_logic
 
@@ -158,13 +225,14 @@ class DataCard(ArtifactCard):
                     split=data_split,
                     dependent_vars=self.dependent_vars,
                     data=self.data,
+                    data_type=self.metadata.data_type,
                 )
                 setattr(data_holder, label, data)
 
             return data_holder
         raise ValueError("No data splits provided")
 
-    def load_data(self):
+    def load_data(self) -> None:
         """Loads DataCard data from storage"""
 
         download_object(
@@ -202,7 +270,7 @@ class DataCard(ArtifactCard):
         name: str,
         query: Optional[str] = None,
         filename: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Adds a query or query from file to the sql_logic dictionary. Either a query or
         a filename pointing to a sql file are required in addition to a name.
@@ -237,7 +305,7 @@ class DataCard(ArtifactCard):
 
         """
 
-        if isinstance(self.data, (pd.DataFrame, pl.DataFrame)):
+        if isinstance(self.data, (pl.DataFrame, pd.DataFrame)):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
@@ -261,7 +329,7 @@ class Downloader:
         self.storage_client = storage_client
         self._card = card
 
-    def download(self):
+    def download(self) -> None:
         raise NotImplementedError
 
     @staticmethod
@@ -269,6 +337,7 @@ class Downloader:
         raise NotImplementedError
 
 
+# TODO: use this impl or one in registry/storage
 class DataDownloader(Downloader):
     """Class for downloading data from storage"""
 
@@ -282,24 +351,28 @@ class DataDownloader(Downloader):
             return
 
         data = load_record_artifact_from_storage(
-            artifact_type=cast(str, self.card.metadata.data_type),
+            artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.data_uri,
             ),
         )
 
-        data = check_data_schema(data, cast(Dict[str, str], self.card.metadata.feature_map))
+        data = check_data_schema(
+            data,
+            cast(Dict[str, str], self.card.metadata.feature_map),
+            self.card.metadata.data_type,
+        )
         setattr(self.card, "data", data)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
         return artifact_type in [
-            AllowedTableTypes.NDARRAY.value,
-            AllowedTableTypes.PANDAS_DATAFRAME.value,
-            AllowedTableTypes.POLARS_DATAFRAME.value,
-            AllowedTableTypes.ARROW_TABLE.value,
-            AllowedTableTypes.DICTIONARY.value,
+            AllowedDataType.NUMPY,
+            AllowedDataType.PANDAS,
+            AllowedDataType.POLARS,
+            AllowedDataType.PYARROW,
+            AllowedDataType.DICT,
         ]
 
 
@@ -317,7 +390,7 @@ class ImageDownloader(Downloader):
         kwargs = {"image_dir": data.image_dir}
 
         record = load_record_artifact_from_storage(
-            artifact_type=cast(str, self.card.metadata.data_type),
+            artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.data_uri,
@@ -329,7 +402,7 @@ class ImageDownloader(Downloader):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == AllowedTableTypes.IMAGE_DATASET.value
+        return AllowedDataType.IMAGE in artifact_type
 
 
 def download_object(

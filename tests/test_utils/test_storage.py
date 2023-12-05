@@ -28,6 +28,7 @@ def test_api_parquet(test_arrow_table, storage_client):
         storage_client=storage_client,
         artifact_type="Table",
     )
+
     metadata = pq_writer.save_artifact(
         artifact=test_arrow_table,
         storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),

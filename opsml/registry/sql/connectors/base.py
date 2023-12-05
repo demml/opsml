@@ -50,7 +50,7 @@ class BaseSQLConnection:
         return kwargs
 
     @cached_property
-    def _sqlalchemy_prefix(self):
+    def _sqlalchemy_prefix(self) -> str:
         raise NotImplementedError
 
     @property
@@ -84,7 +84,7 @@ class CloudSQLConnection(BaseSQLConnection):
     @property
     def _ip_type(self) -> Enum:
         """Sets IP type for CloudSql"""
-        from google.cloud.sql.connector import IPTypes
+        from google.cloud.sql.connector import IPTypes  # type: ignore
 
         return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
@@ -102,8 +102,8 @@ class CloudSQLConnection(BaseSQLConnection):
             raise ValueError("No unix_socket or host detected in uri")
 
         if "cloudsql" in connection_name:
-            return connection_name.split("cloudsql/")[-1]
-        return connection_name
+            return str(connection_name.split("cloudsql/")[-1])
+        return str(connection_name)
 
     @property
     def _python_db_type(self) -> str:
@@ -111,13 +111,13 @@ class CloudSQLConnection(BaseSQLConnection):
 
         raise NotImplementedError
 
-    def _conn(self):
+    def _conn(self) -> Any:
         """Creates the mysql or postgres CloudSQL client"""
-        from google.cloud.sql.connector import Connector
+        from google.cloud.sql.connector import Connector  # type: ignore
 
         connector = Connector(
             credentials=self.credentials,
-            ip_type=self._ip_type,
+            ip_type=self._ip_type,  # type: ignore
         )
 
         conn = connector.connect(

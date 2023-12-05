@@ -10,7 +10,7 @@ from opsml.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger()
 
 
-def verify_token(request: Request):
+def verify_token(request: Request) -> None:
     """Verifies production token if APP_ENV is production"""
     prod_token = request.headers.get("X-Prod-Token")
 

@@ -10,7 +10,8 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._active_run import ActiveRun, CardHandler
 from opsml.projects._run_manager import _RunManager
 from opsml.projects.types import ProjectInfo
-from opsml.registry.cards import ArtifactCard, RunCard
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
@@ -73,7 +74,7 @@ class OpsmlProject:
         raise ValueError("Run id not set for current project")
 
     @run_id.setter
-    def run_id(self, run_id: str):
+    def run_id(self, run_id: str) -> None:
         """Set the run_id to use with the active project"""
         self._run_mgr.run_id = run_id
 
@@ -94,7 +95,7 @@ class OpsmlProject:
         self._run_mgr.start_run(run_name=run_name)
 
         try:
-            yield cast(ActiveRun, self._run_mgr.active_run)
+            yield self._run_mgr.active_run
 
         except Exception as error:
             logger.error("Error encountered. Ending run. {}", error)

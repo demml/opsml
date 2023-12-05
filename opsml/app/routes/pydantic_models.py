@@ -7,10 +7,9 @@ from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
 
 from opsml.model.challenger import BattleReport
-from opsml.registry.cards.audit import AuditSections, Comment
-from opsml.registry.cards.types import METRICS
-from opsml.registry.sql.base.registry_base import VersionType
-from opsml.registry.sql.semver import CardVersion
+from opsml.registry.cards.audit import AuditSections
+from opsml.registry.cards.types import METRICS, Comment
+from opsml.registry.sql.semver import CardVersion, VersionType
 
 
 class StorageUri(BaseModel):
@@ -86,7 +85,8 @@ class ListCardRequest(BaseModel):
     query_terms: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="before")
-    def update_limit(cls, env_vars: Dict[str, Optional[Union[str, int]]]):
+    @classmethod
+    def update_limit(cls, env_vars: Dict[str, Optional[Union[str, int]]]) -> Dict[str, Optional[Union[str, int]]]:
         if not any((env_vars.get(key) for key in ["name", "team", "limit"])):
             env_vars["limit"] = 20
         return env_vars
@@ -189,7 +189,7 @@ class NamesResponse(BaseModel):
 
 
 class ListFileRequest(BaseModel):
-    read_path: Optional[str] = None
+    read_path: str
 
 
 class ListFileResponse(BaseModel):
@@ -228,7 +228,7 @@ class CompareMetricResponse(BaseModel):
     report: Dict[str, List[BattleReport]]
 
 
-def form_body(cls):
+def form_body(cls: Any) -> Any:
     args = []
     params = cls.__signature__.parameters
     for param in params.values():

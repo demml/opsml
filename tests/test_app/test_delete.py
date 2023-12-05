@@ -43,6 +43,7 @@ def test_delete_data_model(
         user_email="mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry = api_registries.model

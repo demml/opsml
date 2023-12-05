@@ -9,7 +9,7 @@ import re
 import traceback
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from fastapi import Request
 from fastapi.responses import StreamingResponse
@@ -18,9 +18,10 @@ from streaming_form_data.targets import FileTarget
 
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import AuditCard, CardRegistries, CardRegistry, RunCard
-from opsml.registry.cards.audit import AuditSections
+from opsml.registry.cards.audit import AuditCard, AuditSections
+from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import RegistryType
+from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()
@@ -98,16 +99,16 @@ def get_runcard_from_model(
     run_uid = modelcard.get("runcard_uid", None)
 
     if run_uid is not None:
-        return registries.run.load_card(uid=run_uid)
+        return cast(RunCard, registries.run.load_card(uid=run_uid))
 
     return None
 
 
-def error_to_500(func):
+def error_to_500(func: Callable[..., Any]) -> Any:
     """Function for wrapping errors in the opsml UI"""
 
     @wraps(func)
-    async def wrapper(request: Request, *args, **kwargs):
+    async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         try:
             return await func(request, *args, **kwargs)
         except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -184,21 +185,21 @@ class MaxBodySizeValidator:
         self.body_len = 0
         self.max_size = max_size
 
-    def __call__(self, chunk: bytes):
+    def __call__(self, chunk: bytes) -> None:
         self.body_len += len(chunk)
         if self.body_len > self.max_size:
             raise MaxBodySizeException(body_len=self.body_len)
 
 
-class ExternalFileTarget(FileTarget):
+class ExternalFileTarget(FileTarget):  # type: ignore[misc]
     def __init__(  # pylint: disable=keyword-arg-before-vararg
         self,
         filename: str,
         write_path: str,
         storage_client: StorageClientType,
         allow_overwrite: bool = True,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
 
@@ -207,11 +208,11 @@ class ExternalFileTarget(FileTarget):
         self.filepath = f"{self.write_path}/{filename}"
         self._create_base_path()
 
-    def _create_base_path(self):
+    def _create_base_path(self) -> None:
         if isinstance(self.storage_client, LocalStorageClient):
             Path(self.write_path).mkdir(parents=True, exist_ok=True)
 
-    def on_start(self):
+    def on_start(self) -> None:
         self._fd = self.storage_client.open(self.filepath, self._mode)
 
 
@@ -292,7 +293,7 @@ class AuditFormParser:
             records = self.registries.audit.list_cards(uid=self.audit_form_dict["uid"])
 
             if bool(records):
-                audit_card: AuditCard = self.registries.audit.load_card(uid=self.audit_form_dict["uid"])
+                audit_card = cast(AuditCard, self.registries.audit.load_card(uid=self.audit_form_dict["uid"]))
 
             else:
                 logger.info("Invalid uid specified, defaulting to new AuditCard")
