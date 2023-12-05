@@ -9,7 +9,7 @@ from typing import Any, Optional, Tuple, Union, cast
 
 import google.auth
 from google.auth.credentials import Credentials
-from google.cloud import storage  # type: ignore
+from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import BaseModel, ConfigDict
 
