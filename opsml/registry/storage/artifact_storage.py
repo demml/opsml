@@ -107,7 +107,7 @@ class ArtifactStorage:
 
     def save_artifact(self, artifact: Any, storage_spec: ArtifactStorageSpecs) -> StoragePath:
         with self.storage_client.create_temp_save_path_with_spec(
-            self.storage_client._extend_storage_spec(
+            self.storage_client.extend_storage_spec(
                 storage_spec,
                 extra_path=self.extra_path,
                 file_suffix=self.file_suffix,
