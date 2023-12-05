@@ -199,8 +199,9 @@ class ModelCardMetadata(BaseModel):
     description: Description = Description()
     onnx_model_data: Optional[DataDict] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None
-    sample_data_type: str = "undefined"
-    model_type: Optional[str] = None
+    sample_data_type: str
+    model_type: str
+    model_class: str
     additional_onnx_args: Optional[ExtraOnnxArgs] = None
     data_schema: Optional[ApiDataSchemas] = None
     runcard_uid: Optional[str] = None

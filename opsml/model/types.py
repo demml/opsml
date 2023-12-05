@@ -28,7 +28,7 @@ class DataDtypes(str, Enum):
     FLOAT64 = "float64"
 
 
-class OnnxModelType(str, Enum):
+class TrainedModelType(str, Enum):
     TRANSFORMER = "transformer"
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
@@ -43,26 +43,26 @@ class OnnxModelType(str, Enum):
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
-    OnnxModelType.SKLEARN_ESTIMATOR,
-    OnnxModelType.STACKING_ESTIMATOR,
-    OnnxModelType.SKLEARN_PIPELINE,
-    OnnxModelType.LGBM_REGRESSOR,
-    OnnxModelType.LGBM_CLASSIFIER,
-    OnnxModelType.XGB_REGRESSOR,
-    OnnxModelType.CALIBRATED_CLASSIFIER,
+    TrainedModelType.SKLEARN_ESTIMATOR,
+    TrainedModelType.STACKING_ESTIMATOR,
+    TrainedModelType.SKLEARN_PIPELINE,
+    TrainedModelType.LGBM_REGRESSOR,
+    TrainedModelType.LGBM_CLASSIFIER,
+    TrainedModelType.XGB_REGRESSOR,
+    TrainedModelType.CALIBRATED_CLASSIFIER,
 ]
 
 LIGHTGBM_SUPPORTED_MODEL_TYPES = [
-    OnnxModelType.LGBM_BOOSTER,
+    TrainedModelType.LGBM_BOOSTER,
 ]
 
 UPDATE_REGISTRY_MODELS = [
-    OnnxModelType.LGBM_CLASSIFIER,
-    OnnxModelType.LGBM_REGRESSOR,
-    OnnxModelType.XGB_REGRESSOR,
+    TrainedModelType.LGBM_CLASSIFIER,
+    TrainedModelType.LGBM_REGRESSOR,
+    TrainedModelType.XGB_REGRESSOR,
 ]
 
-AVAILABLE_MODEL_TYPES = list(OnnxModelType)
+AVAILABLE_MODEL_TYPES = list(TrainedModelType)
 
 
 class OnnxDataProto(Enum):

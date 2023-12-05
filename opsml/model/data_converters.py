@@ -16,7 +16,7 @@ from opsml.model.types import (
     ExtraOnnxArgs,
     Feature,
     OnnxModelDefinition,
-    OnnxModelType,
+    TrainedModelType,
 )
 from opsml.registry.data.types import AllowedDataType
 
@@ -126,9 +126,9 @@ class NumpyOnnxConverter(DataConverter):
     def validate(model_info: ModelInfo) -> bool:
         if model_info.data_type == AllowedDataType.NUMPY:
             if model_info.model_type in AVAILABLE_MODEL_TYPES and model_info.model_type not in [
-                OnnxModelType.TF_KERAS,
-                OnnxModelType.PYTORCH,
-                OnnxModelType.TRANSFORMER,
+                TrainedModelType.TF_KERAS,
+                TrainedModelType.PYTORCH,
+                TrainedModelType.TRANSFORMER,
             ]:
                 return True
         return False
@@ -167,7 +167,8 @@ class PandasOnnxConverter(DataConverter):
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
         return (
-            model_info.data_type == AllowedDataType.PANDAS and model_info.model_type != OnnxModelType.SKLEARN_PIPELINE
+            model_info.data_type == AllowedDataType.PANDAS
+            and model_info.model_type != TrainedModelType.SKLEARN_PIPELINE
         )
 
 
@@ -208,7 +209,8 @@ class PandasPipelineOnnxConverter(DataConverter):
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
         return (
-            model_info.data_type == AllowedDataType.PANDAS and model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
+            model_info.data_type == AllowedDataType.PANDAS
+            and model_info.model_type == TrainedModelType.SKLEARN_PIPELINE
         )
 
 
@@ -245,7 +247,7 @@ class TensorflowDictOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == AllowedDataType.DICT and model_info.model_type == OnnxModelType.TF_KERAS
+        return model_info.data_type == AllowedDataType.DICT and model_info.model_type == TrainedModelType.TF_KERAS
 
 
 class TensorflowNumpyOnnxConverter(DataConverter):
@@ -274,7 +276,7 @@ class TensorflowNumpyOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
-        return model_info.data_type == AllowedDataType.NUMPY and model_info.model_type == OnnxModelType.TF_KERAS
+        return model_info.data_type == AllowedDataType.NUMPY and model_info.model_type == TrainedModelType.TF_KERAS
 
 
 class PyTorchOnnxDataConverter(DataConverter):
@@ -306,8 +308,8 @@ class PyTorchOnnxDataConverter(DataConverter):
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
         return model_info.data_type == AllowedDataType.NUMPY and model_info.model_type in [
-            OnnxModelType.PYTORCH,
-            OnnxModelType.TRANSFORMER,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
         ]
 
 
@@ -361,8 +363,8 @@ class PyTorchOnnxDictConverter(DataConverter):
     @staticmethod
     def validate(model_info: ModelInfo) -> bool:
         return model_info.data_type == AllowedDataType.DICT and model_info.model_type in [
-            OnnxModelType.PYTORCH,
-            OnnxModelType.TRANSFORMER,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
         ]
 
 
