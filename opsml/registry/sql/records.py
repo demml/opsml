@@ -261,7 +261,7 @@ class LoadedModelRecord(LoadRecord):
 
         modelcard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
         modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
-        modelcard_definition["metadata"]["model_type"] = values.get("model_type")
+        modelcard_definition["metadata"]["model_type"] = values.get("model_type", "undefined")
         modelcard_definition["storage_client"] = values.get("storage_client")
         modelcard_definition["metadata"]["uris"] = ModelCardUris(
             model_metadata_uri=values.get("model_metadata_uri"),
