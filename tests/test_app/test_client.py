@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple
-import os
 import re
 import uuid
 import pathlib
@@ -38,7 +37,7 @@ def test_app_settings(test_app: TestClient):
     response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
 
     assert response.status_code == 200
-    assert response.json()["proxy"] == True
+    assert response.json()["proxy"] is True
 
 
 def test_debug(test_app: TestClient):
@@ -436,7 +435,7 @@ def test_pipeline_registry(api_registries: CardRegistry):
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
-    df = registry.list_cards(uid=loaded_card.uid)
+    registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
@@ -700,7 +699,7 @@ def test_model_metrics(
 
     # test auditcard comment
     response = test_app.post(
-        f"/opsml/audit/comment/save",
+        "/opsml/audit/comment/save",
         data=comment.model_dump(),
     )
     assert response.status_code == 200
@@ -810,7 +809,7 @@ def test_card_list_fail(test_app: TestClient):
 def test_homepage(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml")
+    response = test_app.get("/opsml")
     assert response.status_code == 200
 
 
@@ -818,7 +817,7 @@ def test_homepage(test_app: TestClient):
 def test_model_list(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml/models/list/")
+    response = test_app.get("/opsml/models/list/")
     assert response.status_code == 200
 
 
@@ -826,7 +825,7 @@ def test_model_list(test_app: TestClient):
 def test_data_list(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml/data/list/")
+    response = test_app.get("/opsml/data/list/")
     assert response.status_code == 200
 
 
@@ -865,24 +864,24 @@ def test_data_model_version(
         )
         run.register_card(modelcard)
 
-    response = test_app.get(f"/opsml/data/versions/")
+    response = test_app.get("/opsml/data/versions/")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/data/versions/?name=test_data")
+    response = test_app.get("/opsml/data/versions/?name=test_data")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
+    response = test_app.get("/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
     assert response.status_code == 200
 
     response = test_app.get(
-        f"/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
+        "/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
     )
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/models/versions/")
+    response = test_app.get("/opsml/models/versions/")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
@@ -891,7 +890,7 @@ def test_data_model_version(
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/projects/list/?project=test:test-exp")
+    response = test_app.get("/opsml/projects/list/?project=test:test-exp")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/projects/list/?project=test:test-exp&run_uid={run.runcard.uid}")
@@ -905,16 +904,16 @@ def test_data_model_version(
 def test_audit(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml/audit/")
+    response = test_app.get("/opsml/audit/")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops")
+    response = test_app.get("/opsml/audit/?team=mlops")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops&?model=pipeline_model")
+    response = test_app.get("/opsml/audit/?team=mlops&?model=pipeline_model")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops&model=pipeline_model&version=1.0.0")
+    response = test_app.get("/opsml/audit/?team=mlops&model=pipeline_model&version=1.0.0")
     assert response.status_code == 200
 
     audit_form = AuditFormRequest(
@@ -928,7 +927,7 @@ def test_audit(test_app: TestClient):
     )
 
     response = test_app.post(
-        f"/opsml/audit/save",
+        "/opsml/audit/save",
         data=audit_form.model_dump(),
     )
 
@@ -985,14 +984,14 @@ def test_audit_upload(
 
     # save audit card
     response = test_app.post(
-        f"/opsml/audit/save",
+        "/opsml/audit/save",
         data=audit_form.model_dump(),
     )
     auditcard = api_registries.audit.list_cards()[0]
 
     # without uid
     response = test_app.post(
-        f"/opsml/audit/upload",
+        "/opsml/audit/upload",
         data=audit_form.model_dump(),
         files={"audit_file": open(file_, "rb")},
     )
@@ -1012,7 +1011,7 @@ def test_audit_upload(
     )
 
     response = test_app.post(
-        f"/opsml/audit/upload",
+        "/opsml/audit/upload",
         data=audit_form.model_dump(),
         files={"audit_file": open(file_, "rb")},
     )
@@ -1020,7 +1019,7 @@ def test_audit_upload(
 
     # test downloading audit file
     response = test_app.post(
-        f"/opsml/audit/download",
+        "/opsml/audit/download",
         data=audit_form.model_dump(),
     )
     assert response.status_code == 200

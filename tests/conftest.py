@@ -73,7 +73,7 @@ from opsml.registry.storage.types import StorageClientSettings, GcsStorageClient
 from opsml.registry.sql.sql_schema import BaseMixin, Base, RegistryTableNames
 from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.storage.storage_system import StorageClientGetter, StorageSystem, StorageClientType
+from opsml.registry.storage.storage_system import StorageClientGetter, StorageClientType
 
 from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries
@@ -437,7 +437,7 @@ def experiment_table_to_migrate():
 @pytest.fixture(scope="function")
 def mock_local_engine():
     local_client = LocalSQLConnection(tracking_uri="sqlite://")
-    engine = local_client.get_engine()
+    local_client.get_engine()
     return
 
 
@@ -680,7 +680,8 @@ def pytorch_onnx_byo():
     batch_size = 1  # just a random number
 
     # Initialize model with the pretrained weights
-    map_location = lambda storage, loc: storage
+    def map_location(storage, loc):
+        return storage
     if torch.cuda.is_available():
         map_location = None
     torch_model.load_state_dict(model_zoo.load_url(model_url, map_location=map_location))
@@ -690,7 +691,7 @@ def pytorch_onnx_byo():
 
     # Input to the model
     x = torch.randn(batch_size, 1, 224, 224, requires_grad=True)
-    torch_out = torch_model(x)
+    torch_model(x)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         onnx_path = f"{tmpdir}/super_resolution.onnx"
@@ -1032,7 +1033,6 @@ def huggingface_bart():
 def huggingface_vit():
     from transformers import ViTFeatureExtractor, ViTModel
     from PIL import Image
-    import requests
 
     image = Image.open("tests/assets/cats.jpg")
 

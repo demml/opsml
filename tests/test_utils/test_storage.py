@@ -5,7 +5,6 @@ import pytest
 import json
 import os
 from pytest_lazyfixture import lazy_fixture
-from unittest.mock import patch, MagicMock
 from opsml.registry.storage.artifact_storage import (
     ParquetStorage,
     NumpyStorage,

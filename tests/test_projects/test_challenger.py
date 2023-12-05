@@ -97,7 +97,7 @@ def test_challenger_champion_list(opsml_project: OpsmlProject) -> None:
     """Test ModelChallenger using champion list"""
 
     modelcard = opsml_project._run_mgr.registries.model.load_card(name="pipeline_model", version="1.1.0")
-    runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
+    opsml_project._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
 
     challenger = ModelChallenger(challenger=modelcard)
 
@@ -167,13 +167,13 @@ def test_challenger_fail_no_runcard(
 
     # run test
     modelcard = opsml_project._run_mgr.registries.model.load_card(name="pipeline_model", version="1.1.0")
-    runcard = opsml_project._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
+    opsml_project._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
 
     challenger = ModelChallenger(challenger=modelcard)
 
     # should fail (runcard does not exist)
     with pytest.raises(ValueError):
-        battle_result = challenger.challenge_champion(
+        challenger.challenge_champion(
             champions=[champion_info],
             metric_name="mape",
             lower_is_better=True,
@@ -182,7 +182,7 @@ def test_challenger_fail_no_runcard(
 
 
 def test_challenger_input_validation():
-    inputs = ChallengeInputs(
+    ChallengeInputs(
         metric_name=["mae"],
         metric_value=[10],
         lower_is_better=[True],
