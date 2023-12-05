@@ -18,6 +18,8 @@ logger = ArtifactLogger.get_logger()
 
 
 class CardValidator:
+    """Base class for card validators to be used during card instantiation"""
+
     def get_metadata(self) -> Any:
         raise NotImplementedError
 
@@ -29,6 +31,16 @@ class DataCardValidator(CardValidator):
         sql_logic: Dict[str, str],
         metadata: Optional[DataCardMetadata] = None,
     ) -> None:
+        """DataCardValidator validator to be used during DataCard instantiation
+
+        Args:
+            data:
+                Data to be used for DataCard
+            sql_logic:
+                SQL logic to be used for DataCard
+            metadata:
+                Metadata to be used for DataCard
+        """
         self.data = data
         self.metadata = metadata
         self.sql_logic = sql_logic
@@ -41,6 +53,7 @@ class DataCardValidator(CardValidator):
         return False
 
     def get_data_type(self) -> str:
+        """Get data allowedatatype for DataCard"""
         if self.data is None and bool(self.sql_logic):
             return AllowedDataType.SQL
         return check_data_type(self.data)
@@ -89,6 +102,16 @@ class ModelCardValidator:
         trained_model: Any,
         metadata: Optional[ModelCardMetadata] = None,
     ) -> None:
+        """ModelCardValidator validator to be used during ModelCard instantiation
+
+        Args:
+            sample_data:
+                Sample data to be used for ModelCard
+            trained_model:
+                Trained model to be used for ModelCard
+            metadata:
+                Metadata to be used for ModelCard
+        """
         self.sample_data = sample_data
         self.trained_model = trained_model
         self.metadata = metadata
@@ -135,6 +158,7 @@ class ModelCardValidator:
         raise ValueError("Provided sample data is not a valid type")
 
     def get_model_type(self, model_class: str) -> str:
+        """Get model type for ModelCard"""
         model_type = next(
             (
                 model_type
