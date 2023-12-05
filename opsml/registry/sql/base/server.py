@@ -6,11 +6,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.sql.base.query_engine import (  # type: ignore
-    QueryEngine,
-    log_card_change,
-)
+from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
+from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import (
     CardVersion,
     SemVerRegistryValidator,
@@ -18,7 +16,8 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.sql_schema import TableSchema
+from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -26,7 +25,9 @@ logger = ArtifactLogger.get_logger()
 class ServerRegistry(SQLRegistryBase):
     def __init__(self, registry_type: str):
         super().__init__(registry_type)
+
         self.engine = QueryEngine()
+        self._table = TableSchema.get_table(table_name=self.table_name)
 
     @property
     def unique_teams(self) -> List[str]:

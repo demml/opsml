@@ -2,10 +2,9 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Union, cast
 import textwrap
-import pandas as pd
-from sqlalchemy.sql.expression import ColumnElement, FromClause
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
@@ -13,13 +12,9 @@ from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
 from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
-
+import pandas as pd
 
 logger = ArtifactLogger.get_logger()
-
-
-SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-
 
 Registry = ClientRegistry
 
@@ -178,7 +173,7 @@ class CardRegistry:
         """
 
         self._registry = self._set_registry(registry_name=registry_name)
-        self.table_name = self._registry._table.__tablename__
+        self.table_name = self._registry.table_name
 
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
@@ -270,6 +265,8 @@ class CardRegistry:
         )
 
         if as_dataframe:
+            import pandas as pd
+
             return pd.DataFrame(card_list)
 
         return card_list

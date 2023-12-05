@@ -1,6 +1,8 @@
 from typing import Any, Dict, Optional
 from opsml.registry.sql.records import LoadedDataRecord, LoadedModelRecord
 from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.cards.types import ModelCardMetadata
+from opsml.registry.data.types import AllowedDataType
 
 
 def test_data_metadata_backward():
@@ -74,7 +76,7 @@ def test_model_metadata_backward():
                 "datacard_uid": "uid",
                 "onnx_model_data": None,
                 "onnx_model_def": None,
-                "sample_data_type": None,
+                "sample_data_type": AllowedDataType.PANDAS.value,
                 "model_type": "model",
                 "additional_onnx_args": None,
                 "data_schema": None,
@@ -90,6 +92,7 @@ def test_model_metadata_backward():
             "storage_client": None,
             "modelcard_uri": "uri",
             "trained_model_uri": "uri",
+            "sample_data_type": AllowedDataType.PANDAS.value,
         },
     )
 

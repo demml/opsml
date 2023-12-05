@@ -50,7 +50,7 @@ class Comment(BaseModel):
     comment: str
     timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # type: ignore
         return self.__dict__ == other.__dict__
 
 
@@ -128,8 +128,9 @@ class Description(BaseModel):
     Notes: Optional[str] = None
 
     @field_validator("summary", mode="before")
-    def load_summary(cls, summary) -> str:
-        if not bool(summary):
+    @classmethod
+    def load_summary(cls, summary: Optional[str]) -> Optional[str]:
+        if summary is None:
             return summary
 
         if ".md" in summary.lower():
@@ -198,7 +199,7 @@ class ModelCardMetadata(BaseModel):
     description: Description = Description()
     onnx_model_data: Optional[DataDict] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None
-    sample_data_type: Optional[str] = None
+    sample_data_type: str = "undefined"
     model_type: Optional[str] = None
     additional_onnx_args: Optional[ExtraOnnxArgs] = None
     data_schema: Optional[ApiDataSchemas] = None
@@ -257,7 +258,7 @@ class DataCardMetadata(BaseModel):
 
     description: Description = Description()
     feature_map: Optional[Dict[str, Optional[Any]]] = None
-    data_type: Optional[str] = None
+    data_type: str = "undefined"
     feature_descriptions: Dict[str, str] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None
@@ -266,14 +267,18 @@ class DataCardMetadata(BaseModel):
     uris: DataCardUris = DataCardUris()
 
     @field_validator("feature_descriptions", mode="before")
-    def lower_descriptions(cls, feature_descriptions):
+    @classmethod
+    def lower_descriptions(cls, feature_descriptions: Dict[str, str]) -> Dict[str, str]:
         if not bool(feature_descriptions):
             return feature_descriptions
 
         feat_dict = {}
         for feature, description in feature_descriptions.items():
             feat_dict[feature.lower()] = description.lower()
-            return feat_dict
+
+        return feat_dict
 
 
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]
+
+AuditSectionType = Dict[str, Dict[int, Dict[str, str]]]

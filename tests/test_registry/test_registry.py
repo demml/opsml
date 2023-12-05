@@ -572,6 +572,7 @@ def test_local_model_registry(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -635,6 +636,7 @@ def test_register_model(
         metadata=ModelCardMetadata(
             description=Description(summary="test description"),
         ),
+        to_onnx=True,
     )
 
     model_registry: CardRegistry = db_registries["model"]
@@ -657,6 +659,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(card=model_card_custom)
@@ -668,6 +671,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=None,
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -680,6 +684,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid="test_uid",
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -693,6 +698,7 @@ def test_register_model(
             team="mlops",
             user_email="mlops.com",
             datacard_uid="test_uid",
+            to_onnx=True,
         )
 
     # test pre-release model
@@ -704,6 +710,7 @@ def test_register_model(
         user_email="mlops.com",
         datacard_uid=data_card.uid,
         version="3.1.0-rc.1",
+        to_onnx=True,
     )
 
     model_registry.register_card(card=model_card_pre)
@@ -851,6 +858,7 @@ def test_full_pipeline_with_loading(
         team=team,
         user_email=user_email,
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(model_card)

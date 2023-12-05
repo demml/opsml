@@ -1,13 +1,13 @@
 import shutil
 from functools import wraps
-from typing import Any
+from typing import Any, Callable
 
 
-def cleanup_files(func):
+def cleanup_files(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator for deleting files if needed"""
 
     @wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self, *args, **kwargs) -> Any:  # type: ignore[no-untyped-def]
         artifact, loadable_filepath = func(self, *args, **kwargs)
 
         if isinstance(loadable_filepath, list):

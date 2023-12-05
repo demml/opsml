@@ -7,22 +7,21 @@ import textwrap
 from typing import Any, Dict, Optional
 
 import numpy as np
-import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.model_converters import OnnxModelConverter
 from opsml.model.model_info import ModelInfo, get_model_data
-from opsml.model.model_types import ModelType, OnnxModelType
+from opsml.model.model_types import ModelType
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
     ExtraOnnxArgs,
     Feature,
-    InputData,
-    InputDataType,
     ModelReturn,
     OnnxModelDefinition,
+    OnnxModelType,
+    ValidModelInput,
 )
+from opsml.registry.data.types import AllowedDataType, get_class_name
 
 logger = ArtifactLogger.get_logger()
 
@@ -31,7 +30,8 @@ class ModelCreator:
     def __init__(
         self,
         model: Any,
-        input_data: InputData,
+        input_data: ValidModelInput,
+        input_data_type: str,
         additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
@@ -51,10 +51,10 @@ class ModelCreator:
         self.model_class = self._get_model_class_name()
         self.additional_model_args = additional_onnx_args
         self.onnx_model_def = onnx_model_def
-        self.input_data_type = type(self.input_data)
+        self.input_data_type = input_data_type
         self.model_type = self.get_model_type()
 
-    def _get_model_class_name(self):
+    def _get_model_class_name(self) -> str:
         """Gets class name from model"""
 
         if "keras.engine" in str(self.model):
@@ -67,7 +67,7 @@ class ModelCreator:
         if "transformers.models" in str(self.model.__class__.__bases__):
             return OnnxModelType.TRANSFORMER.value
 
-        return self.model.__class__.__name__
+        return str(self.model.__class__.__name__)
 
     def get_model_type(self) -> str:
         model_type = next(
@@ -101,14 +101,16 @@ class TrainedModelMetadataCreator(ModelCreator):
     def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
         model_data = get_model_data(
             input_data=predictions,
-            data_type=type(predictions),
+            data_type=get_class_name(predictions),
         )
 
         # pandas will use column names as features
-        if not isinstance(predictions, pd.DataFrame):
+        if self.input_data_type != AllowedDataType.PANDAS:
             model_data.features = ["outputs"]
 
-        return model_data.feature_dict
+        prediction_type = model_data.feature_dict
+
+        return prediction_type
 
     def _predict_prediction(self) -> Dict[str, Feature]:
         """Test default predict method leveraged by most ml libraries"""
@@ -191,7 +193,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             model_data_schema=DataDict(
                 input_features=input_features,
                 output_features=output_features,
-                data_type=InputDataType(type(self.input_data)).name,
+                data_type=self.input_data_type,
             )
         )
 
@@ -208,7 +210,8 @@ class OnnxModelCreator(ModelCreator):
     def __init__(
         self,
         model: Any,
-        input_data: InputData,
+        input_data: ValidModelInput,
+        input_data_type: str,
         additional_onnx_args: Optional[ExtraOnnxArgs] = None,
         onnx_model_def: Optional[OnnxModelDefinition] = None,
     ):
@@ -229,21 +232,18 @@ class OnnxModelCreator(ModelCreator):
         super().__init__(
             model=model,
             input_data=input_data,
+            input_data_type=input_data_type,
             additional_onnx_args=additional_onnx_args,
             onnx_model_def=onnx_model_def,
         )
-        self.onnx_data_type = self.get_onnx_data_type(input_data=input_data)
+        self.onnx_data_type = self.get_onnx_data_type()
 
-    def get_onnx_data_type(self, input_data: Any) -> str:
+    def get_onnx_data_type(self) -> str:
         """
         Gets the current data type base on model type.
         Currently only sklearn pipeline supports pandas dataframes.
         All others support numpy arrays. This is needed for API signature
         creation when loading model predictors.
-
-        Args:
-            input_data:
-                Sample of data used to train model
 
         Returns:
             data type
@@ -256,9 +256,9 @@ class OnnxModelCreator(ModelCreator):
             OnnxModelType.TF_KERAS,
             OnnxModelType.PYTORCH,
         ]:
-            return InputDataType(type(input_data)).name
+            return AllowedDataType(self.input_data_type).value
 
-        return InputDataType.NUMPY_ARRAY.name
+        return AllowedDataType.NUMPY.value
 
     def create_model(self) -> ModelReturn:
         """
@@ -267,6 +267,7 @@ class OnnxModelCreator(ModelCreator):
         Returns
             `ModelReturn`
         """
+        from opsml.model.model_converters import OnnxModelConverter
 
         try:
             model_data = get_model_data(
@@ -311,7 +312,8 @@ class OnnxModelCreator(ModelCreator):
 
 def create_model(
     model: Any,
-    input_data: InputData,
+    input_data: ValidModelInput,
+    input_data_type: str,
     to_onnx: bool,
     additional_onnx_args: Optional[ExtraOnnxArgs] = None,
     onnx_model_def: Optional[OnnxModelDefinition] = None,
@@ -324,6 +326,8 @@ def create_model(
                 Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
             input_data:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
+            input_data_type:
+                Data type of input data
             additional_onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
             to_onnx:
@@ -346,6 +350,7 @@ def create_model(
     return creator(
         model=model,
         input_data=input_data,
+        input_data_type=input_data_type,
         additional_onnx_args=additional_onnx_args,
         onnx_model_def=onnx_model_def,
     ).create_model()

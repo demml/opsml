@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-
+import os
 import re
 import uuid
 import pathlib
@@ -271,6 +271,7 @@ def test_register_model(
         user_email="mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry = api_registries.model
@@ -291,6 +292,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(card=model_card_custom)
@@ -303,6 +305,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=None,
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -315,6 +318,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid="test_uid",
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -328,6 +332,7 @@ def test_register_model(
             team="mlops",
             user_email="mlops.com",
             datacard_uid="test_uid",
+            to_onnx=True,
         )
 
     # test card tags
@@ -347,6 +352,7 @@ def test_register_model(
         team="new-team",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
     with pytest.raises(ValueError) as ve:
         model_registry.register_card(card=model_card_dup)
@@ -467,6 +473,7 @@ def test_metadata_download_and_registration(
         team=team,
         user_email=user_email,
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(model_card)
@@ -494,9 +501,8 @@ def test_metadata_download_and_registration(
     uri = response.json()
     assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}",
-        json={"read_path": model_card.metadata.uris.trained_model_uri},
+    response = test_app.get(
+        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path={model_card.metadata.uris.trained_model_uri}",
     )
 
     assert response.status_code == 200
@@ -643,6 +649,7 @@ def test_model_metrics(
         info=card_info,
         datacard_uid=datacard.uid,
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -658,6 +665,7 @@ def test_model_metrics(
         info=card_info,
         datacard_uid=datacard.uid,
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard_2)
 
@@ -720,6 +728,7 @@ def test_model_metric_failure(
         sample_input_data=data[0:1],
         info=card_info,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -747,20 +756,18 @@ def test_token_fail(
         api_registries.run.register_card(card=run)
 
 
-def test_delete_no_file(test_app: TestClient):
+def test_delete_fail(test_app: TestClient):
     """Test error path"""
 
-    pathlib.Path("tests/assets/empty").mkdir(parents=True, exist_ok=True)
+    pathlib.Path("tests/assets/empty/model_registry").mkdir(parents=True, exist_ok=True)
 
-    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty"})
+    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty/model_registry"})
 
-    detail = response.json()
-    assert detail["deleted"] == False
     assert response.status_code == 200
 
     # this should fail because there is no file
     response = test_app.post("/opsml/files/delete", json={"read_path": "fail"})
-    assert response.status_code == 500
+    assert response.status_code == 422
 
 
 def test_card_create_fail(test_app: TestClient):
@@ -854,6 +861,7 @@ def test_data_model_version(
             user_email="mlops.com",
             tags={"id": "model1"},
             datacard_uid=datacard.uid,
+            to_onnx=True,
         )
         run.register_card(modelcard)
 
@@ -959,6 +967,7 @@ def test_audit_upload(
         trained_model=model,
         sample_input_data=data[0:1],
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -1024,3 +1033,26 @@ def test_registry_name_fail(test_app: TestClient):
     )
 
     assert response.status_code == 500
+
+
+def test_upload_fail(test_app: TestClient):
+    headers = {
+        "Filename": "blah:",
+        "WritePath": "fake",
+        "X-Prod-Token": "test-token",
+    }
+    files = {"file": open("tests/assets/cats.jpg", "rb")}
+
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.UPLOAD}",
+        files=files,
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_download_fail(test_app: TestClient):
+    # test register model (onnx)
+    response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path=fake")
+    assert response.status_code == 422
