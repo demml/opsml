@@ -15,10 +15,10 @@ from opsml.model.types import (
     DataDtypes,
     ExtraOnnxArgs,
     Feature,
+    ModelCard,
     OnnxModelDefinition,
     TrainedModelType,
 )
-from opsml.registry.cards.model import ModelCard
 from opsml.registry.data.types import AllowedDataType
 
 # attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
@@ -108,8 +108,8 @@ class NumpyOnnxConverter(DataConverter):
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
 
-        dtype = self.model_data.dtypes[0]
-        shape = cast(Tuple[int, ...], self.model_data.shape[1:])
+        dtype = self.data_helper.dtypes[0]
+        shape = cast(Tuple[int, ...], self.data_helper.shape[1:])
         spec = get_skl2onnx_onnx_tensor_spec(dtype=dtype, input_shape=shape)
 
         return [(self.input_name, spec)]
@@ -118,7 +118,7 @@ class NumpyOnnxConverter(DataConverter):
         return None
 
     def convert_data_to_onnx(self) -> Dict[str, NDArray[Any]]:
-        return {self.input_name: self.model_data.data}
+        return {self.input_name: self.data_helper.data}
 
     @staticmethod
     def validate(data_type: str, model_type: str) -> bool:
@@ -221,9 +221,9 @@ class TensorflowDictOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        model = cast(tf.keras.Model, self.trained_model)
+        assert isinstance(self.card.trained_model, tf.keras.Model)
         spec = []
-        for input_ in model.inputs:
+        for input_ in self.card.trained_model.inputs:
             shape_, dtype = list(input_.shape), input_.dtype
             shape_[0] = None
             input_name = getattr(input_, "name", "inputs")
@@ -233,6 +233,7 @@ class TensorflowDictOnnxConverter(DataConverter):
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
         onnx_data = {}
+        assert isinstance(self.data_helper.data, dict)
         for key, val in self.data_helper.data.items():
             onnx_data[key] = val.astype(np.float32)
         return onnx_data
@@ -255,8 +256,9 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        model = cast(tf.keras.Model, self.card.trained_model)
-        input_ = model.inputs[0]
+        assert isinstance(self.card.trained_model, tf.keras.Model)
+        # model = cast(tf.keras.Model, self.card.trained_model)
+        input_ = self.card.trained_model.inputs[0]
         shape_, dtype = list(input_.shape), input_.dtype
         shape_[0] = None
         self.input_name = getattr(input_, "name", "inputs")
@@ -280,8 +282,8 @@ class PyTorchOnnxDataConverter(DataConverter):
         self.input_name = self._get_input_name()
 
     def _get_input_name(self) -> str:
-        args = cast(ExtraOnnxArgs, self.card.metadata.additional_onnx_args)
-        return args.input_names[0]
+        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
+        return self.card.metadata.additional_onnx_args.input_names[0]
 
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
@@ -319,8 +321,8 @@ class PyTorchOnnxDictConverter(DataConverter):
         self.input_names = self._get_input_names()
 
     def _get_input_names(self) -> List[str]:
-        args = cast(ExtraOnnxArgs, self.card.metadata.additional_model_args)
-        return args.input_names
+        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
+        return self.card.metadata.additional_onnx_args.input_names
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         return None
@@ -328,8 +330,8 @@ class PyTorchOnnxDictConverter(DataConverter):
     def get_onnx_data_types(self) -> List[Any]:
         zipped = zip(
             self.input_names,
-            self.model_data.shape,
-            self.model_data.dtypes,
+            self.data_helper.shape,
+            self.data_helper.dtypes,
         )
 
         return list([zipped])

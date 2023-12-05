@@ -323,3 +323,48 @@ class ModelProto(Protocol):
     @property
     def graph(self) -> Graph:
         return Graph()
+
+
+# proto class for type checking in order to prevent cyclic import
+class Metadata(Protocol):
+    @property
+    def model_type(self) -> str:
+        ...
+
+    @property
+    def model_class(self) -> str:
+        ...
+
+    @property
+    def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
+        ...
+
+    @property
+    def additional_onnx_args(self) -> Optional[ExtraOnnxArgs]:
+        ...
+
+    @additional_onnx_args.setter
+    def additional_onnx_args(self) -> None:
+        ...
+
+    @property
+    def sample_data_type(self) -> str:
+        ...
+
+
+class ModelCard(Protocol):
+    @property
+    def metadata(self) -> Metadata:
+        ...
+
+    @property
+    def trained_model(self) -> Any:
+        ...
+
+    @property
+    def sample_input_data(self) -> ValidModelInput:
+        ...
+
+    @property
+    def to_onnx(self) -> bool:
+        ...

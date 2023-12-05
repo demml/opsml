@@ -86,7 +86,7 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
                 calculate_linear_regressor_output_shapes,
             )
 
-        if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
+        if self.model_estimator == TrainedModelType.XGB_REGRESSOR:
             return cast(Callable[..., Any], calculate_linear_regressor_output_shapes)
         return cast(Callable[..., Any], calculate_linear_classifier_output_shapes)
 
