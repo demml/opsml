@@ -155,9 +155,7 @@ class AuditCardRegistry(Registry):
         return registry_name.lower() == RegistryType.AUDIT.value
 
 
-# CardRegistry also needs to set a storage file system
 class CardRegistry:
-    # TODO(@damon): Turn this into registry_type
     def __init__(self, registry_name: str):
         """
         Interface for connecting to any of the ArtifactCard registries
