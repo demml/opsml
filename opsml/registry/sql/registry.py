@@ -12,6 +12,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.base import OpsmlRegistry
+from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.utils.utils import check_package_exists
@@ -19,12 +20,10 @@ from opsml.registry.utils.utils import check_package_exists
 logger = ArtifactLogger.get_logger()
 
 
-if TYPE_CHECKING:
-    from opsml.registry.sql.base.server import ServerRegistry
+SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
 
-    Registry = ServerRegistry
-else:
-    Registry = OpsmlRegistry
+
+Registry = ServerRegistry
 
 
 class DataCardRegistry(Registry):
@@ -76,8 +75,8 @@ class ModelCardRegistry(Registry):
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )
@@ -362,8 +361,8 @@ class CardRegistry:
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )
