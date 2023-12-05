@@ -18,8 +18,8 @@ from opsml.model.types import (
     OnnxModelDefinition,
     TrainedModelType,
 )
-from opsml.registry.data.types import AllowedDataType
 from opsml.registry.cards.model import ModelCard
+from opsml.registry.data.types import AllowedDataType
 
 # attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
 # this is checked during model conversion

@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
 import numpy as np
@@ -10,11 +9,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import (
-    DataDtypes,
-    Feature,
-    ValidModelInput,
-)
+from opsml.model.types import DataDtypes, Feature, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()

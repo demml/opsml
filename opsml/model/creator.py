@@ -4,26 +4,21 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.data_helper import get_model_data
-from opsml.model.types import TrainedModelType
-from opsml.model.model_types import ModelType
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
-    ExtraOnnxArgs,
     Feature,
     ModelReturn,
-    OnnxModelDefinition,
-    OnnxModelType,
-    ValidModelInput,
+    TrainedModelType,
 )
-from opsml.registry.data.types import AllowedDataType, get_class_name
 from opsml.registry.cards.model import ModelCard
+from opsml.registry.data.types import AllowedDataType, get_class_name
 
 logger = ArtifactLogger.get_logger()
 
