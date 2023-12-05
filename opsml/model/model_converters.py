@@ -184,7 +184,7 @@ class ModelConverter:
         logger.info("Onnx model validated")
 
     def _get_data_elem_type(self, sig: Any) -> int:
-        return sig.type.tensor_type.elem_type
+        return int(sig.type.tensor_type.elem_type)
 
     def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer) -> Dict[str, Feature]:  # type: ignore[type-arg]
         feature_dict = {}
@@ -502,7 +502,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
         onnx_model, _ = tf2onnx.convert.from_keras(self.model_info.model, initial_types, opset=13)
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model
+        return cast(ModelProto, onnx_model)
 
     @staticmethod
     def validate(model_type: str) -> bool:

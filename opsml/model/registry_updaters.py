@@ -5,7 +5,7 @@
 
 """Code for generating Onnx Models"""
 import warnings
-from typing import Callable, Any
+from typing import Callable, Any, Optional, Dict, Tuple, cast
 
 # Get logger
 from opsml.helpers.logging import ArtifactLogger
@@ -33,7 +33,7 @@ class LightGBMRegistryUpdater(RegistryUpdater):
             return "LGBMRegressor"
         return "LGBMClassifier"
 
-    def get_output_conversion_tools(self) -> Callable[..., Any]:
+    def get_output_conversion_tools(self) -> Tuple[Callable[..., Any], Optional[Dict[str, Any]]]:
         from skl2onnx.common.shape_calculator import (
             calculate_linear_classifier_output_shapes,
             calculate_linear_regressor_output_shapes,
@@ -87,8 +87,8 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
             )
 
         if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
-            return calculate_linear_regressor_output_shapes
-        return calculate_linear_classifier_output_shapes
+            return cast(Callable[..., Any], calculate_linear_regressor_output_shapes)
+        return cast(Callable[..., Any], calculate_linear_classifier_output_shapes)
 
     def update_registry_converter(self) -> None:
         logger.info("Registering xgboost onnx converter")

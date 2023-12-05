@@ -106,7 +106,7 @@ class PydanticFeatureGenerator:
         for _ in range(shape_len):
             feature_type = conlist(feature_type)
 
-        return feature_type
+        return cast(List[Any], feature_type)
 
     def _get_field_from_feature(self, feature: Feature) -> Union[List[Any], str, int, float]:
         """Infer field type and shape from feature"""

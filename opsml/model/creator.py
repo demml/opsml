@@ -96,7 +96,7 @@ class TrainedModelMetadataCreator(ModelCreator):
             input_data=self.input_data,
         )
 
-        return cast(Dict[str, Feature], model_data.feature_dict)
+        return model_data.feature_dict
 
     def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
         model_data = get_model_data(
@@ -108,7 +108,9 @@ class TrainedModelMetadataCreator(ModelCreator):
         if self.input_data_type != AllowedDataType.PANDAS:
             model_data.features = ["outputs"]
 
-        return cast(Dict[str, Feature], model_data.feature_dict)
+        prediction_type = model_data.feature_dict
+
+        return prediction_type
 
     def _predict_prediction(self) -> Dict[str, Feature]:
         """Test default predict method leveraged by most ml libraries"""
