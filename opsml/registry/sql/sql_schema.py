@@ -4,7 +4,7 @@
 import os
 import uuid
 from datetime import date
-from typing import cast, List
+from typing import List, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
@@ -152,10 +152,10 @@ class ProjectSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
-AVAILABLE_TABLES = cast(
-    List[CardSQLTable],
-    [schema for schema in Base.__subclasses__() if schema.__tablename__ != RegistryTableNames.BASE.value],  # type: ignore[attr-defined]
-)
+AVAILABLE_TABLES: List[CardSQLTable] = []
+for schema in Base.__subclasses__():
+    if schema.__tablename__ != RegistryTableNames.BASE.value:  # type: ignore[attr-defined]
+        AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 
 
 class SQLTableGetter:
