@@ -17,7 +17,7 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.sql.sql_schema import SQLTable
+from opsml.registry.sql.sql_schema import SQLTableGetter
 from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
@@ -30,7 +30,7 @@ class ServerRegistry(SQLRegistryBase):
         super().__init__(registry_type)
 
         self.engine = QueryEngine()
-        self._table = SQLTable.get_table(table_name=self.table_name)
+        self._table = SQLTableGetter.get_table(table_name=self.table_name)
 
     @property
     def unique_teams(self) -> Sequence[str]:
