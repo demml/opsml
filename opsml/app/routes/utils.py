@@ -9,7 +9,7 @@ import re
 import traceback
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 from fastapi import Request
 from fastapi.responses import StreamingResponse

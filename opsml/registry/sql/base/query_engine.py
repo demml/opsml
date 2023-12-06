@@ -6,20 +6,21 @@
 import datetime
 from contextlib import contextmanager
 from enum import Enum
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Type, Union, cast, Sequence
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union, cast
 
-from sqlalchemy import func as sqa_func
-from sqlalchemy import select, text, Integer
+from sqlalchemy import Integer
 from sqlalchemy import cast as sql_cast
+from sqlalchemy import func as sqa_func
+from sqlalchemy import select, text
+from sqlalchemy.engine import Row
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
-from sqlalchemy.engine import Row
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
-from opsml.registry.sql.sql_schema import SQLTable, CardSQLTable
+from opsml.registry.sql.sql_schema import CardSQLTable, SQLTable
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -32,6 +33,7 @@ class SqlDialect(str, Enum):
     SQLITE = "sqlite"
     POSTGRES = "postgres"
     MYSQL = "mysql"
+    SQLITE_MEMORY = ":memory:"
 
 
 class DialectHelper:
@@ -115,11 +117,11 @@ class PostgresHelper(DialectHelper):
 class MySQLHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
-            sqa_func.cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
-            sqa_func.cast(
+            sql_cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
+            sql_cast(
                 sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
             ).label("minor"),
-            sqa_func.cast(
+            sql_cast(
                 sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""),
                 Integer,
             ).label("patch"),
@@ -233,7 +235,7 @@ class QueryEngine:
             Sqlalchemy Select statement
         """
 
-        query: Select[Any] = self._get_base_select_query(table=table)
+        query = cast(Select[Any], select(table))
         query = DialectHelper.get_dialect_logic(query=query, table=table, dialect=self.dialect)
 
         if bool(uid):
@@ -339,15 +341,11 @@ class QueryEngine:
         # opsml timestamp records are stored as BigInts
         return int(round(max_date_.timestamp() * 1_000_000))
 
-    def _get_base_select_query(self, table: CardSQLTable) -> Select[Any]:
-        return cast(Select[Any], select(table))
-
     def _uid_exists_query(self, uid: str, table_to_check: str) -> Select[Any]:
         table = SQLTable.get_table(table_name=table_to_check)
-        query = self._get_base_select_query(table=table.uid)
-        query = query.filter(table.uid == uid)
+        query = select(table).filter(table.uid == uid)
 
-        return query
+        return cast(Select[Any], query)
 
     def get_uid(self, uid: str, table_to_check: str) -> List[str]:
         query = self._uid_exists_query(uid=uid, table_to_check=table_to_check)
