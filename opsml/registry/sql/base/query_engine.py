@@ -20,7 +20,7 @@ from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
-from opsml.registry.sql.sql_schema import CardSQLTable, SQLTable
+from opsml.registry.sql.sql_schema import CardSQLTable, SQLTableGetter
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
@@ -342,7 +342,7 @@ class QueryEngine:
         return int(round(max_date_.timestamp() * 1_000_000))
 
     def _uid_exists_query(self, uid: str, table_to_check: str) -> Select[Any]:
-        table = SQLTable.get_table(table_name=table_to_check)
+        table = SQLTableGetter.get_table(table_name=table_to_check)
         query = select(table).filter(table.uid == uid)
 
         return cast(Select[Any], query)

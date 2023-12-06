@@ -1,15 +1,15 @@
-import os
 from enum import Enum, unique
 
 
 @unique
 class RegistryTableNames(str, Enum):
-    DATA = os.getenv("ML_DATA_REGISTRY_NAME", "OPSML_DATA_REGISTRY")
-    MODEL = os.getenv("ML_MODEL_REGISTRY_NAME", "OPSML_MODEL_REGISTRY")
-    RUN = os.getenv("ML_RUN_REGISTRY_NAME", "OPSML_RUN_REGISTRY")
-    PIPELINE = os.getenv("ML_PIPELINE_REGISTRY_NAME", "OPSML_PIPELINE_REGISTRY")
-    PROJECT = os.getenv("ML_PROJECT_REGISTRY_NAME", "OPSML_PROJECT_REGISTRY")
-    AUDIT = os.getenv("ML_AUDIT_REGISTRY_NAME", "OPSML_AUDIT_REGISTRY")
+    DATA = "OPSML_DATA_REGISTRY"
+    MODEL = "OPSML_MODEL_REGISTRY"
+    RUN = "OPSML_RUN_REGISTRY"
+    PIPELINE = "OPSML_PIPELINE_REGISTRY"
+    PROJECT = "OPSML_PROJECT_REGISTRY"
+    AUDIT = "OPSML_AUDIT_REGISTRY"
+    BASE = "OPSML_BASE_REGISTRY"
 
     @staticmethod
     def from_str(name: str) -> "RegistryTableNames":
