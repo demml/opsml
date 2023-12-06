@@ -344,8 +344,8 @@ class QueryEngine:
 
     def _uid_exists_query(self, uid: str, table_to_check: str) -> Select[Any]:
         table = SQLTable.get_table(table_name=table_to_check)
-        query = self._get_base_select_query(table=table.uid)  # type: ignore
-        query = query.filter(table.uid == uid)  # type: ignore
+        query = self._get_base_select_query(table=table.uid)
+        query = query.filter(table.uid == uid)
 
         return query
 
