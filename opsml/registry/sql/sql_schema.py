@@ -4,12 +4,12 @@
 import os
 import uuid
 from datetime import date
-from typing import Type, Union, cast
+from typing import List, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
+from sqlalchemy.orm import declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.table_names import RegistryTableNames
@@ -40,6 +40,16 @@ class BaseMixin:
         return name.lower().replace("_", "-")
 
 
+# this is only used for type hinting. All tables follow the same base structure
+# Ideally we should be able to use this as the parent to all other tables, but
+# sqlalchemy's inheritance structure and how it relates to table creation is not straightforward.
+class CardSQLTable(Base, BaseMixin):
+    __tablename__ = RegistryTableNames.BASE.value
+
+    def __repr__(self) -> str:
+        return f"{self.__tablename__}"
+
+
 @declarative_mixin
 class DataMixin:
     data_uri = Column("data_uri", String(1024))
@@ -55,7 +65,7 @@ class DataSchema(Base, BaseMixin, DataMixin):
     __tablename__ = RegistryTableNames.DATA.value
 
     def __repr__(self) -> str:
-        return f"<SqlMetric({self.__tablename__}"
+        return f"<SqlTable: {self.__tablename__}>"
 
 
 @declarative_mixin
@@ -76,7 +86,7 @@ class ModelSchema(Base, BaseMixin, ModelMixin):
     __tablename__ = RegistryTableNames.MODEL.value
 
     def __repr__(self) -> str:
-        return f"<SqlMetric({self.__tablename__}"
+        return f"<SqlTable: {self.__tablename__}>"
 
 
 @declarative_mixin
@@ -93,7 +103,7 @@ class RunSchema(Base, BaseMixin, RunMixin):
     __tablename__ = RegistryTableNames.RUN.value
 
     def __repr__(self) -> str:
-        return f"<SqlMetric({self.__tablename__}"
+        return f"<SqlTable: {self.__tablename__}>"
 
 
 @declarative_mixin
@@ -109,7 +119,7 @@ class AuditSchema(Base, BaseMixin, AuditMixin):
     __tablename__ = RegistryTableNames.AUDIT.value
 
     def __repr__(self) -> str:
-        return f"<SqlMetric({self.__tablename__}"
+        return f"<SqlTable: {self.__tablename__}>"
 
 
 @declarative_mixin
@@ -124,7 +134,7 @@ class PipelineSchema(Base, BaseMixin, PipelineMixin):
     __tablename__ = RegistryTableNames.PIPELINE.value
 
     def __repr__(self) -> str:
-        return f"<SqlMetric({self.__tablename__}"
+        return f"<SqlTable: {self.__tablename__}>"
 
 
 class ProjectSchema(Base):
@@ -138,22 +148,21 @@ class ProjectSchema(Base):
     version = Column("version", String(512))
     timestamp = Column("timestamp", BigInteger)
 
-
-REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
-    DataSchema,
-    ModelSchema,
-    RunSchema,
-    PipelineSchema,
-    ProjectSchema,
-    AuditSchema,
-]
+    def __repr__(self) -> str:
+        return f"<SqlTable: {self.__tablename__}>"
 
 
-class TableSchema:
+AVAILABLE_TABLES: List[CardSQLTable] = []
+for schema in Base.__subclasses__():
+    if schema.__tablename__ != RegistryTableNames.BASE.value:  # type: ignore[attr-defined]
+        AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
+
+
+class SQLTableGetter:
     @staticmethod
-    def get_table(table_name: str) -> Type[REGISTRY_TABLES]:
-        for table_schema in Base.__subclasses__():
-            if table_name == table_schema.__tablename__:  # type: ignore
-                return cast(Type[REGISTRY_TABLES], table_schema)
+    def get_table(table_name: str) -> CardSQLTable:
+        for table_schema in AVAILABLE_TABLES:
+            if table_name == table_schema.__tablename__:
+                return table_schema
 
         raise ValueError(f"""Incorrect table name provided {table_name}""")

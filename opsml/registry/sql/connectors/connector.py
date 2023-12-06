@@ -1,38 +1,20 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
-from enum import Enum
 from functools import cached_property
-from typing import Any, Dict, Type, cast
+from typing import Any, Type, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.sql.connectors.base import (
-    DEFAULT_OVERFLOW,
-    DEFAULT_POOL_SIZE,
     BaseSQLConnection,
     CloudSQLConnection,
+    CloudSqlPrefix,
+    PythonCloudSqlType,
+    SqlType,
 )
 
 logger = ArtifactLogger.get_logger()
-
-
-class SqlType(str, Enum):
-    CLOUDSQL_MYSQL = "cloudsql_mysql"
-    CLOUDSQL_POSTGRES = "cloudsql_postgresql"
-    LOCAL = "local"
-    SQLITE = "sqlite"
-
-
-class PythonCloudSqlType(str, Enum):
-    MYSQL = "pymysql"
-    POSTGRES = "pg8000"
-
-
-class CloudSqlPrefix(str, Enum):
-    MYSQL = "mysql+pymysql://"
-    POSTGRES = "postgresql+pg8000://"
 
 
 class CloudSqlPostgresql(CloudSQLConnection):
@@ -87,22 +69,6 @@ class LocalSQLConnection(BaseSQLConnection):
         )
 
         self.storage_backend: str = SqlType.LOCAL.value
-
-    @cached_property
-    def default_db_kwargs(self) -> Dict[str, int]:
-        kwargs = {}
-        if SqlType.SQLITE.value not in self.tracking_uri:
-            kwargs = {
-                "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
-                "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
-            }
-
-        logger.info(
-            "Default pool size: {}, overflow: {}",
-            kwargs.get("pool_size", DEFAULT_POOL_SIZE),
-            kwargs.get("max_overflow", DEFAULT_OVERFLOW),
-        )
-        return kwargs
 
     @cached_property
     def _sqlalchemy_prefix(self) -> str:

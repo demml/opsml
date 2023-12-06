@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
@@ -17,7 +17,7 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.sql.sql_schema import TableSchema
+from opsml.registry.sql.sql_schema import SQLTableGetter
 from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
@@ -30,14 +30,14 @@ class ServerRegistry(SQLRegistryBase):
         super().__init__(registry_type)
 
         self.engine = QueryEngine()
-        self._table = TableSchema.get_table(table_name=self.table_name)
+        self._table = SQLTableGetter.get_table(table_name=self.table_name)
 
     @property
-    def unique_teams(self) -> List[str]:
+    def unique_teams(self) -> Sequence[str]:
         """Returns a list of unique teams"""
         return self.engine.get_unique_teams(table=self._table)
 
-    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+    def get_unique_card_names(self, team: Optional[str] = None) -> Sequence[str]:
         """Returns a list of unique card names
         Args:
             team:

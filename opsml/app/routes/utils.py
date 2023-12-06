@@ -9,7 +9,7 @@ import re
 import traceback
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 from fastapi import Request
 from fastapi.responses import StreamingResponse
@@ -50,7 +50,9 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
     return [card["version"] for card in registry.list_cards(name=model, team=team, as_dataframe=False)]
 
 
-def get_names_teams_versions(registry: CardRegistry, team: str, name: str) -> Tuple[List[str], List[str], List[str]]:
+def get_names_teams_versions(
+    registry: CardRegistry, team: str, name: str
+) -> Tuple[Sequence[str], Sequence[str], List[str]]:
     """Helper functions to get the names, teams, and versions for a given registry
 
     Args:

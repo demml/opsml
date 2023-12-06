@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import pandas as pd
 
@@ -39,7 +39,7 @@ class ClientRegistry(SQLRegistryBase):
         return cast(str, data["table_name"])
 
     @property
-    def unique_teams(self) -> List[str]:
+    def unique_teams(self) -> Sequence[str]:
         """Returns a list of unique teams"""
         data = self._session.get_request(
             route=api_routes.TEAM_CARDS,

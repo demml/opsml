@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 from semver import VersionInfo
 
@@ -70,10 +70,10 @@ class SQLRegistryBase:
         self._table_name = RegistryTableNames[registry_type.value.upper()].value
 
     @property
-    def unique_teams(self) -> List[str]:
+    def unique_teams(self) -> Sequence[str]:
         raise NotImplementedError
 
-    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+    def get_unique_card_names(self, team: Optional[str] = None) -> Sequence[str]:
         raise NotImplementedError
 
     @property
