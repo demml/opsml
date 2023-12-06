@@ -17,6 +17,24 @@ DEFAULT_POOL_SIZE = "10"
 DEFAULT_OVERFLOW = "5"
 
 
+class SqlType(str, Enum):
+    CLOUDSQL_MYSQL = "cloudsql_mysql"
+    CLOUDSQL_POSTGRES = "cloudsql_postgresql"
+    LOCAL = "local"
+    SQLITE = "sqlite"
+    SQLITE_MEMORY = ":memory:"
+
+
+class PythonCloudSqlType(str, Enum):
+    MYSQL = "pymysql"
+    POSTGRES = "pg8000"
+
+
+class CloudSqlPrefix(str, Enum):
+    MYSQL = "mysql+pymysql://"
+    POSTGRES = "postgresql+pg8000://"
+
+
 class BaseSQLConnection:
     def __init__(self, tracking_uri: str, credentials: Any = None):
         """Base Connection model that all connections inherit from"""
@@ -37,15 +55,21 @@ class BaseSQLConnection:
 
     @cached_property
     def default_db_kwargs(self) -> Dict[str, int]:
-        """Default db kwargs for sqlalchemy engine"""
-        kwargs = {
-            "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
-            "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
-        }
+        kwargs: Dict[str, Any] = {}
+        if SqlType.SQLITE not in self.tracking_uri:
+            kwargs = {
+                "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
+                "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
+            }
+
+        # if using sqlite, use NullPool
+        if SqlType.SQLITE in self.tracking_uri or SqlType.SQLITE_MEMORY in self.tracking_uri:
+            kwargs["poolclass"] = sqlalchemy.pool.NullPool
+
         logger.info(
             "Default pool size: {}, overflow: {}",
-            kwargs["pool_size"],
-            kwargs["max_overflow"],
+            kwargs.get("pool_size", DEFAULT_POOL_SIZE),
+            kwargs.get("max_overflow", DEFAULT_OVERFLOW),
         )
         return kwargs
 
