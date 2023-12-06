@@ -30,4 +30,4 @@ def test_convert_to_pyarrow(test_data):
     data = DataFormatter.convert_data_to_arrow(test_data, data_type)
 
     # test schema
-    schema = DataFormatter.create_table_schema(data)
+    DataFormatter.create_table_schema(data)

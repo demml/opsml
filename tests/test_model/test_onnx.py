@@ -52,8 +52,8 @@ def model_predict(model_and_data):
 
     pred_onnx = predictor.predict(record)
 
-    out_sig = predictor.output_sig(**pred_onnx)
-    pred_orig = predictor.predict_with_model(model, record)
+    predictor.output_sig(**pred_onnx)
+    predictor.predict_with_model(model, record)
 
 
 @pytest.mark.parametrize(
@@ -228,8 +228,8 @@ def test_byo_onnx(model_and_data):
 
     pred_onnx = predictor.predict(record)
 
-    out_sig = predictor.output_sig(**pred_onnx)
-    pred_orig = predictor.predict_with_model(model, record)
+    predictor.output_sig(**pred_onnx)
+    predictor.predict_with_model(model, record)
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
@@ -253,8 +253,9 @@ def test_byo_pytorch_onnx(model_and_data):
         metadata=ModelCardMetadata(onnx_model_def=model_def),
         to_onnx=True,
     )
+
     predictor = modelcard.onnx_model()
     input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
     record = {input_name: sample_data[0, :].tolist()}
-    pred_onnx = predictor.predict(record)
-    pred_orig = predictor.predict_with_model(model, record)
+    predictor.predict(record)
+    predictor.predict_with_model(model, record)

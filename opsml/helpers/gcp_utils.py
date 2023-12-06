@@ -1,3 +1,6 @@
+# mypy: disable-error-code="attr-defined"
+
+
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -9,7 +12,7 @@ from typing import Any, Optional, Tuple, Union, cast
 
 import google.auth
 from google.auth.credentials import Credentials
-from google.cloud import storage  # type: ignore
+from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import BaseModel, ConfigDict
 

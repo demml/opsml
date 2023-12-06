@@ -15,9 +15,10 @@ from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
+from opsml.registry.cards.validator import DataCardValidator
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
+from opsml.registry.data.types import AllowedDataType, ValidData
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
@@ -26,58 +27,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-
-
-class CardValidator:
-    @staticmethod
-    def check_metadata(
-        data: ValidData,
-        metadata: Union[Dict[str, Any], DataCardMetadata],
-        sql_logic: Dict[str, str],
-    ) -> Optional[str]:
-        """Validates metadata
-
-        Args:
-            data:
-                Data to use for data card. Can be a pyarrow table, pandas dataframe, polars dataframe
-                or numpy array
-            metadata:
-                Metadata dictionary
-            sql_logic:
-                Dictionary of strings containing sql logic or sql files used to create the data
-
-        Returns:
-            Data uri if present
-        """
-
-        if isinstance(metadata, DataCardMetadata):
-            data_uri = metadata.uris.data_uri
-        else:
-            data_uri = metadata["uris"].get("data_uri")
-
-        if data is None and not bool(sql_logic):
-            if data_uri is None:
-                raise ValueError("Data or sql logic must be supplied when no data_uri is present")
-        return data_uri
-
-    @staticmethod
-    def set_data_type(
-        card_args: Dict[str, Any],
-        data_type: str,
-        metadata: Optional[Union[Dict[str, Any], DataCardMetadata]] = None,
-    ) -> Dict[str, Any]:
-        if metadata is None:
-            card_args["metadata"] = DataCardMetadata(data_type=data_type)
-
-        elif isinstance(metadata, DataCardMetadata):
-            metadata.data_type = data_type
-            card_args["metadata"] = metadata
-
-        elif isinstance(metadata, dict):
-            metadata["data_type"] = data_type
-            card_args["metadata"] = metadata
-
-        return card_args
 
 
 @auditable
@@ -135,19 +84,16 @@ class DataCard(ArtifactCard):
         metadata = card_args.get("metadata")
         sql_logic: Dict[str, str] = card_args.get("sql_logic", {})
 
-        if metadata is not None:
-            data_uri = CardValidator.check_metadata(data, metadata, sql_logic)
+        validator = DataCardValidator(
+            data=data,
+            metadata=metadata,
+            sql_logic=sql_logic,
+        )
 
-            if data_uri is not None:
-                return card_args
+        if validator.has_data_uri:
+            return card_args
 
-        if data is None and bool(sql_logic):
-            data_type = AllowedDataType.SQL.value
-        else:
-            data_type = check_data_type(data=data)
-
-        card_args = CardValidator.set_data_type(card_args, data_type, metadata)
-
+        card_args["metadata"] = validator.get_metadata()
         return card_args
 
     @field_validator("data_profile", mode="before")

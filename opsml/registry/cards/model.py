@@ -25,7 +25,7 @@ from opsml.model.types import (
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
-from opsml.registry.data.types import AllowedDataType, check_data_type
+from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -33,80 +33,6 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
-
-
-class ModelCardValidator:
-    @staticmethod
-    def required_args_present(values: Dict[str, Any]) -> bool:
-        return all(
-            values.get(var_) is not None
-            for var_ in [
-                "trained_model",
-                "sample_input_data",
-            ]
-        )
-
-    @staticmethod
-    def check_sample(sample_data: Optional[ValidModelInput] = None) -> ValidModelInput:
-        """Check sample data and returns one record to be used
-        during ONNX conversion and validation
-
-        Args:
-            sample_data:
-                Sample data used to train the model
-
-        Returns:
-            Sample data with only one record
-        """
-        if sample_data is None:
-            return sample_data
-
-        if not isinstance(sample_data, dict):
-            if isinstance(sample_data, pl.DataFrame):
-                sample_data = sample_data.to_pandas()
-
-            return sample_data[0:1]
-
-        sample_dict = {}
-        if isinstance(sample_data, dict):
-            for key in sample_data.keys():
-                sample_dict[key] = sample_data[key][0:1]
-
-            return sample_dict
-
-        raise ValueError("Provided sample data is not a valid type")
-
-    @staticmethod
-    def check_metadata(
-        sample_data: ValidModelInput,
-        metadata: Optional[ModelCardMetadata] = None,
-    ) -> Optional[ModelCardMetadata]:
-        """Checks metadata for valid values
-
-        Args:
-            sample_data:
-                Sample data used to train the model
-            metadata:
-                `ModelCardMetadata` associated with the model
-
-        Returns:
-            `ModelCardMetadata` with updated sample_data_type
-        """
-
-        if metadata is None:
-            data_type = check_data_type(sample_data)
-            if data_type in [AllowedDataType.IMAGE]:
-                raise ValueError(
-                    f"""Invalid model data input type. Accepted types are a pandas dataframe, 
-                                 numpy array and dictionary of numpy arrays. Received {data_type}""",
-                )
-            metadata = ModelCardMetadata(sample_data_type=data_type)
-
-        elif metadata is not None:
-            data_type = check_data_type(sample_data)
-            metadata.sample_data_type = data_type
-
-        return metadata
 
 
 @auditable
@@ -156,26 +82,27 @@ class ModelCard(ArtifactCard):
 
         uid = values.get("uid")
         version = values.get("version")
+        trained_model: Optional[Any] = values.get("trained_model")
+        sample_data: Optional[ValidModelInput] = values.get("sample_input_data")
+        metadata: Optional[ModelCardMetadata] = values.get("metadata")
 
         # no need to check if already registered
         if all([uid, version]):
             return values
 
-        if not ModelCardValidator.required_args_present(values=values):
+        if trained_model is None or sample_data is None:
             raise ValueError(
                 """trained_model and sample_input_data are required for instantiating a ModelCard""",
             )
 
-        sample_data = ModelCardValidator.check_sample(
-            sample_data=values["sample_input_data"],
+        card_validator = ModelCardValidator(
+            sample_data=sample_data,
+            trained_model=trained_model,
+            metadata=metadata,
         )
 
-        metadata = ModelCardValidator.check_metadata(
-            sample_data=sample_data,
-            metadata=values.get("metadata"),
-        )
-        values["metadata"] = metadata
-        values["sample_input_data"] = sample_data
+        values["sample_input_data"] = card_validator.get_sample()
+        values["metadata"] = card_validator.get_metadata()
 
         return values
 
@@ -303,14 +230,7 @@ class ModelCard(ArtifactCard):
             create_model,
         )
 
-        model_return = create_model(
-            model=self.trained_model,
-            input_data=cast(ValidModelInput, self.sample_input_data),
-            input_data_type=self.metadata.sample_data_type,
-            additional_onnx_args=self.metadata.additional_onnx_args,
-            to_onnx=self.to_onnx,
-            onnx_model_def=self.metadata.onnx_model_def,
-        )
+        model_return = create_model(modelcard=self)
 
         self._set_model_attributes(model_return=model_return)
 

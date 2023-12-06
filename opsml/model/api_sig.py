@@ -17,7 +17,7 @@ from opsml.model.types import (
     DictBase,
     Feature,
     NumpyBase,
-    OnnxModelType,
+    TrainedModelType,
 )
 from opsml.registry.data.types import AllowedDataType
 
@@ -60,7 +60,7 @@ class PydanticFeatureGenerator:
             return True
 
         # it is assumed pytorch/tensorflow will be feeding list/arrays
-        if self.model_type in [OnnxModelType.TF_KERAS, OnnxModelType.PYTORCH]:
+        if self.model_type in [TrainedModelType.TF_KERAS, TrainedModelType.PYTORCH]:
             return True
 
         if len(feature.shape) > 1 and feature.shape[1] > 1:
@@ -250,7 +250,7 @@ class SklearnSigCreator(ApiSigCreator):
         Gets pydantic base for sklearn model that depends on type. Onnx accepts dictionary inputs for pipeline
         models
         """
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+        if self.model_type == TrainedModelType.SKLEARN_PIPELINE:
             if self.data_type == AllowedDataType.PANDAS:
                 return DictBase  # onnx sklearn pipelines can accept dictionaries
         return NumpyBase
@@ -277,9 +277,9 @@ class SklearnSigCreator(ApiSigCreator):
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
         return model_type not in [
-            OnnxModelType.TF_KERAS,
-            OnnxModelType.PYTORCH,
-            OnnxModelType.TRANSFORMER,
+            TrainedModelType.TF_KERAS,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
         ]
 
 
@@ -293,9 +293,9 @@ class DeepLearningSigCreator(ApiSigCreator):
     @staticmethod
     def validate_model_type(model_type: str) -> bool:
         return model_type in [
-            OnnxModelType.TF_KERAS,
-            OnnxModelType.PYTORCH,
-            OnnxModelType.TRANSFORMER,
+            TrainedModelType.TF_KERAS,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
         ]
 
 
