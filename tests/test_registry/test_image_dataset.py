@@ -56,7 +56,7 @@ def test_image_metadata():
 
 
 def test_image_dataset():
-    image_dataset = ImageDataset(
+    ImageDataset(
         image_dir="tests/assets/image_dataset",
         metadata="metadata.jsonl",
     )

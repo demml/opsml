@@ -42,7 +42,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
     data_reg = CardRegistry(registry_name="data")
     data_reg.register_card(card=datacard)
 
-    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-lin-reg") as run:
         datacard = data_reg.load_card(uid=datacard.uid)
         splits = datacard.split_data()
@@ -66,7 +66,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
         )
         run.register_card(card=model_card)
 
-    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-lasso") as run:
         datacard = data_reg.load_card(uid=datacard.uid)
         splits = datacard.split_data()
@@ -90,7 +90,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
         )
         run.register_card(card=model_card)
 
-    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-poisson") as run:
         datacard = data_reg.load_card(uid=datacard.uid)
         splits = datacard.split_data()
@@ -140,7 +140,7 @@ def test_datacard(db_registries):
     import numpy as np
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit
+    from opsml.registry import CardInfo, DataCard, DataSplit
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -239,7 +239,7 @@ def test_data_profile(db_registries):
     from sklearn.datasets import load_linnerud
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, CardRegistry
+    from opsml.registry import CardInfo, DataCard
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -289,7 +289,7 @@ def test_data_profile(db_registries):
     data_card2 = DataCard(info=card_info, data=data2)
     data_card2.create_data_profile()
 
-    comparison = DataProfiler.compare_reports(reports=[data_card.data_profile, data_card2.data_profile])
+    DataProfiler.compare_reports(reports=[data_card.data_profile, data_card2.data_profile])
     # comparison.to_file("comparison_report.html")
 
 
@@ -298,7 +298,7 @@ def test_modelcard(db_registries):
     from sklearn.linear_model import LinearRegression
 
     # Opsml
-    from opsml.registry import CardRegistry, ModelCard, CardInfo
+    from opsml.registry import ModelCard, CardInfo
 
     # set up registries
     data_registry = db_registries["data"]
@@ -399,7 +399,8 @@ def test_custom_onnx(db_registries):
     batch_size = 1  # just a random number
 
     # Initialize model with the pretrained weights
-    map_location = lambda storage, loc: storage
+    def map_location(storage, loc):
+        return storage
     if torch.cuda.is_available():
         map_location = None
     torch_model.load_state_dict(model_zoo.load_url(model_url, map_location=map_location))
@@ -409,7 +410,7 @@ def test_custom_onnx(db_registries):
 
     # Input to the model
     x = torch.randn(batch_size, 1, 224, 224, requires_grad=True)
-    torch_out = torch_model(x)
+    torch_model(x)
 
     # Export the model
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -444,7 +445,7 @@ def test_custom_onnx(db_registries):
         model_bytes=onnx_model.SerializeToString(),
     )
 
-    modelcard = ModelCard(
+    ModelCard(
         name="pytorch-custom-onnx",
         team="opsml",
         user_email="opsml.com",
@@ -528,7 +529,7 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
     card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
     # to use runs, you must create and use a project
-    project_info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+    ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
     # project = OpsmlProject(info=project_info)
     project = opsml_project
 
@@ -661,7 +662,7 @@ def test_quickstart(opsml_project: OpsmlProject):
         y = np.random.randint(1, 10, size=(1000, 1))
         return X, y
 
-    info = ProjectInfo(
+    ProjectInfo(
         name="opsml",
         team="devops",
         user_email="test_email",

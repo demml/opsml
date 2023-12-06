@@ -17,7 +17,6 @@ from opsml.registry.cards import (
     DataCardMetadata,
     ModelCardMetadata,
     Description,
-    CardInfo,
     Description,
 )
 from opsml.registry.sql.registry import CardRegistry
@@ -241,7 +240,7 @@ def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
 
 def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArray):
     # create data card
-    registry = db_registries["data"]
+    db_registries["data"]
     data_card = DataCard(
         data=test_array,
         name="test_sql",
@@ -789,7 +788,7 @@ def test_datacard_failure():
 
     # should fail: data nor sql are provided
     with pytest.raises(ValueError) as ve:
-        data_card = DataCard(
+        DataCard(
             name=data_name,
             team=team,
             user_email=user_email,
@@ -816,7 +815,7 @@ def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
-    cards = registry.list_cards(uid=loaded_card.uid)
+    registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
@@ -1088,7 +1087,7 @@ def test_list_cards(db_registries: Dict[str, CardRegistry]):
 
     # add rc
     record["uid"] = uuid.uuid4().hex
-    record["version"] = f"1.15.0-rc.1"
+    record["version"] = "1.15.0-rc.1"
 
     with data_reg._registry.engine.session() as sess:
         sess.add(DataSchema(**record))

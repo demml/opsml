@@ -1,4 +1,4 @@
-from opsml.model.model_info import FloatTypeConverter, get_model_data, ModelData
+from opsml.model.data_helper import FloatTypeConverter, get_model_data, ModelDataHelper
 from opsml.registry.data.types import AllowedDataType
 import pytest
 from numpy.typing import NDArray
@@ -8,7 +8,7 @@ import pandas as pd
 
 
 def test_model_data_base(test_array: NDArray):
-    model_data = ModelData(input_data=test_array)
+    model_data = ModelDataHelper(input_data=test_array)
 
     with pytest.raises(NotImplementedError):
         model_data.dtypes

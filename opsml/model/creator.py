@@ -4,22 +4,19 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.model_info import ModelInfo, get_model_data
-from opsml.model.model_types import ModelType
+from opsml.model.data_helper import get_model_data
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
-    ExtraOnnxArgs,
     Feature,
+    ModelCard,
     ModelReturn,
-    OnnxModelDefinition,
-    OnnxModelType,
-    ValidModelInput,
+    TrainedModelType,
 )
 from opsml.registry.data.types import AllowedDataType, get_class_name
 
@@ -27,14 +24,7 @@ logger = ArtifactLogger.get_logger()
 
 
 class ModelCreator:
-    def __init__(
-        self,
-        model: Any,
-        input_data: ValidModelInput,
-        input_data_type: str,
-        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
-        onnx_model_def: Optional[OnnxModelDefinition] = None,
-    ):
+    def __init__(self, modelcard: ModelCard):
         """
         Args:
             Model:
@@ -46,38 +36,7 @@ class ModelCreator:
             onnx_model_def:
                 Optional `OnnxModelDefinition`
         """
-        self.model = model
-        self.input_data = input_data
-        self.model_class = self._get_model_class_name()
-        self.additional_model_args = additional_onnx_args
-        self.onnx_model_def = onnx_model_def
-        self.input_data_type = input_data_type
-        self.model_type = self.get_model_type()
-
-    def _get_model_class_name(self) -> str:
-        """Gets class name from model"""
-
-        if "keras.engine" in str(self.model):
-            return OnnxModelType.TF_KERAS.value
-
-        if "torch" in str(self.model.__class__.__bases__):
-            return OnnxModelType.PYTORCH.value
-
-        # for transformer models from huggingface
-        if "transformers.models" in str(self.model.__class__.__bases__):
-            return OnnxModelType.TRANSFORMER.value
-
-        return str(self.model.__class__.__name__)
-
-    def get_model_type(self) -> str:
-        model_type = next(
-            (
-                model_type
-                for model_type in ModelType.__subclasses__()
-                if model_type.validate(model_class_name=self.model_class)
-            )
-        )
-        return model_type.get_type()
+        self.card = modelcard
 
     def create_model(self) -> ModelReturn:
         raise NotImplementedError
@@ -92,8 +51,8 @@ class TrainedModelMetadataCreator(ModelCreator):
 
     def _get_input_schema(self) -> Dict[str, Feature]:
         model_data = get_model_data(
-            data_type=self.input_data_type,
-            input_data=self.input_data,
+            data_type=self.card.metadata.sample_data_type,
+            input_data=self.card.sample_input_data,
         )
 
         return model_data.feature_dict
@@ -105,16 +64,14 @@ class TrainedModelMetadataCreator(ModelCreator):
         )
 
         # pandas will use column names as features
-        if self.input_data_type != AllowedDataType.PANDAS:
+        if self.card.metadata.sample_data_type != AllowedDataType.PANDAS:
             model_data.features = ["outputs"]
 
-        prediction_type = model_data.feature_dict
-
-        return prediction_type
+        return model_data.feature_dict
 
     def _predict_prediction(self) -> Dict[str, Feature]:
         """Test default predict method leveraged by most ml libraries"""
-        predictions = self.model.predict(self.input_data)
+        predictions = self.card.trained_model.predict(self.card.sample_input_data)
         return self._get_prediction_type(predictions=predictions)
 
     def _generate_prediction(self) -> Dict[str, Feature]:  # pragma: no cover
@@ -124,15 +81,15 @@ class TrainedModelMetadataCreator(ModelCreator):
         import torch
 
         try:
-            if isinstance(self.input_data, np.ndarray):
-                array_input = torch.from_numpy(self.input_data)
-                predictions = self.model.generate(array_input)
+            if isinstance(self.card.sample_input_data, np.ndarray):
+                array_input = torch.from_numpy(self.card.sample_input_data)
+                predictions = self.card.trained_model.generate(array_input)
 
-            elif isinstance(self.input_data, dict):
+            elif isinstance(self.card.sample_input_data, dict):
                 dict_input: Dict[str, torch.Tensor] = {
-                    key: torch.from_numpy(val) for key, val in self.input_data.items()
+                    key: torch.from_numpy(val) for key, val in self.card.sample_input_data.items()
                 }
-                predictions = self.model.generate(**dict_input)
+                predictions = self.card.trained_model.generate(**dict_input)
 
             if isinstance(predictions, torch.Tensor):
                 predictions = predictions.numpy()
@@ -148,13 +105,15 @@ class TrainedModelMetadataCreator(ModelCreator):
         """Calls the model directly using functional call"""
         import torch
 
-        if isinstance(self.input_data, np.ndarray):
-            array_input = torch.from_numpy(self.input_data)
-            predictions = self.model(array_input)
+        if isinstance(self.card.sample_input_data, np.ndarray):
+            array_input = torch.from_numpy(self.card.sample_input_data)
+            predictions = self.card.trained_model(array_input)
 
-        elif isinstance(self.input_data, dict):
-            dict_input: Dict[str, torch.Tensor] = {key: torch.from_numpy(val) for key, val in self.input_data.items()}
-            predictions = self.model(**dict_input)
+        elif isinstance(self.card.sample_input_data, dict):
+            dict_input: Dict[str, torch.Tensor] = {
+                key: torch.from_numpy(val) for key, val in self.card.sample_input_data.items()
+            }
+            predictions = self.card.trained_model(**dict_input)
 
         if isinstance(predictions, torch.Tensor):
             predictions = predictions.numpy()
@@ -167,12 +126,12 @@ class TrainedModelMetadataCreator(ModelCreator):
 
     def _get_output_schema(self) -> Dict[str, Feature]:
         try:
-            if hasattr(self.model, "predict"):
+            if hasattr(self.card.trained_model, "predict"):
                 return self._predict_prediction()
 
             # huggingface/pytorch
             # Majority of huggingface models have generate method but may raise error
-            if hasattr(self.model, "generate"):
+            if hasattr(self.card.trained_model, "generate"):
                 return self._generate_prediction()
 
             return self._functional_prediction()
@@ -193,11 +152,14 @@ class TrainedModelMetadataCreator(ModelCreator):
             model_data_schema=DataDict(
                 input_features=input_features,
                 output_features=output_features,
-                data_type=self.input_data_type,
+                data_type=self.card.metadata.sample_data_type,
             )
         )
 
-        return ModelReturn(api_data_schema=api_schema, model_type=self.model_type)
+        return ModelReturn(
+            api_data_schema=api_schema,
+            model_type=self.card.metadata.model_type,
+        )
 
     @staticmethod
     def validate(to_onnx: bool) -> bool:
@@ -207,14 +169,7 @@ class TrainedModelMetadataCreator(ModelCreator):
 
 
 class OnnxModelCreator(ModelCreator):
-    def __init__(
-        self,
-        model: Any,
-        input_data: ValidModelInput,
-        input_data_type: str,
-        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
-        onnx_model_def: Optional[OnnxModelDefinition] = None,
-    ):
+    def __init__(self, modelcard: ModelCard):
         """
         Instantiates OnnxModelCreator that is used for converting models to Onnx
 
@@ -229,13 +184,7 @@ class OnnxModelCreator(ModelCreator):
                 Optional `OnnxModelDefinition`
         """
 
-        super().__init__(
-            model=model,
-            input_data=input_data,
-            input_data_type=input_data_type,
-            additional_onnx_args=additional_onnx_args,
-            onnx_model_def=onnx_model_def,
-        )
+        super().__init__(modelcard=modelcard)
         self.onnx_data_type = self.get_onnx_data_type()
 
     def get_onnx_data_type(self) -> str:
@@ -251,12 +200,12 @@ class OnnxModelCreator(ModelCreator):
 
         # Onnx supports dataframe schemas for pipelines
         # re-work this
-        if self.model_type in [
-            OnnxModelType.SKLEARN_PIPELINE,
-            OnnxModelType.TF_KERAS,
-            OnnxModelType.PYTORCH,
+        if self.card.metadata.model_type in [
+            TrainedModelType.SKLEARN_PIPELINE,
+            TrainedModelType.TF_KERAS,
+            TrainedModelType.PYTORCH,
         ]:
-            return AllowedDataType(self.input_data_type).value
+            return AllowedDataType(self.card.metadata.sample_data_type).value
 
         return AllowedDataType.NUMPY.value
 
@@ -271,21 +220,15 @@ class OnnxModelCreator(ModelCreator):
 
         try:
             model_data = get_model_data(
-                data_type=self.input_data_type,
-                input_data=self.input_data,
-            )
-            model_info = ModelInfo(
-                model=self.model,
-                model_data=model_data,
-                model_type=self.model_type,
-                model_class=self.model_class,
-                data_type=self.input_data_type,
-                additional_model_args=self.additional_model_args,
-                onnx_model_def=self.onnx_model_def,
+                data_type=self.card.metadata.sample_data_type,
+                input_data=self.card.sample_input_data,
             )
 
-            onnx_model_return = OnnxModelConverter(model_info=model_info).convert_model()
-            onnx_model_return.model_type = self.model_type
+            onnx_model_return = OnnxModelConverter.convert_model(
+                modelcard=self.card,
+                data_helper=model_data,
+            )
+            onnx_model_return.model_type = self.card.metadata.model_type
             onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
 
             # add onnx version
@@ -295,14 +238,15 @@ class OnnxModelCreator(ModelCreator):
             raise ValueError(
                 textwrap.dedent(
                     f"""
-                Failed to convert model to onnx format. If you'd like to turn onnx conversion off
-                set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition, 
-                please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md. 
-                Error: {exc}
-                """
+               Failed to convert model to onnx format. If you'd like to turn onnx conversion off
+               set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition,
+               please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md.
+               Error: {exc}
+               """
                 )
             ) from exc
 
+    #
     @staticmethod
     def validate(to_onnx: bool) -> bool:
         if to_onnx:
@@ -310,47 +254,18 @@ class OnnxModelCreator(ModelCreator):
         return False
 
 
-def create_model(
-    model: Any,
-    input_data: ValidModelInput,
-    input_data_type: str,
-    to_onnx: bool,
-    additional_onnx_args: Optional[ExtraOnnxArgs] = None,
-    onnx_model_def: Optional[OnnxModelDefinition] = None,
-) -> ModelReturn:
+def create_model(modelcard: ModelCard) -> ModelReturn:
     """
     Validates and selects s `ModeCreator` subclass and creates a `ModelReturn`
 
     Args:
-            model:
-                Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
-            input_data:
-                Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
-            input_data_type:
-                Data type of input data
-            additional_onnx_args:
-                Specific args for Pytorch onnx conversion. The won't be passed for most models
-            to_onnx:
-                Whether to use Onnx creator or not
-            onnx_model_def:
-                Optional onnx model def. This is primarily used for bring your own onnx models
+        modelcard:
+            ModelCard
 
     Returns:
         `ModelReturn`
     """
 
-    creator = next(
-        creator
-        for creator in ModelCreator.__subclasses__()
-        if creator.validate(
-            to_onnx=to_onnx,
-        )
-    )
+    creator = next(creator for creator in ModelCreator.__subclasses__() if creator.validate(to_onnx=modelcard.to_onnx))
 
-    return creator(
-        model=model,
-        input_data=input_data,
-        input_data_type=input_data_type,
-        additional_onnx_args=additional_onnx_args,
-        onnx_model_def=onnx_model_def,
-    ).create_model()
+    return creator(modelcard=modelcard).create_model()
