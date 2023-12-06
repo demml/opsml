@@ -9,7 +9,7 @@ from typing import Type, Union, cast
 from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_mixin, validates  # type: ignore
+from sqlalchemy.orm import declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.table_names import RegistryTableNames
@@ -139,21 +139,18 @@ class ProjectSchema(Base):
     timestamp = Column("timestamp", BigInteger)
 
 
-REGISTRY_TABLES = Union[  # pylint: disable=invalid-name
-    DataSchema,
-    ModelSchema,
-    RunSchema,
-    PipelineSchema,
-    ProjectSchema,
-    AuditSchema,
-]
+class CardSQLTable(Base, BaseMixin):
+    __tablename__ = "type_hinting"
+
+    def __repr__(self) -> str:
+        return f"{self.__tablename__}"
 
 
-class TableSchema:
+class SQLTable:
     @staticmethod
-    def get_table(table_name: str) -> Type[REGISTRY_TABLES]:
+    def get_table(table_name: str) -> CardSQLTable:
         for table_schema in Base.__subclasses__():
-            if table_name == table_schema.__tablename__:  # type: ignore
-                return cast(Type[REGISTRY_TABLES], table_schema)
+            if table_name == table_schema.__tablename__ and table_schema.__tablename__ != "type_hinting":  # type: ignore
+                return cast(CardSQLTable, table_schema)
 
         raise ValueError(f"""Incorrect table name provided {table_name}""")

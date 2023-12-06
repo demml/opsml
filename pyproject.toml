@@ -84,7 +84,7 @@ rollbar = { version = "^0.16.3", optional = true }
 uvicorn = { version = "^0.20.0", optional = true }
 wsgi-basic-auth = { version = "^1.1.0", optional = true }
 streaming-form-data = { version = "^1.11.0", optional = true }
-sqlalchemy = { extras = ["mypy"], version = "^1.4.46", optional = true }
+sqlalchemy = { extras = ["mypy"], version = "^2", optional = true }
 
 
 # optional dependencies for gcp
@@ -152,11 +152,9 @@ optional = true
 
 [tool.poetry.group.dev-lints.dependencies]
 ruff = "^0.0.242"
-sqlalchemy-stubs = "^0.4"
 types-pymysql = "^1.0.19.1"
 types-requests = "^2.28.11.7"
 black = "22.3.0"
-sqlalchemy2-stubs = "0.0.2a32"
 mypy = "^1"
 types-protobuf = "^4.21.0.3"
 pylint = "^2.17.5"
@@ -230,7 +228,6 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",
     "sqlalchemy.ext.mypy.plugin",
-    "sqlmypy",
 ]
 exclude = [
     "opsml/.local_tests/*",
