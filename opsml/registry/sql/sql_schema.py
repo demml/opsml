@@ -4,7 +4,7 @@
 import os
 import uuid
 from datetime import date
-from typing import Type, Union, cast
+from typing import cast
 
 from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
