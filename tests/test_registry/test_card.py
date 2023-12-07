@@ -41,7 +41,7 @@ def test_artifact_card_name_team_fail():
     )
 
     with pytest.raises(ValueError):
-        card = ArtifactCard(
+        ArtifactCard(
             name=card_info.name,
             team=card_info.team,
             user_email=card_info.user_email,

@@ -10,7 +10,7 @@ def test_migrations(mock_local_engine, experiment_table_to_migrate):
     with patch.multiple(
         "opsml.registry.sql.connectors.connector.LocalSQLConnection",
         get_engine=MagicMock(return_value=mock_local_engine),
-    ) as engine_mock:
+    ):
         local_client = LocalSQLConnection(tracking_uri="sqlite://")
         engine = local_client.get_engine()
 
@@ -35,7 +35,7 @@ def test_cli(mock_local_engine, experiment_table_to_migrate):
     with patch.multiple(
         "opsml.registry.sql.connectors.connector.LocalSQLConnection",
         get_engine=MagicMock(return_value=mock_local_engine),
-    ) as engine_mock:
+    ):
         local_client = LocalSQLConnection(tracking_uri="sqlite://")
         engine = local_client.get_engine()
 

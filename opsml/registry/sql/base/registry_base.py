@@ -2,36 +2,28 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 from semver import VersionInfo
-from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.cards import (
-    ArtifactCard,
-    AuditCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    RunCard,
-)
+from opsml.registry.cards.audit import AuditCard
+from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.cards.card_saver import save_card_artifacts
+from opsml.registry.cards.data import DataCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.pipeline import PipelineCard
+from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.sql.sql_schema import RegistryTableNames, TableSchema
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-
-
-SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-
 
 table_name_card_map = {
     RegistryType.DATA.value: DataCard,
@@ -43,7 +35,7 @@ table_name_card_map = {
 
 
 def load_card_from_record(
-    registry_type: str,
+    registry_type: RegistryType,
     record: LoadedRecordType,
 ) -> ArtifactCard:
     """
@@ -52,7 +44,7 @@ def load_card_from_record(
 
     Args:
         registry_type:
-            Registry type
+            Registry type string.
         record:
             Loaded record from backend database
 
@@ -60,34 +52,33 @@ def load_card_from_record(
         `ArtifactCard`
     """
 
-    card = table_name_card_map[registry_type]
+    card = table_name_card_map[registry_type.value]
 
-    return card(**record.model_dump())
+    return cast(ArtifactCard, card(**record.model_dump()))
 
 
 class SQLRegistryBase:
-    def __init__(self, registry_type: str):
+    def __init__(self, registry_type: RegistryType):
         """
         Base class for SQL Registries to inherit from
 
         Args:
-            table_name:
-                CardRegistry table name
+            registry_type:
+                Registry type
         """
         self.storage_client = settings.storage_client
-        table_name = RegistryTableNames[registry_type.upper()].value
-        self._table = TableSchema.get_table(table_name=table_name)
+        self._table_name = RegistryTableNames[registry_type.value.upper()].value
 
     @property
-    def unique_teams(self) -> List[str]:
+    def unique_teams(self) -> Sequence[str]:
         raise NotImplementedError
 
-    def get_unique_card_names(self, team: Optional[str] = None):
+    def get_unique_card_names(self, team: Optional[str] = None) -> Sequence[str]:
         raise NotImplementedError
 
     @property
     def table_name(self) -> str:
-        return self._table.__tablename__
+        return self._table_name
 
     @property
     def supported_card(self) -> str:
@@ -104,12 +95,12 @@ class SQLRegistryBase:
     ) -> str:
         raise NotImplementedError
 
-    def _is_correct_card_type(self, card: ArtifactCard):
+    def _is_correct_card_type(self, card: ArtifactCard) -> bool:
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
     @property
-    def registry_type(self) -> str:
+    def registry_type(self) -> RegistryType:
         """Registry type"""
         raise NotImplementedError
 
@@ -126,12 +117,12 @@ class SQLRegistryBase:
     def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         raise NotImplementedError
 
-    def _validate_card_type(self, card: ArtifactCard):
+    def _validate_card_type(self, card: ArtifactCard) -> None:
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
                 f"""Card of type {card.__class__.__name__} is not supported by registry
-                {self._table.__tablename__}"""
+                {self.table_name}"""
             )
 
         if self.check_uid(uid=str(card.uid), registry_type=self.registry_type):
@@ -141,18 +132,6 @@ class SQLRegistryBase:
             If registering a new Card, create a new Card of the correct type.
             """
             )
-
-    def _set_artifact_storage_spec(self, card: ArtifactCard) -> None:
-        """Creates artifact storage info to associate with artifacts"""
-
-        save_path = f"{self.table_name}/{card.team}/{card.name}/v{card.version}"
-
-        artifact_storage_spec = ArtifactStorageSpecs(save_path=save_path)
-        self._update_storage_client_metadata(storage_specdata=artifact_storage_spec)
-
-    def _update_storage_client_metadata(self, storage_specdata: ArtifactStorageSpecs):
-        """Updates storage metadata"""
-        self.storage_client.storage_spec = storage_specdata
 
     def _validate_semver(self, name: str, team: str, version: CardVersion) -> None:
         """
@@ -201,7 +180,7 @@ class SQLRegistryBase:
         version_type: VersionType,
         pre_tag: str,
         build_tag: str,
-    ):
+    ) -> None:
         """Sets a given card's version and uid
 
         Args:
@@ -312,7 +291,6 @@ class SQLRegistryBase:
             build_tag=build_tag,
         )
         self._set_card_uid(card=card)
-        self._set_artifact_storage_spec(card=card)
         self._create_registry_record(card=card)
 
     def update_card(self, card: ArtifactCard) -> None:
@@ -341,7 +319,7 @@ class SQLRegistryBase:
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         raise NotImplementedError
 
     def _sort_by_version(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

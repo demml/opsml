@@ -1,9 +1,9 @@
-from opsml.projects import ProjectInfo, MlflowProject, OpsmlProject
+from opsml.projects import ProjectInfo, OpsmlProject
 from opsml.registry import ModelCard, DataCard
 from sklearn import linear_model
 
 
-def test_challenger_example(mlflow_project: MlflowProject):
+def test_challenger_example(opsml_project: OpsmlProject):
     ########### Challenger example
 
     from sklearn.datasets import load_linnerud
@@ -14,7 +14,7 @@ def test_challenger_example(mlflow_project: MlflowProject):
 
     # Opsml
     from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
-    from opsml.projects import ProjectInfo, MlflowProject
+    from opsml.projects import ProjectInfo
     from opsml.model.challenger import ModelChallenger
 
     ### **Create Example Data**
@@ -42,9 +42,8 @@ def test_challenger_example(mlflow_project: MlflowProject):
     data_reg = CardRegistry(registry_name="data")
     data_reg.register_card(card=datacard)
 
-    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-    project = MlflowProject(info=info)
-    with mlflow_project.run(run_name="challenger-lin-reg") as run:
+    ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    with opsml_project.run(run_name="challenger-lin-reg") as run:
         datacard = data_reg.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
@@ -63,12 +62,12 @@ def test_challenger_example(mlflow_project: MlflowProject):
             user_email="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
-    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-    project = MlflowProject(info=info)
-    with mlflow_project.run(run_name="challenger-lasso") as run:
+    ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    with opsml_project.run(run_name="challenger-lasso") as run:
         datacard = data_reg.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
@@ -87,12 +86,12 @@ def test_challenger_example(mlflow_project: MlflowProject):
             user_email="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
-    info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
-    project = MlflowProject(info=info)
-    with mlflow_project.run(run_name="challenger-poisson") as run:
+    ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    with opsml_project.run(run_name="challenger-poisson") as run:
         datacard = data_reg.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
@@ -111,6 +110,7 @@ def test_challenger_example(mlflow_project: MlflowProject):
             user_email="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
@@ -140,7 +140,7 @@ def test_datacard(db_registries):
     import numpy as np
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit
+    from opsml.registry import CardInfo, DataCard, DataSplit
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -239,7 +239,7 @@ def test_data_profile(db_registries):
     from sklearn.datasets import load_linnerud
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, CardRegistry
+    from opsml.registry import CardInfo, DataCard
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -289,7 +289,7 @@ def test_data_profile(db_registries):
     data_card2 = DataCard(info=card_info, data=data2)
     data_card2.create_data_profile()
 
-    comparison = DataProfiler.compare_reports(reports=[data_card.data_profile, data_card2.data_profile])
+    DataProfiler.compare_reports(reports=[data_card.data_profile, data_card2.data_profile])
     # comparison.to_file("comparison_report.html")
 
 
@@ -298,7 +298,7 @@ def test_modelcard(db_registries):
     from sklearn.linear_model import LinearRegression
 
     # Opsml
-    from opsml.registry import CardRegistry, ModelCard, CardInfo
+    from opsml.registry import ModelCard, CardInfo
 
     # set up registries
     data_registry = db_registries["data"]
@@ -326,6 +326,7 @@ def test_modelcard(db_registries):
         trained_model=linreg,
         sample_input_data=X_train,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
 
     onnx_predictor = modelcard.onnx_model()
@@ -398,7 +399,8 @@ def test_custom_onnx(db_registries):
     batch_size = 1  # just a random number
 
     # Initialize model with the pretrained weights
-    map_location = lambda storage, loc: storage
+    def map_location(storage, loc):
+        return storage
     if torch.cuda.is_available():
         map_location = None
     torch_model.load_state_dict(model_zoo.load_url(model_url, map_location=map_location))
@@ -408,7 +410,7 @@ def test_custom_onnx(db_registries):
 
     # Input to the model
     x = torch.randn(batch_size, 1, 224, 224, requires_grad=True)
-    torch_out = torch_model(x)
+    torch_model(x)
 
     # Export the model
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -443,7 +445,7 @@ def test_custom_onnx(db_registries):
         model_bytes=onnx_model.SerializeToString(),
     )
 
-    modelcard = ModelCard(
+    ModelCard(
         name="pytorch-custom-onnx",
         team="opsml",
         user_email="opsml.com",
@@ -451,6 +453,7 @@ def test_custom_onnx(db_registries):
         sample_input_data=datacard.data[0:1],
         onnx_model_def=model_def,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
 
     # remove final registration line due to pytest module-level save issues
@@ -478,6 +481,7 @@ def test_overview_list(
         user_email="mlops.com",
         datacard_uid=data_card.uid,
         version="1.0.0",
+        to_onnx=True,
     )
     model_registry = db_registries["model"]
     model_registry.register_card(card=model_card)
@@ -525,7 +529,7 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
     card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
     # to use runs, you must create and use a project
-    project_info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+    ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
     # project = OpsmlProject(info=project_info)
     project = opsml_project
 
@@ -565,6 +569,7 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
             sample_input_data=X,
             datacard_uid=data_card.uid,
             info=card_info,
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 
@@ -575,61 +580,6 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
     # > Param(name='alpha', value=0.5)
 
 
-def test_runcard_mlflow_example(mlflow_project: MlflowProject):
-    from sklearn.linear_model import LinearRegression
-    import numpy as np
-    import pandas as pd
-
-    from opsml.projects import ProjectInfo
-
-    from opsml.projects.mlflow import MlflowProject
-
-    from opsml.registry.cards import CardInfo
-    from opsml.registry import DataCard, ModelCard, CardRegistry
-
-    def fake_data():
-        X_train = np.random.normal(-4, 2.0, size=(1000, 10))
-
-        col_names = []
-        for i in range(0, X_train.shape[1]):
-            col_names.append(f"col_{i}")
-
-        X = pd.DataFrame(X_train, columns=col_names)
-        y = np.random.randint(1, 10, size=(1000, 1))
-        return X, y
-
-    info = ProjectInfo(
-        name="opsml",
-        team="devops",
-        user_email="test_email",
-    )
-    # project = MlflowProject(info=info)
-    project = mlflow_project
-    with project.run(run_name="mlflow-test") as run:
-        X, y = fake_data()
-        reg = LinearRegression().fit(X.to_numpy(), y)
-
-        data_card = DataCard(
-            data=X,
-            name="pipeline-data",
-            team="mlops",
-            user_email="mlops.com",
-        )
-        run.register_card(card=data_card)
-
-        model_card = ModelCard(
-            trained_model=reg,
-            sample_input_data=X[0:1],
-            name="linear_reg",
-            team="mlops",
-            user_email="mlops.com",
-            datacard_uid=data_card.uid,
-        )
-        run.register_card(card=model_card)
-        for i in range(0, 10):
-            run.log_metric("test", i)
-
-
 def test_index_example(db_registries):
     from sklearn.datasets import load_linnerud
     from sklearn.linear_model import LinearRegression
@@ -637,11 +587,9 @@ def test_index_example(db_registries):
     import numpy as np
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
+    from opsml.registry import CardInfo, DataCard, ModelCard, DataSplit
 
     # set up registries
-    # data_registry = CardRegistry(registry_name="data")
-    # model_registry = CardRegistry(registry_name="model")
     data_registry = db_registries["data"]
     model_registry = db_registries["model"]
 
@@ -687,6 +635,7 @@ def test_index_example(db_registries):
         trained_model=linreg,
         sample_input_data=X_train,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(card=modelcard)
@@ -694,13 +643,12 @@ def test_index_example(db_registries):
     print(model_registry.list_cards(info=card_info))
 
 
-def test_quickstart(mlflow_project: MlflowProject):
+def test_quickstart(opsml_project: OpsmlProject):
     import pandas as pd
     from sklearn.linear_model import LinearRegression
     import numpy as np
 
     from opsml.projects import ProjectInfo
-    from opsml.projects.mlflow import MlflowProject
     from opsml.registry import DataCard, ModelCard
 
     def fake_data():
@@ -714,15 +662,14 @@ def test_quickstart(mlflow_project: MlflowProject):
         y = np.random.randint(1, 10, size=(1000, 1))
         return X, y
 
-    info = ProjectInfo(
+    ProjectInfo(
         name="opsml",
         team="devops",
         user_email="test_email",
     )
 
-    # start mlflow run
-    # project = MlflowProject(info=info)
-    project = mlflow_project
+    # start opsmlrun
+    project = opsml_project
     with project.run(run_name="test-run") as run:
         # create data and train model
         X, y = fake_data()
@@ -747,6 +694,7 @@ def test_quickstart(mlflow_project: MlflowProject):
             user_email="mlops.com",
             datacard_uid=data_card.uid,
             tags={"name": "model_tag"},
+            to_onnx=True,
         )
         run.register_card(card=model_card)
 

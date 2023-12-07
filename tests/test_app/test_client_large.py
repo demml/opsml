@@ -92,6 +92,7 @@ def test_register_large_gpt_model(
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(model_card)
 
@@ -120,6 +121,7 @@ def test_register_large_bart_model(
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     api_registries.model.register_card(model_card)
@@ -149,7 +151,7 @@ def test_register_large_vit_model(
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
-        # to_onnx=False,  # onnx conversion fails w/ this model - not sure why
+        to_onnx=True,
     )
 
     api_registries.model.register_card(model_card)

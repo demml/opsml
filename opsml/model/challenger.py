@@ -7,7 +7,8 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
-from opsml.registry.cards import ModelCard, RunCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import CardInfo, Metric
 from opsml.registry.sql.registry import CardRegistries
 
@@ -47,15 +48,17 @@ class ChallengeInputs(BaseModel):
         return cast(List[bool], self.lower_is_better)
 
     @field_validator("metric_name")
-    def convert_name(cls, name) -> List[str]:
+    @classmethod
+    def convert_name(cls, name: Union[List[str], str]) -> List[str]:
         if not isinstance(name, list):
             return [name]
         return name
 
     @field_validator("metric_value")
-    def convert_value(cls, value, info: ValidationInfo) -> List[str]:
-        data = info.data  # type: ignore
-        metric = cast(list, data["metric_name"])
+    @classmethod
+    def convert_value(cls, value: Optional[MetricValue], info: ValidationInfo) -> List[Any]:
+        data = info.data
+        metric = cast(MetricName, data["metric_name"])
         nbr_metrics = len(metric)
 
         if value is not None:
@@ -64,7 +67,7 @@ class ChallengeInputs(BaseModel):
             else:
                 metric_value = value
         else:
-            metric_value = [None] * nbr_metrics
+            metric_value = [None] * nbr_metrics  # type: ignore
 
         if len(metric_value) != nbr_metrics:
             raise ValueError("List of metric values must be the same length as metric names")
@@ -72,9 +75,10 @@ class ChallengeInputs(BaseModel):
         return metric_value
 
     @field_validator("lower_is_better")
-    def convert_threshold(cls, threshold, info: ValidationInfo) -> List[bool]:
-        data = info.data  # type: ignore
-        metric = cast(list, data["metric_name"])
+    @classmethod
+    def convert_threshold(cls, threshold: Union[bool, List[bool]], info: ValidationInfo) -> List[bool]:
+        data = info.data
+        metric = cast(MetricName, data["metric_name"])
         nbr_metrics = len(metric)
 
         if not isinstance(threshold, list):
@@ -113,7 +117,7 @@ class ModelChallenger:
         raise ValueError("Challenger metric not set")
 
     @challenger_metric.setter
-    def challenger_metric(self, metric: Metric):
+    def challenger_metric(self, metric: Metric) -> None:
         self._challenger_metric = metric
 
     def _get_last_champion_record(self) -> Optional[Dict[str, Any]]:
@@ -150,7 +154,7 @@ class ModelChallenger:
                 Name of metric
 
         """
-        runcard: RunCard = self._registries.run.load_card(uid=runcard_uid)
+        runcard = cast(RunCard, self._registries.run.load_card(uid=runcard_uid))
 
         return cast(Metric, runcard.get_metric(name=metric_name))
 
@@ -227,11 +231,12 @@ class ModelChallenger:
                 raise ValueError(f"Champion model does not exist. {champion}")
 
             champion_card = champion_record[0]
-            if champion_card.get("runcard_uid") is None:
+            runcard_uid = champion_card.get("runcard_uid")
+            if runcard_uid is None:
                 raise ValueError(f"No RunCard associated with champion: {champion}")
 
             champion_metric = self._get_runcard_metric(
-                runcard_uid=champion_card.get("runcard_uid"),
+                runcard_uid=runcard_uid,
                 metric_name=metric_name,
             )
 

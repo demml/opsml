@@ -48,7 +48,7 @@ def test_cloudsql():
 
     MYSQL_TRACKING_URI = f"mysql+pymysql://{USER}:{PASSWORD}@/{DB_NAME}?unix_socket=/cloudsql/{CONNECTION_NAME}"
     with pytest.raises(NotImplementedError):
-        conn = CloudSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
+        CloudSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
 
 
 def test_base_sql_connection():
@@ -59,4 +59,4 @@ def test_base_sql_connection():
 
     MYSQL_TRACKING_URI = f"mysql+pymysql://{USER}:{PASSWORD}@/{DB_NAME}?unix_socket=/cloudsql/{CONNECTION_NAME}"
     with pytest.raises(NotImplementedError):
-        conn = BaseSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
+        BaseSQLConnection(tracking_uri=MYSQL_TRACKING_URI)

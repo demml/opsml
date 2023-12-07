@@ -8,7 +8,8 @@ from typing import Any, Dict, Optional, Union, cast
 import numpy as np
 import pandas as pd
 import polars as pl
-from pydantic import ConfigDict, field_validator, model_validator
+from numpy.typing import NDArray
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
@@ -16,14 +17,15 @@ from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
-    InputDataType,
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
+    ValidModelInput,
 )
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
+from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
@@ -31,8 +33,6 @@ from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
-
-SampleModelData = Optional[Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]]
 
 
 @auditable
@@ -70,56 +70,41 @@ class ModelCard(ArtifactCard):
     )
 
     trained_model: Optional[Any] = None
-    sample_input_data: SampleModelData = None
+    sample_input_data: Optional[ValidModelInput] = None
     datacard_uid: Optional[str] = None
-    to_onnx: bool = True
-    metadata: ModelCardMetadata = ModelCardMetadata()
+    to_onnx: bool = False
+    metadata: ModelCardMetadata
 
     @model_validator(mode="before")
-    def check_args(cls, values: Dict[str, Any]):
+    @classmethod
+    def _check_args(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Converts trained model to modelcard"""
 
-        if all([values.get("uid"), values.get("version")]):
+        uid = values.get("uid")
+        version = values.get("version")
+        trained_model: Optional[Any] = values.get("trained_model")
+        sample_data: Optional[ValidModelInput] = values.get("sample_input_data")
+        metadata: Optional[ModelCardMetadata] = values.get("metadata")
+
+        # no need to check if already registered
+        if all([uid, version]):
             return values
 
-        if not cls._required_args_present(values=values):
+        if trained_model is None or sample_data is None:
             raise ValueError(
                 """trained_model and sample_input_data are required for instantiating a ModelCard""",
             )
 
-        return values
-
-    @field_validator("sample_input_data", mode="before")
-    def get_one_sample(cls, input_data: SampleModelData) -> SampleModelData:
-        """Parses input data and returns a single record to be used during ONNX conversion and validation"""
-
-        if input_data is None:
-            return input_data
-
-        if not isinstance(input_data, InputDataType.DICT.value):
-            if isinstance(input_data, InputDataType.POLARS_DATAFRAME.value):
-                input_data = input_data.to_pandas()
-
-            return input_data[0:1]
-
-        sample_dict = {}
-        if isinstance(input_data, dict):
-            for key in input_data.keys():
-                sample_dict[key] = input_data[key][0:1]
-
-            return sample_dict
-
-        raise ValueError("Provided sample data is not a valid type")
-
-    @classmethod
-    def _required_args_present(cls, values: Dict[str, Any]) -> bool:
-        return all(
-            values.get(var_) is not None
-            for var_ in [
-                "trained_model",
-                "sample_input_data",
-            ]
+        card_validator = ModelCardValidator(
+            sample_data=sample_data,
+            trained_model=trained_model,
+            metadata=metadata,
         )
+
+        values["sample_input_data"] = card_validator.get_sample()
+        values["metadata"] = card_validator.get_metadata()
+
+        return values
 
     @property
     def model_data_schema(self) -> DataDict:
@@ -133,20 +118,20 @@ class ModelCard(ArtifactCard):
             return self.metadata.data_schema.input_data_schema
         raise ValueError("Model input data schema has not been set or is not needed for this model")
 
-    def load_sample_data(self):
+    def load_sample_data(self) -> None:
         """Loads sample data associated with original non-onnx model"""
 
-        storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri)
+        if self.metadata.sample_data_type is None:
+            raise ValueError("Cannot load sample data - sample_data_type is not set")
 
-        storage_client.storage_spec = storage_spec
         sample_data = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=self.metadata.sample_data_type,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
+        self.sample_input_data = sample_data
 
-        setattr(self, "sample_input_data", sample_data)
-
-    def load_trained_model(self):
+    def load_trained_model(self) -> None:
         """Loads original trained model"""
 
         if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
@@ -156,24 +141,24 @@ class ModelCard(ArtifactCard):
 
         if self.trained_model is None:
             self.load_sample_data()
-            storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri)
-            storage_client.storage_spec = storage_spec
+
+            if self.metadata.model_type is None:
+                raise ValueError("Cannot load trained model - model_type is not set")
 
             trained_model = load_record_artifact_from_storage(
-                storage_client=storage_client,
                 artifact_type=self.metadata.model_type,
+                storage_client=storage_client,
+                storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
             )
-
-            setattr(self, "trained_model", trained_model)
+            self.trained_model = trained_model
 
     @property
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
-        storage_spec = ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri)
-        storage_client.storage_spec = storage_spec
         model_metadata = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ArtifactStorageType.JSON.value,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
         )
 
         return ModelMetadata.model_validate(model_metadata)
@@ -185,16 +170,16 @@ class ModelCard(ArtifactCard):
             metadata:
                 `ModelMetadata`
         """
-        if metadata.onnx_uri is not None:
-            storage_client.storage_spec.save_path = metadata.onnx_uri
-            onnx_model = load_record_artifact_from_storage(
-                storage_client=storage_client,
-                artifact_type=ArtifactStorageType.ONNX.value,
-            )
+        if metadata.onnx_uri is None:
+            raise ValueError("Onnx uri is not specified")
 
-            return onnx_model
+        onnx_model = load_record_artifact_from_storage(
+            artifact_type=ArtifactStorageType.ONNX.value,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=metadata.onnx_uri),
+        )
 
-        raise ValueError("Onnx uri is not specified")
+        return onnx_model
 
     def load_onnx_model_definition(self) -> None:
         """Loads the onnx model definition"""
@@ -209,8 +194,7 @@ class ModelCard(ArtifactCard):
             onnx_version=metadata.onnx_version,
             model_bytes=onnx_model.SerializeToString(),
         )
-
-        setattr(self.metadata, "onnx_model_def", model_def)
+        self.metadata.onnx_model_def = model_def
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
@@ -246,13 +230,7 @@ class ModelCard(ArtifactCard):
             create_model,
         )
 
-        model_return = create_model(
-            model=self.trained_model,
-            input_data=self.sample_input_data,
-            additional_onnx_args=self.metadata.additional_onnx_args,
-            to_onnx=self.to_onnx,
-            onnx_model_def=self.metadata.onnx_model_def,
-        )
+        model_return = create_model(modelcard=self)
 
         self._set_model_attributes(model_return=model_return)
 
@@ -266,7 +244,7 @@ class ModelCard(ArtifactCard):
             self.load_sample_data()
 
         sample_data = cast(
-            Union[pd.DataFrame, np.ndarray, Dict[str, Any]],
+            Union[pd.DataFrame, NDArray[Any], Dict[str, Any]],
             self.sample_input_data,
         )
 
@@ -277,16 +255,16 @@ class ModelCard(ArtifactCard):
 
         if isinstance(sample_data, pd.DataFrame):
             record = list(sample_data[0:1].T.to_dict().values())[0]  # pylint: disable=unsubscriptable-object
-            return record
+            return cast(Dict[str, Any], record)
 
         if isinstance(sample_data, pl.DataFrame):
             record = list(sample_data.to_pandas()[0:1].T.to_dict().values())[0]
-            return record
+            return cast(Dict[str, Any], record)
 
         record = {}
         for feat, val in sample_data.items():
             record[feat] = np.ravel(val).tolist()
-        return record
+        return cast(Dict[str, Any], record)
 
     def onnx_model(self, start_onnx_runtime: bool = True) -> OnnxModelPredictor:
         """

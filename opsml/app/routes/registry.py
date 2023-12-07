@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 
 from opsml.app.routes.pydantic_models import TableNameResponse
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 

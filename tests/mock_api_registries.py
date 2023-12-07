@@ -2,32 +2,26 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Iterable, List, Optional, Union, cast, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Union, cast
 import textwrap
-import pandas as pd
-from sqlalchemy.sql.expression import ColumnElement, FromClause
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
-from opsml.registry.sql.sql_schema import RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType
-
+import pandas as pd
 
 logger = ArtifactLogger.get_logger()
-
-
-SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-
 
 Registry = ClientRegistry
 
 
 class DataCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.DATA.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.DATA
 
     @staticmethod
     def validate(registry_name: str):
@@ -36,11 +30,11 @@ class DataCardRegistry(Registry):
 
 class ModelCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.MODEL.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.MODEL
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -73,8 +67,8 @@ class ModelCardRegistry(Registry):
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )
@@ -101,20 +95,20 @@ class ModelCardRegistry(Registry):
         return registry_name.lower() == RegistryType.MODEL.value
 
 
-class RunCardRegistry(Registry):  # type:ignore
+class RunCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.RUN.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.RUN
 
     @staticmethod
     def validate(registry_name: str):
         return registry_name.lower() == RegistryType.RUN.value
 
 
-class PipelineCardRegistry(Registry):  # type:ignore
+class PipelineCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PIPELINE.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PIPELINE
 
     @staticmethod
     def validate(registry_name: str):
@@ -124,10 +118,10 @@ class PipelineCardRegistry(Registry):  # type:ignore
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
-class ProjectCardRegistry(Registry):  # type:ignore
+class ProjectCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PROJECT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PROJECT
 
     @staticmethod
     def validate(registry_name: str):
@@ -147,12 +141,12 @@ class ProjectCardRegistry(Registry):  # type:ignore
         raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
-class AuditCardRegistry(Registry):  # type:ignore
+class AuditCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.AUDIT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.AUDIT
 
-    def validate_uid(self, uid: str, registry_type: str) -> bool:
+    def validate_uid(self, uid: str, registry_type: RegistryType) -> bool:
         return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
@@ -160,7 +154,6 @@ class AuditCardRegistry(Registry):  # type:ignore
         return registry_name.lower() == RegistryType.AUDIT.value
 
 
-# CardRegistry also needs to set a storage file system
 class CardRegistry:
     def __init__(self, registry_name: str):
         """
@@ -178,7 +171,7 @@ class CardRegistry:
         """
 
         self._registry = self._set_registry(registry_name=registry_name)
-        self.table_name = self._registry._table.__tablename__
+        self.table_name = self._registry.table_name
 
     def _set_registry(self, registry_name: str) -> Registry:
         """Returns a SQL registry to be used to register Cards
@@ -198,7 +191,7 @@ class CardRegistry:
             )
         )
 
-        return registry(registry_type=registry_name)
+        return registry(registry_type=RegistryType.from_str(registry_name))
 
     def list_cards(
         self,
@@ -270,6 +263,8 @@ class CardRegistry:
         )
 
         if as_dataframe:
+            import pandas as pd
+
             return pd.DataFrame(card_list)
 
         return card_list
@@ -346,8 +341,8 @@ class CardRegistry:
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )

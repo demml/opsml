@@ -7,6 +7,7 @@ from typing import Any, List
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import inspect
+from sqlalchemy.engine.base import Engine
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.sql_schema import Base
@@ -17,7 +18,7 @@ DIR_PATH = os.path.dirname(__file__)
 
 
 class DBInitializer:
-    def __init__(self, engine, registry_tables: List[Any]):
+    def __init__(self, engine: Engine, registry_tables: List[Any]):
         self.engine = engine
         self.registry_tables = registry_tables
 
@@ -27,12 +28,12 @@ class DBInitializer:
         registry_tables = self.registry_tables
         return all(registry_table.value in table_names for registry_table in registry_tables)
 
-    def create_tables(self):
+    def create_tables(self) -> None:
         """Creates tables"""
         logger.info("Creating database tables")
         Base.metadata.create_all(self.engine)
 
-    def update_tables(self):
+    def update_tables(self) -> None:
         """Updates tables in db based on alembic revisions"""
 
         # credit to mlflow for this implementation

@@ -17,6 +17,24 @@ DEFAULT_POOL_SIZE = "10"
 DEFAULT_OVERFLOW = "5"
 
 
+class SqlType(str, Enum):
+    CLOUDSQL_MYSQL = "cloudsql_mysql"
+    CLOUDSQL_POSTGRES = "cloudsql_postgresql"
+    LOCAL = "local"
+    SQLITE = "sqlite"
+    SQLITE_MEMORY = ":memory:"
+
+
+class PythonCloudSqlType(str, Enum):
+    MYSQL = "pymysql"
+    POSTGRES = "pg8000"
+
+
+class CloudSqlPrefix(str, Enum):
+    MYSQL = "mysql+pymysql://"
+    POSTGRES = "postgresql+pg8000://"
+
+
 class BaseSQLConnection:
     def __init__(self, tracking_uri: str, credentials: Any = None):
         """Base Connection model that all connections inherit from"""
@@ -37,20 +55,26 @@ class BaseSQLConnection:
 
     @cached_property
     def default_db_kwargs(self) -> Dict[str, int]:
-        """Default db kwargs for sqlalchemy engine"""
-        kwargs = {
-            "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
-            "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
-        }
+        kwargs: Dict[str, Any] = {}
+        if SqlType.SQLITE not in self.tracking_uri:
+            kwargs = {
+                "pool_size": int(os.getenv("OPSML_POOL_SIZE", DEFAULT_POOL_SIZE)),
+                "max_overflow": int(os.getenv("OPSML_MAX_OVERFLOW", DEFAULT_OVERFLOW)),
+            }
+
+        # if using sqlite, use NullPool
+        if SqlType.SQLITE in self.tracking_uri or SqlType.SQLITE_MEMORY in self.tracking_uri:
+            kwargs["poolclass"] = sqlalchemy.pool.NullPool
+
         logger.info(
             "Default pool size: {}, overflow: {}",
-            kwargs["pool_size"],
-            kwargs["max_overflow"],
+            kwargs.get("pool_size", DEFAULT_POOL_SIZE),
+            kwargs.get("max_overflow", DEFAULT_OVERFLOW),
         )
         return kwargs
 
     @cached_property
-    def _sqlalchemy_prefix(self):
+    def _sqlalchemy_prefix(self) -> str:
         raise NotImplementedError
 
     @property
@@ -84,7 +108,7 @@ class CloudSQLConnection(BaseSQLConnection):
     @property
     def _ip_type(self) -> Enum:
         """Sets IP type for CloudSql"""
-        from google.cloud.sql.connector import IPTypes
+        from google.cloud.sql.connector import IPTypes  # type: ignore
 
         return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
@@ -102,8 +126,8 @@ class CloudSQLConnection(BaseSQLConnection):
             raise ValueError("No unix_socket or host detected in uri")
 
         if "cloudsql" in connection_name:
-            return connection_name.split("cloudsql/")[-1]
-        return connection_name
+            return str(connection_name.split("cloudsql/")[-1])
+        return str(connection_name)
 
     @property
     def _python_db_type(self) -> str:
@@ -111,13 +135,13 @@ class CloudSQLConnection(BaseSQLConnection):
 
         raise NotImplementedError
 
-    def _conn(self):
+    def _conn(self) -> Any:
         """Creates the mysql or postgres CloudSQL client"""
-        from google.cloud.sql.connector import Connector
+        from google.cloud.sql.connector import Connector  # type: ignore
 
         connector = Connector(
             credentials=self.credentials,
-            ip_type=self._ip_type,
+            ip_type=self._ip_type,  # type: ignore
         )
 
         conn = connector.connect(

@@ -7,15 +7,17 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Protocol, Union
 
 import numpy as np
 import pandas as pd
 import polars as pl
+import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-InputData = Union[pd.DataFrame, NDArray, Dict[str, NDArray]]
+ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]  # type: ignore
+ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
 
 
 class DataDtypes(str, Enum):
@@ -26,7 +28,7 @@ class DataDtypes(str, Enum):
     FLOAT64 = "float64"
 
 
-class OnnxModelType(str, Enum):
+class TrainedModelType(str, Enum):
     TRANSFORMER = "transformer"
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
@@ -41,35 +43,26 @@ class OnnxModelType(str, Enum):
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
-    OnnxModelType.SKLEARN_ESTIMATOR,
-    OnnxModelType.STACKING_ESTIMATOR,
-    OnnxModelType.SKLEARN_PIPELINE,
-    OnnxModelType.LGBM_REGRESSOR,
-    OnnxModelType.LGBM_CLASSIFIER,
-    OnnxModelType.XGB_REGRESSOR,
-    OnnxModelType.CALIBRATED_CLASSIFIER,
+    TrainedModelType.SKLEARN_ESTIMATOR,
+    TrainedModelType.STACKING_ESTIMATOR,
+    TrainedModelType.SKLEARN_PIPELINE,
+    TrainedModelType.LGBM_REGRESSOR,
+    TrainedModelType.LGBM_CLASSIFIER,
+    TrainedModelType.XGB_REGRESSOR,
+    TrainedModelType.CALIBRATED_CLASSIFIER,
 ]
 
 LIGHTGBM_SUPPORTED_MODEL_TYPES = [
-    OnnxModelType.LGBM_BOOSTER,
+    TrainedModelType.LGBM_BOOSTER,
 ]
 
 UPDATE_REGISTRY_MODELS = [
-    OnnxModelType.LGBM_CLASSIFIER,
-    OnnxModelType.LGBM_REGRESSOR,
-    OnnxModelType.XGB_REGRESSOR,
+    TrainedModelType.LGBM_CLASSIFIER,
+    TrainedModelType.LGBM_REGRESSOR,
+    TrainedModelType.XGB_REGRESSOR,
 ]
 
-AVAILABLE_MODEL_TYPES = list(OnnxModelType)
-
-
-class InputDataType(Enum):
-    """Input put data associated with model"""
-
-    PANDAS_DATAFRAME = pd.DataFrame
-    NUMPY_ARRAY = np.ndarray
-    DICT = dict
-    POLARS_DATAFRAME = pl.DataFrame
+AVAILABLE_MODEL_TYPES = list(TrainedModelType)
 
 
 class OnnxDataProto(Enum):
@@ -96,7 +89,7 @@ class OnnxDataProto(Enum):
 
 class Feature(BaseModel):
     feature_type: str
-    shape: list
+    shape: List[Any]
 
 
 class DataDict(BaseModel):
@@ -153,13 +146,13 @@ class ExtraOnnxArgs(BaseModel):
 class Base(BaseModel):
     model_config = ConfigDict(frozen=False)
 
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         raise NotImplementedError
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
-    def to_numpy(self, type_: str, values: Any):
+    def to_numpy(self, type_: str, values: Any) -> NDArray[Any]:
         if type_ == OnnxDataProto.DOUBLE.name:
             return np.array(values, np.float64)
 
@@ -176,44 +169,44 @@ class Base(BaseModel):
 
 
 class NumpyBase(Base):
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         values = list(self.model_dump().values())
-        for _, feature in self.feature_map.items():  # there can only be one
+        for _, feature in self.feature_map.items():  # type: ignore[attr-defined]
             array = self.to_numpy(
                 type_=feature.feature_type,
                 values=values,
             )
-            return {"predict": array.reshape(1, -1)}
+        return {"predict": array.reshape(1, -1)}
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
 
 class DictBase(Base):
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
 
         for feat, feat_val in self:
             array = self.to_numpy(
-                type_=self.feature_map[feat].feature_type,
+                type_=self.feature_map[feat].feature_type,  # type: ignore[attr-defined]
                 values=feat_val,
             )
             feats[feat] = array.reshape(1, -1)
         return feats
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.model_dump(), index=[0])
 
 
 class DeepLearningNumpyBase(Base):
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
             feats[feat] = np.expand_dims(array, axis=0)
         return feats
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
 
@@ -222,15 +215,15 @@ class DeepLearningDictBase(Base):
     Multi-input models typically allow for a dictionary of arrays
     """
 
-    def to_onnx(self):
+    def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
             feats[feat] = np.expand_dims(array, axis=0)
 
         return feats
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         raise NotImplementedError
 
 
@@ -283,10 +276,11 @@ class ModelMetadata(BaseModel):
     model_type: str
     onnx_uri: Optional[str] = None
     onnx_version: Optional[str] = None
+    onnx_model_def: Optional[OnnxModelDefinition] = None
     model_uri: str
     model_version: str
     model_team: str
-    sample_data: dict
+    sample_data: Dict[str, Any]
     data_schema: ApiDataSchemas
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
@@ -297,3 +291,80 @@ class ModelDownloadInfo(BaseModel):
     version: Optional[str] = None
     team: Optional[str] = None
     uid: Optional[str] = None
+
+
+### Sklearn protocol stub
+class BaseEstimator(Protocol):
+    ...
+
+
+### Onnx protocol stubs
+class Graph:
+    @property
+    def output(self) -> Any:
+        ...
+
+    @property
+    def input(self) -> Any:
+        ...
+
+
+class ModelProto(Protocol):
+    ir_version: int
+    producer_name: str
+    producer_version: str
+    domain: str
+    model_version: int
+    doc_string: str
+
+    def SerializeToString(self) -> bytes:  # pylint: disable=invalid-name
+        ...
+
+    @property
+    def graph(self) -> Graph:
+        return Graph()
+
+
+# proto class for type checking in order to prevent cyclic import
+class Metadata(Protocol):
+    @property
+    def model_type(self) -> str:
+        ...
+
+    @property
+    def model_class(self) -> str:
+        ...
+
+    @property
+    def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
+        ...
+
+    @property
+    def additional_onnx_args(self) -> Optional[ExtraOnnxArgs]:
+        ...
+
+    @additional_onnx_args.setter
+    def additional_onnx_args(self) -> None:
+        ...
+
+    @property
+    def sample_data_type(self) -> str:
+        ...
+
+
+class ModelCard(Protocol):
+    @property
+    def metadata(self) -> Metadata:
+        ...
+
+    @property
+    def trained_model(self) -> Any:
+        ...
+
+    @property
+    def sample_input_data(self) -> ValidModelInput:
+        ...
+
+    @property
+    def to_onnx(self) -> bool:
+        ...

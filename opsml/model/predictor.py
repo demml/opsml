@@ -4,12 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 from functools import cached_property
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import numpy as np
+from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import ApiDataSchemas, Base, InputDataType, OnnxModelType
+from opsml.model.types import ApiDataSchemas, Base, TrainedModelType
+from opsml.registry.data.types import AllowedDataType
 
 
 # need to build response object for prediction
@@ -54,16 +56,16 @@ class OnnxModelPredictor:
         )
 
     @property
-    def data_type(self):
-        return self.data_schema.model_data_schema.data_type
+    def data_type(self) -> str:
+        return str(self.data_schema.model_data_schema.data_type)
 
     @cached_property
     def input_sig(self) -> Base:
-        return self.sig_creator.input_sig
+        return cast(Base, self.sig_creator.input_sig)
 
     @cached_property
     def output_sig(self) -> Base:
-        return self.sig_creator.output_sig
+        return cast(Base, self.sig_creator.output_sig)
 
     def predict(self, data: Dict[str, Any]) -> Any:
         """
@@ -126,18 +128,18 @@ class OnnxModelPredictor:
 
         pred_data = self.sig_creator.input_sig(**data)
 
-        if self.model_type == OnnxModelType.SKLEARN_PIPELINE:
+        if self.model_type == TrainedModelType.SKLEARN_PIPELINE:
             data_for_pred = pred_data.to_dataframe()
 
-        elif self.model_type == OnnxModelType.TF_KERAS:
+        elif self.model_type == TrainedModelType.TF_KERAS:
             data_for_pred = pred_data.to_onnx()
 
-        elif self.model_type in [OnnxModelType.PYTORCH, OnnxModelType.TRANSFORMER]:
+        elif self.model_type in [TrainedModelType.PYTORCH, TrainedModelType.TRANSFORMER]:
             import torch
 
-            feed_data: Dict[str, np.ndarray] = pred_data.to_onnx()
+            feed_data: Dict[str, NDArray[Any]] = pred_data.to_onnx()
 
-            if self.data_type == InputDataType.DICT:
+            if self.data_type == AllowedDataType.DICT:
                 data_for_pred = {
                     name: torch.from_numpy(value) for name, value in feed_data.items()  # pylint: disable=no-member
                 }
@@ -154,7 +156,7 @@ class OnnxModelPredictor:
 
         return prediction
 
-    def _create_onnx_session(self, model_definition: bytes):
+    def _create_onnx_session(self, model_definition: bytes) -> Any:
         import onnxruntime as rt  # pylint: disable=import-outside-toplevel
 
         return rt.InferenceSession(

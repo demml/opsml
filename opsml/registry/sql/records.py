@@ -25,7 +25,7 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
 
-def get_timestamp():
+def get_timestamp() -> int:
     return int(round(time.time() * 1_000_000))
 
 
@@ -48,9 +48,10 @@ class DataRegistryRecord(SaveRecord):
     datacard_uri: str
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
-        uris = metadata.get("uris")
+    @classmethod
+    def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = values["metadata"]
+        uris: Dict[str, Any] = metadata["uris"]
 
         values["data_uri"] = uris["data_uri"]
         values["datacard_uri"] = uris["datacard_uri"]
@@ -78,8 +79,10 @@ class ModelRegistryRecord(SaveRecord):
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
+    @classmethod
+    def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = values["metadata"]
+
         values["modelcard_uri"] = metadata["uris"]["modelcard_uri"]
         values["trained_model_uri"] = metadata["uris"]["trained_model_uri"]
         values["model_metadata_uri"] = metadata["uris"]["model_metadata_uri"]
@@ -131,8 +134,9 @@ class AuditRegistryRecord(SaveRecord):
     timestamp: int = get_timestamp()
 
     @model_validator(mode="before")
-    def set_metadata(cls, values):
-        metadata = values.get("metadata")
+    @classmethod
+    def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = values["metadata"]
         values["audit_uri"] = metadata["audit_uri"]
         values["datacards"] = metadata["datacards"]
         values["modelcards"] = metadata["modelcards"]
@@ -163,7 +167,7 @@ class LoadRecord(BaseModel):
     storage_client: Optional[StorageClientType] = None
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
+    def validate_table(registry_type: RegistryType) -> bool:
         raise NotImplementedError
 
 
@@ -172,7 +176,8 @@ class LoadedDataRecord(LoadRecord):
     metadata: DataCardMetadata
 
     @model_validator(mode="before")
-    def load_attributes(cls, values):
+    @classmethod
+    def load_attributes(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
         datacard_definition = cls.load_datacard_definition(
@@ -205,16 +210,13 @@ class LoadedDataRecord(LoadRecord):
 
     @staticmethod
     def load_data_profile(data_profile_uri: str, storage_client: StorageClientType) -> ProfileReport:
-        storage_spec = ArtifactStorageSpecs(save_path=data_profile_uri)
-
-        storage_client.storage_spec = storage_spec
         profile_bytes = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=data_profile_uri),
         )
-
-        profile = DataProfiler.load_profile(data=profile_bytes)
-        return profile
+        assert profile_bytes is not None
+        return DataProfiler.load_profile(data=cast(bytes, profile_bytes))
 
     @classmethod
     def load_datacard_definition(
@@ -227,20 +229,17 @@ class LoadedDataRecord(LoadRecord):
         Returns:
             Dictionary to be parsed by DataCard.model_validate()
         """
-
-        storage_spec = ArtifactStorageSpecs(save_path=save_path)
-        storage_client.storage_spec = storage_spec
-
         datacard_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=save_path),
         )
-
-        return datacard_definition
+        assert datacard_definition is not None
+        return cast(Dict[str, Any], datacard_definition)
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.DATA.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.DATA
 
 
 class LoadedModelRecord(LoadRecord):
@@ -250,7 +249,8 @@ class LoadedModelRecord(LoadRecord):
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
-    def load_model_attr(cls, values) -> Dict[str, Any]:
+    @classmethod
+    def load_model_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
@@ -261,7 +261,7 @@ class LoadedModelRecord(LoadRecord):
 
         modelcard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
         modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
-        modelcard_definition["metadata"]["model_type"] = values.get("model_type")
+        modelcard_definition["metadata"]["model_type"] = values.get("model_type", "undefined")
         modelcard_definition["storage_client"] = values.get("storage_client")
         modelcard_definition["metadata"]["uris"] = ModelCardUris(
             model_metadata_uri=values.get("model_metadata_uri"),
@@ -283,16 +283,13 @@ class LoadedModelRecord(LoadRecord):
         Returns:
             Dictionary to be parsed by ModelCard.parse_obj()
         """
-
-        storage_spec = ArtifactStorageSpecs(save_path=values["modelcard_uri"])
-
-        storage_client.storage_spec = storage_spec
         model_card_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
         )
-
-        return model_card_definition
+        assert model_card_definition is not None
+        return cast(Dict[str, Any], model_card_definition)
 
     @classmethod
     def convert_model_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
@@ -300,8 +297,8 @@ class LoadedModelRecord(LoadRecord):
         return ModelCardMetadata(**card_def).model_dump()
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.MODEL.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.MODEL
 
 
 class LoadedAuditRecord(LoadRecord):
@@ -311,14 +308,15 @@ class LoadedAuditRecord(LoadRecord):
     metadata: AuditCardMetadata
 
     @model_validator(mode="before")
-    def load_audit_attr(cls, values) -> Dict[str, Any]:
+    @classmethod
+    def load_audit_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
         audit = cls._load_audit(
-            audit_uri=values.get("audit_uri"),
+            audit_uri=values["audit_uri"],
             storage_client=storage_client,
         )
-        audit["metadata"]["audit_uri"] = values.get("audit_uri")
+        audit["metadata"]["audit_uri"] = values["audit_uri"]
 
         return audit
 
@@ -340,19 +338,17 @@ class LoadedAuditRecord(LoadRecord):
             Audit dictionary
         """
 
-        storage_spec = ArtifactStorageSpecs(save_path=audit_uri)
-
-        storage_client.storage_spec = storage_spec
         audit_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
         )
-
-        return audit_definition
+        assert audit_definition is not None
+        return cast(Dict[str, Any], audit_definition)
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.AUDIT.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.AUDIT
 
 
 class LoadedRunRecord(LoadRecord):
@@ -368,11 +364,12 @@ class LoadedRunRecord(LoadRecord):
     runcard_uri: str
 
     @model_validator(mode="before")
-    def load_run_attr(cls, values) -> Dict[str, Any]:
+    @classmethod
+    def load_run_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         storage_client = cast(StorageClientType, values["storage_client"])
 
         runcard_definition = cls.load_runcard_definition(
-            runcard_uri=values.get("runcard_uri"),
+            runcard_uri=values["runcard_uri"],
             storage_client=storage_client,
         )
 
@@ -393,19 +390,17 @@ class LoadedRunRecord(LoadRecord):
             Dictionary to be parsed by RunCard.model_validate()
         """
 
-        storage_spec = ArtifactStorageSpecs(save_path=runcard_uri)
-
-        storage_client.storage_spec = storage_spec
         runcard_definition = load_record_artifact_from_storage(
-            storage_client=storage_client,
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            storage_client=storage_client,
+            storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
         )
-
-        return runcard_definition
+        assert runcard_definition is not None
+        return cast(Dict[str, Any], runcard_definition)
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.RUN.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.RUN
 
 
 # same as piplelineregistry (duplicating to stay with theme of separate records)
@@ -416,8 +411,8 @@ class LoadedPipelineRecord(LoadRecord):
     runcard_uids: Optional[List[str]] = None
 
     @staticmethod
-    def validate_table(registry_type: str) -> bool:
-        return registry_type == RegistryType.PIPELINE.value
+    def validate_table(registry_type: RegistryType) -> bool:
+        return registry_type == RegistryType.PIPELINE
 
 
 LoadedRecordType = Union[
@@ -430,7 +425,7 @@ LoadedRecordType = Union[
 
 
 def load_record(
-    registry_type: str,
+    registry_type: RegistryType,
     record_data: Dict[str, Any],
     storage_client: StorageClientType,
 ) -> LoadedRecordType:

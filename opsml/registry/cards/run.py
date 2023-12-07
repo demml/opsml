@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
@@ -70,7 +70,7 @@ class RunCard(ArtifactCard):
     project_id: Optional[str] = None
     runcard_uri: Optional[str] = None
 
-    def add_tag(self, key: str, value: str):
+    def add_tag(self, key: str, value: str) -> None:
         """
         Logs params to current RunCard
 
@@ -82,7 +82,7 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**{key: value}, **self.tags}
 
-    def add_tags(self, tags: Dict[str, str]):
+    def add_tags(self, tags: Dict[str, str]) -> None:
         """
         Logs params to current RunCard
 
@@ -92,7 +92,7 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**tags, **self.tags}
 
-    def log_parameters(self, params: Dict[str, Union[float, int, str]]):
+    def log_parameters(self, params: Dict[str, Union[float, int, str]]) -> None:
         """
         Logs params to current RunCard
 
@@ -105,7 +105,7 @@ class RunCard(ArtifactCard):
             # check key
             self.log_parameter(key, value)
 
-    def log_parameter(self, key: str, value: Union[int, float, str]):
+    def log_parameter(self, key: str, value: Union[int, float, str]) -> None:
         """
         Logs params to current RunCard
 
@@ -183,9 +183,8 @@ class RunCard(ArtifactCard):
                 Artifact
         """
 
-        curr_artifacts = cast(Dict[str, Any], self.artifacts)
         new_artifact = {name: artifact}
-        self.artifacts = {**new_artifact, **curr_artifacts}
+        self.artifacts = {**new_artifact, **self.artifacts}
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
     def create_registry_record(self) -> RegistryRecord:
@@ -195,7 +194,7 @@ class RunCard(ArtifactCard):
 
         return RunRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
-    def add_artifact_uri(self, name: str, uri: str):
+    def add_artifact_uri(self, name: str, uri: str) -> None:
         """
         Adds an artifact_uri to the runcard
 
@@ -271,11 +270,10 @@ class RunCard(ArtifactCard):
     def load_artifacts(self) -> None:
         if bool(self.artifact_uris):
             for name, uri in self.artifact_uris.items():
-                storage_spec = ArtifactStorageSpecs(save_path=uri)
-                storage_client.storage_spec = storage_spec
                 self.artifacts[name] = load_record_artifact_from_storage(
-                    storage_client=storage_client,
                     artifact_type=ARBITRARY_ARTIFACT_TYPE,
+                    storage_client=storage_client,
+                    storage_spec=ArtifactStorageSpecs(save_path=uri),
                 )
             return None
 

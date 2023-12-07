@@ -13,16 +13,13 @@ from functools import reduce
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
-import onnx
-import onnxruntime as rt
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
-from onnx.onnx_ml_pb2 import ModelProto  # type: ignore
-from sklearn.base import BaseEstimator
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.model.data_converters import OnnxDataConverter
-from opsml.model.model_info import ModelInfo
+from opsml.model.data_helper import ModelDataHelper
 from opsml.model.model_types import ModelType
 from opsml.model.registry_updaters import OnnxRegistryUpdater
 from opsml.model.types import (
@@ -30,23 +27,53 @@ from opsml.model.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
     ApiDataSchemas,
+    BaseEstimator,
     DataDict,
     ExtraOnnxArgs,
     Feature,
+    ModelCard,
+    ModelProto,
     ModelReturn,
     OnnxDataProto,
     OnnxModelDefinition,
-    OnnxModelType,
+    TrainedModelType,
 )
 
-ONNX_VERSION = onnx.__version__
 logger = ArtifactLogger.get_logger()
 
 
+try:
+    import onnx
+    import onnxruntime as rt
+
+except ModuleNotFoundError as import_error:
+    logger.error(
+        """Failed to import onnx and onnxruntime. Please install onnx and onnxruntime via opsml extras
+        If you wish to convert your model to onnx"""
+    )
+    raise import_error
+
+
 class ModelConverter:
-    def __init__(self, model_info: ModelInfo):
-        self.model_info = model_info
-        self.data_converter = OnnxDataConverter(model_info=model_info)
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
+        self.card = modelcard
+        self.data_helper = data_helper
+        self.data_converter = OnnxDataConverter(
+            modelcard=modelcard,
+            data_helper=data_helper,
+        )
+
+    @property
+    def model_type(self) -> str:
+        return self.card.metadata.model_type
+
+    @property
+    def trained_model(self) -> Any:
+        return self.card.trained_model
+
+    @property
+    def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
+        return self.card.metadata.onnx_model_def
 
     @property
     def is_sklearn_classifier(self) -> bool:
@@ -54,10 +81,12 @@ class ModelConverter:
 
         from sklearn.base import is_classifier
 
-        return is_classifier(self.model_info.model)
+        return bool(is_classifier(self.trained_model))
 
     def update_onnx_registries(self) -> bool:
-        return OnnxRegistryUpdater.update_onnx_registry(model_estimator_name=self.model_info.model_type)
+        return OnnxRegistryUpdater.update_onnx_registry(
+            model_estimator_name=self.model_type,
+        )
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a model to onnx format
@@ -67,15 +96,22 @@ class ModelConverter:
         """
         raise NotImplementedError
 
-    def convert_data(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for onnx
 
         Returns
             Encrypted model definition
         """
+
+        if self.model_type in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
+            OpsmlImportExceptions.try_skl2onnx_imports()
+
+        elif self.model_type == TrainedModelType.TF_KERAS:
+            OpsmlImportExceptions.try_tf2onnx_imports()
+
         return self.data_converter.get_data_types()
 
-    def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]):
+    def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]) -> None:
         raise ValueError(
             f"""Onnx and model prediction shape mismatch. \n
                 Onnx prediction shape: {onnx_shape} \n
@@ -83,7 +119,7 @@ class ModelConverter:
             """
         )
 
-    def _validate_pred_arrays(self, onnx_preds: NDArray, model_preds: NDArray) -> bool:
+    def _validate_pred_arrays(self, onnx_preds: NDArray[Any], model_preds: NDArray[Any]) -> bool:
         """
         Validates onnx and original model predictions. Checks whether average diff between model and onnx
         is <= .001.
@@ -122,8 +158,8 @@ class ModelConverter:
 
     def _predictions_close(
         self,
-        onnx_preds: List[Union[float, int, NDArray]],
-        model_preds: Union[List[Union[float, int]], Union[float, int], NDArray],
+        onnx_preds: List[Union[float, int, NDArray[Any]]],
+        model_preds: Union[List[Union[float, int]], Union[float, int], NDArray[Any]],
     ) -> bool:  # pragma: no cover
         """Checks if model and onnx predictions are close
 
@@ -149,20 +185,17 @@ class ModelConverter:
                 return self._validate_pred_arrays(onnx_pred, model_preds)
             raise ValueError("Model and onnx predictions should both be of type NDArray")
 
-        model_preds = cast(Union[float, int], model_preds)
         valid_list = [np.sum(np.abs(onnx_preds[0] - model_preds)) <= 0.001]
         return all(valid_list)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
-        model_preds = self.model_info.model.predict(self.model_info.model_data.data)
+        model_preds = self.trained_model.predict(self.data_helper.data)
 
         logger.info("Validating converted onnx model")
-        sess = rt.InferenceSession(
-            path_or_bytes=onnx_model.SerializeToString(),
-            providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
-        )
+        sess = self._create_onnx_session(onnx_model=onnx_model)
+
         onnx_preds = sess.run(None, inputs)
         if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
             raise ValueError("Model prediction validation failed")
@@ -170,9 +203,9 @@ class ModelConverter:
         logger.info("Onnx model validated")
 
     def _get_data_elem_type(self, sig: Any) -> int:
-        return sig.type.tensor_type.elem_type
+        return int(sig.type.tensor_type.elem_type)
 
-    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer):
+    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer) -> Dict[str, Feature]:  # type: ignore[type-arg]
         feature_dict = {}
 
         for sig in signature:
@@ -218,7 +251,7 @@ class ModelConverter:
         """
 
         return OnnxModelDefinition(
-            onnx_version=ONNX_VERSION,
+            onnx_version=onnx.__version__,  # type: ignore
             model_bytes=onnx_model.SerializeToString(),
         )
 
@@ -241,19 +274,18 @@ class ModelConverter:
 
         return model_def, input_onnx_features, output_onnx_features
 
-    def _load_onnx_model(
-        self, model_def: OnnxModelDefinition
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _load_onnx_model(self) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """
         Loads onnx model from model definition
 
         Returns:
             Tuple containing onnx model definition, input features, and output features
         """
-        onnx_model = onnx.load_from_string(model_def.model_bytes)
-        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
+        assert isinstance(self.onnx_model_def, OnnxModelDefinition)
+        onnx_model = onnx.load_from_string(self.onnx_model_def.model_bytes)
+        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=cast(ModelProto, onnx_model))
 
-        return model_def, input_onnx_features, output_onnx_features
+        return self.onnx_model_def, input_onnx_features, output_onnx_features
 
     def convert(self) -> ModelReturn:
         """Converts model to onnx model, validates it, and creates an
@@ -262,13 +294,13 @@ class ModelConverter:
         Returns:
             ModelReturn object containing model definition and api data schema
         """
-        initial_types, data_schema = self.convert_data()
+        initial_types, data_schema = self.get_data_types()
 
-        if self.model_info.onnx_model_def is None:
+        if self.onnx_model_def is None:
             model_def, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
 
         else:
-            model_def, input_onnx_features, output_onnx_features = self._load_onnx_model(self.model_info.onnx_model_def)
+            model_def, input_onnx_features, output_onnx_features = self._load_onnx_model()
 
         schema = ApiDataSchemas(
             model_data_schema=DataDict(
@@ -280,6 +312,12 @@ class ModelConverter:
 
         return ModelReturn(model_definition=model_def, api_data_schema=schema)
 
+    def _create_onnx_session(self, onnx_model: ModelProto) -> rt.InferenceSession:
+        return rt.InferenceSession(
+            path_or_bytes=onnx_model.SerializeToString(),
+            providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
+        )
+
     @staticmethod
     def validate(model_type: str) -> bool:
         """validates model base class"""
@@ -287,25 +325,27 @@ class ModelConverter:
 
 
 class SklearnOnnxModel(ModelConverter):
+    """Class for converting sklearn models to onnx format"""
+
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_info.model_type == OnnxModelType.STACKING_ESTIMATOR
+        return self.model_type == TrainedModelType.STACKING_ESTIMATOR
 
     @property
     def _is_calibrated_classifier(self) -> bool:
-        return self.model_info.model_class.lower() == OnnxModelType.CALIBRATED_CLASSIFIER
+        return self.card.metadata.model_class.lower() == TrainedModelType.CALIBRATED_CLASSIFIER
 
     @property
     def _is_pipeline(self) -> bool:
-        return self.model_info.model_type == OnnxModelType.SKLEARN_PIPELINE
+        return self.model_type == TrainedModelType.SKLEARN_PIPELINE
 
-    def _update_onnx_registries_pipelines(self):
+    def _update_onnx_registries_pipelines(self) -> bool:
         updated = False
 
-        for model_step in self.model_info.model.steps:
+        for model_step in self.trained_model.steps:
             estimator_name = model_step[1].__class__.__name__.lower()
 
-            if estimator_name == OnnxModelType.CALIBRATED_CLASSIFIER:
+            if estimator_name == TrainedModelType.CALIBRATED_CLASSIFIER:
                 updated = self._update_onnx_registries_calibrated_classifier(estimator=model_step[1].estimator)
 
             # check if estimator is calibrated
@@ -316,11 +356,11 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
-    def _update_onnx_registries_stacking(self):
+    def _update_onnx_registries_stacking(self) -> bool:
         updated = False
         for estimator in [
-            *self.model_info.model.estimators_,
-            self.model_info.model.final_estimator,
+            *self.trained_model.estimators_,
+            self.trained_model.final_estimator,
         ]:
             estimator_name = estimator.__class__.__name__.lower()
             if estimator_name in UPDATE_REGISTRY_MODELS:
@@ -330,11 +370,11 @@ class SklearnOnnxModel(ModelConverter):
                 updated = True
         return updated
 
-    def _update_onnx_registries_calibrated_classifier(self, estimator: Optional[BaseEstimator] = None):
+    def _update_onnx_registries_calibrated_classifier(self, estimator: Optional[BaseEstimator] = None) -> bool:
         updated = False
 
         if estimator is None:
-            estimator = self.model_info.model.estimator
+            estimator = self.trained_model.estimator
 
         model_type = next(
             (
@@ -374,29 +414,30 @@ class SklearnOnnxModel(ModelConverter):
         all Float64 types are converted to Float32 for all models.
         """
 
-        if self.model_info.model_data.all_features_float32:
-            return None
+        if self.data_helper.all_features_float32:
+            pass
 
-        if self._is_stacking_estimator:
+        elif self._is_stacking_estimator:
             logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
-            return self.data_converter.converter.convert_to_float(convert_all=True)
+            self.data_converter.converter.convert_to_float(convert_all=True)
 
-        if not self._is_pipeline and self.model_info.model_data.num_dtypes > 1:
-            return self.data_converter.converter.convert_to_float(convert_all=True)
+        elif not self._is_pipeline and self.data_helper.num_dtypes > 1:
+            self.data_converter.converter.convert_to_float(convert_all=True)
 
-        logger.warning("Converting all float64 data to float32")
-        return self.data_converter.converter.convert_to_float(convert_all=False)
+        else:
+            logger.warning("Converting all float64 data to float32")
+            self.data_converter.converter.convert_to_float(convert_all=False)
 
-    def prepare_registries_and_data(self):
+    def prepare_registries_and_data(self) -> None:
         """Updates sklearn onnx registries and convert data to float32"""
 
         self.update_sklearn_onnx_registries()
         self._convert_data_for_onnx()
 
-    def convert_data(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for sklearn onnx models"""
         self.prepare_registries_and_data()
-        return super().convert_data()
+        return super().get_data_types()
 
     @property
     def options(self) -> Optional[Dict[str, Any]]:
@@ -405,7 +446,7 @@ class SklearnOnnxModel(ModelConverter):
         Our inference implementation uses triton for onnx hosting which does not support sequence output
         for classification models (skl2onnx default). This defaults all sklearn classifiers to an array output
         """
-        add_model_args = self.model_info.additional_model_args
+        add_model_args = self.card.metadata.additional_onnx_args
         options = getattr(add_model_args, "options", None)
 
         if self.is_sklearn_classifier and options is None:
@@ -426,19 +467,27 @@ class SklearnOnnxModel(ModelConverter):
             from skl2onnx import convert_sklearn
 
         try:
-            return convert_sklearn(model=self.model_info.model, initial_types=initial_types, options=self.options)
-        except NameError as error:
+            return cast(
+                ModelProto,
+                convert_sklearn(
+                    model=self.trained_model,
+                    initial_types=initial_types,
+                    options=self.options,
+                ),
+            )
+        except NameError as name_error:
             # There may be a small amount of instances where a sklearn classifier does
             # not support zipmap as a default option (LinearSVC). This catches those errors
-            if re.search("Option 'zipmap' not in", str(error), re.IGNORECASE):
+            if re.search("Option 'zipmap' not in", str(name_error), re.IGNORECASE):
                 logger.info("Zipmap not supported for classifier")
-                return convert_sklearn(model=self.model_info.model, initial_types=initial_types)
-            raise error
+                return cast(ModelProto, convert_sklearn(model=self.trained_model, initial_types=initial_types))
+            raise name_error
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
 
         onnx_model = self._convert_sklearn(initial_types=initial_types)
+
         self.validate_model(onnx_model=onnx_model)
         return onnx_model
 
@@ -452,10 +501,10 @@ class LightGBMBoosterOnnxModel(ModelConverter):
         """Converts sklearn model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
 
-        onnx_model = convert_lightgbm(model=self.model_info.model, initial_types=initial_types)
+        onnx_model = convert_lightgbm(model=self.trained_model, initial_types=initial_types)
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model
+        return cast(ModelProto, onnx_model)
 
     @staticmethod
     def validate(model_type: str) -> bool:
@@ -463,7 +512,7 @@ class LightGBMBoosterOnnxModel(ModelConverter):
 
 
 class TensorflowKerasOnnxModel(ModelConverter):
-    def _get_onnx_model_from_tuple(self, model: Any):
+    def _get_onnx_model_from_tuple(self, model: Any) -> Any:
         if isinstance(model, tuple):
             return model[0]
         return model
@@ -473,20 +522,20 @@ class TensorflowKerasOnnxModel(ModelConverter):
 
         import tf2onnx
 
-        onnx_model, _ = tf2onnx.convert.from_keras(self.model_info.model, initial_types, opset=13)
+        onnx_model, _ = tf2onnx.convert.from_keras(self.trained_model, initial_types, opset=13)
         self.validate_model(onnx_model=onnx_model)
 
-        return onnx_model
+        return cast(ModelProto, onnx_model)
 
     @staticmethod
     def validate(model_type: str) -> bool:
-        return model_type in OnnxModelType.TF_KERAS
+        return model_type in TrainedModelType.TF_KERAS
 
 
 class PytorchArgBuilder:
     def __init__(
         self,
-        input_data: Union[NDArray, Dict[str, NDArray]],
+        input_data: Union[NDArray[Any], Dict[str, NDArray[Any]]],
     ):
         self.input_data = input_data
 
@@ -510,14 +559,12 @@ class PytorchArgBuilder:
 
 
 class PyTorchOnnxModel(ModelConverter):
-    def __init__(self, model_info: ModelInfo):
-        self.additional_args = self._get_additional_model_args(
-            additional_onnx_args=model_info.additional_model_args,
-            input_data=model_info.model_data.data,
+    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
+        modelcard.metadata.additional_onnx_args = self._get_additional_model_args(
+            additional_onnx_args=modelcard.metadata.additional_onnx_args,
+            input_data=data_helper.data,
         )
-        model_info.additional_model_args = self.additional_args
-
-        super().__init__(model_info=model_info)
+        super().__init__(modelcard=modelcard, data_helper=data_helper)
 
     def _get_additional_model_args(
         self,
@@ -530,35 +577,35 @@ class PyTorchOnnxModel(ModelConverter):
             return PytorchArgBuilder(input_data=input_data).get_args()
         return additional_onnx_args
 
-    def _post_process_prediction(self, predictions: Any) -> NDArray:
+    def _post_process_prediction(self, predictions: Any) -> NDArray[Any]:
         """Parse pytorch predictions"""
 
         if hasattr(predictions, "logits"):
-            return predictions.logits.detach().numpy()
+            return predictions.logits.detach().numpy()  # type: ignore
         if hasattr(predictions, "detach"):
-            return predictions.detach().numpy()
+            return predictions.detach().numpy()  # type: ignore
         if hasattr(predictions, "last_hidden_state"):
-            return predictions.last_hidden_state.detach().numpy()
+            return predictions.last_hidden_state.detach().numpy()  # type: ignore
 
         # for vision model
         if isinstance(predictions, OrderedDict):
-            return predictions["out"].detach().numpy()
+            return predictions["out"].detach().numpy()  # type: ignore
 
-        return predictions.numpy()
+        return predictions.numpy()  # type: ignore
 
-    def _model_predict(self) -> NDArray:
+    def _model_predict(self) -> NDArray[Any]:
         """Generate prediction for pytorch model using sample data"""
 
         torch_data = self._get_torch_data()
 
         if isinstance(torch_data, tuple):
-            pred = self.model_info.model(*torch_data)
+            pred = self.trained_model(*torch_data)
 
         elif isinstance(torch_data, dict):
-            pred = self.model_info.model(**torch_data)
+            pred = self.trained_model(**torch_data)
 
         else:
-            pred = self.model_info.model(torch_data)
+            pred = self.trained_model(torch_data)
 
         return self._post_process_prediction(predictions=pred)
 
@@ -568,12 +615,7 @@ class PyTorchOnnxModel(ModelConverter):
         model_preds = self._model_predict()
 
         logger.info("Validating converted onnx model")
-
-        model_string = onnx_model.SerializeToString()
-        sess = rt.InferenceSession(
-            path_or_bytes=model_string,
-            providers=rt.get_available_providers(),
-        )
+        sess = self._create_onnx_session(onnx_model=onnx_model)
 
         onnx_preds = sess.run(None, inputs)
 
@@ -589,18 +631,16 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_torch_data(self) -> Any:
         import torch
 
-        if isinstance(self.model_info.model_data.data, tuple):
-            return tuple(
-                torch.from_numpy(data) for data in self.model_info.model_data.data  # pylint: disable=no-member
-            )
+        if isinstance(self.data_helper.data, tuple):
+            return tuple(torch.from_numpy(data) for data in self.data_helper.data)  # pylint: disable=no-member
 
-        if isinstance(self.model_info.model_data.data, dict):
+        if isinstance(self.data_helper.data, dict):
             return {
                 name: torch.from_numpy(data)  # pylint: disable=no-member
-                for name, data in self.model_info.model_data.data.items()
+                for name, data in self.data_helper.data.items()
             }
 
-        return torch.from_numpy(self.model_info.model_data.data)  # pylint: disable=no-member
+        return torch.from_numpy(self.data_helper.data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
@@ -609,19 +649,20 @@ class PyTorchOnnxModel(ModelConverter):
 
         arg_data = self._get_torch_data()
 
+        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
-            self.model_info.model.eval()  # force model into evaluation mode
+            self.trained_model.eval()  # force model into evaluation mode
             torch.onnx.export(
-                model=self.model_info.model,
+                model=self.trained_model,
                 args=arg_data,
                 f=filename,
-                **self.additional_args.model_dump(exclude={"options"}),
+                **self.card.metadata.additional_onnx_args.model_dump(exclude={"options"}),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
 
-        return model
+        return cast(ModelProto, model)
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""
@@ -634,28 +675,36 @@ class PyTorchOnnxModel(ModelConverter):
     @staticmethod
     def validate(model_type: str) -> bool:
         return model_type in [
-            OnnxModelType.PYTORCH,
-            OnnxModelType.TRANSFORMER,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
         ]
 
 
 class OnnxModelConverter:
-    def __init__(self, model_info: ModelInfo):
-        """Instantiates a helper class to convert machine learning models and their input data
-        to onnx format for interoperability.
+    @staticmethod
+    def convert_model(modelcard: ModelCard, data_helper: ModelDataHelper) -> ModelReturn:
+        """
+        Instantiates a helper class to convert machine learning models and their input
+        data to onnx format for interoperability.
+
 
         Args:
-            model_info (ModelInfo): ModelInfo class containing model-specific information for Onnx conversion
+            modelcard:
+                ModelCard class containing model-specific information for Onnx conversion
+            data_helper:
+                ModelDataHelper class containing model-specific information for Onnx conversion
 
         """
-        self.model_info = model_info
 
-    def convert_model(self) -> ModelReturn:
         converter = next(
             (
                 converter
                 for converter in ModelConverter.__subclasses__()
-                if converter.validate(model_type=self.model_info.model_type)
+                if converter.validate(model_type=modelcard.metadata.model_type)
             )
         )
-        return converter(model_info=self.model_info).convert()
+
+        return converter(
+            modelcard=modelcard,
+            data_helper=data_helper,
+        ).convert()
