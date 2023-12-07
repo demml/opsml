@@ -7,6 +7,8 @@ import pandas as pd
 from pytest_lazyfixture import lazy_fixture
 import warnings
 
+EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+
 
 # this is done to filter all the convergence and user warnings during testing
 def warn(*args, **kwargs):
@@ -31,6 +33,7 @@ def model_predict(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uids=["test_uid"],
+        to_onnx=True,
     )
     predictor = model_card.onnx_model()
 
@@ -49,8 +52,8 @@ def model_predict(model_and_data):
 
     pred_onnx = predictor.predict(record)
 
-    out_sig = predictor.output_sig(**pred_onnx)
-    pred_orig = predictor.predict_with_model(model, record)
+    predictor.output_sig(**pred_onnx)
+    predictor.predict_with_model(model, record)
 
 
 @pytest.mark.parametrize(
@@ -143,11 +146,10 @@ def test_sklearn_models(model_and_data):
     model_predict(model_and_data)
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        # Not supported on apple silicon
         lazy_fixture("load_pytorch_resnet"),  # pytorch resent trained with numpy array
         lazy_fixture("load_pytorch_language"),  # huggingface automodel "distil-bert" trained with dictionary
         lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
@@ -157,12 +159,11 @@ def test_model_pytorch_predict(model_and_data):
     model_predict(model_and_data)
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize(
     "model_and_data",
     [
-        # Not supported on apple silicon
         lazy_fixture("load_transformer_example"),  # keras transformer example
         lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
     ],
@@ -193,6 +194,7 @@ def test_byo_onnx(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uid="test_uid",
+        to_onnx=True,
     )
     predictor = modelcard.onnx_model()
     model_def = modelcard.metadata.onnx_model_def
@@ -206,6 +208,7 @@ def test_byo_onnx(model_and_data):
         user_email="test_email",
         datacard_uid="test_uid",
         metadata=ModelCardMetadata(onnx_model_def=model_def),
+        to_onnx=True,
     )
     predictor = new_modelcard.onnx_model()
     assert new_modelcard.metadata.data_schema is not None
@@ -225,11 +228,11 @@ def test_byo_onnx(model_and_data):
 
     pred_onnx = predictor.predict(record)
 
-    out_sig = predictor.output_sig(**pred_onnx)
-    pred_orig = predictor.predict_with_model(model, record)
+    predictor.output_sig(**pred_onnx)
+    predictor.predict_with_model(model, record)
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Not supported on apple silicon")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.parametrize(
     "model_and_data",
     [
@@ -248,31 +251,11 @@ def test_byo_pytorch_onnx(model_and_data):
         user_email="test_email",
         datacard_uid="test_uid",
         metadata=ModelCardMetadata(onnx_model_def=model_def),
+        to_onnx=True,
     )
+
     predictor = modelcard.onnx_model()
     input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
     record = {input_name: sample_data[0, :].tolist()}
-    pred_onnx = predictor.predict(record)
-    pred_orig = predictor.predict_with_model(model, record)
-
-
-# for random testing of definitions
-
-# filename = "sklearn_pipeline"
-#    with open(f"{filename}-v1-0-0.onnx", "wb") as file_:
-#        file_.write(model_card.onnx_model_def.model_bytes)
-#
-#    model_def = ModelApiDef(
-#        model_name=model_card.name,
-#        model_type=model_card.model_type,
-#        onnx_version=predictor.onnx_version,
-#        model_version=predictor.model_version,
-#        onnx_uri=f"{filename}-v1-0-0.onnx",
-#        data_schema=predictor.data_schema,
-#        sample_data=model_card._get_sample_data_for_api(),
-#    )
-#
-#    import json
-#
-#    with open(f"{filename}_model_def.json", "w") as file_:
-#        json.dump(model_def.model_dump(), file_)
+    predictor.predict(record)
+    predictor.predict_with_model(model, record)

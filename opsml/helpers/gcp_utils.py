@@ -1,3 +1,6 @@
+# mypy: disable-error-code="attr-defined"
+
+
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -5,11 +8,11 @@
 import base64
 import json
 import os
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union, cast
 
 import google.auth
 from google.auth.credentials import Credentials
-from google.cloud import storage  # type: ignore
+from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import BaseModel, ConfigDict
 
@@ -55,7 +58,7 @@ class GCSStorageClient(GCPService):
         self,
         gcs_bucket: Union[str, None] = None,
         prefix: Union[str, None] = None,
-    ):
+    ) -> Any:
         """List object is a given bucket with the specified prefix
 
         Args:
@@ -75,7 +78,7 @@ class GCSStorageClient(GCPService):
         gcs_bucket: str,
         blob_path: Union[str, None] = None,
         destination_filename: Union[str, None] = None,
-    ):
+    ) -> None:
         """Download an object from gcs
 
         Args:
@@ -91,7 +94,7 @@ class GCSStorageClient(GCPService):
 
         logger.info("Successfully downloaded gs://{}/{}", gcs_bucket, blob_path)
 
-    def download_object_from_uri(self, gcs_uri: str):
+    def download_object_from_uri(self, gcs_uri: str) -> str:
         bucket, blob, filename = self.parse_gcs_uri(gcs_uri=gcs_uri)
 
         self.download_object(
@@ -106,7 +109,7 @@ class GCSStorageClient(GCPService):
         self,
         gcs_bucket: str,
         blob_path: Union[str, None] = None,
-    ):
+    ) -> None:
         """Delete object from gcs
 
         Args:
@@ -123,10 +126,7 @@ class GCSStorageClient(GCPService):
 
         logger.info("Successfully deleted gs://{}/{}", gcs_bucket, blob_path)
 
-    def parse_gcs_uri(
-        self,
-        gcs_uri: str,
-    ):
+    def parse_gcs_uri(self, gcs_uri: str) -> Tuple[str, str, str]:
         """Parses gcs url
 
         Args:
@@ -144,7 +144,7 @@ class GCSStorageClient(GCPService):
 
         return bucket, blob_path, filename
 
-    def delete_object_from_uri(self, gcs_uri: str):
+    def delete_object_from_uri(self, gcs_uri: str) -> None:
         """Delete object from gcs
 
         Args:
@@ -167,7 +167,7 @@ class GCSStorageClient(GCPService):
         gcs_bucket: str,
         filename: str,
         destination_path: str,
-    ):
+    ) -> str:
         """Upload local file to gcs
 
         Args:
@@ -193,7 +193,7 @@ class GCSStorageClient(GCPService):
         return gcs_uri
 
     @staticmethod
-    def valid_service_name(service_name: str):
+    def valid_service_name(service_name: str) -> bool:
         return service_name == "storage"
 
 
@@ -201,10 +201,10 @@ ClientTypes = GCSStorageClient
 
 
 class GcpCredsSetter:
-    def __init__(self, service_creds: Optional[str] = None):
+    def __init__(self, service_creds: Optional[str] = None) -> None:
         """Set credentials"""
 
-        self.service_base64_creds = service_creds or os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")  # type: ignore
+        self.service_base64_creds = service_creds or os.environ.get("GOOGLE_ACCOUNT_JSON_BASE64")
 
     def get_creds(self) -> GcpCreds:
         service_creds, project_name = self.get_base64_creds()
@@ -245,7 +245,7 @@ class GcpCredsSetter:
 
     def decode_base64(self, service_base64_creds: str) -> str:
         base_64 = base64.b64decode(s=service_base64_creds).decode("utf-8")
-        return json.loads(base_64)
+        return cast(str, json.loads(base_64))
 
     def create_gcp_creds_from_base64(self, service_base64_creds: str) -> Tuple[Credentials, Optional[str]]:
         """Decodes base64 encoded service creds into GCP Credentials
@@ -255,6 +255,6 @@ class GcpCredsSetter:
         """
         key = self.decode_base64(service_base64_creds=service_base64_creds)
         service_creds: Credentials = service_account.Credentials.from_service_account_info(info=key)  # noqa
-        project_name = service_creds.project_id
+        project_name = cast(str, service_creds.project_id)
 
         return service_creds, project_name

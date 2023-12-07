@@ -5,18 +5,16 @@ Below are a list of commonly answered questions.
 
 ### Why do some examples use a context manager and some don't? What's recommended?
 
-By default, all cards can be registered, listed, loaded and updated outside of a context manager. In fact, this was done on purpose to not lock users into a particular style. The context manager comes into play when using `RunCards` as they provide a means to group artifacts (Cards, metrics, params) under a specific project run. Technically, this grouping can still be achieved by using `RunCards` directly but this comes at the expense of more lines of code. The context manager tends to be a more convenient ways to log and track artifacts. In addition, when using a `MlflowProject`, all artifacts are automatically viewable in the Mlflow UI.
+By default, all cards can be registered, listed, loaded and updated outside of a context manager. In fact, this was done on purpose to not lock users into a particular style. The context manager comes into play when using `RunCards` as they provide a means to group artifacts (Cards, metrics, params) under a specific project run. Technically, this grouping can still be achieved by using `RunCards` directly but this comes at the expense of more lines of code. The context manager tends to be a more convenient ways to log and track artifacts. In addition, when using a `OpsmlProject`, all artifacts are automatically viewable in the Opsml UI.
 
 Recommendation based on needs
 
-- I'd like to be able to view all artifacts, metris, graphs, reports in a UI 
-    * Use the `MlflowProject` context manager
-- I don't really need to *see* all of the artifacts, I care more that they are tracked and callable when needed 
+- I'd like to be able to view all artifacts, metris, graphs, reports in a UI
+    * Use the `OpsmlProject` context manager
+- I don't really need to *see* all of the artifacts, I care more that they are tracked and callable when needed
     * Use whatever you prefer
 - I like grouping runs/experiments by projects. UI doesn't really matter.
-    * Use the `MlflowProject` or `OpsmlProject` context managers
-- My server is setup to use Mlflow as a UI.
-    * Use `MlflowProject` context manager
+    * Use the `OpsmlProject` context manager
 
 ### How do I turn off onnx conversion?
 

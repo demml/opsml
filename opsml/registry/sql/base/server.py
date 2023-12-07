@@ -2,15 +2,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.sql.base.query_engine import (  # type: ignore
-    QueryEngine,
-    log_card_change,
-)
+from opsml.registry.cards.types import RegistryType
+from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
+from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import (
     CardVersion,
     SemVerRegistryValidator,
@@ -18,22 +17,27 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.sql.sql_schema import RegistryTableNames
+from opsml.registry.sql.sql_schema import SQLTableGetter
+from opsml.registry.sql.table_names import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
 
 class ServerRegistry(SQLRegistryBase):
-    def __init__(self, registry_type: str):
+    """A registry that retrieves data from a database."""
+
+    def __init__(self, registry_type: RegistryType):
         super().__init__(registry_type)
+
         self.engine = QueryEngine()
+        self._table = SQLTableGetter.get_table(table_name=self.table_name)
 
     @property
-    def unique_teams(self) -> List[str]:
+    def unique_teams(self) -> Sequence[str]:
         """Returns a list of unique teams"""
         return self.engine.get_unique_teams(table=self._table)
 
-    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+    def get_unique_card_names(self, team: Optional[str] = None) -> Sequence[str]:
         """Returns a list of unique card names
         Args:
             team:
@@ -197,10 +201,10 @@ class ServerRegistry(SQLRegistryBase):
 
         return records
 
-    def check_uid(self, uid: str, registry_type: str) -> bool:
+    def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         result = self.engine.get_uid(
             uid=uid,
-            table_to_check=RegistryTableNames[registry_type.upper()].value,
+            table_to_check=RegistryTableNames[registry_type.value.upper()].value,
         )
         return bool(result)
 

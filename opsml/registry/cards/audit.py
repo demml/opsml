@@ -6,7 +6,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -17,6 +17,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import (
     AuditCardMetadata,
+    AuditSectionType,
     CardType,
     CardVersion,
     Comment,
@@ -48,7 +49,8 @@ class AuditSections(BaseModel):
     misc: Dict[int, Question]
 
     @model_validator(mode="before")
-    def load_sections(cls, values):
+    @classmethod
+    def load_sections(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Loads audit sections from template if no values are provided"""
 
         if any(values):
@@ -56,10 +58,10 @@ class AuditSections(BaseModel):
         return cls.load_yaml_template()
 
     @staticmethod
-    def load_yaml_template() -> Dict[str, Dict[int, Dict[str, str]]]:
+    def load_yaml_template() -> AuditSectionType:
         with open(AUDIT_TEMPLATE_PATH, "r", encoding="utf-8") as stream:
             try:
-                audit_sections = yaml.safe_load(stream)
+                audit_sections = cast(AuditSectionType, yaml.safe_load(stream))
             except yaml.YAMLError as exc:
                 raise exc
         return audit_sections
@@ -165,15 +167,15 @@ class AuditCard(ArtifactCard):
         ]:
             raise ValueError(f"Invalid card type {card.card_type}. Valid card types are: data, model or run")
 
-        audit_registry = AuditCardRegistry(RegistryType.AUDIT.value)
+        audit_registry = AuditCardRegistry(RegistryType.AUDIT)
 
         if card.uid is None:
             raise ValueError(
-                f"""Card uid must be provided for {card.card_type}. 
+                f"""Card uid must be provided for {card.card_type}.
                 Uid must be registered prior to adding to AuditCard."""
             )
 
-        if not audit_registry.validate_uid(card.uid, card.card_type):
+        if not audit_registry.validate_uid(card.uid, RegistryType.from_str(card.card_type)):
             raise ValueError(f"""Card uid {card.uid} not found in {card.card_type} registry""")
 
         card_list = getattr(self.metadata, f"{card.card_type.lower()}cards")

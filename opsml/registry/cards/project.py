@@ -2,9 +2,9 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Optional
+from typing import Any, Dict
 
-from pydantic import ValidationInfo, field_validator
+from pydantic import model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
@@ -21,12 +21,13 @@ class ProjectCard(ArtifactCard):
     Card containing project information
     """
 
-    project_id: Optional[str] = None
+    project_id: str
 
-    @field_validator("project_id", mode="before")
-    def create_project_id(cls, value, info: ValidationInfo, **kwargs):
-        data = info.data  # type: ignore
-        return f'{data.get("team")}:{data.get("name")}'
+    @model_validator(mode="before")
+    @classmethod
+    def create_project_id(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:
+        card_args["project_id"] = f'{card_args["team"]}:{card_args["name"]}'
+        return card_args
 
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record for a project"""

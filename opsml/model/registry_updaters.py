@@ -5,10 +5,11 @@
 
 """Code for generating Onnx Models"""
 import warnings
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 # Get logger
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import OnnxModelType
+from opsml.model.types import TrainedModelType
 
 logger = ArtifactLogger.get_logger()
 
@@ -17,7 +18,7 @@ class RegistryUpdater:
     def __init__(self, model_estimator: str):
         self.model_estimator = model_estimator
 
-    def update_registry_converter(self):
+    def update_registry_converter(self) -> None:
         """Only used for specific registries but called for all"""
 
     @staticmethod
@@ -28,21 +29,21 @@ class RegistryUpdater:
 
 class LightGBMRegistryUpdater(RegistryUpdater):
     def determine_estimator(self) -> str:
-        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR:
+        if self.model_estimator == TrainedModelType.LGBM_REGRESSOR:
             return "LGBMRegressor"
         return "LGBMClassifier"
 
-    def get_output_conversion_tools(self):
+    def get_output_conversion_tools(self) -> Tuple[Callable[..., Any], Optional[Dict[str, Any]]]:
         from skl2onnx.common.shape_calculator import (
             calculate_linear_classifier_output_shapes,
             calculate_linear_regressor_output_shapes,
         )
 
-        if self.model_estimator == OnnxModelType.LGBM_REGRESSOR:
+        if self.model_estimator == TrainedModelType.LGBM_REGRESSOR:
             return calculate_linear_regressor_output_shapes, None
         return calculate_linear_classifier_output_shapes, {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
-    def update_registry_converter(self):
+    def update_registry_converter(self) -> None:
         logger.info("Registering lightgbm onnx converter")
 
         import lightgbm as lgb
@@ -67,16 +68,16 @@ class LightGBMRegistryUpdater(RegistryUpdater):
 
     @staticmethod
     def validate(model_estimator: str) -> bool:
-        return model_estimator in [OnnxModelType.LGBM_REGRESSOR, OnnxModelType.LGBM_CLASSIFIER]
+        return model_estimator in [TrainedModelType.LGBM_REGRESSOR, TrainedModelType.LGBM_CLASSIFIER]
 
 
 class XGBoostRegressorRegistryUpdater(RegistryUpdater):
     def determine_estimator(self) -> str:
-        if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
+        if self.model_estimator == TrainedModelType.XGB_REGRESSOR:
             return "XGBRegressor"
         return "XGBClassifier"
 
-    def get_output_conversion_tools(self):
+    def get_output_conversion_tools(self) -> Callable[..., Any]:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
@@ -85,11 +86,11 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
                 calculate_linear_regressor_output_shapes,
             )
 
-        if self.model_estimator == OnnxModelType.XGB_REGRESSOR:
-            return calculate_linear_regressor_output_shapes
-        return calculate_linear_classifier_output_shapes
+        if self.model_estimator == TrainedModelType.XGB_REGRESSOR:
+            return cast(Callable[..., Any], calculate_linear_regressor_output_shapes)
+        return cast(Callable[..., Any], calculate_linear_classifier_output_shapes)
 
-    def update_registry_converter(self):
+    def update_registry_converter(self) -> None:
         logger.info("Registering xgboost onnx converter")
 
         import xgboost as xgb
@@ -114,7 +115,7 @@ class XGBoostRegressorRegistryUpdater(RegistryUpdater):
 
     @staticmethod
     def validate(model_estimator: str) -> bool:
-        if model_estimator == OnnxModelType.XGB_REGRESSOR:
+        if model_estimator == TrainedModelType.XGB_REGRESSOR:
             return True
         return False
 

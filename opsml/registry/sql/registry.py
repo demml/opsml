@@ -3,24 +3,21 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import textwrap
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
-from sqlalchemy.sql.expression import ColumnElement, FromClause
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards import ArtifactCard, ModelCard
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
 from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.utils.utils import check_package_exists
 
 logger = ArtifactLogger.get_logger()
-
-
-SqlTableType = Optional[Iterable[Union[ColumnElement[Any], FromClause, int]]]
-
 
 if TYPE_CHECKING:
     Registry = ServerRegistry
@@ -30,21 +27,21 @@ else:
 
 class DataCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.DATA.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.DATA
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.DATA.value
 
 
 class ModelCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.MODEL.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.MODEL
 
     def _validate_datacard_uid(self, uid: str) -> None:
-        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA.value)
+        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
@@ -77,8 +74,8 @@ class ModelCardRegistry(Registry):
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )
@@ -86,6 +83,14 @@ class ModelCardRegistry(Registry):
 
         else:
             model_card = cast(ModelCard, card)
+
+            if model_card.to_onnx:
+                if not check_package_exists("onnx"):
+                    raise ModuleNotFoundError(
+                        """To convert a model to onnx, please install onnx via one of the extras
+                        (opsml[sklearn_onnx], opsml[tf_onnx], opsml[torch_onnx]) or set to_onnx to False.
+                        """
+                    )
 
             if not self._has_datacard_uid(uid=model_card.datacard_uid):
                 raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
@@ -101,40 +106,40 @@ class ModelCardRegistry(Registry):
             )
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.MODEL.value
 
 
-class RunCardRegistry(Registry):  # type:ignore
+class RunCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.RUN.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.RUN
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value
 
 
-class PipelineCardRegistry(Registry):  # type:ignore
+class PipelineCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PIPELINE.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PIPELINE
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PIPELINE.value
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
-class ProjectCardRegistry(Registry):  # type:ignore
+class ProjectCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.PROJECT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.PROJECT
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
 
     def load_card(
@@ -151,16 +156,16 @@ class ProjectCardRegistry(Registry):  # type:ignore
         raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
-class AuditCardRegistry(Registry):  # type:ignore
+class AuditCardRegistry(Registry):
     @property
-    def registry_type(self) -> str:
-        return RegistryType.AUDIT.value
+    def registry_type(self) -> RegistryType:
+        return RegistryType.AUDIT
 
-    def validate_uid(self, uid: str, registry_type: str) -> bool:
+    def validate_uid(self, uid: str, registry_type: RegistryType) -> bool:
         return self.check_uid(uid=uid, registry_type=registry_type)
 
     @staticmethod
-    def validate(registry_name: str):
+    def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.AUDIT.value
 
 
@@ -182,10 +187,10 @@ class CardRegistry:
         """
 
         self._registry = self._set_registry(registry_name=registry_name)
-        self.table_name = self._registry._table.__tablename__
+        self.table_name = self._registry.table_name
 
     @property
-    def registry_type(self) -> str:
+    def registry_type(self) -> RegistryType:
         "Registry type for card registry"
         return self._registry.registry_type
 
@@ -207,7 +212,7 @@ class CardRegistry:
             )
         )
 
-        return registry(registry_type=registry_name)
+        return registry(registry_type=RegistryType.from_str(registry_name))
 
     def list_cards(
         self,
@@ -355,8 +360,8 @@ class CardRegistry:
             logger.info(
                 textwrap.dedent(
                     f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register 
-                a new card, please instantiate a new Card object. If you'd like to update the 
+                Card {card.uid} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
                 existing card, please use the update_card method.
                 """
                 )
@@ -408,7 +413,7 @@ class CardRegistry:
 
 
 class CardRegistries:
-    def __init__(self):
+    def __init__(self) -> None:
         """Instantiates class that contains all registries"""
         self.data = CardRegistry(registry_name=CardType.DATACARD.value)
         self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
@@ -417,7 +422,7 @@ class CardRegistries:
         self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
         self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value)
 
-    def set_storage_client(self, storage_client: StorageClientType):
+    def set_storage_client(self, storage_client: StorageClientType) -> None:
         for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
             registry: CardRegistry = getattr(self, attr)
             registry._registry.storage_client = storage_client

@@ -1,7 +1,10 @@
 from functools import cached_property
 from typing import cast
 
-from opsml.registry.cards import ArtifactCard, DataCard, ModelCard, RunCard
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.data import DataCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import CardType
 from opsml.registry.storage.storage_system import StorageClientType
 
@@ -9,13 +12,14 @@ from opsml.registry.storage.storage_system import StorageClientType
 class CardArtifactDeleter:
     def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
         """
-        Parent class for saving artifacts belonging to cards
+        Parent class for deleting artifacts belonging to cards
 
         Args:
             card:
-                ArtifactCard with artifacts to save
-            card_storage_info:
-                Extra info to use with artifact storage
+                ArtifactCard with artifacts to delete
+
+            storage_client:
+                The client which will perform the actual deletion
         """
 
         self._card = card
@@ -30,6 +34,7 @@ class CardArtifactDeleter:
 
     def _delete_artifacts(self, read_path: str) -> None:
         """Find common directory from path and delete files"""
+
         path_split = read_path.split("/")
         version_index = path_split.index(f"v{self.card.version}")
         dir_path = "/".join(path_split[: version_index + 1])
@@ -78,7 +83,7 @@ class ModelArtifactDeleter(CardArtifactDeleter):
 
 class RunCardArtifactDeleter(CardArtifactDeleter):
     @cached_property
-    def card(self):
+    def card(self) -> RunCard:
         return cast(RunCard, self._card)
 
     def delete_artifacts(self) -> None:
@@ -86,7 +91,7 @@ class RunCardArtifactDeleter(CardArtifactDeleter):
         Delete artifacts for a RunCard
         """
 
-        self._delete_artifacts(read_path=self.card.runcard_uri)
+        self._delete_artifacts(read_path=cast(str, self.card.runcard_uri))
 
     @staticmethod
     def validate(card_type: str) -> bool:

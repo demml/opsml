@@ -75,7 +75,7 @@ def test_feed_data_profile(
     iris_data: pd.DataFrame,
 ):
     # create data card
-    registry = db_registries["data"]
+    db_registries["data"]
 
     profile = ProfileReport(iris_data, title="Profiling Report")
     data_card = DataCard(
@@ -103,7 +103,7 @@ def test_compare_data_profile(
     iris_data: pd.DataFrame,
 ):
     # create data card
-    registry = db_registries["data"]
+    db_registries["data"]
 
     # Split indices
     indices = np.arange(iris_data.shape[0])

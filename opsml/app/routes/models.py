@@ -6,7 +6,7 @@ import os
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
@@ -21,13 +21,16 @@ from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
-from opsml.registry import CardInfo, CardRegistries, CardRegistry, ModelCard, RunCard
-from opsml.registry.cards.model import ModelMetadata
+from opsml.model.types import ModelMetadata
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.run import RunCard
+from opsml.registry.cards.types import CardInfo
 from opsml.registry.model.registrar import (
     ModelRegistrar,
     RegistrationError,
     RegistrationRequest,
 )
+from opsml.registry.sql.registry import CardRegistries, CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
@@ -36,13 +39,14 @@ PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-router = APIRouter()
+
 model_route_helper = ModelRouteHelper()
+router = APIRouter()
 
 
-@router.get("/models/list/")
+@router.get("/models/list/", response_class=HTMLResponse)
 @error_to_500
-async def model_list_homepage(request: Request, team: Optional[str] = None):
+async def model_list_homepage(request: Request, team: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
     Args:
         request:
@@ -53,19 +57,19 @@ async def model_list_homepage(request: Request, team: Optional[str] = None):
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return model_route_helper.get_homepage(request=request, team=team)
+    return model_route_helper.get_homepage(request=request, team=team)  # type: ignore[return-value]
 
 
-@router.get("/models/versions/")
+@router.get("/models/versions/", response_class=HTMLResponse)
 @error_to_500
 async def model_versions_page(
     request: Request,
     model: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
-):
+) -> HTMLResponse:
     if model is None and uid is None:
-        return RedirectResponse(url="/opsml/models/list/")
+        return RedirectResponse(url="/opsml/models/list/")  # type: ignore[return-value]
 
     registry: CardRegistry = request.app.state.registries.model
 
@@ -74,12 +78,15 @@ async def model_versions_page(
         model = model or selected_model[0]["name"]
         version = version or selected_model[0]["version"]
 
-    versions = registry.list_cards(name=model, as_dataframe=False, limit=50)
+    versions = cast(
+        List[Dict[str, Any]],
+        registry.list_cards(name=model, as_dataframe=False, limit=50),
+    )
     metadata = post_model_metadata(
         request=request,
         payload=CardRequest(uid=uid, name=model, version=version),
     )
-    return model_route_helper.get_versions_page(
+    return model_route_helper.get_versions_page(  # type: ignore[return-value]
         request=request,
         name=cast(str, model),
         version=version,
@@ -202,7 +209,7 @@ def post_model_metrics(
             detail="Model is not associated with a run",
         )
 
-    runcard: RunCard = registries.run.load_card(uid=card.get("runcard_uid"))
+    runcard = cast(RunCard, registries.run.load_card(uid=card.get("runcard_uid")))
 
     return MetricResponse(metrics=runcard.metrics)
 
@@ -217,7 +224,7 @@ def compare_metrics(
     try:
         # Get challenger
         registries: CardRegistries = request.app.state.registries
-        challenger_card: ModelCard = registries.model.load_card(uid=payload.challenger_uid)
+        challenger_card = cast(ModelCard, registries.model.load_card(uid=payload.challenger_uid))
         model_challenger = ModelChallenger(challenger=challenger_card)
 
         champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]

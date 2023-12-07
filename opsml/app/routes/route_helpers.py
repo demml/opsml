@@ -10,16 +10,21 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from starlette.templating import _TemplateResponse
 
 from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
-from opsml.model.types import ModelMetadata
-from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import AuditCard, CardRegistry, DataCard, RunCard
-from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.audit import AuditSections
-from opsml.registry.utils.settings import settings
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.types import ModelMetadata
+from opsml.projects.project import OpsmlProject
+from opsml.projects.types import ProjectInfo
+from opsml.registry.cards.audit import AuditCard, AuditSections
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.data import DataCard
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.cards.run import RunCard
+from opsml.registry.data.types import AllowedDataType
+from opsml.registry.sql.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
@@ -64,7 +69,7 @@ class RouteHelper:
 class AuditRouteHelper(RouteHelper):
     """Route helper for AuditCard pages"""
 
-    def get_homepage(self, request: Request):
+    def get_homepage(self, request: Request) -> _TemplateResponse:
         """Returns default audit page when all parameters are None
 
         Args:
@@ -88,7 +93,7 @@ class AuditRouteHelper(RouteHelper):
             },
         )
 
-    def get_team_page(self, request: Request, team: str):
+    def get_team_page(self, request: Request, team: str) -> _TemplateResponse:
         """Returns audit page for a specific team
 
         Args:
@@ -113,7 +118,7 @@ class AuditRouteHelper(RouteHelper):
             },
         )
 
-    def get_versions_page(self, request: Request, name: str, team: str):
+    def get_versions_page(self, request: Request, name: str, team: str) -> _TemplateResponse:
         """Returns the audit page for a model name, team, and versions
 
         Args:
@@ -195,7 +200,7 @@ class AuditRouteHelper(RouteHelper):
         version: Optional[str] = None,
         email: Optional[str] = None,
         uid: Optional[str] = None,
-    ):
+    ) -> _TemplateResponse:
         """Get audit information for model version
 
         Args:
@@ -251,7 +256,7 @@ class AuditRouteHelper(RouteHelper):
 class DataRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, team: Optional[str] = None):
+    def get_homepage(self, request: Request, team: Optional[str] = None) -> _TemplateResponse:
         """Retrieves homepage
 
         Args:
@@ -317,7 +322,7 @@ class DataRouteHelper(RouteHelper):
         name: str,
         load_profile: bool,
         version: Optional[str] = None,
-    ):
+    ) -> _TemplateResponse:
         """Given a data name, returns the data versions page
 
         Args:
@@ -359,7 +364,7 @@ class DataRouteHelper(RouteHelper):
         name: str,
         version: str,
         profile_uri: Optional[str] = None,
-    ):
+    ) -> _TemplateResponse:
         """Loads the data profile page
 
         Args:
@@ -403,7 +408,7 @@ class DataRouteHelper(RouteHelper):
 class ModelRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, team: Optional[str] = None):
+    def get_homepage(self, request: Request, team: Optional[str] = None) -> _TemplateResponse:
         """Retrieve homepage
 
         Args:
@@ -433,9 +438,8 @@ class ModelRouteHelper(RouteHelper):
     ) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
-            project_num = request.app.state.mlflow_client.get_experiment_by_name(name=runcard.project_id).experiment_id
-
-            return runcard, project_num
+            # TODO(@thorresterr): 🤷🏻
+            return runcard, runcard.project_id
 
         return None, None
 
@@ -450,7 +454,7 @@ class ModelRouteHelper(RouteHelper):
             `Tuple[str, str]`
         """
         max_dim = 0
-        if metadata.data_schema.model_data_schema.data_type == "NUMPY_ARRAY":
+        if metadata.data_schema.model_data_schema.data_type == AllowedDataType.NUMPY:
             features = metadata.data_schema.model_data_schema.input_features
             inputs = features.get("inputs")
             if inputs is not None:
@@ -472,7 +476,7 @@ class ModelRouteHelper(RouteHelper):
         versions: List[Dict[str, Any]],
         metadata: ModelMetadata,
         version: Optional[str] = None,
-    ):
+    ) -> _TemplateResponse:
         """Given a data name, returns the data versions page
 
         Args:
@@ -518,7 +522,7 @@ class ModelRouteHelper(RouteHelper):
 class ProjectRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_run_metrics(self, request: Request, run_uid: str):
+    def get_run_metrics(self, request: Request, run_uid: str) -> _TemplateResponse:
         """Retrieve homepage
 
         Args:
@@ -564,28 +568,12 @@ class ProjectRouteHelper(RouteHelper):
         project = OpsmlProject(project_info)
         return project.list_runs()
 
-    def remove_old_mlflow_path(self, runcard: RunCard) -> RunCard:
-        """Method use to remove old mlflow paths
-
-        Args:
-            runcard:
-                The run card.
-
-        Returns:
-            `RunCard`
-        """
-
-        for key, val in runcard.artifact_uris.items():
-            new_val = val.replace("mlflow-artifacts:", settings.storage_settings.storage_uri)
-            runcard.artifact_uris[key] = new_val
-        return runcard
-
     def get_project_run(
         self,
         request: Request,
         project: Optional[str] = None,
         run_uid: Optional[str] = None,
-    ):
+    ) -> _TemplateResponse:
         """Retrieve homepage
 
         Args:
@@ -631,10 +619,6 @@ class ProjectRouteHelper(RouteHelper):
                     },
                 )
             runcard = run_registry.load_card(uid=project_runs[0]["uid"])
-
-        runcard = self.remove_old_mlflow_path(
-            runcard=cast(RunCard, runcard),
-        )
 
         return templates.TemplateResponse(
             "include/project/projects.html",

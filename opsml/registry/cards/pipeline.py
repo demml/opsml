@@ -44,7 +44,7 @@ class PipelineCard(ArtifactCard):
     modelcard_uids: List[Optional[str]] = []
     runcard_uids: List[Optional[str]] = []
 
-    def add_card_uid(self, uid: str, card_type: str):
+    def add_card_uid(self, uid: str, card_type: str) -> None:
         """
         Adds Card uid to appropriate card type attribute
 
@@ -62,7 +62,7 @@ class PipelineCard(ArtifactCard):
         new_ids = [*current_ids, *[uid]]
         setattr(self, f"{card_type}card_uids", new_ids)
 
-    def load_pipeline_code(self):
+    def load_pipeline_code(self) -> None:
         raise NotImplementedError
 
     def create_registry_record(self) -> RegistryRecord:

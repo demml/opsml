@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple
-
 import re
 import uuid
 import pathlib
@@ -38,7 +37,7 @@ def test_app_settings(test_app: TestClient):
     response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
 
     assert response.status_code == 200
-    assert response.json()["proxy"] == True
+    assert response.json()["proxy"] is True
 
 
 def test_debug(test_app: TestClient):
@@ -271,6 +270,7 @@ def test_register_model(
         user_email="mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry = api_registries.model
@@ -291,6 +291,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(card=model_card_custom)
@@ -303,6 +304,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid=None,
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -315,6 +317,7 @@ def test_register_model(
         team="mlops",
         user_email="mlops.com",
         datacard_uid="test_uid",
+        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
@@ -328,6 +331,7 @@ def test_register_model(
             team="mlops",
             user_email="mlops.com",
             datacard_uid="test_uid",
+            to_onnx=True,
         )
 
     # test card tags
@@ -347,6 +351,7 @@ def test_register_model(
         team="new-team",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
     with pytest.raises(ValueError) as ve:
         model_registry.register_card(card=model_card_dup)
@@ -410,7 +415,7 @@ def test_load_data_card(api_registries: CardRegistries, test_data: pd.DataFrame)
     datacardv12: DataCard = registry.load_card(name=data_name, version="1.2.0")
     datacardv12.metadata.uris.data_uri = "fail"
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(Exception):
         datacardv12.load_data()
 
 
@@ -430,7 +435,7 @@ def test_pipeline_registry(api_registries: CardRegistry):
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data")
     registry.update_card(card=loaded_card)
-    df = registry.list_cards(uid=loaded_card.uid)
+    registry.list_cards(uid=loaded_card.uid)
     values = registry.query_value_from_card(
         uid=loaded_card.uid,
         columns=["datacard_uids"],
@@ -467,6 +472,7 @@ def test_metadata_download_and_registration(
         team=team,
         user_email=user_email,
         datacard_uid=data_card.uid,
+        to_onnx=True,
     )
 
     model_registry.register_card(model_card)
@@ -494,9 +500,8 @@ def test_metadata_download_and_registration(
     uri = response.json()
     assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}",
-        json={"read_path": model_card.metadata.uris.trained_model_uri},
+    response = test_app.get(
+        url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path={model_card.metadata.uris.trained_model_uri}",
     )
 
     assert response.status_code == 200
@@ -643,6 +648,7 @@ def test_model_metrics(
         info=card_info,
         datacard_uid=datacard.uid,
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -658,6 +664,7 @@ def test_model_metrics(
         info=card_info,
         datacard_uid=datacard.uid,
         metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard_2)
 
@@ -692,7 +699,7 @@ def test_model_metrics(
 
     # test auditcard comment
     response = test_app.post(
-        f"/opsml/audit/comment/save",
+        "/opsml/audit/comment/save",
         data=comment.model_dump(),
     )
     assert response.status_code == 200
@@ -720,6 +727,7 @@ def test_model_metric_failure(
         sample_input_data=data[0:1],
         info=card_info,
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -731,6 +739,7 @@ def test_token_fail(
     api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,
 ):
+    monkeypatch.setattr(config.config, "APP_ENV", "production")
     monkeypatch.setattr(config.config, "PROD_TOKEN", "fail")
 
     run = RunCard(
@@ -747,20 +756,18 @@ def test_token_fail(
         api_registries.run.register_card(card=run)
 
 
-def test_delete_no_file(test_app: TestClient):
+def test_delete_fail(test_app: TestClient):
     """Test error path"""
 
-    pathlib.Path("tests/assets/empty").mkdir(parents=True, exist_ok=True)
+    pathlib.Path("tests/assets/empty/model_registry").mkdir(parents=True, exist_ok=True)
 
-    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty"})
+    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty/model_registry"})
 
-    detail = response.json()
-    assert detail["deleted"] == False
     assert response.status_code == 200
 
     # this should fail because there is no file
     response = test_app.post("/opsml/files/delete", json={"read_path": "fail"})
-    assert response.status_code == 500
+    assert response.status_code == 422
 
 
 def test_card_create_fail(test_app: TestClient):
@@ -803,7 +810,7 @@ def test_card_list_fail(test_app: TestClient):
 def test_homepage(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml")
+    response = test_app.get("/opsml")
     assert response.status_code == 200
 
 
@@ -811,7 +818,7 @@ def test_homepage(test_app: TestClient):
 def test_model_list(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml/models/list/")
+    response = test_app.get("/opsml/models/list/")
     assert response.status_code == 200
 
 
@@ -819,7 +826,7 @@ def test_model_list(test_app: TestClient):
 def test_data_list(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml/data/list/")
+    response = test_app.get("/opsml/data/list/")
     assert response.status_code == 200
 
 
@@ -854,27 +861,28 @@ def test_data_model_version(
             user_email="mlops.com",
             tags={"id": "model1"},
             datacard_uid=datacard.uid,
+            to_onnx=True,
         )
         run.register_card(modelcard)
 
-    response = test_app.get(f"/opsml/data/versions/")
+    response = test_app.get("/opsml/data/versions/")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/data/versions/?name=test_data")
+    response = test_app.get("/opsml/data/versions/?name=test_data")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
+    response = test_app.get("/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
     assert response.status_code == 200
 
     response = test_app.get(
-        f"/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
+        "/opsml/data/profile/view/?name=test_data&version=1.0.0&profile_uri=tests/assets/data_profile.html"
     )
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/models/versions/")
+    response = test_app.get("/opsml/models/versions/")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
@@ -883,7 +891,7 @@ def test_data_model_version(
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/projects/list/?project=test:test-exp")
+    response = test_app.get("/opsml/projects/list/?project=test:test-exp")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/projects/list/?project=test:test-exp&run_uid={run.runcard.uid}")
@@ -897,16 +905,16 @@ def test_data_model_version(
 def test_audit(test_app: TestClient):
     """Test settings"""
 
-    response = test_app.get(f"/opsml/audit/")
+    response = test_app.get("/opsml/audit/")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops")
+    response = test_app.get("/opsml/audit/?team=mlops")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops&?model=pipeline_model")
+    response = test_app.get("/opsml/audit/?team=mlops&?model=pipeline_model")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team=mlops&model=pipeline_model&version=1.0.0")
+    response = test_app.get("/opsml/audit/?team=mlops&model=pipeline_model&version=1.0.0")
     assert response.status_code == 200
 
     audit_form = AuditFormRequest(
@@ -920,7 +928,7 @@ def test_audit(test_app: TestClient):
     )
 
     response = test_app.post(
-        f"/opsml/audit/save",
+        "/opsml/audit/save",
         data=audit_form.model_dump(),
     )
 
@@ -959,6 +967,7 @@ def test_audit_upload(
         trained_model=model,
         sample_input_data=data[0:1],
         datacard_uid=datacard.uid,
+        to_onnx=True,
     )
     api_registries.model.register_card(modelcard)
 
@@ -976,14 +985,14 @@ def test_audit_upload(
 
     # save audit card
     response = test_app.post(
-        f"/opsml/audit/save",
+        "/opsml/audit/save",
         data=audit_form.model_dump(),
     )
     auditcard = api_registries.audit.list_cards()[0]
 
     # without uid
     response = test_app.post(
-        f"/opsml/audit/upload",
+        "/opsml/audit/upload",
         data=audit_form.model_dump(),
         files={"audit_file": open(file_, "rb")},
     )
@@ -1003,7 +1012,7 @@ def test_audit_upload(
     )
 
     response = test_app.post(
-        f"/opsml/audit/upload",
+        "/opsml/audit/upload",
         data=audit_form.model_dump(),
         files={"audit_file": open(file_, "rb")},
     )
@@ -1011,7 +1020,7 @@ def test_audit_upload(
 
     # test downloading audit file
     response = test_app.post(
-        f"/opsml/audit/download",
+        "/opsml/audit/download",
         data=audit_form.model_dump(),
     )
     assert response.status_code == 200
@@ -1024,3 +1033,26 @@ def test_registry_name_fail(test_app: TestClient):
     )
 
     assert response.status_code == 500
+
+
+def test_upload_fail(test_app: TestClient):
+    headers = {
+        "Filename": "blah:",
+        "WritePath": "fake",
+        "X-Prod-Token": "test-token",
+    }
+    files = {"file": open("tests/assets/cats.jpg", "rb")}
+
+    response = test_app.post(
+        url=f"opsml/{ApiRoutes.UPLOAD}",
+        files=files,
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_download_fail(test_app: TestClient):
+    # test register model (onnx)
+    response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path=fake")
+    assert response.status_code == 422

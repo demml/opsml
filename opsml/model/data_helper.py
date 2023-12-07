@@ -2,30 +2,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import (
-    DataDtypes,
-    ExtraOnnxArgs,
-    Feature,
-    InputData,
-    InputDataType,
-    OnnxModelDefinition,
-)
+from opsml.model.types import DataDtypes, Feature, ValidModelInput
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
 
-class ModelData:
+class ModelDataHelper:
     def __init__(
         self,
-        input_data: InputData,
+        input_data: ValidModelInput,
     ):
         """Base helper class for storing input/sample data associated with a trained model.
         This class is used with OnnxModelConverter
@@ -65,7 +58,7 @@ class ModelData:
         self._features = features
 
     @property
-    def feature_types(self):
+    def feature_types(self) -> Iterator[Tuple[str, str]]:
         """Creates feature, type mapping"""
         return zip(self.features, self.dtypes)
 
@@ -85,13 +78,13 @@ class ModelData:
     def feature_dict(self) -> Dict[str, Feature]:
         raise NotImplementedError
 
-    def to_numpy(self) -> NDArray:
+    def to_numpy(self) -> NDArray[Any]:
         raise ValueError("This method is not implemented for this Data type")
 
-    def dataframe_record(self):
+    def dataframe_record(self) -> Dict[str, Any]:
         raise ValueError("This method is not implemented for this Data type")
 
-    def convert_dataframe_column(self, column_type: str, convert_column_type: str):
+    def convert_dataframe_column(self, column_type: str, convert_column_type: type) -> None:
         raise ValueError("This method is not implemented for this Data type")
 
     @staticmethod
@@ -103,15 +96,15 @@ class ModelData:
         return Feature(feature_type="STR", shape=shape)
 
     @staticmethod
-    def validate(data_type: type) -> bool:
+    def validate(data_type: str) -> bool:
         raise NotImplementedError
 
 
-class NumpyData(ModelData):
-    def __init__(self, input_data):
+class NumpyData(ModelDataHelper):
+    def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
-        self.data = cast(NDArray, self.data)
+        self.data = cast(NDArray[Any], self.data)
 
     @property
     def dtypes(self) -> List[str]:
@@ -123,7 +116,7 @@ class NumpyData(ModelData):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return self.data.shape
+        return cast(Tuple[int, ...], self.data.shape)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -133,12 +126,12 @@ class NumpyData(ModelData):
         return feature_dict
 
     @staticmethod
-    def validate(data_type: type) -> bool:
-        return data_type == InputDataType.NUMPY_ARRAY.value
+    def validate(data_type: str) -> bool:
+        return data_type == AllowedDataType.NUMPY
 
 
-class PandasDataFrame(ModelData):
-    def __init__(self, input_data):
+class PandasDataFrameData(ModelDataHelper):
+    def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
         self.data = cast(pd.DataFrame, self.data)
@@ -156,7 +149,7 @@ class PandasDataFrame(ModelData):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return self.data.shape
+        return cast(Tuple[int, ...], self.data.shape)
 
     @property
     def dtypes(self) -> List[str]:
@@ -168,16 +161,16 @@ class PandasDataFrame(ModelData):
 
     @property
     def features(self) -> List[str]:
-        return self.data.columns
+        return cast(List[str], self.data.columns)
 
     @features.setter
     def features(self, features: List[str]) -> None:
         self._features = features
 
-    def to_numpy(self) -> NDArray:
-        return self.data.to_numpy()
+    def to_numpy(self) -> NDArray[Any]:
+        return cast(NDArray[Any], self.data.to_numpy())
 
-    def convert_dataframe_column(self, column_type: str, convert_column_type: str):
+    def convert_dataframe_column(self, column_type: str, convert_column_type: type) -> None:
         """Helper for converting pandas dataframe column to a new type"""
 
         for feature_name, feature_type in self.feature_types:
@@ -188,15 +181,15 @@ class PandasDataFrame(ModelData):
         return {col: self.data[col].values for col in self.features}
 
     @staticmethod
-    def validate(data_type: type) -> bool:
-        return data_type == InputDataType.PANDAS_DATAFRAME.value
+    def validate(data_type: str) -> bool:
+        return data_type == AllowedDataType.PANDAS
 
 
-class DataDictionary(ModelData):
-    def __init__(self, input_data):
+class DataDictionary(ModelDataHelper):
+    def __init__(self, input_data: ValidModelInput):
         super().__init__(input_data=input_data)
 
-        self.data = cast(Dict[str, NDArray], self.data)
+        self.data = cast(Dict[str, NDArray[Any]], self.data)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -226,11 +219,11 @@ class DataDictionary(ModelData):
         self._features = features
 
     @staticmethod
-    def validate(data_type: type) -> bool:
-        return data_type == InputDataType.DICT.value
+    def validate(data_type: str) -> bool:
+        return data_type == AllowedDataType.DICT
 
 
-def get_model_data(data_type: type, input_data: Any):
+def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
     """Sets the appropriate ModelData subclass depending
     on data_type passed
 
@@ -240,7 +233,7 @@ def get_model_data(data_type: type, input_data: Any):
     """
     model_data = next(
         data_class
-        for data_class in ModelData.__subclasses__()
+        for data_class in ModelDataHelper.__subclasses__()
         if data_class.validate(
             data_type=data_type,
         )
@@ -265,15 +258,16 @@ class FloatTypeConverter:
                     data = data.astype({feature: np.float32})
             else:
                 data = data.astype({feature: np.float32})
+
         return data
 
-    def _convert_array(self, data: NDArray) -> NDArray:
+    def _convert_array(self, data: NDArray[Any]) -> NDArray[Any]:
         dtype = str(data.dtype)
         if dtype != DataDtypes.STRING:
             return data.astype(np.float32, copy=False)
         return data
 
-    def _convert_dict(self, data: Dict[str, NDArray]) -> Dict[str, NDArray]:
+    def _convert_dict(self, data: Dict[str, NDArray[Any]]) -> Dict[str, NDArray[Any]]:
         for key, value in data.items():
             dtype = str(value.dtype)
             if not self.convert_all:
@@ -284,40 +278,10 @@ class FloatTypeConverter:
                     data[key] = value.astype(np.float32, copy=False)
         return data
 
-    def convert_to_float(self, data: InputData) -> InputData:
+    def convert_to_float(self, data: ValidModelInput) -> ValidModelInput:
         if isinstance(data, pd.DataFrame):
             return self._convert_dataframe(data=data)
         if isinstance(data, np.ndarray):
             return self._convert_array(data=data)
-        return self._convert_dict(data=data)
 
-
-@dataclass
-class ModelInfo:
-    """Helper class to be used with OnnxModelConverter.
-    Contains metadata needed for conversion of trained model to onnx format.
-
-    Args:
-        model:
-            Trained model (sklearn, tf, keras, pytorch)
-        input_data:
-            Sample data use to train model
-        model_type:
-            Model type
-        model_class:
-            Model class
-        data_type:
-            Data type
-        additional_model_args:
-            Optional args to include with Torch model
-        onnx_model_def:
-            Optional `OnnxModelDefinition`
-    """
-
-    model: Any
-    model_data: ModelData
-    model_type: str
-    model_class: str
-    data_type: type
-    additional_model_args: Optional[ExtraOnnxArgs] = None
-    onnx_model_def: Optional[OnnxModelDefinition] = None
+        return self._convert_dict(data=cast(Dict[str, NDArray[Any]], data))
