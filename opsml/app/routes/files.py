@@ -48,22 +48,30 @@ def verify_path(path: str) -> str:
     Returns:
         path
     """
-    # For v1 and v2 all artifacts belong to a registry
+    # For v1 and v2 all artifacts belong to a registry (exception being mlflow artifacts)
     if any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
         return path
 
-    try:
-        # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path> with artifact_path being a uid
-        # get uid from path
-        uid = path.split("/")[2]
-        UUID(uid, version=4)  # we use uuid4
+    # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path>/artifacts with artifact_path being a uid
+    valid = []
+    splits = path.split("/")
+    for split in splits:
+        if split == "artifacts":
+            valid.append(True)
+            continue
+        try:
+            UUID(split, version=4)  # we use uuid4
+            valid.append(True)
+        except Exception as exc:
+            valid.append(False)
+
+    if all(valid):
         return path
 
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Path is not a valid registry path",
-        ) from exc
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Path is not a valid registry path",
+    )
 
 
 # upload uses the request object directly which affects OpenAPI docs
