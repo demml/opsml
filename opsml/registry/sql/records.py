@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,
@@ -193,30 +192,12 @@ class LoadedDataRecord(LoadRecord):
         datacard_definition["metadata"]["uris"]["datacard_uri"] = values.get("datacard_uri")
         datacard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
 
-        if datacard_definition["metadata"]["uris"]["profile_uri"] is not None:
-            profile_uri = datacard_definition["metadata"]["uris"]["profile_uri"]
-
-            datacard_definition["data_profile"] = LoadedDataRecord.load_data_profile(
-                data_profile_uri=profile_uri,
-                storage_client=storage_client,
-            )
-
         return datacard_definition
 
     @classmethod
     def convert_data_metadata(cls, card_def: Dict[str, Any]) -> Dict[str, Any]:
         """This classmethod is used for backward compatibility"""
         return DataCardMetadata(**card_def).model_dump()
-
-    @staticmethod
-    def load_data_profile(data_profile_uri: str, storage_client: StorageClientType) -> ProfileReport:
-        profile_bytes = load_record_artifact_from_storage(
-            artifact_type=ARBITRARY_ARTIFACT_TYPE,
-            storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=data_profile_uri),
-        )
-        assert profile_bytes is not None
-        return DataProfiler.load_profile(data=cast(bytes, profile_bytes))
 
     @classmethod
     def load_datacard_definition(

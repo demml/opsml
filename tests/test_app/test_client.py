@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 from starlette.testclient import TestClient
+from fastapi.exceptions import HTTPException
 from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
@@ -23,6 +24,7 @@ from opsml.registry import (
     ModelCardMetadata,
 )
 from opsml.app.routes.utils import list_team_name_info, error_to_500
+from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.projects import OpsmlProject
@@ -1056,3 +1058,14 @@ def test_download_fail(test_app: TestClient):
     # test register model (onnx)
     response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path=fake")
     assert response.status_code == 422
+
+
+def test_verify_path():
+    verify_path("test/assets/OPSML_MODEL_REGISTRY")
+    verify_path("test/assets/OPSML_DATA_REGISTRY")
+    verify_path("test/assets/OPSML_RUN_REGISTRY")
+    verify_path("test/assets/OPSML_PROJECT_REGISTRY")
+    verify_path("mlflow:/1/d3a94b802f9141ffb020e9f12e3bdbff/artifacts/data")
+
+    with pytest.raises(HTTPException):
+        assert verify_path("tests/assets/fake")

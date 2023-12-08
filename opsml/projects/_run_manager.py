@@ -8,7 +8,7 @@ from typing import Dict, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._active_run import ActiveRun, RunInfo
-from opsml.projects.types import ProjectInfo, Tags
+from opsml.projects.base.types import ProjectInfo, Tags
 from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.utils.settings import settings
@@ -62,9 +62,9 @@ class _RunManager:
     @property
     def base_tags(self) -> Dict[str, Union[str, Optional[str]]]:
         return {
-            Tags.NAME: self._project_info.name,
-            Tags.TEAM: self._project_info.team,
-            Tags.EMAIL: self._project_info.user_email,
+            Tags.NAME.value: self._project_info.name,
+            Tags.TEAM.value: self._project_info.team,
+            Tags.EMAIL.value: self._project_info.user_email,
         }
 
     @property

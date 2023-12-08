@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from typing import Dict
+from uuid import UUID
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -47,14 +48,29 @@ def verify_path(path: str) -> str:
     Returns:
         path
     """
+    # For v1 and v2 all artifacts belong to a registry (exception being mlflow artifacts)
+    if any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
+        return path
 
-    if not any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="No path provided",
-        )
+    # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path>/artifacts with artifact_path being a uid
+    has_artifacts, has_uuid = False, False
+    for split in path.split("/"):
+        if split == "artifacts":
+            has_artifacts = True
+            continue
+        try:
+            UUID(split, version=4)  # we use uuid4
+            has_uuid = True
+        except ValueError:
+            pass
 
-    return path
+    if has_uuid and has_artifacts:
+        return path
+
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Path is not a valid registry path",
+    )
 
 
 # upload uses the request object directly which affects OpenAPI docs
