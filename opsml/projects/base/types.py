@@ -12,6 +12,7 @@ from opsml.helpers.types import OpsmlUri
 from opsml.registry.utils.settings import settings
 
 
+# This needs to be kept here for backward compatibility with v1
 class Tags(str, Enum):
     NAME = "name"
     TEAM = "team"
