@@ -15,7 +15,6 @@ import pyarrow.parquet as pq
 import zarr
 from numpy.typing import NDArray
 
-from opsml.projects.types import Tags
 from opsml.helpers.utils import all_subclasses
 from opsml.model.types import ModelProto
 from opsml.registry.cards.types import StoragePath
