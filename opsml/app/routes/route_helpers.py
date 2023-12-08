@@ -300,6 +300,7 @@ class DataRouteHelper(RouteHelper):
         Returns:
             `Tuple[str, bool]`
         """
+
         if load_profile and datacard.metadata.uris.profile_html_uri is not None:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 filepath = request.app.state.storage_client.download(
@@ -338,6 +339,7 @@ class DataRouteHelper(RouteHelper):
 
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
+
         datacard, version = self._check_version(registry, name, versions, version)
         datacard = cast(DataCard, datacard)
 

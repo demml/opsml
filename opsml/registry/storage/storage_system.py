@@ -357,18 +357,18 @@ class LocalStorageClient(StorageClient):
         files = kwargs.get("files", [])
         if len(files) == 1:
             filepath = Path(files[0])
+            rpath = str(filepath)
 
             if local_path.is_dir():
                 lpath = str(local_path / filepath.name)
 
-            return cast(Optional[str], self.copy(read_path=str(filepath), write_path=lpath))
-
         # check if trying to copy single file to directory
         if read_path.is_file():
             lpath = str(local_path / read_path.name)
-            return cast(Optional[str], self.copy(read_path=rpath, write_path=lpath))
 
-        return cast(Optional[str], self.copy(read_path=rpath, write_path=lpath))
+        self.copy(read_path=rpath, write_path=lpath)
+
+        return lpath
 
     def delete(self, read_path: str) -> None:
         """Deletes files from a read path
