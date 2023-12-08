@@ -1,10 +1,11 @@
-PROJECT=poetry-template
-PYTHON_VERSION=3.10.10
+PROJECT=opsml
+PYTHON_VERSION=3.11.2
 SOURCE_OBJECTS=opsml
 
 
 format.black:
 	poetry run black ${SOURCE_OBJECTS}
+
 format.isort:
 	poetry run isort ${SOURCE_OBJECTS}
 format.ruff:
