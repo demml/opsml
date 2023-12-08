@@ -62,7 +62,7 @@ def verify_path(path: str) -> str:
         try:
             UUID(split, version=4)  # we use uuid4
             valid.append(True)
-        except Exception:
+        except ValueError:
             valid.append(False)
 
     if all(valid):
