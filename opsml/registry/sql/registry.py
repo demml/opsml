@@ -15,7 +15,7 @@ from opsml.registry.sql.base import OpsmlRegistry
 from opsml.registry.sql.base.server import ServerRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.utils.utils import check_package_exists
+from opsml.settings.utils import check_package_exists
 
 logger = ArtifactLogger.get_logger()
 
