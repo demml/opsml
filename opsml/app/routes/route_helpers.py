@@ -16,8 +16,8 @@ from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ModelMetadata
+from opsml.projects.base.types import ProjectInfo
 from opsml.projects.project import OpsmlProject
-from opsml.projects.types import ProjectInfo
 from opsml.registry.cards.audit import AuditCard, AuditSections
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -300,6 +300,7 @@ class DataRouteHelper(RouteHelper):
         Returns:
             `Tuple[str, bool]`
         """
+
         if load_profile and datacard.metadata.uris.profile_html_uri is not None:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 filepath = request.app.state.storage_client.download(
@@ -338,6 +339,7 @@ class DataRouteHelper(RouteHelper):
 
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
+
         datacard, version = self._check_version(registry, name, versions, version)
         datacard = cast(DataCard, datacard)
 
