@@ -53,7 +53,7 @@ class DataCardValidator(CardValidator):
         return False
 
     def get_data_type(self) -> str:
-        """Get data allowedatatype for DataCard"""
+        """Get data allowed datatype for DataCard"""
         if self.data is None and bool(self.sql_logic):
             return AllowedDataType.SQL
         return check_data_type(self.data)
