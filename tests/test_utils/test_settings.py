@@ -1,9 +1,14 @@
+from opsml.app.core.config import config
+from opsml.helpers.gcp_utils import GcpCredsSetter
 from opsml.registry.utils.settings import DefaultSettings
 from opsml.registry.storage.types import GcsStorageClientSettings, S3StorageClientSettings
-from opsml.helpers.gcp_utils import GcpCredsSetter
 
 
-def test_default_local_settings():
+def test_default_local_settings(monkeypatch) -> None:
+    monkeypatch.setattr(config, "STORAGE_URI", "./mlruns")
+    monkeypatch.setattr(config, "TRACKING_URI", "sqlite:///test.db")
+    monkeypatch.setenv(name="OPSML_TRACKING_URI", value="sqlite:///test.db")
+    monkeypatch.setenv(name="OPSML_STORAGE_URI", value="./mlruns")
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
     local_client = settings.connection_client
@@ -11,6 +16,7 @@ def test_default_local_settings():
 
 
 def test_default_http_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
+    monkeypatch.setattr(config, "TRACKING_URI", "https://fake_url.com")
     monkeypatch.setenv(name="OPSML_TRACKING_URI", value="https://fake_url.com")
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
@@ -18,8 +24,10 @@ def test_default_http_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_
 
 def test_default_postgres_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
     url = "postgresql+psycopg2://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
+    monkeypatch.setattr(config, "STORAGE_URI", "gs://opsml/test")
+    monkeypatch.setattr(config, "TRACKING_URI", url)
     monkeypatch.setenv(name="OPSML_TRACKING_URI", value=url)
-    monkeypatch.setenv(name="OPSML_STORAGE_URI", value="gs://opsml/tet")
+    monkeypatch.setenv(name="OPSML_STORAGE_URI", value="gs://opsml/test")
 
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
@@ -29,6 +37,9 @@ def test_default_postgres_settings(monkeypatch, mock_gcs_storage_response, mock_
 
 def test_default_mysql_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
     url = "mysql+pymysql://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
+
+    monkeypatch.setattr(config, "STORAGE_URI", "gs://opsml/test")
+    monkeypatch.setattr(config, "TRACKING_URI", url)
     monkeypatch.setenv(name="OPSML_TRACKING_URI", value=url)
     monkeypatch.setenv(name="OPSML_STORAGE_URI", value="gs://opsml/tet")
 
@@ -39,6 +50,11 @@ def test_default_mysql_settings(monkeypatch, mock_gcs_storage_response, mock_gcp
 
 
 def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
+    monkeypatch.setattr(config, "STORAGE_URI", "./mlruns")
+    monkeypatch.setattr(config, "TRACKING_URI", "sqlite:///test.db")
+    monkeypatch.setenv(name="OPSML_TRACKING_URI", value="sqlite:///test.db")
+    monkeypatch.setenv(name="OPSML_STORAGE_URI", value="./mlruns")
+
     settings = DefaultSettings()
     assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
 
@@ -60,8 +76,6 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
 
 def test_api_storage(api_registries):
     """Tests settings for presence of ApiStorageClient when using api"""
-
-    settings = DefaultSettings()
     from opsml.registry.utils.settings import settings
 
     assert settings.storage_client.__class__.__name__ == "ApiStorageClient"

@@ -312,9 +312,11 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         return test_client
 
     with patch("httpx.Client", callable_api):
+        from opsml.app.core.config import config
         from opsml.registry.utils.settings import settings
         from opsml.registry.sql.base.query_engine import QueryEngine
 
+        config.TRACKING_URI = "http://testserver"
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
 

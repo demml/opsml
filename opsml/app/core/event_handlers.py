@@ -30,6 +30,7 @@ initializer = DBInitializer(
 
 def _init_rollbar() -> None:
     logger.info("Initializing rollbar")
+    # TODO(@damon): Remove rollbar integration or move it to a separate package
     rollbar.init(
         os.getenv("ROLLBAR_TOKEN"),
         os.getenv("APP_ENV", "development"),

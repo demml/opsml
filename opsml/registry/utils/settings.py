@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
 from functools import cached_property
 from typing import Any, Dict, Optional, Type, cast
 
@@ -9,9 +8,9 @@ import httpx
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
-from opsml.helpers.types import OpsmlAuth, OpsmlUri
 from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.sql.connectors.base import BaseSQLConnection
 from opsml.registry.sql.connectors.connector import SQLConnector
@@ -27,10 +26,6 @@ from opsml.registry.storage.types import (
     StorageClientSettings,
     StorageSettings,
 )
-
-BASE_LOCAL_SQL = f"sqlite:///{os.getcwd()}/tmp.db"
-STORAGE_URI = f"{os.getcwd()}/opsml_artifacts"
-
 
 logger = ArtifactLogger.get_logger()
 
@@ -101,29 +96,19 @@ class DefaultAttrCreator:
             env_vars (dict): Dictionary of key value pairs
         """
         self._env_vars = env_vars
-        self.tracking_uri = self._set_tracking_uri()
-
+        self._set_tracking_uri()
         self._set_storage_client()
 
-    def _set_tracking_uri(self) -> str:
-        """Sets tracking url to use for database entries
+    def _set_tracking_uri(self) -> None:
+        """Sets tracking url to use for database entries"""
 
-        Returns:
-            tracking_uri string
-
-        """
-
-        tracking_uri: str = self._env_vars.get(OpsmlUri.TRACKING_URI.lower(), BASE_LOCAL_SQL)
-
-        if tracking_uri is BASE_LOCAL_SQL:
+        if config.is_tracking_local:
+            # Needs the [server] extra installed
             OpsmlImportExceptions.try_sql_import()
-
             logger.info("""No tracking url set. Defaulting to Sqlite""")
 
-        self._env_vars[OpsmlUri.TRACKING_URI.lower()] = tracking_uri
-        self._get_api_client(tracking_uri=tracking_uri)
-
-        return tracking_uri
+        self._env_vars["opsml_tracking_uri"] = config.TRACKING_URI
+        self._get_api_client(tracking_uri=config.TRACKING_URI)
 
     def _set_storage_client(self) -> None:
         """Sets storage info and storage client attributes for DefaultSettings"""
@@ -146,10 +131,10 @@ class DefaultAttrCreator:
             tracking_uri (str): URL for tracking
         """
 
-        username = os.environ.get(OpsmlAuth.USERNAME)
-        password = os.environ.get(OpsmlAuth.PASSWORD)
+        username = config.OPSML_USERNAME
+        password = config.OPSML_PASSWORD
 
-        if "http" in tracking_uri:
+        if not config.is_tracking_local:
             request_client = ApiClient(base_url=tracking_uri.strip("/"))
             if all(bool(cred) for cred in [username, password]):
                 request_client.client.auth = httpx.BasicAuth(
@@ -213,7 +198,7 @@ class DefaultAttrCreator:
             StorageClientSettings
 
         """
-        storage_uri = os.environ.get(OpsmlUri.STORAGE_URI, STORAGE_URI)
+        storage_uri = config.STORAGE_URI
 
         if storage_uri is not None:
             storage_type = self._get_storage_type(storage_uri=storage_uri)
