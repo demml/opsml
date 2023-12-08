@@ -53,19 +53,18 @@ def verify_path(path: str) -> str:
         return path
 
     # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path>/artifacts with artifact_path being a uid
-    valid = []
-    splits = path.split("/")
-    for split in splits:
+    has_artifacts, has_uuid = False, False
+    for split in path.split("/"):
         if split == "artifacts":
-            valid.append(True)
+            has_artifacts = True
             continue
         try:
             UUID(split, version=4)  # we use uuid4
-            valid.append(True)
+            has_uuid = True
         except ValueError:
-            valid.append(False)
+            pass
 
-    if all(valid):
+    if has_uuid and has_artifacts:
         return path
 
     raise HTTPException(
