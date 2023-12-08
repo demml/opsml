@@ -52,6 +52,7 @@ class AllowedDataType(str, Enum):
     IMAGE = "ImageDataset"
     DICT = "dict"
     SQL = "sql"
+    PROFILE = "profile"
 
 
 class ArrowTable(BaseModel):
