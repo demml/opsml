@@ -62,9 +62,9 @@ class _RunManager:
     @property
     def base_tags(self) -> Dict[str, Union[str, Optional[str]]]:
         return {
-            Tags.NAME: self._project_info.name,
-            Tags.TEAM: self._project_info.team,
-            Tags.EMAIL: self._project_info.user_email,
+            Tags.NAME.value: self._project_info.name,
+            Tags.TEAM.value: self._project_info.team,
+            Tags.EMAIL.value: self._project_info.user_email,
         }
 
     @property
