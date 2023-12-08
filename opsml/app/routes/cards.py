@@ -6,7 +6,6 @@ from typing import Optional, Union
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
-from opsml.app.core.config import config
 from opsml.app.core.dependencies import verify_token
 from opsml.app.routes.pydantic_models import (
     AddCardRequest,
@@ -27,6 +26,7 @@ from opsml.app.routes.pydantic_models import (
 from opsml.app.routes.utils import get_registry_type_from_table, replace_proxy_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.registry import CardRegistry
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 

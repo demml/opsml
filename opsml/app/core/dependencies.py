@@ -4,8 +4,8 @@
 
 from fastapi import HTTPException, Request
 
-from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 

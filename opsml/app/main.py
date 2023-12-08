@@ -10,12 +10,12 @@ from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from opsml.app.core.config import config
 from opsml.app.core.event_handlers import start_app_handler, stop_app_handler
 from opsml.app.core.login import get_current_username
 from opsml.app.core.middleware import rollbar_middleware
 from opsml.app.routes.router import api_router
 from opsml.helpers.logging import ArtifactLogger
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 

@@ -15,7 +15,7 @@ from opsml.registry.sql.records import (
 )
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs
-from opsml.registry.utils.settings import settings
+from opsml.registry.storage.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client

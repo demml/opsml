@@ -1,6 +1,6 @@
-from opsml.app.core.config import config
+from opsml.settings.config import config
 from opsml.helpers.gcp_utils import GcpCredsSetter
-from opsml.registry.utils.settings import DefaultSettings
+from opsml.registry.storage.settings import DefaultSettings
 from opsml.registry.storage.types import GcsStorageClientSettings, S3StorageClientSettings
 
 
@@ -76,6 +76,6 @@ def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gc
 
 def test_api_storage(api_registries):
     """Tests settings for presence of ApiStorageClient when using api"""
-    from opsml.registry.utils.settings import settings
+    from opsml.registry.storage.settings import settings
 
     assert settings.storage_client.__class__.__name__ == "ApiStorageClient"

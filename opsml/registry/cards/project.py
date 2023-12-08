@@ -10,7 +10,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType
 from opsml.registry.sql.records import ProjectRegistryRecord, RegistryRecord
-from opsml.registry.utils.settings import settings
+from opsml.registry.storage.settings import settings
 
 logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client

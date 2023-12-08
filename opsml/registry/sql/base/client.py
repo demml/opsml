@@ -12,7 +12,7 @@ from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.semver import CardVersion, VersionType
-from opsml.registry.utils.settings import settings
+from opsml.registry.storage.settings import settings
 
 logger = ArtifactLogger.get_logger()
 
