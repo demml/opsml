@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.types import (
     METRICS,
     PARAMS,

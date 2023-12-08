@@ -16,8 +16,8 @@ from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.types import ModelMetadata
-from opsml.projects.project import OpsmlProject
 from opsml.projects.base.types import ProjectInfo
+from opsml.projects.project import OpsmlProject
 from opsml.registry.cards.audit import AuditCard, AuditSections
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
