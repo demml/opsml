@@ -872,7 +872,6 @@ def test_data_model_version(
     assert response.status_code == 200
 
     response = test_app.get("/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
-    print(response.__dict__)
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
