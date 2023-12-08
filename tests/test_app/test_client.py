@@ -26,7 +26,7 @@ from opsml.app.routes.utils import list_team_name_info, error_to_500
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.projects import OpsmlProject
-from opsml.app.core import config
+from opsml.settings.config import config
 from tests.conftest import TODAY_YMD
 from unittest.mock import patch, MagicMock
 
@@ -739,8 +739,8 @@ def test_token_fail(
     api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(config.config, "APP_ENV", "production")
-    monkeypatch.setattr(config.config, "PROD_TOKEN", "fail")
+    monkeypatch.setattr(config, "APP_ENV", "production")
+    monkeypatch.setattr(config, "PROD_TOKEN", "fail")
 
     run = RunCard(
         name="test_df",

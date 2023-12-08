@@ -8,7 +8,6 @@ import httpx
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from opsml.app.core.config import config
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.utils import OpsmlImportExceptions
@@ -26,6 +25,7 @@ from opsml.registry.storage.types import (
     StorageClientSettings,
     StorageSettings,
 )
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 

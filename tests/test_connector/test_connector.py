@@ -1,4 +1,4 @@
-from opsml.registry.utils.settings import DefaultConnector
+from opsml.registry.storage.settings import DefaultConnector
 from opsml.registry.sql.connectors.base import CloudSQLConnection, BaseSQLConnection
 import sqlalchemy
 import pytest

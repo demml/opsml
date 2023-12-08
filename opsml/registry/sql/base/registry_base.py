@@ -21,7 +21,7 @@ from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
 from opsml.registry.sql.table_names import RegistryTableNames
-from opsml.registry.utils.settings import settings
+from opsml.registry.storage.settings import settings
 
 logger = ArtifactLogger.get_logger()
 

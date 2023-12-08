@@ -11,7 +11,7 @@ from opsml.projects._active_run import ActiveRun, RunInfo
 from opsml.projects.types import ProjectInfo, Tags
 from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.utils.settings import settings
+from opsml.registry.storage.settings import settings
 
 logger = ArtifactLogger.get_logger()
 

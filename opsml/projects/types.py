@@ -7,7 +7,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from opsml.app.core.config import config
+from opsml.settings.config import config
 
 
 class Tags(str, Enum):
