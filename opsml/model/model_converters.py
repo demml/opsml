@@ -205,7 +205,8 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
 
-    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer) -> Dict[str, Feature]:  # type: ignore[type-arg]
+    # type: ignore[type-arg]
+    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer) -> Dict[str, Feature]:
         feature_dict = {}
 
         for sig in signature:
