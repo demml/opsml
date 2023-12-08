@@ -191,7 +191,15 @@ class DataCard(ArtifactCard):
     def load_profile(self) -> None:
         """Loads DataCard data profile from storage"""
 
-        # download data
+        if self.data_profile is not None:
+            logger.info("Data profile already exists")
+            return
+
+        if self.metadata.uris.profile_uri is None:
+            logger.info("DataCard is not associated with a data profile")
+            return
+
+        # download data profile
         download_object(
             card=self,
             artifact_type=AllowedDataType.PROFILE,
@@ -300,10 +308,7 @@ class DataProfileDownloader(Downloader):
         return cast(DataCard, self._card)
 
     def download(self) -> None:
-        if self.card.data_profile is not None:
-            logger.info("Data profile already exists")
-            return
-
+        """Downloads a data profile from storage"""
         data_profile = load_record_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
             storage_client=self.storage_client,
