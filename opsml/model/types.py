@@ -202,7 +202,9 @@ class DeepLearningNumpyBase(Base):
     def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
+            array = self.to_numpy(
+                type_=self.feature_map[feat].feature_type, values=feat_val
+            )  # type: ignore[attr-defined]
             feats[feat] = np.expand_dims(array, axis=0)
         return feats
 
@@ -218,7 +220,9 @@ class DeepLearningDictBase(Base):
     def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
+            array = self.to_numpy(
+                type_=self.feature_map[feat].feature_type, values=feat_val
+            )  # type: ignore[attr-defined]
             feats[feat] = np.expand_dims(array, axis=0)
 
         return feats
@@ -293,12 +297,12 @@ class ModelDownloadInfo(BaseModel):
     uid: Optional[str] = None
 
 
-### Sklearn protocol stub
+# Sklearn protocol stub
 class BaseEstimator(Protocol):
     ...
 
 
-### Onnx protocol stubs
+# Onnx protocol stubs
 class Graph:
     @property
     def output(self) -> Any:

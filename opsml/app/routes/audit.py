@@ -78,7 +78,8 @@ async def audit_list_homepage(
         return audit_route_helper.get_team_page(request=request, team=team)  # type: ignore[return-value]
 
     if team is not None and model is not None and version is None:
-        return audit_route_helper.get_versions_page(request=request, team=team, name=model)  # type: ignore[return-value]
+        # type: ignore[return-value]
+        return audit_route_helper.get_versions_page(request=request, team=team, name=model)
 
     if model is not None and team is not None and all(attr is None for attr in [uid, version]):
         raise ValueError("Model name provided without either version or uid")
