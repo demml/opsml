@@ -261,7 +261,7 @@ def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArra
     assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
     ### Test add failure
-    with pytest.raises(IndexError):
+    with pytest.raises(FileNotFoundError):
         data_card.add_sql(name="fail", filename="fail.sql")
 
     with pytest.raises(ValueError):
