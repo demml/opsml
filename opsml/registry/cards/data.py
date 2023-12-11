@@ -233,7 +233,7 @@ class DataCard(ArtifactCard):
             self.sql_logic[name] = query
 
         elif filename is not None:
-            sql_path = FileUtils.find_filepath(name=filename)
+            sql_path = str(FileUtils.find_filepath(name=filename))
             with open(sql_path, "r", encoding="utf-8") as file_:
                 query = file_.read()
             self.sql_logic[name] = query

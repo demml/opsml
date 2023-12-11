@@ -19,7 +19,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 
 # from opsml.drift.data_drift import DriftDetector
 from tests import conftest
-from tests.utils import FileUtils
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
