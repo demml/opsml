@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath
+from opsml.helpers.utils import FileUtils
 from opsml.model.types import (
     ApiDataSchemas,
     DataDict,
@@ -152,7 +152,7 @@ class Description(BaseModel):
 
         if ".md" in summary.lower():
             try:
-                mkdwn_path = FindPath.find_filepath(name=summary)
+                mkdwn_path = FileUtils.find_filepath(name=summary)
                 with open(mkdwn_path, "r", encoding="utf-8") as file_:
                     summary = file_.read()
 
