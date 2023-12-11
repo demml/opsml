@@ -19,6 +19,7 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 
 # from opsml.drift.data_drift import DriftDetector
 from tests import conftest
+from tests.utils import FileUtils
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
@@ -213,18 +214,18 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_local_paths(storage_client: StorageClient):
     FILENAME = "example.csv"
-    file_path = utils.FindPath.find_filepath(name=FILENAME)
+    file_path = utils.FileUtils.find_filepath(name=FILENAME)
 
     with tempfile.TemporaryDirectory() as tempdir:
         storage_client.upload(local_path=file_path, write_path=f"{tempdir}/{FILENAME}")
 
-        dir_path = utils.FindPath.find_dirpath(
-            anchor_file=FILENAME,
-            dir_name="assets",
+        dir_path = utils.FileUtils.find_dirpath(
             path=os.getcwd(),
+            dir_name="assets",
+            anchor_file=FILENAME,
         )
 
-        storage_client.upload(local_path=dir_path, write_path=f"{tempdir}/assets")
+        storage_client.upload(local_path=str(dir_path), write_path=f"{tempdir}/assets")
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])

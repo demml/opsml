@@ -10,7 +10,7 @@ import polars as pl
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath
+from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
@@ -114,7 +114,7 @@ class DataCard(ArtifactCard):
         for name, query in sql_logic.items():
             if ".sql" in query:
                 try:
-                    sql_path = FindPath.find_filepath(name=query)
+                    sql_path = FileUtils.find_filepath(name=query)
                     with open(sql_path, "r", encoding="utf-8") as file_:
                         query_ = file_.read()
                     sql_logic[name] = query_
@@ -233,7 +233,7 @@ class DataCard(ArtifactCard):
             self.sql_logic[name] = query
 
         elif filename is not None:
-            sql_path = FindPath.find_filepath(name=filename)
+            sql_path = FileUtils.find_filepath(name=filename)
             with open(sql_path, "r", encoding="utf-8") as file_:
                 query = file_.read()
             self.sql_logic[name] = query
