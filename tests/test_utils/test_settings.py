@@ -1,9 +1,4 @@
 from opsml.helpers.gcp_utils import GcpCredsSetter
-from opsml.registry.sql.connectors.connector import (
-    CloudSqlMySql,
-    CloudSqlPostgresql,
-    LocalSQLConnection,
-)
 from opsml.registry.storage.settings import DefaultSettings
 from opsml.registry.storage.storage_system import (
     ApiStorageClient,
@@ -20,7 +15,6 @@ def test_default_local_settings() -> None:
     settings = DefaultSettings(cfg=cfg)
     settings.request_client is None
     assert isinstance(settings.storage_client, LocalStorageClient)
-    assert isinstance(settings.connection_client, LocalSQLConnection)
 
 
 def test_default_http_settings(mock_gcs_storage_response, mock_gcp_creds) -> None:
@@ -37,7 +31,6 @@ def test_default_postgres_settings(mock_gcs_storage_response, mock_gcp_creds) ->
     settings = DefaultSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, GCSFSStorageClient)
-    assert isinstance(settings.connection_client, CloudSqlPostgresql)
 
 
 def test_default_mysql_settings(mock_aws_storage_response):
@@ -49,7 +42,6 @@ def test_default_mysql_settings(mock_aws_storage_response):
     settings = DefaultSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, S3StorageClient)
-    assert isinstance(settings.connection_client, CloudSqlMySql)
 
 
 def test_switch_storage_settings(mock_gcs_storage_response, mock_gcp_creds):
@@ -57,7 +49,6 @@ def test_switch_storage_settings(mock_gcs_storage_response, mock_gcp_creds):
     settings = DefaultSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, LocalStorageClient)
-    assert isinstance(settings.connection_client, LocalSQLConnection)
 
     gcp_creds = GcpCredsSetter().get_creds()
     storage_settings = GcsStorageClientSettings(
@@ -70,7 +61,6 @@ def test_switch_storage_settings(mock_gcs_storage_response, mock_gcp_creds):
     settings.storage_settings = storage_settings
 
     assert isinstance(settings.storage_client, GCSFSStorageClient)
-    assert isinstance(settings.connection_client, LocalSQLConnection)
 
 
 from opsml.registry.sql.registry import CardRegistries

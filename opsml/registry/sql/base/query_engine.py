@@ -13,7 +13,6 @@ from sqlalchemy import cast as sql_cast
 from sqlalchemy import func as sqa_func
 from sqlalchemy import select, text
 from sqlalchemy.engine import Row
-from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
@@ -21,7 +20,6 @@ from sqlalchemy.sql.expression import ColumnElement
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.semver import get_version_to_search
 from opsml.registry.sql.sql_schema import CardSQLTable, SQLTableGetter
-from opsml.registry.storage.settings import settings
 
 logger = ArtifactLogger.get_logger()
 
@@ -134,7 +132,9 @@ class MySQLHelper(DialectHelper):
 
 class QueryEngine:
     def __init__(self) -> None:
-        self.engine = cast(Engine, settings.connection_client.sql_engine)
+        from opsml.registry.sql.base import initializer
+
+        self.engine = initializer.engine
 
     @property
     def dialect(self) -> str:

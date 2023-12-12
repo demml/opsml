@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from typing import Any, Type, cast
+from typing import Any, Optional, Type, cast
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
@@ -95,3 +95,43 @@ class SQLConnector:
             LocalSQLConnection,
         )
         return cast(Type[BaseSQLConnection], connector)
+
+
+class DefaultConnector:
+    def __init__(
+        self,
+        tracking_uri: str,
+        credentials: Optional[Any] = None,
+    ):
+        self.tracking_uri = tracking_uri
+        self.credentials = credentials
+
+    def _get_connector_type(self) -> str:
+        """Gets the sql connection type when running opsml locally (without api proxy)"""
+
+        connector_type = "local"
+        for db_type in ["postgresql", "mysql"]:
+            if db_type in self.tracking_uri:
+                connector_type = db_type
+
+        if "cloudsql" in self.tracking_uri:
+            connector_type = f"cloudsql_{connector_type}"
+
+        return connector_type
+
+    def _get_sql_connector(self, connector_type: str) -> Type[BaseSQLConnection]:
+        """Gets the sql connection given a connector type"""
+        return SQLConnector.get_connector(connector_type=connector_type)
+
+    def get_connector(self) -> Type[BaseSQLConnection]:
+        """Gets the sql connector to use when running opsml locally (without api proxy)"""
+        connector_type = self._get_connector_type()
+        connector = self._get_sql_connector(connector_type=connector_type)
+
+        return cast(
+            Type[BaseSQLConnection],
+            connector(
+                tracking_uri=self.tracking_uri,
+                credentials=self.credentials,
+            ),
+        )
