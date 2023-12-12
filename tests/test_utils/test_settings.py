@@ -1,14 +1,18 @@
-from opsml.settings.config import OpsmlConfig
 from opsml.helpers.gcp_utils import GcpCredsSetter
-from opsml.registry.storage.settings import DefaultSettings
-from opsml.registry.storage.types import GcsStorageClientSettings, S3StorageClientSettings
-from opsml.registry.storage.storage_system import (
-    LocalStorageClient,
-    GCSFSStorageClient,
-    S3StorageClient,
-    ApiStorageClient,
+from opsml.registry.sql.connectors.connector import (
+    CloudSqlMySql,
+    CloudSqlPostgresql,
+    LocalSQLConnection,
 )
-from opsml.registry.sql.connectors.connector import LocalSQLConnection, CloudSqlPostgresql, CloudSqlMySql
+from opsml.registry.storage.settings import DefaultSettings
+from opsml.registry.storage.storage_system import (
+    ApiStorageClient,
+    GCSFSStorageClient,
+    LocalStorageClient,
+    S3StorageClient,
+)
+from opsml.registry.storage.types import GcsStorageClientSettings
+from opsml.settings.config import OpsmlConfig
 
 
 def test_default_local_settings() -> None:
