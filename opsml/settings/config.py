@@ -19,7 +19,7 @@ class OpsmlConfig(BaseSettings):
 
     # API client username / password
     opsml_username: Optional[str] = None
-    OPSML_PASSWORD: Optional[str] = None
+    opsml_username: Optional[str] = None
 
     # The current RUN_ID to load when creating a new project
     opsml_run_id: Optional[str] = None
