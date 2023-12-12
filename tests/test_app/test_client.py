@@ -1,36 +1,41 @@
-from typing import Dict, List, Tuple
-import re
-import uuid
 import pathlib
+import re
+import sys
+import uuid
+from typing import Any, Dict, List, Tuple
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import pytest
-from pytest_lazyfixture import lazy_fixture
-from starlette.testclient import TestClient
 from fastapi.exceptions import HTTPException
-from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
+from pytest_lazyfixture import lazy_fixture
 from requests.auth import HTTPBasicAuth
-from opsml.registry import (
-    AuditCard,
-    DataCard,
-    ModelCard,
-    RunCard,
-    PipelineCard,
-    CardRegistry,
-    CardRegistries,
-    CardInfo,
-    DataCardMetadata,
-    ModelCardMetadata,
-)
-from opsml.app.routes.utils import list_team_name_info, error_to_500
+from sklearn import linear_model, pipeline
+from starlette.testclient import TestClient
+
+from opsml.app.core import config
 from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
+from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.projects import OpsmlProject
-from opsml.app.core import config
+from opsml.registry import (
+    AuditCard,
+    CardInfo,
+    CardRegistries,
+    CardRegistry,
+    DataCard,
+    DataCardMetadata,
+    ModelCard,
+    ModelCardMetadata,
+    PipelineCard,
+    RunCard,
+)
 from tests.conftest import TODAY_YMD
-from unittest.mock import patch, MagicMock
+
+EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
 def test_app_settings(test_app: TestClient):
@@ -737,6 +742,7 @@ def test_model_metric_failure(
     assert response.status_code == 500
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_token_fail(
     api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,
@@ -1069,3 +1075,36 @@ def test_verify_path():
 
     with pytest.raises(HTTPException):
         assert verify_path("tests/assets/fake")
+
+
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
+def test_register_distilbert(
+    api_registries: CardRegistries,
+    load_pytorch_language: Tuple[Any, Dict[str, NDArray]],
+) -> None:
+    """An example of saving a large, pretrained  bart model to opsml"""
+    model, data = load_pytorch_language
+
+    data_card = DataCard(
+        data=data["input_ids"],
+        name="distilbert",
+        team="mlops",
+        user_email="test@mlops.com",
+    )
+    api_registries.data.register_card(data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data,
+        name="distilbert",
+        team="mlops",
+        user_email="test@mlops.com",
+        tags={"id": "model1"},
+        datacard_uid=data_card.uid,
+        to_onnx=True,
+    )
+
+    api_registries.model.register_card(model_card)
+
+    assert "trained-model.pt" in model_card.metadata.uris.trained_model_uri

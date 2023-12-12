@@ -1,18 +1,22 @@
-import os
-from pathlib import PosixPath
 import base64
-from opsml.helpers import utils
-from opsml.helpers import gcp_utils
-from google.oauth2.service_account import Credentials
 import json
+import os
+import sys
+from pathlib import PosixPath
+
 import pytest
+from google.oauth2.service_account import Credentials
+
+from opsml.helpers import gcp_utils, utils
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_find_path():
     path = utils.FindPath.find_filepath("requirements.txt")
     assert isinstance(path, PosixPath)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_find_dir_path():
     path = utils.FindPath.find_dirpath(
         dir_name="assets",
@@ -22,6 +26,7 @@ def test_find_dir_path():
     assert isinstance(path, str)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_find_src_dir():
     src_dir, src_path = utils.FindPath.find_source_dir(
         os.getcwd(),

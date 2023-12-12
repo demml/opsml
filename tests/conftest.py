@@ -1,7 +1,7 @@
 import os
+import warnings
 from pathlib import Path
 from typing import Any, Iterator, List
-import warnings
 
 warnings.filterwarnings("ignore")
 
@@ -19,66 +19,65 @@ os.environ["OPSML_STORAGE_URI"] = STORAGE_PATH
 os.environ["OPSML_USERNAME"] = "test-user"
 os.environ["OPSML_PASSWORD"] = "test-pass"
 
-import uuid
-import pytest
-import shutil
-import httpx
-from google.auth import load_credentials_from_file
-from unittest.mock import patch, MagicMock, PropertyMock
-from starlette.testclient import TestClient
-import time
 import datetime
+import shutil
 import tempfile
+import time
+import uuid
+from unittest.mock import MagicMock, PropertyMock, patch
 
-import pyarrow as pa
-from pydantic import BaseModel
-
-import numpy as np
+import httpx
 import joblib
+import lightgbm as lgb
+import numpy as np
 import pandas as pd
 import polars as pl
+import pyarrow as pa
+import pytest
+from google.auth import load_credentials_from_file
+from pydantic import BaseModel
+from sklearn import (
+    cross_decomposition,
+    ensemble,
+    gaussian_process,
+    linear_model,
+    multioutput,
+    naive_bayes,
+    neighbors,
+    neural_network,
+    svm,
+    tree,
+)
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.compose import ColumnTransformer
 
 # ml model packages and classes
-from sklearn.datasets import fetch_openml
-from sklearn import (
-    linear_model,
-    tree,
-    naive_bayes,
-    gaussian_process,
-    neighbors,
-    svm,
-    multioutput,
-    neural_network,
-    cross_decomposition,
-)
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.datasets import load_iris
+from sklearn.datasets import fetch_openml, load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn import ensemble
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from starlette.testclient import TestClient
 from xgboost import XGBRegressor
-import lightgbm as lgb
 
-
-# opsml
-from opsml.registry import ModelCard, DataSplit
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
-from opsml.registry.storage.types import StorageClientSettings, GcsStorageClientSettings, S3StorageClientSettings
-from opsml.registry.sql.sql_schema import BaseMixin, Base, RegistryTableNames
-from opsml.registry.sql.db_initializer import DBInitializer
-from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.storage.storage_system import get_storage_client, StorageClientType
-
-from opsml.projects import ProjectInfo
-from opsml.registry import CardRegistries
-from opsml.registry.cards.types import ModelCardUris
-from opsml.projects import OpsmlProject
 from opsml.model.types import OnnxModelDefinition
+from opsml.projects import OpsmlProject, ProjectInfo
+
+# opsml
+from opsml.registry import CardRegistries, DataSplit, ModelCard
+from opsml.registry.cards.types import ModelCardUris
+from opsml.registry.sql.connectors.connector import LocalSQLConnection
+from opsml.registry.sql.db_initializer import DBInitializer
+from opsml.registry.sql.sql_schema import Base, BaseMixin, RegistryTableNames
+from opsml.registry.storage.storage_system import StorageClientType, get_storage_client
+from opsml.registry.storage.types import (
+    GcsStorageClientSettings,
+    S3StorageClientSettings,
+    StorageClientSettings,
+)
 
 # testing
 from tests.mock_api_registries import CardRegistry as ClientCardRegistry
@@ -312,8 +311,8 @@ def mock_registries(test_client: TestClient) -> CardRegistries:
         return test_client
 
     with patch("httpx.Client", callable_api):
-        from opsml.registry.utils.settings import settings
         from opsml.registry.sql.base.query_engine import QueryEngine
+        from opsml.registry.utils.settings import settings
 
         settings.opsml_tracking_uri = "http://testserver"
         registries = CardRegistries()
@@ -410,7 +409,7 @@ def mock_opsml_app_run():
 
 @pytest.fixture(scope="module")
 def experiment_table_to_migrate():
-    from sqlalchemy import Column, JSON, String
+    from sqlalchemy import JSON, Column, String
     from sqlalchemy.orm import declarative_mixin
 
     @declarative_mixin
@@ -445,8 +444,8 @@ def db_registries():
     cleanup()
 
     # force opsml to use CardRegistry with SQL connection (non-proxy)
-    from opsml.registry.sql.registry import CardRegistry
     from opsml.registry.sql.base.query_engine import QueryEngine
+    from opsml.registry.sql.registry import CardRegistry
 
     model_registry = CardRegistry(registry_name="model")
     data_registry = CardRegistry(registry_name="data")
@@ -636,14 +635,14 @@ def load_pytorch_language():
 
 @pytest.fixture(scope="session")
 def pytorch_onnx_byo():
-    from torch import nn
-    import torch.utils.model_zoo as model_zoo
-    import torch.onnx
     import onnx
 
     # Super Resolution model definition in PyTorch
     import torch.nn as nn
     import torch.nn.init as init
+    import torch.onnx
+    import torch.utils.model_zoo as model_zoo
+    from torch import nn
 
     class SuperResolutionNet(nn.Module):
         def __init__(self, upscale_factor, inplace=False):
@@ -1009,7 +1008,7 @@ def huggingface_whisper():
 
 @pytest.fixture(scope="module")
 def huggingface_openai_gpt():
-    from transformers import OpenAIGPTTokenizer, OpenAIGPTLMHeadModel
+    from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer
 
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
     model = OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
@@ -1020,7 +1019,7 @@ def huggingface_openai_gpt():
 
 @pytest.fixture(scope="module")
 def huggingface_bart():
-    from transformers import BartTokenizer, BartModel
+    from transformers import BartModel, BartTokenizer
 
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = BartModel.from_pretrained("facebook/bart-base")
@@ -1031,8 +1030,8 @@ def huggingface_bart():
 
 @pytest.fixture(scope="module")
 def huggingface_vit():
-    from transformers import ViTFeatureExtractor, ViTModel
     from PIL import Image
+    from transformers import ViTFeatureExtractor, ViTModel
 
     image = Image.open("tests/assets/cats.jpg")
 

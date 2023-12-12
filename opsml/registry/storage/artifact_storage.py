@@ -616,7 +616,10 @@ class PyTorchModelStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.PYTORCH
+        return artifact_type in [
+            ArtifactStorageType.PYTORCH,
+            ArtifactStorageType.TRANSFORMER,
+        ]
 
 
 class LightGBMBoosterStorage(JoblibStorage):

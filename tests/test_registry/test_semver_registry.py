@@ -1,8 +1,10 @@
 from typing import Dict
+
 import pytest
-from opsml.registry.sql.registry import CardRegistry
-from opsml.registry import DataCard
+
 from opsml.helpers.exceptions import VersionError
+from opsml.registry import DataCard
+from opsml.registry.sql.registry import CardRegistry
 
 
 def test_version_tags(db_registries: Dict[str, CardRegistry]):

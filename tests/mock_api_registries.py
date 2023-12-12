@@ -2,16 +2,17 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List, Optional, Union, cast
 import textwrap
+from typing import Any, Dict, List, Optional, Union, cast
+
+import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType
-from opsml.registry.sql.semver import VersionType
 from opsml.registry.sql.base.client import ClientRegistry
+from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.storage_system import StorageClientType
-import pandas as pd
 
 logger = ArtifactLogger.get_logger()
 

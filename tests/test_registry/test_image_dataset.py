@@ -1,11 +1,14 @@
-from typing import Dict
 import os
-from opsml.registry.cards import DataCard
-from opsml.registry.sql.registry import CardRegistry
-from opsml.registry.image import ImageDataset, ImageRecord, ImageMetadata
-from pydantic_core._pydantic_core import ValidationError
-import pytest
+import sys
 import tempfile
+from typing import Dict
+
+import pytest
+from pydantic_core._pydantic_core import ValidationError
+
+from opsml.registry.cards import DataCard
+from opsml.registry.image import ImageDataset, ImageMetadata, ImageRecord
+from opsml.registry.sql.registry import CardRegistry
 
 # these examples are pulled from huggingface
 # the aim is to have as much parity as possible
@@ -78,6 +81,7 @@ def test_image_dataset():
     ve.match("metadata must be a jsonl file")
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_register_data(
     db_registries: Dict[str, CardRegistry],
 ):
