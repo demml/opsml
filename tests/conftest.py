@@ -304,7 +304,7 @@ def test_app_login() -> Iterator[TestClient]:
 
 
 from opsml.registry.sql.base.query_engine import QueryEngine
-from opsml.registry.storage.settings import StorageSettings
+from opsml.registry.storage.settings import DefaultSettings
 from opsml.settings.config import OpsmlConfig, config
 
 
@@ -322,7 +322,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
         # Create default settings
         registries = CardRegistries()
         cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=STORAGE_PATH)
-        api_settings = StorageSettings(cfg=cfg)
+        api_settings = DefaultSettings(cfg=cfg)
 
         registries.set_storage_client(api_settings.storage_client)
 
