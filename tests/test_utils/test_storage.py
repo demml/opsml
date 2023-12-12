@@ -39,6 +39,7 @@ def test_api_parquet(test_arrow_table, storage_client):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_api_numpy(test_array, storage_client):
     numpy_writer = NumpyStorage(
         storage_client=storage_client,
@@ -210,6 +211,7 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_local_paths(storage_client: StorageClient):
     FILENAME = "example.csv"
     file_path = utils.FindPath.find_filepath(name=FILENAME)

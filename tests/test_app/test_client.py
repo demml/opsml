@@ -740,6 +740,7 @@ def test_model_metric_failure(
     assert response.status_code == 500
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_token_fail(
     api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,

@@ -1,6 +1,7 @@
 from typing import Dict
 from os import path
-
+import pytest
+import sys
 from opsml.registry.cards import (
     DataCard,
     RunCard,
@@ -11,6 +12,7 @@ from sklearn import linear_model
 from sklearn.pipeline import Pipeline
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_data_model(
     db_registries: Dict[str, CardRegistry],
     sklearn_pipeline: Pipeline,
@@ -83,6 +85,7 @@ def test_delete_data_model(
     assert not path.exists(datacard_filepath)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_runcard(
     linear_regression: linear_model.LinearRegression,
     db_registries: Dict[str, CardRegistry],

@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import PosixPath
 import base64
 from opsml.helpers import utils
@@ -8,11 +9,13 @@ import json
 import pytest
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_find_path():
     path = utils.FindPath.find_filepath("requirements.txt")
     assert isinstance(path, PosixPath)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_find_dir_path():
     path = utils.FindPath.find_dirpath(
         dir_name="assets",
@@ -22,6 +25,7 @@ def test_find_dir_path():
     assert isinstance(path, str)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_find_src_dir():
     src_dir, src_path = utils.FindPath.find_source_dir(
         os.getcwd(),
