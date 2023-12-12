@@ -96,7 +96,7 @@ class _DefaultAttrCreator:
             return None
 
         username = cfg.opsml_username
-        password = cfg.opsml_username
+        password = cfg.opsml_password
 
         request_client = ApiClient(cfg=cfg, base_url=cfg.opsml_tracking_uri.strip("/"))
         if all(bool(cred) for cred in [username, password]):
@@ -109,20 +109,18 @@ class _DefaultAttrCreator:
     @staticmethod
     def get_storage_settings(cfg: OpsmlConfig, client: Optional[ApiClient]) -> StorageSettings:
         if client is not None:
-            storage_settings = client.get_request(route=api_routes.SETTINGS)
-            storage_uri = cast(str, storage_settings.get("storage_uri"))
-            storage_type = cast(str, storage_settings.get("storage_type"))
+            resp = client.get_request(route=api_routes.SETTINGS)
+            storage_uri = cast(str, resp.get("storage_uri"))
+            storage_type = cast(str, resp.get("storage_type"))
         else:
             storage_uri = cfg.opsml_storage_uri
             storage_type = _DefaultAttrCreator._get_storage_type(storage_uri)
 
-        storage_settings = StorageSettingsGetter(
+        return StorageSettingsGetter(
             storage_uri=storage_uri,
             storage_type=storage_type,
             api_client=client,
         ).get_storage_settings()
-
-        return storage_settings
 
     @staticmethod
     def _get_storage_type(storage_uri: str) -> str:
