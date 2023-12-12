@@ -33,6 +33,8 @@ from opsml.app.core import config
 from tests.conftest import TODAY_YMD
 from unittest.mock import patch, MagicMock
 
+EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+
 
 def test_app_settings(test_app: TestClient):
     """Test settings"""
@@ -1072,6 +1074,8 @@ def test_verify_path():
         assert verify_path("tests/assets/fake")
 
 
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 def test_register_distilbert(
     api_registries: CardRegistries,
     load_pytorch_language: Tuple[Any, Dict[str, NDArray]],
@@ -1096,36 +1100,6 @@ def test_register_distilbert(
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
         to_onnx=True,
-    )
-
-    api_registries.model.register_card(model_card)
-
-    assert "trained-model.pt" in model_card.metadata.uris.trained_model_uri
-
-
-def test_register_distilbert(
-    api_registries: CardRegistries,
-    load_pytorch_language: Tuple[Any, Dict[str, NDArray]],
-) -> None:
-    """An example of saving a large, pretrained  bart model to opsml"""
-    model, data = load_pytorch_language
-
-    data_card = DataCard(
-        data=data["input_ids"],
-        name="distilbert",
-        team="mlops",
-        user_email="test@mlops.com",
-    )
-    api_registries.data.register_card(data_card)
-
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data,
-        name="distilbert",
-        team="mlops",
-        user_email="test@mlops.com",
-        tags={"id": "model1"},
-        datacard_uid=data_card.uid,
     )
 
     api_registries.model.register_card(model_card)
