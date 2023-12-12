@@ -1,16 +1,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from functools import cached_property
-from typing import Any, Optional, Type, cast
+from typing import Optional, cast
 
 import httpx
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.request_helpers import ApiClient, api_routes
 from opsml.helpers.utils import OpsmlImportExceptions
-from opsml.registry.sql.connectors.base import BaseSQLConnection
-from opsml.registry.sql.connectors.connector import SQLConnector
 from opsml.registry.storage.storage_system import StorageSystem, get_storage_client
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
@@ -131,46 +128,6 @@ class _DefaultAttrCreator:
         return StorageSystem.LOCAL.value
 
 
-class DefaultConnector:
-    def __init__(
-        self,
-        tracking_uri: str,
-        credentials: Optional[Any] = None,
-    ):
-        self.tracking_uri = tracking_uri
-        self.credentials = credentials
-
-    def _get_connector_type(self) -> str:
-        """Gets the sql connection type when running opsml locally (without api proxy)"""
-
-        connector_type = "local"
-        for db_type in ["postgresql", "mysql"]:
-            if db_type in self.tracking_uri:
-                connector_type = db_type
-
-        if "cloudsql" in self.tracking_uri:
-            connector_type = f"cloudsql_{connector_type}"
-
-        return connector_type
-
-    def _get_sql_connector(self, connector_type: str) -> Type[BaseSQLConnection]:
-        """Gets the sql connection given a connector type"""
-        return SQLConnector.get_connector(connector_type=connector_type)
-
-    def get_connector(self) -> Type[BaseSQLConnection]:
-        """Gets the sql connector to use when running opsml locally (without api proxy)"""
-        connector_type = self._get_connector_type()
-        connector = self._get_sql_connector(connector_type=connector_type)
-
-        return cast(
-            Type[BaseSQLConnection],
-            connector(
-                tracking_uri=self.tracking_uri,
-                credentials=self.credentials,
-            ),
-        )
-
-
 class DefaultSettings:
     """Opsml settings"""
 
@@ -188,16 +145,6 @@ class DefaultSettings:
     def storage_settings(self, storage_settings: StorageSettings) -> None:
         self._storage_settings = storage_settings
         self.storage_client = get_storage_client(self._storage_settings)
-
-    @cached_property
-    def connection_client(self) -> Type[BaseSQLConnection]:
-        """Retrieve sql connection client.
-        Connection client is only used in the Registry class.
-        """
-        return DefaultConnector(
-            tracking_uri=self.cfg.opsml_tracking_uri,
-            credentials=None,
-        ).get_connector()
 
 
 settings = DefaultSettings(cfg=config)

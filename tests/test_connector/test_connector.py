@@ -3,7 +3,7 @@ import sqlalchemy
 from google.cloud.sql.connector import IPTypes
 
 from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
-from opsml.registry.storage.settings import DefaultConnector
+from opsml.registry.sql.connectors.connector import DefaultConnector
 
 
 def test_cloudsql_mysql_parsing():
