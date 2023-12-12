@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings
 
 
 class OpsmlConfig(BaseSettings):
-    app_name: str = "OPSML-API"
+    app_name: str = "opsml"
     app_env: str = Field(default="development")
 
     opsml_storage_uri: str = "./mlruns"
