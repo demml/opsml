@@ -128,7 +128,7 @@ class _DefaultAttrCreator:
         return StorageSystem.LOCAL.value
 
 
-class DefaultSettings:
+class StorageSettings:
     """Opsml settings"""
 
     def __init__(self, cfg: OpsmlConfig) -> None:
@@ -147,4 +147,4 @@ class DefaultSettings:
         self.storage_client = get_storage_client(self._storage_settings)
 
 
-settings = DefaultSettings(cfg=config)
+settings = StorageSettings(cfg=config)

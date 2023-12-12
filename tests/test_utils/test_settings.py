@@ -1,5 +1,5 @@
 from opsml.helpers.gcp_utils import GcpCredsSetter
-from opsml.registry.storage.settings import DefaultSettings
+from opsml.registry.storage.settings import StorageSettings
 from opsml.registry.storage.storage_system import (
     ApiStorageClient,
     GCSFSStorageClient,
@@ -12,14 +12,14 @@ from opsml.settings.config import OpsmlConfig
 
 def test_default_local_settings() -> None:
     cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./mlruns")
-    settings = DefaultSettings(cfg=cfg)
+    settings = StorageSettings(cfg=cfg)
     settings.request_client is None
     assert isinstance(settings.storage_client, LocalStorageClient)
 
 
 def test_default_http_settings(mock_gcs_storage_response, mock_gcp_creds) -> None:
     cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri="gs://google")
-    settings = DefaultSettings(cfg)
+    settings = StorageSettings(cfg)
 
     assert isinstance(settings.storage_client, GCSFSStorageClient)
 
@@ -28,7 +28,7 @@ def test_default_postgres_settings(mock_gcs_storage_response, mock_gcp_creds) ->
     tracking_uri = "postgresql+psycopg2://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
     storage_uri = "gs://opsml/test"
     cfg = OpsmlConfig(opsml_tracking_uri=tracking_uri, opsml_storage_uri=storage_uri)
-    settings = DefaultSettings(cfg=cfg)
+    settings = StorageSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, GCSFSStorageClient)
 
@@ -39,14 +39,14 @@ def test_default_mysql_settings(mock_aws_storage_response):
     )
     storage_uri = "s3://opsml/test"
     cfg = OpsmlConfig(opsml_tracking_uri=tracking_uri, opsml_storage_uri=storage_uri)
-    settings = DefaultSettings(cfg=cfg)
+    settings = StorageSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, S3StorageClient)
 
 
 def test_switch_storage_settings(mock_gcs_storage_response, mock_gcp_creds):
     cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./mlruns")
-    settings = DefaultSettings(cfg=cfg)
+    settings = StorageSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, LocalStorageClient)
 
