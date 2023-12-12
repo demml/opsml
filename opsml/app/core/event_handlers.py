@@ -31,7 +31,7 @@ def _init_rollbar() -> None:
     logger.info("Initializing rollbar")
     rollbar.init(
         os.getenv("ROLLBAR_TOKEN"),
-        os.getenv("APP_ENV", "development"),
+        config.app_env,
     )
 
 

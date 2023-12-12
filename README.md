@@ -39,6 +39,7 @@
 - [Contributing](#contributing)
 
 ## What is it?
+
 `OpsML` is a library which simplifies the machine learning project lifecycle.
 
 ## Features:
@@ -123,6 +124,25 @@ Types of extras that can be installed:
   ```bash
   poetry add "opsml[s3,mysql]"
   ```
+
+## Environment Variables
+
+The following environment variables are used to configure opsml. When using
+opsml as a client (i.e., not running a server), the only variable that must be
+set is `OPSML_TRACKING_URI`.
+
+| Name                       | Description                                                                                                                     |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| APP_ENV                    | The environment to use. Supports `development`, `staging`, and `prodction`                                                      |
+| GOOGLE_ACCOUNT_JSON_BASE64 | The base64 string of the the GCP service account to use.                                                                        |
+| OPSML_MAX_OVERFLOW         | The SQL "max_overflow" size. Defaults to 5                                                                                      |
+| OPSML_POOL_SIZE            | The SQL connection pool size. Defaults to 10.                                                                                   |
+| OPSML_STORAGE_URI          | The location of storage to use. Supports a local file system, AWS, and GCS. Example: `gs://some-bucket`                         |
+| OPSML_TRACKING_URI         | Used when logging artifacts to an opsml server (a.k.a., the server which "tracks" artifacts)                                    |
+| OPSML_USERNAME             | An optional server username. If the server is setup with login enabled, all clients must use HTTP basic auth with this username |
+| OPSML_PASSWORD             | An optional server password. If the server is setup with login enabled, all clients must use HTTP basic auth with this password |
+| OPSML_RUN_ID               | If set, the run will be automatically loaded when creating new cards.                                                           |
+
 
 ## QuickStart
 
