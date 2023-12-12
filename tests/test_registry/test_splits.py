@@ -1,11 +1,13 @@
 from typing import Dict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
+
 from opsml.registry.cards import DataCard, DataSplit
-from opsml.registry.sql.registry import CardRegistry, CardInfo
+from opsml.registry.sql.registry import CardInfo, CardRegistry
 
 card_info = CardInfo(name="test-data", team="opsml", user_email="@opsml.com")
 

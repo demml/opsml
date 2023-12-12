@@ -1,16 +1,15 @@
-from typing import Tuple
+import sys
 from os import path
+from typing import Tuple
+
 import pandas as pd
+import pytest
 from sklearn import pipeline
 
-
-from opsml.registry import (
-    DataCard,
-    ModelCard,
-    CardRegistries,
-)
+from opsml.registry import CardRegistries, DataCard, ModelCard
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_data_model(
     api_registries: CardRegistries,
     sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],

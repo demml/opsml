@@ -1,16 +1,15 @@
 from typing import cast
-import pandas as pd
 
+import pandas as pd
 import pytest
 from sklearn import pipeline
 
+from opsml.helpers.logging import ArtifactLogger
+from opsml.model.challenger import ChallengeInputs, ModelChallenger
+from opsml.projects import OpsmlProject
+from opsml.projects._active_run import ActiveRun
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
-from opsml.projects._active_run import ActiveRun
-from opsml.projects import OpsmlProject
-from opsml.helpers.logging import ArtifactLogger
-from opsml.model.challenger import ModelChallenger, ChallengeInputs
-
 
 logger = ArtifactLogger.get_logger()
 

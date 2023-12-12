@@ -1,18 +1,19 @@
+import os
+import sys
 from typing import cast
-import pandas as pd
 
+import numpy as np
+import pandas as pd
 import pytest
 from sklearn import pipeline
-import os
-import numpy as np
-from opsml.registry import DataCard, ModelCard, AuditCard, CardRegistry
-from opsml.registry.cards.types import CardInfo
-from opsml.projects._active_run import ActiveRun
-from opsml.projects import OpsmlProject, ProjectInfo
+
 from opsml.helpers.logging import ArtifactLogger
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.projects._active_run import ActiveRun
+from opsml.registry import AuditCard, CardRegistry, DataCard, ModelCard
+from opsml.registry.cards.types import CardInfo
 from opsml.registry.image import ImageDataset
 from tests import conftest
-
 
 logger = ArtifactLogger.get_logger()
 
@@ -226,6 +227,7 @@ def test_opsml_project_list_runs(
     assert len(opsml_project_2.list_runs()) == 1
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_opsml_image_dataset(opsml_project: OpsmlProject) -> None:
     """verify we can save image dataset"""
 

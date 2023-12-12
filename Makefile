@@ -1,14 +1,14 @@
 PROJECT=opsml
 PYTHON_VERSION=3.11.2
 SOURCE_OBJECTS=opsml
-
+FORMAT_OBJECTS=opsml tests
 
 format.black:
-	poetry run black ${SOURCE_OBJECTS}
+	poetry run black ${FORMAT_OBJECTS}
 format.isort:
-	poetry run isort ${SOURCE_OBJECTS}
+	poetry run isort ${FORMAT_OBJECTS}
 format.ruff:
-	poetry run ruff check --silent --fix --exit-zero ${SOURCE_OBJECTS}
+	poetry run ruff check --silent --fix --exit-zero ${FORMAT_OBJECTS}
 format: format.isort format.ruff format.black
 
 lints.format_check:

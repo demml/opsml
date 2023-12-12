@@ -1,5 +1,11 @@
 import pytest
-from opsml.registry.sql.semver import get_version_to_search, CardVersion, SemVerUtils, VersionType
+
+from opsml.registry.sql.semver import (
+    CardVersion,
+    SemVerUtils,
+    VersionType,
+    get_version_to_search,
+)
 
 
 def test_semver(db_registries):

@@ -2,6 +2,7 @@ from opsml.registry.storage.settings import DefaultConnector
 from opsml.registry.sql.connectors.base import CloudSQLConnection, BaseSQLConnection
 import sqlalchemy
 import pytest
+import sqlalchemy
 from google.cloud.sql.connector import IPTypes
 
 

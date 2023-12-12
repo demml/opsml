@@ -2,6 +2,7 @@ from typing import Any
 import base64
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -59,6 +60,7 @@ def test_type_checker_check_param_type() -> None:
         utils.TypeChecker.check_metric_type((1, 1))
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_file_utils_find_dirpath(tmp_path: Path) -> None:
     tmp_assets = Path(tmp_path).joinpath("test/child/grandchild")
     tmp_assets.mkdir(parents=True)
@@ -96,6 +98,7 @@ def test_file_utils_find_dirpath(tmp_path: Path) -> None:
         utils.FileUtils.find_dirpath(path=tmp_assets2, dir_name="notthere", anchor_file="test.txt")
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_file_utils_find_filepath(tmp_path: Path) -> None:
     tmp_files = Path(tmp_path).joinpath("files")
     tmp_files.mkdir()
