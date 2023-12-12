@@ -34,6 +34,16 @@ def get_class_name(object_: object) -> str:
     return module + "." + klass.__qualname__
 
 
+# need for old v1 compat
+class AllowedTableTypes(str, Enum):
+    NDARRAY = "ndarray"
+    ARROW_TABLE = "Table"
+    PANDAS_DATAFRAME = "PandasDataFrame"
+    POLARS_DATAFRAME = "PolarsDataFrame"
+    DICTIONARY = "Dictionary"
+    IMAGE_DATASET = "ImageDataset"
+
+
 class AllowedDataType(str, Enum):
     PANDAS = "pandas.core.frame.DataFrame"
     PYARROW = "pyarrow.lib.Table"
@@ -42,6 +52,7 @@ class AllowedDataType(str, Enum):
     IMAGE = "ImageDataset"
     DICT = "dict"
     SQL = "sql"
+    PROFILE = "profile"
 
 
 class ArrowTable(BaseModel):
