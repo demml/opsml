@@ -1,8 +1,9 @@
-from opsml.registry.utils.settings import DefaultConnector
-from opsml.registry.sql.connectors.base import CloudSQLConnection, BaseSQLConnection
-import sqlalchemy
 import pytest
+import sqlalchemy
 from google.cloud.sql.connector import IPTypes
+
+from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
+from opsml.registry.utils.settings import DefaultConnector
 
 
 def test_cloudsql_mysql_parsing():

@@ -1,12 +1,14 @@
 from typing import Dict
-import pandas as pd
-from ydata_profiling import ProfileReport
+
 import numpy as np
-from opsml.registry.sql.registry import CardRegistry
-from opsml.registry import DataCard
-from opsml.profile.profile_data import DataProfiler
-from sklearn.model_selection import train_test_split
+import pandas as pd
 import pytest
+from sklearn.model_selection import train_test_split
+from ydata_profiling import ProfileReport
+
+from opsml.profile.profile_data import DataProfiler
+from opsml.registry import DataCard
+from opsml.registry.sql.registry import CardRegistry
 
 
 def test_datacard_create_data_profile_pandas(

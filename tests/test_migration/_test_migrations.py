@@ -1,9 +1,11 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from click.testing import CliRunner
+from sqlalchemy.engine.reflection import Inspector
+
 from opsml.cli.update_registries import update_registries
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.sql.migration.migrate import run_alembic_migrations
-from sqlalchemy.engine.reflection import Inspector
 
 
 def test_migrations(mock_local_engine, experiment_table_to_migrate):

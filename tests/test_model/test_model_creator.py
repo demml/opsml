@@ -1,10 +1,12 @@
-from opsml.model.creator import OnnxModelCreator, ModelCreator
-from opsml.registry.data.types import AllowedDataType
-from opsml.registry.cards import ModelCard
+from typing import Tuple
+
 import pandas as pd
 import pytest
 from sklearn.base import BaseEstimator
-from typing import Tuple
+
+from opsml.model.creator import ModelCreator, OnnxModelCreator
+from opsml.registry.cards import ModelCard
+from opsml.registry.data.types import AllowedDataType
 
 
 def test_onnx_model_create_fail(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):

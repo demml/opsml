@@ -1,10 +1,11 @@
 from typing import Dict, Tuple
-from opsml.registry import AuditCard, DataCard, ModelCard, CardRegistry, PipelineCard
-from opsml.registry.cards import audit_deco
 
-from sklearn import linear_model
 import pandas as pd
 import pytest
+from sklearn import linear_model
+
+from opsml.registry import AuditCard, CardRegistry, DataCard, ModelCard, PipelineCard
+from opsml.registry.cards import audit_deco
 
 
 def test_audit_card(

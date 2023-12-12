@@ -1,4 +1,4 @@
-from opsml.app.routes.utils import replace_proxy_root, get_registry_type_from_table
+from opsml.app.routes.utils import get_registry_type_from_table, replace_proxy_root
 from opsml.registry.cards.types import RegistryType
 
 

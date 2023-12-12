@@ -1,34 +1,35 @@
-from typing import Dict, List, Tuple
-import pandas as pd
-import numpy as np
-import polars as pl
-from numpy.typing import NDArray
-import pyarrow as pa
-from os import path
 import sys
-from sqlalchemy import select
+import uuid
+from os import path
+from typing import Dict, List, Tuple
+
+import numpy as np
+import pandas as pd
+import polars as pl
+import pyarrow as pa
 import pytest
+from numpy.typing import NDArray
+from pydantic import ValidationError
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.cards import (
-    DataCard,
-    RunCard,
-    PipelineCard,
-    ModelCard,
-    DataSplit,
-    DataCardMetadata,
-    ModelCardMetadata,
-    Description,
-    Description,
-)
-from opsml.registry.sql.registry import CardRegistry
-from opsml.registry.sql.sql_schema import DataSchema
-from opsml.registry.sql.base.query_engine import DialectHelper
-from opsml.helpers.exceptions import VersionError
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
-import uuid
-from pydantic import ValidationError
-from tests.conftest import FOURTEEN_DAYS_TS, FOURTEEN_DAYS_STR
+from sqlalchemy import select
+
+from opsml.helpers.exceptions import VersionError
+from opsml.registry.cards import (
+    DataCard,
+    DataCardMetadata,
+    DataSplit,
+    Description,
+    ModelCard,
+    ModelCardMetadata,
+    PipelineCard,
+    RunCard,
+)
+from opsml.registry.sql.base.query_engine import DialectHelper
+from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.sql.sql_schema import DataSchema
+from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS
 
 
 def test_registry_dialect(

@@ -1,8 +1,10 @@
-from opsml.registry import DataCard, CardRegistries
-from opsml.registry.image import ImageDataset
 import os
-import pytest
 import sys
+
+import pytest
+
+from opsml.registry import CardRegistries, DataCard
+from opsml.registry.image import ImageDataset
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
