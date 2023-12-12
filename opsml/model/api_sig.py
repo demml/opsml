@@ -60,7 +60,11 @@ class PydanticFeatureGenerator:
             return True
 
         # it is assumed pytorch/tensorflow will be feeding list/arrays
-        if self.model_type in [TrainedModelType.TF_KERAS, TrainedModelType.PYTORCH]:
+        if self.model_type in [
+            TrainedModelType.TF_KERAS,
+            TrainedModelType.PYTORCH,
+            TrainedModelType.TRANSFORMER,
+        ]:
             return True
 
         if len(feature.shape) > 1 and feature.shape[1] > 1:

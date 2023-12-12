@@ -1,23 +1,23 @@
+import json
+import os
 import sys
+import tempfile
+
 import numpy as np
 import pyarrow as pa
 import pytest
-import json
-import os
 from pytest_lazyfixture import lazy_fixture
-from opsml.registry.storage.artifact_storage import (
-    ParquetStorage,
-    NumpyStorage,
-    TensorflowModelStorage,
-    PyTorchModelStorage,
-    JSONStorage,
-)
-import tempfile
-from opsml.registry.storage.storage_system import StorageClient
-from opsml.helpers import utils
-from opsml.registry.storage.types import ArtifactStorageSpecs
 
-# from opsml.drift.data_drift import DriftDetector
+from opsml.helpers import utils
+from opsml.registry.storage.artifact_storage import (
+    JSONStorage,
+    NumpyStorage,
+    ParquetStorage,
+    PyTorchModelStorage,
+    TensorflowModelStorage,
+)
+from opsml.registry.storage.storage_system import StorageClient
+from opsml.registry.storage.types import ArtifactStorageSpecs
 from tests import conftest
 
 
@@ -40,6 +40,7 @@ def test_api_parquet(test_arrow_table, storage_client):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_api_numpy(test_array, storage_client):
     numpy_writer = NumpyStorage(
         storage_client=storage_client,
@@ -176,7 +177,7 @@ def test_array(test_array, storage_client):
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example):
-    model, data = load_transformer_example
+    model, _ = load_transformer_example
     model_storage = TensorflowModelStorage(
         artifact_type="keras",
         storage_client=storage_client,
@@ -211,6 +212,7 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_local_paths(storage_client: StorageClient):
     FILENAME = "example.csv"
     file_path = utils.FindPath.find_filepath(name=FILENAME)

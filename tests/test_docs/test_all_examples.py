@@ -1,21 +1,23 @@
-from opsml.projects import ProjectInfo, OpsmlProject
-from opsml.registry import ModelCard, DataCard
 from sklearn import linear_model
+
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry import DataCard, ModelCard
 
 
 def test_challenger_example(opsml_project: OpsmlProject):
     ########### Challenger example
 
-    from sklearn.datasets import load_linnerud
-    from sklearn.model_selection import train_test_split
-    from sklearn.linear_model import LinearRegression, Lasso, PoissonRegressor
-    from sklearn.metrics import mean_absolute_error
     import numpy as np
+    from sklearn.datasets import load_linnerud
+    from sklearn.linear_model import Lasso, LinearRegression, PoissonRegressor
+    from sklearn.metrics import mean_absolute_error
+    from sklearn.model_selection import train_test_split
+
+    from opsml.model.challenger import ModelChallenger
+    from opsml.projects import ProjectInfo
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
-    from opsml.projects import ProjectInfo
-    from opsml.model.challenger import ModelChallenger
+    from opsml.registry import CardInfo, CardRegistry, DataCard, DataSplit, ModelCard
 
     ### **Create Example Data**
 
@@ -135,9 +137,9 @@ def test_challenger_example(opsml_project: OpsmlProject):
 
 
 def test_datacard(db_registries):
+    import numpy as np
     from sklearn.datasets import load_linnerud
     from sklearn.model_selection import train_test_split
-    import numpy as np
 
     # Opsml
     from opsml.registry import CardInfo, DataCard, DataSplit
@@ -182,7 +184,8 @@ def test_datacard(db_registries):
 
 def test_data_splits():
     import polars as pl
-    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    from opsml.registry import CardInfo, DataCard, DataSplit
 
     info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
 
@@ -208,7 +211,8 @@ def test_data_splits():
     assert splits.test.X.shape[0] == 1
 
     import numpy as np
-    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    from opsml.registry import CardInfo, DataCard, DataSplit
 
     info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
 
@@ -222,7 +226,8 @@ def test_data_splits():
     #### **Start and Stop Slicing**
 
     import numpy as np
-    from opsml.registry import DataCard, DataSplit, CardInfo
+
+    from opsml.registry import CardInfo, DataCard, DataSplit
 
     info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
 
@@ -258,6 +263,7 @@ def test_data_profile(db_registries):
     data_registry.register_card(card=data_card)
 
     from ydata_profiling import ProfileReport
+
     from opsml.registry import DataCard
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
@@ -268,12 +274,13 @@ def test_data_profile(db_registries):
     card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
     data_card = DataCard(info=card_info, data=data, data_profile=data_profile)
 
-    from sklearn.datasets import load_linnerud
     import numpy as np
+    from sklearn.datasets import load_linnerud
+
+    from opsml.profile import DataProfiler
 
     # Opsml
     from opsml.registry import CardInfo, DataCard
-    from opsml.profile import DataProfiler
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -298,7 +305,7 @@ def test_modelcard(db_registries):
     from sklearn.linear_model import LinearRegression
 
     # Opsml
-    from opsml.registry import ModelCard, CardInfo
+    from opsml.registry import CardInfo, ModelCard
 
     # set up registries
     data_registry = db_registries["data"]
@@ -348,18 +355,18 @@ def test_modelcard(db_registries):
 def test_custom_onnx(db_registries):
     import tempfile
 
-    from torch import nn
-    import torch.utils.model_zoo as model_zoo
-    import torch.onnx
     import onnx
 
     # Super Resolution model definition in PyTorch
     import torch.nn as nn
     import torch.nn.init as init
+    import torch.onnx
+    import torch.utils.model_zoo as model_zoo
+    from torch import nn
 
     ## opsml
     from opsml.model.types import OnnxModelDefinition
-    from opsml.registry import CardRegistries, ModelCard, DataCard
+    from opsml.registry import CardRegistries, DataCard, ModelCard
 
     registries = CardRegistries()
     registries.data = db_registries["data"]
@@ -401,6 +408,7 @@ def test_custom_onnx(db_registries):
     # Initialize model with the pretrained weights
     def map_location(storage, loc):
         return storage
+
     if torch.cuda.is_available():
         map_location = None
     torch_model.load_state_dict(model_zoo.load_url(model_url, map_location=map_location))
@@ -581,13 +589,13 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
 
 
 def test_index_example(db_registries):
+    import numpy as np
     from sklearn.datasets import load_linnerud
     from sklearn.linear_model import LinearRegression
     from sklearn.model_selection import train_test_split
-    import numpy as np
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, ModelCard, DataSplit
+    from opsml.registry import CardInfo, DataCard, DataSplit, ModelCard
 
     # set up registries
     data_registry = db_registries["data"]
@@ -644,9 +652,9 @@ def test_index_example(db_registries):
 
 
 def test_quickstart(opsml_project: OpsmlProject):
+    import numpy as np
     import pandas as pd
     from sklearn.linear_model import LinearRegression
-    import numpy as np
 
     from opsml.projects import ProjectInfo
     from opsml.registry import DataCard, ModelCard

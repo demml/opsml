@@ -67,6 +67,28 @@ jobs:
           name: coverage
           path: coverage
 
+  Unit-Test-Windows:
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.5.1"]
+        os: [windows]
+
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - run : make setup.project
+      - run : make test.unit
+
   Postgres-Unit:
     needs: Unit-Test
     runs-on: ubuntu-latest
@@ -178,29 +200,3 @@ jobs:
           SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           SMOKESHOW_AUTH_KEY: ${{ secrets.SMOKESHOW_AUTH_TOKEN }}
 
-
-  #Windows-Test:
-  #  needs: Lints
-  #  strategy:
-  #    matrix:
-  #      python-version: ["3.10"]
-  #      poetry-version: ["1.5.1"]
-  #      os: [windows]
-#
-  #  runs-on: ${{ matrix.os }}-latest
-  #  steps:
-  #    - uses: actions/checkout@v3
-#
-  #    - uses: actions/download-artifact@master
-  #      with:
-  #        name: requirements
-  #        path: deps
-#
-  #    - name: Set up Python ${{ matrix.python-version }}
-  #      uses: actions/setup-python@v4
-  #      with:
-  #        python-version: ${{ matrix.python-version }}
-  #        cache: 'pip'
-  #    - run : pip install -r deps/requirements.txt
-  #    - run : pip install google-auth
-  #    - run : make test.unit.windows

@@ -1,6 +1,9 @@
-from opsml.registry.utils.settings import DefaultSettings
-from opsml.registry.storage.types import GcsStorageClientSettings, S3StorageClientSettings
 from opsml.helpers.gcp_utils import GcpCredsSetter
+from opsml.registry.storage.types import (
+    GcsStorageClientSettings,
+    S3StorageClientSettings,
+)
+from opsml.registry.utils.settings import DefaultSettings
 
 
 def test_default_local_settings():
