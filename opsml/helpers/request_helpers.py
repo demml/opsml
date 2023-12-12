@@ -10,6 +10,8 @@ from typing import Any, Dict, Optional, cast
 import httpx
 from tenacity import retry, stop_after_attempt
 
+from opsml.settings import OpsmlConfig
+
 PATH_PREFIX = "opsml"
 
 
@@ -37,14 +39,13 @@ class ApiRoutes:
 
 
 api_routes = ApiRoutes()
-TIMEOUT_CONFIG = httpx.Timeout(10, read=120, write=120)
-OPSML_PROD_TOKEN = os.environ.get("OPSML_PROD_TOKEN", "staging")
-default_headers = httpx.Headers({"X-Prod-Token": OPSML_PROD_TOKEN})
+_TIMEOUT_CONFIG = httpx.Timeout(10, read=120, write=120)
 
 
 class ApiClient:
     def __init__(
         self,
+        cfg: OpsmlConfig,
         base_url: str,
         path_prefix: str = PATH_PREFIX,
     ):
@@ -57,9 +58,10 @@ class ApiClient:
                 Prefix for opsml server path
 
         """
+        self.cfg = cfg
         self.client = httpx.Client()
-        self.client.timeout = TIMEOUT_CONFIG
-        self.client.headers = default_headers
+        self.client.headers = httpx.Headers({"X-Prod-Token": cfg.PROD_TOKEN})
+        self.client.timeout = _TIMEOUT_CONFIG
 
         self._base_url = self._get_base_url(
             base_url=base_url,

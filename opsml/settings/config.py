@@ -5,40 +5,25 @@
 import os
 from typing import Optional
 
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
-class OpsmlConfig:
-    APP_NAME = "OPSML-API"
-    APP_ENV = os.environ.get("APP_ENV", "development")
-    STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
-    TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{os.getcwd()}/tmp.db")
-    PROD_TOKEN = os.environ.get("OPSML_PROD_TOKEN", "staging")
+
+class OpsmlConfig(BaseSettings):
+    APP_NAME: str = "OPSML-API"
+    APP_ENV: str = Field(default="development")
+
+    # TODO(@damon): Change these to opsml_
+    STORAGE_URI: str = Field(default=f"{os.getcwd()}/mlruns", alias="opsml_storage_uri")
+    TRACKING_URI: str = Field(default=f"sqlite:///{os.getcwd()}/tmp.db", alias="opsml_tracking_uri")
+    PROD_TOKEN: str = Field(default="staging", alias="opsml_prod_token")
 
     # API client username / password
-    OPSML_USERNAME = os.environ.get("OPSML_USERNAME")
-    OPSML_PASSWORD = os.environ.get("OPSML_PASSWORD")
+    OPSML_USERNAME: Optional[str] = None
+    OPSML_PASSWORD: Optional[str] = None
 
     # The current RUN_ID to load when creating a new project
-    OPSML_RUN_ID = os.environ.get("OPSML_RUN_ID")
-
-    def __init__(self) -> None:
-        self._proxy_root = os.environ.get("PROXY_ROOT")
-        self._is_proxy = True
-
-    @property
-    def proxy_root(self) -> Optional[str]:
-        return self._proxy_root
-
-    @proxy_root.setter
-    def proxy_root(self, root: str) -> None:
-        self._proxy_root = root
-
-    @property
-    def is_proxy(self) -> bool:
-        return self._is_proxy
-
-    @is_proxy.setter
-    def is_proxy(self, proxy: bool) -> None:
-        self._is_proxy = proxy
+    OPSML_RUN_ID: Optional[str] = None
 
     @property
     def is_tracking_local(self) -> bool:
@@ -46,7 +31,7 @@ class OpsmlConfig:
 
         If tracking is local, the [server] extra is required.
         """
-        return not self.TRACKING_URI.lower().strip().startswith("http")
+        return not str(self.TRACKING_URI).lower().strip().startswith("http")
 
 
 config = OpsmlConfig()

@@ -23,10 +23,9 @@ from opsml.app.routes.pydantic_models import (
     VersionRequest,
     VersionResponse,
 )
-from opsml.app.routes.utils import get_registry_type_from_table, replace_proxy_root
+from opsml.app.routes.utils import get_registry_type_from_table
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.registry import CardRegistry
-from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 
@@ -167,16 +166,6 @@ def list_cards(
             ignore_release_candidates=payload.ignore_release_candidates,
             query_terms=payload.query_terms,
         )
-
-        if config.is_proxy:
-            cards = [
-                replace_proxy_root(
-                    card=card,
-                    storage_root=config.STORAGE_URI,
-                    proxy_root=str(config.proxy_root),
-                )
-                for card in cards
-            ]
 
         return ListCardResponse(cards=cards)
 

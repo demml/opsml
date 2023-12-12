@@ -80,9 +80,6 @@ from opsml.registry.cards.types import ModelCardUris
 from opsml.projects import OpsmlProject
 from opsml.model.types import OnnxModelDefinition
 
-# testing
-from tests.mock_api_registries import CardRegistry as ClientCardRegistry
-
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
 FOURTEEN_DAYS_TS = int(round(fourteen_days_ago.timestamp() * 1_000_000))
@@ -307,35 +304,36 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> CardRegistries:
+from opsml.settings.config import config, OpsmlConfig
+from opsml.registry.storage.settings import DefaultSettings
+from opsml.registry.sql.base.query_engine import QueryEngine
+
+
+def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
+    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
+    initializer.initialize()
+
     def callable_api():
         return test_client
 
     with patch("httpx.Client", callable_api):
-        from opsml.settings.config import config
-        from opsml.registry.storage.settings import settings
-        from opsml.registry.sql.base.query_engine import QueryEngine
+        # Set the global configuration (used by the web server to determine `/settings`)
+        monkeypatch.setattr(config, "TRACKING_URI", "http://testserver")
 
-        config.TRACKING_URI = "http://testserver"
-        settings.opsml_tracking_uri = "http://testserver"
+        # Create default settings
         registries = CardRegistries()
+        cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=STORAGE_PATH)
+        api_settings = DefaultSettings(cfg=cfg)
 
-        initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
-        initializer.initialize()
+        registries.set_storage_client(api_settings.storage_client)
 
-        registries.data = ClientCardRegistry(registry_name="data")
-        registries.model = ClientCardRegistry(registry_name="model")
-        registries.pipeline = ClientCardRegistry(registry_name="pipeline")
-        registries.run = ClientCardRegistry(registry_name="run")
-        registries.project = ClientCardRegistry(registry_name="project")
-        registries.audit = ClientCardRegistry(registry_name="audit")
-
+    with patch("httpx.Client", callable_api):
         return registries
 
 
 @pytest.fixture(scope="function")
-def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
-    yield mock_registries(test_app)
+def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Iterator[CardRegistries]:
+    yield mock_registries(monkeypatch, test_app)
 
 
 @pytest.fixture(scope="function")
@@ -383,15 +381,7 @@ def opsml_project_2(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
 def mock_opsml_project(info: ProjectInfo) -> OpsmlProject:
     info.tracking_uri = SQL_PATH
     opsml_run = OpsmlProject(info=info)
-
-    api_card_registries = CardRegistries()
-    api_card_registries.data = ClientCardRegistry(registry_name="data")
-    api_card_registries.model = ClientCardRegistry(registry_name="model")
-    api_card_registries.run = ClientCardRegistry(registry_name="run")
-    api_card_registries.project = ClientCardRegistry(registry_name="project")
-    api_card_registries.pipeline = ClientCardRegistry(registry_name="pipeline")
-
-    opsml_run._run_mgr.registries = api_card_registries
+    opsml_run._run_mgr.registries = CardRegistries()
     return opsml_run
 
 
@@ -472,6 +462,27 @@ def db_registries():
     }
 
     cleanup()
+
+
+@pytest.fixture(scope="function")
+def mock_aws_storage_response():
+    class MockResponse:
+        def __init__(self):
+            self.status_code = 200
+
+        def json(self):
+            return {
+                "storage_type": "s3",
+                "storage_uri": "s3://test",
+                "proxy": False,
+            }
+
+    class MockHTTPX(httpx.Client):
+        def get(self, url, **kwargs):
+            return MockResponse()
+
+    with patch("httpx.Client", MockHTTPX) as mock_requests:
+        yield mock_requests
 
 
 @pytest.fixture(scope="function")

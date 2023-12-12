@@ -147,36 +147,6 @@ def get_registry_type_from_table(
     raise ValueError("Could not determine registry type")
 
 
-def get_real_path(current_path: str, proxy_root: str, storage_root: str) -> str:
-    new_path = current_path.replace(proxy_root, f"{storage_root}/")
-    return new_path
-
-
-def replace_proxy_root(
-    card: Dict[str, Any],
-    storage_root: str,
-    proxy_root: str,
-) -> Dict[str, Any]:
-    for name, value in card.items():
-        if "uri" in name:
-            if isinstance(value, str):
-                real_path = get_real_path(
-                    current_path=value,
-                    proxy_root=proxy_root,
-                    storage_root=storage_root,
-                )
-                card[name] = real_path
-
-        if isinstance(value, dict):
-            replace_proxy_root(
-                card=value,
-                storage_root=storage_root,
-                proxy_root=proxy_root,
-            )
-
-    return card
-
-
 class MaxBodySizeException(Exception):
     def __init__(self, body_len: int):
         self.body_len = body_len
