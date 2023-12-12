@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+# mypy: disable-error-code="return-value"
 
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
@@ -72,18 +73,18 @@ async def audit_list_homepage(
     """
 
     if all(attr is None for attr in [uid, version, model, team]):
-        return audit_route_helper.get_homepage(request=request)  # type: ignore[return-value]
+        return audit_route_helper.get_homepage(request=request)
 
     if team is not None and all(attr is None for attr in [version, model]):
-        return audit_route_helper.get_team_page(request=request, team=team)  # type: ignore[return-value]
+        return audit_route_helper.get_team_page(request=request, team=team)
 
     if team is not None and model is not None and version is None:
-        return audit_route_helper.get_versions_page(request=request, team=team, name=model)  # type: ignore[return-value]
+        return audit_route_helper.get_versions_page(request=request, team=team, name=model)
 
     if model is not None and team is not None and all(attr is None for attr in [uid, version]):
         raise ValueError("Model name provided without either version or uid")
 
-    return audit_route_helper.get_name_version_page(  # type: ignore[return-value]
+    return audit_route_helper.get_name_version_page(
         request=request,
         team=str(team),
         name=str(model),

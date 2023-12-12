@@ -1,4 +1,6 @@
 # pylint: disable=no-member
+# mypy: disable-error-code="attr-defined"
+
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -171,7 +173,7 @@ class Base(BaseModel):
 class NumpyBase(Base):
     def to_onnx(self) -> Dict[str, NDArray[Any]]:
         values = list(self.model_dump().values())
-        for _, feature in self.feature_map.items():  # type: ignore[attr-defined]
+        for _, feature in self.feature_map.items():
             array = self.to_numpy(
                 type_=feature.feature_type,
                 values=values,
@@ -188,7 +190,7 @@ class DictBase(Base):
 
         for feat, feat_val in self:
             array = self.to_numpy(
-                type_=self.feature_map[feat].feature_type,  # type: ignore[attr-defined]
+                type_=self.feature_map[feat].feature_type,
                 values=feat_val,
             )
             feats[feat] = array.reshape(1, -1)
@@ -202,7 +204,7 @@ class DeepLearningNumpyBase(Base):
     def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
             feats[feat] = np.expand_dims(array, axis=0)
         return feats
 
@@ -218,7 +220,7 @@ class DeepLearningDictBase(Base):
     def to_onnx(self) -> Dict[str, NDArray[Any]]:
         feats = {}
         for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)  # type: ignore[attr-defined]
+            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
             feats[feat] = np.expand_dims(array, axis=0)
 
         return feats
@@ -293,12 +295,12 @@ class ModelDownloadInfo(BaseModel):
     uid: Optional[str] = None
 
 
-### Sklearn protocol stub
+# Sklearn protocol stub
 class BaseEstimator(Protocol):
     ...
 
 
-### Onnx protocol stubs
+# Onnx protocol stubs
 class Graph:
     @property
     def output(self) -> Any:

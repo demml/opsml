@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 from opsml.settings.config import config
 
 
+# This needs to be kept here for backward compatibility with v1
 class Tags(str, Enum):
     NAME = "name"
     TEAM = "team"
