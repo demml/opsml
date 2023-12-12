@@ -1,8 +1,9 @@
-from opsml.model.data_helper import FloatTypeConverter, get_model_data, ModelDataHelper
-from opsml.registry.data.types import AllowedDataType
+import pandas as pd
 import pytest
 from numpy.typing import NDArray
-import pandas as pd
+
+from opsml.model.data_helper import FloatTypeConverter, ModelDataHelper, get_model_data
+from opsml.registry.data.types import AllowedDataType
 
 # most methods are tested as part of other unit tests
 

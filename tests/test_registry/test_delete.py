@@ -1,15 +1,13 @@
-from typing import Dict
-from os import path
-import pytest
 import sys
-from opsml.registry.cards import (
-    DataCard,
-    RunCard,
-    ModelCard,
-)
-from opsml.registry.sql.registry import CardRegistry
+from os import path
+from typing import Dict
+
+import pytest
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
+
+from opsml.registry.cards import DataCard, ModelCard, RunCard
+from opsml.registry.sql.registry import CardRegistry
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")

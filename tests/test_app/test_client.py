@@ -1,37 +1,39 @@
-from typing import Dict, List, Tuple, Any
-import sys
-import re
-import uuid
 import pathlib
+import re
+import sys
+import uuid
+from typing import Any, Dict, List, Tuple
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import pytest
-from pytest_lazyfixture import lazy_fixture
-from starlette.testclient import TestClient
 from fastapi.exceptions import HTTPException
-from sklearn import linear_model, pipeline
 from numpy.typing import NDArray
 from pydantic import ValidationError
+from pytest_lazyfixture import lazy_fixture
 from requests.auth import HTTPBasicAuth
-from opsml.registry import (
-    AuditCard,
-    DataCard,
-    ModelCard,
-    RunCard,
-    PipelineCard,
-    CardRegistry,
-    CardRegistries,
-    CardInfo,
-    DataCardMetadata,
-    ModelCardMetadata,
-)
-from opsml.app.routes.utils import list_team_name_info, error_to_500
+from sklearn import linear_model, pipeline
+from starlette.testclient import TestClient
+
+from opsml.app.core import config
 from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
+from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.projects import OpsmlProject
-from opsml.app.core import config
+from opsml.registry import (
+    AuditCard,
+    CardInfo,
+    CardRegistries,
+    CardRegistry,
+    DataCard,
+    DataCardMetadata,
+    ModelCard,
+    ModelCardMetadata,
+    PipelineCard,
+    RunCard,
+)
 from tests.conftest import TODAY_YMD
-from unittest.mock import patch, MagicMock
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 

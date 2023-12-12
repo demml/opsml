@@ -1,15 +1,12 @@
-from typing import Tuple
-from os import path
-import pandas as pd
-from sklearn import pipeline
-import pytest
 import sys
+from os import path
+from typing import Tuple
 
-from opsml.registry import (
-    DataCard,
-    ModelCard,
-    CardRegistries,
-)
+import pandas as pd
+import pytest
+from sklearn import pipeline
+
+from opsml.registry import CardRegistries, DataCard, ModelCard
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
