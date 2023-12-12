@@ -1,4 +1,5 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
+import sys
 import re
 import uuid
 import pathlib
@@ -1069,3 +1070,64 @@ def test_verify_path():
 
     with pytest.raises(HTTPException):
         assert verify_path("tests/assets/fake")
+
+
+def test_register_distilbert(
+    api_registries: CardRegistries,
+    load_pytorch_language: Tuple[Any, Dict[str, NDArray]],
+) -> None:
+    """An example of saving a large, pretrained  bart model to opsml"""
+    model, data = load_pytorch_language
+
+    data_card = DataCard(
+        data=data["input_ids"],
+        name="distilbert",
+        team="mlops",
+        user_email="test@mlops.com",
+    )
+    api_registries.data.register_card(data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data,
+        name="distilbert",
+        team="mlops",
+        user_email="test@mlops.com",
+        tags={"id": "model1"},
+        datacard_uid=data_card.uid,
+        to_onnx=True,
+    )
+
+    api_registries.model.register_card(model_card)
+
+    assert "trained-model.pt" in model_card.metadata.uris.trained_model_uri
+
+
+def test_register_distilbert(
+    api_registries: CardRegistries,
+    load_pytorch_language: Tuple[Any, Dict[str, NDArray]],
+) -> None:
+    """An example of saving a large, pretrained  bart model to opsml"""
+    model, data = load_pytorch_language
+
+    data_card = DataCard(
+        data=data["input_ids"],
+        name="distilbert",
+        team="mlops",
+        user_email="test@mlops.com",
+    )
+    api_registries.data.register_card(data_card)
+
+    model_card = ModelCard(
+        trained_model=model,
+        sample_input_data=data,
+        name="distilbert",
+        team="mlops",
+        user_email="test@mlops.com",
+        tags={"id": "model1"},
+        datacard_uid=data_card.uid,
+    )
+
+    api_registries.model.register_card(model_card)
+
+    assert "trained-model.pt" in model_card.metadata.uris.trained_model_uri

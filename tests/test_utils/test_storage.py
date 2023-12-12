@@ -17,7 +17,6 @@ from opsml.registry.storage.storage_system import StorageClient
 from opsml.helpers import utils
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
-# from opsml.drift.data_drift import DriftDetector
 from tests import conftest
 
 
@@ -176,7 +175,7 @@ def test_array(test_array, storage_client):
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example):
-    model, data = load_transformer_example
+    model, _ = load_transformer_example
     model_storage = TensorflowModelStorage(
         artifact_type="keras",
         storage_client=storage_client,
