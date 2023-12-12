@@ -68,7 +68,7 @@ jobs:
           path: coverage
 
   Unit-Test-Windows:
-    needs: Lints
+    needs: Unit-Test
     strategy:
       matrix:
         python-version: ["3.11"]
