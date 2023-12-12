@@ -9,7 +9,7 @@ from sklearn import pipeline
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.projects._active_run import ActiveRun
+from opsml.projects.active_run import ActiveRun
 from opsml.registry import AuditCard, CardRegistry, DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
 from opsml.registry.image import ImageDataset
