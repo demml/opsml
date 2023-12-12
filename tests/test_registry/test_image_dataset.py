@@ -1,5 +1,6 @@
 from typing import Dict
 import os
+import sys
 from opsml.registry.cards import DataCard
 from opsml.registry.sql.registry import CardRegistry
 from opsml.registry.image import ImageDataset, ImageRecord, ImageMetadata
@@ -78,6 +79,7 @@ def test_image_dataset():
     ve.match("metadata must be a jsonl file")
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_register_data(
     db_registries: Dict[str, CardRegistry],
 ):

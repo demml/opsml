@@ -2,7 +2,8 @@ from typing import Tuple
 from os import path
 import pandas as pd
 from sklearn import pipeline
-
+import pytest
+import sys
 
 from opsml.registry import (
     DataCard,
@@ -11,6 +12,7 @@ from opsml.registry import (
 )
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_data_model(
     api_registries: CardRegistries,
     sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],

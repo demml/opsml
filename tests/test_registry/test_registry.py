@@ -5,6 +5,7 @@ import polars as pl
 from numpy.typing import NDArray
 import pyarrow as pa
 from os import path
+import sys
 from sqlalchemy import select
 import pytest
 from pytest_lazyfixture import lazy_fixture
@@ -886,6 +887,7 @@ def test_full_pipeline_with_loading(
     pipeline_registry.register_card(card=pipeline_card)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_model_registry_with_polars(
     db_registries: Dict[str, CardRegistry],
     linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
