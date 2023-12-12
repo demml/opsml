@@ -4,11 +4,13 @@ These tests should be ran manually when you want to verify large data and model
 registration works.
 """
 
-from typing import Tuple, Any, Dict
+from typing import Any, Dict, Tuple
+
 import numpy as np
 import pytest
 import torch
-from opsml.registry import DataCard, ModelCard, CardRegistries
+
+from opsml.registry import CardRegistries, DataCard, ModelCard
 
 
 @pytest.mark.large

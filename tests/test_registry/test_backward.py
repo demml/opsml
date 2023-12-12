@@ -1,7 +1,8 @@
 from typing import Any, Dict, Optional
+
+from opsml.registry.data.types import AllowedDataType
 from opsml.registry.sql.records import LoadedDataRecord, LoadedModelRecord
 from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.data.types import AllowedDataType
 
 
 def test_data_metadata_backward():

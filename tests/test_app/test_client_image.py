@@ -1,8 +1,13 @@
-from opsml.registry import DataCard, CardRegistries
-from opsml.registry.image import ImageDataset
 import os
+import sys
+
+import pytest
+
+from opsml.registry import CardRegistries, DataCard
+from opsml.registry.image import ImageDataset
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_register_data(api_registries: CardRegistries):
     # create data card
     registry = api_registries.data

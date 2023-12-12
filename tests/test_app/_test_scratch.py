@@ -1,7 +1,4 @@
-
-
 from starlette.testclient import TestClient
-
 
 
 def test_card_create_fail(test_app: TestClient):

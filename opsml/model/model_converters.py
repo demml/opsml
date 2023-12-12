@@ -212,9 +212,7 @@ class ModelConverter:
             data_type = self._get_data_elem_type(sig=sig)
             shape_dims = sig.type.tensor_type.shape.dim
 
-            dim_shape = [dim.dim_value for dim in shape_dims]
-            if dim_shape:
-                dim_shape[0] = None  # set None for dynamic batch size
+            dim_shape = [dim.dim_value if dim.dim_value > 0 else None for dim in shape_dims]
 
             if sig.name == "variable":
                 name = "value"

@@ -1,11 +1,12 @@
 import numpy as np
-import pytest
-from pytest_lazyfixture import lazy_fixture
-from opsml.registry.data.types import AllowedDataType
-from opsml.registry.data.formatter import DataFormatter
 import pandas as pd
 import polars as pl
 import pyarrow as pa
+import pytest
+from pytest_lazyfixture import lazy_fixture
+
+from opsml.registry.data.formatter import DataFormatter
+from opsml.registry.data.types import AllowedDataType
 
 
 @pytest.mark.parametrize(

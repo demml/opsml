@@ -21,6 +21,7 @@ class ArtifactStorageType(str, Enum):
     JSON = "json"
     BOOSTER = "booster"
     ONNX = "onnx"
+    TRANSFORMER = "transformer"
 
 
 ARTIFACT_TYPES = [

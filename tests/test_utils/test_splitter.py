@@ -1,8 +1,9 @@
-from opsml.registry.data.splitter import DataSplitter, DataSplit, DataSplitterBase
-from opsml.registry.data.types import AllowedDataType
 import numpy as np
 import pyarrow as pa
 import pytest
+
+from opsml.registry.data.splitter import DataSplit, DataSplitter, DataSplitterBase
+from opsml.registry.data.types import AllowedDataType
 
 
 def test_pyarrow_splitter(test_arrow_table: pa.Table):

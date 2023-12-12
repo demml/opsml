@@ -66,7 +66,7 @@ class DataCard(ArtifactCard):
     dependent_vars: List[Union[int, str]] = []
     sql_logic: Dict[str, str] = {}
     data_profile: Optional[ProfileReport] = None
-    metadata: DataCardMetadata
+    metadata: DataCardMetadata = DataCardMetadata()
 
     @model_validator(mode="before")
     @classmethod
