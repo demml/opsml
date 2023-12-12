@@ -224,7 +224,6 @@ addopts = "--ignore=tests/test_docs"
 # platform configuration
 python_version = "3.9"
 platform = "linux"
-mypy_path = "stubs"
 ignore_missing_imports = true
 strict = true
 

@@ -167,7 +167,7 @@ class FileUtils:
         return paths[0]
 
 
-def all_subclasses(cls: Type) -> Set[Type]:
+def all_subclasses(cls: Type[Any]) -> Set[Type[Any]]:
     """Gets all subclasses associated with parent class"""
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)],
@@ -187,8 +187,10 @@ def check_package_exists(package_name: str) -> bool:
     return importlib.util.find_spec(package_name) is not None
 
 
-def try_import(packages: List[str], extras_expression: str, context: str) -> bool:
-    """Test if packages can be imported
+def try_import(packages: List[str], extras_expression: str, context: str) -> None:
+    """Imports packages
+
+    If the package cannot be imported, an custom error is logged.
 
     Args:
         packages:
@@ -197,9 +199,6 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
             Expression for installing extras
         context:
             Context for error message
-
-    Returns:
-        True if all packages can be imported, False otherwise
     """
     for package in packages:
         try:
@@ -214,7 +213,6 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
                 context,
             )
             raise error
-    return True
 
 
 class OpsmlImportExceptions:
