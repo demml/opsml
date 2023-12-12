@@ -32,7 +32,7 @@ class OpsmlApp:
         self.port = port
         self.login = login
         self.app = FastAPI(
-            title=config.APP_NAME,
+            title=config.app_name,
             dependencies=self.get_login(),
         )
 

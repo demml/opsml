@@ -717,8 +717,8 @@ def test_token_fail(
     monkeypatch: pytest.MonkeyPatch,
     api_registries: CardRegistries,
 ):
-    monkeypatch.setattr(config, "APP_ENV", "production")
-    monkeypatch.setattr(config, "PROD_TOKEN", "fail")
+    monkeypatch.setattr(config, "app_env", "production")
+    monkeypatch.setattr(config, "opsml_prod_token", "fail")
     run = RunCard(
         name="test_df",
         team="mlops",

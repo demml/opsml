@@ -44,12 +44,12 @@ class ProjectInfo(BaseModel):
     )
 
     run_id: Optional[str] = Field(
-        config.OPSML_RUN_ID,
+        config.opsml_run_id,
         description="An existing run_id to use. If None, a new run is created when the project is activated",
     )
 
     tracking_uri: str = Field(
-        config.TRACKING_URI,
+        config.opsml_tracking_uri,
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
     )
 

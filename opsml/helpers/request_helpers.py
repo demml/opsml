@@ -60,7 +60,7 @@ class ApiClient:
         """
         self.cfg = cfg
         self.client = httpx.Client()
-        self.client.headers = httpx.Headers({"X-Prod-Token": cfg.PROD_TOKEN})
+        self.client.headers = httpx.Headers({"X-Prod-Token": cfg.opsml_prod_token})
         self.client.timeout = _TIMEOUT_CONFIG
 
         self._base_url = self._get_base_url(

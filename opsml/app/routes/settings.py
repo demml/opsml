@@ -19,11 +19,11 @@ def get_storage_settings() -> StorageSettingsResponse:
     """Returns backend storage path and type"""
 
     storage_type = StorageSystem.LOCAL.value
-    if bool(config.STORAGE_URI):
-        if config.is_tracking_local and "gs://" in str(config.STORAGE_URI):
+    if bool(config.opsml_storage_uri):
+        if config.is_tracking_local and "gs://" in str(config.opsml_storage_uri):
             storage_type = StorageSystem.GCS.value
 
-        if config.is_tracking_local and "s3://" in str(config.STORAGE_URI):
+        if config.is_tracking_local and "s3://" in str(config.opsml_storage_uri):
             storage_type = StorageSystem.S3.value
 
         if not config.is_tracking_local:
@@ -32,6 +32,6 @@ def get_storage_settings() -> StorageSettingsResponse:
 
     return StorageSettingsResponse(
         storage_type=storage_type,
-        storage_uri=config.STORAGE_URI,
+        storage_uri=config.opsml_storage_uri,
         version=version.__version__,
     )

@@ -14,8 +14,8 @@ def verify_token(request: Request) -> None:
     """Verifies production token if APP_ENV is production"""
     prod_token = request.headers.get("X-Prod-Token")
 
-    if config.APP_ENV == "production":
-        if prod_token != config.PROD_TOKEN:
+    if config.app_env == "production":
+        if prod_token != config.opsml_prod_token:
             logger.error("Attempt to write prod without token")
             raise HTTPException(
                 status_code=400,

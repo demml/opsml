@@ -95,10 +95,10 @@ class _DefaultAttrCreator:
             logger.info("""No tracking url set. Defaulting to Sqlite""")
             return None
 
-        username = cfg.OPSML_USERNAME
+        username = cfg.opsml_username
         password = cfg.OPSML_PASSWORD
 
-        request_client = ApiClient(cfg=cfg, base_url=cfg.TRACKING_URI.strip("/"))
+        request_client = ApiClient(cfg=cfg, base_url=cfg.opsml_tracking_uri.strip("/"))
         if all(bool(cred) for cred in [username, password]):
             request_client.client.auth = httpx.BasicAuth(
                 username=str(username),
@@ -110,15 +110,15 @@ class _DefaultAttrCreator:
     def get_storage_settings(cfg: OpsmlConfig, client: Optional[ApiClient]) -> StorageSettings:
         if client is not None:
             storage_settings = client.get_request(route=api_routes.SETTINGS)
-            storage_uri = str(storage_settings.get("storage_uri"))
-            storage_type = str(storage_settings.get("storage_type"))
+            storage_uri = cast(str, storage_settings.get("storage_uri"))
+            storage_type = cast(str, storage_settings.get("storage_type"))
         else:
-            storage_uri = cfg.STORAGE_URI
+            storage_uri = cfg.opsml_storage_uri
             storage_type = _DefaultAttrCreator._get_storage_type(storage_uri)
 
         storage_settings = StorageSettingsGetter(
             storage_uri=storage_uri,
-            storage_type=str(storage_type),
+            storage_type=storage_type,
             api_client=client,
         ).get_storage_settings()
 
@@ -197,7 +197,7 @@ class DefaultSettings:
         Connection client is only used in the Registry class.
         """
         return DefaultConnector(
-            tracking_uri=self.cfg.TRACKING_URI,
+            tracking_uri=self.cfg.opsml_tracking_uri,
             credentials=None,
         ).get_connector()
 
