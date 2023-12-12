@@ -7,7 +7,7 @@ from sklearn import pipeline
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ChallengeInputs, ModelChallenger
 from opsml.projects import OpsmlProject
-from opsml.projects._active_run import ActiveRun
+from opsml.projects.active_run import ActiveRun
 from opsml.registry import DataCard, ModelCard
 from opsml.registry.cards.types import CardInfo
 
