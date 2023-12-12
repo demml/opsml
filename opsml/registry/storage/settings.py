@@ -96,7 +96,7 @@ class _DefaultAttrCreator:
             return None
 
         username = cfg.opsml_username
-        password = cfg.OPSML_PASSWORD
+        password = cfg.opsml_username
 
         request_client = ApiClient(cfg=cfg, base_url=cfg.opsml_tracking_uri.strip("/"))
         if all(bool(cred) for cred in [username, password]):
