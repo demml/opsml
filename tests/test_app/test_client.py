@@ -15,13 +15,11 @@ from requests.auth import HTTPBasicAuth
 from sklearn import linear_model, pipeline
 from starlette.testclient import TestClient
 
-from opsml.app.core import config
 from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.helpers.request_helpers import ApiRoutes
 from opsml.projects import OpsmlProject
-from opsml.settings.config import config
 from opsml.registry import (
     AuditCard,
     CardInfo,
@@ -34,6 +32,7 @@ from opsml.registry import (
     PipelineCard,
     RunCard,
 )
+from opsml.settings.config import config
 from tests.conftest import TODAY_YMD
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)

@@ -303,9 +303,9 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-from opsml.settings.config import config, OpsmlConfig
-from opsml.registry.storage.settings import DefaultSettings
 from opsml.registry.sql.base.query_engine import QueryEngine
+from opsml.registry.storage.settings import DefaultSettings
+from opsml.settings.config import OpsmlConfig, config
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
