@@ -318,7 +318,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 
     with patch("httpx.Client", callable_api):
         # Set the global configuration (used by the web server to determine `/settings`)
-        monkeypatch.setattr(config, "TRACKING_URI", "http://testserver")
+        monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
         # Create default settings
         registries = CardRegistries()

@@ -12,7 +12,7 @@ security = HTTPBasic()
 
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)) -> str:
-    username = config.OPSML_USERNAME.encode("utf-8")
+    username = config.opsml_username.encode("utf-8")
     password = config.OPSML_PASSWORD.encode("utf-8")
     current_username_bytes = credentials.username.encode("utf8")
     is_correct_username = secrets.compare_digest(current_username_bytes, username)

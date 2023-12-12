@@ -10,20 +10,19 @@ from pydantic_settings import BaseSettings
 
 
 class OpsmlConfig(BaseSettings):
-    APP_NAME: str = "OPSML-API"
-    APP_ENV: str = Field(default="development")
+    app_name: str = "OPSML-API"
+    app_env: str = Field(default="development")
 
-    # TODO(@damon): Change these to opsml_
-    STORAGE_URI: str = Field(default=f"{os.getcwd()}/mlruns", alias="opsml_storage_uri")
-    TRACKING_URI: str = Field(default=f"sqlite:///{os.getcwd()}/tmp.db", alias="opsml_tracking_uri")
-    PROD_TOKEN: str = Field(default="staging", alias="opsml_prod_token")
+    opsml_storage_uri: str = f"{os.getcwd()}/mlruns"
+    opsml_tracking_uri: str = f"sqlite:///{os.getcwd()}/tmp.db"
+    opsml_prod_token: str = Field(default="staging", alias="opsml_prod_token")
 
     # API client username / password
-    OPSML_USERNAME: Optional[str] = None
+    opsml_username: Optional[str] = None
     OPSML_PASSWORD: Optional[str] = None
 
     # The current RUN_ID to load when creating a new project
-    OPSML_RUN_ID: Optional[str] = None
+    opsml_run_id: Optional[str] = None
 
     @property
     def is_tracking_local(self) -> bool:
@@ -31,7 +30,7 @@ class OpsmlConfig(BaseSettings):
 
         If tracking is local, the [server] extra is required.
         """
-        return not str(self.TRACKING_URI).lower().strip().startswith("http")
+        return not str(self.opsml_tracking_uri).lower().strip().startswith("http")
 
 
 config = OpsmlConfig()
