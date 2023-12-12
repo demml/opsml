@@ -21,7 +21,6 @@ logger = ArtifactLogger.get_logger()
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
 
-# set up db initializer
 initializer = DBInitializer(
     engine=cast(Engine, settings.connection_client.sql_engine),
     registry_tables=list(RegistryTableNames),
@@ -30,7 +29,6 @@ initializer = DBInitializer(
 
 def _init_rollbar() -> None:
     logger.info("Initializing rollbar")
-    # TODO(@damon): Remove rollbar integration or move it to a separate package
     rollbar.init(
         os.getenv("ROLLBAR_TOKEN"),
         os.getenv("APP_ENV", "development"),

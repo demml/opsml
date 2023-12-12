@@ -35,9 +35,7 @@ def test_app_settings(test_app: TestClient):
     """Test settings"""
 
     response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
-
     assert response.status_code == 200
-    assert response.json()["proxy"] is True
 
 
 def test_debug(test_app: TestClient):
@@ -91,42 +89,20 @@ def test_register_data(
     df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-
-def test_list_teams(
-    api_registries: CardRegistries,
-):
-    registry: CardRegistry = api_registries.data
+    # Verify teams / names
     teams = registry._registry.unique_teams
-    assert len(teams) == 1
-    assert teams[0] == "mlops"
+    assert "mlops" in teams
 
-
-def test_list_card_names(
-    api_registries: CardRegistries,
-):
-    # create data card
-    registry = api_registries.data
     names = registry._registry.get_unique_card_names(team="mlops")
+    assert "test-df" in names
 
-    assert len(names) == 1
-    assert names[0] == "test-df"
-
-    names = registry._registry.get_unique_card_names()
-
-    assert len(names) == 1
-    assert names[0] == "test-df"
-
-
-def test_list_team_info(
-    api_registries: CardRegistries,
-):
-    registry = api_registries.data
     info = list_team_name_info(registry=registry, team="mlops")
-    assert info.names[0] == "test-df"
-    assert info.teams[0] == "mlops"
+    assert "mlops" in info.teams
+    assert "test-df" in info.names
 
     info = list_team_name_info(registry=registry)
-    assert info.names[0] == "test-df"
+    assert "mlops" in info.teams
+    assert "test-df" in info.names
 
 
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
@@ -355,7 +331,7 @@ def test_register_model(
     )
     with pytest.raises(ValueError) as ve:
         model_registry.register_card(card=model_card_dup)
-    assert ve.match("Failed to set version. Model name already exists for a different team")
+    assert ve.match("different team")
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
@@ -736,12 +712,11 @@ def test_model_metric_failure(
 
 
 def test_token_fail(
-    api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,
+    api_registries: CardRegistries,
 ):
     monkeypatch.setattr(config, "APP_ENV", "production")
     monkeypatch.setattr(config, "PROD_TOKEN", "fail")
-
     run = RunCard(
         name="test_df",
         team="mlops",

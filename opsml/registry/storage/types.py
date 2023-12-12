@@ -53,13 +53,7 @@ class S3StorageClientSettings(StorageClientSettings):
 class ApiStorageClientSettings(StorageClientSettings):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
 
-    client: Optional[ApiClient] = None
-
-    @property
-    def api_client(self) -> ApiClient:
-        if self.client is not None:
-            return self.client
-        raise ValueError("ApiClient has not been set")
+    api_client: ApiClient
 
 
 StorageSettings = Union[

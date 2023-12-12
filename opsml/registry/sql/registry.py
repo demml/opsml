@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
 
-from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers import utils
+from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.types import CardInfo, CardType, RegistryType

@@ -20,19 +20,18 @@ def get_storage_settings() -> StorageSettingsResponse:
 
     storage_type = StorageSystem.LOCAL.value
     if bool(config.STORAGE_URI):
-        if not config.is_proxy and "gs://" in config.STORAGE_URI:
+        if config.is_tracking_local and "gs://" in str(config.STORAGE_URI):
             storage_type = StorageSystem.GCS.value
 
-        if not config.is_proxy and "s3://" in config.STORAGE_URI:
+        if config.is_tracking_local and "s3://" in str(config.STORAGE_URI):
             storage_type = StorageSystem.S3.value
 
-        if config.is_proxy:
+        if not config.is_tracking_local:
             # this should setup the api storage client
             storage_type = StorageSystem.API.value
 
     return StorageSettingsResponse(
         storage_type=storage_type,
         storage_uri=config.STORAGE_URI,
-        proxy=config.is_proxy,
         version=version.__version__,
     )
