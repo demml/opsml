@@ -87,6 +87,7 @@ class _DefaultAttrCreator:
     @staticmethod
     def get_request_client(cfg: OpsmlConfig) -> Optional[ApiClient]:
         if cfg.is_tracking_local:
+            # TODO(@damon): This should move to the SQL package
             # Needs the [server] extra installed
             OpsmlImportExceptions.try_sql_import()
             logger.info("""No tracking url set. Defaulting to Sqlite""")
