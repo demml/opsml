@@ -18,7 +18,8 @@ import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
-ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, np.ndarray], pl.DataFrame]  # type: ignore
+# Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
+ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, Any], pl.DataFrame, str]  # type: ignore
 ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
 
 
@@ -31,7 +32,7 @@ class DataDtypes(str, Enum):
 
 
 class TrainedModelType(str, Enum):
-    TRANSFORMER = "transformer"
+    TRANSFORMER = "transformers"
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
     STACKING_ESTIMATOR = "stackingestimator"
@@ -39,9 +40,11 @@ class TrainedModelType(str, Enum):
     LGBM_REGRESSOR = "lgbmregressor"
     LGBM_CLASSIFIER = "lgbmclassifier"
     XGB_REGRESSOR = "xgbregressor"
-    LGBM_BOOSTER = "booster"
+    XGB_CLASSIFIER = "xgbclassifier"
+    LGBM_BOOSTER = "lgbmbooster"
     TF_KERAS = "keras"
     PYTORCH = "pytorch"
+    PYTORCH_LIGHTNING = "pytorch_lightning"
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
@@ -65,6 +68,12 @@ UPDATE_REGISTRY_MODELS = [
 ]
 
 AVAILABLE_MODEL_TYPES = list(TrainedModelType)
+
+
+class HuggingFaceModuleType(str, Enum):
+    PRETRAINED_MODEL = "transformers.modeling_utils.PreTrainedModel"
+    TRANSFORMER_MODEL = "transformers.models"
+    TRANSFORMER_PIPELINE = "transformers.pipelines"
 
 
 class OnnxDataProto(Enum):
@@ -370,3 +379,93 @@ class ModelCard(Protocol):
     @property
     def to_onnx(self) -> bool:
         ...
+
+
+class ModelType:
+    @staticmethod
+    def get_type() -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        raise NotImplementedError
+
+
+class SklearnPipeline(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.SKLEARN_PIPELINE.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "Pipeline"
+
+
+class SklearnCalibratedClassifier(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.CALIBRATED_CLASSIFIER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "CalibratedClassifierCV"
+
+
+class SklearnStackingEstimator(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.STACKING_ESTIMATOR.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name in ["StackingRegressor", "StackingClassifier"]
+
+
+class LightGBMRegressor(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.LGBM_REGRESSOR.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "LGBMRegressor"
+
+
+class LightGBMClassifier(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.LGBM_CLASSIFIER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "LGBMClassifier"
+
+
+class XGBRegressor(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.XGB_REGRESSOR.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "XGBRegressor"
+
+
+class XGBRegressor(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.XGB_CLASSIFIER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "XGBClassifier"
+
+
+class LightGBMBooster(ModelType):
+    @staticmethod
+    def get_type() -> str:
+        return TrainedModelType.LGBM_BOOSTER.value
+
+    @staticmethod
+    def validate(model_class_name: str) -> bool:
+        return model_class_name == "Booster"

@@ -53,6 +53,9 @@ class AllowedDataType(str, Enum):
     DICT = "dict"
     SQL = "sql"
     PROFILE = "profile"
+    TRANSFORMER_BATCH = "transformers"
+    STRING = "str"
+    TENSOR = "Tensor"
 
 
 class ArrowTable(BaseModel):
@@ -85,6 +88,12 @@ def check_data_type(data: ValidData) -> str:
         return AllowedDataType.POLARS.value
     if isinstance(data, pa.Table):
         return AllowedDataType.PYARROW.value
+    if isinstance(data, str):
+        return AllowedDataType.STRING.value
+    if AllowedDataType.TRANSFORMER_BATCH.value in data.__module__:
+        return AllowedDataType.TRANSFORMER_BATCH.value
+    if AllowedDataType.TENSOR.value in data.__class__.__name__:
+        return AllowedDataType.TENSOR.value
 
     raise ValueError(
         f"""Data must be one of the following types: numpy array, pandas dataframe, 
