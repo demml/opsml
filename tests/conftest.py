@@ -58,6 +58,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.base import BaseEstimator
 from starlette.testclient import TestClient
 from xgboost import XGBRegressor
 
@@ -625,7 +626,7 @@ def load_pytorch_language():
         "this is a test",
         padding="max_length",
         truncation=True,
-        return_tensors="pt",
+        return_tensors="tf",
     ).input_ids
     sample_data = {"input_ids": data.numpy()}
     loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
@@ -806,6 +807,14 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
     )
     pipe.fit(train_data, data["y"])
     return pipe, train_data
+
+
+@pytest.fixture(scope="function")
+def sklearn_subclass():
+    class CustomSklearn(BaseEstimator):
+        ...
+
+    return CustomSklearn(), "placeholder"
 
 
 @pytest.fixture(scope="session")
@@ -1023,9 +1032,31 @@ def huggingface_bart():
 
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = BartModel.from_pretrained("facebook/bart-base")
-    inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
+    inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
 
     return model, inputs
+
+
+@pytest.fixture(scope="module")
+def huggingface_text_classification_pipeline():
+    from transformers import pipeline
+
+    pipe = pipeline("text-classification")
+    data = "This restaurant is awesome"
+
+    return pipe, data
+
+
+@pytest.fixture(scope="module")
+def huggingface_subclass():
+    from transformers import PreTrainedModel
+
+    class SubclassModel(PreTrainedModel):
+        ...
+
+    data = "This restaurant is awesome"
+
+    return SubclassModel, data
 
 
 @pytest.fixture(scope="module")
@@ -1738,4 +1769,34 @@ def deeplabv3_resnet50():
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)
 
-    return model, input_batch.numpy()
+    return model, input_batch
+
+
+@pytest.fixture(scope="module")
+def pytorch_lightning_model():
+    import torch
+    from torch import optim, nn, utils, Tensor
+    from torchvision.datasets import MNIST
+    from torchvision.transforms import ToTensor
+    import lightning as L
+
+    # define any number of nn.Modules (or use your current ones)
+    encoder = nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
+    decoder = nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
+
+    # define the LightningModule
+    class SimpleModel(L.LightningModule):
+        def __init__(self):
+            super().__init__()
+            self.l1 = torch.nn.Linear(in_features=64, out_features=4)
+
+        def forward(self, x):
+            return torch.relu(self.l1(x.view(x.size(0), -1)))
+
+    trainer = L.Trainer()
+    model = SimpleModel()
+    # set model
+    trainer.strategy.model = model
+    input_sample = torch.randn((1, 64))
+
+    return trainer, input_sample

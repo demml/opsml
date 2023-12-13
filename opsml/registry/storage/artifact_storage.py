@@ -616,10 +616,60 @@ class PyTorchModelStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type in [
-            ArtifactStorageType.PYTORCH,
-            ArtifactStorageType.TRANSFORMER,
-        ]
+        return artifact_type in ArtifactStorageType.PYTORCH
+
+
+class HuggingFaceStorage(ArtifactStorage):
+    """Class that saves and loads a huggingface model"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            file_suffix=None,
+            artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
+        )
+
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+        """
+        Saves a pytorch model
+
+        Args:
+            artifact:
+                Artifact to write to json
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used for some storage clients.
+
+        Returns:
+            Storage path
+        """
+
+        getattr(artifact, "save_pretrained")(tmp_uri)
+
+        return self._upload_artifact(
+            file_path=tmp_uri,
+            storage_uri=storage_uri,
+            recursive=True,
+            **{"is_dir": True},
+        )
+
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any):  # type: ignore
+        # kwargs will be {"model_class", "model_type"}
+        import torch
+
+        return torch.load(str(file_path))
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type in ArtifactStorageType.TRANSFORMER
 
 
 class LightGBMBoosterStorage(JoblibStorage):
