@@ -108,7 +108,7 @@ class CloudSQLConnection(BaseSQLConnection):
     @property
     def _ip_type(self) -> Enum:
         """Sets IP type for CloudSql"""
-        from google.cloud.sql.connector import IPTypes  # type: ignore
+        from google.cloud.sql.connector import IPTypes
 
         return IPTypes.PRIVATE if os.environ.get("PRIVATE_IP") else IPTypes.PUBLIC
 
@@ -137,7 +137,7 @@ class CloudSQLConnection(BaseSQLConnection):
 
     def _conn(self) -> Any:
         """Creates the mysql or postgres CloudSQL client"""
-        from google.cloud.sql.connector import Connector  # type: ignore
+        from google.cloud.sql.connector import Connector
 
         connector = Connector(
             credentials=self.credentials,
