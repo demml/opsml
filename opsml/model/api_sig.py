@@ -63,7 +63,7 @@ class PydanticFeatureGenerator:
         if self.model_type in [
             TrainedModelType.TF_KERAS,
             TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMER,
+            TrainedModelType.TRANSFORMERS,
         ]:
             return True
 
@@ -283,7 +283,7 @@ class SklearnSigCreator(ApiSigCreator):
         return model_type not in [
             TrainedModelType.TF_KERAS,
             TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMER,
+            TrainedModelType.TRANSFORMERS,
         ]
 
 
@@ -299,7 +299,7 @@ class DeepLearningSigCreator(ApiSigCreator):
         return model_type in [
             TrainedModelType.TF_KERAS,
             TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMER,
+            TrainedModelType.TRANSFORMERS,
         ]
 
 

@@ -163,6 +163,12 @@ class ModelCardValidator:
                 raise ValueError("Trainer must be passed to ModelCardValidator when using pytorch lightning models")
             return TrainedModelType.PYTORCH_LIGHTNING.value, self.trained_model.model.__class__.__name__
 
+        for base in self.model_bases:
+            if "lightning.pytorch" in base:
+                if "trainer" not in base:
+                    raise ValueError("Trainer must be passed to ModelCardValidator when using pytorch lightning models")
+                return TrainedModelType.PYTORCH_LIGHTNING.value, "subclass"
+
         return None
 
     def check_lightgbm_model_name(self) -> Optional[Tuple[str, str]]:
@@ -209,7 +215,7 @@ class ModelCardValidator:
         """Checks if model is from huggingface"""
 
         if any(huggingface_module in self.model_module for huggingface_module in HuggingFaceModuleType):
-            return TrainedModelType.TRANSFORMER.value, self.model_name
+            return TrainedModelType.TRANSFORMERS.value, self.model_name
 
         # for subclassed models
         if hasattr(self.trained_model, "mro"):
@@ -217,7 +223,7 @@ class ModelCardValidator:
             bases = [str(base) for base in self.trained_model.mro()]
             for base in bases:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
-                    return TrainedModelType.TRANSFORMER.value, "subclass"
+                    return TrainedModelType.TRANSFORMERS.value, "subclass"
         return None
 
     def get_sample(self) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:

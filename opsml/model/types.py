@@ -32,7 +32,7 @@ class DataDtypes(str, Enum):
 
 
 class TrainedModelType(str, Enum):
-    TRANSFORMER = "transformers"
+    TRANSFORMERS = "transformers"
     SKLEARN_PIPELINE = "sklearn_pipeline"
     SKLEARN_ESTIMATOR = "sklearn_estimator"
     STACKING_ESTIMATOR = "stackingestimator"
@@ -291,6 +291,7 @@ class ModelMetadata(BaseModel):
     model_uri: str
     model_version: str
     model_team: str
+    opsml_version: str
     sample_data: Dict[str, Any]
     data_schema: ApiDataSchemas
 

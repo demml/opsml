@@ -674,7 +674,7 @@ class PyTorchOnnxModel(ModelConverter):
     def validate(model_type: str) -> bool:
         return model_type in [
             TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMER,
+            TrainedModelType.TRANSFORMERS,
         ]
 
 

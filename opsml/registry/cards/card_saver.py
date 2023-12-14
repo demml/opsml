@@ -15,6 +15,7 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidSavedSample,
 )
+from opsml.version import __version__
 from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -248,6 +249,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             model_uri=self.card.metadata.uris.trained_model_uri,
             model_version=self.card.version,
             model_team=self.card.team,
+            opsml_version=__version__,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.metadata.data_schema,
         )

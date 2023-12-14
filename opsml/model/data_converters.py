@@ -126,7 +126,7 @@ class NumpyOnnxConverter(DataConverter):
             if model_type in AVAILABLE_MODEL_TYPES and model_type not in [
                 TrainedModelType.TF_KERAS,
                 TrainedModelType.PYTORCH,
-                TrainedModelType.TRANSFORMER,
+                TrainedModelType.TRANSFORMERS,
             ]:
                 return True
         return False
@@ -303,7 +303,7 @@ class PyTorchOnnxDataConverter(DataConverter):
     def validate(data_type: str, model_type: str) -> bool:
         return data_type == AllowedDataType.NUMPY and model_type in [
             TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMER,
+            TrainedModelType.TRANSFORMERS,
         ]
 
 
@@ -358,7 +358,7 @@ class PyTorchOnnxDictConverter(DataConverter):
     def validate(data_type: str, model_type: str) -> bool:
         return data_type == AllowedDataType.DICT and model_type in [
             TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMER,
+            TrainedModelType.TRANSFORMERS,
         ]
 
 
