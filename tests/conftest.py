@@ -120,6 +120,9 @@ def cleanup() -> None:
     # delete blah directory
     shutil.rmtree("blah", ignore_errors=True)
 
+    # delete pytorch lightning logs
+    shutil.rmtree("lightning_logs", ignore_errors=True)
+
 
 class Blob(BaseModel):
     name: str = "test_upload/test.csv"
