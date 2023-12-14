@@ -1,11 +1,10 @@
-from typing import Dict, Tuple
+from typing import Tuple
 
 import pandas as pd
 import pytest
 from sklearn import linear_model
 
-from opsml.registry import AuditCard, CardRegistry, DataCard, ModelCard
-from opsml.registry import CardRegistries
+from opsml.registry import AuditCard, CardRegistries, DataCard, ModelCard
 
 
 def test_audit_card(db_registries: CardRegistries):

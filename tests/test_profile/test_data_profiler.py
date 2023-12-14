@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from ydata_profiling import ProfileReport
 
 from opsml.profile.profile_data import DataProfiler
-from opsml.registry import DataCard, CardRegistries
+from opsml.registry import CardRegistries, DataCard
 
 
 def test_datacard_create_data_profile_pandas(
