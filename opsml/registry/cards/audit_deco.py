@@ -1,7 +1,6 @@
-from typing import Optional, Protocol, cast
+from typing import Optional, Protocol
 
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType
 
 
 class AuditCard(Protocol):
@@ -35,20 +34,21 @@ def add_to_auditcard(  # type: ignore
     if self.uid is None:
         raise ValueError("Card must be registered before adding to auditcard")
 
-    if auditcard_uid is not None:
-        from opsml.registry.sql.registry import (  # pylint: disable=cyclic-import
-            CardRegistry,
-        )
+    # TODO(@damon): Move this to the audit card registry.
+    # if auditcard_uid is not None:
+    #     from opsml.registry.sql.registry import (  # pylint: disable=cyclic-import
+    #         CardRegistry,
+    #     )
 
-        audit_registry = CardRegistry(registry_name="audit")
-        loaded_card = cast(AuditCard, audit_registry.load_card(uid=auditcard_uid))
-        loaded_card.add_card(card=self)
-        audit_registry.update_card(card=loaded_card)  # type: ignore
+    #     audit_registry = CardRegistry(registry_name="audit")
+    #     loaded_card = cast(AuditCard, audit_registry.load_card(uid=auditcard_uid))
+    #     loaded_card.add_card(card=self)
+    #     audit_registry.update_card(card=loaded_card)  # type: ignore
 
-        if self.card_type in [CardType.DATACARD, CardType.MODELCARD]:
-            self.metadata.auditcard_uid = loaded_card.uid
+    #     if self.card_type in [CardType.DATACARD, CardType.MODELCARD]:
+    #         self.metadata.auditcard_uid = loaded_card.uid
 
-        return None
+    #     return None
 
     if auditcard is not None:
         return auditcard.add_card(card=self)

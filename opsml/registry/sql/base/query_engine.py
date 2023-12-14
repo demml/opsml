@@ -12,7 +12,7 @@ from sqlalchemy import Integer
 from sqlalchemy import cast as sql_cast
 from sqlalchemy import func as sqa_func
 from sqlalchemy import select, text
-from sqlalchemy.engine import Row
+from sqlalchemy.engine import Engine, Row
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
 from sqlalchemy.sql.expression import ColumnElement
@@ -131,10 +131,8 @@ class MySQLHelper(DialectHelper):
 
 
 class QueryEngine:
-    def __init__(self) -> None:
-        from opsml.registry.sql.base import initializer
-
-        self.engine = initializer.engine
+    def __init__(self, engine: Engine) -> None:
+        self.engine = engine
 
     @property
     def dialect(self) -> str:

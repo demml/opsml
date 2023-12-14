@@ -2,63 +2,27 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from semver import VersionInfo
 
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
-from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.cards.data import DataCard
-from opsml.registry.cards.model import ModelCard
-from opsml.registry.cards.pipeline import PipelineCard
-from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
 from opsml.registry.sql.table_names import RegistryTableNames
-from opsml.registry.storage.settings import settings
+from opsml.registry.storage.settings import DefaultSettings
 
 logger = ArtifactLogger.get_logger()
 
-table_name_card_map = {
-    RegistryType.DATA.value: DataCard,
-    RegistryType.MODEL.value: ModelCard,
-    RegistryType.RUN.value: RunCard,
-    RegistryType.PIPELINE.value: PipelineCard,
-    RegistryType.AUDIT.value: AuditCard,
-}
-
-
-def load_card_from_record(
-    registry_type: RegistryType,
-    record: LoadedRecordType,
-) -> ArtifactCard:
-    """
-    Loads an artifact card given a tablename and the loaded record
-    from backend database
-
-    Args:
-        registry_type:
-            Registry type string.
-        record:
-            Loaded record from backend database
-
-    Returns:
-        `ArtifactCard`
-    """
-
-    card = table_name_card_map[registry_type.value]
-
-    return cast(ArtifactCard, card(**record.model_dump()))
-
 
 class SQLRegistryBase:
-    def __init__(self, registry_type: RegistryType):
+    def __init__(self, registry_type: RegistryType, settings: DefaultSettings):
         """
         Base class for SQL Registries to inherit from
 
@@ -115,6 +79,10 @@ class SQLRegistryBase:
         raise NotImplementedError
 
     def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        raise NotImplementedError
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
         raise NotImplementedError
 
     def _validate_card_type(self, card: ArtifactCard) -> None:
@@ -334,14 +302,14 @@ class SQLRegistryBase:
 
         return sorted_records
 
-    def load_card(
+    def load_card_record(
         self,
         name: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         uid: Optional[str] = None,
         ignore_release_candidates: bool = False,
-    ) -> ArtifactCard:
+    ) -> LoadedRecordType:
         cleaned_name = clean_string(name)
 
         record = self.list_cards(
@@ -353,15 +321,10 @@ class SQLRegistryBase:
             ignore_release_candidates=ignore_release_candidates,
         )
 
-        loaded_record = load_record(
+        return load_record(
             registry_type=self.registry_type,
             record_data=record[0],
             storage_client=self.storage_client,
-        )
-
-        return load_card_from_record(
-            registry_type=self.registry_type,
-            record=loaded_record,
         )
 
     def delete_card(self, card: ArtifactCard) -> None:
