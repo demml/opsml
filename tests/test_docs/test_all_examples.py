@@ -1,10 +1,10 @@
 from sklearn import linear_model
 
 from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import DataCard, ModelCard
+from opsml.registry import CardRegistries, DataCard, ModelCard
 
 
-def test_challenger_example(opsml_project: OpsmlProject):
+def test_challenger_example(api_registries: CardRegistries, opsml_project: OpsmlProject):
     ########### Challenger example
 
     import numpy as np
@@ -17,7 +17,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
     from opsml.projects import ProjectInfo
 
     # Opsml
-    from opsml.registry import CardInfo, CardRegistry, DataCard, DataSplit, ModelCard
+    from opsml.registry import CardInfo, DataCard, DataSplit, ModelCard
 
     ### **Create Example Data**
 
@@ -41,12 +41,11 @@ def test_challenger_example(opsml_project: OpsmlProject):
             DataSplit(label="test", indices=test_idx),
         ],
     )
-    data_reg = CardRegistry(registry_name="data")
-    data_reg.register_card(card=datacard)
+    api_registries.data.register_card(card=datacard)
 
     ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-lin-reg") as run:
-        datacard = data_reg.load_card(uid=datacard.uid)
+        datacard = api_registries.data.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
         reg = LinearRegression()
@@ -70,7 +69,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
 
     ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-lasso") as run:
-        datacard = data_reg.load_card(uid=datacard.uid)
+        datacard = api_registries.card.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
         reg = Lasso()
@@ -94,7 +93,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
 
     ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-poisson") as run:
-        datacard = data_reg.load_card(uid=datacard.uid)
+        datacard = api_registries.data.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
         reg = PoissonRegressor()
@@ -116,8 +115,7 @@ def test_challenger_example(opsml_project: OpsmlProject):
         )
         run.register_card(card=model_card)
 
-    model_registry = CardRegistry(registry_name="model")
-    linreg_card = model_registry.load_card(
+    linreg_card = api_registries.model.load_card(
         name="linear_reg",
         tags={"example": "challenger"},
     )

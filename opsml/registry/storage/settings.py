@@ -29,7 +29,7 @@ class _DefaultAttrCreator:
         username = cfg.opsml_username
         password = cfg.opsml_password
 
-        request_client = ApiClient(cfg=cfg, base_url="")
+        request_client = ApiClient(cfg=cfg, base_url=cfg.opsml_tracking_uri)
         if all(bool(cred) for cred in [username, password]):
             request_client.client.auth = httpx.BasicAuth(
                 username=str(username),

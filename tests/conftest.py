@@ -64,7 +64,6 @@ from xgboost import XGBRegressor
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
 from opsml.model.types import OnnxModelDefinition
-from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
@@ -309,27 +308,17 @@ from opsml.settings.config import OpsmlConfig, config
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
-    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
-    initializer.initialize()
-
     def callable_api():
         return test_client
 
     with patch("httpx.Client", callable_api):
-        # Set the global configuration (used by the web server to determine `/settings`)
+        # Set the global configuration to mock API "client" mode
+        # TODO(@damon): Get rid of all global state
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
         # Create default settings
-        registries = CardRegistries()
         cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=STORAGE_PATH)
-        api_settings = DefaultSettings(cfg=cfg)
-
-        registries.set_storage_client(api_settings.storage_client)
-
-        return registries
-
-    # with patch("httpx.Client", callable_api):
-    # return registries
+        return CardRegistries(DefaultSettings(cfg=cfg))
 
 
 @pytest.fixture(scope="function")
@@ -349,41 +338,6 @@ def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
 @pytest.fixture(scope="function")
 def api_storage_client(api_registries: CardRegistries) -> StorageClientType:
     return api_registries.data._registry.storage_client
-
-
-@pytest.fixture(scope="function")
-def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
-    opsml_run = OpsmlProject(
-        info=ProjectInfo(
-            name="test_exp",
-            team="test",
-            user_email="test",
-            tracking_uri=SQL_PATH,
-        )
-    )
-    opsml_run._run_mgr.registries = api_registries
-    return opsml_run
-
-
-@pytest.fixture(scope="function")
-def opsml_project_2(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
-    opsml_run = OpsmlProject(
-        info=ProjectInfo(
-            name="opsml_project",
-            team="devops",
-            user_email="test",
-            tracking_uri=SQL_PATH,
-        )
-    )
-    opsml_run._run_mgr.registries = api_registries
-    return opsml_run
-
-
-def mock_opsml_project(info: ProjectInfo) -> OpsmlProject:
-    info.tracking_uri = SQL_PATH
-    opsml_run = OpsmlProject(info=info)
-    opsml_run._run_mgr.registries = CardRegistries()
-    return opsml_run
 
 
 @pytest.fixture(scope="function")
@@ -438,21 +392,14 @@ def db_registries():
     cleanup()
 
     # force opsml to use CardRegistry with SQL connection (non-proxy)
-    from opsml.registry.sql.base.query_engine import QueryEngine
     from opsml.registry.sql.registry import CardRegistry
 
-    model_registry = CardRegistry(registry_name="model")
-    data_registry = CardRegistry(registry_name="data")
-    run_registry = CardRegistry(registry_name="run")
-    pipeline_registry = CardRegistry(registry_name="pipeline")
-    audit_registry = CardRegistry(registry_name="audit")
-
-    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
-    # tables are created when settings are called.
-    # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
-    # need to do it manually
-
-    initializer.initialize()
+    settings = DefaultSettings(config)
+    model_registry = CardRegistry(registry_name="model", settings=settings)
+    data_registry = CardRegistry(registry_name="data", settings=settings)
+    run_registry = CardRegistry(registry_name="run", settings=settings)
+    pipeline_registry = CardRegistry(registry_name="pipeline", settings=settings)
+    audit_registry = CardRegistry(registry_name="audit", settings=settings)
 
     yield {
         "data": data_registry,

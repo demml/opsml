@@ -3,176 +3,42 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import textwrap
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Type, Union, cast
 
 import pandas as pd
 
-from opsml.helpers import utils
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.model import ModelCard
-from opsml.registry.cards.types import CardInfo, CardType, RegistryType
-from opsml.registry.sql.base import OpsmlRegistry
+from opsml.registry.cards import (
+    ArtifactCard,
+    AuditCard,
+    CardInfo,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    RunCard,
+)
+from opsml.registry.cards.types import CardType, RegistryType
+from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
+from opsml.registry.storage.settings import DefaultSettings
 from opsml.registry.storage.storage_system import StorageClientType
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 
-if TYPE_CHECKING:
-    from opsml.registry.sql.base.server import ServerRegistry
-
-    Registry = ServerRegistry
-else:
-    Registry = OpsmlRegistry
-
-
-class DataCardRegistry(Registry):
-    @property
-    def registry_type(self) -> RegistryType:
-        return RegistryType.DATA
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.DATA.value
-
-
-class ModelCardRegistry(Registry):
-    @property
-    def registry_type(self) -> RegistryType:
-        return RegistryType.MODEL
-
-    def _validate_datacard_uid(self, uid: str) -> None:
-        exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA)
-        if not exists:
-            raise ValueError("ModelCard must be associated with a valid DataCard uid")
-
-    def _has_datacard_uid(self, uid: Optional[str]) -> bool:
-        return bool(uid)
-
-    def register_card(
-        self,
-        card: ArtifactCard,
-        version_type: VersionType = VersionType.MINOR,
-        pre_tag: str = "rc",
-        build_tag: str = "build",
-    ) -> None:
-        """
-        Adds new record to registry.
-
-        Args:
-            card:
-                Card to register
-            version_type:
-                Version type for increment. Options are "major", "minor" and
-                "patch". Defaults to "minor"
-            pre_tag:
-                pre-release tag
-            build_tag:
-                build tag
-        """
-
-        if card.uid is not None:
-            logger.info(
-                textwrap.dedent(
-                    f"""
-                Card {card.uid} already exists. Skipping registration. If you'd like to register
-                a new card, please instantiate a new Card object. If you'd like to update the
-                existing card, please use the update_card method.
-                """
-                )
-            )
-
-        else:
-            model_card = cast(ModelCard, card)
-
-            if model_card.to_onnx:
-                if not utils.check_package_exists("onnx"):
-                    raise ModuleNotFoundError(
-                        """To convert a model to onnx, please install onnx via one of the extras
-                        (opsml[sklearn_onnx], opsml[tf_onnx], opsml[torch_onnx]) or set to_onnx to False.
-                        """
-                    )
-
-            if not self._has_datacard_uid(uid=model_card.datacard_uid):
-                raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
-
-            if model_card.datacard_uid is not None:
-                self._validate_datacard_uid(uid=model_card.datacard_uid)
-
-            super().register_card(
-                card=card,
-                version_type=version_type,
-                pre_tag=pre_tag,
-                build_tag=build_tag,
-            )
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.MODEL.value
-
-
-class RunCardRegistry(Registry):
-    @property
-    def registry_type(self) -> RegistryType:
-        return RegistryType.RUN
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.RUN.value
-
-
-class PipelineCardRegistry(Registry):
-    @property
-    def registry_type(self) -> RegistryType:
-        return RegistryType.PIPELINE
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.PIPELINE.value
-
-    def delete_card(self, card: ArtifactCard) -> None:
-        raise ValueError("PipelineCardRegistry does not support delete_card")
-
-
-class ProjectCardRegistry(Registry):
-    @property
-    def registry_type(self) -> RegistryType:
-        return RegistryType.PROJECT
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.PROJECT.value
-
-    def load_card(
-        self,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        uid: Optional[str] = None,
-        ignore_release_candidates: bool = False,
-    ) -> ArtifactCard:
-        raise ValueError("ProjectCardRegistry does not support load_card")
-
-    def delete_card(self, card: ArtifactCard) -> None:
-        raise ValueError("ProjectCardRegistry does not support delete_card")
-
-
-class AuditCardRegistry(Registry):
-    @property
-    def registry_type(self) -> RegistryType:
-        return RegistryType.AUDIT
-
-    def validate_uid(self, uid: str, registry_type: RegistryType) -> bool:
-        return self.check_uid(uid=uid, registry_type=registry_type)
-
-    @staticmethod
-    def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.AUDIT.value
+table_name_card_map = {
+    RegistryType.DATA.value: DataCard,
+    RegistryType.MODEL.value: ModelCard,
+    RegistryType.RUN.value: RunCard,
+    RegistryType.PIPELINE.value: PipelineCard,
+    RegistryType.AUDIT.value: AuditCard,
+}
 
 
 # CardRegistry also needs to set a storage file system
 class CardRegistry:
-    def __init__(self, registry_name: str):
+    # TODO(@damon): Take a registry_type enum
+    def __init__(self, registry_name: str, settings: DefaultSettings):
         """
         Interface for connecting to any of the ArtifactCard registries
 
@@ -184,10 +50,10 @@ class CardRegistry:
             Instantiated connection to specific Card registry
 
         Example:
-            data_registry = CardRegistry(registry_name="data")
+            data_registry = CardRegistry(registry_name="data", settings=settings)
         """
 
-        self._registry = self._set_registry(registry_name=registry_name)
+        self._registry = self._set_registry(registry_name=registry_name, settings=settings)
         self.table_name = self._registry.table_name
 
     @property
@@ -195,7 +61,7 @@ class CardRegistry:
         "Registry type for card registry"
         return self._registry.registry_type
 
-    def _set_registry(self, registry_name: str) -> Registry:
+    def _set_registry(self, registry_name: str, settings: DefaultSettings) -> SQLRegistryBase:
         """Returns a SQL registry to be used to register Cards
 
         Args:
@@ -204,16 +70,24 @@ class CardRegistry:
         Returns:
             SQL Registry
         """
+        registry_type: Type[SQLRegistryBase]
+        if config.is_tracking_local:
+            from opsml.registry.sql.base.server import ServerRegistry
+
+            registry_type = ServerRegistry
+        else:
+            from opsml.registry.sql.base.client import ClientRegistry
+
+            registry_type = ClientRegistry
 
         registry = next(
             registry
-            for registry in Registry.__subclasses__()
+            for registry in registry_type.__subclasses__()
             if registry.validate(
                 registry_name=registry_name,
             )
         )
-
-        return registry(registry_type=RegistryType.from_str(registry_name))
+        return registry(registry_type=RegistryType.from_str(registry_name), settings=settings)
 
     def list_cards(
         self,
@@ -327,13 +201,15 @@ class CardRegistry:
             version = version or info.version
             tags = tags or info.tags
 
-        return self._registry.load_card(
+        record = self._registry.load_card_record(
             uid=uid,
             name=name,
             version=version,
             tags=tags,
             ignore_release_candidates=ignore_release_candidates,
         )
+        card = table_name_card_map[self.registry_type.value]
+        return cast(ArtifactCard, card(**record.model_dump()))
 
     def register_card(
         self,
@@ -414,14 +290,17 @@ class CardRegistry:
 
 
 class CardRegistries:
-    def __init__(self) -> None:
+    def __init__(self, settings: Optional[DefaultSettings] = None) -> None:
         """Instantiates class that contains all registries"""
-        self.data = CardRegistry(registry_name=CardType.DATACARD.value)
-        self.model = CardRegistry(registry_name=CardType.MODELCARD.value)
-        self.run = CardRegistry(registry_name=CardType.RUNCARD.value)
-        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value)
-        self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value)
-        self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value)
+        if settings is None:
+            settings = DefaultSettings(config)
+
+        self.data = CardRegistry(registry_name=CardType.DATACARD.value, settings=settings)
+        self.model = CardRegistry(registry_name=CardType.MODELCARD.value, settings=settings)
+        self.run = CardRegistry(registry_name=CardType.RUNCARD.value, settings=settings)
+        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value, settings=settings)
+        self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value, settings=settings)
+        self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value, settings=settings)
 
     def set_storage_client(self, storage_client: StorageClientType) -> None:
         for attr in ["data", "model", "run", "project", "pipeline", "audit"]:

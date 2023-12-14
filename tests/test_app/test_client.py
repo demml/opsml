@@ -19,7 +19,7 @@ from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.helpers.request_helpers import ApiRoutes
-from opsml.projects import OpsmlProject
+from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import (
     AuditCard,
     CardInfo,
@@ -32,6 +32,7 @@ from opsml.registry import (
     PipelineCard,
     RunCard,
 )
+from opsml.registry.sql.registry import CardRegistries
 from opsml.settings.config import config
 from tests.conftest import TODAY_YMD
 
@@ -817,36 +818,40 @@ def test_data_list(test_app: TestClient):
 def test_data_model_version(
     test_app: TestClient,
     api_registries: CardRegistries,
-    opsml_project: OpsmlProject,
     sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ):
     """Test settings"""
 
     model, data = sklearn_pipeline
 
-    with opsml_project.run() as run:
-        datacard = DataCard(
-            data=data,
-            name="test_data",
-            team="mlops",
-            user_email="mlops.com",
-        )
-        datacard.create_data_profile()
-        run.register_card(card=datacard)
-        run.log_metric("test_metric", 10)
-        run.log_metrics({"test_metric2": 20})
+    def callable_api():
+        return test_app
 
-        modelcard = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            tags={"id": "model1"},
-            datacard_uid=datacard.uid,
-            to_onnx=True,
-        )
-        run.register_card(modelcard)
+    with patch("httpx.Client", callable_api):
+        info = ProjectInfo(name="test", team="test", user_email="test")
+        with OpsmlProject(info=info).run() as run:
+            datacard = DataCard(
+                data=data,
+                name="test_data",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            datacard.create_data_profile()
+            run.register_card(card=datacard)
+            run.log_metric("test_metric", 10)
+            run.log_metrics({"test_metric2": 20})
+
+            modelcard = ModelCard(
+                trained_model=model,
+                sample_input_data=data[0:1],
+                name="pipeline_model",
+                team="mlops",
+                user_email="mlops.com",
+                tags={"id": "model1"},
+                datacard_uid=datacard.uid,
+                to_onnx=True,
+            )
+            run.register_card(modelcard)
 
     response = test_app.get("/opsml/data/versions/")
     assert response.status_code == 200

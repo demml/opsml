@@ -10,21 +10,13 @@ from fastapi import FastAPI, Response
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.model.registrar import ModelRegistrar
-from opsml.registry.sql.base import initializer
-from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.storage.settings import settings
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 
 MiddlewareReturnType = Union[Awaitable[Any], Response]
-
-initializer = DBInitializer(
-    engine=initializer.engine,
-    registry_tables=list(RegistryTableNames),
-)
 
 
 def _init_rollbar() -> None:
@@ -39,9 +31,6 @@ def _init_registries(app: FastAPI) -> None:
     app.state.registries = CardRegistries()
     app.state.storage_client = settings.storage_client
     app.state.model_registrar = ModelRegistrar(settings.storage_client)
-
-    # initialize dbs
-    initializer.initialize()
 
 
 def _shutdown_registries(app: FastAPI) -> None:
