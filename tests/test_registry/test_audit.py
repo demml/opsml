@@ -5,12 +5,11 @@ import pytest
 from sklearn import linear_model
 
 from opsml.registry import AuditCard, CardRegistry, DataCard, ModelCard
+from opsml.registry import CardRegistries
 
 
-def test_audit_card(
-    db_registries: Dict[str, CardRegistry],
-):
-    audit_registry = db_registries["audit"]
+def test_audit_card(db_registries: CardRegistries):
+    audit_registry = db_registries.audit
     card = AuditCard(name="audit_card", team="team", user_email="test")
 
     assert card.business[1].response is None
@@ -50,16 +49,13 @@ def test_audit_card_failure():
 
 
 def test_audit_card_add_uids(
-    db_registries: Dict[str, CardRegistry], linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame]
+    db_registries: CardRegistries, linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame]
 ):
-    audit_registry = db_registries["audit"]
+    reg, data = linear_regression
     auditcard = AuditCard(name="audit_card", team="team", user_email="test")
 
-    reg, data = linear_regression
-
     datacard = DataCard(name="data_card", team="team", user_email="test", data=data)
-    data_registry = db_registries["data"]
-    data_registry.register_card(card=datacard)
+    db_registries.data.register_card(datacard)
 
     # test 1st path to add uid
     auditcard.add_card(datacard)
@@ -67,7 +63,7 @@ def test_audit_card_add_uids(
     assert auditcard.metadata.datacards[0].name == datacard.name
 
     # register card
-    audit_registry.register_card(card=auditcard)
+    db_registries.audit.register_card(card=auditcard)
 
     # create modelcard
     modelcard = ModelCard(
@@ -79,5 +75,4 @@ def test_audit_card_add_uids(
         datacard_uid=datacard.uid,
         to_onnx=True,
     )
-    model_registry = db_registries["model"]
-    model_registry.register_card(card=modelcard)
+    db_registries.model.register_card(card=modelcard)

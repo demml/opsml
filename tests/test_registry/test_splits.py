@@ -6,6 +6,7 @@ import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
+from opsml.registry import CardRegistries
 from opsml.registry.cards import DataCard, DataSplit
 from opsml.registry.sql.registry import CardInfo, CardRegistry
 
@@ -351,7 +352,7 @@ def test_data_splits_polars_index(iris_data_polars: pl.DataFrame):
 
 
 def test_data_splits_polars_row(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     iris_data_polars: pl.DataFrame,
 ):
     data = iris_data_polars
@@ -379,8 +380,8 @@ def test_data_splits_polars_row(
     assert data_splits.train.X.shape[0] == 3
 
 
-def test_datacard_split_fail(db_registries: Dict[str, CardRegistry], test_df: pd.DataFrame):
-    registry: CardRegistry = db_registries["data"]
+def test_datacard_split_fail(db_registries: CardRegistries, test_df: pd.DataFrame):
+    registry: CardRegistry = db_registries.data
 
     data_card = DataCard(
         data=test_df,
