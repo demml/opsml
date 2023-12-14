@@ -17,6 +17,7 @@ import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
+
 from opsml.version import __version__
 
 # Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
