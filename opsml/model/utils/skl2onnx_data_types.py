@@ -5,7 +5,7 @@
 import warnings
 from typing import List, Tuple, Union
 
-from opsml.model.types import DataDtypes
+from opsml.model.utils.types import DataDtypes
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

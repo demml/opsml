@@ -365,7 +365,7 @@ def test_custom_onnx(db_registries):
     from torch import nn
 
     ## opsml
-    from opsml.model.types import OnnxModelDefinition
+    from opsml.model.utils.types import OnnxModelDefinition
     from opsml.registry import CardRegistries, DataCard, ModelCard
 
     registries = CardRegistries()

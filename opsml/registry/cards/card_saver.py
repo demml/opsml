@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional, Tuple, Union, cast
 import pyarrow as pa
 from numpy.typing import NDArray
 
-from opsml.model.types import (
+from opsml.model.utils.types import (
     ModelMetadata,
     OnnxAttr,
     OnnxModelDefinition,

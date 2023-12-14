@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 # Get logger
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import TrainedModelType
+from opsml.model.utils.types import TrainedModelType
 
 logger = ArtifactLogger.get_logger()
 

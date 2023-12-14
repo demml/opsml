@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.types import ApiDataSchemas, Base, TrainedModelType
+from opsml.model.utils.types import ApiDataSchemas, Base, TrainedModelType
 from opsml.registry.data.types import AllowedDataType
 
 

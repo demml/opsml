@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from opsml.model.data_helper import FloatTypeConverter, ModelDataHelper
-from opsml.model.types import (
+from opsml.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
+from opsml.model.utils.types import (
     AVAILABLE_MODEL_TYPES,
     DataDtypes,
     ExtraOnnxArgs,
@@ -24,7 +24,7 @@ from opsml.registry.data.types import AllowedDataType
 # attempt to load get_skl2onnx_onnx_tensor_spec if skl2onnx is installed
 # this is checked during model conversion
 try:
-    from opsml.model.sklearn.skl2onnx_data_types import get_skl2onnx_onnx_tensor_spec
+    from opsml.model.utils.skl2onnx_data_types import get_skl2onnx_onnx_tensor_spec
 except ModuleNotFoundError:
     pass
 

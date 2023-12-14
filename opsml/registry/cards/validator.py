@@ -9,7 +9,7 @@ import polars as pl
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType, ModelType
+from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType, ModelType
 from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 
@@ -142,7 +142,6 @@ class ModelCardValidator:
             return class_module
 
         # check sklearn
-
         class_module = self.check_sklearn_model_name()
         if class_module is not None:
             return class_module
@@ -226,7 +225,7 @@ class ModelCardValidator:
                     return TrainedModelType.TRANSFORMERS.value, "subclass"
         return None
 
-    def get_sample(self) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
+    def get_sample_data(self) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
         """Check sample data and returns one record to be used
         during ONNX conversion and validation
 
@@ -234,6 +233,9 @@ class ModelCardValidator:
             Sample data with only one record
         """
         if self.sample_data is None:
+            return self.sample_data
+
+        if isinstance(self.sample_data, str):
             return self.sample_data
 
         if not isinstance(self.sample_data, dict):
@@ -273,6 +275,25 @@ class ModelCardValidator:
             return model_class_name
         return model_type.get_type()
 
+    def _get_task_type(self, model_type: str) -> str:
+        """Get task type for metadata. Primarily used for huggingface pipelines
+
+        Args:
+            model_type:
+                Model type to be used for task type
+        """
+
+        if hasattr(self.trained_model, "task"):
+            return self.trained_model.task
+
+        if "regressor" in model_type:
+            return "regression"
+
+        if "classifier" in model_type:
+            return "classification"
+
+        return "unknown"
+
     def get_metadata(self) -> ModelCardMetadata:
         """Checks metadata for valid values
         Returns:
@@ -283,6 +304,9 @@ class ModelCardValidator:
 
         # clean up class name (mainly for sklearn, lgb, xgb)
         model_type = self.get_model_type(model_class_name=model_name)
+
+        # get task type (important for huggingface pipelines)
+        task_type = self._get_task_type(model_type=model_type)
 
         data_type = check_data_type(self.sample_data)
 
@@ -296,6 +320,7 @@ class ModelCardValidator:
                 sample_data_type=data_type,
                 model_class=model_class,
                 model_type=model_type,
+                task_type=task_type,
             )
 
         elif self.metadata is not None:

@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Tuple, Type, Union, cast
 
 from pydantic import conlist, create_model
 
-from opsml.model.types import (
+from opsml.model.utils.types import (
     ApiDataSchemas,
     ApiSigTypes,
     Base,
