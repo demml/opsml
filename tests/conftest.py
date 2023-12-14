@@ -29,11 +29,14 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import httpx
 import joblib
 import lightgbm as lgb
+import lightning as L
 import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pytest
+import torch
+import torch.nn as nn
 from google.auth import load_credentials_from_file
 from pydantic import BaseModel
 from sklearn import (
@@ -60,13 +63,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from starlette.testclient import TestClient
-from xgboost import XGBRegressor
-import torch
-import lightning as L
 from torch.nn import MSELoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
-import torch.nn as nn
+from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient

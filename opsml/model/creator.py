@@ -6,7 +6,6 @@
 import textwrap
 from typing import Any, Dict
 
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.utils.data_helper import get_model_data
 from opsml.model.utils.model_predict_helper import PredictHelper
