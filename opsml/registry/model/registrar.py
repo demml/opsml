@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import ModelMetadata
+from opsml.model.utils.types import ModelMetadata
 from opsml.registry.storage.storage_system import StorageClientType
 
 logger = ArtifactLogger.get_logger()

@@ -9,7 +9,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import DataDtypes, Feature, ValidModelInput
+from opsml.model.utils.types import DataDtypes, Feature, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()

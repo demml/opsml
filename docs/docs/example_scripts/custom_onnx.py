@@ -16,7 +16,7 @@ import torch.nn.init as init
 
 
 ## opsml
-from opsml.model.types import OnnxModelDefinition
+from opsml.model.utils.types import OnnxModelDefinition
 from opsml.registry import CardRegistries, ModelCard, DataCard
 
 registries = CardRegistries()

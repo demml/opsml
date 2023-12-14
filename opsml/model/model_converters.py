@@ -19,10 +19,9 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.model.data_converters import OnnxDataConverter
-from opsml.model.data_helper import ModelDataHelper
-from opsml.model.model_types import ModelType
+from opsml.model.utils.data_helper import ModelDataHelper
 from opsml.model.registry_updaters import OnnxRegistryUpdater
-from opsml.model.types import (
+from opsml.model.utils.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
@@ -37,6 +36,7 @@ from opsml.model.types import (
     OnnxDataProto,
     OnnxModelDefinition,
     TrainedModelType,
+    ModelType,
 )
 
 logger = ArtifactLogger.get_logger()

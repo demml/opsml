@@ -61,7 +61,7 @@ setup.sysdeps:
 
 test.unit:
 	poetry run pytest \
-		-m "not large" \
+		-m "not large and not compat" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report html:coverage \

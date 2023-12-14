@@ -16,7 +16,7 @@ import zarr
 from numpy.typing import NDArray
 
 from opsml.helpers.utils import all_subclasses
-from opsml.model.types import ModelProto
+from opsml.model.utils.types import ModelProto
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset

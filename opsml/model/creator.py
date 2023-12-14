@@ -9,8 +9,9 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.data_helper import get_model_data
-from opsml.model.types import (
+from opsml.model.utils.data_helper import get_model_data
+from opsml.model.utils.model_predict_helper import PredictHelper
+from opsml.model.utils.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
@@ -76,89 +77,17 @@ class TrainedModelMetadataCreator(ModelCreator):
 
         return model_data.feature_dict
 
-    def _predict_prediction(self) -> Dict[str, Feature]:
-        """Test default predict method leveraged by most ml libraries"""
-        predictions = self.card.trained_model.predict(self.card.sample_input_data)
-        return self._get_prediction_type(predictions=predictions)
-
-    def _torch_prediction(self) -> Dict[str, Feature]:  # pragma: no cover
-        """Tests generate method commonly used with huggingface models.
-        If generate fails, prediction will fall back to normal functional call.
-        """
-
-        try:
-            if self.card.metadata.sample_data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = self.model(**self.card.sample_input_data)
-            else:
-                predictions = self.model(self.card.sample_input_data)
-
-            return self._get_prediction_type(predictions=predictions.detach().numpy())
-
-        except TypeError as error:
-            logger.error("{}. Falling back to model functional call", error)
-            raise error
-
-    def _generate_prediction(self) -> Optional[Dict[str, Feature]]:  # pragma: no cover
-        """Test generate method commonly used with huggingface models"""
-
-        try:
-            if self.card.metadata.sample_data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = self.model.generate(**self.card.sample_input_data)
-            else:
-                predictions = self.model.generate(self.card.sample_input_data)
-
-            return self._get_prediction_type(predictions=predictions.detach().numpy())
-
-        except Exception:
-            return None
-
-    def _transformers_prediction(self) -> Dict[str, Feature]:  # pragma: no cover
-        """Get predictions for huggingface transformers models"""
-        predictions = self._generate_prediction()
-
-        if predictions is not None:
-            return predictions
-
-        return self._functional_prediction()
-
-    def _functional_prediction(self) -> Dict[str, Feature]:
-        import torch
-
-        try:
-            if self.card.metadata.sample_data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = self.model(**self.card.sample_input_data)
-            else:
-                predictions = self.model(self.card.sample_input_data)
-
-            if isinstance(predictions, torch.Tensor):
-                predictions = predictions.detach.numpy()
-
-            else:
-                for method in self.model.__dir__():
-                    if "last_hidden_state" in method:
-                        predictions = getattr(predictions, method).detach().numpy()
-
-            return self._get_prediction_type(predictions=predictions)
-
-        except Exception as error:
-            logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
-            raise error
-
-        # try functional call
-
     def _get_output_schema(self) -> Dict[str, Feature]:
         try:
-            if hasattr(self.card.trained_model, "predict"):
-                return self._predict_prediction()
+            prediction = PredictHelper.get_model_prediction(
+                model=self.model,
+                input_data=self.card.sample_input_data,
+                sample_data_type=self.card.metadata.sample_data_type,
+                model_class=self.card.metadata.model_class,
+                model_type=self.card.metadata.model_type,
+            )
 
-            if (
-                self.card.metadata.model_class == TrainedModelType.PYTORCH
-                or self.card.metadata.model_class == TrainedModelType.PYTORCH_LIGHTNING
-            ):
-                return self._torch_prediction()
-
-            if self.card.metadata.model_class == TrainedModelType.TRANSFORMERS:
-                return self._transformers_prediction()
+            return self._get_prediction_type(predictions=prediction)
 
         except Exception as error:
             logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
