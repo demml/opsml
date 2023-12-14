@@ -1,5 +1,3 @@
-from typing import Dict
-
 import pytest
 
 from opsml.helpers.exceptions import VersionError

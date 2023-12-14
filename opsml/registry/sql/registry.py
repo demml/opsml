@@ -17,7 +17,7 @@ from opsml.registry.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.cards.types import CardType, RegistryType
+from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.settings import DefaultSettings

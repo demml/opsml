@@ -1,6 +1,5 @@
 import sys
 from os import path
-from typing import Dict
 
 import pytest
 from sklearn import linear_model
