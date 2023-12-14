@@ -1,7 +1,8 @@
-from opsml.registry.cards.validator import ModelCardValidator
-from opsml.model.utils.model_predict_helper import PredictHelper
-import pytest
 import numpy as np
+import pytest
+
+from opsml.model.utils.model_predict_helper import PredictHelper
+from opsml.registry.cards.validator import ModelCardValidator
 
 
 @pytest.mark.compat

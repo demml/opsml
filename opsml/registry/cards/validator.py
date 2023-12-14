@@ -2,14 +2,19 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, Union, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType, ModelType
+from opsml.model.utils.types import (
+    HuggingFaceModuleType,
+    ModelType,
+    TrainedModelType,
+    ValidModelInput,
+)
 from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 
