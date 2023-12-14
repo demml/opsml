@@ -65,7 +65,7 @@ class CardRegistry:
 
         IMPORTANT: We need to delay importing ServerRegistry until we know we
         need it. Since opsml can run in both "server" mode (where tracking is
-        local) which reqires sqlalchemy and "client" mode which does not, we
+        local) which requires sqlalchemy and "client" mode which does not, we
         only want to import ServerRegistry when we know we need it.
         """
         sql_registry_type: Type[SQLRegistryBase]

@@ -10,7 +10,7 @@ from sqlalchemy import inspect
 from sqlalchemy.engine.base import Engine
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.sql_schema import Base
+from opsml.registry.sql.base.sql_schema import Base
 
 logger = ArtifactLogger.get_logger()
 

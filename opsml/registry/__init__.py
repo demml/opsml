@@ -11,9 +11,9 @@ from opsml.registry.cards.types import (
     RegistryType,
 )
 from opsml.registry.data.splitter import DataSplit
+from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.sql.semver import VersionType
-from opsml.registry.sql.types import RegistryTableNames
 
 __all__ = [
     "AuditCard",
