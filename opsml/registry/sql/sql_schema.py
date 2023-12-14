@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.table_names import RegistryTableNames
+from opsml.registry import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
