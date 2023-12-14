@@ -14,6 +14,8 @@ logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
+# TODO(@damon): This should *not* be here. The API client should *not* know (or
+# care) where the server is storing data.
 @router.get("/settings", response_model=StorageSettingsResponse, name="settings")
 def get_storage_settings() -> StorageSettingsResponse:
     """Returns backend storage path and type"""

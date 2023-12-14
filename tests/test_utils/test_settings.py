@@ -21,7 +21,7 @@ def test_default_http_settings(mock_gcs_storage_response, mock_gcp_creds) -> Non
     cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri="gs://google")
     settings = DefaultSettings(cfg)
 
-    assert isinstance(settings.storage_client, GCSFSStorageClient)
+    assert isinstance(settings.storage_client, ApiStorageClient)
 
 
 def test_default_postgres_settings(mock_gcs_storage_response, mock_gcp_creds) -> None:

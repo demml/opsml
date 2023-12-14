@@ -17,6 +17,7 @@ from opsml.registry.storage.settings import settings
 logger = ArtifactLogger.get_logger()
 
 
+# TODO(@damon): Have the registry client take an ApiClient
 class ClientRegistry(SQLRegistryBase):
     """A registry that retrieves data from an opsml server instance."""
 
