@@ -1,5 +1,3 @@
-from typing import Dict
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,16 +5,15 @@ from sklearn.model_selection import train_test_split
 from ydata_profiling import ProfileReport
 
 from opsml.profile.profile_data import DataProfiler
-from opsml.registry import DataCard
-from opsml.registry.sql.registry import CardRegistry
+from opsml.registry import DataCard, CardRegistries
 
 
 def test_datacard_create_data_profile_pandas(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     iris_data: pd.DataFrame,
 ):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
 
     iris_data["date_"] = pd.Timestamp.today().strftime("%Y-%m-%d")
 
@@ -43,11 +40,11 @@ def test_datacard_create_data_profile_pandas(
 
 
 def test_datacard_create_data_profile_polars(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     iris_data_polars: pd.DataFrame,
 ):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         data=iris_data_polars,
         name="test_df",
@@ -75,12 +72,9 @@ def test_datacard_create_data_profile_polars(
 
 
 def test_feed_data_profile(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     iris_data: pd.DataFrame,
 ):
-    # create data card
-    db_registries["data"]
-
     profile = ProfileReport(iris_data, title="Profiling Report")
     data_card = DataCard(
         data=iris_data,
@@ -103,12 +97,9 @@ def test_feed_data_profile(
 
 
 def test_compare_data_profile(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     iris_data: pd.DataFrame,
 ):
-    # create data card
-    db_registries["data"]
-
     # Split indices
     indices = np.arange(iris_data.shape[0])
 

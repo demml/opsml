@@ -300,7 +300,6 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.storage.settings import DefaultSettings
 from opsml.settings.config import OpsmlConfig, config
 
@@ -386,26 +385,10 @@ def mock_local_engine():
 
 
 @pytest.fixture(scope="function")
-def db_registries():
+def db_registries() -> CardRegistries:
     cleanup()
 
-    # force opsml to use CardRegistry with SQL connection (non-proxy)
-    from opsml.registry.sql.registry import CardRegistry
-
-    settings = DefaultSettings(config)
-    model_registry = CardRegistry(registry_name="model", settings=settings)
-    data_registry = CardRegistry(registry_name="data", settings=settings)
-    run_registry = CardRegistry(registry_name="run", settings=settings)
-    pipeline_registry = CardRegistry(registry_name="pipeline", settings=settings)
-    audit_registry = CardRegistry(registry_name="audit", settings=settings)
-
-    yield {
-        "data": data_registry,
-        "model": model_registry,
-        "run": run_registry,
-        "pipeline": pipeline_registry,
-        "audit": audit_registry,
-    }
+    yield CardRegistries(DefaultSettings(config))
 
     cleanup()
 

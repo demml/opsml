@@ -27,16 +27,16 @@ from opsml.registry.cards import (
     RunCard,
 )
 from opsml.registry.sql.base.query_engine import DialectHelper
-from opsml.registry.sql.registry import CardRegistry
+from opsml.registry import CardRegistries
 from opsml.registry.sql.sql_schema import DataSchema
 from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS
 
 
 def test_registry_dialect(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     tracking_uri: str,
 ):
-    registry = db_registries["data"]
+    registry = db_registries.data
 
     if "postgres" in tracking_uri:
         assert "postgres" in registry._registry.engine.dialect
@@ -60,12 +60,12 @@ def test_registry_dialect(
     ],
 )
 def test_register_data(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     test_data: tuple[pd.DataFrame, NDArray, pa.Table],
     data_splits: List[Dict[str, str]],
 ):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
 
     data_card = DataCard(
         data=test_data,
@@ -122,9 +122,9 @@ def test_register_data(
     assert "mlops" in registry._registry.unique_teams
 
 
-def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
+def test_datacard_sql_register(db_registries: CardRegistries):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         name="test_sql",
         team="mlops",
@@ -144,9 +144,9 @@ def test_datacard_sql_register(db_registries: Dict[str, CardRegistry]):
     assert data_card.version >= "1.0.0"
 
 
-def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
+def test_datacard_tags(db_registries: CardRegistries):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         name="test_tags",
         team="mlops",
@@ -177,9 +177,9 @@ def test_datacard_tags(db_registries: Dict[str, CardRegistry]):
     assert data_card.tags == {"test": "hello"}
 
 
-def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
+def test_datacard_sql_register_date(db_registries: CardRegistries):
     # create data card at current time
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         name="test_date",
         team="mlops",
@@ -201,9 +201,9 @@ def test_datacard_sql_register_date(db_registries: Dict[str, CardRegistry]):
     assert len(cards) >= 1
 
 
-def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
+def test_datacard_sql_register_file(db_registries: CardRegistries):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         name="test_file",
         team="mlops",
@@ -216,9 +216,9 @@ def test_datacard_sql_register_file(db_registries: Dict[str, CardRegistry]):
     assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
 
-def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
+def test_unique_name_fail(db_registries: CardRegistries):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         name="test_name_fail",
         team="mlops",
@@ -240,9 +240,9 @@ def test_unique_name_fail(db_registries: Dict[str, CardRegistry]):
         registry.register_card(card=data_card)
 
 
-def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArray):
+def test_datacard_sql(db_registries: CardRegistries, test_array: NDArray):
     # create data card
-    db_registries["data"]
+    db_registries.data
     data_card = DataCard(
         data=test_array,
         name="test_sql",
@@ -293,9 +293,9 @@ def test_datacard_sql(db_registries: Dict[str, CardRegistry], test_array: NDArra
         )
 
 
-def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array: NDArray):
+def test_semver_registry_list(db_registries: CardRegistries, test_array: NDArray):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
 
     # version 1
     for i in range(0, 5):
@@ -439,9 +439,9 @@ def test_semver_registry_list(db_registries: Dict[str, CardRegistry], test_array
 
 def test_runcard(
     linear_regression: linear_model.LinearRegression,
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
 ):
-    registry: CardRegistry = db_registries["run"]
+    registry = db_registries.run
     run = RunCard(
         name="test_run",
         team="mlops",
@@ -488,11 +488,11 @@ def test_runcard(
 
 
 def test_local_model_registry_to_onnx(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries.data
     model, data = sklearn_pipeline
     data_card = DataCard(
         data=data,
@@ -512,7 +512,7 @@ def test_local_model_registry_to_onnx(
         to_onnx=True,
     )
 
-    model_registry: CardRegistry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
@@ -520,11 +520,11 @@ def test_local_model_registry_to_onnx(
 
 
 def test_local_model_registry_no_onnx(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries.data
     model, data = sklearn_pipeline
     data_card = DataCard(
         data=data,
@@ -544,7 +544,7 @@ def test_local_model_registry_no_onnx(
         to_onnx=False,
     )
 
-    model_registry: CardRegistry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
@@ -552,11 +552,11 @@ def test_local_model_registry_no_onnx(
 
 
 def test_local_model_registry(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries.data
     model, data = sklearn_pipeline
     data_card = DataCard(
         data=data,
@@ -588,7 +588,7 @@ def test_local_model_registry(
     with pytest.raises(ValueError):
         model_card.load_trained_model()
 
-    model_registry: CardRegistry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(model_card)
 
     assert path.exists(model_card.metadata.uris.model_metadata_uri)
@@ -611,13 +611,13 @@ def test_local_model_registry(
 
 
 def test_register_model(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
     model, data = sklearn_pipeline
 
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries.data
 
     data_card = DataCard(
         data=data,
@@ -640,7 +640,7 @@ def test_register_model(
         to_onnx=True,
     )
 
-    model_registry: CardRegistry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(model_card1)
 
     loaded_card = model_registry.load_card(uid=model_card1.uid)
@@ -727,12 +727,12 @@ def test_register_model(
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_load_data_card(db_registries: Dict[str, CardRegistry], test_data: pd.DataFrame):
+def test_load_data_card(db_registries: CardRegistries, test_data: pd.DataFrame):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
 
-    registry: CardRegistry = db_registries["data"]
+    registry = db_registries.data
 
     data_split = [
         DataSplit(label="train", column_name="year", column_value=2020),
@@ -801,7 +801,7 @@ def test_datacard_failure():
     assert ve.match("Data or sql logic must be supplied when no data_uri")
 
 
-def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
+def test_pipeline_registry(db_registries: CardRegistries):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -812,7 +812,7 @@ def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
         pipeline_card.add_card_uid(uid=uuid.uuid4().hex, card_type=card_type)
 
     # register
-    registry: CardRegistry = db_registries["pipeline"]
+    registry = db_registries.pipeline
     registry.register_card(card=pipeline_card)
     loaded_card: PipelineCard = registry.load_card(uid=pipeline_card.uid)
     loaded_card.add_card_uid(uid="updated_uid", card_type="data")
@@ -830,16 +830,16 @@ def test_pipeline_registry(db_registries: Dict[str, CardRegistry]):
 
 
 def test_full_pipeline_with_loading(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     linear_regression: linear_model.LinearRegression,
 ):
     team = "mlops"
     user_email = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
-    data_registry: CardRegistry = db_registries["data"]
-    model_registry: CardRegistry = db_registries["model"]
-    experiment_registry: CardRegistry = db_registries["run"]
-    pipeline_registry: CardRegistry = db_registries["pipeline"]
+    data_registry = db_registries.data
+    model_registry = db_registries.model
+    run_registry = db_registries.run
+    pipeline_registry = db_registries.pipeline
     model, data = linear_regression
 
     #### Create DataCard
@@ -873,7 +873,7 @@ def test_full_pipeline_with_loading(
         modelcard_uids=[model_card.uid],
     )
     exp_card.log_metric("test_metric", 10)
-    experiment_registry.register_card(card=exp_card)
+    run_registry.register_card(card=exp_card)
 
     #### PipelineCard
     pipeline_card = PipelineCard(
@@ -890,11 +890,11 @@ def test_full_pipeline_with_loading(
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_model_registry_with_polars(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
 ):
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries.data
     model, data = linear_regression_polars
     data_card = DataCard(
         data=data,
@@ -914,15 +914,15 @@ def test_model_registry_with_polars(
         to_onnx=True,
     )
 
-    model_registry: CardRegistry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
     assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
-def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
-    registry = db_registries["data"]
+def test_pandas_dtypes(db_registries: CardRegistries, drift_dataframe):
+    registry = db_registries.data
     data, y, _, _ = drift_dataframe
 
     data["col_11"] = y
@@ -948,8 +948,8 @@ def test_pandas_dtypes(db_registries: Dict[str, CardRegistry], drift_dataframe):
     assert splits.test.X.dtypes["col_11"] == "category"
 
 
-def test_polars_dtypes(db_registries: Dict[str, CardRegistry], iris_data_polars):
-    registry = db_registries["data"]
+def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars):
+    registry = db_registries.data
     data = iris_data_polars
 
     data = data.with_columns(
@@ -980,9 +980,9 @@ def test_polars_dtypes(db_registries: Dict[str, CardRegistry], iris_data_polars)
     assert splits.test.X.schema["test_cat"] == orig_schema["test_cat"]
 
 
-def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
+def test_datacard_major_minor_version(db_registries: CardRegistries):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
     data_card = DataCard(
         name="major_minor",
         team="mlops",
@@ -1062,8 +1062,8 @@ def test_datacard_major_minor_version(db_registries: Dict[str, CardRegistry]):
     assert data_card.version == "4.1.0"
 
 
-def test_list_cards(db_registries: Dict[str, CardRegistry]):
-    data_reg = db_registries["data"]
+def test_list_cards(db_registries: CardRegistries):
+    data_reg = db_registries.data
 
     record = {
         "uid": uuid.uuid4().hex,

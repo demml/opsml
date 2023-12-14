@@ -21,7 +21,6 @@ from opsml.registry.cards.types import CardType, RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.settings import DefaultSettings
-from opsml.registry.storage.storage_system import StorageClientType
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
@@ -35,25 +34,25 @@ table_name_card_map = {
 }
 
 
-# CardRegistry also needs to set a storage file system
 class CardRegistry:
-    # TODO(@damon): Take a registry_type enum
-    def __init__(self, registry_name: str, settings: DefaultSettings):
+    def __init__(self, registry_type: RegistryType, settings: DefaultSettings):
         """
         Interface for connecting to any of the ArtifactCard registries
 
         Args:
-            registry_name:
-                Name of the registry to connect to. Options are "model", "data" and "run".
+            registry_type:
+                Type of card registry to create
+            settings:
+                Storage settings
 
         Returns:
             Instantiated connection to specific Card registry
 
         Example:
-            data_registry = CardRegistry(registry_name="data", settings=settings)
+            data_registry = CardRegistry(RegistryType.DATA, settings)s
         """
 
-        self._registry = self._set_registry(registry_name=registry_name, settings=settings)
+        self._registry = self._set_registry(registry_type, settings)
         self.table_name = self._registry.table_name
 
     @property
@@ -61,33 +60,32 @@ class CardRegistry:
         "Registry type for card registry"
         return self._registry.registry_type
 
-    def _set_registry(self, registry_name: str, settings: DefaultSettings) -> SQLRegistryBase:
-        """Returns a SQL registry to be used to register Cards
+    def _set_registry(self, registry_type: RegistryType, settings: DefaultSettings) -> SQLRegistryBase:
+        """Sets the underlying registry.
 
-        Args:
-            registry_name: Name of the registry (pipeline, model, data, experiment)
-
-        Returns:
-            SQL Registry
+        IMPORTANT: We need to delay importing ServerRegistry until we know we
+        need it. Since opsml can run in both "server" mode (where tracking is
+        local) which reqires sqlalchemy and "client" mode which does not, we
+        only want to import ServerRegistry when we know we need it.
         """
-        registry_type: Type[SQLRegistryBase]
+        sql_registry_type: Type[SQLRegistryBase]
         if config.is_tracking_local:
             from opsml.registry.sql.base.server import ServerRegistry
 
-            registry_type = ServerRegistry
+            sql_registry_type = ServerRegistry
         else:
             from opsml.registry.sql.base.client import ClientRegistry
 
-            registry_type = ClientRegistry
+            sql_registry_type = ClientRegistry
 
         registry = next(
             registry
-            for registry in registry_type.__subclasses__()
+            for registry in sql_registry_type.__subclasses__()
             if registry.validate(
-                registry_name=registry_name,
+                registry_name=registry_type.value,
             )
         )
-        return registry(registry_type=RegistryType.from_str(registry_name), settings=settings)
+        return registry(registry_type=registry_type, settings=settings)
 
     def list_cards(
         self,
@@ -295,14 +293,9 @@ class CardRegistries:
         if settings is None:
             settings = DefaultSettings(config)
 
-        self.data = CardRegistry(registry_name=CardType.DATACARD.value, settings=settings)
-        self.model = CardRegistry(registry_name=CardType.MODELCARD.value, settings=settings)
-        self.run = CardRegistry(registry_name=CardType.RUNCARD.value, settings=settings)
-        self.pipeline = CardRegistry(registry_name=CardType.PIPELINECARD.value, settings=settings)
-        self.project = CardRegistry(registry_name=CardType.PROJECTCARD.value, settings=settings)
-        self.audit = CardRegistry(registry_name=CardType.AUDITCARD.value, settings=settings)
-
-    def set_storage_client(self, storage_client: StorageClientType) -> None:
-        for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
-            registry: CardRegistry = getattr(self, attr)
-            registry._registry.storage_client = storage_client
+        self.data = CardRegistry(registry_type=RegistryType.DATA, settings=settings)
+        self.model = CardRegistry(registry_type=RegistryType.MODEL, settings=settings)
+        self.run = CardRegistry(registry_type=RegistryType.RUN, settings=settings)
+        self.pipeline = CardRegistry(registry_type=RegistryType.PIPELINE, settings=settings)
+        self.project = CardRegistry(registry_type=RegistryType.PROJECT, settings=settings)
+        self.audit = CardRegistry(registry_type=RegistryType.AUDIT, settings=settings)
