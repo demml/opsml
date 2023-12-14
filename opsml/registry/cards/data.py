@@ -12,7 +12,6 @@ from pydantic import field_validator, model_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.cards.validator import DataCardValidator
@@ -29,7 +28,6 @@ from opsml.registry.storage.types import ArtifactStorageSpecs
 logger = ArtifactLogger.get_logger()
 
 
-@auditable
 class DataCard(ArtifactCard):
     """Create a DataCard from your data.
 

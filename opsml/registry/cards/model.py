@@ -22,7 +22,6 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidModelInput,
 )
-from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
@@ -35,7 +34,6 @@ logger = ArtifactLogger.get_logger()
 storage_client = settings.storage_client
 
 
-@auditable
 class ModelCard(ArtifactCard):
     """Create a ModelCard from your trained machine learning model.
     This Card is used in conjunction with the ModelCardCreator class.

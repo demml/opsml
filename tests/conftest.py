@@ -69,8 +69,6 @@ from opsml.model.types import OnnxModelDefinition
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 from opsml.registry.cards.types import ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.sql.db_initializer import DBInitializer
-from opsml.registry.sql.sql_schema import Base, BaseMixin, RegistryTableNames
 from opsml.registry.storage.storage_system import StorageClientType, get_storage_client
 from opsml.registry.storage.types import (
     GcsStorageClientSettings,
