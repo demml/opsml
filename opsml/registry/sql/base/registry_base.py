@@ -13,9 +13,9 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
+from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.sql.types import RegistryTableNames
 from opsml.registry.storage.settings import DefaultSettings
 
 logger = ArtifactLogger.get_logger()

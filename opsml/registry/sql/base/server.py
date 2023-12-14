@@ -11,11 +11,13 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import RegistryType
+from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
+from opsml.registry.sql.base.sql_schema import SQLTableGetter
+from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.connectors.connector import DefaultConnector
-from opsml.registry.sql.db_initializer import DBInitializer
 from opsml.registry.sql.records import LoadedRecordType
 from opsml.registry.sql.semver import (
     CardVersion,
@@ -24,8 +26,6 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.sql.sql_schema import SQLTableGetter
-from opsml.registry.sql.table_names import RegistryTableNames
 from opsml.registry.storage.settings import DefaultSettings
 from opsml.settings.config import config
 
