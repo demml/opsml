@@ -27,7 +27,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml.registry.storage.artifact_storage import load_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 from opsml.registry.utils.settings import settings
 
@@ -124,15 +124,23 @@ class ModelCard(ArtifactCard):
         if self.metadata.sample_data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
 
-        sample_data = load_record_artifact_from_storage(
+        sample_data = load_artifact_from_storage(
             artifact_type=self.metadata.sample_data_type,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
         self.sample_input_data = sample_data
 
-    def load_trained_model(self) -> None:
-        """Loads original trained model"""
+    def load_trained_model(self, **kwargs) -> None:
+        """Loads original trained model
+
+        Args:
+            kwargs:
+                Additional kwargs to pass to the model class. Currently, this is only
+                used for `pytorch lightning` models that need to be loaded via a checkpoint.
+                In this case, `pytorch lightning` expects a defined model to load the checkpoint into.
+                This is passed in via the `model_arch` kwarg.
+        """
 
         if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
             raise ValueError(
@@ -145,13 +153,14 @@ class ModelCard(ArtifactCard):
             if self.metadata.model_type is None:
                 raise ValueError("Cannot load trained model - model_type is not set")
 
-            trained_model = load_record_artifact_from_storage(
+            trained_model = load_artifact_from_storage(
                 artifact_type=self.metadata.model_class,
                 storage_client=storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
                 **{
                     "model_type": self.metadata.model_type,
                     "task_type": self.metadata.task_type,
+                    **kwargs,
                 },
             )
             self.trained_model = trained_model
@@ -159,7 +168,7 @@ class ModelCard(ArtifactCard):
     @property
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
-        model_metadata = load_record_artifact_from_storage(
+        model_metadata = load_artifact_from_storage(
             artifact_type=ArtifactStorageType.JSON.value,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
@@ -177,7 +186,7 @@ class ModelCard(ArtifactCard):
         if metadata.onnx_uri is None:
             raise ValueError("Onnx uri is not specified")
 
-        onnx_model = load_record_artifact_from_storage(
+        onnx_model = load_artifact_from_storage(
             artifact_type=ArtifactStorageType.ONNX.value,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=metadata.onnx_uri),

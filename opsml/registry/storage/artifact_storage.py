@@ -618,6 +618,75 @@ class PyTorchModelStorage(ArtifactStorage):
         return artifact_type == TrainedModelType.PYTORCH
 
 
+class PyTorchLightningModelStorage(ArtifactStorage):
+    """Class that saves and loads a pytorch model"""
+
+    def __init__(
+        self,
+        artifact_type: str,
+        storage_client: StorageClientType,
+        extra_path: Optional[str] = None,
+    ):
+        super().__init__(
+            artifact_type=artifact_type,
+            storage_client=storage_client,
+            file_suffix="ckpt",
+            artifact_class=ArtifactClass.OTHER.value,
+            extra_path=extra_path,
+        )
+
+    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+        """
+        Saves a pytorch lightning model
+
+        Args:
+            artifact:
+                Artifact to write to json
+            storage_uri:
+                Path to write to
+            tmp_uri:
+                Temporary uri to write to. This will be used for some storage clients.
+
+        Returns:
+            Storage path
+        """
+        from lightning import Trainer
+
+        trainer = cast(Trainer, artifact)
+        trainer.save_checkpoint(tmp_uri)
+
+        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any):
+        """Loads a pytorch lightning model. It is expected that a model
+        architecture will be passed via kwargs in order to load the model from
+        a checkpoint. If an architecture is not passed, an attempt to load via
+        pytorch will be made.
+
+        Args:
+            file_path:
+                File path to checkpoint
+        """
+        try:
+            model_arch = kwargs.get("model_arch")
+
+            if model_arch is not None:
+                # attempt to load checkpoint into model
+                return model_arch.load_from_checkpoint(file_path)
+
+            else:
+                # load via torch
+                import torch
+
+                return torch.load(file_path)
+        except Exception as e:
+            raise ValueError(f"Unable to load pytorch lightning model: {e}")
+
+    @staticmethod
+    def validate(artifact_type: str) -> bool:
+        return artifact_type == TrainedModelType.PYTORCH_LIGHTNING
+
+
 class HuggingFaceStorage(ArtifactStorage):
     """Class that saves and loads a huggingface model"""
 
@@ -637,7 +706,7 @@ class HuggingFaceStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """
-        Saves a pytorch model
+        Saves a huggingface model
 
         Args:
             artifact:
@@ -660,15 +729,25 @@ class HuggingFaceStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-    def _load_artifact(self, file_path: FilePath, **kwargs: Any):  # type: ignore
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> Any:
+        """ "Loads a huggingface model (model or pipeline)
+
+        Args:
+            kwargs:
+                Dictionary of arguments to pass to pass for model loading
+
+                model_type: The huggingface model type passed via metadata
+                task_type: The huggingface task type. This is used for models that
+                were saved as pipelines
+
+        """
         import transformers
 
-        # kwargs will be {"model_class", "model_type"}
         model_type = kwargs["model_type"]
         task_type = kwargs["task_type"]
 
-        # only way to tell if model was a pipeline
-        if "pipeline" in model_type:
+        # only way to tell if model was a pipeline is from model class type
+        if "pipeline" in model_type.lower():
             return transformers.pipeline(task_type, file_path)
 
         else:
@@ -720,7 +799,7 @@ def save_artifact_to_storage(
     ).save_artifact(artifact=artifact, storage_spec=storage_spec)
 
 
-def load_record_artifact_from_storage(
+def load_artifact_from_storage(
     artifact_type: str,
     storage_client: StorageClientType,
     storage_spec: ArtifactStorageSpecs,
