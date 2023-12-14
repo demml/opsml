@@ -4,9 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-import numpy as np
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.utils.data_helper import get_model_data

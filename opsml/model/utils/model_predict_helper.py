@@ -1,8 +1,10 @@
-from typing import Any, List, Dict, cast, Union
+from typing import Any, Dict, List, Union, cast
+
 from numpy.typing import NDArray
-from opsml.model.utils.types import ValidModelInput, TrainedModelType
-from opsml.registry.data.types import AllowedDataType
+
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.utils.types import TrainedModelType, ValidModelInput
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 

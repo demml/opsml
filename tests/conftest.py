@@ -48,6 +48,7 @@ from sklearn import (
     svm,
     tree,
 )
+from sklearn.base import BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
 
@@ -58,7 +59,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.base import BaseEstimator
 from starlette.testclient import TestClient
 from xgboost import XGBRegressor
 
@@ -1774,15 +1774,13 @@ def deeplabv3_resnet50():
 
 @pytest.fixture(scope="module")
 def pytorch_lightning_model():
-    import torch
-    from torch import optim, nn, utils, Tensor
-    from torchvision.datasets import MNIST
-    from torchvision.transforms import ToTensor
     import lightning as L
+    import torch
+    from torch import nn
 
     # define any number of nn.Modules (or use your current ones)
-    encoder = nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
-    decoder = nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
+    nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
+    nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
 
     # define the LightningModule
     class SimpleModel(L.LightningModule):
