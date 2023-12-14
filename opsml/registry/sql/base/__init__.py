@@ -2,17 +2,22 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from opsml.registry.storage.settings import settings
+from typing import cast
+
+from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.settings.config import config
+
+logger = ArtifactLogger.get_logger()
 
 
 # no typing in order to prevent imports before they're needed
 def get_registry():  # type: ignore
     """Get the registry object based on the settings"""
 
-    # initialize tables
-    if settings.request_client is None:
-        from typing import cast
+    if config.is_tracking_local:
+        logger.info("Initializing SQL: verifying the [server] extra is installed.")
+        OpsmlImportExceptions.try_sql_import()
 
         from sqlalchemy.engine.base import Engine
 

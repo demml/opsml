@@ -73,6 +73,10 @@ def verify_path(path: str) -> str:
     )
 
 
+#
+# TODO(@damon): Ensure WritePath is placed within the storage root!
+# TODO(@damon): Currently the client controls where the server puts the file.
+#
 # upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
 async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
