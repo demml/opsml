@@ -3,10 +3,14 @@ import pytest
 
 from opsml.model.utils.model_predict_helper import PredictHelper
 from opsml.registry.cards.validator import ModelCardValidator
+from opsml.registry.storage.artifact_storage import save_artifact_to_storage, load_artifact_from_storage
+from opsml.registry.storage.types import ArtifactStorageSpecs
+
+TRAINED_MODEL = "trained-model"
 
 
 @pytest.mark.compat
-def test_huggingface_model(huggingface_bart):
+def _test_huggingface_model(huggingface_bart, api_storage_client):
     model, inputs = huggingface_bart
 
     validator = ModelCardValidator(
@@ -30,9 +34,32 @@ def test_huggingface_model(huggingface_bart):
 
     assert isinstance(predictions, np.ndarray)
 
+    storage_path = save_artifact_to_storage(
+        artifact=model,
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(
+            filename=TRAINED_MODEL,
+            save_path="OPSML_MODEL_REGISTRY",
+        ),
+        extra_path="model",
+    )
+
+    loaded_model = load_artifact_from_storage(
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
+        **{
+            "model_type": metadata.model_type,
+            "task_type": metadata.task_type,
+        },
+    )
+
+    assert type(loaded_model) == type(model)
+
 
 @pytest.mark.compat
-def test_huggingface_pipeline(huggingface_text_classification_pipeline):
+def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
     model, inputs = huggingface_text_classification_pipeline
 
     validator = ModelCardValidator(
@@ -54,9 +81,32 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline):
     )
     assert isinstance(predictions, list)
 
+    storage_path = save_artifact_to_storage(
+        artifact=model,
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(
+            filename=TRAINED_MODEL,
+            save_path="OPSML_MODEL_REGISTRY",
+        ),
+        extra_path="model",
+    )
+
+    loaded_model = load_artifact_from_storage(
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
+        **{
+            "model_type": metadata.model_type,
+            "task_type": metadata.task_type,
+        },
+    )
+
+    assert type(loaded_model) == type(model)
+
 
 @pytest.mark.compat
-def test_huggingface_subclass(huggingface_subclass):
+def _test_huggingface_subclass(huggingface_subclass):
     model, inputs = huggingface_subclass
 
     validator = ModelCardValidator(
@@ -71,7 +121,7 @@ def test_huggingface_subclass(huggingface_subclass):
 
 
 @pytest.mark.compat
-def test_sklearn_subclass(sklearn_subclass):
+def _test_sklearn_subclass(sklearn_subclass):
     model, inputs = sklearn_subclass
 
     validator = ModelCardValidator(
@@ -86,7 +136,7 @@ def test_sklearn_subclass(sklearn_subclass):
 
 
 @pytest.mark.compat
-def test_torch_deeplab(deeplabv3_resnet50):
+def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
     model, inputs = deeplabv3_resnet50
 
     validator = ModelCardValidator(
@@ -109,9 +159,28 @@ def test_torch_deeplab(deeplabv3_resnet50):
 
     assert isinstance(predictions, dict)
 
+    storage_path = save_artifact_to_storage(
+        artifact=model,
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(
+            filename=TRAINED_MODEL,
+            save_path="OPSML_MODEL_REGISTRY",
+        ),
+        extra_path="model",
+    )
+
+    loaded_model = load_artifact_from_storage(
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
+    )
+
+    assert type(loaded_model) == type(model)
+
 
 @pytest.mark.compat
-def test_torch_lightning(pytorch_lightning_model):
+def _test_torch_lightning(pytorch_lightning_model):
     trainer, inputs = pytorch_lightning_model
 
     validator = ModelCardValidator(
@@ -145,7 +214,52 @@ def test_torch_lightning(pytorch_lightning_model):
 
 
 @pytest.mark.compat
-def test_sklearn_pipeline(sklearn_pipeline):
+def _test_lightning_regression(lightning_regression, api_storage_client):
+    trainer, inputs, arch = lightning_regression
+
+    validator = ModelCardValidator(
+        sample_data=inputs,
+        trained_model=trainer,
+    )
+
+    metadata = validator.get_metadata()
+
+    assert metadata.model_type == "MyModel"
+    assert metadata.model_class == "pytorch_lightning"
+
+    predictions = PredictHelper.get_model_prediction(
+        trainer.model,
+        validator.get_sample_data(),
+        metadata.sample_data_type,
+        metadata.model_class,
+        metadata.model_type,
+    )
+
+    assert isinstance(predictions, np.ndarray)
+
+    storage_path = save_artifact_to_storage(
+        artifact=trainer,
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(
+            filename=TRAINED_MODEL,
+            save_path="OPSML_MODEL_REGISTRY",
+        ),
+        extra_path="model",
+    )
+
+    loaded_model = load_artifact_from_storage(
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
+        **{"model_arch": arch},
+    )
+
+    assert type(loaded_model) == type(trainer.model)
+
+
+@pytest.mark.compat
+def _test_sklearn_pipeline(sklearn_pipeline):
     model, inputs = sklearn_pipeline
 
     validator = ModelCardValidator(
@@ -169,7 +283,7 @@ def test_sklearn_pipeline(sklearn_pipeline):
 
 
 @pytest.mark.compat
-def test_tensorflow(load_transformer_example):
+def _test_tensorflow(load_transformer_example):
     model, inputs = load_transformer_example
 
     validator = ModelCardValidator(
@@ -194,7 +308,7 @@ def test_tensorflow(load_transformer_example):
 
 
 @pytest.mark.compat
-def test_tensorflow_multi_input(load_multi_input_keras_example):
+def _test_tensorflow_multi_input(load_multi_input_keras_example):
     model, inputs = load_multi_input_keras_example
 
     validator = ModelCardValidator(

@@ -21,7 +21,7 @@ from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.data.types import AllowedDataType, ValidData
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml.registry.storage.artifact_storage import load_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
@@ -309,7 +309,7 @@ class DataProfileDownloader(Downloader):
 
     def download(self) -> None:
         """Downloads a data profile from storage"""
-        data_profile = load_record_artifact_from_storage(
+        data_profile = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
@@ -336,7 +336,7 @@ class DataDownloader(Downloader):
             logger.info("Data already exists")
             return
 
-        data = load_record_artifact_from_storage(
+        data = load_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
@@ -375,7 +375,7 @@ class ImageDownloader(Downloader):
 
         kwargs = {"image_dir": data.image_dir}
 
-        load_record_artifact_from_storage(
+        load_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(

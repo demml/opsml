@@ -17,7 +17,7 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     RegistryType,
 )
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml.registry.storage.artifact_storage import load_artifact_from_storage
 from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
@@ -210,7 +210,7 @@ class LoadedDataRecord(LoadRecord):
         Returns:
             Dictionary to be parsed by DataCard.model_validate()
         """
-        datacard_definition = load_record_artifact_from_storage(
+        datacard_definition = load_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=save_path),
@@ -264,7 +264,7 @@ class LoadedModelRecord(LoadRecord):
         Returns:
             Dictionary to be parsed by ModelCard.parse_obj()
         """
-        model_card_definition = load_record_artifact_from_storage(
+        model_card_definition = load_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
@@ -319,7 +319,7 @@ class LoadedAuditRecord(LoadRecord):
             Audit dictionary
         """
 
-        audit_definition = load_record_artifact_from_storage(
+        audit_definition = load_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
@@ -371,7 +371,7 @@ class LoadedRunRecord(LoadRecord):
             Dictionary to be parsed by RunCard.model_validate()
         """
 
-        runcard_definition = load_record_artifact_from_storage(
+        runcard_definition = load_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),

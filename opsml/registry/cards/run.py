@@ -13,7 +13,7 @@ from opsml.registry.sql.records import (
     RegistryRecord,
     RunRegistryRecord,
 )
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml.registry.storage.artifact_storage import load_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from opsml.registry.utils.settings import settings
 
@@ -270,7 +270,7 @@ class RunCard(ArtifactCard):
     def load_artifacts(self) -> None:
         if bool(self.artifact_uris):
             for name, uri in self.artifact_uris.items():
-                self.artifacts[name] = load_record_artifact_from_storage(
+                self.artifacts[name] = load_artifact_from_storage(
                     artifact_type=ARBITRARY_ARTIFACT_TYPE,
                     storage_client=storage_client,
                     storage_spec=ArtifactStorageSpecs(save_path=uri),

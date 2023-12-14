@@ -61,6 +61,12 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from starlette.testclient import TestClient
 from xgboost import XGBRegressor
+import torch
+import lightning as L
+from torch.nn import MSELoss
+from torch.optim import Adam
+from torch.utils.data import DataLoader, Dataset
+import torch.nn as nn
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
@@ -1774,10 +1780,6 @@ def deeplabv3_resnet50():
 
 @pytest.fixture(scope="module")
 def pytorch_lightning_model():
-    import lightning as L
-    import torch
-    from torch import nn
-
     # define any number of nn.Modules (or use your current ones)
     nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
     nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
@@ -1798,3 +1800,56 @@ def pytorch_lightning_model():
     input_sample = torch.randn((1, 64))
 
     return trainer, input_sample
+
+
+@pytest.fixture(scope="module")
+def lightning_regression():
+    class SimpleDataset(Dataset):
+        def __init__(self):
+            X = np.arange(10000)
+            y = X * 2
+            X = [[_] for _ in X]
+            y = [[_] for _ in y]
+            self.X = torch.Tensor(X)
+            self.y = torch.Tensor(y)
+
+        def __len__(self):
+            return len(self.y)
+
+        def __getitem__(self, idx):
+            return {"X": self.X[idx], "y": self.y[idx]}
+
+    class MyModel(L.LightningModule):
+        def __init__(self):
+            super().__init__()
+            self.fc = nn.Linear(1, 1)
+            self.criterion = MSELoss()
+
+        def forward(self, inputs_id, labels=None):
+            outputs = self.fc(inputs_id)
+            loss = 0
+            if labels is not None:
+                loss = self.criterion(outputs, labels)
+            return loss, outputs
+
+        def train_dataloader(self):
+            dataset = SimpleDataset()
+            return DataLoader(dataset, batch_size=1000)
+
+        def training_step(self, batch, batch_idx):
+            input_ids = batch["X"]
+            labels = batch["y"]
+            loss, outputs = self(input_ids, labels)
+            return {"loss": loss}
+
+        def configure_optimizers(self):
+            optimizer = Adam(self.parameters())
+            return optimizer
+
+    model = MyModel()
+    trainer = L.Trainer(max_epochs=1)
+    trainer.fit(model)
+
+    X = torch.Tensor([[1.0], [51.0], [89.0]])
+
+    return trainer, X, MyModel

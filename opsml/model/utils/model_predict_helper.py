@@ -65,6 +65,8 @@ class PredictHelper:
 
 class TorchPredictHelper(PredictHelper):
     def get_prediction(self, model: Any, inputs: ValidModelInput) -> NDArray[Any]:
+        import torch
+
         try:
             if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
                 predictions = model(**inputs)
@@ -73,6 +75,11 @@ class TorchPredictHelper(PredictHelper):
 
             if isinstance(predictions, dict):
                 return {key: value.detach().numpy() for key, value in predictions.items()}
+
+            if isinstance(predictions, tuple):
+                for value in predictions:
+                    if isinstance(value, torch.Tensor):
+                        return value.detach().numpy()
 
             return predictions.detach().numpy()
 
