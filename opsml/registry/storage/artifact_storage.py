@@ -16,7 +16,7 @@ import zarr
 from numpy.typing import NDArray
 
 from opsml.helpers.utils import all_subclasses
-from opsml.model.utils.types import ModelProto
+from opsml.model.utils.types import ModelProto, TrainedModelType
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
@@ -26,7 +26,6 @@ from opsml.registry.storage.storage_system import (
     StorageSystem,
 )
 from opsml.registry.storage.types import (
-    ARTIFACT_TYPES,
     ArtifactStorageSpecs,
     ArtifactStorageType,
     FilePath,
@@ -248,7 +247,7 @@ class JoblibStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type not in ARTIFACT_TYPES
+        return False
 
 
 class ImageDataStorage(ArtifactStorage):
@@ -569,7 +568,7 @@ class TensorflowModelStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.TF_MODEL
+        return artifact_type == TrainedModelType.TF_KERAS
 
 
 class PyTorchModelStorage(ArtifactStorage):
@@ -616,7 +615,7 @@ class PyTorchModelStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type in ArtifactStorageType.PYTORCH
+        return artifact_type == TrainedModelType.PYTORCH
 
 
 class HuggingFaceStorage(ArtifactStorage):
@@ -662,14 +661,23 @@ class HuggingFaceStorage(ArtifactStorage):
         )
 
     def _load_artifact(self, file_path: FilePath, **kwargs: Any):  # type: ignore
-        # kwargs will be {"model_class", "model_type"}
-        import torch
+        import transformers
 
-        return torch.load(str(file_path))
+        # kwargs will be {"model_class", "model_type"}
+        model_type = kwargs["model_type"]
+        task_type = kwargs["task_type"]
+
+        # only way to tell if model was a pipeline
+        if "pipeline" in model_type:
+            return transformers.pipeline(task_type, file_path)
+
+        else:
+            # load model from pretrained
+            return getattr(transformers, model_type).from_pretrained(file_path)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type in ArtifactStorageType.TRANSFORMER
+        return artifact_type == TrainedModelType.TRANSFORMERS
 
 
 class LightGBMBoosterStorage(JoblibStorage):
@@ -682,7 +690,7 @@ class LightGBMBoosterStorage(JoblibStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.BOOSTER
+        return artifact_type == TrainedModelType.LGBM_BOOSTER
 
 
 def save_artifact_to_storage(

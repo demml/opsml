@@ -17,6 +17,7 @@ import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
+from opsml.version import __version__
 
 # Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
 ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, Any], pl.DataFrame, str]  # type: ignore
@@ -291,7 +292,7 @@ class ModelMetadata(BaseModel):
     model_uri: str
     model_version: str
     model_team: str
-    opsml_version: str
+    opsml_version: str = __version__
     sample_data: Dict[str, Any]
     data_schema: ApiDataSchemas
 

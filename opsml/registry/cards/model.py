@@ -101,7 +101,7 @@ class ModelCard(ArtifactCard):
             metadata=metadata,
         )
 
-        values["sample_input_data"] = card_validator.get_sample()
+        values["sample_input_data"] = card_validator.get_sample_data()
         values["metadata"] = card_validator.get_metadata()
 
         return values
@@ -146,9 +146,13 @@ class ModelCard(ArtifactCard):
                 raise ValueError("Cannot load trained model - model_type is not set")
 
             trained_model = load_record_artifact_from_storage(
-                artifact_type=self.metadata.model_type,
+                artifact_type=self.metadata.model_class,
                 storage_client=storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                **{
+                    "model_type": self.metadata.model_type,
+                    "task_type": self.metadata.task_type,
+                },
             )
             self.trained_model = trained_model
 

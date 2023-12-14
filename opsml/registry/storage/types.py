@@ -16,24 +16,8 @@ FilePath = Union[List[str], str]
 
 class ArtifactStorageType(str, Enum):
     HTML = "html"
-    TF_MODEL = "keras"
-    PYTORCH = "pytorch"
     JSON = "json"
-    BOOSTER = "booster"
     ONNX = "onnx"
-    TRANSFORMER = "transformer"
-
-
-ARTIFACT_TYPES = [
-    *list(ArtifactStorageType),
-    *[
-        AllowedDataType.NUMPY,
-        AllowedDataType.PANDAS,
-        AllowedDataType.POLARS,
-        AllowedDataType.IMAGE,
-        AllowedDataType.PYARROW,
-    ],
-]
 
 
 class StorageClientSettings(BaseModel):

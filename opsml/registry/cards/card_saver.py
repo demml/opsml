@@ -249,7 +249,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             model_uri=self.card.metadata.uris.trained_model_uri,
             model_version=self.card.version,
             model_team=self.card.team,
-            opsml_version=__version__,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.metadata.data_schema,
         )
