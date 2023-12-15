@@ -4,6 +4,7 @@ import polars as pl
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType
+from opsml.model.utils.huggingface_types import HuggingFaceTaskType
 
 
 def get_model_args(model_args: Dict[str, Any]) -> Tuple[Any, str, List[str]]:
@@ -74,6 +75,10 @@ class SklearnModel(SupportedModel):
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, module, bases = get_model_args(model_args)
 
+        from sklearn.base import BaseEstimator
+
+        assert isinstance(model, BaseEstimator), "Model must be a sklearn estimator"
+
         if "sklearn" in module:
             model_args["model_type"] = model.__class__.__name__
 
@@ -93,6 +98,10 @@ class TensorflowModel(SupportedModel):
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, module, bases = get_model_args(model_args)
+
+        import tensorflow as tf
+
+        assert isinstance(model, tf.keras.Model), "Model must be a tensorflow keras model"
 
         if "keras" in module:
             model_args["model_type"] = model.__class__.__name__
@@ -114,6 +123,10 @@ class PytorchModel(SupportedModel):
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, _, bases = get_model_args(model_args)
 
+        from torch.nn import Module
+
+        assert isinstance(model, Module), "Model must be a pytorch model"
+
         for base in bases:
             if "torch" in base:
                 model_args["model_type"] = model.__class__.__name__
@@ -131,15 +144,15 @@ class LightningModel(SupportedModel):
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, module, bases = get_model_args(model_args)
 
+        from pytorch_lightning import Trainer
+
+        assert isinstance(model, Trainer), "Model must be a pytorch lightning trainer"
+
         if "lightning.pytorch" in module:
-            if "trainer" not in module:
-                raise ValueError("Trainer must be passed to ModelCardValidator when using pytorch lightning models")
-            model_args["model_type"] = model.__class__.__name__
+            model_args["model_type"] = model.model.__class__.__name__
 
         for base in bases:
             if "lightning.pytorch" in base:
-                if "trainer" not in base:
-                    raise ValueError("Trainer must be passed to ModelCardValidator when using pytorch lightning models")
                 model_args["model_type"] = "subclass"
 
         return model_args
@@ -161,22 +174,16 @@ class LightGBMBoosterModel(SupportedModel):
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, module, _ = get_model_args(model_args)
 
+        from lightgbm import Booster
+
+        assert isinstance(
+            model, Booster
+        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+
         if "lightgbm" in module:
             model_args["model_type"] = model.__class__.__name__
 
         return model_args
-
-    @field_validator("model", mode="before")
-    @classmethod
-    def check_model_name(cls, model: Any) -> Any:
-        if "sklearn" in model.__module_.lower():
-            raise ValueError("Sklearn flavor of LightGBM model is not supported. Use SklearnModel instead.")
-
-        model_bases = [str(base) for base in model.__class__.__bases__]
-        for base in model_bases:
-            if "sklearn" in base:
-                raise ValueError("Sklearn flavor of LightGBM model is not supported. Use SklearnModel instead.")
-        return model
 
     @property
     def model_class(self) -> str:
@@ -191,6 +198,16 @@ class HuggingFaceModel(SupportedModel):
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, module, bases = get_model_args(model_args)
 
+        if model_args.get("is_pipeline"):
+            from transformers import Pipeline
+
+            assert isinstance(model, Pipeline), "Model must be a huggingface pipeline"
+
+        else:
+            from transformers import PreTrainedModel
+
+            assert isinstance(model, PreTrainedModel), "Model must be a huggingface model"
+
         if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
             model_args["model_type"] = model.__class__.__name__
 
@@ -203,6 +220,16 @@ class HuggingFaceModel(SupportedModel):
                     model_args["model_type"] = "subclass"
 
         return model_args
+
+    @field_validator("task_type", mode="before")
+    @classmethod
+    def check_task_type(cls, task_type: str) -> str:
+        """Check if task is a huggingface approved task"""
+
+        task = task_type.lower()
+        if task not in list(HuggingFaceTaskType):
+            raise ValueError(f"Task type {task} is not supported")
+        return task
 
     @property
     def model_class(self) -> str:
