@@ -79,6 +79,14 @@ from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
 from opsml.settings.config import OpsmlConfig, config
+from opsml.registry.cards.supported_models import (
+    HuggingFaceModel,
+    SklearnModel,
+    TensorflowModel,
+    PytorchModel,
+    LightningModel,
+    XGBoostModel,
+)
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
@@ -996,7 +1004,12 @@ def huggingface_bart():
     model = BartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
 
+    HuggingFaceModel(model=model, preprocessor=tokenizer, sample_data=inputs)
+
     return model, inputs
+
+
+from transformers import pipeline
 
 
 @pytest.fixture(scope="module")

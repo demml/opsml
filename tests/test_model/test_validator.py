@@ -3,10 +3,11 @@ import pytest
 
 from opsml.model.utils.model_predict_helper import PredictHelper
 from opsml.registry.cards.validator import ModelCardValidator
-from opsml.registry.storage.artifact_storage import (
+from opsml.registry.storage.artifact import (
     load_artifact_from_storage,
     save_artifact_to_storage,
 )
+
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 TRAINED_MODEL = "trained-model"
