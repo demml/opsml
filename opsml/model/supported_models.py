@@ -1,4 +1,7 @@
-from typing import Any, List
+from typing import Any, Union, Optional, Dict
+import pandas as pd
+import polars as pl
+from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.model.utils.types import TrainedModelType, ValidModelInput
 
@@ -7,8 +10,45 @@ class SupportedModel(BaseModel):
     model: Any
     preprocessor: Any
     sample_data: ValidModelInput
+    task_type: str = "undefined"
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
+
+    @field_validator("sample_data", mode="before")
+    @classmethod
+    def get_sample_data(
+        cls, sample_data: ValidModelInput
+    ) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
+        """Check sample data and returns one record to be used
+        during type inference and ONNX conversion/validation
+
+        Returns:
+            Sample data with only one record
+        """
+        if isinstance(sample_data, str):
+            return sample_data
+
+        if not isinstance(sample_data, dict):
+            if isinstance(sample_data, pl.DataFrame):
+                sample_data = sample_data.to_pandas()
+
+            return sample_data[0:1]
+
+        sample_dict = {}
+        if isinstance(sample_data, dict):
+            for key, value in sample_data.items():
+                if hasattr(value, "shape"):
+                    if len(value.shape) > 1:
+                        sample_dict[key] = value[0:1]
+                else:
+                    raise ValueError(
+                        """Provided sample data is not a valid type. 
+                        Must be a dictionary of numpy, torch, or tensorflow tensors."""
+                    )
+
+            return sample_dict
+
+        raise ValueError("Provided sample data is not a valid type")
 
     @property
     def model_type(self) -> str:
@@ -66,7 +106,6 @@ class LightGBMBoosterModel(SupportedModel):
 
 
 class HuggingfaceModel(SupportedModel):
-    task_type: str
     is_pipeline: bool = False
 
     @property
@@ -74,7 +113,7 @@ class HuggingfaceModel(SupportedModel):
         return TrainedModelType.TRANSFORMERS.value
 
 
-SUPPORTED_MODELS = List[
+SUPPORTED_MODELS = Union[
     SklearnModel,
     TensorflowModel,
     PytorchModel,

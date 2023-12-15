@@ -9,11 +9,11 @@ import polars as pl
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.supported_models import SUPPORTED_MODELS
 from opsml.model.utils.types import (
     HuggingFaceModuleType,
     ModelType,
     TrainedModelType,
-    ValidModelInput,
 )
 from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
@@ -102,8 +102,7 @@ class DataCardValidator(CardValidator):
 class ModelCardValidator:
     def __init__(
         self,
-        sample_data: ValidModelInput,
-        trained_model: Any,
+        model: SUPPORTED_MODELS,
         metadata: Optional[ModelCardMetadata] = None,
     ) -> None:
         """ModelCardValidator validator to be used during ModelCard instantiation
@@ -116,12 +115,9 @@ class ModelCardValidator:
             metadata:
                 Metadata to be used for ModelCard
         """
-        self.sample_data = sample_data
-        self.trained_model = trained_model
+        self.model = model
         self.metadata = metadata
-        self.model_module = trained_model.__module__
-        self.model_bases = [str(base) for base in trained_model.__class__.__bases__]
-        self.model_name = trained_model.__class__.__name__
+        self.model_name = self.model.model.__class__.__name__
 
     def _get_model_class_name(self) -> Tuple[str, str]:
         """Gets class name from model"""
@@ -229,41 +225,6 @@ class ModelCardValidator:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
                     return TrainedModelType.TRANSFORMERS.value, "subclass"
         return None
-
-    def get_sample_data(self) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
-        """Check sample data and returns one record to be used
-        during ONNX conversion and validation
-
-        Returns:
-            Sample data with only one record
-        """
-        if self.sample_data is None:
-            return self.sample_data
-
-        if isinstance(self.sample_data, str):
-            return self.sample_data
-
-        if not isinstance(self.sample_data, dict):
-            if isinstance(self.sample_data, pl.DataFrame):
-                self.sample_data = self.sample_data.to_pandas()
-
-            return self.sample_data[0:1]
-
-        sample_dict = {}
-        if isinstance(self.sample_data, dict):
-            for key, value in self.sample_data.items():
-                if hasattr(value, "shape"):
-                    if len(value.shape) > 1:
-                        sample_dict[key] = value[0:1]
-                else:
-                    raise ValueError(
-                        """Provided sample data is not a valid type. 
-                        Must be a dictionary of numpy, torch, or tensorflow tensors."""
-                    )
-
-            return sample_dict
-
-        raise ValueError("Provided sample data is not a valid type")
 
     def get_model_type(self, model_class_name: str) -> str:
         """Get model type for metadata"""
