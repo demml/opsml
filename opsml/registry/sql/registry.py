@@ -20,7 +20,7 @@ from opsml.registry.cards import (
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
-from opsml.registry.storage.settings import DefaultSettings
+from opsml.registry.storage import client
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
@@ -35,7 +35,7 @@ table_name_card_map = {
 
 
 class CardRegistry:
-    def __init__(self, registry_type: RegistryType, settings: DefaultSettings):
+    def __init__(self, registry_type: RegistryType, storage_client: client.StorageClientType):
         """
         Interface for connecting to any of the ArtifactCard registries
 
@@ -52,7 +52,7 @@ class CardRegistry:
             data_registry = CardRegistry(RegistryType.DATA, settings)s
         """
 
-        self._registry = self._set_registry(registry_type, settings)
+        self._registry = self._set_registry(registry_type, storage_client)
         self.table_name = self._registry.table_name
 
     @property
@@ -60,7 +60,7 @@ class CardRegistry:
         "Registry type for card registry"
         return self._registry.registry_type
 
-    def _set_registry(self, registry_type: RegistryType, settings: DefaultSettings) -> SQLRegistryBase:
+    def _set_registry(self, registry_type: RegistryType, storage_client: client.StorageClientType) -> SQLRegistryBase:
         """Sets the underlying registry.
 
         IMPORTANT: We need to delay importing ServerRegistry until we know we
@@ -85,7 +85,7 @@ class CardRegistry:
                 registry_name=registry_type.value,
             )
         )
-        return registry(registry_type=registry_type, settings=settings)
+        return registry(registry_type=registry_type, storage_client=storage_client)
 
     def list_cards(
         self,
@@ -288,14 +288,14 @@ class CardRegistry:
 
 
 class CardRegistries:
-    def __init__(self, settings: Optional[DefaultSettings] = None) -> None:
+    def __init__(self, storage_client: Optional[client.StorageClientType] = None) -> None:
         """Instantiates class that contains all registries"""
-        if settings is None:
-            settings = DefaultSettings(config)
+        if storage_client is None:
+            storage_client = client.storage_client
 
-        self.data = CardRegistry(registry_type=RegistryType.DATA, settings=settings)
-        self.model = CardRegistry(registry_type=RegistryType.MODEL, settings=settings)
-        self.run = CardRegistry(registry_type=RegistryType.RUN, settings=settings)
-        self.pipeline = CardRegistry(registry_type=RegistryType.PIPELINE, settings=settings)
-        self.project = CardRegistry(registry_type=RegistryType.PROJECT, settings=settings)
-        self.audit = CardRegistry(registry_type=RegistryType.AUDIT, settings=settings)
+        self.data = CardRegistry(registry_type=RegistryType.DATA, storage_client=storage_client)
+        self.model = CardRegistry(registry_type=RegistryType.MODEL, storage_client=storage_client)
+        self.run = CardRegistry(registry_type=RegistryType.RUN, storage_client=storage_client)
+        self.pipeline = CardRegistry(registry_type=RegistryType.PIPELINE, storage_client=storage_client)
+        self.project = CardRegistry(registry_type=RegistryType.PROJECT, storage_client=storage_client)
+        self.audit = CardRegistry(registry_type=RegistryType.AUDIT, storage_client=storage_client)

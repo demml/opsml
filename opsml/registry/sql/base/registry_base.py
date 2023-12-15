@@ -16,13 +16,13 @@ from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.storage.settings import DefaultSettings
+from opsml.registry.storage.client import StorageClientType
 
 logger = ArtifactLogger.get_logger()
 
 
 class SQLRegistryBase:
-    def __init__(self, registry_type: RegistryType, settings: DefaultSettings):
+    def __init__(self, registry_type: RegistryType, storage_client: StorageClientType):
         """
         Base class for SQL Registries to inherit from
 
@@ -30,7 +30,7 @@ class SQLRegistryBase:
             registry_type:
                 Registry type
         """
-        self.storage_client = settings.storage_client
+        self.storage_client = storage_client
         self._table_name = RegistryTableNames[registry_type.value.upper()].value
 
     @property

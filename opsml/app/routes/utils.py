@@ -22,7 +22,7 @@ from opsml.registry.cards.audit import AuditCard, AuditSections
 from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.storage.storage_system import LocalStorageClient, StorageClientType
+from opsml.registry.storage.client import LocalStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()
 # Constants

@@ -10,8 +10,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.base.types import ProjectInfo, Tags
 from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
-from opsml.registry.storage.settings import settings
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage import client
 
 logger = ArtifactLogger.get_logger()
 
@@ -36,9 +35,7 @@ class _RunManager:
         self._active_run: Optional[ActiveRun] = None
         self._version: Optional[str] = None
 
-        # in opsml, storage client comes from settings (created once during runtime)
-        # storage and registries are held in run_manager and passed to active run
-        self._storage_client = settings.storage_client
+        self._storage_client = client.storage_client
         self.registries = CardRegistries()
 
         run_id = project_info.run_id
@@ -53,7 +50,7 @@ class _RunManager:
         return self._project_id
 
     @property
-    def storage_client(self) -> StorageClientType:
+    def storage_client(self) -> client.StorageClientType:
         return self._storage_client
 
     @property

@@ -70,12 +70,8 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.storage.storage_system import StorageClientType, get_storage_client
-from opsml.registry.storage.types import (
-    GcsStorageClientSettings,
-    S3StorageClientSettings,
-    StorageClientSettings,
-)
+from opsml.registry.storage import client
+from opsml.settings.config import OpsmlConfig, config
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
@@ -178,31 +174,18 @@ def mock_gcp_creds(mock_gcp_vars):
 
 
 @pytest.fixture(scope="function")
-def gcp_storage_client(mock_gcp_vars):
-    gcs_settings = GcsStorageClientSettings(
-        storage_type="gcs",
-        storage_uri="gs://test",
-        credentials=mock_gcp_vars["gcp_creds"],
-        gcp_project=mock_gcp_vars["gcp_project"],
-    )
-    storage_client = get_storage_client(settings=gcs_settings)
-    return storage_client
+def gcp_storage_client(mock_gcp_creds):
+    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://test"))
 
 
 @pytest.fixture(scope="function")
 def s3_storage_client():
-    s3_settings = S3StorageClientSettings(
-        storage_type="s3",
-        storage_uri="s3://test",
-    )
-    storage_client = get_storage_client(settings=s3_settings)
-    return storage_client
+    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="s3://test"))
 
 
 @pytest.fixture(scope="function")
 def local_storage_client():
-    storage_client = get_storage_client(settings=StorageClientSettings())
-    return storage_client
+    return client.get_storage_client(OpsmlConfig())
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -301,10 +284,6 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-from opsml.registry.storage.settings import DefaultSettings
-from opsml.settings.config import OpsmlConfig, config
-
-
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
     def callable_api():
         return test_client
@@ -314,14 +293,27 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
         # TODO(@damon): Get rid of all global state
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
-        # Create default settings
         cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=STORAGE_PATH)
-        return CardRegistries(DefaultSettings(cfg=cfg))
+
+        # Cards rely on global storage state - so set it to API
+        client.storage_client = client.get_storage_client(cfg)
+        return CardRegistries(client.storage_client)
 
 
 @pytest.fixture(scope="function")
 def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Iterator[CardRegistries]:
+    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
     yield mock_registries(monkeypatch, test_app)
+
+
+@pytest.fixture(scope="function")
+def db_registries() -> CardRegistries:
+    """Returns CardRegistries configured with a local client (to simulate "client" mode)."""
+    cleanup()
+    # Cards rely on global storage state - so set it to local.
+    client.storage_client = client.get_storage_client(config)
+    yield CardRegistries(client.storage_client)
+    cleanup()
 
 
 @pytest.fixture(scope="function")
@@ -360,7 +352,7 @@ def mock_model_challenger() -> Any:
 
 
 @pytest.fixture(scope="function")
-def api_storage_client(api_registries: CardRegistries) -> StorageClientType:
+def api_storage_client(api_registries: CardRegistries) -> client.StorageClientType:
     return api_registries.data._registry.storage_client
 
 
@@ -409,15 +401,6 @@ def mock_local_engine():
     local_client = LocalSQLConnection(tracking_uri="sqlite://")
     local_client.get_engine()
     return
-
-
-@pytest.fixture(scope="function")
-def db_registries() -> CardRegistries:
-    cleanup()
-
-    yield CardRegistries(DefaultSettings(config))
-
-    cleanup()
 
 
 @pytest.fixture(scope="function")
