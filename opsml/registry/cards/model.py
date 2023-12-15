@@ -21,7 +21,6 @@ from opsml.model.utils.types import (
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
-    ValidModelInput,
 )
 from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
@@ -82,22 +81,15 @@ class ModelCard(ArtifactCard):
 
         uid = values.get("uid")
         version = values.get("version")
-        trained_model: Optional[Any] = values.get("trained_model")
-        sample_data: Optional[ValidModelInput] = values.get("sample_input_data")
+        model: Optional[SUPPORTED_MODELS] = values.get("model")
         metadata: Optional[ModelCardMetadata] = values.get("metadata")
 
         # no need to check if already registered
         if all([uid, version]):
             return values
 
-        if trained_model is None or sample_data is None:
-            raise ValueError(
-                """trained_model and sample_input_data are required for instantiating a ModelCard""",
-            )
-
         card_validator = ModelCardValidator(
-            sample_data=sample_data,
-            trained_model=trained_model,
+            model=model,
             metadata=metadata,
         )
 
