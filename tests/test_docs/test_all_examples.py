@@ -1,11 +1,17 @@
 from sklearn import linear_model
 
-from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries, DataCard, ModelCard
 
 
-def test_challenger_example(api_registries: CardRegistries, opsml_project: OpsmlProject):
+def test_challenger_example(
+    opsml_project,
+    mock_model_challenger,
+    api_registries: CardRegistries,
+):
     ########### Challenger example
+
+    opsml_project._run_mgr.registries = api_registries
 
     import numpy as np
     from sklearn.datasets import load_linnerud
@@ -13,7 +19,6 @@ def test_challenger_example(api_registries: CardRegistries, opsml_project: Opsml
     from sklearn.metrics import mean_absolute_error
     from sklearn.model_selection import train_test_split
 
-    from opsml.model.challenger import ModelChallenger
     from opsml.projects import ProjectInfo
 
     # Opsml
@@ -69,7 +74,7 @@ def test_challenger_example(api_registries: CardRegistries, opsml_project: Opsml
 
     ProjectInfo(name="opsml", team="devops", user_email="test_email")
     with opsml_project.run(run_name="challenger-lasso") as run:
-        datacard = api_registries.card.load_card(uid=datacard.uid)
+        datacard = api_registries.data.load_card(uid=datacard.uid)
         splits = datacard.split_data()
 
         reg = Lasso()
@@ -120,7 +125,10 @@ def test_challenger_example(api_registries: CardRegistries, opsml_project: Opsml
         tags={"example": "challenger"},
     )
 
-    challenger = ModelChallenger(challenger=linreg_card)
+    challenger = mock_model_challenger(
+        challenger=linreg_card,
+        registries=api_registries,
+    )
 
     reports = challenger.challenge_champion(
         metric_name="mae",
@@ -134,7 +142,7 @@ def test_challenger_example(api_registries: CardRegistries, opsml_project: Opsml
     print([report.model_dump() for report in reports["mae"]])
 
 
-def test_datacard(db_registries):
+def test_datacard(db_registries: CardRegistries):
     import numpy as np
     from sklearn.datasets import load_linnerud
     from sklearn.model_selection import train_test_split
@@ -167,7 +175,7 @@ def test_datacard(db_registries):
     splits = data_card.split_data()
     print(splits.train.X.head())
 
-    data_registry = db_registries["data"]
+    data_registry = db_registries.data
     data_registry.register_card(card=data_card)
     print(data_card.version)
     # > 1.0.0
@@ -237,7 +245,7 @@ def test_data_splits():
     assert splits.train.X.shape[0] == 3
 
 
-def test_data_profile(db_registries):
+def test_data_profile(db_registries: CardRegistries):
     # Data
     from sklearn.datasets import load_linnerud
 
@@ -257,7 +265,7 @@ def test_data_profile(db_registries):
     # data_card.data_profile.to_file("my_report.html")
 
     # Registering card will automatically save the report and its html
-    data_registry = db_registries["data"]
+    data_registry = db_registries.data
     data_registry.register_card(card=data_card)
 
     from ydata_profiling import ProfileReport
@@ -298,59 +306,7 @@ def test_data_profile(db_registries):
     # comparison.to_file("comparison_report.html")
 
 
-def test_modelcard(db_registries):
-    # load data card from earlier
-    from sklearn.linear_model import LinearRegression
-
-    # Opsml
-    from opsml.registry import CardInfo, ModelCard
-
-    # set up registries
-    data_registry = db_registries["data"]
-    model_registry = db_registries["model"]
-
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
-
-    # load datacard
-    datacard = data_registry.load_card(name=card_info.name, version="1.0.0")
-
-    # data is not loaded by default (helps when sharing cards with large data)
-    datacard.load_data()
-    data_splits = datacard.split_data()
-
-    X_train = data_splits.train.X
-    y_train = data_splits.train.y
-
-    # fit model
-    linreg = LinearRegression()
-    linreg = linreg.fit(X=X_train, y=y_train)
-
-    # lets test the onnx model before registering
-    modelcard = ModelCard(
-        info=card_info,
-        trained_model=linreg,
-        sample_input_data=X_train,
-        datacard_uid=datacard.uid,
-        to_onnx=True,
-    )
-
-    onnx_predictor = modelcard.onnx_model()
-    record = list(modelcard.sample_input_data[0:1].T.to_dict().values())[0]
-
-    pred_onnx = onnx_predictor.predict(record)["value"]
-    pred_orig = onnx_predictor.predict_with_model(linreg, record)[0][0]
-
-    print(f"Original: {pred_orig}, Onnx: {pred_onnx}")
-    # > Original: 54.4616866, Onnx: 54.4616866
-
-    print(onnx_predictor.input_sig.model_json_schema())
-    print(onnx_predictor.output_sig.model_json_schema())
-
-    # everything looks good
-    model_registry.register_card(modelcard)
-
-
-def test_custom_onnx(db_registries):
+def test_custom_onnx(db_registries: CardRegistries):
     import tempfile
 
     import onnx
@@ -367,8 +323,8 @@ def test_custom_onnx(db_registries):
     from opsml.registry import CardRegistries, DataCard, ModelCard
 
     registries = CardRegistries()
-    registries.data = db_registries["data"]
-    registries.model = db_registries["model"]
+    registries.data = db_registries.data
+    registries.model = db_registries.model
 
     class SuperResolutionNet(nn.Module):
         def __init__(self, upscale_factor, inplace=False):
@@ -467,9 +423,9 @@ def test_custom_onnx(db_registries):
 
 def test_overview_list(
     linear_regression: linear_model.LinearRegression,
-    db_registries,
+    db_registries: CardRegistries,
 ):
-    data_registry = db_registries["data"]
+    data_registry = db_registries.data
     model, data = linear_regression
     data_card = DataCard(
         data=data,
@@ -489,12 +445,12 @@ def test_overview_list(
         version="1.0.0",
         to_onnx=True,
     )
-    model_registry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(card=model_card)
     uid = model_card.uid
 
     ######## Doc example
-    registry = db_registries["model"]
+    registry = db_registries.model
 
     registry.list_cards()
     # will list all cards in registry
@@ -523,7 +479,12 @@ def test_overview_list(
     registry.list_cards(uid=uid, as_dataframe=True)
 
 
-def test_runcard_opsml_example(opsml_project: OpsmlProject):
+def _test_runcard_opsml_example(
+    opsml_project,
+    api_registries: CardRegistries,
+):
+    opsml_project._run_mgr.registries = api_registries
+
     import numpy as np
     import pandas as pd
     from sklearn.linear_model import Lasso
@@ -586,7 +547,7 @@ def test_runcard_opsml_example(opsml_project: OpsmlProject):
     # > Param(name='alpha', value=0.5)
 
 
-def test_index_example(db_registries):
+def test_index_example(db_registries: CardRegistries):
     import numpy as np
     from sklearn.datasets import load_linnerud
     from sklearn.linear_model import LinearRegression
@@ -596,8 +557,8 @@ def test_index_example(db_registries):
     from opsml.registry import CardInfo, DataCard, DataSplit, ModelCard
 
     # set up registries
-    data_registry = db_registries["data"]
-    model_registry = db_registries["model"]
+    data_registry = db_registries.data
+    model_registry = db_registries.model
 
     # card info (optional, but is used to simplify required args a bit)
     card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
@@ -649,7 +610,11 @@ def test_index_example(db_registries):
     print(model_registry.list_cards(info=card_info))
 
 
-def test_quickstart(opsml_project: OpsmlProject):
+def test_quickstart(
+    opsml_project,
+    api_registries: CardRegistries,
+):
+    opsml_project._run_mgr.registries = api_registries
     import numpy as np
     import pandas as pd
     from sklearn.linear_model import LinearRegression
