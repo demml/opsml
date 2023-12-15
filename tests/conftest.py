@@ -1,7 +1,7 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, List
+from typing import Any, Iterator, List, Optional
 
 warnings.filterwarnings("ignore")
 
@@ -63,11 +63,13 @@ from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.helpers.request_helpers import ApiClient
+from opsml.model.challenger import ModelChallenger
 from opsml.model.types import OnnxModelDefinition
+from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
-from opsml.registry.cards.types import ModelCardUris
+from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage.storage_system import StorageClientType, get_storage_client
 from opsml.registry.storage.types import (
@@ -321,6 +323,41 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 @pytest.fixture(scope="function")
 def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Iterator[CardRegistries]:
     yield mock_registries(monkeypatch, test_app)
+
+
+@pytest.fixture(scope="function")
+def opsml_project() -> Iterator[OpsmlProject]:
+    project = OpsmlProject(
+        info=ProjectInfo(
+            name="test_exp",
+            team="test",
+            user_email="test",
+        )
+    )
+    return project
+
+
+@pytest.fixture(scope="function")
+def mock_model_challenger() -> Any:
+    class MockModelChallenger(ModelChallenger):
+        def __init__(
+            self,
+            challenger: ModelCard,
+            registries: CardRegistries,
+        ):
+            """
+            Instantiates ModelChallenger class
+
+            Args:
+                challenger:
+                    ModelCard of challenger
+
+            """
+            self._challenger = challenger
+            self._challenger_metric: Optional[Metric] = None
+            self._registries = registries
+
+    return MockModelChallenger
 
 
 @pytest.fixture(scope="function")
