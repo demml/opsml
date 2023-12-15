@@ -2,19 +2,9 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, Tuple, Union
-
-import pandas as pd
-import polars as pl
-from numpy.typing import NDArray
-
+from typing import Any, Dict, Optional
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.supported_models import SUPPORTED_MODELS
-from opsml.model.utils.types import (
-    HuggingFaceModuleType,
-    ModelType,
-    TrainedModelType,
-)
+from opsml.registry.cards.supported_models import SUPPORTED_MODELS
 from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 
@@ -117,163 +107,12 @@ class ModelCardValidator:
         """
         self.model = model
         self.metadata = metadata
-        self.model_name = self.model.model.__class__.__name__
-
-    def _get_model_class_name(self) -> Tuple[str, str]:
-        """Gets class name from model"""
-
-        # check for huggingface
-        class_module = self.check_huggingface_model_name()
-        if class_module is not None:
-            return class_module
-
-        # check for pytorch lightning
-        class_module = self.check_pytorch_lightning_model_name()
-        if class_module is not None:
-            return class_module
-
-        # check for pytorch
-        class_module = self.check_pytorch_model_name()
-        if class_module is not None:
-            return class_module
-
-        # check for tensorflow
-        class_module = self.check_tf_keras_model_name()
-        if class_module is not None:
-            return class_module
-
-        # check sklearn
-        class_module = self.check_sklearn_model_name()
-        if class_module is not None:
-            return class_module
-
-        # check for lightgbm
-        class_module = self.check_lightgbm_model_name()
-        if class_module is not None:
-            return class_module
-
-        return str(self.model_module), "unknown"  # will default to joblib storage
-
-    def check_pytorch_lightning_model_name(self) -> Optional[Tuple[str, str]]:
-        """Checks if model is a pytorch lightning model. Assumes a trainer
-        is passed to the ModelCardValidator
-        """
-        if "lightning.pytorch" in self.model_module:
-            if "trainer" not in self.model_module:
-                raise ValueError("Trainer must be passed to ModelCardValidator when using pytorch lightning models")
-            return TrainedModelType.PYTORCH_LIGHTNING.value, self.trained_model.model.__class__.__name__
-
-        for base in self.model_bases:
-            if "lightning.pytorch" in base:
-                if "trainer" not in base:
-                    raise ValueError("Trainer must be passed to ModelCardValidator when using pytorch lightning models")
-                return TrainedModelType.PYTORCH_LIGHTNING.value, "subclass"
-
-        return None
-
-    def check_lightgbm_model_name(self) -> Optional[Tuple[str, str]]:
-        """Checks if model is a lightgbm booster"""
-
-        if "lightgbm" in self.model_module:
-            return TrainedModelType.LGBM_BOOSTER.value, self.model_name
-
-        return None
-
-    def check_sklearn_model_name(self) -> Optional[Tuple[str, str]]:
-        """Checks if model is from sklearn"""
-
-        if "sklearn" in self.model_module:
-            return TrainedModelType.SKLEARN_ESTIMATOR.value, self.model_name
-
-        # check for subclassed models
-        for base in self.model_bases:
-            if "sklearn" in base:
-                return TrainedModelType.SKLEARN_ESTIMATOR.value, "subclass"
-
-        return None
-
-    def check_tf_keras_model_name(self) -> Optional[Tuple[str, str]]:
-        """Checks if model is from tensorflow"""
-
-        if "keras" in self.model_module:
-            return TrainedModelType.TF_KERAS.value, self.model_name
-
-        # check for subclassed models
-        for base in self.model_bases:
-            if "keras" in base:
-                return TrainedModelType.TF_KERAS.value, "subclass"
-
-        return None
-
-    def check_pytorch_model_name(self) -> Optional[Tuple[str, str]]:
-        """Checks if model is from pytorch"""
-        for base in self.model_bases:
-            if "torch" in base:
-                return TrainedModelType.PYTORCH.value, self.model_name
-
-    def check_huggingface_model_name(self) -> Optional[Tuple[str, str]]:
-        """Checks if model is from huggingface"""
-
-        if any(huggingface_module in self.model_module for huggingface_module in HuggingFaceModuleType):
-            return TrainedModelType.TRANSFORMERS.value, self.model_name
-
-        # for subclassed models
-        if hasattr(self.trained_model, "mro"):
-            # check for mro
-            bases = [str(base) for base in self.trained_model.mro()]
-            for base in bases:
-                if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
-                    return TrainedModelType.TRANSFORMERS.value, "subclass"
-        return None
-
-    def get_model_type(self, model_class_name: str) -> str:
-        """Get model type for metadata"""
-        model_type = next(
-            (
-                model_type
-                for model_type in ModelType.__subclasses__()
-                if model_type.validate(model_class_name=model_class_name)
-            ),
-            None,
-        )
-
-        if model_type is None:
-            return model_class_name
-        return model_type.get_type()
-
-    def _get_task_type(self, model_type: str) -> str:
-        """Get task type for metadata. Primarily used for huggingface pipelines
-
-        Args:
-            model_type:
-                Model type to be used for task type
-        """
-
-        if hasattr(self.trained_model, "task"):
-            return self.trained_model.task
-
-        if "regressor" in model_type:
-            return "regression"
-
-        if "classifier" in model_type:
-            return "classification"
-
-        return "unknown"
 
     def get_metadata(self) -> ModelCardMetadata:
         """Checks metadata for valid values
         Returns:
             `ModelCardMetadata` with updated sample_data_type
         """
-        # get base model class and class name
-        model_class, model_name = self._get_model_class_name()
-
-        # clean up class name (mainly for sklearn, lgb, xgb)
-        model_type = self.get_model_type(model_class_name=model_name)
-
-        # get task type (important for huggingface pipelines)
-        task_type = self._get_task_type(model_type=model_type)
-
         data_type = check_data_type(self.sample_data)
 
         if self.metadata is None:
@@ -284,14 +123,14 @@ class ModelCardValidator:
                 )
             self.metadata = ModelCardMetadata(
                 sample_data_type=data_type,
-                model_class=model_class,
-                model_type=model_type,
-                task_type=task_type,
+                model_class=self.model.model_class,
+                model_type=self.model.model_type,
+                task_type=self.model.task_type,
             )
 
         elif self.metadata is not None:
             self.metadata.sample_data_type = data_type
-            self.metadata.model_type = model_type
-            self.metadata.model_class = model_class
+            self.metadata.model_type = self.model.model_type
+            self.metadata.model_class = self.model.model_class
 
         return self.metadata

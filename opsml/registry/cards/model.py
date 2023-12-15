@@ -13,7 +13,7 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
-from opsml.model.supported_models import SUPPORTED_MODELS
+from opsml.registry.cards.supported_models import SUPPORTED_MODELS
 from opsml.model.utils.types import (
     ApiDataSchemas,
     DataDict,
@@ -26,7 +26,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact_storage import load_artifact_from_storage
+from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.storage import client
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
@@ -144,7 +144,7 @@ class ModelCard(ArtifactCard):
 
             trained_model = load_artifact_from_storage(
                 artifact_type=self.metadata.model_class,
-                storage_client=storage_client,
+                storage_client=client.storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
                 **{
                     "model_type": self.metadata.model_type,

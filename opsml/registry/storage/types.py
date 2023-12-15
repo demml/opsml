@@ -8,8 +8,6 @@ from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
-from opsml.registry.data.types import AllowedDataType
-
 FilePath = Union[List[str], str]
 
 
