@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from pathlib import Path
-from typing import Any, List
+from typing import List
 
 from alembic import command
 from alembic.config import Config
@@ -20,15 +20,14 @@ DIR_PATH = Path(__file__).parents[1]
 
 
 class DBInitializer:
-    def __init__(self, engine: Engine, registry_tables: List[Any]):
+    def __init__(self, engine: Engine, registry_tables: List[str]):
         self.engine = engine
         self.registry_tables = registry_tables
 
     def registry_tables_exist(self) -> bool:
         """Checks if all tables have been created previously"""
         table_names = inspect(self.engine).get_table_names()
-        registry_tables = self.registry_tables
-        return all(registry_table.value in table_names for registry_table in registry_tables)
+        return all([expected_table in table_names for expected_table in self.registry_tables])
 
     def create_tables(self) -> None:
         """Creates tables"""

@@ -27,7 +27,7 @@ from typing import (
 from pyarrow.fs import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import ApiRoutes
+from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
@@ -92,13 +92,13 @@ def extract_registry_name(string: str) -> Optional[str]:
 class StorageClient:
     def __init__(
         self,
-        storage_settings: StorageSettings,
+        settings: StorageSettings,
         client: Any = LocalFileSystem(),
         backend: str = StorageSystem.LOCAL.value,
     ):
         self.client = client
         self.backend = backend
-        self.base_path_prefix = storage_settings.storage_uri
+        self.base_path_prefix = settings.storage_uri
 
     def extend_storage_spec(
         self,
@@ -167,18 +167,18 @@ class StorageClient:
 class GCSFSStorageClient(StorageClient):
     def __init__(
         self,
-        storage_settings: StorageSettings,
+        settings: StorageSettings,
     ):
         import gcsfs
 
-        assert isinstance(storage_settings, GcsStorageClientSettings)
+        assert isinstance(settings, GcsStorageClientSettings)
         client = gcsfs.GCSFileSystem(
-            project=storage_settings.gcp_project,
-            token=storage_settings.credentials,
+            project=settings.gcp_project,
+            token=settings.credentials,
         )
 
         super().__init__(
-            storage_settings=storage_settings,
+            settings=settings,
             client=client,
             backend=StorageSystem.GCS.value,
         )
@@ -231,15 +231,15 @@ class GCSFSStorageClient(StorageClient):
 class S3StorageClient(StorageClient):
     def __init__(
         self,
-        storage_settings: StorageSettings,
+        settings: StorageSettings,
     ):
         import s3fs
 
-        assert isinstance(storage_settings, S3StorageClientSettings)
+        assert isinstance(settings, S3StorageClientSettings)
         client = s3fs.S3FileSystem()
 
         super().__init__(
-            storage_settings=storage_settings,
+            settings=settings,
             client=client,
             backend=StorageSystem.S3.value,
         )
@@ -389,14 +389,19 @@ class LocalStorageClient(StorageClient):
 
 
 class ApiStorageClient(LocalStorageClient):
-    def __init__(self, storage_settings: StorageSettings):
-        assert isinstance(storage_settings, ApiStorageClientSettings)
+    def __init__(self, settings: StorageSettings):
+        assert isinstance(settings, ApiStorageClientSettings)
         super().__init__(
-            storage_settings=storage_settings,
+            settings=settings,
             backend=StorageSystem.API.value,
         )
 
-        self.api_client = storage_settings.api_client
+        self.api_client = ApiClient(
+            base_url=settings.opsml_tracking_uri,
+            username=settings.opsml_username,
+            password=settings.opsml_password,
+            token=settings.opsml_prod_token,
+        )
 
     def list_files(self, storage_uri: str) -> FilePath:
         response = self.api_client.post_request(
@@ -559,15 +564,15 @@ StorageClientType = Union[
 
 
 def get_storage_client(
-    storage_settings: StorageSettings,
+    settings: StorageSettings,
 ) -> StorageClientType:
     storage_client = next(
         (
             storage_client
             for storage_client in all_subclasses(StorageClient)
-            if storage_client.validate(storage_backend=storage_settings.storage_type)
+            if storage_client.validate(storage_backend=settings.storage_type)
         ),
         LocalStorageClient,
     )
 
-    return storage_client(storage_settings=storage_settings)
+    return storage_client(settings=settings)

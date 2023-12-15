@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import ApiClient, api_routes
+from opsml.helpers.request_helpers import api_routes
 from opsml.helpers.utils import check_package_exists
 from opsml.registry.cards import ArtifactCard, ModelCard
 from opsml.registry.cards.types import RegistryType
@@ -17,6 +17,7 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.records import LoadedRecordType
 from opsml.registry.sql.semver import CardVersion, VersionType
 from opsml.registry.storage.settings import DefaultSettings
+from opsml.registry.storage.storage_system import ApiStorageClient
 
 logger = ArtifactLogger.get_logger()
 
@@ -28,8 +29,8 @@ class ClientRegistry(SQLRegistryBase):
     def __init__(self, registry_type: RegistryType, settings: DefaultSettings):
         super().__init__(registry_type, settings)
 
-        assert isinstance(settings.request_client, ApiClient)
-        self._session: ApiClient = settings.request_client
+        assert isinstance(settings.storage_client, ApiStorageClient)
+        self._session = settings.storage_client.api_client
 
         self._registry_type = registry_type
 

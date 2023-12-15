@@ -41,7 +41,7 @@ class ServerRegistry(SQLRegistryBase):
         connector = DefaultConnector(tracking_uri=config.opsml_tracking_uri).get_connector()
         db_initializer = DBInitializer(
             engine=cast(Engine, connector.sql_engine),
-            registry_tables=list(RegistryTableNames),
+            registry_tables=[t.value for t in RegistryTableNames],
         )
         db_initializer.initialize()
 

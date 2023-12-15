@@ -1,8 +1,10 @@
-from sklearn import linear_model
 import sys
+
+import pytest
+from sklearn import linear_model
+
 from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries, DataCard, ModelCard
-import pytest
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 

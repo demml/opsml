@@ -1,4 +1,4 @@
-from opsml.helpers.gcp_utils import GcpCredsSetter
+from opsml.registry.sql.registry import CardRegistries
 from opsml.registry.storage.settings import DefaultSettings
 from opsml.registry.storage.storage_system import (
     ApiStorageClient,
@@ -6,14 +6,12 @@ from opsml.registry.storage.storage_system import (
     LocalStorageClient,
     S3StorageClient,
 )
-from opsml.registry.storage.types import GcsStorageClientSettings
 from opsml.settings.config import OpsmlConfig
 
 
 def test_default_local_settings() -> None:
     cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./mlruns")
     settings = DefaultSettings(cfg=cfg)
-    settings.request_client is None
     assert isinstance(settings.storage_client, LocalStorageClient)
 
 
@@ -42,28 +40,6 @@ def test_default_mysql_settings(mock_aws_storage_response):
     settings = DefaultSettings(cfg=cfg)
 
     assert isinstance(settings.storage_client, S3StorageClient)
-
-
-def test_switch_storage_settings(mock_gcs_storage_response, mock_gcp_creds):
-    cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./mlruns")
-    settings = DefaultSettings(cfg=cfg)
-
-    assert isinstance(settings.storage_client, LocalStorageClient)
-
-    gcp_creds = GcpCredsSetter().get_creds()
-    storage_settings = GcsStorageClientSettings(
-        storage_type="gcs",
-        storage_uri="gs://test",
-        credentials=gcp_creds.creds,
-        gcp_project=gcp_creds.project,
-    )
-
-    settings.storage_settings = storage_settings
-
-    assert isinstance(settings.storage_client, GCSFSStorageClient)
-
-
-from opsml.registry.sql.registry import CardRegistries
 
 
 def test_api_storage(api_registries: CardRegistries):

@@ -8,7 +8,6 @@ from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
-from opsml.helpers.request_helpers import ApiClient
 from opsml.registry.data.types import AllowedDataType
 
 FilePath = Union[List[str], str]
@@ -53,8 +52,10 @@ class S3StorageClientSettings(StorageClientSettings):
 
 class ApiStorageClientSettings(StorageClientSettings):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
-
-    api_client: ApiClient
+    opsml_tracking_uri: str
+    opsml_username: Optional[str]
+    opsml_password: Optional[str]
+    opsml_prod_token: Optional[str]
 
 
 StorageSettings = Union[
