@@ -21,7 +21,7 @@ from opsml.registry.data.types import AllowedDataType, ValidData
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml.registry.storage.artifact import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger()
