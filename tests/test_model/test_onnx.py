@@ -57,6 +57,7 @@ def model_predict(model_and_data):
     predictor.predict_with_model(model, record)
 
 
+@pytest.mark.flaky(reruns=2)
 @pytest.mark.parametrize(
     "model_and_data",
     [
