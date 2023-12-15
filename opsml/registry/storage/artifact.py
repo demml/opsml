@@ -17,6 +17,12 @@ from numpy.typing import NDArray
 
 from opsml.helpers.utils import all_subclasses
 from opsml.model.utils.types import ModelProto, TrainedModelType
+from opsml.registry.cards.supported_models import (
+    HuggingFaceModel,
+    TensorflowModel,
+    PytorchModel,
+    LightningModel,
+)
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
@@ -538,7 +544,7 @@ class TensorflowModelStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: TensorflowModel, storage_uri: str, tmp_uri: str) -> str:
         """Saves a tensorflow model
 
         Args:
@@ -553,7 +559,7 @@ class TensorflowModelStorage(ArtifactStorage):
             Storage path
         """
 
-        artifact.save(tmp_uri)
+        artifact.model.save(tmp_uri)
         return self._upload_artifact(
             file_path=tmp_uri,
             storage_uri=storage_uri,
@@ -588,7 +594,7 @@ class PyTorchModelStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: PytorchModel, storage_uri: str, tmp_uri: str) -> str:
         """
         Saves a pytorch model
 
@@ -605,7 +611,7 @@ class PyTorchModelStorage(ArtifactStorage):
         """
         import torch
 
-        torch.save(artifact, tmp_uri)
+        torch.save(artifact.model, tmp_uri)
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
     def _load_artifact(self, file_path: FilePath):  # type: ignore
@@ -635,7 +641,7 @@ class PyTorchLightningModelStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: LightningModel, storage_uri: str, tmp_uri: str) -> str:
         """
         Saves a pytorch lightning model
 
@@ -652,7 +658,7 @@ class PyTorchLightningModelStorage(ArtifactStorage):
         """
         from lightning import Trainer
 
-        trainer = cast(Trainer, artifact)
+        trainer = cast(Trainer, artifact.model)
         trainer.save_checkpoint(tmp_uri)
 
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
@@ -704,7 +710,7 @@ class HuggingFaceStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: HuggingFaceModel, storage_uri: str, tmp_uri: str) -> str:
         """
         Saves a huggingface model
 
@@ -720,7 +726,10 @@ class HuggingFaceStorage(ArtifactStorage):
             Storage path
         """
 
-        getattr(artifact, "save_pretrained")(tmp_uri)
+        artifact.model.save_pretrained(tmp_uri)
+
+        if artifact.preprocessor is not None:
+            artifact.preprocessor.save_pretrained(tmp_uri)
 
         return self._upload_artifact(
             file_path=tmp_uri,
@@ -730,29 +739,56 @@ class HuggingFaceStorage(ArtifactStorage):
         )
 
     def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> Any:
-        """ "Loads a huggingface model (model or pipeline)
+        """Loads a huggingface object (model or pipeline)
 
         Args:
             kwargs:
                 Dictionary of arguments to pass to pass for model loading
 
-                model_type: The huggingface model type passed via metadata
-                task_type: The huggingface task type. This is used for models that
-                were saved as pipelines
+                model_type:
+                    The huggingface model type passed via metadata
+                task_type:
+                    The huggingface task type. This is used for models that
+                    were saved as pipelines
+                is_pipeline:
+                    Whether the model was saved as a pipeline
+                preprocessor_name:
+                    The name of the preprocessor to load
 
         """
         import transformers
 
-        model_type = kwargs["model_type"]
-        task_type = kwargs["task_type"]
+        model_type: str = kwargs["model_type"]
+        task_type: str = kwargs["task_type"]
+        is_pipeline: bool = kwargs["is_pipeline"]
+        preprocessor_name: Optional[str] = kwargs.get("preprocessor_name")
 
         # only way to tell if model was a pipeline is from model class type
-        if "pipeline" in model_type.lower():
-            return transformers.pipeline(task_type, file_path)
+        if is_pipeline:
+            model = transformers.pipeline(task_type, file_path)
+            return {
+                "model": model,
+                "is_pipeline": True,
+                "task_type": task_type,
+                "model_type": model_type,
+            }
 
         else:
             # load model from pretrained
-            return getattr(transformers, model_type).from_pretrained(file_path)
+            preprocessor = None
+            model = getattr(transformers, model_type).from_pretrained(file_path)
+
+            # check for preprocessor
+            if preprocessor_name is not None:
+                preprocessor = getattr(transformers, preprocessor_name).from_pretrained(file_path)
+
+            return {
+                "model": model,
+                "preprocessor": preprocessor,
+                "is_pipeline": False,
+                "task_type": task_type,
+                "model_type": model_type,
+            }
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

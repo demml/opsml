@@ -108,12 +108,26 @@ class ModelCardValidator:
         self.model = model
         self.metadata = metadata
 
+    def _get_preprocessor_name(self) -> Optional[str]:
+        """Get name of preprocessor
+
+        Returns:
+            Name of preprocessor
+        """
+
+        if self.model.preprocessor is not None:
+            return self.model.preprocessor.__class__.__name__
+
+        return None
+
     def get_metadata(self) -> ModelCardMetadata:
         """Checks metadata for valid values
         Returns:
             `ModelCardMetadata` with updated sample_data_type
         """
-        data_type = check_data_type(self.sample_data)
+        data_type = check_data_type(self.model.sample_data)
+
+        preprocessor_name = self._get_preprocessor_name()
 
         if self.metadata is None:
             if data_type in [AllowedDataType.IMAGE]:
@@ -125,6 +139,7 @@ class ModelCardValidator:
                 sample_data_type=data_type,
                 model_class=self.model.model_class,
                 model_type=self.model.model_type,
+                preprocessor_name=preprocessor_name,
                 task_type=self.model.task_type,
             )
 
@@ -132,5 +147,6 @@ class ModelCardValidator:
             self.metadata.sample_data_type = data_type
             self.metadata.model_type = self.model.model_type
             self.metadata.model_class = self.model.model_class
+            self.metadata.preprocessor_name = (preprocessor_name,)
 
         return self.metadata

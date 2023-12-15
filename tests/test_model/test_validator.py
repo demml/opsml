@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from opsml.model.utils.model_predict_helper import PredictHelper
+from opsml.registry.cards.supported_models import HuggingFaceModel
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.storage.artifact import (
     load_artifact_from_storage,
@@ -14,23 +15,20 @@ TRAINED_MODEL = "trained-model"
 
 
 @pytest.mark.compat
-def _test_huggingface_model(huggingface_bart, api_storage_client):
-    model, inputs = huggingface_bart
+def test_huggingface_model(huggingface_bart, api_storage_client):
+    model = huggingface_bart
 
-    validator = ModelCardValidator(
-        sample_data=inputs,
-        trained_model=model,
-    )
+    validator = ModelCardValidator(model=model)
 
     metadata = validator.get_metadata()
 
     assert metadata.model_type == "BartModel"
     assert metadata.model_class == "transformers"
-    assert metadata.task_type == "unknown"
+    assert metadata.task_type == "text-classification"
 
     predictions = PredictHelper.get_model_prediction(
-        model,
-        validator.get_sample_data(),
+        model.model,
+        model.sample_data,
         metadata.sample_data_type,
         metadata.model_class,
         metadata.model_type,
@@ -49,15 +47,20 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
         extra_path="model",
     )
 
-    loaded_model = load_artifact_from_storage(
+    loaded_model_dict = load_artifact_from_storage(
         artifact_type=metadata.model_class,
         storage_client=api_storage_client,
         storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
         **{
             "model_type": metadata.model_type,
             "task_type": metadata.task_type,
+            "preprocessor_name": metadata.preprocessor_name,
+            "is_pipeline": model.is_pipeline,
         },
     )
+
+    loaded_model_dict["sample_data"] = model.sample_data
+    loaded_model = HuggingFaceModel(**loaded_model_dict)
 
     assert type(loaded_model) == type(model)
 

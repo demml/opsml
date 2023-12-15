@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
-from opsml.model.types import (
+from opsml.model.utils.types import (
     ApiDataSchemas,
     DataDict,
     ExtraOnnxArgs,
@@ -220,6 +220,7 @@ class ModelCardMetadata(BaseModel):
     model_type: str = "undefined"
     model_class: str = "undefined"
     task_type: str = "undefined"
+    preprocessor_name: str = "undefined"
     additional_onnx_args: Optional[ExtraOnnxArgs] = None
     data_schema: Optional[ApiDataSchemas] = None
     runcard_uid: Optional[str] = None
