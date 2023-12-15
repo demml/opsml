@@ -2,8 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# TODO(@damon): Rename this module to api_client
-
 import json as py_json
 import os
 from pathlib import Path

@@ -27,8 +27,8 @@ from typing import (
 from pyarrow.fs import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 from opsml.helpers.utils import all_subclasses
+from opsml.registry.storage.api import ApiClient, ApiRoutes
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
     ArtifactStorageSpecs,
@@ -582,9 +582,7 @@ class _DefaultAttrCreator:
 
     @staticmethod
     def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
-        from opsml.helpers.gcp_utils import (
-            GcpCredsSetter,
-        )
+        from opsml.helpers.gcp_utils import GcpCredsSetter
 
         gcp_creds = GcpCredsSetter().get_creds()
 
