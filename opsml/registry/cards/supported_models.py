@@ -218,7 +218,7 @@ class HuggingFaceModel(SupportedModel):
 
         # for subclassed models
         if hasattr(model, "mro"):
-            # check for mro
+            # check bases
             bases = [str(base) for base in model.mro()]
             for base in bases:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
