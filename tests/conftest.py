@@ -361,15 +361,6 @@ def mock_model_challenger() -> Any:
 
 
 @pytest.fixture(scope="function")
-def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
-    with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
-        from opsml.registry.storage.settings import settings
-
-        client_mock.return_value = settings.request_client
-        yield client_mock
-
-
-@pytest.fixture(scope="function")
 def api_storage_client(api_registries: CardRegistries) -> StorageClientType:
     return api_registries.data._registry.storage_client
 
