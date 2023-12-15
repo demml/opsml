@@ -9,7 +9,7 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from opsml.helpers import utils
-from opsml.registry.storage.artifact_storage import (
+from opsml.registry.storage.artifact import (
     JSONStorage,
     NumpyStorage,
     ParquetStorage,

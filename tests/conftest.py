@@ -224,7 +224,7 @@ def mock_pathlib():
 @pytest.fixture(scope="function")
 def mock_joblib_storage(mock_pathlib):
     with patch.multiple(
-        "opsml.registry.storage.artifact_storage.JoblibStorage",
+        "opsml.registry.storage.artifact.JoblibStorage",
         _write_joblib=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_joblib:
@@ -234,7 +234,7 @@ def mock_joblib_storage(mock_pathlib):
 @pytest.fixture(scope="function")
 def mock_json_storage(mock_pathlib):
     with patch.multiple(
-        "opsml.registry.storage.artifact_storage.JSONStorage",
+        "opsml.registry.storage.artifact.JSONStorage",
         _write_json=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_json:
