@@ -2,10 +2,12 @@ from sklearn import linear_model
 import sys
 from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries, DataCard, ModelCard
+import pytest
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_challenger_example(
     opsml_project,
     mock_model_challenger,
@@ -144,6 +146,7 @@ def test_challenger_example(
     print([report.model_dump() for report in reports["mae"]])
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_datacard(db_registries: CardRegistries):
     import numpy as np
     from sklearn.datasets import load_linnerud
@@ -190,6 +193,7 @@ def test_datacard(db_registries: CardRegistries):
     print(cards[0])
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_data_splits():
     import polars as pl
 
@@ -247,6 +251,7 @@ def test_data_splits():
     assert splits.train.X.shape[0] == 3
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_data_profile(db_registries: CardRegistries):
     # Data
     from sklearn.datasets import load_linnerud
@@ -308,6 +313,7 @@ def test_data_profile(db_registries: CardRegistries):
     # comparison.to_file("comparison_report.html")
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_custom_onnx(db_registries: CardRegistries):
     import tempfile
 
@@ -423,6 +429,7 @@ def test_custom_onnx(db_registries: CardRegistries):
     # remove final registration line due to pytest module-level save issues
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_overview_list(
     linear_regression: linear_model.LinearRegression,
     db_registries: CardRegistries,
@@ -481,7 +488,8 @@ def test_overview_list(
     registry.list_cards(uid=uid, as_dataframe=True)
 
 
-def _test_runcard_opsml_example(
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
+def test_runcard_opsml_example(
     opsml_project,
     api_registries: CardRegistries,
 ):
@@ -549,6 +557,7 @@ def _test_runcard_opsml_example(
     # > Param(name='alpha', value=0.5)
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_index_example(db_registries: CardRegistries):
     import numpy as np
     from sklearn.datasets import load_linnerud
@@ -612,6 +621,7 @@ def test_index_example(db_registries: CardRegistries):
     print(model_registry.list_cards(info=card_info))
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping on macos")
 def test_quickstart(
     opsml_project,
     api_registries: CardRegistries,
