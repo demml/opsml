@@ -1,14 +1,13 @@
 import os
 import sys
 import tempfile
-from typing import Dict
 
 import pytest
 from pydantic_core._pydantic_core import ValidationError
 
+from opsml.registry import CardRegistries
 from opsml.registry.cards import DataCard
 from opsml.registry.image import ImageDataset, ImageMetadata, ImageRecord
-from opsml.registry.sql.registry import CardRegistry
 
 # these examples are pulled from huggingface
 # the aim is to have as much parity as possible
@@ -83,10 +82,10 @@ def test_image_dataset():
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_register_data(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
 ):
     # create data card
-    registry = db_registries["data"]
+    registry = db_registries.data
 
     records = [
         {"file_name": "cats.jpg", "caption": "This is a second value of a text feature you added to your images"},

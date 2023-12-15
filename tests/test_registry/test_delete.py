@@ -1,22 +1,21 @@
 import sys
 from os import path
-from typing import Dict
 
 import pytest
 from sklearn import linear_model
 from sklearn.pipeline import Pipeline
 
+from opsml.registry import CardRegistries
 from opsml.registry.cards import DataCard, ModelCard, RunCard
-from opsml.registry.sql.registry import CardRegistry
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_data_model(
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
     # create data card
-    data_registry: CardRegistry = db_registries["data"]
+    data_registry = db_registries.data
     model, data = sklearn_pipeline
     data_card = DataCard(
         data=data,
@@ -44,7 +43,7 @@ def test_delete_data_model(
         to_onnx=True,
     )
 
-    model_registry: CardRegistry = db_registries["model"]
+    model_registry = db_registries.model
     model_registry.register_card(card=model_card)
     cards = model_registry.list_cards(name="pipeline_model", team="mlops")
     assert len(cards) == 1
@@ -86,9 +85,9 @@ def test_delete_data_model(
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_runcard(
     linear_regression: linear_model.LinearRegression,
-    db_registries: Dict[str, CardRegistry],
+    db_registries: CardRegistries,
 ):
-    registry: CardRegistry = db_registries["run"]
+    registry = db_registries.run
     run = RunCard(
         name="test_run",
         team="mlops",

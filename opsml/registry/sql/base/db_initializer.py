@@ -2,7 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Any, List
+from pathlib import Path
+from typing import List
 
 from alembic import command
 from alembic.config import Config
@@ -10,23 +11,23 @@ from sqlalchemy import inspect
 from sqlalchemy.engine.base import Engine
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.sql_schema import Base
+from opsml.registry.sql.base.sql_schema import Base
 
 logger = ArtifactLogger.get_logger()
 
-DIR_PATH = os.path.dirname(__file__)
+
+DIR_PATH = Path(__file__).parents[1]
 
 
 class DBInitializer:
-    def __init__(self, engine: Engine, registry_tables: List[Any]):
+    def __init__(self, engine: Engine, registry_tables: List[str]):
         self.engine = engine
         self.registry_tables = registry_tables
 
     def registry_tables_exist(self) -> bool:
         """Checks if all tables have been created previously"""
         table_names = inspect(self.engine).get_table_names()
-        registry_tables = self.registry_tables
-        return all(registry_table.value in table_names for registry_table in registry_tables)
+        return all((expected_table in table_names for expected_table in self.registry_tables))
 
     def create_tables(self) -> None:
         """Creates tables"""

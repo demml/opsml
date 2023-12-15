@@ -1,70 +1,40 @@
-from opsml.helpers.gcp_utils import GcpCredsSetter
-from opsml.registry.storage.types import (
-    GcsStorageClientSettings,
-    S3StorageClientSettings,
+from opsml.registry.sql.registry import CardRegistries
+from opsml.registry.storage.client import (
+    ApiStorageClient,
+    GCSFSStorageClient,
+    LocalStorageClient,
+    S3StorageClient,
+    get_storage_client,
 )
-from opsml.registry.utils.settings import DefaultSettings
+from opsml.settings.config import OpsmlConfig
 
 
-def test_default_local_settings():
-    settings = DefaultSettings()
-    assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
-    local_client = settings.connection_client
-    assert local_client.__class__.__name__ == "LocalSQLConnection"
+def test_default_local_settings() -> None:
+    cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./mlruns")
+    assert isinstance(get_storage_client(cfg=cfg), LocalStorageClient)
 
 
-def test_default_http_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
-    monkeypatch.setenv(name="OPSML_TRACKING_URI", value="https://fake_url.com")
-    settings = DefaultSettings()
-    assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
+def test_default_http_settings(mock_gcs_storage_response, mock_gcp_creds) -> None:
+    cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri="gs://google")
+    assert isinstance(get_storage_client(cfg=cfg), ApiStorageClient)
 
 
-def test_default_postgres_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
-    url = "postgresql+psycopg2://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
-    monkeypatch.setenv(name="OPSML_TRACKING_URI", value=url)
-    monkeypatch.setenv(name="OPSML_STORAGE_URI", value="gs://opsml/tet")
-
-    settings = DefaultSettings()
-    assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
-
-    assert settings.connection_client.__class__.__name__ == "CloudSqlPostgresql"
+def test_default_postgres_settings(mock_gcs_storage_response, mock_gcp_creds) -> None:
+    tracking_uri = "postgresql+psycopg2://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
+    storage_uri = "gs://opsml/test"
+    cfg = OpsmlConfig(opsml_tracking_uri=tracking_uri, opsml_storage_uri=storage_uri)
+    assert isinstance(get_storage_client(cfg=cfg), GCSFSStorageClient)
 
 
-def test_default_mysql_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
-    url = "mysql+pymysql://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
-    monkeypatch.setenv(name="OPSML_TRACKING_URI", value=url)
-    monkeypatch.setenv(name="OPSML_STORAGE_URI", value="gs://opsml/tet")
-
-    settings = DefaultSettings()
-    assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
-
-    assert settings.connection_client.__class__.__name__ == "CloudSqlMySql"
-
-
-def test_switch_storage_settings(monkeypatch, mock_gcs_storage_response, mock_gcp_creds):
-    settings = DefaultSettings()
-    assert settings.storage_client.__class__.__name__ == "LocalStorageClient"
-
-    gcp_creds = GcpCredsSetter().get_creds()
-    storage_settings = GcsStorageClientSettings(
-        storage_type="gcs",
-        storage_uri="gs://test",
-        credentials=gcp_creds.creds,
-        gcp_project=gcp_creds.project,
+def test_default_mysql_settings(mock_aws_storage_response):
+    tracking_uri = (
+        "mysql+pymysql://test_user:test_password@/ds-test-db?host=/cloudsql/test-project:test-region:test-connection"
     )
-
-    settings.set_storage(storage_settings=storage_settings)
-    assert settings.storage_client.__class__.__name__ == "GCSFSStorageClient"
-
-    storage_settings = S3StorageClientSettings(storage_type="s3", storage_uri="s3://test")
-    settings.set_storage(storage_settings=storage_settings)
-    assert settings.storage_client.__class__.__name__ == "S3StorageClient"
+    storage_uri = "s3://opsml/test"
+    cfg = OpsmlConfig(opsml_tracking_uri=tracking_uri, opsml_storage_uri=storage_uri)
+    assert isinstance(get_storage_client(cfg=cfg), S3StorageClient)
 
 
-def test_api_storage(api_registries):
+def test_api_storage(api_registries: CardRegistries):
     """Tests settings for presence of ApiStorageClient when using api"""
-
-    settings = DefaultSettings()
-    from opsml.registry.utils.settings import settings
-
-    assert settings.storage_client.__class__.__name__ == "ApiStorageClient"
+    assert isinstance(api_registries.run._registry.storage_client, ApiStorageClient)

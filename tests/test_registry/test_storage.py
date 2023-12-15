@@ -9,14 +9,14 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from opsml.helpers import utils
-from opsml.registry.storage.artifact_storage import (
+from opsml.registry.storage.artifact import (
     JSONStorage,
     NumpyStorage,
     ParquetStorage,
     PyTorchModelStorage,
     TensorflowModelStorage,
 )
-from opsml.registry.storage.storage_system import StorageClient
+from opsml.registry.storage.client import StorageClient
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from tests import conftest
 
@@ -122,7 +122,9 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
     "storage_client",
     [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")],
 )
-def test_parquet_cloud(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_parquet_cloud(
+    test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset, mock_gcp_creds
+):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
         artifact_type="Table",
@@ -215,18 +217,18 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_local_paths(storage_client: StorageClient):
     FILENAME = "example.csv"
-    file_path = utils.FindPath.find_filepath(name=FILENAME)
+    file_path = utils.FileUtils.find_filepath(name=FILENAME)
 
     with tempfile.TemporaryDirectory() as tempdir:
         storage_client.upload(local_path=file_path, write_path=f"{tempdir}/{FILENAME}")
 
-        dir_path = utils.FindPath.find_dirpath(
-            anchor_file=FILENAME,
-            dir_name="assets",
+        dir_path = utils.FileUtils.find_dirpath(
             path=os.getcwd(),
+            dir_name="assets",
+            anchor_file=FILENAME,
         )
 
-        storage_client.upload(local_path=dir_path, write_path=f"{tempdir}/assets")
+        storage_client.upload(local_path=str(dir_path), write_path=f"{tempdir}/assets")
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
