@@ -21,12 +21,17 @@ def get_model_args(model_args: Dict[str, Any]) -> Tuple[Any, str, List[str]]:
 
 class SupportedModel(BaseModel):
     model: Any
-    preprocessor: Any
+    preprocessor: Optional[Any] = None
     sample_data: ValidModelInput
     task_type: str = "undefined"
-    model_type: str
+    model_type: str = "undefined"
 
-    model_config = ConfigDict(protected_namespaces=("protect_",))
+    model_config = ConfigDict(
+        protected_namespaces=("protect_",),
+        arbitrary_types_allowed=True,
+        validate_assignment=False,
+        validate_default=True,
+    )
 
     @field_validator("sample_data", mode="before")
     @classmethod

@@ -71,6 +71,7 @@ from xgboost import XGBRegressor
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.model.challenger import ModelChallenger
 from opsml.model.utils.types import OnnxModelDefinition
+from opsml.model.utils.huggingface_types import HuggingFaceTaskType
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
@@ -997,16 +998,21 @@ def huggingface_openai_gpt():
 
 
 @pytest.fixture(scope="module")
-def huggingface_bart():
+def huggingface_bart() -> HuggingFaceModel:
     from transformers import BartModel, BartTokenizer
 
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = BartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
 
-    HuggingFaceModel(model=model, preprocessor=tokenizer, sample_data=inputs)
+    model = HuggingFaceModel(
+        model=model,
+        preprocessor=tokenizer,
+        sample_data=inputs,
+        task_type=HuggingFaceTaskType.TEXT_CLASSIFICATION.value,
+    )
 
-    return model, inputs
+    return model
 
 
 from transformers import pipeline
