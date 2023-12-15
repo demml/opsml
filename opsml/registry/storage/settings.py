@@ -52,13 +52,11 @@ class _DefaultAttrCreator:
 
 
 class DefaultSettings:
-    """Opsml settings"""
+    """Storage settings"""
 
     def __init__(self, cfg: OpsmlConfig) -> None:
-        self.cfg = cfg
-
-        if not self.cfg.is_tracking_local:
-            self._storage_settings: StorageSettings = ApiStorageClientSettings(
+        if not cfg.is_tracking_local:
+            settings: StorageSettings = ApiStorageClientSettings(
                 storage_type=StorageSystem.API.value,
                 storage_uri=cfg.opsml_storage_uri,
                 opsml_tracking_uri=cfg.opsml_tracking_uri,
@@ -67,14 +65,8 @@ class DefaultSettings:
                 opsml_prod_token=cfg.opsml_prod_token,
             )
         else:
-            self._storage_settings = _DefaultAttrCreator.get_storage_settings(self.cfg)
-        self._storage_client = get_storage_client(self.storage_settings)
-
-    @property
-    def storage_settings(self) -> StorageSettings:
-        # TODO(@damon): Remove access to underlying storage settings. All
-        # interaction to storage should be done thru the client only.
-        return self._storage_settings
+            settings = _DefaultAttrCreator.get_storage_settings(cfg)
+        self._storage_client = get_storage_client(settings)
 
     @property
     def storage_client(self) -> StorageClientType:
