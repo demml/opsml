@@ -13,6 +13,7 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
+from opsml.model.supported_models import SUPPORTED_MODELS
 from opsml.model.utils.types import (
     ApiDataSchemas,
     DataDict,
@@ -69,8 +70,7 @@ class ModelCard(ArtifactCard):
         protected_namespaces=("protect_",),
     )
 
-    trained_model: Optional[Any] = None
-    sample_input_data: Optional[ValidModelInput] = None
+    model: Optional[SUPPORTED_MODELS] = None
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata

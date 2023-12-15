@@ -454,7 +454,7 @@ class XGBRegressor(ModelType):
         return model_class_name == "XGBRegressor"
 
 
-class XGBRegressor(ModelType):
+class XGBClassifier(ModelType):
     @staticmethod
     def get_type() -> str:
         return TrainedModelType.XGB_CLASSIFIER.value
