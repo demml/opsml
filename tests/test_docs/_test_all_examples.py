@@ -1,7 +1,9 @@
 from sklearn import linear_model
-
+import sys
 from opsml.projects import ProjectInfo
 from opsml.registry import CardRegistries, DataCard, ModelCard
+
+EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
 def test_challenger_example(
