@@ -181,7 +181,7 @@ class ModelCardValidator:
         if self.metadata is None:
             if data_type in [AllowedDataType.IMAGE]:
                 raise ValueError(
-                    f"""Invalid model data input type. Accepted types are a pandas dataframe, 
+                    f"""Invalid model data input type. Accepted types are a pandas dataframe,
                                  numpy array and dictionary of numpy arrays. Received {data_type}""",
                 )
             self.metadata = ModelCardMetadata(

@@ -27,7 +27,7 @@ class DBInitializer:
     def registry_tables_exist(self) -> bool:
         """Checks if all tables have been created previously"""
         table_names = inspect(self.engine).get_table_names()
-        return all([expected_table in table_names for expected_table in self.registry_tables])
+        return all((expected_table in table_names for expected_table in self.registry_tables))
 
     def create_tables(self) -> None:
         """Creates tables"""

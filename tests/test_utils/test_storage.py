@@ -16,7 +16,7 @@ from opsml.registry.storage.artifact_storage import (
     PyTorchModelStorage,
     TensorflowModelStorage,
 )
-from opsml.registry.storage.storage_system import StorageClient
+from opsml.registry.storage.client import StorageClient
 from opsml.registry.storage.types import ArtifactStorageSpecs
 from tests import conftest
 
@@ -122,7 +122,9 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
     "storage_client",
     [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")],
 )
-def test_parquet_cloud(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
+def test_parquet_cloud(
+    test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset, mock_gcp_creds
+):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
         artifact_type="Table",

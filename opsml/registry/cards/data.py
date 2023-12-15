@@ -20,9 +20,8 @@ from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.data.types import AllowedDataType, ValidData
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
+from opsml.registry.storage import client
 from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
-from opsml.registry.storage.settings import settings
-from opsml.registry.storage.storage_system import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger()
@@ -183,7 +182,7 @@ class DataCard(ArtifactCard):
         download_object(
             card=self,
             artifact_type=self.metadata.data_type,
-            storage_client=settings.storage_client,
+            storage_client=client.storage_client,
         )
 
     def load_profile(self) -> None:
@@ -201,7 +200,7 @@ class DataCard(ArtifactCard):
         download_object(
             card=self,
             artifact_type=AllowedDataType.PROFILE,
-            storage_client=settings.storage_client,
+            storage_client=client.storage_client,
         )
 
     def create_registry_record(self) -> RegistryRecord:
@@ -288,7 +287,9 @@ class DataCard(ArtifactCard):
 
 
 class Downloader:
-    def __init__(self, card: ArtifactCard, storage_client: StorageClientType):  # pylint: disable=redefined-outer-name
+    def __init__(
+        self, card: ArtifactCard, storage_client: client.StorageClientType
+    ):  # pylint: disable=redefined-outer-name
         self.storage_client = storage_client
         self._card = card
 
@@ -388,7 +389,9 @@ class ImageDownloader(Downloader):
 
 
 def download_object(
-    card: ArtifactCard, artifact_type: str, storage_client: StorageClientType  # pylint: disable=redefined-outer-name
+    card: ArtifactCard,
+    artifact_type: str,
+    storage_client: client.StorageClientType,  # pylint: disable=redefined-outer-name
 ) -> None:
     """Download data from storage
 

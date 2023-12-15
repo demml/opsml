@@ -16,22 +16,20 @@ from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.records import LoadedRecordType
 from opsml.registry.sql.semver import CardVersion, VersionType
-from opsml.registry.storage.settings import DefaultSettings
-from opsml.registry.storage.storage_system import ApiStorageClient
+from opsml.registry.storage.client import ApiStorageClient, StorageClientType
 
 logger = ArtifactLogger.get_logger()
 
 
-# TODO(@damon): Have the registry client take an ApiClient
 class ClientRegistry(SQLRegistryBase):
     """A registry that retrieves data from an opsml server instance."""
 
-    def __init__(self, registry_type: RegistryType, settings: DefaultSettings):
-        super().__init__(registry_type, settings)
+    def __init__(self, registry_type: RegistryType, storage_client: StorageClientType):
+        super().__init__(registry_type, storage_client)
 
-        assert isinstance(settings.storage_client, ApiStorageClient)
-        self._session = settings.storage_client.api_client
+        assert isinstance(storage_client, ApiStorageClient)
 
+        self._session = storage_client.api_client
         self._registry_type = registry_type
 
     @cached_property

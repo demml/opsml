@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from opsml import version
 from opsml.app.routes.pydantic_models import StorageSettingsResponse
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.storage.storage_system import StorageSystem
+from opsml.registry.storage.client import StorageSystem
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
