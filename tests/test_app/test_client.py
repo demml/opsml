@@ -18,7 +18,6 @@ from starlette.testclient import TestClient
 from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
-from opsml.helpers.request_helpers import ApiRoutes
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import (
     AuditCard,
@@ -33,6 +32,7 @@ from opsml.registry import (
     RunCard,
 )
 from opsml.registry.sql.registry import CardRegistries
+from opsml.registry.storage.api import ApiRoutes
 from opsml.settings.config import config
 from tests.conftest import TODAY_YMD
 
