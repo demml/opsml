@@ -9,7 +9,6 @@ from opsml.registry.sql.connectors.connector import DefaultConnector
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_cloudsql_mysql_parsing():
     USER = "fake-user"
     PASSWORD = "fakepass"
@@ -28,7 +27,6 @@ def test_cloudsql_mysql_parsing():
     assert "CloudSqlMySql" in conn.__class__.__name__
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_cloudsql_postgres_parsing():
     USER = "fake-user"
     PASSWORD = "fakepass"
@@ -46,7 +44,6 @@ def test_cloudsql_postgres_parsing():
     assert "CloudSqlPostgresql" in conn.__class__.__name__
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_cloudsql():
     USER = "fake-user"
     PASSWORD = "fakepass"
@@ -58,6 +55,7 @@ def test_cloudsql():
         CloudSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
 
 
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_base_sql_connection():
     USER = "fake-user"
     PASSWORD = "fakepass"
