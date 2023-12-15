@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 from typing import Any, List
-
+from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import inspect
@@ -14,7 +14,8 @@ from opsml.registry.sql.base.sql_schema import Base
 
 logger = ArtifactLogger.get_logger()
 
-DIR_PATH = os.path.dirname(__file__)
+
+DIR_PATH = Path(__file__).parents[1]
 
 
 class DBInitializer:
