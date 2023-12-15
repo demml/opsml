@@ -30,15 +30,12 @@ class DebugResponse(BaseModel):
     url: str
     storage: str
     app_env: str
-    proxy_root: Optional[str] = None
-    is_proxy: Optional[bool] = None
 
 
 class StorageSettingsResponse(BaseModel):
     storage_type: str
     storage_uri: str
     version: str
-    proxy: bool = False
 
 
 class VersionRequest(BaseModel):

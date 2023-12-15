@@ -10,9 +10,8 @@ import polars as pl
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FindPath
+from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.cards.validator import DataCardValidator
@@ -21,15 +20,13 @@ from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.data.types import AllowedDataType, ValidData
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage import client
+from opsml.registry.storage.artifact import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs
-from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
 
 
-@auditable
 class DataCard(ArtifactCard):
     """Create a DataCard from your data.
 
@@ -114,7 +111,7 @@ class DataCard(ArtifactCard):
         for name, query in sql_logic.items():
             if ".sql" in query:
                 try:
-                    sql_path = FindPath.find_filepath(name=query)
+                    sql_path = FileUtils.find_filepath(name=query)
                     with open(sql_path, "r", encoding="utf-8") as file_:
                         query_ = file_.read()
                     sql_logic[name] = query_
@@ -185,7 +182,7 @@ class DataCard(ArtifactCard):
         download_object(
             card=self,
             artifact_type=self.metadata.data_type,
-            storage_client=settings.storage_client,
+            storage_client=client.storage_client,
         )
 
     def load_profile(self) -> None:
@@ -203,7 +200,7 @@ class DataCard(ArtifactCard):
         download_object(
             card=self,
             artifact_type=AllowedDataType.PROFILE,
-            storage_client=settings.storage_client,
+            storage_client=client.storage_client,
         )
 
     def create_registry_record(self) -> RegistryRecord:
@@ -252,7 +249,7 @@ class DataCard(ArtifactCard):
             self.sql_logic[name] = query
 
         elif filename is not None:
-            sql_path = FindPath.find_filepath(name=filename)
+            sql_path = str(FileUtils.find_filepath(name=filename))
             with open(sql_path, "r", encoding="utf-8") as file_:
                 query = file_.read()
             self.sql_logic[name] = query
@@ -290,7 +287,9 @@ class DataCard(ArtifactCard):
 
 
 class Downloader:
-    def __init__(self, card: ArtifactCard, storage_client: StorageClientType):  # pylint: disable=redefined-outer-name
+    def __init__(
+        self, card: ArtifactCard, storage_client: client.StorageClientType
+    ):  # pylint: disable=redefined-outer-name
         self.storage_client = storage_client
         self._card = card
 
@@ -390,7 +389,9 @@ class ImageDownloader(Downloader):
 
 
 def download_object(
-    card: ArtifactCard, artifact_type: str, storage_client: StorageClientType  # pylint: disable=redefined-outer-name
+    card: ArtifactCard,
+    artifact_type: str,
+    storage_client: client.StorageClientType,  # pylint: disable=redefined-outer-name
 ) -> None:
     """Download data from storage
 

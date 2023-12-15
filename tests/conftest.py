@@ -1,7 +1,7 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, List
+from typing import Any, Iterator, List, Optional
 
 warnings.filterwarnings("ignore")
 
@@ -24,7 +24,7 @@ import shutil
 import tempfile
 import time
 import uuid
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import httpx
 import joblib
@@ -62,25 +62,16 @@ from starlette.testclient import TestClient
 from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
-from opsml.helpers.request_helpers import ApiClient
+from opsml.model.challenger import ModelChallenger
 from opsml.model.types import OnnxModelDefinition
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
-from opsml.registry.cards.types import ModelCardUris
+from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.sql.db_initializer import DBInitializer
-from opsml.registry.sql.sql_schema import Base, BaseMixin, RegistryTableNames
-from opsml.registry.storage.storage_system import StorageClientType, get_storage_client
-from opsml.registry.storage.types import (
-    GcsStorageClientSettings,
-    S3StorageClientSettings,
-    StorageClientSettings,
-)
-
-# testing
-from tests.mock_api_registries import CardRegistry as ClientCardRegistry
+from opsml.registry.storage import client
+from opsml.settings.config import OpsmlConfig, config
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
@@ -183,31 +174,18 @@ def mock_gcp_creds(mock_gcp_vars):
 
 
 @pytest.fixture(scope="function")
-def gcp_storage_client(mock_gcp_vars):
-    gcs_settings = GcsStorageClientSettings(
-        storage_type="gcs",
-        storage_uri="gs://test",
-        credentials=mock_gcp_vars["gcp_creds"],
-        gcp_project=mock_gcp_vars["gcp_project"],
-    )
-    storage_client = get_storage_client(storage_settings=gcs_settings)
-    return storage_client
+def gcp_storage_client(mock_gcp_creds):
+    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://test"))
 
 
 @pytest.fixture(scope="function")
 def s3_storage_client():
-    s3_settings = S3StorageClientSettings(
-        storage_type="s3",
-        storage_uri="s3://test",
-    )
-    storage_client = get_storage_client(storage_settings=s3_settings)
-    return storage_client
+    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="s3://test"))
 
 
 @pytest.fixture(scope="function")
 def local_storage_client():
-    storage_client = get_storage_client(storage_settings=StorageClientSettings())
-    return storage_client
+    return client.get_storage_client(OpsmlConfig())
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -246,7 +224,7 @@ def mock_pathlib():
 @pytest.fixture(scope="function")
 def mock_joblib_storage(mock_pathlib):
     with patch.multiple(
-        "opsml.registry.storage.artifact_storage.JoblibStorage",
+        "opsml.registry.storage.artifact.JoblibStorage",
         _write_joblib=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_joblib:
@@ -256,7 +234,7 @@ def mock_joblib_storage(mock_pathlib):
 @pytest.fixture(scope="function")
 def mock_json_storage(mock_pathlib):
     with patch.multiple(
-        "opsml.registry.storage.artifact_storage.JSONStorage",
+        "opsml.registry.storage.artifact.JSONStorage",
         _write_json=MagicMock(return_value=None),
         _load_artifact=MagicMock(return_value=None),
     ) as mocked_json:
@@ -306,90 +284,76 @@ def test_app_login() -> Iterator[TestClient]:
     cleanup()
 
 
-def mock_registries(test_client: TestClient) -> CardRegistries:
+def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
     def callable_api():
         return test_client
 
     with patch("httpx.Client", callable_api):
-        from opsml.registry.sql.base.query_engine import QueryEngine
-        from opsml.registry.utils.settings import settings
+        # Set the global configuration to mock API "client" mode
+        # TODO(@damon): Get rid of all global state
+        monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
-        settings.opsml_tracking_uri = "http://testserver"
-        registries = CardRegistries()
+        cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=STORAGE_PATH)
 
-        initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
-        initializer.initialize()
-
-        registries.data = ClientCardRegistry(registry_name="data")
-        registries.model = ClientCardRegistry(registry_name="model")
-        registries.pipeline = ClientCardRegistry(registry_name="pipeline")
-        registries.run = ClientCardRegistry(registry_name="run")
-        registries.project = ClientCardRegistry(registry_name="project")
-        registries.audit = ClientCardRegistry(registry_name="audit")
-
-        return registries
+        # Cards rely on global storage state - so set it to API
+        client.storage_client = client.get_storage_client(cfg)
+        return CardRegistries(client.storage_client)
 
 
 @pytest.fixture(scope="function")
-def api_registries(test_app: TestClient) -> Iterator[CardRegistries]:
-    yield mock_registries(test_app)
+def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Iterator[CardRegistries]:
+    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
+    yield mock_registries(monkeypatch, test_app)
 
 
 @pytest.fixture(scope="function")
-def mock_cli_property(api_registries: CardRegistries) -> Iterator[ApiClient]:
-    with patch("opsml.cli.utils.CliApiClient.client", new_callable=PropertyMock) as client_mock:
-        from opsml.registry.utils.settings import settings
-
-        client_mock.return_value = settings.request_client
-        yield client_mock
-
-
-@pytest.fixture(scope="function")
-def api_storage_client(api_registries: CardRegistries) -> StorageClientType:
-    return api_registries.data._registry.storage_client
+def db_registries() -> CardRegistries:
+    """Returns CardRegistries configured with a local client (to simulate "client" mode)."""
+    cleanup()
+    # Cards rely on global storage state - so set it to local.
+    client.storage_client = client.get_storage_client(config)
+    yield CardRegistries(client.storage_client)
+    cleanup()
 
 
 @pytest.fixture(scope="function")
-def opsml_project(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
-    opsml_run = OpsmlProject(
+def opsml_project() -> Iterator[OpsmlProject]:
+    project = OpsmlProject(
         info=ProjectInfo(
             name="test_exp",
             team="test",
             user_email="test",
-            tracking_uri=SQL_PATH,
         )
     )
-    opsml_run._run_mgr.registries = api_registries
-    return opsml_run
+    return project
 
 
 @pytest.fixture(scope="function")
-def opsml_project_2(api_registries: CardRegistries) -> Iterator[OpsmlProject]:
-    opsml_run = OpsmlProject(
-        info=ProjectInfo(
-            name="opsml_project",
-            team="devops",
-            user_email="test",
-            tracking_uri=SQL_PATH,
-        )
-    )
-    opsml_run._run_mgr.registries = api_registries
-    return opsml_run
+def mock_model_challenger() -> Any:
+    class MockModelChallenger(ModelChallenger):
+        def __init__(
+            self,
+            challenger: ModelCard,
+            registries: CardRegistries,
+        ):
+            """
+            Instantiates ModelChallenger class
+
+            Args:
+                challenger:
+                    ModelCard of challenger
+
+            """
+            self._challenger = challenger
+            self._challenger_metric: Optional[Metric] = None
+            self._registries = registries
+
+    return MockModelChallenger
 
 
-def mock_opsml_project(info: ProjectInfo) -> OpsmlProject:
-    info.tracking_uri = SQL_PATH
-    opsml_run = OpsmlProject(info=info)
-
-    api_card_registries = CardRegistries()
-    api_card_registries.data = ClientCardRegistry(registry_name="data")
-    api_card_registries.model = ClientCardRegistry(registry_name="model")
-    api_card_registries.run = ClientCardRegistry(registry_name="run")
-    api_card_registries.project = ClientCardRegistry(registry_name="project")
-    api_card_registries.pipeline = ClientCardRegistry(registry_name="pipeline")
-
-    opsml_run._run_mgr.registries = api_card_registries
-    return opsml_run
+@pytest.fixture(scope="function")
+def api_storage_client(api_registries: CardRegistries) -> client.StorageClientType:
+    return api_registries.data._registry.storage_client
 
 
 @pytest.fixture(scope="function")
@@ -440,35 +404,24 @@ def mock_local_engine():
 
 
 @pytest.fixture(scope="function")
-def db_registries():
-    cleanup()
+def mock_aws_storage_response():
+    class MockResponse:
+        def __init__(self):
+            self.status_code = 200
 
-    # force opsml to use CardRegistry with SQL connection (non-proxy)
-    from opsml.registry.sql.base.query_engine import QueryEngine
-    from opsml.registry.sql.registry import CardRegistry
+        def json(self):
+            return {
+                "storage_type": "s3",
+                "storage_uri": "s3://test",
+                "proxy": False,
+            }
 
-    model_registry = CardRegistry(registry_name="model")
-    data_registry = CardRegistry(registry_name="data")
-    run_registry = CardRegistry(registry_name="run")
-    pipeline_registry = CardRegistry(registry_name="pipeline")
-    audit_registry = CardRegistry(registry_name="audit")
+    class MockHTTPX(httpx.Client):
+        def get(self, url, **kwargs):
+            return MockResponse()
 
-    initializer = DBInitializer(engine=QueryEngine().engine, registry_tables=list(RegistryTableNames))
-    # tables are created when settings are called.
-    # settings is a singleton, so during testing, if the tables are deleted, they are not re-created
-    # need to do it manually
-
-    initializer.initialize()
-
-    yield {
-        "data": data_registry,
-        "model": model_registry,
-        "run": run_registry,
-        "pipeline": pipeline_registry,
-        "audit": audit_registry,
-    }
-
-    cleanup()
+    with patch("httpx.Client", MockHTTPX) as mock_requests:
+        yield mock_requests
 
 
 @pytest.fixture(scope="function")

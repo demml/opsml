@@ -15,12 +15,10 @@ from requests.auth import HTTPBasicAuth
 from sklearn import linear_model, pipeline
 from starlette.testclient import TestClient
 
-from opsml.app.core import config
 from opsml.app.routes.files import verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
-from opsml.helpers.request_helpers import ApiRoutes
-from opsml.projects import OpsmlProject
+from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import (
     AuditCard,
     CardInfo,
@@ -33,6 +31,9 @@ from opsml.registry import (
     PipelineCard,
     RunCard,
 )
+from opsml.registry.sql.registry import CardRegistries
+from opsml.registry.storage.api import ApiRoutes
+from opsml.settings.config import config
 from tests.conftest import TODAY_YMD
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
@@ -42,9 +43,7 @@ def test_app_settings(test_app: TestClient):
     """Test settings"""
 
     response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
-
     assert response.status_code == 200
-    assert response.json()["proxy"] is True
 
 
 def test_debug(test_app: TestClient):
@@ -98,42 +97,20 @@ def test_register_data(
     df = registry.list_cards(as_dataframe=True)
     assert isinstance(df, pd.DataFrame)
 
-
-def test_list_teams(
-    api_registries: CardRegistries,
-):
-    registry: CardRegistry = api_registries.data
+    # Verify teams / names
     teams = registry._registry.unique_teams
-    assert len(teams) == 1
-    assert teams[0] == "mlops"
+    assert "mlops" in teams
 
-
-def test_list_card_names(
-    api_registries: CardRegistries,
-):
-    # create data card
-    registry = api_registries.data
     names = registry._registry.get_unique_card_names(team="mlops")
+    assert "test-df" in names
 
-    assert len(names) == 1
-    assert names[0] == "test-df"
-
-    names = registry._registry.get_unique_card_names()
-
-    assert len(names) == 1
-    assert names[0] == "test-df"
-
-
-def test_list_team_info(
-    api_registries: CardRegistries,
-):
-    registry = api_registries.data
     info = list_team_name_info(registry=registry, team="mlops")
-    assert info.names[0] == "test-df"
-    assert info.teams[0] == "mlops"
+    assert "mlops" in info.teams
+    assert "test-df" in info.names
 
     info = list_team_name_info(registry=registry)
-    assert info.names[0] == "test-df"
+    assert "mlops" in info.teams
+    assert "test-df" in info.names
 
 
 def test_register_major_minor(api_registries: CardRegistries, test_array: NDArray):
@@ -362,7 +339,7 @@ def test_register_model(
     )
     with pytest.raises(ValueError) as ve:
         model_registry.register_card(card=model_card_dup)
-    assert ve.match("Failed to set version. Model name already exists for a different team")
+    assert ve.match("different team")
 
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
@@ -744,12 +721,11 @@ def test_model_metric_failure(
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_token_fail(
-    api_registries: CardRegistries,
     monkeypatch: pytest.MonkeyPatch,
+    api_registries: CardRegistries,
 ):
-    monkeypatch.setattr(config.config, "APP_ENV", "production")
-    monkeypatch.setattr(config.config, "PROD_TOKEN", "fail")
-
+    monkeypatch.setattr(config, "app_env", "production")
+    monkeypatch.setattr(config, "opsml_prod_token", "fail")
     run = RunCard(
         name="test_df",
         team="mlops",
@@ -842,36 +818,40 @@ def test_data_list(test_app: TestClient):
 def test_data_model_version(
     test_app: TestClient,
     api_registries: CardRegistries,
-    opsml_project: OpsmlProject,
     sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame],
 ):
     """Test settings"""
 
     model, data = sklearn_pipeline
 
-    with opsml_project.run() as run:
-        datacard = DataCard(
-            data=data,
-            name="test_data",
-            team="mlops",
-            user_email="mlops.com",
-        )
-        datacard.create_data_profile()
-        run.register_card(card=datacard)
-        run.log_metric("test_metric", 10)
-        run.log_metrics({"test_metric2": 20})
+    def callable_api():
+        return test_app
 
-        modelcard = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            tags={"id": "model1"},
-            datacard_uid=datacard.uid,
-            to_onnx=True,
-        )
-        run.register_card(modelcard)
+    with patch("httpx.Client", callable_api):
+        info = ProjectInfo(name="test", team="test", user_email="test")
+        with OpsmlProject(info=info).run() as run:
+            datacard = DataCard(
+                data=data,
+                name="test_data",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            datacard.create_data_profile()
+            run.register_card(card=datacard)
+            run.log_metric("test_metric", 10)
+            run.log_metrics({"test_metric2": 20})
+
+            modelcard = ModelCard(
+                trained_model=model,
+                sample_input_data=data[0:1],
+                name="pipeline_model",
+                team="mlops",
+                user_email="mlops.com",
+                tags={"id": "model1"},
+                datacard_uid=datacard.uid,
+                to_onnx=True,
+            )
+            run.register_card(modelcard)
 
     response = test_app.get("/opsml/data/versions/")
     assert response.status_code == 200

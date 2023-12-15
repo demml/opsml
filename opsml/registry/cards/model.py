@@ -22,20 +22,17 @@ from opsml.model.types import (
     OnnxModelDefinition,
     ValidModelInput,
 )
-from opsml.registry.cards.audit_deco import auditable
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact_storage import load_record_artifact_from_storage
+from opsml.registry.storage import client
+from opsml.registry.storage.artifact import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
-from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-storage_client = settings.storage_client
 
 
-@auditable
 class ModelCard(ArtifactCard):
     """Create a ModelCard from your trained machine learning model.
     This Card is used in conjunction with the ModelCardCreator class.
@@ -126,7 +123,7 @@ class ModelCard(ArtifactCard):
 
         sample_data = load_record_artifact_from_storage(
             artifact_type=self.metadata.sample_data_type,
-            storage_client=storage_client,
+            storage_client=client.storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
         self.sample_input_data = sample_data
@@ -147,7 +144,7 @@ class ModelCard(ArtifactCard):
 
             trained_model = load_record_artifact_from_storage(
                 artifact_type=self.metadata.model_type,
-                storage_client=storage_client,
+                storage_client=client.storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
             )
             self.trained_model = trained_model
@@ -157,7 +154,7 @@ class ModelCard(ArtifactCard):
         """Loads `ModelMetadata` class"""
         model_metadata = load_record_artifact_from_storage(
             artifact_type=ArtifactStorageType.JSON.value,
-            storage_client=storage_client,
+            storage_client=client.storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
         )
 
@@ -175,7 +172,7 @@ class ModelCard(ArtifactCard):
 
         onnx_model = load_record_artifact_from_storage(
             artifact_type=ArtifactStorageType.ONNX.value,
-            storage_client=storage_client,
+            storage_client=client.storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=metadata.onnx_uri),
         )
 

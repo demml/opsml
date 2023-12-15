@@ -7,8 +7,8 @@ from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._active_run import ActiveRun, CardHandler
 from opsml.projects._run_manager import _RunManager
+from opsml.projects.active_run import ActiveRun, CardHandler
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.run import RunCard

@@ -1,15 +1,12 @@
-from typing import Dict
-
 import pytest
 
 from opsml.helpers.exceptions import VersionError
-from opsml.registry import DataCard
+from opsml.registry import CardRegistries, DataCard
 from opsml.registry.sql.registry import CardRegistry
 
 
-def test_version_tags(db_registries: Dict[str, CardRegistry]):
-    # create data card
-    registry: CardRegistry = db_registries["data"]
+def test_version_tags(db_registries: CardRegistries):
+    registry: CardRegistry = db_registries.data
 
     kwargs = {
         "name": "pre_build",
@@ -83,9 +80,9 @@ def test_version_tags(db_registries: Dict[str, CardRegistry]):
     assert ve.match("Model name already exists for a different team. Try a different name.")
 
 
-def test_build_tag_official_version(db_registries: Dict[str, CardRegistry]):
+def test_build_tag_official_version(db_registries: CardRegistries):
     # create data card
-    registry: CardRegistry = db_registries["data"]
+    registry: CardRegistry = db_registries.data
 
     kwargs = {
         "name": "build_tag",

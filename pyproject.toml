@@ -150,6 +150,7 @@ transformers = "^4.27.3"
 tensorflow = { version = "^2.11.0", platform = "linux" }
 # Tensorflow < 2.13.0 has no arm64 build in the main pypi package, so this separate one must be used for apple silicon
 tensorflow-macos = { version = "2.12.0", platform = "darwin" }
+pytest-rerunfailures = "^13.0"
 
 [tool.poetry.group.dev-lints]
 optional = true
@@ -224,7 +225,6 @@ addopts = "--ignore=tests/test_docs"
 # platform configuration
 python_version = "3.9"
 platform = "linux"
-mypy_path = "stubs"
 ignore_missing_imports = true
 strict = true
 
