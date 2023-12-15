@@ -13,12 +13,11 @@ from opsml.registry.sql.records import (
     RegistryRecord,
     RunRegistryRecord,
 )
-from opsml.registry.storage.artifact_storage import load_artifact_from_storage
+from opsml.registry.storage import client
+from opsml.registry.storage.artifact import load_record_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs
-from opsml.registry.utils.settings import settings
 
 logger = ArtifactLogger.get_logger()
-storage_client = settings.storage_client
 
 
 class RunCard(ArtifactCard):
@@ -272,7 +271,7 @@ class RunCard(ArtifactCard):
             for name, uri in self.artifact_uris.items():
                 self.artifacts[name] = load_artifact_from_storage(
                     artifact_type=ARBITRARY_ARTIFACT_TYPE,
-                    storage_client=storage_client,
+                    storage_client=client.storage_client,
                     storage_spec=ArtifactStorageSpecs(save_path=uri),
                 )
             return None

@@ -7,16 +7,12 @@ import uuid
 from typing import Dict, Optional, Union, cast
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._active_run import ActiveRun, RunInfo
+from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.base.types import ProjectInfo, Tags
 from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
-from opsml.registry.storage.storage_system import StorageClientType
-from opsml.registry.utils.settings import settings
+from opsml.registry.storage import client
 
 logger = ArtifactLogger.get_logger()
-
-
-registries = CardRegistries()
 
 
 class _RunManager:
@@ -39,10 +35,8 @@ class _RunManager:
         self._active_run: Optional[ActiveRun] = None
         self._version: Optional[str] = None
 
-        # in opsml, storage client comes from settings (created once during runtime)
-        # storage and registries are held in run_manager and passed to active run
-        self._storage_client = settings.storage_client
-        self.registries = registries
+        self._storage_client = client.storage_client
+        self.registries = CardRegistries()
 
         run_id = project_info.run_id
         if run_id is not None:
@@ -56,7 +50,7 @@ class _RunManager:
         return self._project_id
 
     @property
-    def storage_client(self) -> StorageClientType:
+    def storage_client(self) -> client.StorageClientType:
         return self._storage_client
 
     @property
@@ -153,10 +147,7 @@ class _RunManager:
         """Loads a RunCard or creates a new RunCard"""
 
         if self.run_id is not None and self._card_exists(run_id=self.run_id):
-            # need run registry with API client
-            run_registry = CardRegistry(registry_name="run")
-            runcard = run_registry.load_card(uid=self.run_id)
-
+            runcard = self.registries.run.load_card(uid=self.run_id)
             return cast(RunCard, runcard)
 
         return RunCard(

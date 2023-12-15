@@ -18,7 +18,7 @@ from opsml.registry.cards.types import (
     RegistryType,
 )
 from opsml.registry.storage.artifact_storage import load_artifact_from_storage
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage.client import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs
 
 ARBITRARY_ARTIFACT_TYPE = "dict"

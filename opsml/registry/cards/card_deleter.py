@@ -6,7 +6,7 @@ from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import CardType
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage.client import StorageClientType
 
 
 class CardArtifactDeleter:
