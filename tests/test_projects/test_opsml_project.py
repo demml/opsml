@@ -7,16 +7,11 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
-from opsml.helpers.logging import ArtifactLogger
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects.active_run import ActiveRun
-from opsml.registry import AuditCard, CardRegistry, DataCard, ModelCard
-from opsml.registry.cards.types import CardInfo, RegistryType
+from opsml.registry import AuditCard, CardInfo, DataCard, ModelCard
 from opsml.registry.image import ImageDataset
 from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.storage.settings import settings
-
-logger = ArtifactLogger.get_logger()
 
 
 def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
@@ -132,14 +127,12 @@ def test_opsml_read_only(
         info.run_id = "run_id_fail"
         OpsmlProject(info=info)
 
-    proj_reg = CardRegistry(RegistryType.PROJECT, settings=settings)
-
     with pytest.raises(ValueError) as ve:
-        proj_reg.delete_card(data_card)
+        db_registries.project.delete_card(data_card)
     ve.match("ProjectCardRegistry does not support delete_card")
 
     with pytest.raises(ValueError) as ve:
-        proj_reg.load_card("test-exp")
+        db_registries.project.load_card("test-exp")
     ve.match("ProjectCardRegistry does not support load_card")
 
 
