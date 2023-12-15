@@ -1,12 +1,9 @@
-import sys
 import pytest
 import sqlalchemy
 from google.cloud.sql.connector import IPTypes
 
 from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
 from opsml.registry.sql.connectors.connector import DefaultConnector
-
-EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
 def test_cloudsql_mysql_parsing():
@@ -55,7 +52,6 @@ def test_cloudsql():
         CloudSQLConnection(tracking_uri=MYSQL_TRACKING_URI)
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_base_sql_connection():
     USER = "fake-user"
     PASSWORD = "fakepass"
