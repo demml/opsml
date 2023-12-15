@@ -1,3 +1,4 @@
+import sys
 import pytest
 import sqlalchemy
 from google.cloud.sql.connector import IPTypes
@@ -5,7 +6,10 @@ from google.cloud.sql.connector import IPTypes
 from opsml.registry.sql.connectors.base import BaseSQLConnection, CloudSQLConnection
 from opsml.registry.sql.connectors.connector import DefaultConnector
 
+EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
+
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_cloudsql_mysql_parsing():
     USER = "fake-user"
     PASSWORD = "fakepass"
@@ -24,6 +28,7 @@ def test_cloudsql_mysql_parsing():
     assert "CloudSqlMySql" in conn.__class__.__name__
 
 
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_cloudsql_postgres_parsing():
     USER = "fake-user"
     PASSWORD = "fakepass"
@@ -41,6 +46,7 @@ def test_cloudsql_postgres_parsing():
     assert "CloudSqlPostgresql" in conn.__class__.__name__
 
 
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 def test_cloudsql():
     USER = "fake-user"
     PASSWORD = "fakepass"
