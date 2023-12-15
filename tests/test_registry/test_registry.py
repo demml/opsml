@@ -28,7 +28,7 @@ from opsml.registry.cards import (
     RunCard,
 )
 from opsml.registry.sql.base.query_engine import DialectHelper
-from opsml.registry.sql.sql_schema import DataSchema
+from opsml.registry.sql.base.sql_schema import DataSchema
 from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS
 
 
