@@ -24,7 +24,7 @@ import shutil
 import tempfile
 import time
 import uuid
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import httpx
 import joblib
@@ -62,7 +62,6 @@ from starlette.testclient import TestClient
 from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
-from opsml.helpers.request_helpers import ApiClient
 from opsml.model.challenger import ModelChallenger
 from opsml.model.types import OnnxModelDefinition
 from opsml.projects import OpsmlProject, ProjectInfo

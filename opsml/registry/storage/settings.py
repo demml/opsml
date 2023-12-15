@@ -52,7 +52,7 @@ class _DefaultAttrCreator:
 
 
 class DefaultSettings:
-    """Storage settings"""
+    """Creates a storage client"""
 
     def __init__(self, cfg: OpsmlConfig) -> None:
         if not cfg.is_tracking_local:
