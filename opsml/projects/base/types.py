@@ -2,14 +2,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
 from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from opsml.helpers.types import OpsmlUri
-from opsml.registry.utils.settings import settings
+from opsml.settings.config import config
 
 
 # This needs to be kept here for backward compatibility with v1
@@ -46,12 +44,12 @@ class ProjectInfo(BaseModel):
     )
 
     run_id: Optional[str] = Field(
-        os.environ.get(OpsmlUri.RUN_ID.value),
+        config.opsml_run_id,
         description="An existing run_id to use. If None, a new run is created when the project is activated",
     )
 
     tracking_uri: str = Field(
-        settings.opsml_tracking_uri,
+        config.opsml_tracking_uri,
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
     )
 

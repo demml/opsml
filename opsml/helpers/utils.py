@@ -3,14 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import glob
-import importlib
+import importlib.util
 import os
 import re
 import string
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
 
 from opsml.helpers import exceptions
 from opsml.helpers.logging import ArtifactLogger
@@ -35,23 +34,25 @@ def experimental_feature(func: Callable[..., None]) -> Callable[..., None]:
     return wrapper
 
 
-def clean_string(name: Optional[str] = None) -> Optional[str]:
+def clean_string(value: Optional[str] = None) -> Optional[str]:
     """
-    Cleans a given string
+    Cleans a given string. Cleaning makes the string lowercase, trims,
+    whitespace, removes punctuation except for dashes and underscores, and
+    replaces all underscores with dashes.
+
+    Examples:
+        clean_string("  TEST  "") == "test"
+        clean_string("  !!_-TEST-_!!   ") == "--test--"
 
     Args:
-        name:
-            String to clean
-
+        value: string to clean
     """
-    if name is not None:
-        _name = name.strip()
-        _name = _name.lower()
-        _name = re.sub("[" + REMOVE_CHARS + "]", "", _name)
-        _name = _name.replace("_", "-")
+    if value is None:
+        return None
 
-        return _name
-    return None
+    clean = value.strip().lower()
+    clean = re.sub("[" + REMOVE_CHARS + "]", "", clean)
+    return clean.replace("_", "-")
 
 
 def validate_name_team_pattern(name: str, team: str) -> None:
@@ -89,8 +90,53 @@ class TypeChecker:
         raise ValueError("Param is not of valid type (int, float, str)")
 
 
-class FindPath:
+class FileUtils:
     """Helper class for finding paths to artifacts"""
+
+    @staticmethod
+    def find_dirpath(path: str, dir_name: str, anchor_file: str) -> Path:
+        """Finds the directory path for a directory `dir_name` which contains a
+        given anchor file.
+
+        Note that anchor_file must be unique within the recursive directory tree
+        rooted at `path`.
+
+        Args:
+            path:
+                Base path to search
+            dir_name:
+                Name of directory
+            anchor_file:
+                Name of anchor file in directory
+
+        Example:
+            /test/child/grandchild/test.txt
+
+            find_dirpath("child", "/test", "test.txt") == "/test/child"
+            find_dirpath("grandchild", "/test", "test.txt") ==
+            "/test/child/grandchild"
+
+        Returns:
+            dirpath
+
+        Raises:
+            FileNotFoundError: The anchor file does not exist in any directory
+            MoreThanOnePathException: Multiple anchor_files exist in the `path` hierarchy
+
+        """
+        paths = list(Path(path).rglob(anchor_file))
+
+        if len(paths) == 0:
+            raise FileNotFoundError()
+
+        if len(paths) > 1:
+            raise exceptions.MoreThanOnePathException()
+
+        for parent in paths[0].parents:
+            if parent.is_dir() and parent.name == dir_name:
+                return parent
+
+        raise FileNotFoundError()
 
     @staticmethod
     def find_filepath(name: str, path: Optional[str] = None) -> Path:
@@ -100,105 +146,51 @@ class FindPath:
             name:
                 Name of file
             path:
-                Optional. Base path to search
+                Directory to search. Defaults to the current working directory.
 
         Returns:
             filepath
+
+        Raises
         """
         if path is None:
             path = os.getcwd()
 
         paths = list(Path(path).rglob(name))
 
-        try:
-            file_path = paths[0]
-        except IndexError as error:
-            raise IndexError(f"No path found for file {name}. {error}") from error
+        if len(paths) == 0:
+            raise FileNotFoundError(f"File {name} not found in {path}")
 
-        if file_path is not None:
-            return file_path
+        if len(paths) > 1:
+            raise exceptions.MoreThanOnePathException()
 
-        raise exceptions.MissingKwarg(
-            f"""
-            {name} file was not found in the current path: {path}.
-            Check to make sure you specified the correct name.
-            """
-        )
-
-    @staticmethod
-    def find_dirpath(dir_name: str, path: str, anchor_file: str) -> str:
-        """Finds the dir path of a given file.
-
-        Args:
-            dir_name:
-                Name of directory
-            path:
-                Base path to search
-            anchor_file:
-                Name of anchor file in directory
-
-        Returns:
-            dirpath
-        """
-
-        paths = glob.glob(f"{path}/**/{anchor_file}", recursive=True)
-
-        if len(paths) <= 1:
-            dirs = paths[0].split("/")[:-1]
-
-            try:
-                dir_idx = dirs.index(dir_name)
-            except ValueError as error:
-                raise exceptions.DirNotFound(
-                    f"""Directory {dir_name} was not found.
-                     Please check the name of your top-level directory.
-                     Error: {error}
-                     """
-                )
-            return "/".join(dirs[: dir_idx + 1])
-
-        raise exceptions.MoreThanOnePath(
-            f"""More than one path was found for the trip configuration file.
-                Please check your project structure.
-                Found paths: {paths}
-            """
-        )
-
-    @staticmethod
-    def find_source_dir(path: str, runner_file: str) -> Tuple[str, str]:
-        """Finds the dir path of a given of the pipeline
-        runner file.
-
-        Args:
-            path (str): Current directory
-            runner_file (str): Name of pipeline runner file
-
-        Returns:
-            tuple(dir, name)
-        """
-        paths = glob.glob(f"{path}/**/{runner_file}", recursive=True)
-        if len(paths) <= 1:
-            source_path = "/".join(paths[0].split("/")[:-1])
-            source_dir = paths[0].split("/")[:-1][-1]
-            return source_dir, source_path
-
-        raise exceptions.MoreThanOnePath(
-            f"""More than one path was found for the trip configuration file.
-                Please check your project structure.
-                Found paths: {paths}
-            """
-        )
+        return paths[0]
 
 
-def all_subclasses(cls: Any) -> Set[Any]:
+def all_subclasses(cls: Type[Any]) -> Set[Type[Any]]:
     """Gets all subclasses associated with parent class"""
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)],
     )
 
 
-def try_import(packages: List[str], extras_expression: str, context: str) -> bool:
-    """Test if packages can be imported
+def check_package_exists(package_name: str) -> bool:
+    """Checks if package exists
+
+    Args:
+        package_name:
+            Name of package to check
+
+    Returns:
+        True if package exists, False otherwise
+    """
+    return importlib.util.find_spec(package_name) is not None
+
+
+def try_import(packages: List[str], extras_expression: str, context: str) -> None:
+    """Imports packages
+
+    If the package cannot be imported, an custom error is logged.
 
     Args:
         packages:
@@ -207,9 +199,6 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
             Expression for installing extras
         context:
             Context for error message
-
-    Returns:
-        True if all packages can be imported, False otherwise
     """
     for package in packages:
         try:
@@ -224,7 +213,6 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> boo
                 context,
             )
             raise error
-    return True
 
 
 class OpsmlImportExceptions:

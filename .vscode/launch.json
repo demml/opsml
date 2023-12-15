@@ -48,8 +48,6 @@
             "env": {
                 "OPSML_TRACKING_URI": "sqlite:///tmp.db",
                 "OPSML_STORAGE_URI": "./mlruns",
-                "OPSML_PROD_TOKEN": "prod",
-                "APP_ENV": "production",
             }
         },
         {

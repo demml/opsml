@@ -8,9 +8,7 @@ from opsml.registry.sql.semver import (
 )
 
 
-def test_semver(db_registries):
-    db_registries["model"]
-
+def test_semver() -> None:
     for i in range(0, 10):
         expected_version = f"1.{i+1}.0"
         new_version = SemVerUtils.increment_version(

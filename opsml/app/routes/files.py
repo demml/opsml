@@ -26,7 +26,7 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.table_names import RegistryTableNames
+from opsml.registry import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 CHUNK_SIZE = 31457280
@@ -73,6 +73,10 @@ def verify_path(path: str) -> str:
     )
 
 
+#
+# TODO(@damon): Ensure WritePath is placed within the storage root!
+# TODO(@damon): Currently the client controls where the server puts the file.
+#
 # upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
 async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover

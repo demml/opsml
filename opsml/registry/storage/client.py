@@ -27,7 +27,7 @@ from typing import (
 from pyarrow.fs import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.request_helpers import ApiRoutes
+from opsml.helpers.request_helpers import ApiClient, ApiRoutes
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
@@ -35,8 +35,10 @@ from opsml.registry.storage.types import (
     FilePath,
     GcsStorageClientSettings,
     S3StorageClientSettings,
+    StorageClientSettings,
     StorageSettings,
 )
+from opsml.settings.config import OpsmlConfig, config
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer*")
@@ -92,13 +94,13 @@ def extract_registry_name(string: str) -> Optional[str]:
 class StorageClient:
     def __init__(
         self,
-        storage_settings: StorageSettings,
+        settings: StorageSettings,
         client: Any = LocalFileSystem(),
         backend: str = StorageSystem.LOCAL.value,
     ):
         self.client = client
         self.backend = backend
-        self.base_path_prefix = storage_settings.storage_uri
+        self.base_path_prefix = settings.storage_uri
 
     def extend_storage_spec(
         self,
@@ -167,18 +169,18 @@ class StorageClient:
 class GCSFSStorageClient(StorageClient):
     def __init__(
         self,
-        storage_settings: StorageSettings,
+        settings: StorageSettings,
     ):
         import gcsfs
 
-        assert isinstance(storage_settings, GcsStorageClientSettings)
+        assert isinstance(settings, GcsStorageClientSettings)
         client = gcsfs.GCSFileSystem(
-            project=storage_settings.gcp_project,
-            token=storage_settings.credentials,
+            project=settings.gcp_project,
+            token=settings.credentials,
         )
 
         super().__init__(
-            storage_settings=storage_settings,
+            settings=settings,
             client=client,
             backend=StorageSystem.GCS.value,
         )
@@ -231,15 +233,15 @@ class GCSFSStorageClient(StorageClient):
 class S3StorageClient(StorageClient):
     def __init__(
         self,
-        storage_settings: StorageSettings,
+        settings: StorageSettings,
     ):
         import s3fs
 
-        assert isinstance(storage_settings, S3StorageClientSettings)
+        assert isinstance(settings, S3StorageClientSettings)
         client = s3fs.S3FileSystem()
 
         super().__init__(
-            storage_settings=storage_settings,
+            settings=settings,
             client=client,
             backend=StorageSystem.S3.value,
         )
@@ -389,14 +391,19 @@ class LocalStorageClient(StorageClient):
 
 
 class ApiStorageClient(LocalStorageClient):
-    def __init__(self, storage_settings: StorageSettings):
-        assert isinstance(storage_settings, ApiStorageClientSettings)
+    def __init__(self, settings: StorageSettings):
+        assert isinstance(settings, ApiStorageClientSettings)
         super().__init__(
-            storage_settings=storage_settings,
+            settings=settings,
             backend=StorageSystem.API.value,
         )
 
-        self.api_client = storage_settings.api_client
+        self.api_client = ApiClient(
+            base_url=settings.opsml_tracking_uri,
+            username=settings.opsml_username,
+            password=settings.opsml_password,
+            token=settings.opsml_prod_token,
+        )
 
     def list_files(self, storage_uri: str) -> FilePath:
         response = self.api_client.post_request(
@@ -558,16 +565,69 @@ StorageClientType = Union[
 ]
 
 
-def get_storage_client(
-    storage_settings: StorageSettings,
-) -> StorageClientType:
-    storage_client = next(
-        (
-            storage_client
-            for storage_client in all_subclasses(StorageClient)
-            if storage_client.validate(storage_backend=storage_settings.storage_type)
-        ),
+class _DefaultAttrCreator:
+    @staticmethod
+    def get_storage_settings(cfg: OpsmlConfig) -> StorageSettings:
+        if "gs://" in cfg.opsml_storage_uri:
+            return _DefaultAttrCreator._get_gcs_settings(cfg.opsml_storage_uri)
+        if "s3://" in cfg.opsml_storage_uri:
+            return S3StorageClientSettings(
+                storage_type=StorageSystem.S3.value,
+                storage_uri=cfg.opsml_storage_uri,
+            )
+        return StorageClientSettings(
+            storage_type=StorageSystem.LOCAL.value,
+            storage_uri=cfg.opsml_storage_uri,
+        )
+
+    @staticmethod
+    def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
+        from opsml.helpers.gcp_utils import (  # pylint: disable=import-outside-toplevel
+            GcpCredsSetter,
+        )
+
+        gcp_creds = GcpCredsSetter().get_creds()
+
+        return GcsStorageClientSettings(
+            storage_type=StorageSystem.GCS.value,
+            storage_uri=storage_uri,
+            gcp_project=gcp_creds.project,
+            credentials=gcp_creds.creds,
+        )
+
+
+def get_storage_client(cfg: OpsmlConfig) -> StorageClientType:
+    if not cfg.is_tracking_local:
+        settings: StorageSettings = ApiStorageClientSettings(
+            storage_type=StorageSystem.API.value,
+            storage_uri=cfg.opsml_storage_uri,
+            opsml_tracking_uri=cfg.opsml_tracking_uri,
+            opsml_username=cfg.opsml_username,
+            opsml_password=cfg.opsml_password,
+            opsml_prod_token=cfg.opsml_prod_token,
+        )
+    else:
+        settings = _DefaultAttrCreator.get_storage_settings(cfg)
+
+    client_type = next(
+        (c for c in all_subclasses(StorageClient) if c.validate(storage_backend=settings.storage_type)),
         LocalStorageClient,
     )
 
-    return storage_client(storage_settings=storage_settings)
+    return client_type(settings=settings)
+
+
+# The global storage client. When importing from this module, be sure to import
+# the *module* rather than storage_client itself to simplify mocking. Tests will
+# mock the global storage client.
+#
+# i.e., use:
+# from opsml.registry.storage import client
+#
+# do_something(client.storage_client)
+#
+# do *not* use:
+# from opsml.registry.storage.client import storage_client
+#
+# do_something(storage_client)
+storage_client = get_storage_client(config)

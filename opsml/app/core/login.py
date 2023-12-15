@@ -1,18 +1,27 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
 import secrets
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from opsml.settings import config
+
 security = HTTPBasic()
 
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)) -> str:
-    username = os.environ["OPSML_USERNAME"].encode("utf-8")
-    password = os.environ["OPSML_PASSWORD"].encode("utf-8")
+    """Retrieves the currently logged in user,.
+
+    Provides a really simple user/pass authorization scheme.
+    """
+    if config.opsml_username is None or config.opsml_password is None:
+        # user / pass not configured - no security
+        return credentials.username
+
+    username = config.opsml_username.encode("utf-8")
+    password = config.opsml_password.encode("utf-8")
     current_username_bytes = credentials.username.encode("utf8")
     is_correct_username = secrets.compare_digest(current_username_bytes, username)
     current_password_bytes = credentials.password.encode("utf8")

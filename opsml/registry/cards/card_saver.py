@@ -26,8 +26,8 @@ from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.data.types import AllowedDataType, ArrowTable
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.storage.artifact_storage import save_artifact_to_storage
-from opsml.registry.storage.storage_system import StorageClientType
+from opsml.registry.storage.artifact import save_artifact_to_storage
+from opsml.registry.storage.client import StorageClientType
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
 
