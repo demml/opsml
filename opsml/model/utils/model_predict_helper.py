@@ -69,10 +69,7 @@ class TorchPredictHelper(PredictHelper):
         import torch
 
         try:
-            if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = model(**model.sample_data)
-            else:
-                predictions = model(model.sample_data)
+            predictions = model.get_sample_prediction()
 
             if isinstance(predictions, dict):
                 return {key: value.detach().numpy() for key, value in predictions.items()}

@@ -5,8 +5,8 @@ from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from opsml.registry.cards.types import CommonKwargs
 from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType
-from opsml.model.utils.huggingface_types import HuggingFaceTask
-from opsml.registry.data.types import get_class_name
+from opsml.model.utils.huggingface_types import HuggingFaceTask, GENERATION_TYPES
+from opsml.registry.data.types import get_class_name, AllowedDataType
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -98,7 +98,7 @@ class SupportedModel(BaseModel):
 
         raise ValueError("Provided sample data is not a valid type")
 
-    def get_example_prediction(self) -> Any:
+    def get_sample_prediction(self) -> Any:
         return self.model.predict(self.sample_data)
 
     @property
@@ -170,12 +170,18 @@ class PytorchModel(SupportedModel):
 
         return model
 
+    def get_sample_prediction(self) -> Any:
+        if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
+            return self.model(**self.sample_data)
+
+        return self.model(self.sample_data)
+
     @property
     def model_class(self) -> str:
         return TrainedModelType.PYTORCH.value
 
 
-class LightningModel(SupportedModel):
+class LightningModel(PytorchModel):
     @field_validator("model", mode="before")
     @classmethod
     def check_model(cls, model: Any) -> Any:
@@ -213,9 +219,7 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(
-            model, Booster
-        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             cls._model_type = model.__class__.__name__
@@ -233,7 +237,11 @@ class LightGBMBoosterModel(SupportedModel):
 
 class HuggingFaceModel(SupportedModel):
     is_pipeline: bool = False
-    backend: str = CommonKwargs.PYTORCH.value
+    _backend: str
+
+    @property
+    def backend(self) -> str:
+        return self._backend
 
     @model_validator(mode="before")
     @classmethod
@@ -249,10 +257,10 @@ class HuggingFaceModel(SupportedModel):
             from transformers import PreTrainedModel, TFPreTrainedModel
 
             if isinstance(model, PreTrainedModel):
-                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.PYTORCH.value
+                cls._backend = CommonKwargs.PYTORCH.value
 
             elif isinstance(model, TFPreTrainedModel):
-                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.TENSORFLOW.value
+                cls._backend = CommonKwargs.TENSORFLOW.value
 
             else:
                 raise ValueError("Model must be a huggingface model")
@@ -279,6 +287,25 @@ class HuggingFaceModel(SupportedModel):
         if task not in list(HuggingFaceTask):
             raise ValueError(f"Task type {task} is not supported")
         return task
+
+    def _generate_predictions(self):
+        """Use model in generate mode if generate task"""
+        if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
+            return self.model.generate(**self.sample_data)
+
+        return self.generate(self.sample_data)
+
+    def _functional_predictions(self):
+        """Use model in functional mode if functional task"""
+        if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
+            return self.model(**self.sample_data)
+
+        return self.model(self.sample_data)
+
+    def get_sample_prediction(self) -> Any:
+        if self.task_type in GENERATION_TYPES:
+            return self._generate_predictions()
+        return self._functional_predictions()
 
     @property
     def model_class(self) -> str:
