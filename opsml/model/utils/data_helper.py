@@ -3,15 +3,16 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
+from functools import cached_property
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import get_class_name
 from opsml.model.utils.types import DataDtypes, Feature, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
+from opsml.registry.cards.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
@@ -196,21 +197,15 @@ class DataDictionary(ModelDataHelper):
             feature_dict[feature] = Feature(feature_type=type_, shape=[shape[1]])
         return feature_dict
 
-    @property
+    @cached_property
     def dtypes(self) -> List[str]:
         types = []
         for _, value in self.data.items():
-            class_name = get_class_name(value)
-
-            if (
-                isinstance(value, np.ndarray)
-                or (class_name == AllowedDataType.TORCH_TENSOR)
-                or (class_name == AllowedDataType.TENSORFLOW_TENSOR)
-            ):
-                types.append(str(value.dtype).lower())
-
+            dtype = getattr(value, "dtype", None)
+            if dtype is not None:
+                types.append(str(dtype).lower())
             else:
-                types.append(class_name.lower())
+                types.append(str(type(value)).lower())
 
         return types
 
@@ -220,7 +215,7 @@ class DataDictionary(ModelDataHelper):
 
     @property
     def shape(self) -> List[Tuple[int, ...]]:
-        return [value.shape for _, value in self.data.items()]
+        return [getattr(value, "shape", CommonKwargs.UNDEFINED.value) for value in self.data.values()]
 
     @property
     def features(self) -> List[str]:
@@ -233,6 +228,45 @@ class DataDictionary(ModelDataHelper):
     @staticmethod
     def validate(data_type: str) -> bool:
         return data_type == AllowedDataType.DICT
+
+
+class TupleData(ModelDataHelper):
+    def __init__(self, input_data: Tuple[Any]):
+        super().__init__(input_data=input_data)
+
+        self.data = cast(Tuple[Any], self.data)
+
+    @cached_property
+    def dtypes(self) -> List[str]:
+        dtypes = []
+        for value in self.data:
+            dtype = getattr(value, "dtype", None)
+
+            if dtype is not None:
+                dtypes.appen(str(dtype).lower())
+            else:
+                dtypes.append(str(type(value)).lower())
+
+        return dtype
+
+    @property
+    def num_dtypes(self) -> int:
+        return len(set(self.dtypes))
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return cast(Tuple[int, ...], self.data.shape)
+
+    @property
+    def feature_dict(self) -> Dict[str, Feature]:
+        feature_dict = {}
+        for feature, type_ in zip(self.features, self.dtypes):
+            feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
+        return feature_dict
+
+    @staticmethod
+    def validate(data_type: str) -> bool:
+        return data_type == AllowedDataType.NUMPY
 
 
 def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
