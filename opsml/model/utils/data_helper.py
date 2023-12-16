@@ -214,7 +214,7 @@ class DataDictionary(ModelDataHelper):
         return len(set(self.dtypes))
 
     @property
-    def shape(self) -> List[Tuple[int, ...]]:
+    def shape(self) -> List[Union[str, Tuple[int, ...]]]:
         return [getattr(value, "shape", CommonKwargs.UNDEFINED.value) for value in self.data.values()]
 
     @property
@@ -254,8 +254,8 @@ class TupleData(ModelDataHelper):
         return len(set(self.dtypes))
 
     @property
-    def shape(self) -> Tuple[int, ...]:
-        return cast(Tuple[int, ...], self.data.shape)
+    def shape(self) -> List[Union[str, Tuple[int, ...]]]:
+        return [getattr(value, "shape", CommonKwargs.UNDEFINED.value) for value in self.data.values()]
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
