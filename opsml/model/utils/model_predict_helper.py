@@ -5,6 +5,7 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.utils.types import TrainedModelType, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
+from opsml.registry.cards.supported_models import HuggingFaceModel, PytorchModel, LightningModel
 
 logger = ArtifactLogger.get_logger()
 
@@ -64,14 +65,14 @@ class PredictHelper:
 
 
 class TorchPredictHelper(PredictHelper):
-    def get_prediction(self, model: Any, inputs: ValidModelInput) -> NDArray[Any]:
+    def get_prediction(self, model: PytorchModel) -> NDArray[Any]:
         import torch
 
         try:
             if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = model(**inputs)
+                predictions = model(**model.sample_data)
             else:
-                predictions = model(inputs)
+                predictions = model(model.sample_data)
 
             if isinstance(predictions, dict):
                 return {key: value.detach().numpy() for key, value in predictions.items()}
@@ -93,32 +94,28 @@ class TorchPredictHelper(PredictHelper):
 
 
 class HuggingFacePredictHelper(PredictHelper):
-    def _generate_prediction(
-        self,
-        model: Any,
-        inputs: ValidModelInput,
-    ) -> NDArray[Any]:
+    def _generate_prediction(self, model: HuggingFaceModel) -> NDArray[Any]:
         # cant use getattr
         # most models have a generate method even if they don't support it
         try:
             if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = model.generate(**inputs)
+                predictions = model.generate(**model.sample_data)
             else:
-                predictions = model.generate(inputs)
+                predictions = model.generate(model.sample_data)
 
             return predictions.detach().numpy()
 
         except Exception:
             return None
 
-    def _functional_prediction(self, model: Any, inputs: ValidModelInput) -> NDArray[Any]:
+    def _functional_prediction(self, model: HuggingFaceModel) -> NDArray[Any]:
         import torch
 
         try:
             if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = model(**inputs)
+                predictions = model(**model.sample_data)
             else:
-                predictions = model(inputs)
+                predictions = model(model.sample_data)
 
             if isinstance(predictions, torch.Tensor):
                 predictions = predictions.detach.numpy()
@@ -135,8 +132,8 @@ class HuggingFacePredictHelper(PredictHelper):
             logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
             raise error
 
-    def _get_pipeline_prediction(self, model: Any, inputs: ValidModelInput) -> List[Dict[str, Any]]:
-        predictions = model(inputs)
+    def _get_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
+        predictions = model.model(inputs)
         return cast(List[Dict[str, Any]], predictions)
 
     def get_prediction(self, model: Any, inputs: ValidModelInput) -> Union[List[Dict[str, Any]], NDArray[Any]]:

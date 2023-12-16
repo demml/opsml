@@ -198,6 +198,7 @@ class LightGBMBoosterModel(SupportedModel):
 
 class HuggingFaceModel(SupportedModel):
     is_pipeline: bool = False
+    backend: str = CommonKwargs.PYTORCH.value
 
     @model_validator(mode="before")
     @classmethod
@@ -210,9 +211,16 @@ class HuggingFaceModel(SupportedModel):
             assert isinstance(model, Pipeline), "Model must be a huggingface pipeline"
 
         else:
-            from transformers import PreTrainedModel
+            from transformers import PreTrainedModel, TFPreTrainedModel
 
-            assert isinstance(model, PreTrainedModel), "Model must be a huggingface model"
+            if isinstance(model, PreTrainedModel):
+                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.PYTORCH.value
+
+            elif isinstance(model, TFPreTrainedModel):
+                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.TENSORFLOW.value
+
+            else:
+                raise ValueError("Model must be a huggingface model")
 
         if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
             model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__

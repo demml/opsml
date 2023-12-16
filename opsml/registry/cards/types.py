@@ -29,6 +29,9 @@ class CommonKwargs(str, Enum):
     TASK_TYPE = "task_type"
     MODEL = "model"
     UNDEFINED = "undefined"
+    BACKEND = "backend"
+    PYTORCH = "pytorch"
+    TENSORFLOW = "tensorflow"
 
 
 class RegistryType(str, Enum):
