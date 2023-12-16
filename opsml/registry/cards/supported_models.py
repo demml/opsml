@@ -6,11 +6,10 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from opsml.registry.cards.types import CommonKwargs
 from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType
 from opsml.model.utils.huggingface_types import HuggingFaceTask
+from opsml.registry.data.types import get_class_name
 
 
-def get_model_args(model_args: Dict[str, Any]) -> Tuple[Any, str, List[str]]:
-    model = model_args.get("model")
-
+def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
     if model is None:
         raise ValueError("Model must be passed to ModelCardValidator when using pytorch lightning models")
 
@@ -24,8 +23,10 @@ class SupportedModel(BaseModel):
     model: Any
     preprocessor: Optional[Any] = None
     sample_data: ValidModelInput
-    task_type: str = "undefined"
-    model_type: str = "undefined"
+    task_type: str = CommonKwargs.UNDEFINED.value
+    _model_type: str  # private field to be set during validation
+    _data_type: str  # private field to be set during validation
+    _preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -33,6 +34,30 @@ class SupportedModel(BaseModel):
         validate_assignment=False,
         validate_default=True,
     )
+
+    @property
+    def data_type(self) -> str:
+        return self._data_type
+
+    @property
+    def model_type(self) -> str:
+        return self._model_type
+
+    @property
+    def supports_onnx(self) -> bool:
+        return True
+
+    @property
+    def preprocessor_name(self) -> str:
+        return self._preprocessor_name
+
+    @field_validator("preprocessor", model="before")
+    @classmethod
+    def get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> Optional[Any]:
+        if preprocessor is not None:
+            cls._preprocessor_name = preprocessor.__class__.__name__
+
+        return preprocessor
 
     @field_validator("sample_data", mode="before")
     @classmethod
@@ -45,6 +70,9 @@ class SupportedModel(BaseModel):
         Returns:
             Sample data with only one record
         """
+
+        cls._data_type = get_class_name(sample_data)
+
         if isinstance(sample_data, str):
             return sample_data
 
@@ -70,29 +98,32 @@ class SupportedModel(BaseModel):
 
         raise ValueError("Provided sample data is not a valid type")
 
+    def get_example_prediction(self) -> Any:
+        return self.model.predict(self.sample_data)
+
     @property
     def model_class(self) -> str:
         raise NotImplementedError
 
 
 class SklearnModel(SupportedModel):
-    @model_validator(mode="before")
+    @field_validator("model", mode="before")
     @classmethod
-    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model, module, bases = get_model_args(model_args)
+    def check_model(cls, model: Any) -> Any:
+        model, module, bases = get_model_args(model)
 
         from sklearn.base import BaseEstimator
 
         assert isinstance(model, BaseEstimator), "Model must be a sklearn estimator"
 
         if "sklearn" in module:
-            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
+            cls._model_type = model.__class__.__name__
 
         for base in bases:
             if "sklearn" in base:
-                model_args[CommonKwargs.MODEL_TYPE] = "subclass"
+                cls._model_type = "subclass"
 
-        return model_args
+        return model
 
     @property
     def model_class(self) -> str:
@@ -100,23 +131,23 @@ class SklearnModel(SupportedModel):
 
 
 class TensorflowModel(SupportedModel):
-    @model_validator(mode="before")
+    @field_validator("model", mode="before")
     @classmethod
-    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model, module, bases = get_model_args(model_args)
+    def check_model(cls, model: Any) -> Any:
+        model, module, bases = get_model_args(model)
 
         import tensorflow as tf
 
         assert isinstance(model, tf.keras.Model), "Model must be a tensorflow keras model"
 
         if "keras" in module:
-            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
+            cls._model_type = model.__class__.__name__
 
         for base in bases:
             if "keras" in base:
-                model_args[CommonKwargs.MODEL_TYPE] = "subclass"
+                cls._model_type = "subclass"
 
-        return model_args
+        return model
 
     @property
     def model_class(self) -> str:
@@ -124,10 +155,10 @@ class TensorflowModel(SupportedModel):
 
 
 class PytorchModel(SupportedModel):
-    @model_validator(mode="before")
+    @field_validator("model", mode="before")
     @classmethod
-    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model, _, bases = get_model_args(model_args)
+    def check_model(cls, model: Any) -> Any:
+        model, _, bases = get_model_args(model)
 
         from torch.nn import Module
 
@@ -135,9 +166,9 @@ class PytorchModel(SupportedModel):
 
         for base in bases:
             if "torch" in base:
-                model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
+                cls._model_type = model.__class__.__name__
 
-        return model_args
+        return model
 
     @property
     def model_class(self) -> str:
@@ -145,23 +176,23 @@ class PytorchModel(SupportedModel):
 
 
 class LightningModel(SupportedModel):
-    @model_validator(mode="before")
+    @field_validator("model", mode="before")
     @classmethod
-    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model, module, bases = get_model_args(model_args)
+    def check_model(cls, model: Any) -> Any:
+        model, module, bases = get_model_args(model)
 
         from pytorch_lightning import Trainer
 
         assert isinstance(model, Trainer), "Model must be a pytorch lightning trainer"
 
         if "lightning.pytorch" in module:
-            model_args[CommonKwargs.MODEL_TYPE] = model.model.__class__.__name__
+            cls._model_type = model.model.__class__.__name__
 
         for base in bases:
             if "lightning.pytorch" in base:
-                model_args[CommonKwargs.MODEL_TYPE] = "subclass"
+                cls._model_type = "subclass"
 
-        return model_args
+        return model
 
     @property
     def model_class(self) -> str:
@@ -175,10 +206,10 @@ class XGBoostModel(SklearnModel):
 class LightGBMBoosterModel(SupportedModel):
     """LightGBM Booster model class. If using the sklearn API, use SklearnModel instead."""
 
-    @model_validator(mode="before")
+    @field_validator("model", mode="before")
     @classmethod
-    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model, module, _ = get_model_args(model_args)
+    def check_model(cls, model: Any) -> Any:
+        model, module, _ = get_model_args(model)
 
         from lightgbm import Booster
 
@@ -187,9 +218,13 @@ class LightGBMBoosterModel(SupportedModel):
         ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
-            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
+            cls._model_type = model.__class__.__name__
 
-        return model_args
+        return model
+
+    @property
+    def supports_onnx(self) -> bool:
+        return False
 
     @property
     def model_class(self) -> str:
@@ -223,7 +258,7 @@ class HuggingFaceModel(SupportedModel):
                 raise ValueError("Model must be a huggingface model")
 
         if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
-            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
+            cls._model_type = model.__class__.__name__
 
         # for subclassed models
         if hasattr(model, "mro"):
@@ -231,7 +266,7 @@ class HuggingFaceModel(SupportedModel):
             bases = [str(base) for base in model.mro()]
             for base in bases:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
-                    model_args[CommonKwargs.MODEL_TYPE] = "subclass"
+                    cls._model_type = "subclass"
 
         return model_args
 
