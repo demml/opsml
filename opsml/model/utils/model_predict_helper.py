@@ -133,7 +133,7 @@ class HuggingFacePredictHelper(PredictHelper):
             raise error
 
     def _get_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
-        predictions = model.model(inputs)
+        predictions = model.model(model.sample_data)
         return cast(List[Dict[str, Any]], predictions)
 
     def get_prediction(self, model: Any, inputs: ValidModelInput) -> Union[List[Dict[str, Any]], NDArray[Any]]:

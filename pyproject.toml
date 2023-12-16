@@ -158,7 +158,7 @@ pytest-rerunfailures = "^13.0"
 optional = true
 
 [tool.poetry.group.dev-lints.dependencies]
-ruff = "^0.0.242"
+ruff = "^0.1.0"
 types-pymysql = "^1.0.19.1"
 types-requests = "^2.28.11.7"
 black = "22.3.0"
