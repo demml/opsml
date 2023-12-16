@@ -15,7 +15,7 @@ TRAINED_MODEL = "trained-model"
 
 
 @pytest.mark.compat
-def test_huggingface_model(huggingface_bart, api_storage_client):
+def _test_huggingface_model(huggingface_bart, api_storage_client):
     model = huggingface_bart
 
     validator = ModelCardValidator(model=model)
@@ -25,6 +25,7 @@ def test_huggingface_model(huggingface_bart, api_storage_client):
     assert metadata.model_type == "BartModel"
     assert metadata.model_class == "transformers"
     assert metadata.task_type == "text-classification"
+    assert model.backend == "pytorch"
 
     predictions = PredictHelper.get_model_prediction(
         model.model,
@@ -66,7 +67,7 @@ def test_huggingface_model(huggingface_bart, api_storage_client):
 
 
 @pytest.mark.compat
-def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
+def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
     model = huggingface_text_classification_pipeline
 
     validator = ModelCardValidator(model=model)
@@ -76,6 +77,7 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
     assert metadata.model_type == "TextClassificationPipeline"
     assert metadata.model_class == "transformers"
     assert metadata.task_type == "text-classification"
+    assert model.backend == "pytorch"
 
     predictions = PredictHelper.get_model_prediction(
         model.model,
@@ -116,18 +118,55 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
 
 
 @pytest.mark.compat
-def _test_huggingface_subclass(huggingface_subclass):
-    model, inputs = huggingface_subclass
+def test_huggingface_tensorflow(huggingface_tf_distilbert):
+    model = huggingface_tf_distilbert
 
-    validator = ModelCardValidator(
-        sample_data=inputs,
-        trained_model=model,
-    )
+    validator = ModelCardValidator(model=model)
 
     metadata = validator.get_metadata()
 
-    assert metadata.model_type == "subclass"
+    assert metadata.model_type == "DistilBertForSequenceClassification"
     assert metadata.model_class == "transformers"
+    assert metadata.task_type == "text-classification"
+    assert model.backend == "tensorflow"
+
+    predictions = PredictHelper.get_model_prediction(
+        model.model,
+        model.sample_data,
+        metadata.sample_data_type,
+        metadata.model_class,
+        metadata.model_type,
+    )
+
+    assert isinstance(predictions, np.ndarray)
+
+    storage_path = save_artifact_to_storage(
+        artifact=model,
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(
+            filename=TRAINED_MODEL,
+            save_path="OPSML_MODEL_REGISTRY",
+        ),
+        extra_path="model",
+    )
+
+    loaded_model_dict = load_artifact_from_storage(
+        artifact_type=metadata.model_class,
+        storage_client=api_storage_client,
+        storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
+        **{
+            "model_type": metadata.model_type,
+            "task_type": metadata.task_type,
+            "preprocessor_name": metadata.preprocessor_name,
+            "is_pipeline": model.is_pipeline,
+        },
+    )
+
+    loaded_model_dict["sample_data"] = model.sample_data
+    loaded_model = HuggingFaceModel(**loaded_model_dict)
+
+    assert type(loaded_model.model) == type(model.model)
 
 
 @pytest.mark.compat

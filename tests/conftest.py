@@ -1033,17 +1033,18 @@ def huggingface_text_classification_pipeline():
 
 
 @pytest.fixture(scope="module")
-def huggingface_subclass():
-    from transformers import PreTrainedModel
+def huggingface_tf_distilbert() -> HuggingFaceModel:
+    from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
+    import tensorflow as tf
 
-    class SubclassModel(PreTrainedModel):
-        ...
-
-    data = "This restaurant is awesome"
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
+    inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
 
     model = HuggingFaceModel(
-        model=SubclassModel,
-        sample_data=data,
+        model=model,
+        preprocessor=tokenizer,
+        sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
     )
 

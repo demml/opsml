@@ -53,9 +53,10 @@ class AllowedDataType(str, Enum):
     DICT = "dict"
     SQL = "sql"
     PROFILE = "profile"
-    TRANSFORMER_BATCH = "transformers"
+    TRANSFORMER_BATCH = "transformers.tokenization_utils_base.BatchEncoding"
     STRING = "str"
-    TENSOR = "Tensor"
+    TORCH_TENSOR = "torch.Tensor"
+    TENSORFLOW_TENSOR = "tensorflow.python.framework.ops.EagerTensor"
 
 
 class ArrowTable(BaseModel):
@@ -76,6 +77,8 @@ def check_data_type(data: ValidData) -> str:
     Returns:
         data type
     """
+    class_name = get_class_name(data)
+
     if isinstance(data, dict):
         return AllowedDataType.DICT.value
     if isinstance(data, ImageDataset):
@@ -90,10 +93,12 @@ def check_data_type(data: ValidData) -> str:
         return AllowedDataType.PYARROW.value
     if isinstance(data, str):
         return AllowedDataType.STRING.value
-    if AllowedDataType.TRANSFORMER_BATCH.value in data.__module__:
+    if class_name == AllowedDataType.TRANSFORMER_BATCH.value:
         return AllowedDataType.TRANSFORMER_BATCH.value
-    if AllowedDataType.TENSOR.value in data.__class__.__name__:
-        return AllowedDataType.TENSOR.value
+    if class_name == AllowedDataType.TORCH_TENSOR.value:
+        return AllowedDataType.TORCH_TENSOR.value
+    if class_name == AllowedDataType.TENSORFLOW_TENSOR.value:
+        return AllowedDataType.TENSORFLOW_TENSOR.value
 
     raise ValueError(
         f"""Data must be one of the following types: numpy array, pandas dataframe, 
