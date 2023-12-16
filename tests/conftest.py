@@ -71,7 +71,7 @@ from xgboost import XGBRegressor
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.model.challenger import ModelChallenger
 from opsml.model.utils.types import OnnxModelDefinition
-from opsml.model.utils.huggingface_types import HuggingFaceTaskType
+from opsml.model.utils.huggingface_types import HuggingFaceTask
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
@@ -1009,7 +1009,7 @@ def huggingface_bart() -> HuggingFaceModel:
         model=model,
         preprocessor=tokenizer,
         sample_data=inputs,
-        task_type=HuggingFaceTaskType.TEXT_CLASSIFICATION.value,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
     )
 
     return model
@@ -1025,7 +1025,14 @@ def huggingface_text_classification_pipeline():
     pipe = pipeline("text-classification")
     data = "This restaurant is awesome"
 
-    return pipe, data
+    model = HuggingFaceModel(
+        model=pipe,
+        sample_data=data,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        is_pipeline=True,
+    )
+
+    return model
 
 
 @pytest.fixture(scope="module")
@@ -1037,7 +1044,13 @@ def huggingface_subclass():
 
     data = "This restaurant is awesome"
 
-    return SubclassModel, data
+    model = HuggingFaceModel(
+        model=SubclassModel,
+        sample_data=data,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+    )
+
+    return model
 
 
 @pytest.fixture(scope="module")
@@ -1052,7 +1065,14 @@ def huggingface_vit():
 
     inputs = feature_extractor(images=image, return_tensors="pt")
 
-    return model, inputs
+    model = HuggingFaceModel(
+        model=model,
+        preprocessor=feature_extractor,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
+    )
+
+    return model
 
 
 @pytest.fixture(scope="function")

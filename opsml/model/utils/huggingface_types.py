@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class HuggingFaceTaskType(str, Enum):
+class HuggingFaceTask(str, Enum):
     AUDIO_CLASSIFICATION = "audio-classification"
     AUTOMATIC_SPEECH_RECOGNITION = "automatic-speech-recognition"
     CONVERSATIONAL = "conversational"

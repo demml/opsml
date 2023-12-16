@@ -3,8 +3,9 @@ import pandas as pd
 import polars as pl
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from opsml.registry.cards.types import CommonKwargs
 from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType
-from opsml.model.utils.huggingface_types import HuggingFaceTaskType
+from opsml.model.utils.huggingface_types import HuggingFaceTask
 
 
 def get_model_args(model_args: Dict[str, Any]) -> Tuple[Any, str, List[str]]:
@@ -85,11 +86,11 @@ class SklearnModel(SupportedModel):
         assert isinstance(model, BaseEstimator), "Model must be a sklearn estimator"
 
         if "sklearn" in module:
-            model_args["model_type"] = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
 
         for base in bases:
             if "sklearn" in base:
-                model_args["model_type"] = "subclass"
+                model_args[CommonKwargs.MODEL_TYPE] = "subclass"
 
         return model_args
 
@@ -109,11 +110,11 @@ class TensorflowModel(SupportedModel):
         assert isinstance(model, tf.keras.Model), "Model must be a tensorflow keras model"
 
         if "keras" in module:
-            model_args["model_type"] = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
 
         for base in bases:
             if "keras" in base:
-                model_args["model_type"] = "subclass"
+                model_args[CommonKwargs.MODEL_TYPE] = "subclass"
 
         return model_args
 
@@ -134,7 +135,7 @@ class PytorchModel(SupportedModel):
 
         for base in bases:
             if "torch" in base:
-                model_args["model_type"] = model.__class__.__name__
+                model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
 
         return model_args
 
@@ -154,11 +155,11 @@ class LightningModel(SupportedModel):
         assert isinstance(model, Trainer), "Model must be a pytorch lightning trainer"
 
         if "lightning.pytorch" in module:
-            model_args["model_type"] = model.model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE] = model.model.__class__.__name__
 
         for base in bases:
             if "lightning.pytorch" in base:
-                model_args["model_type"] = "subclass"
+                model_args[CommonKwargs.MODEL_TYPE] = "subclass"
 
         return model_args
 
@@ -186,7 +187,7 @@ class LightGBMBoosterModel(SupportedModel):
         ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
-            model_args["model_type"] = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
 
         return model_args
 
@@ -203,7 +204,7 @@ class HuggingFaceModel(SupportedModel):
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model, module, bases = get_model_args(model_args)
 
-        if model_args.get("is_pipeline"):
+        if model_args.get(CommonKwargs.IS_PIPELINE):
             from transformers import Pipeline
 
             assert isinstance(model, Pipeline), "Model must be a huggingface pipeline"
@@ -214,7 +215,7 @@ class HuggingFaceModel(SupportedModel):
             assert isinstance(model, PreTrainedModel), "Model must be a huggingface model"
 
         if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
-            model_args["model_type"] = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE] = model.__class__.__name__
 
         # for subclassed models
         if hasattr(model, "mro"):
@@ -222,7 +223,7 @@ class HuggingFaceModel(SupportedModel):
             bases = [str(base) for base in model.mro()]
             for base in bases:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
-                    model_args["model_type"] = "subclass"
+                    model_args[CommonKwargs.MODEL_TYPE] = "subclass"
 
         return model_args
 
@@ -232,7 +233,7 @@ class HuggingFaceModel(SupportedModel):
         """Check if task is a huggingface approved task"""
 
         task = task_type.lower()
-        if task not in list(HuggingFaceTaskType):
+        if task not in list(HuggingFaceTask):
             raise ValueError(f"Task type {task} is not supported")
         return task
 

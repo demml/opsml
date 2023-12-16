@@ -23,7 +23,7 @@ from opsml.registry.cards.supported_models import (
     PytorchModel,
     LightningModel,
 )
-from opsml.registry.cards.types import StoragePath
+from opsml.registry.cards.types import StoragePath, CommonKwargs
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import (
@@ -758,19 +758,19 @@ class HuggingFaceStorage(ArtifactStorage):
         """
         import transformers
 
-        model_type: str = kwargs["model_type"]
-        task_type: str = kwargs["task_type"]
-        is_pipeline: bool = kwargs["is_pipeline"]
-        preprocessor_name: Optional[str] = kwargs.get("preprocessor_name")
+        model_type: str = kwargs[CommonKwargs.MODEL_TYPE]
+        task_type: str = kwargs[CommonKwargs.TASK_TYPE]
+        is_pipeline: bool = kwargs[CommonKwargs.IS_PIPELINE]
+        preprocessor_name: Optional[str] = kwargs.get(CommonKwargs.PREPROCESSOR_NAME)
 
         # only way to tell if model was a pipeline is from model class type
         if is_pipeline:
             model = transformers.pipeline(task_type, file_path)
             return {
-                "model": model,
-                "is_pipeline": True,
-                "task_type": task_type,
-                "model_type": model_type,
+                CommonKwargs.MODEL.value: model,
+                CommonKwargs.IS_PIPELINE.value: True,
+                CommonKwargs.TASK_TYPE.value: task_type,
+                CommonKwargs.MODEL_TYPE.value: model_type,
             }
 
         else:
@@ -779,15 +779,15 @@ class HuggingFaceStorage(ArtifactStorage):
             model = getattr(transformers, model_type).from_pretrained(file_path)
 
             # check for preprocessor
-            if preprocessor_name is not None:
+            if preprocessor_name != "undefined":
                 preprocessor = getattr(transformers, preprocessor_name).from_pretrained(file_path)
 
             return {
-                "model": model,
-                "preprocessor": preprocessor,
-                "is_pipeline": False,
-                "task_type": task_type,
-                "model_type": model_type,
+                CommonKwargs.MODEL.value: model,
+                CommonKwargs.PREPROCESSOR.value: preprocessor,
+                CommonKwargs.IS_PIPELINE.value: False,
+                CommonKwargs.TASK_TYPE.value: task_type,
+                CommonKwargs.MODEL_TYPE.value: model_type,
             }
 
     @staticmethod
