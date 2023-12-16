@@ -31,3 +31,10 @@ class HuggingFaceTask(str, Enum):
     ZERO_SHOT_IMAGE_CLASSIFICATION = "zero-shot-image-classification"
     ZERO_SHOT_AUDIO_CLASSIFICATION = "zero-shot-audio-classification"
     ZERO_SHOT_OBJECT_DETECTION = "zero-shot-object-detection"
+
+
+GENERATION_TYPES = [
+    HuggingFaceTask.MASK_GENERATION.value,
+    HuggingFaceTask.TEXT_GENERATION.value,
+    HuggingFaceTask.TEXT2TEXT_GENERATION.value,
+]
