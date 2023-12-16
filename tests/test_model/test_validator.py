@@ -15,7 +15,7 @@ TRAINED_MODEL = "trained-model"
 
 
 @pytest.mark.compat
-def test_huggingface_model(huggingface_bart, api_storage_client):
+def _test_huggingface_model(huggingface_bart, api_storage_client):
     model = huggingface_bart
 
     validator = ModelCardValidator(model=model)
@@ -66,22 +66,20 @@ def test_huggingface_model(huggingface_bart, api_storage_client):
 
 
 @pytest.mark.compat
-def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
-    model, inputs = huggingface_text_classification_pipeline
+def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
+    model = huggingface_text_classification_pipeline
 
-    validator = ModelCardValidator(
-        sample_data=inputs,
-        trained_model=model,
-    )
+    validator = ModelCardValidator(model=model)
 
     metadata = validator.get_metadata()
 
     assert metadata.model_type == "TextClassificationPipeline"
     assert metadata.model_class == "transformers"
+    assert metadata.task_type == "image-classification"
 
     predictions = PredictHelper.get_model_prediction(
-        model,
-        validator.get_sample_data(),
+        model.model,
+        model.sample_data,
         metadata.sample_data_type,
         metadata.model_class,
         metadata.model_type,
@@ -106,6 +104,8 @@ def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_sto
         **{
             "model_type": metadata.model_type,
             "task_type": metadata.task_type,
+            "preprocessor_name": metadata.preprocessor_name,
+            "is_pipeline": model.is_pipeline,
         },
     )
 

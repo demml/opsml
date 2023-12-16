@@ -20,6 +20,15 @@ from opsml.model.utils.types import (
 logger = ArtifactLogger.get_logger()
 
 
+class CommonKwargs(str, Enum):
+    IS_PIPELINE = "is_pipeline"
+    MODEL_TYPE = "model_type"
+    MODEL_CLASS = "model_class"
+    PREPROCESSOR_NAME = "PREPROCESSOR_NAME"
+    PREPROCESSOR = "preprocessor"
+    TASK_TYPE = "task_type"
+    MODEL = "model"
+    
 class RegistryType(str, Enum):
     DATA = "data"
     MODEL = "model"
