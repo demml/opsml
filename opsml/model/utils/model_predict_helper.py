@@ -3,9 +3,11 @@ from typing import Any, Dict, List, Union, cast
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import get_class_name
 from opsml.model.utils.types import TrainedModelType, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
-from opsml.registry.cards.supported_models import HuggingFaceModel, PytorchModel, LightningModel
+from opsml.registry.cards.supported_models import HuggingFaceModel, PytorchModel, LightningModel, SamplePrediction
+from opsml.model.utils.huggingface_types import GENERATION_TYPES
 
 logger = ArtifactLogger.get_logger()
 
@@ -91,36 +93,95 @@ class TorchPredictHelper(PredictHelper):
 
 
 class HuggingFacePredictHelper(PredictHelper):
-    def _generate_prediction(self, model: HuggingFaceModel) -> NDArray[Any]:
-        # cant use getattr
-        # most models have a generate method even if they don't support it
+    def _get_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
+        pred = model.get_sample_prediction()
+
+        if isinstance(pred.prediction, dict):
+            return [pred.prediction]
+
+        return cast(List[Dict[str, Any]], pred.prediction)
+
+    def _process_tensor(self, pred: SamplePrediction) -> NDArray[Any]:
+        """Processes huggingface model that outputs a torch or tensorflow tensor
+
+        Args:
+            pred:
+                SamplePrediction
+        Returns:
+            Numpy array of predictions
+        """
+        if pred.prediction_type == AllowedDataType.TORCH_TENSOR:
+            return pred.prediction.detach().numpy()
+
+        return pred.prediction.numpy()
+
+    def _process_modeloutput(self, pred: SamplePrediction) -> Dict[str, Any]:
+        """Processes huggingface model that outputs a class of type `ModelOuput`
+
+        Args:
+            pred:
+                SamplePrediction
+        Returns:
+            Dictionary of predictions
+        """
+        predictions = {}
+        for key, value in pred.prediction.items():
+            pred_class = get_class_name(value)
+
+            if pred_class == AllowedDataType.TORCH_TENSOR:
+                predictions[key] = value.detach().numpy()
+            elif pred_class == AllowedDataType.TENSORFLOW_TENSOR:
+                predictions[key] = value.numpy()
+            else:
+                predictions[key] = value
+
+        return predictions
+
+    def _process_hidden_state(self, pred: SamplePrediction) -> NDArray[Any]:
+        """Processes huggingface model that outputs a hidden state
+
+        Args:
+            pred:
+                SamplePrediction
+        Returns:
+            Numpy array of predictions
+        """
+        for method in pred.prediction.__dir__():
+            if "last_hidden_state" in method:
+                hidden_state = getattr(pred.prediction, method)
+                pred_class = get_class_name(hidden_state)
+
+                if pred_class == AllowedDataType.TORCH_TENSOR:
+                    return hidden_state.detach().numpy()
+                return hidden_state.numpy()
+
+    def _get_prediction(self, model: HuggingFaceModel):
+        from transformers.utils import ModelOutput
+
         try:
-            if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = model.generate(**model.sample_data)
-            else:
-                predictions = model.generate(model.sample_data)
+            pred = model.get_sample_prediction()
 
-            return predictions.detach().numpy()
+            if pred.prediction_type in [
+                AllowedDataType.TORCH_TENSOR,
+                AllowedDataType.TENSORFLOW_TENSOR,
+            ]:
+                predictions = self._process_tensor(pred)
 
-        except Exception:
-            return None
+            # check for different output types
 
-    def _functional_prediction(self, model: HuggingFaceModel) -> NDArray[Any]:
-        import torch
-
-        try:
-            if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                predictions = model(**model.sample_data)
-            else:
-                predictions = model(model.sample_data)
-
-            if isinstance(predictions, torch.Tensor):
-                predictions = predictions.detach.numpy()
+            elif isinstance(pred.prediction, ModelOutput):
+                predictions = self._process_modeloutput
 
             else:
-                for method in predictions.__dir__():
+                for method in pred.prediction.__dir__():
                     if "last_hidden_state" in method:
-                        predictions = getattr(predictions, method).detach().numpy()
+                        hidden_state = getattr(predictions, method)
+                        pred_class = get_class_name(hidden_state)
+
+                        if pred_class == AllowedDataType.TORCH_TENSOR:
+                            predictions = hidden_state.detach().numpy()
+                        else:
+                            predictions = hidden_state.numpy()
                         break
 
             return predictions
@@ -129,11 +190,7 @@ class HuggingFacePredictHelper(PredictHelper):
             logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
             raise error
 
-    def _get_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
-        predictions = model.model(model.sample_data)
-        return cast(List[Dict[str, Any]], predictions)
-
-    def get_prediction(self, model: Any, inputs: ValidModelInput) -> Union[List[Dict[str, Any]], NDArray[Any]]:
+    def get_prediction(self, model: HuggingFaceModel) -> Union[List[Dict[str, Any]], NDArray[Any]]:
         """
         Get prediction from model
         Args:
@@ -147,14 +204,23 @@ class HuggingFacePredictHelper(PredictHelper):
             Dictionary of predictions
         """
 
-        if "Pipeline" in self.model_type:
-            return self._get_pipeline_prediction(model, inputs)
+        if self.model.is_pipeline:
+            return self._get_pipeline_prediction(model)
 
-        predictions = self._generate_prediction(model, inputs)
+        else:
+            pass
+
+        if self.model.task_type in GENERATION_TYPES:
+            return self._generate_prediction(model)
+
+        if "Pipeline" in self.model_type:
+            return self._get_pipeline_prediction(model)
+
+        predictions = self._generate_prediction(model)
         if predictions is not None:
             return predictions
 
-        return self._functional_prediction(model, inputs)
+        return self._functional_prediction(model)
 
     @staticmethod
     def validate(model_class: str) -> bool:

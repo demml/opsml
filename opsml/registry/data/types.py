@@ -13,25 +13,9 @@ import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
 
 from opsml.registry.image.dataset import ImageDataset
+from opsml.helpers.utils import get_class_name
 
 ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]  # type: ignore
-
-
-def get_class_name(object_: object) -> str:
-    """Parses object to get the fully qualified class name.
-    Used during type checking to avoid unnecessary imports.
-
-    Args:
-        object_:
-            object to parse
-    Returns:
-        fully qualified class name
-    """
-    klass = object_.__class__
-    module = klass.__module__
-    if module == "builtins":
-        return klass.__qualname__  # avoid outputs like 'builtins.str'
-    return module + "." + klass.__qualname__
 
 
 # need for old v1 compat

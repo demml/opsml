@@ -7,6 +7,7 @@ import textwrap
 from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import get_class_name
 from opsml.model.utils.data_helper import get_model_data
 from opsml.model.utils.model_predict_helper import PredictHelper
 from opsml.model.utils.types import (
@@ -17,7 +18,7 @@ from opsml.model.utils.types import (
     ModelReturn,
     TrainedModelType,
 )
-from opsml.registry.data.types import AllowedDataType, get_class_name
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
