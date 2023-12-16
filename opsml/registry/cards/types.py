@@ -24,11 +24,13 @@ class CommonKwargs(str, Enum):
     IS_PIPELINE = "is_pipeline"
     MODEL_TYPE = "model_type"
     MODEL_CLASS = "model_class"
-    PREPROCESSOR_NAME = "PREPROCESSOR_NAME"
+    PREPROCESSOR_NAME = "preprocessor_name"
     PREPROCESSOR = "preprocessor"
     TASK_TYPE = "task_type"
     MODEL = "model"
-    
+    UNDEFINED = "undefined"
+
+
 class RegistryType(str, Enum):
     DATA = "data"
     MODEL = "model"
@@ -225,11 +227,11 @@ class ModelCardMetadata(BaseModel):
     description: Description = Description()
     onnx_model_data: Optional[DataDict] = None
     onnx_model_def: Optional[OnnxModelDefinition] = None
-    sample_data_type: str = "undefined"
-    model_type: str = "undefined"
-    model_class: str = "undefined"
-    task_type: str = "undefined"
-    preprocessor_name: str = "undefined"
+    sample_data_type: str = CommonKwargs.UNDEFINED.value
+    model_type: str = CommonKwargs.UNDEFINED.value
+    model_class: str = CommonKwargs.UNDEFINED.value
+    task_type: str = CommonKwargs.UNDEFINED.value
+    preprocessor_name: str = CommonKwargs.UNDEFINED.value
     additional_onnx_args: Optional[ExtraOnnxArgs] = None
     data_schema: Optional[ApiDataSchemas] = None
     runcard_uid: Optional[str] = None

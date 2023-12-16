@@ -15,7 +15,7 @@ TRAINED_MODEL = "trained-model"
 
 
 @pytest.mark.compat
-def _test_huggingface_model(huggingface_bart, api_storage_client):
+def test_huggingface_model(huggingface_bart, api_storage_client):
     model = huggingface_bart
 
     validator = ModelCardValidator(model=model)
@@ -62,7 +62,7 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
     loaded_model_dict["sample_data"] = model.sample_data
     loaded_model = HuggingFaceModel(**loaded_model_dict)
 
-    assert type(loaded_model) == type(model)
+    assert type(loaded_model.model) == type(model.model)
 
 
 @pytest.mark.compat
@@ -75,7 +75,7 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
 
     assert metadata.model_type == "TextClassificationPipeline"
     assert metadata.model_class == "transformers"
-    assert metadata.task_type == "image-classification"
+    assert metadata.task_type == "text-classification"
 
     predictions = PredictHelper.get_model_prediction(
         model.model,
@@ -97,7 +97,7 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
         extra_path="model",
     )
 
-    loaded_model = load_artifact_from_storage(
+    loaded_model_dict = load_artifact_from_storage(
         artifact_type=metadata.model_class,
         storage_client=api_storage_client,
         storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
@@ -109,7 +109,10 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
         },
     )
 
-    assert type(loaded_model) == type(model)
+    loaded_model_dict["sample_data"] = model.sample_data
+    loaded_model = HuggingFaceModel(**loaded_model_dict)
+
+    assert type(loaded_model.model) == type(model.model)
 
 
 @pytest.mark.compat
