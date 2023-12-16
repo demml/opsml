@@ -5,8 +5,6 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
-from sqlalchemy.engine.base import Engine
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
 from opsml.registry.cards import ArtifactCard, ModelCard
@@ -40,7 +38,7 @@ class ServerRegistry(SQLRegistryBase):
 
         connector = DefaultConnector(tracking_uri=config.opsml_tracking_uri).get_connector()
         db_initializer = DBInitializer(
-            engine=cast(Engine, connector.sql_engine),
+            engine=connector.sql_engine,
             registry_tables=[t.value for t in RegistryTableNames],
         )
         db_initializer.initialize()
