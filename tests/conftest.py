@@ -1015,9 +1015,6 @@ def huggingface_bart() -> HuggingFaceModel:
     return model
 
 
-from transformers import pipeline
-
-
 @pytest.fixture(scope="module")
 def huggingface_text_classification_pipeline():
     from transformers import pipeline

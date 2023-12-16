@@ -5,7 +5,7 @@
 from typing import Any, Dict, Optional
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.supported_models import SUPPORTED_MODELS
-from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata
+from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata, CommonKwargs
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 
 logger = ArtifactLogger.get_logger()
@@ -108,7 +108,7 @@ class ModelCardValidator:
         self.model = model
         self.metadata = metadata
 
-    def _get_preprocessor_name(self) -> Optional[str]:
+    def _get_preprocessor_name(self) -> str:
         """Get name of preprocessor
 
         Returns:
@@ -118,7 +118,7 @@ class ModelCardValidator:
         if self.model.preprocessor is not None:
             return self.model.preprocessor.__class__.__name__
 
-        return None
+        return CommonKwargs.UNDEFINED.value
 
     def get_metadata(self) -> ModelCardMetadata:
         """Checks metadata for valid values
