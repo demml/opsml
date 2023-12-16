@@ -68,24 +68,7 @@ class PredictHelper:
 
 class TorchPredictHelper(PredictHelper):
     def get_prediction(self, model: PytorchModel) -> NDArray[Any]:
-        import torch
-
-        try:
-            predictions = model.get_sample_prediction()
-
-            if isinstance(predictions, dict):
-                return {key: value.detach().numpy() for key, value in predictions.items()}
-
-            if isinstance(predictions, tuple):
-                for value in predictions:
-                    if isinstance(value, torch.Tensor):
-                        return value.detach().numpy()
-
-            return predictions.detach().numpy()
-
-        except TypeError as error:
-            logger.error("{}. Falling back to model functional call", error)
-            raise error
+        return model.get_sample_prediction()
 
     @staticmethod
     def validate(model_class: str) -> bool:
@@ -101,20 +84,6 @@ class HuggingFacePredictHelper(PredictHelper):
 
         return cast(List[Dict[str, Any]], pred.prediction)
 
-    def _process_tensor(self, pred: SamplePrediction) -> NDArray[Any]:
-        """Processes huggingface model that outputs a torch or tensorflow tensor
-
-        Args:
-            pred:
-                SamplePrediction
-        Returns:
-            Numpy array of predictions
-        """
-        if pred.prediction_type == AllowedDataType.TORCH_TENSOR:
-            return pred.prediction.detach().numpy()
-
-        return pred.prediction.numpy()
-
     def _process_modeloutput(self, pred: SamplePrediction) -> Dict[str, Any]:
         """Processes huggingface model that outputs a class of type `ModelOuput`
 
@@ -124,16 +93,11 @@ class HuggingFacePredictHelper(PredictHelper):
         Returns:
             Dictionary of predictions
         """
+
+        # convert to dict
         predictions = {}
         for key, value in pred.prediction.items():
-            pred_class = get_class_name(value)
-
-            if pred_class == AllowedDataType.TORCH_TENSOR:
-                predictions[key] = value.detach().numpy()
-            elif pred_class == AllowedDataType.TENSORFLOW_TENSOR:
-                predictions[key] = value.numpy()
-            else:
-                predictions[key] = value
+            predictions[key] = value
 
         return predictions
 
@@ -148,12 +112,7 @@ class HuggingFacePredictHelper(PredictHelper):
         """
         for method in pred.prediction.__dir__():
             if "last_hidden_state" in method:
-                hidden_state = getattr(pred.prediction, method)
-                pred_class = get_class_name(hidden_state)
-
-                if pred_class == AllowedDataType.TORCH_TENSOR:
-                    return hidden_state.detach().numpy()
-                return hidden_state.numpy()
+                return getattr(pred.prediction, method)
 
     def _get_prediction(self, model: HuggingFaceModel):
         from transformers.utils import ModelOutput
@@ -165,29 +124,20 @@ class HuggingFacePredictHelper(PredictHelper):
                 AllowedDataType.TORCH_TENSOR,
                 AllowedDataType.TENSORFLOW_TENSOR,
             ]:
-                predictions = self._process_tensor(pred)
+                predictions = pred
 
             # check for different output types
 
             elif isinstance(pred.prediction, ModelOutput):
-                predictions = self._process_modeloutput
+                predictions = self._process_modeloutput(pred)
 
             else:
-                for method in pred.prediction.__dir__():
-                    if "last_hidden_state" in method:
-                        hidden_state = getattr(predictions, method)
-                        pred_class = get_class_name(hidden_state)
-
-                        if pred_class == AllowedDataType.TORCH_TENSOR:
-                            predictions = hidden_state.detach().numpy()
-                        else:
-                            predictions = hidden_state.numpy()
-                        break
+                predictions = self._process_hidden_state(pred)
 
             return predictions
 
         except Exception as error:
-            logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
+            logger.error("Failed to coerce huggingface model outputs. {}", error)
             raise error
 
     def get_prediction(self, model: HuggingFaceModel) -> Union[List[Dict[str, Any]], NDArray[Any]]:
@@ -207,20 +157,7 @@ class HuggingFacePredictHelper(PredictHelper):
         if self.model.is_pipeline:
             return self._get_pipeline_prediction(model)
 
-        else:
-            pass
-
-        if self.model.task_type in GENERATION_TYPES:
-            return self._generate_prediction(model)
-
-        if "Pipeline" in self.model_type:
-            return self._get_pipeline_prediction(model)
-
-        predictions = self._generate_prediction(model)
-        if predictions is not None:
-            return predictions
-
-        return self._functional_prediction(model)
+        return self._get_prediction(model)
 
     @staticmethod
     def validate(model_class: str) -> bool:
