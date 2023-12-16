@@ -9,6 +9,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import get_class_name
 from opsml.model.utils.types import DataDtypes, Feature, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
 
@@ -16,10 +17,7 @@ logger = ArtifactLogger.get_logger()
 
 
 class ModelDataHelper:
-    def __init__(
-        self,
-        input_data: ValidModelInput,
-    ):
+    def __init__(self, input_data: Any):
         """Base helper class for storing input/sample data associated with a trained model.
         This class is used with OnnxModelConverter
 
@@ -101,7 +99,7 @@ class ModelDataHelper:
 
 
 class NumpyData(ModelDataHelper):
-    def __init__(self, input_data: ValidModelInput):
+    def __init__(self, input_data: NDArray[Any]):
         super().__init__(input_data=input_data)
 
         self.data = cast(NDArray[Any], self.data)
@@ -131,7 +129,7 @@ class NumpyData(ModelDataHelper):
 
 
 class PandasDataFrameData(ModelDataHelper):
-    def __init__(self, input_data: ValidModelInput):
+    def __init__(self, input_data: pd.DataFrame):
         super().__init__(input_data=input_data)
 
         self.data = cast(pd.DataFrame, self.data)
@@ -186,10 +184,10 @@ class PandasDataFrameData(ModelDataHelper):
 
 
 class DataDictionary(ModelDataHelper):
-    def __init__(self, input_data: ValidModelInput):
+    def __init__(self, input_data: Dict[str, Any]):
         super().__init__(input_data=input_data)
 
-        self.data = cast(Dict[str, NDArray[Any]], self.data)
+        self.data = cast(Dict[str, Any], self.data)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -200,7 +198,21 @@ class DataDictionary(ModelDataHelper):
 
     @property
     def dtypes(self) -> List[str]:
-        return [str(value.dtype).lower() for _, value in self.data.items()]
+        types = []
+        for _, value in self.data.items():
+            class_name = get_class_name(value)
+
+            if (
+                isinstance(value, np.ndarray)
+                or (class_name == AllowedDataType.TORCH_TENSOR)
+                or (class_name == AllowedDataType.TENSORFLOW_TENSOR)
+            ):
+                types.append(str(value.dtype).lower())
+
+            else:
+                types.append(class_name.lower())
+
+        return types
 
     @property
     def num_dtypes(self) -> int:

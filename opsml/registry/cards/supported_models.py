@@ -1,6 +1,7 @@
 from typing import Any, Union, Optional, Dict, Tuple, List
 import pandas as pd
 import polars as pl
+from dataclasses import dataclass
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from opsml.registry.cards.types import CommonKwargs
@@ -17,6 +18,21 @@ def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
     model_bases = [str(base) for base in model.__class__.__bases__]
 
     return model, model_module, model_bases
+
+
+@dataclass
+class SamplePrediction:
+    """Dataclass that holds sample prediction information
+
+    Args:
+        prediction_type:
+            Type of prediction
+        prediction:
+            Sample prediction
+    """
+
+    prediction_type: str
+    prediction: Any
 
 
 class SupportedModel(BaseModel):
@@ -98,8 +114,14 @@ class SupportedModel(BaseModel):
 
         raise ValueError("Provided sample data is not a valid type")
 
-    def get_sample_prediction(self) -> Any:
-        return self.model.predict(self.sample_data)
+    def get_sample_prediction(self) -> SamplePrediction:
+        prediction = self.model.predict(self.sample_data)
+        prediction_type = get_class_name(prediction)
+
+        return SamplePrediction(
+            prediction_type,
+            prediction,
+        )
 
     @property
     def model_class(self) -> str:
@@ -170,11 +192,15 @@ class PytorchModel(SupportedModel):
 
         return model
 
-    def get_sample_prediction(self) -> Any:
+    def get_sample_prediction(self) -> SamplePrediction:
         if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-            return self.model(**self.sample_data)
+            prediction = self.model(**self.sample_data)
+        else:
+            prediction = self.model(self.sample_data)
 
-        return self.model(self.sample_data)
+        prediction_type = get_class_name(prediction)
+
+        return SamplePrediction(prediction_type, prediction)
 
     @property
     def model_class(self) -> str:
@@ -302,10 +328,25 @@ class HuggingFaceModel(SupportedModel):
 
         return self.model(self.sample_data)
 
-    def get_sample_prediction(self) -> Any:
-        if self.task_type in GENERATION_TYPES:
-            return self._generate_predictions()
-        return self._functional_predictions()
+    def _get_pipeline_prediction(self):
+        """Use model in pipeline mode if pipeline task"""
+
+        if isinstance(self.sample_data, dict):
+            return self.model(**self.sample_data)
+
+        return self.model(self.sample_data)
+
+    def get_sample_prediction(self) -> SamplePrediction:
+        if self.is_pipeline:
+            prediction = self._get_pipeline_prediction()
+        elif self.task_type in GENERATION_TYPES:
+            prediction = self._generate_predictions()
+        else:
+            prediction = self._functional_predictions()
+
+        prediction_type = get_class_name(prediction)
+
+        return SamplePrediction(prediction_type, prediction)
 
     @property
     def model_class(self) -> str:
