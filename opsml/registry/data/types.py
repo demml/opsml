@@ -41,6 +41,7 @@ class AllowedDataType(str, Enum):
     STRING = "str"
     TORCH_TENSOR = "torch.Tensor"
     TENSORFLOW_TENSOR = "tensorflow.python.framework.ops.EagerTensor"
+    TUPLE = "tuple"
 
 
 class ArrowTable(BaseModel):
