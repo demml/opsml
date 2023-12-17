@@ -334,7 +334,7 @@ class ParquetStorage(ArtifactStorage):
 
         Args:
             artifact:
-                Parquet gctable to write
+                Parquet table to write
             storage_uri:
                 Path to write to
             tmp_uri:
@@ -746,7 +746,7 @@ class HuggingFaceStorage(ArtifactStorage):
                 Dictionary of arguments to pass to pass for model loading
 
                 model:
-                    Loade HuggingFaceModel class
+                    Load HuggingFaceModel class
 
         """
         import transformers
