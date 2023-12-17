@@ -42,6 +42,7 @@ class SupportedModel(BaseModel):
     sample_data: Optional[ValidModelInput] = None
     task_type: str = CommonKwargs.UNDEFINED.value
     model_type: str
+    preprocessor_name: str
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -58,14 +59,13 @@ class SupportedModel(BaseModel):
     def supports_onnx(self) -> bool:
         return True
 
-    @cached_property
-    def preprocessor_name(self) -> str:
-        if self.preprocessor is not None:
-            return self.preprocessor.__class__.__name__
+    @classmethod
+    def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:
+        if preprocessor is not None:
+            return preprocessor.__class__.__name__
 
         return CommonKwargs.UNDEFINED.value
 
-    @field_validator("sample_data", mode="before")
     @classmethod
     def get_sample_data(
         cls, sample_data: Optional[ValidModelInput] = None
@@ -76,6 +76,7 @@ class SupportedModel(BaseModel):
         Returns:
             Sample data with only one record
         """
+
         assert sample_data is not None, "Sample data must be provided"
 
         if isinstance(sample_data, str):
@@ -118,15 +119,35 @@ class SupportedModel(BaseModel):
 
 
 class SklearnModel(SupportedModel):
+    """Model interface for Sklearn models.
+
+    Args:
+        model:
+            Sklearn model
+        preprocessor:
+            Optional preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for model. Defaults to undefined.
+        model_type:
+            Optional model type. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+       SklearnModel
+    """
+
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model = model_args.get("model")
 
         # passed as extra when modelcard is being loaded
-        model_uri = model_args.get("model_uri", False)
-
-        if model_uri:
+        if model_args.get("model_uri", False):
             return model_args
 
         model, module, bases = get_model_args(model)
@@ -142,6 +163,13 @@ class SklearnModel(SupportedModel):
             if "sklearn" in base:
                 model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
+        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
+            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
+        )
+        model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+            preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+        )
+
         return model_args
 
     @property
@@ -150,15 +178,35 @@ class SklearnModel(SupportedModel):
 
 
 class TensorflowModel(SupportedModel):
+    """Model interface for Tensorflow models.
+
+    Args:
+        model:
+            Tensorflow model
+        preprocessor:
+            Optional preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for model. Defaults to undefined.
+        model_type:
+            Optional model type. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+       TensorflowModel
+    """
+
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model = model_args.get("model")
 
         # passed as extra when modelcard is being loaded
-        model_uri = model_args.get("model_uri", False)
-
-        if model_uri:
+        if model_args.get("model_uri", False):
             return model_args
 
         model, module, bases = get_model_args(model)
@@ -174,7 +222,14 @@ class TensorflowModel(SupportedModel):
             if "keras" in base:
                 model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        return model
+        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
+            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
+        )
+        model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+            preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+        )
+
+        return model_args
 
     @property
     def model_class(self) -> str:
@@ -182,15 +237,35 @@ class TensorflowModel(SupportedModel):
 
 
 class PytorchModel(SupportedModel):
+    """Model interface for Pytorch models.
+
+    Args:
+        model:
+            Torch model
+        preprocessor:
+            Optional preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for model. Defaults to undefined.
+        model_type:
+            Optional model type. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+       PytorchModel
+    """
+
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model = model_args.get("model")
 
         # passed as extra when modelcard is being loaded
-        model_uri = model_args.get("model_uri", False)
-
-        if model_uri:
+        if model_args.get("model_uri", False):
             return model_args
 
         model, _, bases = get_model_args(model)
@@ -203,7 +278,14 @@ class PytorchModel(SupportedModel):
             if "torch" in base:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-        return model
+        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
+            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
+        )
+        model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+            preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+        )
+
+        return model_args
 
     def get_sample_prediction(self) -> SamplePrediction:
         assert self.sample_data is not None, "Sample data must be provided"
@@ -223,15 +305,35 @@ class PytorchModel(SupportedModel):
 
 
 class LightningModel(PytorchModel):
+    """Model interface for Pytorch Lightning models.
+
+    Args:
+        model:
+            Torch lightning model
+        preprocessor:
+            Optional preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for model. Defaults to undefined.
+        model_type:
+            Optional model type. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+       LightningModel
+    """
+
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
         model = model_args.get("model")
 
         # passed as extra when modelcard is being loaded
-        model_uri = model_args.get("model_uri", False)
-
-        if model_uri:
+        if model_args.get("model_uri", False):
             return model_args
 
         model, module, bases = get_model_args(model)
@@ -247,7 +349,14 @@ class LightningModel(PytorchModel):
             if "lightning.pytorch" in base:
                 model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        return model
+        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
+            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
+        )
+        model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+            preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+        )
+
+        return model_args
 
     @property
     def model_class(self) -> str:
@@ -255,11 +364,54 @@ class LightningModel(PytorchModel):
 
 
 class XGBoostModel(SklearnModel):
+    """Model interface for XGBoost model class. Currently, only Sklearn flavor of XGBoost
+    regressor and classifier are supported.
+
+    Args:
+        model:
+            XGBoost model
+        preprocessor:
+            Optional preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for model. Defaults to undefined.
+        model_type:
+            Optional model type. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+        XGBoostModel
+    """
+
     ...
 
 
 class LightGBMBoosterModel(SupportedModel):
-    """LightGBM Booster model class. If using the sklearn API, use SklearnModel instead."""
+    """Model interface for LightGBM Booster model class. If using the sklearn API, use SklearnModel instead.
+
+    Args:
+        model:
+            LightGBM booster model
+        preprocessor:
+            Optional preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for model. Defaults to undefined.
+        model_type:
+            Optional model type. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+        LightGBMBoosterModel
+    """
 
     @model_validator(mode="before")
     @classmethod
@@ -267,9 +419,7 @@ class LightGBMBoosterModel(SupportedModel):
         model = model_args.get("model")
 
         # passed as extra when modelcard is being loaded
-        model_uri = model_args.get("model_uri", False)
-
-        if model_uri:
+        if model_args.get("model_uri", False):
             return model_args
 
         model, module, _ = get_model_args(model)
@@ -281,7 +431,14 @@ class LightGBMBoosterModel(SupportedModel):
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-        return model
+        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
+            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
+        )
+        model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+            preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+        )
+
+        return model_args
 
     @property
     def supports_onnx(self) -> bool:
@@ -293,49 +450,107 @@ class LightGBMBoosterModel(SupportedModel):
 
 
 class HuggingFaceModel(SupportedModel):
+    """Model interface for HuggingFace models
+
+    Args:
+        model:
+            HuggingFace model
+        preprocessor:
+            HuggingFace preprocessor
+        sample_data:
+            Sample data to be used for type inference and ONNX conversion/validation.
+            This should match exactly what the model expects as input. See example below.
+        task_type:
+            Task type for HuggingFace model. See `HuggingFaceTask` for supported tasks.
+        model_type:
+            Optional model type for HuggingFace model. This is inferred automatically.
+        preprocessor_name:
+            Optional preprocessor name for HuggingFace model. This is inferred automatically if a
+            preprocessor is provided.
+
+    Returns:
+        HuggingFaceModel
+
+    Example::
+
+        from transformers import BartModel, BartTokenizer
+
+        tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+        model = BartModel.from_pretrained("facebook/bart-base")
+        inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
+
+        # this is fed to the ModelCard
+        model = HuggingFaceModel(
+            model=model,
+            preprocessor=tokenizer,
+            sample_data=inputs,
+            task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        )
+    """
+
     is_pipeline: bool = False
     backend: str
+
+    @classmethod
+    def _check_model_backend(cls, model: Any) -> str:
+        """Check model backend type for HuggingFace model
+
+        Args:
+            model:
+                HuggingFace model
+
+        Returns:
+            backend name
+        """
+
+        from transformers import PreTrainedModel, TFPreTrainedModel
+
+        if isinstance(model, PreTrainedModel):
+            return CommonKwargs.PYTORCH.value
+
+        elif isinstance(model, TFPreTrainedModel):
+            return CommonKwargs.TENSORFLOW.value
+
+        raise ValueError("Model must be a huggingface model")
 
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model = model_args.get("model")
-
         # passed as extra when modelcard is being loaded
-        model_uri = model_args.get("model_uri", False)
-
-        if model_uri:
+        if model_args.get("model_uri") is not None:
             return model_args
 
-        model, module, bases = get_model_args(model)
+        hf_model = model_args.get("model")
+        hf_model, module, bases = get_model_args(hf_model)
 
         if model_args.get(CommonKwargs.IS_PIPELINE):
             from transformers import Pipeline
 
-            assert isinstance(model, Pipeline), "Model must be a huggingface pipeline"
+            assert isinstance(hf_model, Pipeline), "Model must be a huggingface pipeline"
+            model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(
+                hf_model.model
+            )  # hf_model is pipe that has 'model' attr
 
         else:
-            from transformers import PreTrainedModel, TFPreTrainedModel
-
-            if isinstance(model, PreTrainedModel):
-                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.PYTORCH.value
-
-            elif isinstance(model, TFPreTrainedModel):
-                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.TENSORFLOW.value
-
-            else:
-                raise ValueError("Model must be a huggingface model")
+            model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model)
 
         if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
-            model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.__class__.__name__
 
         # for subclassed models
-        if hasattr(model, "mro"):
+        if hasattr(hf_model, "mro"):
             # check bases
-            bases = [str(base) for base in model.mro()]
+            bases = [str(base) for base in hf_model.mro()]
             for base in bases:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
                     model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
+
+        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
+            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
+        )
+        model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+            preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+        )
 
         return model_args
 
@@ -367,13 +582,23 @@ class HuggingFaceModel(SupportedModel):
 
         return self.model(self.sample_data)
 
-    def _get_pipeline_prediction(self):
+    def _get_pipeline_prediction(self) -> Dict[str, Any]:
         """Use model in pipeline mode if pipeline task"""
 
         if isinstance(self.sample_data, dict):
-            return self.model(**self.sample_data)
+            prediction = self.model(**self.sample_data)
 
-        return self.model(self.sample_data)
+        else:
+            prediction = self.model(self.sample_data)
+
+        if isinstance(prediction, dict):
+            return prediction
+
+        elif isinstance(prediction, list):
+            assert len(prediction) >= 1, "Pipeline model must return a prediction"
+            return prediction[0]
+
+        raise ValueError("Pipeline model must return a prediction")
 
     def get_sample_prediction(self) -> SamplePrediction:
         if self.is_pipeline:

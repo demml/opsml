@@ -16,7 +16,7 @@ TRAINED_MODEL = "trained-model"
 
 @pytest.mark.compat
 def test_huggingface_model(huggingface_bart, api_storage_client):
-    model = huggingface_bart
+    model: HuggingFaceModel = huggingface_bart
 
     validator = ModelCardValidator(model=model)
 
@@ -29,7 +29,7 @@ def test_huggingface_model(huggingface_bart, api_storage_client):
 
     predictions = PredictHelper.process_model_prediction(model)
 
-    assert isinstance(predictions, np.ndarray)
+    assert isinstance(predictions, dict)
 
     storage_path = save_artifact_to_storage(
         artifact=model,
@@ -41,28 +41,29 @@ def test_huggingface_model(huggingface_bart, api_storage_client):
         ),
         extra_path="model",
     )
+    
+    # simulate dumping and loading prior to loading model
+    serialized = model.model_dump(exclude={"model", "preprocessor", "sample_data"})
+    serialized["model_uri"] = storage_path.uri
+    loaded_model = HuggingFaceModel.model_validate(serialized)
+    
 
-    loaded_model_dict = load_artifact_from_storage(
+    loaded_model = load_artifact_from_storage(
         artifact_type=metadata.model_class,
         storage_client=api_storage_client,
         storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
-        **{
-            "model_type": metadata.model_type,
-            "task_type": metadata.task_type,
-            "preprocessor_name": metadata.preprocessor_name,
-            "is_pipeline": model.is_pipeline,
-        },
+        **{"model": loaded_model},
     )
 
-    loaded_model_dict["sample_data"] = model.sample_data
-    loaded_model = HuggingFaceModel(**loaded_model_dict)
+    loaded_model.sample_data = model.sample_data
 
     assert type(loaded_model.model) == type(model.model)
+    assert type(loaded_model.preprocessor) == type(model.preprocessor)
 
 
 @pytest.mark.compat
 def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
-    model = huggingface_text_classification_pipeline
+    model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     validator = ModelCardValidator(model=model)
 
@@ -73,14 +74,9 @@ def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_sto
     assert metadata.task_type == "text-classification"
     assert model.backend == "pytorch"
 
-    predictions = PredictHelper.get_model_prediction(
-        model.model,
-        model.sample_data,
-        metadata.sample_data_type,
-        metadata.model_class,
-        metadata.model_type,
-    )
-    assert isinstance(predictions, list)
+    predictions = PredictHelper.process_model_prediction(model)
+    
+    assert isinstance(predictions, dict)
 
     storage_path = save_artifact_to_storage(
         artifact=model,
@@ -92,21 +88,20 @@ def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_sto
         ),
         extra_path="model",
     )
+    
+    # simulate dumping and loading prior to loading model
+    serialized = model.model_dump(exclude={"model", "preprocessor", "sample_data"})
+    serialized["model_uri"] = storage_path.uri
+    loaded_model = HuggingFaceModel.model_validate(serialized)
 
-    loaded_model_dict = load_artifact_from_storage(
+    loaded_model = load_artifact_from_storage(
         artifact_type=metadata.model_class,
         storage_client=api_storage_client,
         storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
-        **{
-            "model_type": metadata.model_type,
-            "task_type": metadata.task_type,
-            "preprocessor_name": metadata.preprocessor_name,
-            "is_pipeline": model.is_pipeline,
-        },
+        **{"model": loaded_model},
     )
 
-    loaded_model_dict["sample_data"] = model.sample_data
-    loaded_model = HuggingFaceModel(**loaded_model_dict)
+    loaded_model.sample_data = model.sample_data
 
     assert type(loaded_model.model) == type(model.model)
 
