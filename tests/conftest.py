@@ -1003,7 +1003,7 @@ def huggingface_bart() -> HuggingFaceModel:
 
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = BartModel.from_pretrained("facebook/bart-base")
-    inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
+    inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
 
     model = HuggingFaceModel(
         model=model,

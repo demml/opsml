@@ -745,50 +745,28 @@ class HuggingFaceStorage(ArtifactStorage):
             kwargs:
                 Dictionary of arguments to pass to pass for model loading
 
-                model_type:
-                    The huggingface model type passed via metadata
-                task_type:
-                    The huggingface task type. This is used for models that
-                    were saved as pipelines
-                is_pipeline:
-                    Whether the model was saved as a pipeline
-                preprocessor_name:
-                    The name of the preprocessor to load
+                model:
+                    Loade HuggingFaceModel class
 
         """
         import transformers
 
-        model_type: str = kwargs[CommonKwargs.MODEL_TYPE]
-        task_type: str = kwargs[CommonKwargs.TASK_TYPE]
-        is_pipeline: bool = kwargs[CommonKwargs.IS_PIPELINE]
-        preprocessor_name: Optional[str] = kwargs.get(CommonKwargs.PREPROCESSOR_NAME)
+        hf_model: HuggingFaceModel = kwargs[CommonKwargs.MODEL]
 
         # only way to tell if model was a pipeline is from model class type
-        if is_pipeline:
-            model = transformers.pipeline(task_type, file_path)
-            return {
-                CommonKwargs.MODEL.value: model,
-                CommonKwargs.IS_PIPELINE.value: True,
-                CommonKwargs.TASK_TYPE.value: task_type,
-                CommonKwargs.MODEL_TYPE.value: model_type,
-            }
+        if hf_model.is_pipeline:
+            hf_model.model = transformers.pipeline(hf_model.task_type, file_path)
+            return hf_model
 
         else:
             # load model from pretrained
-            preprocessor = None
-            model = getattr(transformers, model_type).from_pretrained(file_path)
+            hf_model.model = getattr(transformers, hf_model.model_type).from_pretrained(file_path)
 
             # check for preprocessor
-            if preprocessor_name != "undefined":
-                preprocessor = getattr(transformers, preprocessor_name).from_pretrained(file_path)
+            if hf_model.preprocessor_name != "undefined":
+                hf_model.preprocessor = getattr(transformers, hf_model.preprocessor_name).from_pretrained(file_path)
 
-            return {
-                CommonKwargs.MODEL.value: model,
-                CommonKwargs.PREPROCESSOR.value: preprocessor,
-                CommonKwargs.IS_PIPELINE.value: False,
-                CommonKwargs.TASK_TYPE.value: task_type,
-                CommonKwargs.MODEL_TYPE.value: model_type,
-            }
+            return hf_model
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

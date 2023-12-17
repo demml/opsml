@@ -83,13 +83,8 @@ class TorchPredictHelper(PredictHelper):
 
 
 class HuggingFacePredictHelper(PredictHelper):
-    def _process_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
-        pred = model.get_sample_prediction()
-
-        if isinstance(pred.prediction, dict):
-            return [pred.prediction]
-
-        return cast(List[Dict[str, Any]], pred.prediction)
+    def _process_pipeline_prediction(self, model: HuggingFaceModel) -> Dict[str, Any]:
+        return model.get_sample_prediction().prediction
 
     def _process_modeloutput(self, pred: SamplePrediction) -> Dict[str, Any]:
         """Processes huggingface model that outputs a class of type `ModelOutput`
@@ -131,6 +126,7 @@ class HuggingFacePredictHelper(PredictHelper):
             if pred.prediction_type in [
                 AllowedDataType.TORCH_TENSOR,
                 AllowedDataType.TENSORFLOW_TENSOR,
+                AllowedDataType.DICT,
             ]:
                 predictions = pred
 
