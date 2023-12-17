@@ -1770,6 +1770,9 @@ def deeplabv3_resnet50():
 
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)
+    
+    print(input_batch)
+    a
 
     return model, input_batch
 
