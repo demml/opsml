@@ -3,22 +3,23 @@ from typing import Any, Dict, List, Union, cast
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import get_class_name
-from opsml.model.utils.types import TrainedModelType, ValidModelInput
 from opsml.registry.data.types import AllowedDataType
-from opsml.registry.cards.supported_models import HuggingFaceModel, PytorchModel, LightningModel, SamplePrediction
-from opsml.model.utils.huggingface_types import GENERATION_TYPES
+from opsml.registry.cards.supported_models import (
+    HuggingFaceModel,
+    PytorchModel,
+    LightningModel,
+    SamplePrediction,
+    SklearnModel,
+    LightGBMBoosterModel,
+    XGBoostModel,
+    TensorflowModel,
+)
 
 logger = ArtifactLogger.get_logger()
 
 
 class PredictHelper:
-    def __init__(self, sample_data_type: str, model_type: str):
-        """Instantiates predictor helper class for getting model predictions."""
-        self.data_type = sample_data_type
-        self.model_type = model_type
-
-    def get_prediction(self, model: Any, inputs: ValidModelInput) -> Any:
+    def process_prediction(self, model: Any) -> Any:
         """
         Generate predictions from model
         Args:
@@ -30,53 +31,59 @@ class PredictHelper:
             Predictions
         """
 
-        return model.predict(inputs)
+        raise NotImplementedError
 
     @staticmethod
-    def validate(model_class: str) -> bool:
-        return model_class not in [
-            TrainedModelType.PYTORCH,
-            TrainedModelType.PYTORCH_LIGHTNING,
-            TrainedModelType.TRANSFORMERS,
-        ]
+    def validate(model: Any) -> bool:
+        raise NotImplementedError
 
     @staticmethod
-    def get_model_prediction(
-        model: Any,
-        inputs: ValidModelInput,
-        sample_data_type: str,
-        model_class: str,
-        model_type: str,
-    ) -> Any:
+    def process_model_prediction(model: Any) -> Any:
         """Get model predictions for a given model"""
         predict_helper = next(
-            (
-                helper
-                for helper in PredictHelper.__subclasses__()
-                if helper.validate(
-                    model_class,
-                )
-            ),
-            PredictHelper,
+            (helper for helper in PredictHelper.__subclasses__() if helper.validate(model)),
+            ClassicPredictHelper,
         )
 
-        return predict_helper(
-            sample_data_type,
-            model_type,
-        ).get_prediction(model, inputs)
+        return predict_helper().process_prediction(model)
 
 
-class TorchPredictHelper(PredictHelper):
-    def get_prediction(self, model: PytorchModel) -> NDArray[Any]:
+class ClassicPredictHelper(PredictHelper):
+    """Predict helper used for models that implement `predict` method"""
+
+    def process_prediction(
+        self,
+        model: Union[TensorflowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel],
+    ) -> SamplePrediction:
+        """
+        Generate predictions from model
+        Args:
+            model:
+                Trained model
+            inputs:
+                Dictionary of inputs
+        Returns:
+            Predictions
+        """
+
         return model.get_sample_prediction()
 
     @staticmethod
-    def validate(model_class: str) -> bool:
-        return model_class == TrainedModelType.PYTORCH or model_class == TrainedModelType.PYTORCH_LIGHTNING
+    def validate(model: Union[TensorflowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel]) -> bool:
+        return isinstance(model, (TensorflowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel))
+
+
+class TorchPredictHelper(PredictHelper):
+    def process_prediction(self, model: PytorchModel) -> NDArray[Any]:
+        return model.get_sample_prediction()
+
+    @staticmethod
+    def validate(model: Union[PytorchModel, LightningModel]) -> bool:
+        return isinstance(model, (PytorchModel, LightningModel))
 
 
 class HuggingFacePredictHelper(PredictHelper):
-    def _get_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
+    def _process_pipeline_prediction(self, model: HuggingFaceModel) -> List[Dict[str, Any]]:
         pred = model.get_sample_prediction()
 
         if isinstance(pred.prediction, dict):
@@ -85,7 +92,7 @@ class HuggingFacePredictHelper(PredictHelper):
         return cast(List[Dict[str, Any]], pred.prediction)
 
     def _process_modeloutput(self, pred: SamplePrediction) -> Dict[str, Any]:
-        """Processes huggingface model that outputs a class of type `ModelOuput`
+        """Processes huggingface model that outputs a class of type `ModelOutput`
 
         Args:
             pred:
@@ -110,11 +117,12 @@ class HuggingFacePredictHelper(PredictHelper):
         Returns:
             Numpy array of predictions
         """
+
         for method in pred.prediction.__dir__():
             if "last_hidden_state" in method:
                 return getattr(pred.prediction, method)
 
-    def _get_prediction(self, model: HuggingFaceModel):
+    def _process_prediction(self, model: HuggingFaceModel):
         from transformers.utils import ModelOutput
 
         try:
@@ -127,7 +135,6 @@ class HuggingFacePredictHelper(PredictHelper):
                 predictions = pred
 
             # check for different output types
-
             elif isinstance(pred.prediction, ModelOutput):
                 predictions = self._process_modeloutput(pred)
 
@@ -140,7 +147,7 @@ class HuggingFacePredictHelper(PredictHelper):
             logger.error("Failed to coerce huggingface model outputs. {}", error)
             raise error
 
-    def get_prediction(self, model: HuggingFaceModel) -> Union[List[Dict[str, Any]], NDArray[Any]]:
+    def process_prediction(self, model: HuggingFaceModel) -> Union[List[Dict[str, Any]], NDArray[Any]]:
         """
         Get prediction from model
         Args:
@@ -154,11 +161,11 @@ class HuggingFacePredictHelper(PredictHelper):
             Dictionary of predictions
         """
 
-        if self.model.is_pipeline:
-            return self._get_pipeline_prediction(model)
+        if model.is_pipeline:
+            return self._process_pipeline_prediction(model)
 
-        return self._get_prediction(model)
+        return self._process_prediction(model)
 
     @staticmethod
-    def validate(model_class: str) -> bool:
-        return model_class == TrainedModelType.TRANSFORMERS
+    def validate(model: HuggingFaceModel) -> bool:
+        return isinstance(model, HuggingFaceModel)

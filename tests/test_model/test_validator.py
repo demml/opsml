@@ -15,7 +15,7 @@ TRAINED_MODEL = "trained-model"
 
 
 @pytest.mark.compat
-def _test_huggingface_model(huggingface_bart, api_storage_client):
+def test_huggingface_model(huggingface_bart, api_storage_client):
     model = huggingface_bart
 
     validator = ModelCardValidator(model=model)
@@ -27,13 +27,7 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
     assert metadata.task_type == "text-classification"
     assert model.backend == "pytorch"
 
-    predictions = PredictHelper.get_model_prediction(
-        model.model,
-        model.sample_data,
-        metadata.sample_data_type,
-        metadata.model_class,
-        metadata.model_type,
-    )
+    predictions = PredictHelper.process_model_prediction(model)
 
     assert isinstance(predictions, np.ndarray)
 
@@ -118,7 +112,7 @@ def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_sto
 
 
 @pytest.mark.compat
-def test_huggingface_tensorflow(huggingface_tf_distilbert):
+def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     model = huggingface_tf_distilbert
 
     validator = ModelCardValidator(model=model)
