@@ -1005,6 +1005,7 @@ def huggingface_bart() -> HuggingFaceModel:
     model = BartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
 
+
     model = HuggingFaceModel(
         model=model,
         preprocessor=tokenizer,
@@ -1040,6 +1041,8 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
+    
+    print(type(inputs))
 
     model = HuggingFaceModel(
         model=model,
