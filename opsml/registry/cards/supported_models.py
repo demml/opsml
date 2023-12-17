@@ -41,8 +41,8 @@ class SupportedModel(BaseModel):
     preprocessor: Optional[Any] = None
     sample_data: Optional[ValidModelInput] = None
     task_type: str = CommonKwargs.UNDEFINED.value
-    model_type: str
-    preprocessor_name: str
+    model_type: str = CommonKwargs.UNDEFINED.value
+    preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -155,7 +155,7 @@ class SklearnModel(SupportedModel):
 
         from sklearn.base import BaseEstimator
 
-        assert isinstance(model, BaseEstimator), "Model must be a sklearn estimator"
+        assert isinstance(model, BaseEstimator), "Model must be an sklearn estimator"
 
         if "sklearn" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__

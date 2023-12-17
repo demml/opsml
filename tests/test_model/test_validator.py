@@ -129,7 +129,7 @@ def _test_sklearn_subclass(sklearn_subclass):
 
 
 @pytest.mark.compat
-def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
+def test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
     model, inputs = deeplabv3_resnet50
 
     validator = ModelCardValidator(
