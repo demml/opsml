@@ -190,6 +190,8 @@ class ModelCardUris:
             URI of trained model sample data
         model_metadata_uri:
             URI where model metadata is stored
+        preprocessor_uri:
+            URI where preprocessor is stored
     """
 
     modelcard_uri: Optional[str] = None
@@ -197,6 +199,7 @@ class ModelCardUris:
     onnx_model_uri: Optional[str] = None
     model_metadata_uri: Optional[str] = None
     sample_data_uri: Optional[str] = None
+    preprocessor_uri: Optional[str] = None
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),

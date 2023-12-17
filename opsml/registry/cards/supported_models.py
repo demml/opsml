@@ -80,12 +80,22 @@ class SupportedModel(BaseModel):
         assert sample_data is not None, "Sample data must be provided"
         sample_data_type = get_class_name(sample_data)
 
+        # convert huggingface input if needed
         if sample_data_type == AllowedDataType.TRANSFORMER_BATCH:
             sample_data = dict(sample_data)
+
+        # for array types, only use one sample
+        if sample_data_type in [
+            AllowedDataType.NUMPY,
+            AllowedDataType.TENSORFLOW_TENSOR,
+            AllowedDataType.TORCH_TENSOR,
+        ]:
+            return sample_data[0:1]
 
         if isinstance(sample_data, str):
             return sample_data
 
+        # get sample for pandas or polars dataframes
         if isinstance(sample_data, (pl.DataFrame, pd.DataFrame)):
             if isinstance(sample_data, pl.DataFrame):
                 sample_data = sample_data.to_pandas()
