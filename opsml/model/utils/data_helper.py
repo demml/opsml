@@ -243,7 +243,7 @@ class TupleData(ModelDataHelper):
             dtype = getattr(value, "dtype", None)
 
             if dtype is not None:
-                dtypes.appen(str(dtype).lower())
+                dtypes.append(str(dtype).lower())
             else:
                 dtypes.append(str(type(value)).lower())
 
@@ -263,6 +263,10 @@ class TupleData(ModelDataHelper):
         for feature, type_ in zip(self.features, self.dtypes):
             feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
         return feature_dict
+
+    @property
+    def features(self) -> List[str]:
+        return [f"input_{i}" for i in range(len(self.data))]
 
     @staticmethod
     def validate(data_type: str) -> bool:

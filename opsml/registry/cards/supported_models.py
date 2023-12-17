@@ -1,4 +1,5 @@
 from typing import Any, Union, Optional, Dict, Tuple, List
+from functools import cached_property
 import pandas as pd
 import polars as pl
 from dataclasses import dataclass
@@ -36,13 +37,11 @@ class SamplePrediction:
 
 
 class SupportedModel(BaseModel):
-    model: Any
+    model: Optional[Any] = None
     preprocessor: Optional[Any] = None
-    sample_data: ValidModelInput
+    sample_data: Optional[ValidModelInput] = None
     task_type: str = CommonKwargs.UNDEFINED.value
-    _model_type: str  # private field to be set during validation
-    _data_type: str  # private field to be set during validation
-    _preprocessor_name: str = CommonKwargs.UNDEFINED.value
+    model_type: str
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -51,34 +50,25 @@ class SupportedModel(BaseModel):
         validate_default=True,
     )
 
-    @property
+    @cached_property
     def data_type(self) -> str:
-        return self._data_type
-
-    @property
-    def model_type(self) -> str:
-        return self._model_type
+        return get_class_name(self.sample_data)
 
     @property
     def supports_onnx(self) -> bool:
         return True
 
-    @property
+    @cached_property
     def preprocessor_name(self) -> str:
-        return self._preprocessor_name
+        if self.preprocessor is not None:
+            return self.preprocessor.__class__.__name__
 
-    @field_validator("preprocessor", model="before")
-    @classmethod
-    def get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> Optional[Any]:
-        if preprocessor is not None:
-            cls._preprocessor_name = preprocessor.__class__.__name__
-
-        return preprocessor
+        return CommonKwargs.UNDEFINED.value
 
     @field_validator("sample_data", mode="before")
     @classmethod
     def get_sample_data(
-        cls, sample_data: ValidModelInput
+        cls, sample_data: Optional[ValidModelInput] = None
     ) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
         """Check sample data and returns one record to be used
         during type inference and ONNX conversion/validation
@@ -86,8 +76,7 @@ class SupportedModel(BaseModel):
         Returns:
             Sample data with only one record
         """
-
-        cls._data_type = get_class_name(sample_data)
+        assert sample_data is not None, "Sample data must be provided"
 
         if isinstance(sample_data, str):
             return sample_data
@@ -129,9 +118,17 @@ class SupportedModel(BaseModel):
 
 
 class SklearnModel(SupportedModel):
-    @field_validator("model", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def check_model(cls, model: Any) -> Any:
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        model = model_args.get("model")
+
+        # passed as extra when modelcard is being loaded
+        model_uri = model_args.get("model_uri", False)
+
+        if model_uri:
+            return model_args
+
         model, module, bases = get_model_args(model)
 
         from sklearn.base import BaseEstimator
@@ -139,13 +136,13 @@ class SklearnModel(SupportedModel):
         assert isinstance(model, BaseEstimator), "Model must be a sklearn estimator"
 
         if "sklearn" in module:
-            cls._model_type = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
         for base in bases:
             if "sklearn" in base:
-                cls._model_type = "subclass"
+                model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        return model
+        return model_args
 
     @property
     def model_class(self) -> str:
@@ -153,9 +150,17 @@ class SklearnModel(SupportedModel):
 
 
 class TensorflowModel(SupportedModel):
-    @field_validator("model", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def check_model(cls, model: Any) -> Any:
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        model = model_args.get("model")
+
+        # passed as extra when modelcard is being loaded
+        model_uri = model_args.get("model_uri", False)
+
+        if model_uri:
+            return model_args
+
         model, module, bases = get_model_args(model)
 
         import tensorflow as tf
@@ -163,11 +168,11 @@ class TensorflowModel(SupportedModel):
         assert isinstance(model, tf.keras.Model), "Model must be a tensorflow keras model"
 
         if "keras" in module:
-            cls._model_type = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
         for base in bases:
             if "keras" in base:
-                cls._model_type = "subclass"
+                model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
         return model
 
@@ -177,9 +182,17 @@ class TensorflowModel(SupportedModel):
 
 
 class PytorchModel(SupportedModel):
-    @field_validator("model", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def check_model(cls, model: Any) -> Any:
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        model = model_args.get("model")
+
+        # passed as extra when modelcard is being loaded
+        model_uri = model_args.get("model_uri", False)
+
+        if model_uri:
+            return model_args
+
         model, _, bases = get_model_args(model)
 
         from torch.nn import Module
@@ -188,11 +201,13 @@ class PytorchModel(SupportedModel):
 
         for base in bases:
             if "torch" in base:
-                cls._model_type = model.__class__.__name__
+                model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
         return model
 
     def get_sample_prediction(self) -> SamplePrediction:
+        assert self.sample_data is not None, "Sample data must be provided"
+
         if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
             prediction = self.model(**self.sample_data)
         else:
@@ -208,9 +223,17 @@ class PytorchModel(SupportedModel):
 
 
 class LightningModel(PytorchModel):
-    @field_validator("model", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def check_model(cls, model: Any) -> Any:
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        model = model_args.get("model")
+
+        # passed as extra when modelcard is being loaded
+        model_uri = model_args.get("model_uri", False)
+
+        if model_uri:
+            return model_args
+
         model, module, bases = get_model_args(model)
 
         from pytorch_lightning import Trainer
@@ -218,11 +241,11 @@ class LightningModel(PytorchModel):
         assert isinstance(model, Trainer), "Model must be a pytorch lightning trainer"
 
         if "lightning.pytorch" in module:
-            cls._model_type = model.model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE.value] = model.model.__class__.__name__
 
         for base in bases:
             if "lightning.pytorch" in base:
-                cls._model_type = "subclass"
+                model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
         return model
 
@@ -238,9 +261,17 @@ class XGBoostModel(SklearnModel):
 class LightGBMBoosterModel(SupportedModel):
     """LightGBM Booster model class. If using the sklearn API, use SklearnModel instead."""
 
-    @field_validator("model", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def check_model(cls, model: Any) -> Any:
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        model = model_args.get("model")
+
+        # passed as extra when modelcard is being loaded
+        model_uri = model_args.get("model_uri", False)
+
+        if model_uri:
+            return model_args
+
         model, module, _ = get_model_args(model)
 
         from lightgbm import Booster
@@ -248,7 +279,7 @@ class LightGBMBoosterModel(SupportedModel):
         assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
-            cls._model_type = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
         return model
 
@@ -263,16 +294,20 @@ class LightGBMBoosterModel(SupportedModel):
 
 class HuggingFaceModel(SupportedModel):
     is_pipeline: bool = False
-    _backend: str
-
-    @property
-    def backend(self) -> str:
-        return self._backend
+    backend: str
 
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        model, module, bases = get_model_args(model_args)
+        model = model_args.get("model")
+
+        # passed as extra when modelcard is being loaded
+        model_uri = model_args.get("model_uri", False)
+
+        if model_uri:
+            return model_args
+
+        model, module, bases = get_model_args(model)
 
         if model_args.get(CommonKwargs.IS_PIPELINE):
             from transformers import Pipeline
@@ -283,16 +318,16 @@ class HuggingFaceModel(SupportedModel):
             from transformers import PreTrainedModel, TFPreTrainedModel
 
             if isinstance(model, PreTrainedModel):
-                cls._backend = CommonKwargs.PYTORCH.value
+                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.PYTORCH.value
 
             elif isinstance(model, TFPreTrainedModel):
-                cls._backend = CommonKwargs.TENSORFLOW.value
+                model_args[CommonKwargs.BACKEND.value] = CommonKwargs.TENSORFLOW.value
 
             else:
                 raise ValueError("Model must be a huggingface model")
 
         if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
-            cls._model_type = model.__class__.__name__
+            model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
         # for subclassed models
         if hasattr(model, "mro"):
@@ -300,7 +335,7 @@ class HuggingFaceModel(SupportedModel):
             bases = [str(base) for base in model.mro()]
             for base in bases:
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
-                    cls._model_type = "subclass"
+                    model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
         return model_args
 
@@ -316,6 +351,8 @@ class HuggingFaceModel(SupportedModel):
 
     def _generate_predictions(self):
         """Use model in generate mode if generate task"""
+
+        assert self.sample_data is not None, "Sample data must be provided"
         if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
             return self.model.generate(**self.sample_data)
 
@@ -323,6 +360,8 @@ class HuggingFaceModel(SupportedModel):
 
     def _functional_predictions(self):
         """Use model in functional mode if functional task"""
+
+        assert self.sample_data is not None, "Sample data must be provided"
         if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
             return self.model(**self.sample_data)
 

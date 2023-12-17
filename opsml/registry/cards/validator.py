@@ -5,7 +5,7 @@
 from typing import Any, Dict, Optional
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.supported_models import SUPPORTED_MODELS
-from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata, CommonKwargs
+from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata
 from opsml.registry.data.types import AllowedDataType, ValidData, check_data_type
 
 logger = ArtifactLogger.get_logger()
