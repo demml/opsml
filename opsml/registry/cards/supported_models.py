@@ -78,11 +78,15 @@ class SupportedModel(BaseModel):
         """
 
         assert sample_data is not None, "Sample data must be provided"
+        sample_data_type = get_class_name(sample_data)
+
+        if sample_data_type == AllowedDataType.TRANSFORMER_BATCH:
+            sample_data = dict(sample_data)
 
         if isinstance(sample_data, str):
             return sample_data
 
-        if not isinstance(sample_data, dict):
+        if isinstance(sample_data, (pl.DataFrame, pd.DataFrame)):
             if isinstance(sample_data, pl.DataFrame):
                 sample_data = sample_data.to_pandas()
 
@@ -92,13 +96,10 @@ class SupportedModel(BaseModel):
         if isinstance(sample_data, dict):
             for key, value in sample_data.items():
                 if hasattr(value, "shape"):
-                    if len(value.shape) > 1:
+                    if len(value.shape) > 1:  # validate one sample for array types
                         sample_dict[key] = value[0:1]
                 else:
-                    raise ValueError(
-                        """Provided sample data is not a valid type. 
-                        Must be a dictionary of numpy, torch, or tensorflow tensors."""
-                    )
+                    sample_dict[key] = value
 
             return sample_dict
 
