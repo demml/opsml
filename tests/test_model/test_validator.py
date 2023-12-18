@@ -10,6 +10,7 @@ from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
+    TensorFlowModel
 )
 from opsml.registry.cards.types import ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
@@ -59,7 +60,7 @@ def simulate_save_load(
 
 
 @pytest.mark.compat
-def _test_huggingface_model(huggingface_bart, api_storage_client):
+def test_huggingface_model(huggingface_bart, api_storage_client):
     model: HuggingFaceModel = huggingface_bart
 
     validator = ModelCardValidator(model=model)
@@ -82,7 +83,7 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
 
 
 @pytest.mark.compat
-def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
+def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     validator = ModelCardValidator(model=model)
@@ -102,7 +103,7 @@ def _test_huggingface_pipeline(huggingface_text_classification_pipeline, api_sto
 
 
 @pytest.mark.compat
-def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
+def test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     model = huggingface_tf_distilbert
 
     validator = ModelCardValidator(model=model)
@@ -123,20 +124,9 @@ def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     assert type(loaded_model.preprocessor) == type(model.preprocessor)
 
 
-@pytest.mark.compat
-def _test_sklearn_subclass(sklearn_subclass):
-    model = sklearn_subclass
-
-    validator = ModelCardValidator(model=model)
-
-    metadata = validator.get_metadata()
-
-    assert metadata.model_type == "subclass"
-    assert metadata.model_class == "sklearn_estimator"
-
 
 @pytest.mark.compat
-def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
+def test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
     model: PyTorchModel = deeplabv3_resnet50
 
     validator = ModelCardValidator(model=model)
@@ -155,7 +145,7 @@ def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
 
 
 @pytest.mark.compat
-def _test_torch_lightning(pytorch_lightning_model):
+def test_torch_lightning(pytorch_lightning_model):
     model: LightningModel = pytorch_lightning_model
 
     validator = ModelCardValidator(model=model)
@@ -170,7 +160,7 @@ def _test_torch_lightning(pytorch_lightning_model):
 
 
 @pytest.mark.compat
-def _test_lightning_regression(lightning_regression, api_storage_client):
+def test_lightning_regression(lightning_regression, api_storage_client):
     model, arch = lightning_regression
 
     validator = ModelCardValidator(model)
@@ -204,61 +194,44 @@ def test_sklearn_pipeline(sklearn_pipeline):
 
     metadata = validator.get_metadata()
 
-    assert metadata.model_type == "sklearn_pipeline"
+    assert metadata.model_type == "Pipeline"
     assert metadata.model_class == "sklearn_estimator"
 
     predictions = PredictHelper.process_model_prediction(model)
+    assert isinstance(predictions, np.ndarray)
+
+
+@pytest.mark.compat
+def test_tensorflow(load_transformer_example, api_storage_client):
+    model = load_transformer_example
+
+    validator = ModelCardValidator(model=model)
+    metadata = validator.get_metadata()
+
+    assert metadata.model_type == "Functional"
+    assert metadata.model_class == "keras"
+
+    predictions = PredictHelper.process_model_prediction(model)
+    assert isinstance(predictions, np.ndarray)
     
-    print(predictions)
-    a
-    assert isinstance(predictions, np.ndarray)
+    loaded_model = simulate_save_load(model, api_storage_client, metadata, TensorFlowModel)
+    assert type(loaded_model.model) == type(model.model)
+    
 
 
 @pytest.mark.compat
-def _test_tensorflow(load_transformer_example):
-    model, inputs = load_transformer_example
+def test_tensorflow_multi_input(load_multi_input_keras_example, api_storage_client):
+    model = load_multi_input_keras_example
 
-    validator = ModelCardValidator(
-        sample_data=inputs,
-        trained_model=model,
-    )
-
+    validator = ModelCardValidator(model=model)
     metadata = validator.get_metadata()
 
     assert metadata.model_type == "Functional"
     assert metadata.model_class == "keras"
 
-    predictions = PredictHelper.get_model_prediction(
-        model,
-        validator.get_sample_data(),
-        metadata.sample_data_type,
-        metadata.model_class,
-        metadata.model_type,
-    )
-
-    assert isinstance(predictions, np.ndarray)
-
-
-@pytest.mark.compat
-def _test_tensorflow_multi_input(load_multi_input_keras_example):
-    model, inputs = load_multi_input_keras_example
-
-    validator = ModelCardValidator(
-        sample_data=inputs,
-        trained_model=model,
-    )
-
-    metadata = validator.get_metadata()
-
-    assert metadata.model_type == "Functional"
-    assert metadata.model_class == "keras"
-
-    predictions = PredictHelper.get_model_prediction(
-        model,
-        validator.get_sample_data(),
-        metadata.sample_data_type,
-        metadata.model_class,
-        metadata.model_type,
-    )
-
+    predictions = PredictHelper.process_model_prediction(model)
+    
     assert isinstance(predictions, list)
+    
+    loaded_model = simulate_save_load(model, api_storage_client, metadata, TensorFlowModel)
+    assert type(loaded_model.model) == type(model.model)

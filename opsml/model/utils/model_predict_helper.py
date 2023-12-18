@@ -66,20 +66,21 @@ class ClassicPredictHelper(PredictHelper):
             Predictions
         """
 
-        return model.get_sample_prediction()
-
-    @staticmethod
-    def validate(model: Union[TensorFlowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel]) -> bool:
-        return isinstance(model, (TensorFlowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel))
-
-
-class TorchPredictHelper(PredictHelper):
-    def process_prediction(self, model: PyTorchModel) -> Union[Dict[str, Any], NDArray[Any]]:
         return model.get_sample_prediction().prediction
 
     @staticmethod
-    def validate(model: Union[PyTorchModel, LightningModel]) -> bool:
-        return isinstance(model, (PyTorchModel, LightningModel))
+    def validate(model: Union[TensorFlowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel]) -> bool:
+        return isinstance(
+            model,
+            (
+                TensorFlowModel,
+                XGBoostModel,
+                LightGBMBoosterModel,
+                SklearnModel,
+                PyTorchModel,
+                LightningModel,
+            ),
+        )
 
 
 class HuggingFacePredictHelper(PredictHelper):

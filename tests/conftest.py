@@ -80,6 +80,7 @@ from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
+    TensorFlowModel,
     SklearnModel
 )
 from opsml.registry.cards.types import Metric, ModelCardUris
@@ -693,7 +694,8 @@ def load_transformer_example():
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
     data = np.load("tests/assets/transformer_data.npy")
-    return loaded_model, data
+    
+    return TensorFlowModel(model=loaded_model, sample_data=data)
 
 
 @pytest.fixture(scope="function")
@@ -702,7 +704,7 @@ def load_multi_input_keras_example():
 
     loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
     data = joblib.load("tests/assets/multi_input_data.joblib")
-    return loaded_model, data
+    return TensorFlowModel(model=loaded_model, sample_data=data)
 
 
 @pytest.fixture(scope="session")
@@ -779,12 +781,6 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
     return SklearnModel(model=pipe, sample_data=train_data)
 
 
-@pytest.fixture(scope="function")
-def sklearn_subclass():
-    class CustomSklearn(BaseEstimator):
-        ...
-
-    return CustomSklearn(), "placeholder"
 
 
 @pytest.fixture(scope="session")
