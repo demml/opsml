@@ -80,6 +80,7 @@ from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
+    SklearnModel
 )
 from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
@@ -774,7 +775,8 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
         [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
     )
     pipe.fit(train_data, data["y"])
-    return pipe, train_data
+    
+    return SklearnModel(model=pipe, sample_data=train_data)
 
 
 @pytest.fixture(scope="function")

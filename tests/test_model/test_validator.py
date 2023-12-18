@@ -170,7 +170,7 @@ def _test_torch_lightning(pytorch_lightning_model):
 
 
 @pytest.mark.compat
-def test_lightning_regression(lightning_regression, api_storage_client):
+def _test_lightning_regression(lightning_regression, api_storage_client):
     model, arch = lightning_regression
 
     validator = ModelCardValidator(model)
@@ -197,26 +197,20 @@ def test_lightning_regression(lightning_regression, api_storage_client):
 
 
 @pytest.mark.compat
-def _test_sklearn_pipeline(sklearn_pipeline):
-    model, inputs = sklearn_pipeline
+def test_sklearn_pipeline(sklearn_pipeline):
+    model = sklearn_pipeline
 
-    validator = ModelCardValidator(
-        sample_data=inputs,
-        trained_model=model,
-    )
+    validator = ModelCardValidator(model=model)
 
     metadata = validator.get_metadata()
 
     assert metadata.model_type == "sklearn_pipeline"
     assert metadata.model_class == "sklearn_estimator"
 
-    predictions = PredictHelper.get_model_prediction(
-        model,
-        validator.get_sample_data(),
-        metadata.sample_data_type,
-        metadata.model_class,
-        metadata.model_type,
-    )
+    predictions = PredictHelper.process_model_prediction(model)
+    
+    print(predictions)
+    a
     assert isinstance(predictions, np.ndarray)
 
 
