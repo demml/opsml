@@ -5,7 +5,7 @@ from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
 from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import (
+from opsml.registry.types import (
     CardInfo,
     DataCardMetadata,
     Description,

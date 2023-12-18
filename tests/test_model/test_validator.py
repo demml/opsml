@@ -4,15 +4,15 @@ import numpy as np
 import pytest
 from torch import Tensor
 
-from opsml.model.utils.model_predict_helper import PredictHelper
-from opsml.registry.cards.supported_models import (
+from opsml.registry.model.utils.model_predict_helper import PredictHelper
+from opsml.registry.model.supported_models import (
     SUPPORTED_MODELS,
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
     TensorFlowModel,
 )
-from opsml.registry.cards.types import ModelCardMetadata
+from opsml.registry.types import ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.storage.artifact import (
     load_artifact_from_storage,

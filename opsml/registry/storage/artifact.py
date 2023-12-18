@@ -16,7 +16,7 @@ import zarr
 from numpy.typing import NDArray
 
 from opsml.helpers.utils import all_subclasses
-from opsml.registry.cards.supported_models import (
+from opsml.registry.model.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
