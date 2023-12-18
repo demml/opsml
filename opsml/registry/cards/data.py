@@ -13,16 +13,20 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType, DataCardMetadata
 from opsml.registry.cards.validator import DataCardValidator
 from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.data.types import AllowedDataType, ValidData
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.types import (
+    AllowedDataType,
+    ArtifactStorageSpecs,
+    CardType,
+    DataCardMetadata,
+    ValidData,
+)
 
 logger = ArtifactLogger.get_logger()
 

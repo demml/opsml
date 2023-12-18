@@ -17,7 +17,7 @@ from opsml.registry.storage.artifact import (
     TensorFlowModelStorage,
 )
 from opsml.registry.storage.client import StorageClient
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.types import ArtifactStorageSpecs
 from tests import conftest
 
 

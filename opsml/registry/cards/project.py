@@ -7,8 +7,8 @@ from typing import Any, Dict
 from pydantic import model_validator
 
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType
 from opsml.registry.sql.records import ProjectRegistryRecord, RegistryRecord
+from opsml.registry.types import CardType
 
 
 class ProjectCard(ArtifactCard):

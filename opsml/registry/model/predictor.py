@@ -9,9 +9,7 @@ from typing import Any, Dict, List, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from opsml.model.api_sig import ApiSigCreatorGetter
-from opsml.model.utils.types import ApiDataSchemas, Base, TrainedModelType
-from opsml.registry.data.types import AllowedDataType
+from opsml.registry.types import AllowedDataType, ApiDataSchemas, Base, TrainedModelType
 
 
 # need to build response object for prediction
@@ -49,11 +47,7 @@ class OnnxModelPredictor:
             self.sess = self._create_onnx_session(model_definition=model_definition)
             self._output_names = [output.name for output in self.sess.get_outputs()]
 
-        self.sig_creator = ApiSigCreatorGetter.get_sig_creator(
-            model_type=model_type,
-            data_schema=self.data_schema,
-            to_onnx=self.to_onnx,
-        )
+        self.sig_creator = None  # TODO: revamp onnx
 
     @property
     def data_type(self) -> str:

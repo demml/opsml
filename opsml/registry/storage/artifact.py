@@ -16,7 +16,6 @@ import zarr
 from numpy.typing import NDArray
 
 from opsml.helpers.utils import all_subclasses
-from opsml.model.utils.types import ModelProto, TrainedModelType
 from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
     LightningModel,
@@ -31,11 +30,8 @@ from opsml.registry.storage.client import (
     StorageClientType,
     StorageSystem,
 )
-from opsml.registry.storage.types import (
-    ArtifactStorageSpecs,
-    ArtifactStorageType,
-    FilePath,
-)
+from opsml.registry.types import ArtifactStorageSpecs, ArtifactStorageType, FilePath
+from opsml.registry.types.model import ModelProto, TrainedModelType
 
 
 class ArtifactStorage:
@@ -739,6 +735,10 @@ class HuggingFaceStorage(ArtifactStorage):
 
         if artifact.preprocessor is not None:
             artifact.preprocessor.save_pretrained(tmp_uri)
+
+        if artifact.save_onnx:
+            # from optimum.onnxruntime
+            pass
 
         return self._upload_artifact(
             file_path=tmp_uri,

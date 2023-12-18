@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional, Union
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import METRICS, PARAMS, CardType, Metric, Param
 from opsml.registry.sql.records import (
     ARBITRARY_ARTIFACT_TYPE,
     RegistryRecord,
@@ -15,7 +14,14 @@ from opsml.registry.sql.records import (
 )
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.types import (
+    METRICS,
+    PARAMS,
+    ArtifactStorageSpecs,
+    CardType,
+    Metric,
+    Param,
+)
 
 logger = ArtifactLogger.get_logger()
 

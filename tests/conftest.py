@@ -51,7 +51,6 @@ from sklearn import (
     svm,
     tree,
 )
-from sklearn.base import BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
 
@@ -80,8 +79,8 @@ from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
+    SklearnModel,
     TensorFlowModel,
-    SklearnModel
 )
 from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
@@ -694,7 +693,7 @@ def load_transformer_example():
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
     data = np.load("tests/assets/transformer_data.npy")
-    
+
     return TensorFlowModel(model=loaded_model, sample_data=data)
 
 
@@ -777,10 +776,8 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
         [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
     )
     pipe.fit(train_data, data["y"])
-    
+
     return SklearnModel(model=pipe, sample_data=train_data)
-
-
 
 
 @pytest.fixture(scope="session")

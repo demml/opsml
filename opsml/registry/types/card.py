@@ -10,7 +10,8 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
-from opsml.model.utils.types import (
+from opsml.registry.types.extra import CommonKwargs
+from opsml.registry.types.model import (
     ApiDataSchemas,
     DataDict,
     ExtraOnnxArgs,
@@ -18,22 +19,6 @@ from opsml.model.utils.types import (
 )
 
 logger = ArtifactLogger.get_logger()
-
-
-class CommonKwargs(str, Enum):
-    IS_PIPELINE = "is_pipeline"
-    MODEL_TYPE = "model_type"
-    MODEL_CLASS = "model_class"
-    MODEL_ARCH = "model_arch"
-    PREPROCESSOR_NAME = "preprocessor_name"
-    PREPROCESSOR = "preprocessor"
-    TASK_TYPE = "task_type"
-    MODEL = "model"
-    UNDEFINED = "undefined"
-    BACKEND = "backend"
-    PYTORCH = "pytorch"
-    TENSORFLOW = "tensorflow"
-    SAMPLE_DATA = "sample_data"
 
 
 class RegistryType(str, Enum):

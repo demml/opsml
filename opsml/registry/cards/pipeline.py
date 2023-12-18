@@ -6,8 +6,8 @@ from typing import List, Optional
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.types import CardType
 from opsml.registry.sql.records import PipelineRegistryRecord, RegistryRecord
+from opsml.registry.types import CardType
 
 logger = ArtifactLogger.get_logger()
 

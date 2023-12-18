@@ -6,10 +6,14 @@ import pandas as pd
 import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
-from opsml.model.utils.huggingface_types import GENERATION_TYPES, HuggingFaceTask
-from opsml.model.utils.types import HuggingFaceModuleType, TrainedModelType
-from opsml.registry.cards.types import CommonKwargs
-from opsml.registry.data.types import AllowedDataType, get_class_name
+from opsml.registry.types import (
+    AllowedDataType,
+    CommonKwargs,
+    HuggingFaceModuleType,
+    TrainedModelType,
+    get_class_name,
+)
+from opsml.registry.types.huggingface import GENERATION_TYPES, HuggingFaceTask
 
 # from torch import Tensor
 
@@ -52,6 +56,7 @@ class SupportedModel(BaseModel):
         arbitrary_types_allowed=True,
         validate_assignment=False,
         validate_default=True,
+        extra="allow",
     )
 
     @cached_property
@@ -457,7 +462,9 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(
+            model, Booster
+        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -521,6 +528,19 @@ class HuggingFaceModel(SupportedModel):
 
     is_pipeline: bool = False
     backend: str
+    _save_onnx: bool = False  # private attr that's called at save time.
+
+    @property
+    @classmethod
+    def save_onnx(cls) -> bool:
+        """Indicates if the model has been marked for onnx conversion during model saving.
+        There is no need to set this manually. It will be inferred from the modelcard.
+        """
+        return cls._save_onnx
+
+    @save_onnx.setter
+    def save_onnx(cls, value: bool) -> None:
+        cls._save_onnx = value
 
     @classmethod
     def _check_model_backend(cls, model: Any) -> str:

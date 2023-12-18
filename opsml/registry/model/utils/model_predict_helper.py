@@ -13,7 +13,7 @@ from opsml.registry.cards.supported_models import (
     TensorFlowModel,
     XGBoostModel,
 )
-from opsml.registry.data.types import AllowedDataType
+from opsml.registry.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 

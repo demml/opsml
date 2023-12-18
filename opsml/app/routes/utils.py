@@ -20,9 +20,9 @@ from opsml.app.routes.pydantic_models import ListTeamNameInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.audit import AuditCard, AuditSections
 from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.storage.client import LocalStorageClient, StorageClientType
+from opsml.registry.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 # Constants

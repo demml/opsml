@@ -10,7 +10,7 @@ import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
 
-from opsml.registry.data.types import AllowedDataType, ArrowTable
+from opsml.registry.types import AllowedDataType, ArrowTable
 
 ValidArrowData = Union[NDArray[Any], pd.DataFrame, pl.DataFrame, pa.Table]
 
@@ -151,7 +151,7 @@ class DataFormatter:
             NDArray[Any],
             pd.DataFrame,
             pl.DataFrame,
-        ]
+        ],
     ) -> Dict[str, Any]:
         """
         Generates a schema (column: type) from a py arrow table.

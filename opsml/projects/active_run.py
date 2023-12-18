@@ -10,12 +10,17 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClientType
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.types import (
+    METRICS,
+    PARAMS,
+    ArtifactStorageSpecs,
+    CardInfo,
+    CardType,
+)
 
 logger = ArtifactLogger.get_logger()
 

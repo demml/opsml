@@ -15,7 +15,6 @@ from starlette.templating import _TemplateResponse
 from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.utils.types import ModelMetadata
 from opsml.projects.base.types import ProjectInfo
 from opsml.projects.project import OpsmlProject
 from opsml.registry.cards.audit import AuditCard, AuditSections
@@ -23,8 +22,8 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.run import RunCard
-from opsml.registry.data.types import AllowedDataType
 from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.types import AllowedDataType, ModelMetadata
 
 logger = ArtifactLogger.get_logger()
 

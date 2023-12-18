@@ -9,12 +9,6 @@ from typing import Any, Dict, Optional, Tuple, Union, cast
 import pyarrow as pa
 from numpy.typing import NDArray
 
-from opsml.model.utils.types import (
-    ModelMetadata,
-    OnnxAttr,
-    OnnxModelDefinition,
-    ValidSavedSample,
-)
 from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -22,13 +16,22 @@ from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
 from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import CardType, StoragePath
 from opsml.registry.data.formatter import DataFormatter
-from opsml.registry.data.types import AllowedDataType, ArrowTable
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClientType
-from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
+from opsml.registry.types import (
+    AllowedDataType,
+    ArrowTable,
+    ArtifactStorageSpecs,
+    ArtifactStorageType,
+    CardType,
+    ModelMetadata,
+    OnnxAttr,
+    OnnxModelDefinition,
+    StoragePath,
+    ValidSavedSample,
+)
 
 
 class SaveName(str, Enum):
@@ -278,7 +281,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         return OnnxAttr()
 
     def _save_model_metadata(self) -> None:
-        onnx_attr = self._save_onnx_model()
+        self._save_trained_model()
+
+        # onnx_attr = self._save_onnx_model()
+
         self._save_trained_model()
         self._save_sample_data()
 
@@ -301,8 +307,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         model_dump = self.card.model_dump(
             exclude={
-                "sample_input_data",
-                "trained_model",
+                {"model": {"model", "sample_data", "preprocessor"}},
                 "storage_client",
             }
         )
@@ -321,9 +326,13 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
     def _save_trained_model(self) -> None:
         """Saves trained model associated with ModelCard to filesystem"""
+        # need to save model to filesystem
+        # Huggingface models are converted to onnx during model saving since they are built
+        # from the model save dir (don't want to do this twice). Thus, we need to add the onnx argument to the model interface
+        setattr(self.card.model, "save_onnx", self.card.to_onnx)
 
         storage_path = save_artifact_to_storage(
-            artifact=self.card.trained_model,
+            artifact=self.card.model,
             artifact_type=self.card.metadata.model_type,
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
