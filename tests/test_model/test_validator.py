@@ -10,7 +10,7 @@ from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
-    TensorFlowModel
+    TensorFlowModel,
 )
 from opsml.registry.cards.types import ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
@@ -18,7 +18,7 @@ from opsml.registry.storage.artifact import (
     load_artifact_from_storage,
     save_artifact_to_storage,
 )
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.types import ArtifactStorageSpecs
 
 TRAINED_MODEL = "trained-model"
 
@@ -124,7 +124,6 @@ def test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     assert type(loaded_model.preprocessor) == type(model.preprocessor)
 
 
-
 @pytest.mark.compat
 def test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
     model: PyTorchModel = deeplabv3_resnet50
@@ -213,10 +212,9 @@ def test_tensorflow(load_transformer_example, api_storage_client):
 
     predictions = PredictHelper.process_model_prediction(model)
     assert isinstance(predictions, np.ndarray)
-    
+
     loaded_model = simulate_save_load(model, api_storage_client, metadata, TensorFlowModel)
     assert type(loaded_model.model) == type(model.model)
-    
 
 
 @pytest.mark.compat
@@ -230,8 +228,8 @@ def test_tensorflow_multi_input(load_multi_input_keras_example, api_storage_clie
     assert metadata.model_class == "keras"
 
     predictions = PredictHelper.process_model_prediction(model)
-    
+
     assert isinstance(predictions, list)
-    
+
     loaded_model = simulate_save_load(model, api_storage_client, metadata, TensorFlowModel)
     assert type(loaded_model.model) == type(model.model)

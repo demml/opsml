@@ -18,10 +18,10 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
-from opsml.model.data_converters import OnnxDataConverter
-from opsml.model.registry_updaters import OnnxRegistryUpdater
-from opsml.model.utils.data_helper import ModelDataHelper
-from opsml.model.utils.types import (
+from opsml.registry.model.data_converters import OnnxDataConverter
+from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
+from opsml.registry.model.utils.data_helper import ModelDataHelper
+from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,

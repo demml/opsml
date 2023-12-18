@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
 from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import QueryEngine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
@@ -25,6 +24,7 @@ from opsml.registry.sql.semver import (
     VersionType,
 )
 from opsml.registry.storage.client import StorageClientType
+from opsml.registry.types import RegistryType
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()

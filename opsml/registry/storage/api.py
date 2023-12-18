@@ -165,7 +165,8 @@ class ApiClient:
             return {"status": 200}  # filler return
 
         response_result = cast(
-            Dict[str, Any], py_json.loads(data.decode("utf-8"))  # pylint: disable=undefined-loop-variable
+            Dict[str, Any],
+            py_json.loads(data.decode("utf-8")),  # pylint: disable=undefined-loop-variable
         )
 
         raise ValueError(

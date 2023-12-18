@@ -12,14 +12,7 @@ from opsml.projects.active_run import ActiveRun, CardHandler
 from opsml.projects.base.types import ProjectInfo
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import (
-    METRICS,
-    PARAMS,
-    CardInfo,
-    CardType,
-    Metric,
-    Param,
-)
+from opsml.registry.types import METRICS, PARAMS, CardInfo, CardType, Metric, Param
 
 logger = ArtifactLogger.get_logger()
 

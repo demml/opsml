@@ -9,8 +9,8 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import experimental_feature
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import CardInfo, Metric
 from opsml.registry.sql.registry import CardRegistries
+from opsml.registry.types import CardInfo, Metric
 
 logger = ArtifactLogger.get_logger()
 

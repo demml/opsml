@@ -11,7 +11,7 @@ import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from opsml.registry.data.types import AllowedDataType
+from opsml.registry.types import AllowedDataType
 
 
 class DataHolder(BaseModel):

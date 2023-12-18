@@ -10,13 +10,13 @@ import pandas as pd
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists
 from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.records import LoadedRecordType
 from opsml.registry.sql.semver import CardVersion, VersionType
 from opsml.registry.storage.api import api_routes
 from opsml.registry.storage.client import ApiStorageClient, StorageClientType
+from opsml.registry.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 

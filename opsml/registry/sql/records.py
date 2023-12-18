@@ -6,9 +6,12 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from opsml.registry.cards.types import (
+from opsml.registry.storage.artifact import load_artifact_from_storage
+from opsml.registry.storage.client import StorageClientType
+from opsml.registry.types import (
     METRICS,
     PARAMS,
+    ArtifactStorageSpecs,
     AuditCardMetadata,
     CardVersion,
     Comment,
@@ -17,9 +20,6 @@ from opsml.registry.cards.types import (
     ModelCardUris,
     RegistryType,
 )
-from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.storage.client import StorageClientType
-from opsml.registry.storage.types import ArtifactStorageSpecs
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 

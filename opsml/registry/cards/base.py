@@ -9,9 +9,9 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_team_pattern
-from opsml.registry.cards.types import CardInfo
 from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.records import RegistryRecord
+from opsml.registry.types import CardInfo
 
 logger = ArtifactLogger.get_logger()
 

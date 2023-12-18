@@ -8,9 +8,9 @@ from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
-from opsml.model.utils.data_helper import get_model_data
-from opsml.model.utils.model_predict_helper import PredictHelper
-from opsml.model.utils.types import (
+from opsml.registry.model.utils.data_helper import get_model_data
+from opsml.registry.model.utils.model_predict_helper import PredictHelper
+from opsml.registry.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
@@ -18,7 +18,7 @@ from opsml.model.utils.types import (
     ModelReturn,
     TrainedModelType,
 )
-from opsml.registry.data.types import AllowedDataType
+from opsml.registry.types.data import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -168,7 +168,7 @@ class OnnxModelCreator(ModelCreator):
         Returns
             `ModelReturn`
         """
-        from opsml.model.model_converters import OnnxModelConverter
+        from opsml.registry.model.model_converters import OnnxModelConverter
 
         try:
             model_data = get_model_data(

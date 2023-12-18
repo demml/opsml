@@ -15,9 +15,9 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
 
+from opsml.registry.types.extra import CommonKwargs
 from opsml.version import __version__
 
 # Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
@@ -154,90 +154,7 @@ class ExtraOnnxArgs(BaseModel):
     export_params: bool = True
     verbose: bool = False
     options: Optional[Dict[str, Any]] = None
-
-
-class Base(BaseModel):
-    model_config = ConfigDict(frozen=False)
-
-    def to_onnx(self) -> Dict[str, NDArray[Any]]:
-        raise NotImplementedError
-
-    def to_dataframe(self) -> pd.DataFrame:
-        raise NotImplementedError
-
-    def to_numpy(self, type_: str, values: Any) -> NDArray[Any]:
-        if type_ == OnnxDataProto.DOUBLE.name:
-            return np.array(values, np.float64)
-
-        if type_ == OnnxDataProto.FLOAT.name:
-            return np.array(values, np.float32)
-
-        if type_ == OnnxDataProto.INT32.name:
-            return np.array(values, np.int32)
-
-        if type_ == OnnxDataProto.INT64.name:
-            return np.array(values, np.int64)
-
-        return np.array(values, str)
-
-
-class NumpyBase(Base):
-    def to_onnx(self) -> Dict[str, NDArray[Any]]:
-        values = list(self.model_dump().values())
-        for _, feature in self.feature_map.items():
-            array = self.to_numpy(
-                type_=feature.feature_type,
-                values=values,
-            )
-        return {"predict": array.reshape(1, -1)}
-
-    def to_dataframe(self) -> pd.DataFrame:
-        raise NotImplementedError
-
-
-class DictBase(Base):
-    def to_onnx(self) -> Dict[str, NDArray[Any]]:
-        feats = {}
-
-        for feat, feat_val in self:
-            array = self.to_numpy(
-                type_=self.feature_map[feat].feature_type,
-                values=feat_val,
-            )
-            feats[feat] = array.reshape(1, -1)
-        return feats
-
-    def to_dataframe(self) -> pd.DataFrame:
-        return pd.DataFrame(self.model_dump(), index=[0])
-
-
-class DeepLearningNumpyBase(Base):
-    def to_onnx(self) -> Dict[str, NDArray[Any]]:
-        feats = {}
-        for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
-            feats[feat] = np.expand_dims(array, axis=0)
-        return feats
-
-    def to_dataframe(self) -> pd.DataFrame:
-        raise NotImplementedError
-
-
-class DeepLearningDictBase(Base):
-    """API base class for tensorflow/keras multi-input models.
-    Multi-input models typically allow for a dictionary of arrays
-    """
-
-    def to_onnx(self) -> Dict[str, NDArray[Any]]:
-        feats = {}
-        for feat, feat_val in self:
-            array = self.to_numpy(type_=self.feature_map[feat].feature_type, values=feat_val)
-            feats[feat] = np.expand_dims(array, axis=0)
-
-        return feats
-
-    def to_dataframe(self) -> pd.DataFrame:
-        raise NotImplementedError
+    huggingface_ort_type: str = CommonKwargs.UNDEFINED.value
 
 
 class ApiSigTypes(Enum):
@@ -337,51 +254,6 @@ class ModelProto(Protocol):
     @property
     def graph(self) -> Graph:
         return Graph()
-
-
-# proto class for type checking in order to prevent cyclic import
-class Metadata(Protocol):
-    @property
-    def model_type(self) -> str:
-        ...
-
-    @property
-    def model_class(self) -> str:
-        ...
-
-    @property
-    def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
-        ...
-
-    @property
-    def additional_onnx_args(self) -> Optional[ExtraOnnxArgs]:
-        ...
-
-    @additional_onnx_args.setter
-    def additional_onnx_args(self) -> None:
-        ...
-
-    @property
-    def sample_data_type(self) -> str:
-        ...
-
-
-class ModelCard(Protocol):
-    @property
-    def metadata(self) -> Metadata:
-        ...
-
-    @property
-    def trained_model(self) -> Any:
-        ...
-
-    @property
-    def sample_input_data(self) -> ValidModelInput:
-        ...
-
-    @property
-    def to_onnx(self) -> bool:
-        ...
 
 
 class ModelType:

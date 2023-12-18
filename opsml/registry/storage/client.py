@@ -29,7 +29,7 @@ from pyarrow.fs import LocalFileSystem
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.storage.api import ApiClient, ApiRoutes
-from opsml.registry.storage.types import (
+from opsml.registry.types import (
     ApiStorageClientSettings,
     ArtifactStorageSpecs,
     FilePath,

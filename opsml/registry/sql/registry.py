@@ -17,10 +17,10 @@ from opsml.registry.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage import client
+from opsml.registry.types import RegistryType
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()

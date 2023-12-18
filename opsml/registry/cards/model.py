@@ -12,23 +12,25 @@ from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.predictor import OnnxModelPredictor
-from opsml.model.utils.types import (
+from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.supported_models import SUPPORTED_MODELS
+from opsml.registry.cards.validator import ModelCardValidator
+from opsml.registry.model.predictor import OnnxModelPredictor
+from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
+from opsml.registry.storage import client
+from opsml.registry.storage.artifact import load_artifact_from_storage
+from opsml.registry.types import (
     ApiDataSchemas,
+    ArtifactStorageSpecs,
+    ArtifactStorageType,
+    CardType,
     DataDict,
     Feature,
+    ModelCardMetadata,
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
 )
-from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.supported_models import SUPPORTED_MODELS
-from opsml.registry.cards.types import CardType, ModelCardMetadata
-from opsml.registry.cards.validator import ModelCardValidator
-from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage import client
-from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
 logger = ArtifactLogger.get_logger()
 
@@ -85,12 +87,7 @@ class ModelCard(ArtifactCard):
         if all([uid, version]):
             return values
 
-        card_validator = ModelCardValidator(
-            model=model,
-            metadata=metadata,
-        )
-
-        values["sample_input_data"] = card_validator.get_sample_data()
+        card_validator = ModelCardValidator(model=model, metadata=metadata)
         values["metadata"] = card_validator.get_metadata()
 
         return values
@@ -228,7 +225,7 @@ class ModelCard(ArtifactCard):
 
         """
 
-        from opsml.model.creator import (  # pylint: disable=import-outside-toplevel
+        from opsml.registry.model.creator import (  # pylint: disable=import-outside-toplevel
             create_model,
         )
 
