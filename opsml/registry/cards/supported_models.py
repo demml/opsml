@@ -1,14 +1,17 @@
-from typing import Any, Union, Optional, Dict, Tuple, List
+from dataclasses import dataclass
 from functools import cached_property
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import pandas as pd
 import polars as pl
-from dataclasses import dataclass
-from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+
+from opsml.model.utils.huggingface_types import GENERATION_TYPES, HuggingFaceTask
+from opsml.model.utils.types import HuggingFaceModuleType, TrainedModelType
 from opsml.registry.cards.types import CommonKwargs
-from opsml.model.utils.types import TrainedModelType, ValidModelInput, HuggingFaceModuleType
-from opsml.model.utils.huggingface_types import HuggingFaceTask, GENERATION_TYPES
-from opsml.registry.data.types import get_class_name, AllowedDataType
+from opsml.registry.data.types import AllowedDataType, get_class_name
+
+# from torch import Tensor
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -39,7 +42,7 @@ class SamplePrediction:
 class SupportedModel(BaseModel):
     model: Optional[Any] = None
     preprocessor: Optional[Any] = None
-    sample_data: Optional[ValidModelInput] = None
+    sample_data: Optional[Any] = None
     task_type: str = CommonKwargs.UNDEFINED.value
     model_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
@@ -67,11 +70,9 @@ class SupportedModel(BaseModel):
         return CommonKwargs.UNDEFINED.value
 
     @classmethod
-    def get_sample_data(
-        cls, sample_data: Optional[ValidModelInput] = None
-    ) -> Optional[Union[str, pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]]]]:
+    def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
         """Check sample data and returns one record to be used
-        during type inference and ONNX conversion/validation
+        during type inference and ONNX conversion/validation.
 
         Returns:
             Sample data with only one record
@@ -188,7 +189,7 @@ class SklearnModel(SupportedModel):
         return TrainedModelType.SKLEARN_ESTIMATOR.value
 
 
-class TensorflowModel(SupportedModel):
+class TensorFlowModel(SupportedModel):
     """Model interface for Tensorflow models.
 
     Args:
@@ -208,7 +209,7 @@ class TensorflowModel(SupportedModel):
             preprocessor is provided.
 
     Returns:
-       TensorflowModel
+       TensorFlowModel
     """
 
     @model_validator(mode="before")
@@ -247,7 +248,7 @@ class TensorflowModel(SupportedModel):
         return TrainedModelType.TF_KERAS.value
 
 
-class PytorchModel(SupportedModel):
+class PyTorchModel(SupportedModel):
     """Model interface for Pytorch models.
 
     Args:
@@ -267,7 +268,7 @@ class PytorchModel(SupportedModel):
             preprocessor is provided.
 
     Returns:
-       PytorchModel
+       PyTorchModel
     """
 
     @model_validator(mode="before")
@@ -302,9 +303,9 @@ class PytorchModel(SupportedModel):
         assert self.sample_data is not None, "Sample data must be provided"
 
         if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-            prediction = self.model(**self.sample_data)
+            prediction = self.model.model(**self.sample_data)
         else:
-            prediction = self.model(self.sample_data)
+            prediction = self.model.model(self.sample_data)
 
         prediction_type = get_class_name(prediction)
 
@@ -315,7 +316,7 @@ class PytorchModel(SupportedModel):
         return TrainedModelType.PYTORCH.value
 
 
-class LightningModel(PytorchModel):
+class LightningModel(PyTorchModel):
     """Model interface for Pytorch Lightning models.
 
     Args:
@@ -349,7 +350,7 @@ class LightningModel(PytorchModel):
 
         model, module, bases = get_model_args(model)
 
-        from pytorch_lightning import Trainer
+        from lightning import Trainer
 
         assert isinstance(model, Trainer), "Model must be a pytorch lightning trainer"
 
@@ -437,7 +438,9 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(
+            model, Booster
+        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -630,8 +633,8 @@ class HuggingFaceModel(SupportedModel):
 
 SUPPORTED_MODELS = Union[
     SklearnModel,
-    TensorflowModel,
-    PytorchModel,
+    TensorFlowModel,
+    PyTorchModel,
     LightningModel,
     XGBoostModel,
     LightGBMBoosterModel,

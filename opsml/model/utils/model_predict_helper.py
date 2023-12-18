@@ -3,17 +3,17 @@ from typing import Any, Dict, List, Union
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.data.types import AllowedDataType
 from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
-    PytorchModel,
+    LightGBMBoosterModel,
     LightningModel,
+    PyTorchModel,
     SamplePrediction,
     SklearnModel,
-    LightGBMBoosterModel,
+    TensorFlowModel,
     XGBoostModel,
-    TensorflowModel,
 )
+from opsml.registry.data.types import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -53,7 +53,7 @@ class ClassicPredictHelper(PredictHelper):
 
     def process_prediction(
         self,
-        model: Union[TensorflowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel],
+        model: Union[TensorFlowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel],
     ) -> SamplePrediction:
         """
         Generate predictions from model
@@ -69,17 +69,17 @@ class ClassicPredictHelper(PredictHelper):
         return model.get_sample_prediction()
 
     @staticmethod
-    def validate(model: Union[TensorflowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel]) -> bool:
-        return isinstance(model, (TensorflowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel))
+    def validate(model: Union[TensorFlowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel]) -> bool:
+        return isinstance(model, (TensorFlowModel, XGBoostModel, LightGBMBoosterModel, SklearnModel))
 
 
 class TorchPredictHelper(PredictHelper):
-    def process_prediction(self, model: PytorchModel) -> NDArray[Any]:
-        return model.get_sample_prediction()
+    def process_prediction(self, model: PyTorchModel) -> Union[Dict[str, Any], NDArray[Any]]:
+        return model.get_sample_prediction().prediction
 
     @staticmethod
-    def validate(model: Union[PytorchModel, LightningModel]) -> bool:
-        return isinstance(model, (PytorchModel, LightningModel))
+    def validate(model: Union[PyTorchModel, LightningModel]) -> bool:
+        return isinstance(model, (PyTorchModel, LightningModel))
 
 
 class HuggingFacePredictHelper(PredictHelper):

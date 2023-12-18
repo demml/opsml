@@ -14,7 +14,7 @@ from opsml.registry.storage.artifact import (
     NumpyStorage,
     ParquetStorage,
     PyTorchModelStorage,
-    TensorflowModelStorage,
+    TensorFlowModelStorage,
 )
 from opsml.registry.storage.client import StorageClient
 from opsml.registry.storage.types import ArtifactStorageSpecs
@@ -103,7 +103,7 @@ def test_api_pytorch_model(storage_client, load_pytorch_resnet):
 @pytest.mark.parametrize("storage_client", [lazy_fixture("api_storage_client")])
 def test_api_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
-    model_storage = TensorflowModelStorage(
+    model_storage = TensorFlowModelStorage(
         artifact_type="keras",
         storage_client=storage_client,
     )
@@ -180,7 +180,7 @@ def test_array(test_array, storage_client):
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_tensorflow_model(storage_client, load_transformer_example):
     model, _ = load_transformer_example
-    model_storage = TensorflowModelStorage(
+    model_storage = TensorFlowModelStorage(
         artifact_type="keras",
         storage_client=storage_client,
     )

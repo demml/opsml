@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, Optional
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.supported_models import SUPPORTED_MODELS
 from opsml.registry.cards.types import DataCardMetadata, ModelCardMetadata

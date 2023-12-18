@@ -19,11 +19,11 @@ from opsml.helpers.utils import all_subclasses
 from opsml.model.utils.types import ModelProto, TrainedModelType
 from opsml.registry.cards.supported_models import (
     HuggingFaceModel,
-    TensorflowModel,
-    PytorchModel,
     LightningModel,
+    PyTorchModel,
+    TensorFlowModel,
 )
-from opsml.registry.cards.types import StoragePath, CommonKwargs
+from opsml.registry.cards.types import CommonKwargs, StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import (
@@ -527,7 +527,7 @@ class JSONStorage(ArtifactStorage):
         return artifact_type == ArtifactStorageType.JSON
 
 
-class TensorflowModelStorage(ArtifactStorage):
+class TensorFlowModelStorage(ArtifactStorage):
     """Class that saves and loads a tensorflow model"""
 
     def __init__(
@@ -544,7 +544,7 @@ class TensorflowModelStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: TensorflowModel, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: TensorFlowModel, storage_uri: str, tmp_uri: str) -> str:
         """Saves a tensorflow model
 
         Args:
@@ -594,7 +594,7 @@ class PyTorchModelStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
-    def _save_artifact(self, artifact: PytorchModel, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: PyTorchModel, storage_uri: str, tmp_uri: str) -> str:
         """
         Saves a pytorch model
 
@@ -614,10 +614,13 @@ class PyTorchModelStorage(ArtifactStorage):
         torch.save(artifact.model, tmp_uri)
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
-    def _load_artifact(self, file_path: FilePath):  # type: ignore
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> PyTorchModel:
         import torch
 
-        return torch.load(str(file_path))
+        torch_model: PyTorchModel = kwargs[CommonKwargs.MODEL]
+        torch_model.model = torch.load(str(file_path))
+
+        return torch_model
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -663,7 +666,7 @@ class PyTorchLightningModelStorage(ArtifactStorage):
 
         return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
 
-    def _load_artifact(self, file_path: FilePath, **kwargs: Any):
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> LightningModel:
         """Loads a pytorch lightning model. It is expected that a model
         architecture will be passed via kwargs in order to load the model from
         a checkpoint. If an architecture is not passed, an attempt to load via
@@ -673,18 +676,22 @@ class PyTorchLightningModelStorage(ArtifactStorage):
             file_path:
                 File path to checkpoint
         """
-        try:
-            model_arch = kwargs.get("model_arch")
+        l_model: LightningModel = kwargs[CommonKwargs.MODEL]
+        model_arch = kwargs[CommonKwargs.MODEL_ARCH]
 
+        try:
             if model_arch is not None:
                 # attempt to load checkpoint into model
-                return model_arch.load_from_checkpoint(file_path)
+                l_model.model = model_arch.load_from_checkpoint(file_path)
+                return l_model
 
             else:
                 # load via torch
                 import torch
 
-                return torch.load(file_path)
+                l_model.model = torch.load(file_path)
+                return l_model
+
         except Exception as e:
             raise ValueError(f"Unable to load pytorch lightning model: {e}")
 
@@ -738,7 +745,7 @@ class HuggingFaceStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-    def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> Any:
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> HuggingFaceModel:
         """Loads a huggingface object (model or pipeline)
 
         Args:

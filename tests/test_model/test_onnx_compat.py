@@ -1,12 +1,10 @@
 import sys
 import warnings
 
-import numpy as np
-import pandas as pd
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.registry.cards import ModelCard, ModelCardMetadata
+from opsml.registry.cards import ModelCard
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 

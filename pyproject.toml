@@ -221,6 +221,10 @@ log_cli = true
 log_cli_level = "INFO"
 testpaths = ["tests"]
 addopts = "--ignore=tests/test_docs"
+markers = [
+    "large",
+    "compat",
+]
 
 
 [tool.mypy]

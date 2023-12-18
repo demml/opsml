@@ -12,8 +12,8 @@ import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
 
-from opsml.registry.image.dataset import ImageDataset
 from opsml.helpers.utils import get_class_name
+from opsml.registry.image.dataset import ImageDataset
 
 ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]  # type: ignore
 
