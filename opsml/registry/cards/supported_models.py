@@ -6,14 +6,15 @@ import pandas as pd
 import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from opsml.helpers.utils import get_class_name
 from opsml.registry.types import (
+    GENERATION_TYPES,
     AllowedDataType,
     CommonKwargs,
     HuggingFaceModuleType,
+    HuggingFaceTask,
     TrainedModelType,
-    get_class_name,
 )
-from opsml.registry.types.huggingface import GENERATION_TYPES, HuggingFaceTask
 
 # from torch import Tensor
 

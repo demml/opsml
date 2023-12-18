@@ -68,9 +68,6 @@ from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
-from opsml.model.challenger import ModelChallenger
-from opsml.model.utils.huggingface_types import HuggingFaceTask
-from opsml.model.utils.types import OnnxModelDefinition
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
@@ -82,9 +79,15 @@ from opsml.registry.cards.supported_models import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.cards.types import Metric, ModelCardUris
+from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
+from opsml.registry.types import (
+    HuggingFaceTask,
+    Metric,
+    ModelCardUris,
+    OnnxModelDefinition,
+)
 from opsml.settings.config import OpsmlConfig, config
 
 CWD = os.getcwd()

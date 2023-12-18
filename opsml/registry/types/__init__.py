@@ -24,7 +24,6 @@ from opsml.registry.types.data import (
     AllowedDataType,
     AllowedTableTypes,
     ArrowTable,
-    DataDict,
     ValidData,
     check_data_type,
 )
