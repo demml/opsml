@@ -171,9 +171,10 @@ class SklearnModel(SupportedModel):
         if "sklearn" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-        for base in bases:
-            if "sklearn" in base:
-                model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
+        else:
+            for base in bases:
+                if "sklearn" in base:
+                    model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
         model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
             sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
@@ -230,9 +231,10 @@ class TensorFlowModel(SupportedModel):
         if "keras" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-        for base in bases:
-            if "keras" in base:
-                model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
+        else:
+            for base in bases:
+                if "keras" in base:
+                    model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
         model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
             sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
@@ -303,9 +305,9 @@ class PyTorchModel(SupportedModel):
         assert self.sample_data is not None, "Sample data must be provided"
 
         if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-            prediction = self.model.model(**self.sample_data)
+            prediction = self.model(**self.sample_data)
         else:
-            prediction = self.model.model(self.sample_data)
+            prediction = self.model(self.sample_data)
 
         prediction_type = get_class_name(prediction)
 
@@ -369,6 +371,23 @@ class LightningModel(PyTorchModel):
         )
 
         return model_args
+
+    def get_sample_prediction(self) -> SamplePrediction:
+        assert self.sample_data is not None, "Sample data must be provided"
+
+        from lightning import Trainer
+
+        if not isinstance(self.model, Trainer):
+            return super().get_sample_prediction()
+
+        if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
+            prediction = self.model.model(**self.sample_data)
+        else:
+            prediction = self.model.model(self.sample_data)
+
+        prediction_type = get_class_name(prediction)
+
+        return SamplePrediction(prediction_type, prediction)
 
     @property
     def model_class(self) -> str:
@@ -438,9 +457,7 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(
-            model, Booster
-        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__

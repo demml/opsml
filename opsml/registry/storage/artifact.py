@@ -567,10 +567,12 @@ class TensorFlowModelStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-    def _load_artifact(self, file_path: FilePath):  # type: ignore
+    def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> TensorFlowModel:
         import tensorflow as tf
 
-        return tf.keras.models.load_model(file_path)
+        tf_model: TensorFlowModel = kwargs[CommonKwargs.MODEL]
+        tf_model.model = tf.keras.models.load_model(file_path)
+        return tf_model
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
