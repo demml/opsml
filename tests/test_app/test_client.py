@@ -1057,7 +1057,6 @@ def test_verify_path():
         assert verify_path("tests/assets/fake")
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 def test_register_distilbert(
     api_registries: CardRegistries,

@@ -37,20 +37,21 @@ MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 router = APIRouter()
 
 
-def verify_path(path: str) -> str:
-    """Verifies path only contains registry dir names. This is to prevent arbitrary file
-    uploads, downloads, lists and deletes.
+def verify_path(path: str) -> None:
+    """Verifies path contains one of our card table names.
+
+    All files being read from or written to opsml should be written to one of
+    our known good card directories - which are the smae as our SQL table names.
 
     Args:
-        path:
-            path to file
+        path: path to verify
 
-    Returns:
-        path
+    Raises:
+        HTTPException: Invalid path
     """
     # For v1 and v2 all artifacts belong to a registry (exception being mlflow artifacts)
     if any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
-        return path
+        return
 
     # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path>/artifacts with artifact_path being a uid
     has_artifacts, has_uuid = False, False
@@ -73,11 +74,6 @@ def verify_path(path: str) -> str:
     )
 
 
-#
-# TODO(@damon): Ensure WritePath is placed within the storage root!
-# TODO(@damon): Currently the client controls where the server puts the file.
-#
-# upload uses the request object directly which affects OpenAPI docs
 @router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
 async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     """Uploads files in chunks to storage destination"""
