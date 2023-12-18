@@ -22,7 +22,7 @@ lints.mypy:
 lints.gitleaks:
 	poetry run gitleaks detect --log-level debug -v
 	poetry run gitleaks protect --log-level debug -v
-lints: lints.format_check lints.ruff lints.pylint lints.gitleaks lints.mypy
+lints: lints.format_check lints.ruff lints.pylint lints.mypy lints.gitleaks
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup: setup.sysdeps setup.python setup.project
