@@ -13,7 +13,6 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.predictor import OnnxModelPredictor
-from opsml.registry.cards.supported_models import SUPPORTED_MODELS
 from opsml.model.utils.types import (
     ApiDataSchemas,
     DataDict,
@@ -23,11 +22,12 @@ from opsml.model.utils.types import (
     OnnxModelDefinition,
 )
 from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.supported_models import SUPPORTED_MODELS
 from opsml.registry.cards.types import CardType, ModelCardMetadata
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.storage import client
+from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
 
 logger = ArtifactLogger.get_logger()

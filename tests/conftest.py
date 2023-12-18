@@ -70,24 +70,21 @@ from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
 from opsml.model.challenger import ModelChallenger
-from opsml.model.utils.types import OnnxModelDefinition
 from opsml.model.utils.huggingface_types import HuggingFaceTask
+from opsml.model.utils.types import OnnxModelDefinition
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
+from opsml.registry.cards.supported_models import (
+    HuggingFaceModel,
+    LightningModel,
+    PyTorchModel,
+)
 from opsml.registry.cards.types import Metric, ModelCardUris
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
 from opsml.settings.config import OpsmlConfig, config
-from opsml.registry.cards.supported_models import (
-    HuggingFaceModel,
-    SklearnModel,
-    TensorflowModel,
-    PytorchModel,
-    LightningModel,
-    XGBoostModel,
-)
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
@@ -1005,7 +1002,6 @@ def huggingface_bart() -> HuggingFaceModel:
     model = BartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
 
-
     model = HuggingFaceModel(
         model=model,
         preprocessor=tokenizer,
@@ -1036,12 +1032,11 @@ def huggingface_text_classification_pipeline():
 @pytest.fixture(scope="module")
 def huggingface_tf_distilbert() -> HuggingFaceModel:
     from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
-    import tensorflow as tf
 
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
-    
+
     print(type(inputs))
 
     model = HuggingFaceModel(
@@ -1770,9 +1765,8 @@ def deeplabv3_resnet50():
 
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)
-    
 
-    return PytorchModel(model=model, sample_data=input_batch,)
+    return PyTorchModel(model=model, sample_data=input_batch)
 
 
 @pytest.fixture(scope="module")
@@ -1796,7 +1790,7 @@ def pytorch_lightning_model():
     trainer.strategy.model = model
     input_sample = torch.randn((1, 64))
 
-    return trainer, input_sample
+    return LightningModel(model=trainer, sample_data=input_sample)
 
 
 @pytest.fixture(scope="module")
@@ -1849,4 +1843,4 @@ def lightning_regression():
 
     X = torch.Tensor([[1.0], [51.0], [89.0]])
 
-    return trainer, X, MyModel
+    return LightningModel(model=trainer, sample_data=X), MyModel

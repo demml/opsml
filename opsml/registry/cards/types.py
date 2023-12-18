@@ -24,6 +24,7 @@ class CommonKwargs(str, Enum):
     IS_PIPELINE = "is_pipeline"
     MODEL_TYPE = "model_type"
     MODEL_CLASS = "model_class"
+    MODEL_ARCH = "model_arch"
     PREPROCESSOR_NAME = "preprocessor_name"
     PREPROCESSOR = "preprocessor"
     TASK_TYPE = "task_type"
