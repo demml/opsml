@@ -18,3 +18,4 @@ class CommonKwargs(str, Enum):
     BACKEND = "backend"
     PYTORCH = "pytorch"
     TENSORFLOW = "tensorflow"
+    SAMPLE_DATA = "sample_data"

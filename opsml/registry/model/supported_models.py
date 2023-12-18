@@ -463,9 +463,7 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(
-            model, Booster
-        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -532,7 +530,6 @@ class HuggingFaceModel(SupportedModel):
     _save_onnx: bool = False  # private attr that's called at save time.
 
     @property
-    @classmethod
     def save_onnx(cls) -> bool:
         """Indicates if the model has been marked for onnx conversion during model saving.
         There is no need to set this manually. It will be inferred from the modelcard.

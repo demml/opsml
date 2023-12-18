@@ -52,6 +52,8 @@ from opsml.registry.types.model import (
     OnnxModelDefinition,
     SeldonSigTypes,
     TrainedModelType,
+    ValidSavedSample,
+    ValidModelInput,
 )
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,
@@ -61,4 +63,5 @@ from opsml.registry.types.storage import (
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
+    FilePath,
 )

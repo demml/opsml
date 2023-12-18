@@ -3,13 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from functools import cached_property
-from typing import Any, Dict, List, cast
 
-import numpy as np
-from numpy.typing import NDArray
+from typing import Any, Dict
 
-from opsml.registry.types import AllowedDataType, ApiDataSchemas, Base, TrainedModelType
+
+from opsml.registry.types import ApiDataSchemas
 
 
 # need to build response object for prediction
@@ -53,14 +51,6 @@ class OnnxModelPredictor:
     def data_type(self) -> str:
         return str(self.data_schema.model_data_schema.data_type)
 
-    @cached_property
-    def input_sig(self) -> Base:
-        return cast(Base, self.sig_creator.input_sig)
-
-    @cached_property
-    def output_sig(self) -> Base:
-        return cast(Base, self.sig_creator.output_sig)
-
     def predict(self, data: Dict[str, Any]) -> Any:
         """
         Run prediction on onnx model. Data is expected to conform to pydantic
@@ -75,85 +65,4 @@ class OnnxModelPredictor:
             Prediction (array or float depending on model type)
         """
 
-        pred_data = self.sig_creator.input_sig(**data)
-        prediction = self.sess.run(
-            output_names=self._output_names,
-            input_feed=pred_data.to_onnx(),
-        )
-        return self._extract_predictions(prediction=prediction)
-
-    def _extract_predictions(self, prediction: List[Any]) -> Dict[str, Any]:
-        """Parses onnx runtime prediction
-
-        Args:
-            Predictions:
-                Onnx runtime prediction list
-
-        Returns:
-            Prediction in the form of a key value mapping
-        """
-        output_dict = {}
-
-        for idx, output in enumerate(self._output_names):
-            if output == "variable":
-                output = "value"
-
-            pred = prediction[idx]
-
-            if isinstance(pred, np.ndarray):
-                output_dict[output] = pred.tolist()
-
-            else:
-                output_dict[output] = pred
-
-        return output_dict
-
-    def predict_with_model(self, model: Any, data: Dict[str, Any]) -> Any:
-        """Will test prediction against model by sending data through
-        pydantic model.
-
-        Args:
-            model : Model to send predictions to
-            data (dictionary of data): Dictionary containing data for prediction
-
-        Returns
-            Prediction (float)
-        """
-
-        pred_data = self.sig_creator.input_sig(**data)
-
-        if self.model_type == TrainedModelType.SKLEARN_PIPELINE:
-            data_for_pred = pred_data.to_dataframe()
-
-        elif self.model_type == TrainedModelType.TF_KERAS:
-            data_for_pred = pred_data.to_onnx()
-
-        elif self.model_type in [TrainedModelType.PYTORCH, TrainedModelType.TRANSFORMERS]:
-            import torch
-
-            feed_data: Dict[str, NDArray[Any]] = pred_data.to_onnx()
-
-            if self.data_type == AllowedDataType.DICT:
-                data_for_pred = {
-                    name: torch.from_numpy(value) for name, value in feed_data.items()  # pylint: disable=no-member
-                }
-                return model(**data_for_pred)
-
-            data_for_pred = (torch.from_numpy(value) for value in feed_data.values())  # pylint: disable=no-member
-
-            return model(*data_for_pred)
-
-        else:
-            data_for_pred = list(pred_data.to_onnx().values())[0]
-
-        prediction = model.predict(data_for_pred)
-
-        return prediction
-
-    def _create_onnx_session(self, model_definition: bytes) -> Any:
-        import onnxruntime as rt  # pylint: disable=import-outside-toplevel
-
-        return rt.InferenceSession(
-            path_or_bytes=model_definition,
-            providers=rt.get_available_providers(),
-        )
+        pass

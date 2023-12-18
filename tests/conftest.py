@@ -72,7 +72,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
-from opsml.registry.cards.supported_models import (
+from opsml.registry.model.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
