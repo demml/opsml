@@ -22,15 +22,20 @@ from opsml.registry.cards.supported_models import (
     PyTorchModel,
     TensorFlowModel,
 )
-from opsml.registry.cards.types import CommonKwargs, StoragePath
-from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import (
     ArtifactClass,
     StorageClientType,
     StorageSystem,
 )
-from opsml.registry.types import ArtifactStorageSpecs, ArtifactStorageType, FilePath
+from opsml.registry.types import (
+    AllowedDataType,
+    ArtifactStorageSpecs,
+    ArtifactStorageType,
+    CommonKwargs,
+    FilePath,
+    StoragePath,
+)
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
 
