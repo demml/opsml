@@ -83,13 +83,7 @@ class StorageClient:
         self,
         spec: ArtifactStorageSpecs,
     ) -> Generator[Tuple[str, str], None, None]:
-        """Creates a tuple of remote_path, tmp_path
-
-        Returns:
-            (remote_path, tmp_path):
-                remote_path is the full path in storage
-                tmp_path is a local temporary path
-        """
+        """Generate both remote and local temporary paths for a given ArtifactoryStorageSpec."""
         spec.filename = spec.filename or uuid.uuid4().hex
         path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
         with tempfile.TemporaryDirectory() as tmpdirname:
