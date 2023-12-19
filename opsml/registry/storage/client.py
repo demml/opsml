@@ -9,7 +9,6 @@ import tempfile
 import uuid
 import warnings
 from contextlib import contextmanager
-from enum import Enum
 from pathlib import Path
 from typing import (
     Any,
@@ -36,6 +35,7 @@ from opsml.registry.storage.types import (
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
+    StorageSystem,
 )
 from opsml.settings.config import OpsmlConfig, config
 
@@ -45,18 +45,12 @@ warnings.filterwarnings("ignore", message="Hint: Inferred schema contains intege
 logger = ArtifactLogger.get_logger()
 
 
-class StorageSystem(str, Enum):
-    GCS = "gcs"
-    S3 = "s3"
-    LOCAL = "local"
-    API = "api"
-
-
 class StorageClient:
     def __init__(
         self,
         settings: StorageSettings,
         client: Any = LocalFileSystem(),
+        # TODO: rename to storage_type / make enum
         backend: str = StorageSystem.LOCAL.value,
     ):
         self.client = client

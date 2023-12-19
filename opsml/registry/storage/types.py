@@ -13,6 +13,13 @@ from opsml.registry.data.types import AllowedDataType
 FilePath = Union[List[str], str]
 
 
+class StorageSystem(str, Enum):
+    GCS = "gcs"
+    S3 = "s3"
+    LOCAL = "local"
+    API = "api"
+
+
 class ArtifactStorageType(str, Enum):
     HTML = "html"
     TF_MODEL = "keras"
