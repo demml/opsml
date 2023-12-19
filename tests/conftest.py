@@ -829,7 +829,12 @@ def random_forest_classifier(drift_dataframe):
     X_train, y_train, X_test, y_test = drift_dataframe
     reg = ensemble.RandomForestClassifier(n_estimators=5)
     reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
+
+    return SklearnModel(
+        model=reg,
+        sample_data=X_train[:100],
+        task_type="classification",
+    )
 
 
 @pytest.fixture(scope="function")

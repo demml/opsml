@@ -114,7 +114,6 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
     model: HuggingFaceModel = huggingface_text_classification_pipeline
     metadata = ModelCardMetadata()
 
-
     assert model.model_type == "TextClassificationPipeline"
     assert model.model_class == "transformers"
     assert model.task_type == "text-classification"
@@ -131,8 +130,6 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
 @pytest.mark.compat
 def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     model = huggingface_tf_distilbert
-
-
 
     assert metadata.model_type == "TFDistilBertForSequenceClassification"
     assert metadata.model_class == "transformers"
@@ -153,8 +150,6 @@ def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
 def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
     model: PyTorchModel = deeplabv3_resnet50
 
-   
-
     assert metadata.model_type == "DeepLabV3"
     assert metadata.model_class == "pytorch"
 
@@ -170,8 +165,6 @@ def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
 def _test_torch_lightning(pytorch_lightning_model):
     model: LightningModel = pytorch_lightning_model
 
-  
-
     assert metadata.model_type == "SimpleModel"
     assert metadata.model_class == "pytorch_lightning"
 
@@ -183,8 +176,6 @@ def _test_torch_lightning(pytorch_lightning_model):
 @pytest.mark.compat
 def _test_lightning_regression(lightning_regression, api_storage_client):
     model, arch = lightning_regression
-
-   
 
     assert metadata.model_type == "MyModel"
     assert metadata.model_class == "pytorch_lightning"
@@ -209,8 +200,6 @@ def _test_lightning_regression(lightning_regression, api_storage_client):
 def _test_sklearn_pipeline(sklearn_pipeline):
     model = sklearn_pipeline
 
-
-
     assert metadata.model_type == "Pipeline"
     assert metadata.model_class == "sklearn_estimator"
 
@@ -221,8 +210,6 @@ def _test_sklearn_pipeline(sklearn_pipeline):
 @pytest.mark.compat
 def _test_tensorflow(load_transformer_example, api_storage_client):
     model = load_transformer_example
-
-
 
     assert metadata.model_type == "Functional"
     assert metadata.model_class == "keras"
@@ -237,7 +224,6 @@ def _test_tensorflow(load_transformer_example, api_storage_client):
 @pytest.mark.compat
 def _test_tensorflow_multi_input(load_multi_input_keras_example, api_storage_client):
     model = load_multi_input_keras_example
-
 
     assert metadata.model_type == "Functional"
     assert metadata.model_class == "keras"

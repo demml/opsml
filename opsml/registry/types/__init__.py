@@ -8,13 +8,8 @@ from opsml.registry.types.card import (
     CardType,
     CardVersion,
     Comment,
-    DataCardMetadata,
-    DataCardUris,
-    Description,
     HuggingFaceStorageArtifact,
     Metric,
-    ModelCardMetadata,
-    ModelCardUris,
     Param,
     PipelineCardArgs,
     RegistryType,
@@ -25,10 +20,12 @@ from opsml.registry.types.data import (
     AllowedDataType,
     AllowedTableTypes,
     ArrowTable,
+    DataCardMetadata,
+    DataCardUris,
     ValidData,
     check_data_type,
 )
-from opsml.registry.types.extra import CommonKwargs
+from opsml.registry.types.extra import CommonKwargs, Description
 from opsml.registry.types.huggingface import (
     GENERATION_TYPES,
     HuggingFaceORTModel,
@@ -48,6 +45,8 @@ from opsml.registry.types.model import (
     Graph,
     HuggingFaceModuleType,
     HuggingFaceOnnxArgs,
+    ModelCardMetadata,
+    ModelCardUris,
     ModelDownloadInfo,
     ModelMetadata,
     ModelProto,
