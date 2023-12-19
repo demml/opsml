@@ -4,13 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-import re
 import shutil
 import tempfile
 import uuid
 import warnings
 from contextlib import contextmanager
-from enum import Enum
 from pathlib import Path
 from typing import (
     Any,
@@ -37,6 +35,7 @@ from opsml.registry.storage.types import (
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
+    StorageSystem,
 )
 from opsml.settings.config import OpsmlConfig, config
 
@@ -46,60 +45,21 @@ warnings.filterwarnings("ignore", message="Hint: Inferred schema contains intege
 logger = ArtifactLogger.get_logger()
 
 
-class StorageSystem(str, Enum):
-    GCS = "gcs"
-    S3 = "s3"
-    LOCAL = "local"
-    API = "api"
-
-
-class ArtifactClass(str, Enum):
-    DATA = "data"
-    OTHER = "other"
-
-
-class DataArtifactNames(str, Enum):
-    PARQUET = "parquet"
-    ZARR = "zarr"
-    DATACARD = "datacard"
-
-
-class ModelArtifactNames(str, Enum):
-    MODELCARD = "modelcard"
-    TRAINED_MODEL = "trained-model"
-    MODEL_METADATA = "model-metadata"
-    ONNX = ".onnx"
-
-
-OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"
-
-
-def extract_registry_name(string: str) -> Optional[str]:
-    """Extracts registry name from string
-
-    Args:
-        string:
-            String
-    Returns:
-        Registry name
-    """
-    reg = re.compile(OPSML_PATTERN)
-    match = reg.match(string)
-
-    if match is not None:
-        return match.group(1)
-    return None
-
-
 class StorageClient:
     def __init__(
         self,
         settings: StorageSettings,
-        client: Any = LocalFileSystem(),
-        backend: str = StorageSystem.LOCAL.value,
+        client: Optional[Any] = None,
+        # TODO: rename to storage_type / make enum
+        backend: Optional[str] = None,
     ):
-        self.client = client
-        self.backend = backend
+        if client is None:
+            self.client = LocalFileSystem()
+            self.backend = StorageSystem.LOCAL.value
+        else:
+            assert backend is not None
+            self.client = client
+            self.backend = backend
         self.base_path_prefix = settings.storage_uri
 
     def extend_storage_spec(
@@ -123,6 +83,7 @@ class StorageClient:
         self,
         spec: ArtifactStorageSpecs,
     ) -> Generator[Tuple[str, str], None, None]:
+        """Generate both remote and local temporary paths for a given ArtifactoryStorageSpec."""
         spec.filename = spec.filename or uuid.uuid4().hex
         path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
         with tempfile.TemporaryDirectory() as tmpdirname:

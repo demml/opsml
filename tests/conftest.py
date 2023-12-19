@@ -290,7 +290,6 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 
     with patch("httpx.Client", callable_api):
         # Set the global configuration to mock API "client" mode
-        # TODO(@damon): Get rid of all global state
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
         cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=STORAGE_PATH)
