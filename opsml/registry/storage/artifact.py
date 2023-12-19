@@ -20,12 +20,13 @@ from opsml.model.types import ModelProto
 from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.storage.client import StorageClientType, StorageSystem
+from opsml.registry.storage.client import StorageClientType
 from opsml.registry.storage.types import (
     ARTIFACT_TYPES,
     ArtifactStorageSpecs,
     ArtifactStorageType,
     FilePath,
+    StorageSystem,
 )
 
 
