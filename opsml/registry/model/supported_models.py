@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -51,6 +50,7 @@ class SupportedModel(BaseModel):
     task_type: str = CommonKwargs.UNDEFINED.value
     model_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
+    data_type: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -59,10 +59,6 @@ class SupportedModel(BaseModel):
         validate_default=True,
         extra="allow",
     )
-
-    @cached_property
-    def data_type(self) -> str:
-        return get_class_name(self.sample_data)
 
     @property
     def supports_onnx(self) -> bool:
@@ -184,9 +180,9 @@ class SklearnModel(SupportedModel):
                 if "sklearn" in base:
                     model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
-            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
-        )
+        sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
         model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
             preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
         )
@@ -244,9 +240,9 @@ class TensorFlowModel(SupportedModel):
                 if "keras" in base:
                     model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
-            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
-        )
+        sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
         model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
             preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
         )
@@ -304,9 +300,9 @@ class PyTorchModel(SupportedModel):
             if "torch" in base:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
-            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
-        )
+        sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
         model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
             preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
         )
@@ -377,9 +373,9 @@ class LightningModel(PyTorchModel):
             if "lightning.pytorch" in base:
                 model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
-            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
-        )
+        sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
         model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
             preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
         )
@@ -478,9 +474,9 @@ class LightGBMBoosterModel(SupportedModel):
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
-            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
-        )
+        sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
         model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
             preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
         )
@@ -610,9 +606,9 @@ class HuggingFaceModel(SupportedModel):
                 if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
                     model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-        model_args[CommonKwargs.SAMPLE_DATA.value] = cls.get_sample_data(
-            sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value)
-        )
+        sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
         model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
             preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
         )

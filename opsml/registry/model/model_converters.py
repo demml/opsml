@@ -69,7 +69,7 @@ class ModelConverter:
 
     @property
     def trained_model(self) -> Any:
-        return self.card.trained_model
+        return self.card.model
 
     @property
     def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
@@ -235,6 +235,7 @@ class ModelConverter:
         Returns:
             Tuple of input and output feature dictionaries
         """
+        # TODO: get rid of this
         input_dict = self._parse_onnx_signature(onnx_model.graph.input)
         output_dict = self._parse_onnx_signature(onnx_model.graph.output)
 
@@ -267,6 +268,8 @@ class ModelConverter:
         """
 
         onnx_model = self.convert_model(initial_types=initial_types)
+        
+        # onnx sess can be used to get name, type, shape
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
         model_def = self.create_model_def(onnx_model=onnx_model)
 
