@@ -49,12 +49,17 @@ class StorageClient:
     def __init__(
         self,
         settings: StorageSettings,
-        client: Any = LocalFileSystem(),
+        client: Optional[Any] = None,
         # TODO: rename to storage_type / make enum
-        backend: str = StorageSystem.LOCAL.value,
+        backend: Optional[str] = None,
     ):
-        self.client = client
-        self.backend = backend
+        if client is None:
+            self.client = LocalFileSystem()
+            self.backend = StorageSystem.LOCAL.value
+        else:
+            assert backend is not None
+            self.client = client
+            self.backend = backend
         self.base_path_prefix = settings.storage_uri
 
     def extend_storage_spec(
@@ -78,6 +83,13 @@ class StorageClient:
         self,
         spec: ArtifactStorageSpecs,
     ) -> Generator[Tuple[str, str], None, None]:
+        """Creates a tuple of remote_path, tmp_path
+
+        Returns:
+            (remote_path, tmp_path):
+                remote_path is the full path in storage
+                tmp_path is a local temporary path
+        """
         spec.filename = spec.filename or uuid.uuid4().hex
         path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
         with tempfile.TemporaryDirectory() as tmpdirname:
