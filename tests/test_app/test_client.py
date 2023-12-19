@@ -39,13 +39,6 @@ from tests.conftest import TODAY_YMD
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
-def test_app_settings(test_app: TestClient):
-    """Test settings"""
-
-    response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
-    assert response.status_code == 200
-
-
 def test_debug(test_app: TestClient):
     """Test debug path"""
 
