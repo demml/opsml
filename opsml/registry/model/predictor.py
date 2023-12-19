@@ -6,7 +6,7 @@
 
 from typing import Any, Dict
 
-from opsml.registry.types import ApiDataSchemas
+from opsml.registry.types import DataDict
 
 
 # need to build response object for prediction
@@ -17,7 +17,7 @@ class OnnxModelPredictor:
         model_type: str,
         model_definition: bytes,
         onnx_version: str,
-        data_schema: ApiDataSchemas,
+        data_schema: DataDict,
         model_version: str,
         sample_api_data: Dict[str, Any],
         start_sess: bool = True,

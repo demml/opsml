@@ -25,7 +25,6 @@ from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
-    ApiDataSchemas,
     BaseEstimator,
     DataDict,
     Feature,
@@ -254,9 +253,7 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(
-        self, initial_types: List[Any]
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -303,12 +300,11 @@ class ModelConverter:
         else:
             model_def, input_onnx_features, output_onnx_features = self._load_onnx_model()
 
-        schema = ApiDataSchemas(
-            model_data_schema=DataDict(
+        schema = (
+            DataDict(
                 input_features=input_onnx_features,
                 output_features=output_onnx_features,
             ),
-            input_data_schema=data_schema,
         )
 
         return ModelReturn(model_definition=model_def, api_data_schema=schema)

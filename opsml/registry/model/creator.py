@@ -12,7 +12,6 @@ from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.utils.data_helper import get_model_data
 from opsml.registry.model.utils.model_predict_helper import PredictHelper
 from opsml.registry.types import (
-    ApiDataSchemas,
     DataDict,
     Feature,
     ModelReturn,
@@ -75,12 +74,9 @@ class TrainedModelMetadataCreator(ModelCreator):
             )
 
             # pandas will use column names as features
-            if self.card.model.data_type != AllowedDataType.PANDAS:
+            if sample_prediction.prediction_type != AllowedDataType.PANDAS:
                 output_data.features = ["outputs"]
-                print(output_data.feature_dict)
 
-            print(output_data.feature_dict)
-            print()
             return output_data.feature_dict
 
         except Exception as error:
@@ -95,22 +91,12 @@ class TrainedModelMetadataCreator(ModelCreator):
         # this will convert categorical to string
         input_features = self._get_input_schema()
 
-        print(input_features)
-        print()
-        print(output_features)
-        a
-
-        api_schema = ApiDataSchemas(
-            model_data_schema=DataDict(
+        return ModelReturn(
+            data_schema=DataDict(
                 input_features=input_features,
                 output_features=output_features,
-                data_type=self.card.metadata.sample_data_type,
+                data_type=self.card.model.data_type,
             )
-        )
-
-        return ModelReturn(
-            api_data_schema=api_schema,
-            model_type=self.card.metadata.model_type,
         )
 
     @staticmethod

@@ -20,7 +20,9 @@ def test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.
         datacard_uids=["test_uid"],
     )
     
-    create_model(modelcard=modelcard)
+    model_return = create_model(modelcard=modelcard)
+    print(model_return)
+    a
 
 
 def _test_onnx_model_create_fail(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
