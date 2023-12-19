@@ -268,7 +268,7 @@ class ModelConverter:
         """
 
         onnx_model = self.convert_model(initial_types=initial_types)
-        
+
         # onnx sess can be used to get name, type, shape
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
         model_def = self.create_model_def(onnx_model=onnx_model)

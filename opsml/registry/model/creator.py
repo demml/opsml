@@ -8,13 +8,13 @@ from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
+from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.utils.data_helper import get_model_data
 from opsml.registry.model.utils.model_predict_helper import PredictHelper
 from opsml.registry.types import (
     ApiDataSchemas,
     DataDict,
     Feature,
-    ModelCard,
     ModelReturn,
     TrainedModelType,
 )
@@ -41,9 +41,9 @@ class ModelCreator:
     @property
     def model(self) -> Any:
         """Return model from modelcard"""
-        if self.card.metadata.model_class == TrainedModelType.PYTORCH_LIGHTNING:
-            return self.card.trained_model.model
-        return self.card.trained_model
+        if self.card.model.model_class == TrainedModelType.PYTORCH_LIGHTNING:
+            return self.card.model.model
+        return self.card.model
 
     def create_model(self) -> ModelReturn:
         raise NotImplementedError
@@ -78,15 +78,17 @@ class TrainedModelMetadataCreator(ModelCreator):
 
     def _get_output_schema(self) -> Dict[str, Feature]:
         try:
-            prediction = PredictHelper.get_model_prediction(
-                model=self.model,
-                input_data=self.card.sample_input_data,
-                sample_data_type=self.card.metadata.sample_data_type,
-                model_class=self.card.metadata.model_class,
-                model_type=self.card.metadata.model_type,
+            sample_prediction = self.card.model.get_sample_prediction()
+            processed_prediction = PredictHelper.process_model_prediction(model=self.card.model)
+
+            print(sample_prediction)
+            a
+            output_data = get_model_data(
+                input_data=processed_prediction,
+                data_type=sample_prediction.prediction_type,
             )
 
-            return self._get_prediction_type(predictions=prediction)
+            return output_data.feature_dict
 
         except Exception as error:
             logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)

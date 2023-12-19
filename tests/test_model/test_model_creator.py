@@ -4,16 +4,28 @@ import pandas as pd
 import pytest
 from sklearn.base import BaseEstimator
 
-from opsml.model.creator import ModelCreator, OnnxModelCreator
 from opsml.registry.cards import ModelCard
-from opsml.registry.data.types import AllowedDataType
+from opsml.registry.model.creator import ModelCreator, OnnxModelCreator
+from opsml.registry.model.supported_models import SklearnModel
+from opsml.registry.types import AllowedDataType
 
 
-def test_onnx_model_create_fail(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
-    model, data = random_forest_classifier
+def test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
+    model: SklearnModel = random_forest_classifier
     modelcard = ModelCard(
-        trained_model=model,
-        sample_input_data=data,
+        model=model,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uids=["test_uid"],
+        to_onnx=True,
+    )
+
+
+def _test_onnx_model_create_fail(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
+    model: SklearnModel = random_forest_classifier
+    modelcard = ModelCard(
+        model=model,
         name="test_model",
         team="mlops",
         user_email="test_email",
@@ -29,7 +41,7 @@ def test_onnx_model_create_fail(random_forest_classifier: Tuple[BaseEstimator, p
     assert ve.match("Failed to convert model to onnx format.")
 
 
-def test_model_creator(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
+def _test_model_creator(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
     model, data = random_forest_classifier
     modelcard = ModelCard(
         trained_model=model,

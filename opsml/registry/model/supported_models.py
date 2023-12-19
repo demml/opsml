@@ -148,7 +148,7 @@ class SklearnModel(SupportedModel):
         model_type:
             Optional model type. This is inferred automatically.
         preprocessor_name:
-            Optional preprocessor. This is inferred automatically if a
+            Optional preprocessor name. This is inferred automatically if a
             preprocessor is provided.
 
     Returns:
@@ -469,7 +469,9 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(
+            model, Booster
+        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__

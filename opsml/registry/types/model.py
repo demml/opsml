@@ -17,6 +17,7 @@ import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from opsml.registry.types.extra import Description
 from opsml.registry.types.huggingface import HuggingFaceORTModel
 from opsml.version import __version__
 
@@ -216,6 +217,70 @@ class HuggingFaceOnnxArgs(BaseModel):
         ), "config must be a valid optimum config"
 
 
+@dataclass
+class ModelCardUris:
+    """Uri holder for ModelCardMetadata
+
+    Args:
+        modelcard_uri:
+            URI of modelcard
+        trained_model_uri:
+            URI where model is stored
+        sample_data_uri:
+            URI of trained model sample data
+        model_metadata_uri:
+            URI where model metadata is stored
+        preprocessor_uri:
+            URI where preprocessor is stored
+    """
+
+    modelcard_uri: Optional[str] = None
+    trained_model_uri: Optional[str] = None
+    onnx_model_uri: Optional[str] = None
+    model_metadata_uri: Optional[str] = None
+    sample_data_uri: Optional[str] = None
+    preprocessor_uri: Optional[str] = None
+
+    model_config = ConfigDict(
+        protected_namespaces=("protect_",),
+        frozen=False,
+    )
+
+
+class ModelCardMetadata(BaseModel):
+    """Create modelcard metadata
+
+    Args:
+        description:
+            Description for your model
+        onnx_model_data:
+            Pydantic model containing onnx data schema
+        onnx_model_def:
+            Pydantic model containing OnnxModel definition
+        model_type:
+            Type of model
+        data_schema:
+            Optional dictionary of the data schema used in model training
+        onnx_args:
+            Optional pydantic model containing either Torch or HuggingFace args for model conversion to onnx.
+        runcard_uid:
+            RunCard associated with the ModelCard
+        pipelinecard_uid:
+            Associated PipelineCard
+        uris:
+            ModelCardUris object containing all uris associated with ModelCard
+    """
+
+    description: Description = Description()
+    data_schema: Optional[DataDict] = None
+    runcard_uid: Optional[str] = None
+    pipelinecard_uid: Optional[str] = None
+    auditcard_uid: Optional[str] = None
+    uris: ModelCardUris = ModelCardUris()
+
+    model_config = ConfigDict(protected_namespaces=("protect_",))
+
+
 class ApiSigTypes(Enum):
     UNDEFINED = Any
     INT = int
@@ -403,3 +468,17 @@ class LightGBMBooster(ModelType):
     @staticmethod
     def validate(model_class_name: str) -> bool:
         return model_class_name == "Booster"
+
+
+class ModelCard(Protocol):
+    @property
+    def metadata(self) -> ModelCardMetadata:
+        ...
+
+    @property
+    def model(self) -> Any:
+        ...
+
+    @property
+    def to_onnx(self) -> bool:
+        ...
