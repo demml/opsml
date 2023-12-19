@@ -12,11 +12,11 @@ from opsml.registry.types import (
     AllowedDataType,
     CommonKwargs,
     HuggingFaceModuleType,
-    HuggingFaceTask,
-    TrainedModelType,
-    TorchOnnxArgs,
     HuggingFaceOnnxArgs,
+    HuggingFaceTask,
     OnnxModelDefinition,
+    TorchOnnxArgs,
+    TrainedModelType,
 )
 
 
@@ -474,7 +474,9 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(
+            model, Booster
+        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__

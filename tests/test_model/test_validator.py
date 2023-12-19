@@ -1,4 +1,3 @@
-from faulthandler import unregister
 from typing import Any
 
 import numpy as np
@@ -20,9 +19,9 @@ from opsml.registry.storage.artifact import (
 )
 from opsml.registry.types import (
     ArtifactStorageSpecs,
+    HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
     ModelCardMetadata,
-    HuggingFaceOnnxArgs
 )
 
 TRAINED_MODEL = "trained-model"
@@ -62,20 +61,20 @@ def simulate_save_load(
     loaded_model = load_model.model_validate(serialized)
 
     if isinstance(model, HuggingFaceModel):
-        
+
         loaded_model = load_artifact_from_storage(
             artifact_type=metadata.model_class,
             storage_client=api_storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=metadata.uris.trained_model_uri),
-            **{**{"model": loaded_model, "load_type":"model"}, **kwargs},
+            **{**{"model": loaded_model, "load_type": "model"}, **kwargs},
         )
-        
+
         if metadata.uris.preprocessor_uri is not None:
             loaded_model = load_artifact_from_storage(
                 artifact_type=metadata.model_class,
                 storage_client=api_storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=metadata.uris.preprocessor_uri),
-                **{**{"model": loaded_model, "load_type":"preprocessor"}, **kwargs},
+                **{**{"model": loaded_model, "load_type": "preprocessor"}, **kwargs},
             )
 
     else:
