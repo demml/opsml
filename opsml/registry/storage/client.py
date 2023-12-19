@@ -53,17 +53,6 @@ class StorageSystem(str, Enum):
     API = "api"
 
 
-class ArtifactClass(str, Enum):
-    DATA = "data"
-    OTHER = "other"
-
-
-class DataArtifactNames(str, Enum):
-    PARQUET = "parquet"
-    ZARR = "zarr"
-    DATACARD = "datacard"
-
-
 class ModelArtifactNames(str, Enum):
     MODELCARD = "modelcard"
     TRAINED_MODEL = "trained-model"

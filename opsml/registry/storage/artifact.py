@@ -1,4 +1,4 @@
-# pylint: disable=[import-outside-toplevel,import-error,no-name-in-module]
+# pylint: disable=[import-outside-toplevel]
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -21,7 +21,6 @@ from opsml.registry.cards.types import StoragePath
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import (
-    ArtifactClass,
     StorageClientType,
     StorageSystem,
 )
@@ -38,19 +37,19 @@ class ArtifactStorage:
 
     def __init__(
         self,
+        # TODO: Make artifact_type an enum
         artifact_type: str,
         storage_client: StorageClientType,
         file_suffix: Optional[str] = None,
-        artifact_class: Optional[str] = None,
         extra_path: Optional[str] = None,
     ):
         """Instantiates base ArtifactStorage class
 
         Args:
-            artifact_type (str): Type of artifact. Examples include pyarrow Table, JSON, Pytorch
-            artifact_class (str): Class that the artifact belongs to. This is either DATA or OTHER
-            storage_client (StorageClientType): Backend storage client to use when saving and loading an artifact
-            file_suffix (str): Optional suffix to use when saving and loading an artifact
+            artifact_type: Type of artifact. Examples include pyarrow Table, JSON, Pytorch
+            storage_client: Backend storage client to use when saving and loading an artifact
+            file_suffix: Optional suffix to use when saving and loading an artifact
+            extra_path: additional path to include before the filename before saving
 
         """
 
@@ -58,15 +57,6 @@ class ArtifactStorage:
         self.extra_path = extra_path
         self.artifact_type = artifact_type
         self.storage_client = storage_client
-        self.artifact_class = artifact_class
-
-    @property
-    def is_data(self) -> bool:
-        return self.artifact_class == ArtifactClass.DATA
-
-    @property
-    def is_storage_a_proxy(self) -> bool:
-        return self.storage_client.backend not in [StorageSystem.GCS, StorageSystem.LOCAL, StorageSystem.S3]
 
     @property
     def is_storage_local(self) -> bool:
@@ -172,7 +162,6 @@ class OnnxStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="onnx",
-            artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
 
@@ -219,7 +208,6 @@ class JoblibStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="joblib",
-            artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
 
@@ -263,7 +251,6 @@ class ImageDataStorage(ArtifactStorage):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
-            artifact_class=ArtifactClass.DATA.value,
             extra_path=extra_path,
         )
 
@@ -319,7 +306,6 @@ class ParquetStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="parquet",
-            artifact_class=ArtifactClass.DATA.value,
             extra_path=extra_path,
         )
 
@@ -393,7 +379,6 @@ class NumpyStorage(ArtifactStorage):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
-            artifact_class=ArtifactClass.DATA.value,
             extra_path=extra_path,
         )
 
@@ -448,7 +433,6 @@ class HTMLStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="html",
-            artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
 
@@ -491,7 +475,6 @@ class JSONStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="json",
-            artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
 
@@ -535,7 +518,6 @@ class TensorflowModelStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix=None,
-            artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
 
@@ -585,7 +567,6 @@ class PyTorchModelStorage(ArtifactStorage):
             artifact_type=artifact_type,
             storage_client=storage_client,
             file_suffix="pt",
-            artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
 
