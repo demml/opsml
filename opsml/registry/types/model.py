@@ -176,28 +176,27 @@ class HuggingFaceOnnxArgs(BaseModel):
     @classmethod
     def check_ort_type(cls, ort_type: str) -> str:
         """Validates onnx runtime model type"""
-        ort_model = ort_type.lower()
-        if ort_model not in list(HuggingFaceORTModel):
-            raise ValueError(f"Optimum model type {ort_model} is not supported")
-        return ort_model
+        if ort_type not in list(HuggingFaceORTModel):
+            raise ValueError(f"Optimum model type {ort_type} is not supported")
+        return ort_type
 
     @field_validator("config", mode="before")
     @classmethod
-    def check_config(cls, config: Optional[Any] = None) -> str:
+    def check_config(cls, config: Optional[Any] = None) -> None:
         """Check that optimum config is valid"""
 
         if config is None:
             return config
 
         from optimum.onnxruntime import (
-            CalibrationConfig,
             AutoCalibrationConfig,
-            QuantizationModel,
-            AutoQuantizationConfig,
-            OptimizationConfig,
             AutoOptimizationConfig,
+            AutoQuantizationConfig,
+            CalibrationConfig,
+            OptimizationConfig,
             ORTConfig,
             QuantizationConfig,
+            QuantizationModel,
         )
 
         assert isinstance(

@@ -18,21 +18,21 @@ from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.image.dataset import ImageDataset
+from opsml.registry.model.supported_models import SUPPORTED_MODELS, HuggingFaceModel
 from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClientType
-from opsml.registry.model.supported_models import HuggingFaceModel
 from opsml.registry.types import (
     AllowedDataType,
     ArrowTable,
     ArtifactStorageSpecs,
     ArtifactStorageType,
     CardType,
+    HuggingFaceStorageArtifact,
     ModelMetadata,
     OnnxAttr,
     OnnxModelDefinition,
     StoragePath,
     ValidSavedSample,
-    CommonKwargs,
 )
 
 
@@ -326,17 +326,28 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.card.metadata.uris.modelcard_uri = storage_path.uri
 
+    def _get_model_artifact_to_save(self) -> Union[HuggingFaceStorageArtifact, SUPPORTED_MODELS]:
+        """Saves a huggingface model to file system
+
+        Huggingface models are converted to onnx during model saving since they are built
+        from the model save dir (don't want to do this twice).
+        Thus, we need to add the onnx arguments and metadata to save arguments
+        """
+
+        if isinstance(self.card.model, HuggingFaceModel):
+            return HuggingFaceStorageArtifact(
+                model_interface=self.card.model,
+                metadata=self.card.metadata,
+                to_onnx=self.card.to_onnx,
+            )
+
+        return self.card.model
+
     def _save_trained_model(self) -> None:
         """Saves trained model associated with ModelCard to filesystem"""
-        # need to save model to filesystem
-        # Huggingface models are converted to onnx during model saving since they are built
-        # from the model save dir (don't want to do this twice). Thus, we need to add the onnx argument to the model interface
-        if isinstance(self.card.model, HuggingFaceModel):
-            setattr(self.card.model, "save_onnx", self.card.to_onnx)
-            setattr(self.card.model, "onnx_args", self.card.metadata.onnx_args)
 
         storage_path = save_artifact_to_storage(
-            artifact=self.card.model,
+            artifact=self._get_model_artifact_to_save(),
             artifact_type=self.card.metadata.model_type,
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
@@ -346,12 +357,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             extra_path="model",
         )
 
-        if isinstance(self.card.model, HuggingFaceModel):
-            self.card.metadata.uris.trained_model_uri = str(Path(storage_path.uri, CommonKwargs.MODEL.value))
-            self.card.metadata.uris.preprocessor_uri = str(Path(storage_path.uri, CommonKwargs.PREPROCESSOR.value))
-            self.card.metadata.uris.onnx_model_uri = str(Path(storage_path.uri, CommonKwargs.ONNX.value))
-
-        else:
+        if not isinstance(self.card.model, HuggingFaceModel):
             self.card.metadata.uris.trained_model_uri = storage_path.uri
 
     def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:

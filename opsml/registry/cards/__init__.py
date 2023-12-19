@@ -5,6 +5,7 @@ from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
 from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
+from opsml.registry.data.splitter import DataSplit
 from opsml.registry.types import (
     CardInfo,
     DataCardMetadata,
@@ -12,7 +13,6 @@ from opsml.registry.types import (
     ModelCardMetadata,
     ModelCardUris,
 )
-from opsml.registry.data.splitter import DataSplit
 
 __all__ = [
     "AuditCard",

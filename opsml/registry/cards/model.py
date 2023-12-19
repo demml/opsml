@@ -13,9 +13,9 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.model.supported_models import SUPPORTED_MODELS
 from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.model.predictor import OnnxModelPredictor
+from opsml.registry.model.supported_models import SUPPORTED_MODELS
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage

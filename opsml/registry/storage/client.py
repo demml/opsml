@@ -32,11 +32,11 @@ from opsml.registry.storage.api import ApiClient, ApiRoutes
 from opsml.registry.types import (
     ApiStorageClientSettings,
     ArtifactStorageSpecs,
+    FilePath,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
-    FilePath,
 )
 from opsml.settings.config import OpsmlConfig, config
 

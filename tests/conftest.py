@@ -72,6 +72,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
+from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.supported_models import (
     HuggingFaceModel,
     LightningModel,
@@ -79,7 +80,6 @@ from opsml.registry.model.supported_models import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
 from opsml.registry.types import (

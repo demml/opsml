@@ -14,9 +14,9 @@ from opsml.registry.types.extra import CommonKwargs
 from opsml.registry.types.model import (
     ApiDataSchemas,
     DataDict,
-    TorchOnnxArgs,
     HuggingFaceOnnxArgs,
     OnnxModelDefinition,
+    TorchOnnxArgs,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -71,11 +71,6 @@ class Comment(BaseModel):
 
     def __eq__(self, other):  # type: ignore
         return self.__dict__ == other.__dict__
-
-
-@dataclass
-class StoragePath:
-    uri: str
 
 
 @dataclass
@@ -307,3 +302,18 @@ class DataCardMetadata(BaseModel):
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]
 
 AuditSectionType = Dict[str, Dict[int, Dict[str, str]]]
+
+
+@dataclass
+class StoragePath:
+    uri: str
+
+
+@dataclass
+class HuggingFaceStorageArtifact:
+    model_interface: Any
+    metadata: ModelCardMetadata
+    to_onnx: bool = False
+    model_uri: Optional[str] = None
+    preprocessor_uri: Optional[str] = None
+    onnx_uri: Optional[str] = None
