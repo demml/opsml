@@ -14,6 +14,9 @@ from opsml.registry.types import (
     HuggingFaceModuleType,
     HuggingFaceTask,
     TrainedModelType,
+    TorchOnnxArgs,
+    HuggingFaceOnnxArgs,
+    OnnxModelDefinition,
 )
 
 
@@ -157,6 +160,8 @@ class SklearnModel(SupportedModel):
        SklearnModel
     """
 
+    onnx_model_def: Optional[OnnxModelDefinition] = None
+
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
@@ -272,10 +277,14 @@ class PyTorchModel(SupportedModel):
         preprocessor_name:
             Optional preprocessor. This is inferred automatically if a
             preprocessor is provided.
+        onnx_args:
+            Optional arguments for ONNX conversion. See `TorchOnnxArgs` for supported arguments.
 
     Returns:
        PyTorchModel
     """
+
+    onnx_args: Optional[TorchOnnxArgs] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -344,6 +353,8 @@ class LightningModel(PyTorchModel):
     Returns:
        LightningModel
     """
+
+    onnx_args: Optional[TorchOnnxArgs] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -443,6 +454,8 @@ class LightGBMBoosterModel(SupportedModel):
         preprocessor_name:
             Optional preprocessor. This is inferred automatically if a
             preprocessor is provided.
+        onnx_args:
+            Optional arguments for ONNX conversion. See `TorchOnnxArgs` for supported arguments.
 
     Returns:
         LightGBMBoosterModel
@@ -461,9 +474,7 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(
-            model, Booster
-        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -504,6 +515,12 @@ class HuggingFaceModel(SupportedModel):
         preprocessor_name:
             Optional preprocessor name for HuggingFace model. This is inferred automatically if a
             preprocessor is provided.
+        is_pipeline:
+            If model is a pipeline. Defaults to False.
+        backend:
+            Backend for HuggingFace model. This is inferred from model
+        onnx_args:
+            Optional arguments for ONNX conversion. See `HuggingFaceOnnxArgs` for supported arguments.
 
     Returns:
         HuggingFaceModel
@@ -527,6 +544,7 @@ class HuggingFaceModel(SupportedModel):
 
     is_pipeline: bool = False
     backend: str
+    onnx_args: Optional[HuggingFaceOnnxArgs] = None
     _onnx_model: Optional[Any] = None
 
     @property
