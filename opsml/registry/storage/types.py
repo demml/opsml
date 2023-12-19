@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from enum import Enum
+from enum import Enum, unique
 from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
@@ -13,13 +13,15 @@ from opsml.registry.data.types import AllowedDataType
 FilePath = Union[List[str], str]
 
 
-class StorageSystem(str, Enum):
+@unique
+class StorageSystem(Enum):
     GCS = "gcs"
     S3 = "s3"
     LOCAL = "local"
     API = "api"
 
 
+@unique
 class ArtifactStorageType(str, Enum):
     HTML = "html"
     TF_MODEL = "keras"
@@ -43,22 +45,24 @@ ARTIFACT_TYPES = [
 
 
 class StorageClientSettings(BaseModel):
-    storage_type: str = "local"
+    storage_system: StorageSystem = StorageSystem.LOCAL
     storage_uri: str = os.getcwd()
 
 
 class GcsStorageClientSettings(StorageClientSettings):
-    storage_type: str = "gcs"
+    storage_system: StorageSystem = StorageSystem.GCS
     credentials: Optional[Any] = None
     gcp_project: Optional[str] = None
 
 
 class S3StorageClientSettings(StorageClientSettings):
-    storage_type: str = "s3"
+    storage_system: StorageSystem = StorageSystem.S3
 
 
 class ApiStorageClientSettings(StorageClientSettings):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
+
+    storage_system: StorageSystem = StorageSystem.API
     opsml_tracking_uri: str
     opsml_username: Optional[str]
     opsml_password: Optional[str]
