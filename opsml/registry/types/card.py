@@ -214,15 +214,7 @@ class ModelCardMetadata(BaseModel):
     """
 
     description: Description = Description()
-    onnx_model_data: Optional[DataDict] = None
-    onnx_model_def: Optional[OnnxModelDefinition] = None
-    sample_data_type: str = CommonKwargs.UNDEFINED.value
-    model_type: str = CommonKwargs.UNDEFINED.value
-    model_class: str = CommonKwargs.UNDEFINED.value
-    task_type: str = CommonKwargs.UNDEFINED.value
-    preprocessor_name: str = CommonKwargs.UNDEFINED.value
-    onnx_args: Optional[Union[TorchOnnxArgs, HuggingFaceOnnxArgs]] = None
-    data_schema: Optional[ApiDataSchemas] = None
+    data_schema: Optional[DataDict] = None
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
