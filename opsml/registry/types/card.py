@@ -10,14 +10,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
-from opsml.registry.types.extra import CommonKwargs
-from opsml.registry.types.model import (
-    ApiDataSchemas,
-    DataDict,
-    HuggingFaceOnnxArgs,
-    OnnxModelDefinition,
-    TorchOnnxArgs,
-)
+from opsml.registry.types.model import DataDict
 
 logger = ArtifactLogger.get_logger()
 
@@ -306,6 +299,3 @@ class HuggingFaceStorageArtifact:
     model_interface: Any
     metadata: ModelCardMetadata
     to_onnx: bool = False
-    model_uri: Optional[str] = None
-    preprocessor_uri: Optional[str] = None
-    onnx_uri: Optional[str] = None

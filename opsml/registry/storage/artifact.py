@@ -813,7 +813,7 @@ class HuggingFaceStorage(ArtifactStorage):
 
         if artifact.to_onnx:
             assert isinstance(
-                artifact.metadata.onnx_args, HuggingFaceOnnxArgs
+                artifact.model_interface.onnx_args, HuggingFaceOnnxArgs
             ), "onnx_args must be provided when saving a converting a huggingface model"
 
             self._convert_to_onnx(artifact=artifact, tmp_uri=tmp_uri, model_path=model_path)
