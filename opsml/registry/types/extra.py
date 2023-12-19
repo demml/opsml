@@ -21,3 +21,4 @@ class CommonKwargs(str, Enum):
     SAMPLE_DATA = "sample_data"
     ONNX = "onnx"
     LOAD_TYPE = "load_type"
+    DATA_TYPE = "data_type"

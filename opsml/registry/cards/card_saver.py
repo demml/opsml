@@ -348,7 +348,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         storage_path = save_artifact_to_storage(
             artifact=self._get_model_artifact_to_save(),
-            artifact_type=self.card.metadata.model_type,
+            artifact_type=self.card.model.model_type,
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
                 filename=SaveName.TRAINED_MODEL.value,

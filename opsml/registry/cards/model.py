@@ -29,6 +29,9 @@ from opsml.registry.types import (
     ModelMetadata,
     ModelReturn,
     OnnxModelDefinition,
+    HuggingFaceModel,
+    CommonKwargs,
+    AllowedDataType,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -101,15 +104,15 @@ class ModelCard(ArtifactCard):
     def load_sample_data(self) -> None:
         """Loads sample data associated with original non-onnx model"""
 
-        if self.metadata.sample_data_type is None:
+        if self.model.data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
 
         sample_data = load_artifact_from_storage(
-            artifact_type=self.metadata.sample_data_type,
+            artifact_type=self.model.data_type,
             storage_client=client.storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
-        self.sample_input_data = sample_data
+        self.model.sample_data = sample_data
 
     def load_trained_model(self, **kwargs) -> None:
         """Loads original trained model
@@ -127,23 +130,33 @@ class ModelCard(ArtifactCard):
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
-        if self.trained_model is None:
+        if self.model.model is None:
             self.load_sample_data()
 
-            if self.metadata.model_type is None:
+            if self.model.model_type is None:
                 raise ValueError("Cannot load trained model - model_type is not set")
 
-            trained_model = load_artifact_from_storage(
+            self.model = load_artifact_from_storage(
                 artifact_type=self.metadata.model_class,
                 storage_client=client.storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
-                **{
-                    "model_type": self.metadata.model_type,
-                    "task_type": self.metadata.task_type,
-                    **kwargs,
-                },
+                **{**{"model": self.model, "load_type": CommonKwargs.MODEL}, **kwargs},
             )
-            self.trained_model = trained_model
+
+            if self.metadata.uris.preprocessor_uri is not None:
+                if isinstance(self.model, HuggingFaceModel):
+                    self.model = load_artifact_from_storage(
+                        artifact_type=self.model.model_class,
+                        storage_client=client.storage_client,
+                        storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                        **{**{"model": self.model, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
+                    )
+                else:
+                    self.model.preprocessor = load_artifact_from_storage(
+                        artifact_type=AllowedDataType.DICT,
+                        storage_client=client.storage_client,
+                        storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                    )
 
     @property
     def model_metadata(self) -> ModelMetadata:
@@ -192,9 +205,8 @@ class ModelCard(ArtifactCard):
     def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
 
-        exclude_vars = {"trained_model", "sample_input_data"}
+        exclude_vars = {"model": {"model", "preprocessor", "sample_data", "onnx_model_def"}}
         dumped_model = self.model_dump(exclude=exclude_vars)
-        dumped_model["metadata"].pop("onnx_model_def")
 
         return ModelRegistryRecord(**dumped_model)
 
@@ -207,10 +219,10 @@ class ModelCard(ArtifactCard):
 
         return version
 
-    def _set_model_attributes(self, model_return: ModelReturn) -> None:
-        setattr(self.metadata, "onnx_model_def", model_return.model_definition)
-        setattr(self.metadata, "data_schema", model_return.api_data_schema)
-        setattr(self.metadata, "model_type", model_return.model_type)
+    # def _set_model_attributes(self, model_return: ModelReturn) -> None:
+    #    setattr(self.metadata, "onnx_model_def", model_return.model_definition)
+    #    setattr(self.metadata, "data_schema", model_return.api_data_schema)
+    #    setattr(self.metadata, "model_type", model_return.model_type)
 
     def _create_and_set_model_attr(self) -> None:
         """

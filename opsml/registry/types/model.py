@@ -111,6 +111,8 @@ class DataDict(BaseModel):
     data_type: Optional[str] = None
     input_features: Dict[str, Feature]
     output_features: Dict[str, Feature]
+    onnx_input_features: Optional[Dict[str, Feature]] = None
+    onnx_output_features: Optional[Dict[str, Feature]] = None
 
     model_config = ConfigDict(frozen=False)
 
