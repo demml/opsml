@@ -36,15 +36,16 @@ class DataDtypes(str, Enum):
 
 class TrainedModelType(str, Enum):
     TRANSFORMERS = "transformers"
-    SKLEARN_PIPELINE = "sklearn_pipeline"
-    SKLEARN_ESTIMATOR = "sklearn_estimator"
-    STACKING_ESTIMATOR = "stackingestimator"
-    CALIBRATED_CLASSIFIER = "calibratedclassifiercv"
-    LGBM_REGRESSOR = "lgbmregressor"
-    LGBM_CLASSIFIER = "lgbmclassifier"
-    XGB_REGRESSOR = "xgbregressor"
-    XGB_CLASSIFIER = "xgbclassifier"
-    LGBM_BOOSTER = "lgbmbooster"
+    SKLEARN_PIPELINE = "Pipeline"
+    SKLEARN_ESTIMATOR = "SklearnEstimator"
+    STACKING_REGRESSOR = "StackingRegressor"
+    STACKING_CLASSIFIER = "StackingClassifier"
+    CALIBRATED_CLASSIFIER = "CalibratedClassifierCV"
+    LGBM_REGRESSOR = "LGBMRegressor"
+    LGBM_CLASSIFIER = "LGBMClassifier"
+    XGB_REGRESSOR = "XGBRegressor"
+    XGB_CLASSIFIER = "XGBClassifier"
+    LGBM_BOOSTER = "Booster"
     TF_KERAS = "keras"
     PYTORCH = "pytorch"
     PYTORCH_LIGHTNING = "pytorch_lightning"
@@ -52,7 +53,8 @@ class TrainedModelType(str, Enum):
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [
     TrainedModelType.SKLEARN_ESTIMATOR,
-    TrainedModelType.STACKING_ESTIMATOR,
+    TrainedModelType.STACKING_REGRESSOR,
+    TrainedModelType.STACKING_CLASSIFIER,
     TrainedModelType.SKLEARN_PIPELINE,
     TrainedModelType.LGBM_REGRESSOR,
     TrainedModelType.LGBM_CLASSIFIER,
