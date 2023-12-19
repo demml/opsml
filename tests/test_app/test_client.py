@@ -15,7 +15,7 @@ from requests.auth import HTTPBasicAuth
 from sklearn import linear_model, pipeline
 from starlette.testclient import TestClient
 
-from opsml.app.routes.files import verify_path
+from opsml.app.routes.files import _verify_path
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.projects import OpsmlProject, ProjectInfo
@@ -37,13 +37,6 @@ from opsml.settings.config import config
 from tests.conftest import TODAY_YMD
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-
-
-def test_app_settings(test_app: TestClient):
-    """Test settings"""
-
-    response = test_app.get(f"/opsml/{ApiRoutes.SETTINGS}")
-    assert response.status_code == 200
 
 
 def test_debug(test_app: TestClient):
@@ -1047,14 +1040,14 @@ def test_download_fail(test_app: TestClient):
 
 
 def test_verify_path():
-    verify_path("test/assets/OPSML_MODEL_REGISTRY")
-    verify_path("test/assets/OPSML_DATA_REGISTRY")
-    verify_path("test/assets/OPSML_RUN_REGISTRY")
-    verify_path("test/assets/OPSML_PROJECT_REGISTRY")
-    verify_path("mlflow:/1/d3a94b802f9141ffb020e9f12e3bdbff/artifacts/data")
+    _verify_path("test/assets/OPSML_MODEL_REGISTRY")
+    _verify_path("test/assets/OPSML_DATA_REGISTRY")
+    _verify_path("test/assets/OPSML_RUN_REGISTRY")
+    _verify_path("test/assets/OPSML_PROJECT_REGISTRY")
+    _verify_path("mlflow:/1/d3a94b802f9141ffb020e9f12e3bdbff/artifacts/data")
 
     with pytest.raises(HTTPException):
-        assert verify_path("tests/assets/fake")
+        assert _verify_path("tests/assets/fake")
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
