@@ -21,8 +21,7 @@ from opsml.registry.types import (
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
-    if model is None:
-        raise ValueError("Model must be passed to ModelCardValidator when using pytorch lightning models")
+    assert model is not None, "Model must not be None"
 
     model_module = model.__module__
     model_bases = [str(base) for base in model.__class__.__bases__]
@@ -121,7 +120,7 @@ class SupportedModel(BaseModel):
 
             return sample_dict
 
-        raise ValueError("Provided sample data is not a valid type")
+        raise ValueError(f"Provided sample data is not a valid type. Received {sample_data_type}")
 
     def get_sample_prediction(self) -> SamplePrediction:
         prediction = self.model.predict(self.sample_data)
@@ -474,9 +473,7 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(
-            model, Booster
-        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__

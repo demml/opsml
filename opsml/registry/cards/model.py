@@ -13,7 +13,6 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.model.supported_models import SUPPORTED_MODELS
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
@@ -71,7 +70,7 @@ class ModelCard(ArtifactCard):
     model: Optional[SUPPORTED_MODELS] = None
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
-    metadata: ModelCardMetadata
+    metadata: ModelCardMetadata = ModelCardMetadata()
 
     @model_validator(mode="before")
     @classmethod
@@ -80,15 +79,10 @@ class ModelCard(ArtifactCard):
 
         uid = values.get("uid")
         version = values.get("version")
-        model: Optional[SUPPORTED_MODELS] = values.get("model")
-        metadata: Optional[ModelCardMetadata] = values.get("metadata")
 
         # no need to check if already registered
         if all([uid, version]):
             return values
-
-        card_validator = ModelCardValidator(model=model, metadata=metadata)
-        values["metadata"] = card_validator.get_metadata()
 
         return values
 

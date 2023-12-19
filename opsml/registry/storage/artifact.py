@@ -735,16 +735,20 @@ class HuggingFaceStorage(ArtifactStorage):
 
     def _convert_to_onnx(self, artifact: HuggingFaceStorageArtifact, tmp_uri: str, model_path: str) -> None:
         # set args
-        args: HuggingFaceOnnxArgs = artifact.metadata.onnx_args
         model_interface: HuggingFaceModel = artifact.model_interface
 
         logger.info("Converting HuggingFace model to onnx format")
         import optimum.onnxruntime as ort
 
         # model must be created from directory
-        ort_model: ort.ORTModel = getattr(ort, args.ort_type)
+        ort_model: ort.ORTModel = getattr(ort, model_interface.onnx_args.ort_type)
         onnx_path = str(Path(tmp_uri, CommonKwargs.ONNX.value))
-        onnx_model = ort_model.from_pretrained(model_path, export=True, config=args.config, provider=args.provider)
+        onnx_model = ort_model.from_pretrained(
+            model_path,
+            export=True,
+            config=model_interface.onnx_args.config,
+            provider=model_interface.onnx_args.provider,
+        )
         onnx_model.save_pretrained(onnx_path)
         self.saved_metadata[CommonKwargs.ONNX.value] = True
 
@@ -825,13 +829,10 @@ class HuggingFaceStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-        artifact.metadata.uris.trained_model_uri = str(Path(registered_path, CommonKwargs.MODEL.value))
-
-        if self.saved_metadata[CommonKwargs.PREPROCESSOR.value]:
-            artifact.metadata.uris.preprocessor_uri = str(Path(registered_path, CommonKwargs.PREPROCESSOR.value))
-
-        if self.saved_metadata[CommonKwargs.ONNX.value]:
-            artifact.metadata.uris.onnx_model_uri = str(Path(registered_path, CommonKwargs.ONNX.value))
+        self._set_uris(
+            artifact=artifact,
+            registered_path=registered_path,
+        )
 
         return registered_path
 

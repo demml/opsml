@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 from torch import Tensor
 
-from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.model.supported_models import (
     SUPPORTED_MODELS,
     HuggingFaceModel,
@@ -46,7 +45,7 @@ def simulate_save_load(
 
     storage_path = save_artifact_to_storage(
         artifact=artifact,
-        artifact_type=metadata.model_class,
+        artifact_type=model.model_class,
         storage_client=api_storage_client,
         storage_spec=ArtifactStorageSpecs(
             filename=TRAINED_MODEL,
@@ -63,7 +62,7 @@ def simulate_save_load(
     if isinstance(model, HuggingFaceModel):
 
         loaded_model = load_artifact_from_storage(
-            artifact_type=metadata.model_class,
+            artifact_type=model.model_class,
             storage_client=api_storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=metadata.uris.trained_model_uri),
             **{**{"model": loaded_model, "load_type": "model"}, **kwargs},
@@ -71,7 +70,7 @@ def simulate_save_load(
 
         if metadata.uris.preprocessor_uri is not None:
             loaded_model = load_artifact_from_storage(
-                artifact_type=metadata.model_class,
+                artifact_type=model.model_class,
                 storage_client=api_storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=metadata.uris.preprocessor_uri),
                 **{**{"model": loaded_model, "load_type": "preprocessor"}, **kwargs},
@@ -79,7 +78,7 @@ def simulate_save_load(
 
     else:
         loaded_model = load_artifact_from_storage(
-            artifact_type=metadata.model_class,
+            artifact_type=model.model_class,
             storage_client=api_storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
             **{**{"model": loaded_model}, **kwargs},
@@ -93,14 +92,11 @@ def simulate_save_load(
 @pytest.mark.compat
 def _test_huggingface_model(huggingface_bart, api_storage_client):
     model: HuggingFaceModel = huggingface_bart
+    metadata = ModelCardMetadata()
 
-    validator = ModelCardValidator(model=model)
-
-    metadata = validator.get_metadata()
-
-    assert metadata.model_type == "BartModel"
-    assert metadata.model_class == "transformers"
-    assert metadata.task_type == "text-classification"
+    assert model.model_type == "BartModel"
+    assert model.model_class == "transformers"
+    assert model.task_type == "text-classification"
     assert model.backend == "pytorch"
 
     predictions = PredictHelper.process_model_prediction(model)
@@ -116,17 +112,15 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
 @pytest.mark.compat
 def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_storage_client):
     model: HuggingFaceModel = huggingface_text_classification_pipeline
+    metadata = ModelCardMetadata()
 
-    validator = ModelCardValidator(model=model)
 
-    metadata = validator.get_metadata()
-
-    assert metadata.model_type == "TextClassificationPipeline"
-    assert metadata.model_class == "transformers"
-    assert metadata.task_type == "text-classification"
+    assert model.model_type == "TextClassificationPipeline"
+    assert model.model_class == "transformers"
+    assert model.task_type == "text-classification"
     assert model.backend == "pytorch"
 
-    metadata.onnx_args = HuggingFaceOnnxArgs(ort_type="ORTModelForSequenceClassification")
+    model.onnx_args = HuggingFaceOnnxArgs(ort_type="ORTModelForSequenceClassification")
     predictions = PredictHelper.process_model_prediction(model)
 
     assert isinstance(predictions, dict)
@@ -138,8 +132,7 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
 def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     model = huggingface_tf_distilbert
 
-    validator = ModelCardValidator(model=model)
-    metadata = validator.get_metadata()
+
 
     assert metadata.model_type == "TFDistilBertForSequenceClassification"
     assert metadata.model_class == "transformers"
@@ -160,9 +153,7 @@ def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
 def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
     model: PyTorchModel = deeplabv3_resnet50
 
-    validator = ModelCardValidator(model=model)
-
-    metadata = validator.get_metadata()
+   
 
     assert metadata.model_type == "DeepLabV3"
     assert metadata.model_class == "pytorch"
@@ -179,8 +170,7 @@ def _test_torch_deeplab(deeplabv3_resnet50, api_storage_client):
 def _test_torch_lightning(pytorch_lightning_model):
     model: LightningModel = pytorch_lightning_model
 
-    validator = ModelCardValidator(model=model)
-    metadata = validator.get_metadata()
+  
 
     assert metadata.model_type == "SimpleModel"
     assert metadata.model_class == "pytorch_lightning"
@@ -194,9 +184,7 @@ def _test_torch_lightning(pytorch_lightning_model):
 def _test_lightning_regression(lightning_regression, api_storage_client):
     model, arch = lightning_regression
 
-    validator = ModelCardValidator(model)
-
-    metadata = validator.get_metadata()
+   
 
     assert metadata.model_type == "MyModel"
     assert metadata.model_class == "pytorch_lightning"
@@ -221,9 +209,7 @@ def _test_lightning_regression(lightning_regression, api_storage_client):
 def _test_sklearn_pipeline(sklearn_pipeline):
     model = sklearn_pipeline
 
-    validator = ModelCardValidator(model=model)
 
-    metadata = validator.get_metadata()
 
     assert metadata.model_type == "Pipeline"
     assert metadata.model_class == "sklearn_estimator"
@@ -236,8 +222,7 @@ def _test_sklearn_pipeline(sklearn_pipeline):
 def _test_tensorflow(load_transformer_example, api_storage_client):
     model = load_transformer_example
 
-    validator = ModelCardValidator(model=model)
-    metadata = validator.get_metadata()
+
 
     assert metadata.model_type == "Functional"
     assert metadata.model_class == "keras"
@@ -253,8 +238,6 @@ def _test_tensorflow(load_transformer_example, api_storage_client):
 def _test_tensorflow_multi_input(load_multi_input_keras_example, api_storage_client):
     model = load_multi_input_keras_example
 
-    validator = ModelCardValidator(model=model)
-    metadata = validator.get_metadata()
 
     assert metadata.model_type == "Functional"
     assert metadata.model_class == "keras"
