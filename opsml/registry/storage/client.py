@@ -50,17 +50,17 @@ class StorageClient:
         self,
         settings: StorageSettings,
         client: Optional[Any] = None,
-        # TODO: rename to storage_type / make enum
-        backend: Optional[str] = None,
     ):
         if client is None:
             self.client = LocalFileSystem()
-            self.backend = StorageSystem.LOCAL.value
         else:
-            assert backend is not None
             self.client = client
-            self.backend = backend
+        self.settings = settings
         self.base_path_prefix = settings.storage_uri
+
+    @property
+    def is_local(self) -> bool:
+        return self.settings.storage_system == StorageSystem.LOCAL
 
     def extend_storage_spec(
         self,
@@ -123,7 +123,7 @@ class StorageClient:
         raise ValueError("Storage class does not implement a delete method")
 
     @staticmethod
-    def validate(storage_backend: str) -> bool:
+    def validate(storage_system: StorageSystem) -> bool:
         raise NotImplementedError
 
 
@@ -143,7 +143,6 @@ class GCSFSStorageClient(StorageClient):
         super().__init__(
             settings=settings,
             client=client,
-            backend=StorageSystem.GCS.value,
         )
 
     def copy(self, read_path: str, write_path: str) -> None:
@@ -187,8 +186,8 @@ class GCSFSStorageClient(StorageClient):
         return loadable_path
 
     @staticmethod
-    def validate(storage_backend: str) -> bool:
-        return storage_backend == StorageSystem.GCS
+    def validate(storage_system: StorageSystem) -> bool:
+        return storage_system == StorageSystem.GCS
 
 
 class S3StorageClient(StorageClient):
@@ -204,7 +203,6 @@ class S3StorageClient(StorageClient):
         super().__init__(
             settings=settings,
             client=client,
-            backend=StorageSystem.S3.value,
         )
 
     def copy(self, read_path: str, write_path: str) -> None:
@@ -248,8 +246,8 @@ class S3StorageClient(StorageClient):
         return loadable_path
 
     @staticmethod
-    def validate(storage_backend: str) -> bool:
-        return storage_backend == StorageSystem.S3
+    def validate(storage_system: StorageSystem) -> bool:
+        return storage_system == StorageSystem.S3
 
 
 class LocalStorageClient(StorageClient):
@@ -347,8 +345,8 @@ class LocalStorageClient(StorageClient):
             self.client.delete_file(read_path)
 
     @staticmethod
-    def validate(storage_backend: str) -> bool:
-        return storage_backend == StorageSystem.LOCAL
+    def validate(storage_system: StorageSystem) -> bool:
+        return storage_system == StorageSystem.LOCAL
 
 
 class ApiStorageClient(LocalStorageClient):
@@ -356,7 +354,6 @@ class ApiStorageClient(LocalStorageClient):
         assert isinstance(settings, ApiStorageClientSettings)
         super().__init__(
             settings=settings,
-            backend=StorageSystem.API.value,
         )
 
         self.api_client = ApiClient(
@@ -514,8 +511,8 @@ class ApiStorageClient(LocalStorageClient):
             raise ValueError("Failed to delete file")
 
     @staticmethod
-    def validate(storage_backend: str) -> bool:
-        return storage_backend == StorageSystem.API
+    def validate(storage_system: StorageSystem) -> bool:
+        return storage_system == StorageSystem.API
 
 
 StorageClientType = Union[
@@ -533,11 +530,9 @@ class _DefaultAttrCreator:
             return _DefaultAttrCreator._get_gcs_settings(cfg.opsml_storage_uri)
         if "s3://" in cfg.opsml_storage_uri:
             return S3StorageClientSettings(
-                storage_type=StorageSystem.S3.value,
                 storage_uri=cfg.opsml_storage_uri,
             )
         return StorageClientSettings(
-            storage_type=StorageSystem.LOCAL.value,
             storage_uri=cfg.opsml_storage_uri,
         )
 
@@ -548,7 +543,6 @@ class _DefaultAttrCreator:
         gcp_creds = GcpCredsSetter().get_creds()
 
         return GcsStorageClientSettings(
-            storage_type=StorageSystem.GCS.value,
             storage_uri=storage_uri,
             gcp_project=gcp_creds.project,
             credentials=gcp_creds.creds,
@@ -558,7 +552,6 @@ class _DefaultAttrCreator:
 def get_storage_client(cfg: OpsmlConfig) -> StorageClientType:
     if not cfg.is_tracking_local:
         settings: StorageSettings = ApiStorageClientSettings(
-            storage_type=StorageSystem.API.value,
             storage_uri=cfg.opsml_storage_uri,
             opsml_tracking_uri=cfg.opsml_tracking_uri,
             opsml_username=cfg.opsml_username,
@@ -569,7 +562,7 @@ def get_storage_client(cfg: OpsmlConfig) -> StorageClientType:
         settings = _DefaultAttrCreator.get_storage_settings(cfg)
 
     client_type = next(
-        (c for c in all_subclasses(StorageClient) if c.validate(storage_backend=settings.storage_type)),
+        (c for c in all_subclasses(StorageClient) if c.validate(settings.storage_system)),
         LocalStorageClient,
     )
 

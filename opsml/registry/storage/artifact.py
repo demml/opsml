@@ -26,7 +26,6 @@ from opsml.registry.storage.types import (
     ArtifactStorageSpecs,
     ArtifactStorageType,
     FilePath,
-    StorageSystem,
 )
 
 
@@ -55,10 +54,6 @@ class ArtifactStorage:
         self.extra_path = extra_path
         self.artifact_type = artifact_type
         self.storage_client = storage_client
-
-    @property
-    def is_storage_local(self) -> bool:
-        return StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL
 
     @property
     def storage_filesystem(self) -> Any:
@@ -116,7 +111,7 @@ class ArtifactStorage:
         file_path: str,
         tmp_path: str,
     ) -> Any:
-        if self.is_storage_local:
+        if self.storage_client.is_local:
             return file_path
 
         loadable_path = self.storage_client.download(
