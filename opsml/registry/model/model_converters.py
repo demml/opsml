@@ -28,7 +28,6 @@ from opsml.registry.types import (
     ApiDataSchemas,
     BaseEstimator,
     DataDict,
-    TorchOnnxArgs,
     Feature,
     ModelCard,
     ModelProto,
@@ -36,6 +35,7 @@ from opsml.registry.types import (
     ModelType,
     OnnxDataProto,
     OnnxModelDefinition,
+    TorchOnnxArgs,
     TrainedModelType,
 )
 
@@ -253,7 +253,9 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(
+        self, initial_types: List[Any]
+    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -494,7 +496,7 @@ class SklearnOnnxModel(ModelConverter):
 
 class LightGBMBoosterOnnxModel(ModelConverter):
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
-        """Converts sklearn model to ONNX ModelProto"""
+        """Converts lightgbm model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
 
         onnx_model = convert_lightgbm(model=self.trained_model, initial_types=initial_types)

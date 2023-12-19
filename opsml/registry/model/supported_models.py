@@ -16,8 +16,6 @@ from opsml.registry.types import (
     TrainedModelType,
 )
 
-# from torch import Tensor
-
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
     if model is None:
@@ -463,7 +461,9 @@ class LightGBMBoosterModel(SupportedModel):
 
         from lightgbm import Booster
 
-        assert isinstance(model, Booster), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
+        assert isinstance(
+            model, Booster
+        ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
 
         if "lightgbm" in module:
             model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -527,18 +527,17 @@ class HuggingFaceModel(SupportedModel):
 
     is_pipeline: bool = False
     backend: str
-    _save_onnx: bool = False  # private attr that's called at save time.
+    _onnx_model: Optional[Any] = None
 
     @property
-    def save_onnx(cls) -> bool:
-        """Indicates if the model has been marked for onnx conversion during model saving.
-        There is no need to set this manually. It will be inferred from the modelcard.
-        """
-        return cls._save_onnx
+    def onnx_model(self) -> bool:
+        """Onnx version of HuggingFace model. This is only available if `to_onnx` is set to True during registration
+        or loaded from `onnx_model` method in modelcard"""
+        return self._onnx_model
 
-    @save_onnx.setter
-    def save_onnx(cls, value: bool) -> None:
-        cls._save_onnx = value
+    @onnx_model.setter
+    def onnx_model(self, value: Any) -> None:
+        self._onnx_model = value
 
     @classmethod
     def _check_model_backend(cls, model: Any) -> str:

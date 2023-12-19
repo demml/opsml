@@ -14,10 +14,10 @@ from opsml.registry.types import (
     AVAILABLE_MODEL_TYPES,
     AllowedDataType,
     DataDtypes,
-    TorchOnnxArgs,
     Feature,
     ModelCard,
     OnnxModelDefinition,
+    TorchOnnxArgs,
     TrainedModelType,
 )
 

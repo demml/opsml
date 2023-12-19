@@ -15,15 +15,15 @@ import pyarrow.parquet as pq
 import zarr
 from numpy.typing import NDArray
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
+from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.model.supported_models import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
     TensorFlowModel,
 )
-
-from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import (
     ArtifactClass,
     StorageClientType,
@@ -35,10 +35,13 @@ from opsml.registry.types import (
     ArtifactStorageType,
     CommonKwargs,
     FilePath,
-    StoragePath,
     HuggingFaceOnnxArgs,
+    HuggingFaceStorageArtifact,
+    StoragePath,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
+
+logger = ArtifactLogger.get_logger()
 
 
 class ArtifactStorage:
@@ -724,22 +727,73 @@ class HuggingFaceStorage(ArtifactStorage):
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
+        self.saved_metadata = {
+            CommonKwargs.MODEL.value: False,
+            CommonKwargs.PREPROCESSOR.value: False,
+            CommonKwargs.ONNX.value: False,
+        }
 
-    def _convert_to_onnx(self, artifact: HuggingFaceModel, tmp_uri: str, model_path: str):
-        args: HuggingFaceOnnxArgs = artifact.onnx_args
+    def _convert_to_onnx(self, artifact: HuggingFaceStorageArtifact, tmp_uri: str, model_path: str) -> None:
+        # set args
+        args: HuggingFaceOnnxArgs = artifact.metadata.onnx_args
+        model_interface: HuggingFaceModel = artifact.model_interface
+
+        logger.info("Converting HuggingFace model to onnx format")
         import optimum.onnxruntime as ort
 
-        onnx_model: ort.ORTModel = getattr(artifact.model, args.ort_type)
+        # model must be created from directory
+        ort_model: ort.ORTModel = getattr(ort, args.ort_type)
         onnx_path = str(Path(tmp_uri, CommonKwargs.ONNX.value))
-        onnx_model.from_pretrained(
-            model_path,
-            export=True,
-            config=args.config,
-            provider=args.provider,
-        )
+        onnx_model = ort_model.from_pretrained(model_path, export=True, config=args.config, provider=args.provider)
         onnx_model.save_pretrained(onnx_path)
+        self.saved_metadata[CommonKwargs.ONNX.value] = True
 
-    def _save_artifact(self, artifact: HuggingFaceModel, storage_uri: str, tmp_uri: str) -> str:
+        # set model_interface
+        if model_interface.is_pipeline:
+            from transformers import pipeline
+
+            model_interface.onnx_model = pipeline(
+                model_interface.task_type,
+                model=onnx_model,
+                tokenizer=model_interface.model.tokenizer,
+            )
+
+        else:
+            model_interface.onnx_model = onnx_model
+
+        # set onnx path
+        artifact.metadata.uris.onnx_model_uri = onnx_path
+
+    def _save_model(self, artifact: HuggingFaceStorageArtifact, tmp_uri: str) -> str:
+        """Saves a huggingface model to directory"""
+
+        logger.info("Saving HuggingFace model")
+        model_interface: HuggingFaceModel = artifact.model_interface
+        model_path = str(Path(tmp_uri, CommonKwargs.MODEL.value))
+        model_interface.model.save_pretrained(model_path)
+        self.saved_metadata[CommonKwargs.MODEL.value] = True
+
+        # save preprocessor if present
+        if model_interface.preprocessor is not None:
+            logger.info("Saving HuggingFace preprocessor")
+            preprocessor_path = str(Path(tmp_uri, CommonKwargs.PREPROCESSOR.value))
+            model_interface.preprocessor.save_pretrained(preprocessor_path)
+            self.saved_metadata[CommonKwargs.PREPROCESSOR.value] = True
+
+        return model_path
+
+    def _set_uris(self, artifact: HuggingFaceStorageArtifact, registered_path: str) -> None:
+        """Sets metadata uris after uploading to server"""
+
+        artifact.metadata.uris.trained_model_uri = str(Path(registered_path, CommonKwargs.MODEL.value))
+
+        if self.saved_metadata[CommonKwargs.PREPROCESSOR.value]:
+            artifact.metadata.uris.preprocessor_uri = str(Path(registered_path, CommonKwargs.PREPROCESSOR.value))
+
+        if self.saved_metadata[CommonKwargs.ONNX.value]:
+            artifact.metadata.uris.onnx_model_uri = str(Path(registered_path, CommonKwargs.ONNX.value))
+
+    def _save_artifact(self, artifact: HuggingFaceStorageArtifact, storage_uri: str, tmp_uri: str) -> str:
         """
         Saves a huggingface model
 
@@ -755,29 +809,37 @@ class HuggingFaceStorage(ArtifactStorage):
             Storage path
         """
 
-        model_path = str(Path(tmp_uri, CommonKwargs.MODEL.value))
-        artifact.model.save_pretrained(model_path)
+        model_path = self._save_model(artifact, tmp_uri)
 
-        if artifact.preprocessor is not None:
-            preprocessor_path = str(Path(tmp_uri, CommonKwargs.PREPROCESSOR.value))
-            artifact.preprocessor.save_pretrained(preprocessor_path)
-
-        if artifact.save_onnx:
+        if artifact.to_onnx:
             assert isinstance(
-                artifact.onnx_args, HuggingFaceOnnxArgs
+                artifact.metadata.onnx_args, HuggingFaceOnnxArgs
             ), "onnx_args must be provided when saving a converting a huggingface model"
 
             self._convert_to_onnx(artifact=artifact, tmp_uri=tmp_uri, model_path=model_path)
 
-        return self._upload_artifact(
+        registered_path = self._upload_artifact(
             file_path=tmp_uri,
             storage_uri=storage_uri,
             recursive=True,
             **{"is_dir": True},
         )
 
+        artifact.metadata.uris.trained_model_uri = str(Path(registered_path, CommonKwargs.MODEL.value))
+
+        if self.saved_metadata[CommonKwargs.PREPROCESSOR.value]:
+            artifact.metadata.uris.preprocessor_uri = str(Path(registered_path, CommonKwargs.PREPROCESSOR.value))
+
+        if self.saved_metadata[CommonKwargs.ONNX.value]:
+            artifact.metadata.uris.onnx_model_uri = str(Path(registered_path, CommonKwargs.ONNX.value))
+
+        return registered_path
+
     def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> HuggingFaceModel:
         """Loads a huggingface object (model or pipeline)
+
+        Objects are loaded based on kwargs because we don't want to download a specific
+        object unless necessary (important for large models)
 
         Args:
             kwargs:
@@ -789,21 +851,23 @@ class HuggingFaceStorage(ArtifactStorage):
         """
         import transformers
 
-        hf_model: HuggingFaceModel = kwargs[CommonKwargs.MODEL]
+        load_type = kwargs[CommonKwargs.LOAD_TYPE]
 
-        # only way to tell if model was a pipeline is from model class type
-        if hf_model.is_pipeline:
-            hf_model.model = transformers.pipeline(hf_model.task_type, file_path)
-            return hf_model
+        if load_type == CommonKwargs.MODEL:
+            hf_model: HuggingFaceModel = kwargs[CommonKwargs.MODEL]
 
-        else:
-            # load model from pretrained
-            hf_model.model = getattr(transformers, hf_model.model_type).from_pretrained(file_path)
+            # only way to tell if model was a pipeline is from model class type
+            if hf_model.is_pipeline:
+                hf_model.model = transformers.pipeline(hf_model.task_type, file_path)
+                return hf_model
 
-            # check for preprocessor
-            if hf_model.preprocessor_name != "undefined":
-                hf_model.preprocessor = getattr(transformers, hf_model.preprocessor_name).from_pretrained(file_path)
+            else:
+                # load model from pretrained
+                hf_model.model = getattr(transformers, hf_model.model_type).from_pretrained(file_path)
+                return hf_model
 
+        elif load_type == CommonKwargs.PREPROCESSOR:
+            hf_model.preprocessor = getattr(transformers, hf_model.preprocessor_name).from_pretrained(file_path)
             return hf_model
 
     @staticmethod

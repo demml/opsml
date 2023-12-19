@@ -20,3 +20,4 @@ class CommonKwargs(str, Enum):
     TENSORFLOW = "tensorflow"
     SAMPLE_DATA = "sample_data"
     ONNX = "onnx"
+    LOAD_TYPE = "load_type"
