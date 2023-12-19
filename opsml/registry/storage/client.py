@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-import re
 import shutil
 import tempfile
 import uuid
@@ -51,33 +50,6 @@ class StorageSystem(str, Enum):
     S3 = "s3"
     LOCAL = "local"
     API = "api"
-
-
-class ModelArtifactNames(str, Enum):
-    MODELCARD = "modelcard"
-    TRAINED_MODEL = "trained-model"
-    MODEL_METADATA = "model-metadata"
-    ONNX = ".onnx"
-
-
-OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"
-
-
-def extract_registry_name(string: str) -> Optional[str]:
-    """Extracts registry name from string
-
-    Args:
-        string:
-            String
-    Returns:
-        Registry name
-    """
-    reg = re.compile(OPSML_PATTERN)
-    match = reg.match(string)
-
-    if match is not None:
-        return match.group(1)
-    return None
 
 
 class StorageClient:
