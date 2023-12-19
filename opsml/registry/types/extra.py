@@ -19,3 +19,4 @@ class CommonKwargs(str, Enum):
     PYTORCH = "pytorch"
     TENSORFLOW = "tensorflow"
     SAMPLE_DATA = "sample_data"
+    ONNX = "onnx"

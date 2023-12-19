@@ -15,9 +15,9 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, ConfigDict, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from opsml.registry.types.extra import CommonKwargs
+from opsml.registry.types.huggingface import HuggingFaceORTModel
 from opsml.version import __version__
 
 # Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
@@ -137,7 +137,7 @@ class ModelReturn(BaseModel):
     model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
 
 
-class ExtraOnnxArgs(BaseModel):
+class TorchOnnxArgs(BaseModel):
     """
     input_names (List[str]): Optional list containing input names for model inputs.
     This is a PyTorch-specific attribute
@@ -154,7 +154,65 @@ class ExtraOnnxArgs(BaseModel):
     export_params: bool = True
     verbose: bool = False
     options: Optional[Dict[str, Any]] = None
-    huggingface_ort_type: str = CommonKwargs.UNDEFINED.value
+
+
+class HuggingFaceOnnxArgs(BaseModel):
+    """Optional Args to use with a huggingface model
+
+    Args:
+        ort_type:
+            Optimum onnx class name
+        provider:
+            Onnx runtime provider to use
+        config:
+            Optional optimum config to use
+    """
+
+    ort_type: str
+    provider: str = "CPUExecutionProvider"
+    config: Optional[Any] = None
+
+    @field_validator("ort_type", mode="before")
+    @classmethod
+    def check_ort_type(cls, ort_type: str) -> str:
+        """Validates onnx runtime model type"""
+        ort_model = ort_type.lower()
+        if ort_model not in list(HuggingFaceORTModel):
+            raise ValueError(f"Optimum model type {ort_model} is not supported")
+        return ort_model
+
+    @field_validator("config", mode="before")
+    @classmethod
+    def check_config(cls, config: Optional[Any] = None) -> str:
+        """Check that optimum config is valid"""
+
+        if config is None:
+            return config
+
+        from optimum.onnxruntime import (
+            CalibrationConfig,
+            AutoCalibrationConfig,
+            QuantizationModel,
+            AutoQuantizationConfig,
+            OptimizationConfig,
+            AutoOptimizationConfig,
+            ORTConfig,
+            QuantizationConfig,
+        )
+
+        assert isinstance(
+            config,
+            (
+                CalibrationConfig,
+                AutoCalibrationConfig,
+                QuantizationModel,
+                AutoQuantizationConfig,
+                OptimizationConfig,
+                AutoOptimizationConfig,
+                ORTConfig,
+                QuantizationConfig,
+            ),
+        ), "config must be a valid optimum config"
 
 
 class ApiSigTypes(Enum):

@@ -38,3 +38,35 @@ GENERATION_TYPES = [
     HuggingFaceTask.TEXT_GENERATION.value,
     HuggingFaceTask.TEXT2TEXT_GENERATION.value,
 ]
+
+
+class HuggingFaceORTModel(str, Enum):
+    ORT_MODEL_FOR_AUDIO_CLASSIFICATION = "ORTModelForAudioClassification"
+    ORT_MODEL_FOR_AUDIO_FRAME_CLASSIFICATION = "ORTModelForAudioFrameClassification"
+    ORT_MODEL_FOR_AUDIO_XVECTOR = "ORTModelForAudioXVector"
+    ORT_MODEL_FOR_CUSTOM_TASKS = "ORTModelForCustomTasks"
+    ORT_MODEL_FOR_CTC = "ORTModelForCTC"
+    ORT_MODEL_FOR_FEATURE_EXTRACTION = "ORTModelForFeatureExtraction"
+    ORT_MODEL_FOR_IMAGE_CLASSIFICATION = "ORTModelForImageClassification"
+    ORT_MODEL_FOR_MASKED_LM = "ORTModelForMaskedLM"
+    ORT_MODEL_FOR_MULTIPLE_CHOICE = "ORTModelForMultipleChoice"
+    ORT_MODEL_FOR_QUESTION_ANSWERING = "ORTModelForQuestionAnswering"
+    ORT_MODEL_FOR_SEMANTIC_SEGMENTATION = "ORTModelForSemanticSegmentation"
+    ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION = "ORTModelForSequenceClassification"
+    ORT_MODEL_FOR_TOKEN_CLASSIFICATION = "ORTModelForTokenClassification"
+    ORT_MODEL_FOR_SEQ2SEQ_LM = "ORTModelForSeq2SeqLM"
+    ORT_MODEL_FOR_SPEECH_SEQ2SEQ = "ORTModelForSpeechSeq2Seq"
+    ORT_MODEL_FOR_VISION2SEQ = "ORTModelForVision2Seq"
+    ORT_MODEL_FOR_PIX2STRUCT = "ORTModelForPix2Struct"
+    ORT_MODEL_FOR_CAUSAL_LM = "ORTModelForCausalLM"
+    ORT_OPTIMIZER = "ORTOptimizer"
+    ORT_QUANTIZER = "ORTQuantizer"
+    ORT_TRAINER = "ORTTrainer"
+    ORT_SEQ2SEQ_TRAINER = "ORTSeq2SeqTrainer"
+    ORT_TRAINING_ARGUMENTS = "ORTTrainingArguments"
+    ORT_SEQ2SEQ_TRAINING_ARGUMENTS = "ORTSeq2SeqTrainingArguments"
+    ORT_STABLE_DIFFUSION_PIPELINE = "ORTStableDiffusionPipeline"
+    ORT_STABLE_DIFFUSION_IMG2IMG_PIPELINE = "ORTStableDiffusionImg2ImgPipeline"
+    ORT_STABLE_DIFFUSION_INPAINT_PIPELINE = "ORTStableDiffusionInpaintPipeline"
+    ORT_STABLE_DIFFUSION_XL_PIPELINE = "ORTStableDiffusionXLPipeline"
+    ORT_STABLE_DIFFUSION_XL_IMG2IMG_PIPELINE = "ORTStableDiffusionXLImg2ImgPipeline"
