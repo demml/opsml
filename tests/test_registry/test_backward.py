@@ -78,7 +78,7 @@ def test_model_metadata_backward():
                 "onnx_model_def": None,
                 "sample_data_type": AllowedDataType.PANDAS.value,
                 "model_type": "model",
-                "additional_onnx_args": None,
+                "onnx_args": None,
                 "data_schema": None,
                 "runcard_uid": None,
                 "pipelinecard_uid": None,

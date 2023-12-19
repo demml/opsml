@@ -22,6 +22,7 @@ from opsml.registry.model.supported_models import (
     PyTorchModel,
     TensorFlowModel,
 )
+
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import (
     ArtifactClass,
@@ -35,6 +36,7 @@ from opsml.registry.types import (
     CommonKwargs,
     FilePath,
     StoragePath,
+    HuggingFaceOnnxArgs,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
@@ -92,9 +94,12 @@ class ArtifactStorage:
         """Carries out post processing for proxy clients
 
         Args:
-            file_path (str): File path used for writing
-            storage_uri(str): Storage Uri. Can be the same as file_path
-            recursive (bool): Whether to recursively upload all files and folder in a given path
+            file_path:
+                File path used for writing
+            storage_uri:
+                Storage Uri. Can be the same as file_path
+            recursive:
+                Whether to recursively upload all files and folder in a given path
         """
 
         return self.storage_client.upload(
@@ -720,6 +725,20 @@ class HuggingFaceStorage(ArtifactStorage):
             extra_path=extra_path,
         )
 
+    def _convert_to_onnx(self, artifact: HuggingFaceModel, tmp_uri: str, model_path: str):
+        args: HuggingFaceOnnxArgs = artifact.onnx_args
+        import optimum.onnxruntime as ort
+
+        onnx_model: ort.ORTModel = getattr(artifact.model, args.ort_type)
+        onnx_path = str(Path(tmp_uri, CommonKwargs.ONNX.value))
+        onnx_model.from_pretrained(
+            model_path,
+            export=True,
+            config=args.config,
+            provider=args.provider,
+        )
+        onnx_model.save_pretrained(onnx_path)
+
     def _save_artifact(self, artifact: HuggingFaceModel, storage_uri: str, tmp_uri: str) -> str:
         """
         Saves a huggingface model
@@ -736,14 +755,19 @@ class HuggingFaceStorage(ArtifactStorage):
             Storage path
         """
 
-        artifact.model.save_pretrained(tmp_uri)
+        model_path = str(Path(tmp_uri, CommonKwargs.MODEL.value))
+        artifact.model.save_pretrained(model_path)
 
         if artifact.preprocessor is not None:
-            artifact.preprocessor.save_pretrained(tmp_uri)
+            preprocessor_path = str(Path(tmp_uri, CommonKwargs.PREPROCESSOR.value))
+            artifact.preprocessor.save_pretrained(preprocessor_path)
 
         if artifact.save_onnx:
-            # from optimum.onnxruntime
-            pass
+            assert isinstance(
+                artifact.onnx_args, HuggingFaceOnnxArgs
+            ), "onnx_args must be provided when saving a converting a huggingface model"
+
+            self._convert_to_onnx(artifact=artifact, tmp_uri=tmp_uri, model_path=model_path)
 
         return self._upload_artifact(
             file_path=tmp_uri,

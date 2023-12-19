@@ -20,6 +20,7 @@ from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClientType
+from opsml.registry.model.supported_models import HuggingFaceModel
 from opsml.registry.types import (
     AllowedDataType,
     ArrowTable,
@@ -31,6 +32,7 @@ from opsml.registry.types import (
     OnnxModelDefinition,
     StoragePath,
     ValidSavedSample,
+    CommonKwargs,
 )
 
 
@@ -329,7 +331,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         # need to save model to filesystem
         # Huggingface models are converted to onnx during model saving since they are built
         # from the model save dir (don't want to do this twice). Thus, we need to add the onnx argument to the model interface
-        setattr(self.card.model, "save_onnx", self.card.to_onnx)
+        if isinstance(self.card.model, HuggingFaceModel):
+            setattr(self.card.model, "save_onnx", self.card.to_onnx)
+            setattr(self.card.model, "onnx_args", self.card.metadata.onnx_args)
 
         storage_path = save_artifact_to_storage(
             artifact=self.card.model,
@@ -341,7 +345,14 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             ),
             extra_path="model",
         )
-        self.card.metadata.uris.trained_model_uri = storage_path.uri
+
+        if isinstance(self.card.model, HuggingFaceModel):
+            self.card.metadata.uris.trained_model_uri = str(Path(storage_path.uri, CommonKwargs.MODEL.value))
+            self.card.metadata.uris.preprocessor_uri = str(Path(storage_path.uri, CommonKwargs.PREPROCESSOR.value))
+            self.card.metadata.uris.onnx_model_uri = str(Path(storage_path.uri, CommonKwargs.ONNX.value))
+
+        else:
+            self.card.metadata.uris.trained_model_uri = storage_path.uri
 
     def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
         """Get artifact and artifact type to save"""

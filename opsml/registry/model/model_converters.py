@@ -28,7 +28,7 @@ from opsml.registry.types import (
     ApiDataSchemas,
     BaseEstimator,
     DataDict,
-    ExtraOnnxArgs,
+    TorchOnnxArgs,
     Feature,
     ModelCard,
     ModelProto,
@@ -253,9 +253,7 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(
-        self, initial_types: List[Any]
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -444,7 +442,7 @@ class SklearnOnnxModel(ModelConverter):
         Our inference implementation uses triton for onnx hosting which does not support sequence output
         for classification models (skl2onnx default). This defaults all sklearn classifiers to an array output
         """
-        add_model_args = self.card.metadata.additional_onnx_args
+        add_model_args = self.card.metadata.onnx_args
         options = getattr(add_model_args, "options", None)
 
         if self.is_sklearn_classifier and options is None:
@@ -546,11 +544,11 @@ class PytorchArgBuilder:
     def _get_output_names(self) -> List[str]:
         return ["output"]
 
-    def get_args(self) -> ExtraOnnxArgs:
+    def get_args(self) -> TorchOnnxArgs:
         input_names = self._get_input_names()
         output_names = self._get_output_names()
 
-        return ExtraOnnxArgs(
+        return TorchOnnxArgs(
             input_names=input_names,
             output_names=output_names,
         )
@@ -558,8 +556,8 @@ class PytorchArgBuilder:
 
 class PyTorchOnnxModel(ModelConverter):
     def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
-        modelcard.metadata.additional_onnx_args = self._get_additional_model_args(
-            additional_onnx_args=modelcard.metadata.additional_onnx_args,
+        modelcard.metadata.onnx_args = self._get_additional_model_args(
+            onnx_args=modelcard.metadata.onnx_args,
             input_data=data_helper.data,
         )
         super().__init__(modelcard=modelcard, data_helper=data_helper)
@@ -567,13 +565,13 @@ class PyTorchOnnxModel(ModelConverter):
     def _get_additional_model_args(
         self,
         input_data: Any,
-        additional_onnx_args: Optional[ExtraOnnxArgs] = None,
-    ) -> ExtraOnnxArgs:
-        """Passes or creates ExtraOnnxArgs needed for Onnx model conversion"""
+        onnx_args: Optional[TorchOnnxArgs] = None,
+    ) -> TorchOnnxArgs:
+        """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
 
-        if additional_onnx_args is None:
+        if onnx_args is None:
             return PytorchArgBuilder(input_data=input_data).get_args()
-        return additional_onnx_args
+        return onnx_args
 
     def _post_process_prediction(self, predictions: Any) -> NDArray[Any]:
         """Parse pytorch predictions"""
@@ -647,7 +645,7 @@ class PyTorchOnnxModel(ModelConverter):
 
         arg_data = self._get_torch_data()
 
-        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
+        assert isinstance(self.card.metadata.onnx_args, TorchOnnxArgs)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
             self.trained_model.eval()  # force model into evaluation mode
@@ -655,7 +653,7 @@ class PyTorchOnnxModel(ModelConverter):
                 model=self.trained_model,
                 args=arg_data,
                 f=filename,
-                **self.card.metadata.additional_onnx_args.model_dump(exclude={"options"}),
+                **self.card.metadata.onnx_args.model_dump(exclude={"options"}),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)

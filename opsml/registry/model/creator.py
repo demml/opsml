@@ -31,7 +31,7 @@ class ModelCreator:
                 Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
             input_data:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
-            additional_onnx_args:
+            onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
             onnx_model_def:
                 Optional `OnnxModelDefinition`
@@ -130,7 +130,7 @@ class OnnxModelCreator(ModelCreator):
                 Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
             input_data:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
-            additional_onnx_args:
+            onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
             onnx_model_def:
                 Optional `OnnxModelDefinition`

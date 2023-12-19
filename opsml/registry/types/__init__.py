@@ -28,7 +28,7 @@ from opsml.registry.types.data import (
     check_data_type,
 )
 from opsml.registry.types.extra import CommonKwargs
-from opsml.registry.types.huggingface import GENERATION_TYPES, HuggingFaceTask
+from opsml.registry.types.huggingface import GENERATION_TYPES, HuggingFaceTask, HuggingFaceORTModel
 from opsml.registry.types.model import (
     AVAILABLE_MODEL_TYPES,
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -39,7 +39,7 @@ from opsml.registry.types.model import (
     BaseEstimator,
     DataDict,
     DataDtypes,
-    ExtraOnnxArgs,
+    TorchOnnxArgs,
     Feature,
     Graph,
     HuggingFaceModuleType,
@@ -54,6 +54,7 @@ from opsml.registry.types.model import (
     TrainedModelType,
     ValidSavedSample,
     ValidModelInput,
+    HuggingFaceOnnxArgs,
 )
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,

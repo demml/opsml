@@ -14,7 +14,7 @@ from opsml.registry.types import (
     AVAILABLE_MODEL_TYPES,
     AllowedDataType,
     DataDtypes,
-    ExtraOnnxArgs,
+    TorchOnnxArgs,
     Feature,
     ModelCard,
     OnnxModelDefinition,
@@ -284,8 +284,8 @@ class PyTorchOnnxDataConverter(DataConverter):
         self.input_name = self._get_input_name()
 
     def _get_input_name(self) -> str:
-        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
-        return self.card.metadata.additional_onnx_args.input_names[0]
+        assert isinstance(self.card.metadata.onnx_args, TorchOnnxArgs)
+        return self.card.metadata.onnx_args.input_names[0]
 
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
@@ -323,8 +323,8 @@ class PyTorchOnnxDictConverter(DataConverter):
         self.input_names = self._get_input_names()
 
     def _get_input_names(self) -> List[str]:
-        assert isinstance(self.card.metadata.additional_onnx_args, ExtraOnnxArgs)
-        return self.card.metadata.additional_onnx_args.input_names
+        assert isinstance(self.card.metadata.onnx_args, TorchOnnxArgs)
+        return self.card.metadata.onnx_args.input_names
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         return None

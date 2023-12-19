@@ -14,7 +14,8 @@ from opsml.registry.types.extra import CommonKwargs
 from opsml.registry.types.model import (
     ApiDataSchemas,
     DataDict,
-    ExtraOnnxArgs,
+    TorchOnnxArgs,
+    HuggingFaceOnnxArgs,
     OnnxModelDefinition,
 )
 
@@ -207,8 +208,8 @@ class ModelCardMetadata(BaseModel):
             Type of model
         data_schema:
             Optional dictionary of the data schema used in model training
-        additional_onnx_args:
-            Optional pydantic model containing Torch args for model conversion to onnx.
+        onnx_args:
+            Optional pydantic model containing either Torch or HuggingFace args for model conversion to onnx.
         runcard_uid:
             RunCard associated with the ModelCard
         pipelinecard_uid:
@@ -225,7 +226,7 @@ class ModelCardMetadata(BaseModel):
     model_class: str = CommonKwargs.UNDEFINED.value
     task_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
-    additional_onnx_args: Optional[ExtraOnnxArgs] = None
+    onnx_args: Optional[Union[TorchOnnxArgs, HuggingFaceOnnxArgs]] = None
     data_schema: Optional[ApiDataSchemas] = None
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
