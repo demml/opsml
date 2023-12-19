@@ -18,7 +18,6 @@ def test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.
         team="mlops",
         user_email="test_email",
         datacard_uids=["test_uid"],
-        to_onnx=True,
     )
     
     create_model(modelcard=modelcard)

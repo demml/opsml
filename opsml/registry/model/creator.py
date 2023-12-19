@@ -58,21 +58,9 @@ class TrainedModelMetadataCreator(ModelCreator):
 
     def _get_input_schema(self) -> Dict[str, Feature]:
         model_data = get_model_data(
-            data_type=self.card.metadata.sample_data_type,
-            input_data=self.card.sample_input_data,
+            data_type=self.card.model.data_type,
+            input_data=self.card.model.sample_data,
         )
-
-        return model_data.feature_dict
-
-    def _get_prediction_type(self, predictions: Any) -> Dict[str, Feature]:
-        model_data = get_model_data(
-            input_data=predictions,
-            data_type=get_class_name(predictions),
-        )
-
-        # pandas will use column names as features
-        if self.card.metadata.sample_data_type != AllowedDataType.PANDAS:
-            model_data.features = ["outputs"]
 
         return model_data.feature_dict
 
@@ -81,13 +69,18 @@ class TrainedModelMetadataCreator(ModelCreator):
             sample_prediction = self.card.model.get_sample_prediction()
             processed_prediction = PredictHelper.process_model_prediction(model=self.card.model)
 
-            print(sample_prediction)
-            a
             output_data = get_model_data(
                 input_data=processed_prediction,
                 data_type=sample_prediction.prediction_type,
             )
 
+            # pandas will use column names as features
+            if self.card.model.data_type != AllowedDataType.PANDAS:
+                output_data.features = ["outputs"]
+                print(output_data.feature_dict)
+
+            print(output_data.feature_dict)
+            print()
             return output_data.feature_dict
 
         except Exception as error:
@@ -101,6 +94,11 @@ class TrainedModelMetadataCreator(ModelCreator):
 
         # this will convert categorical to string
         input_features = self._get_input_schema()
+
+        print(input_features)
+        print()
+        print(output_features)
+        a
 
         api_schema = ApiDataSchemas(
             model_data_schema=DataDict(
@@ -154,7 +152,7 @@ class OnnxModelCreator(ModelCreator):
 
         # Onnx supports dataframe schemas for pipelines
         # re-work this
-        if self.card.metadata.model_type in [
+        if self.card.model.model_type in [
             TrainedModelType.SKLEARN_PIPELINE,
             TrainedModelType.TF_KERAS,
             TrainedModelType.PYTORCH,
