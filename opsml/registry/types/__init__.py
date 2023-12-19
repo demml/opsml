@@ -36,7 +36,6 @@ from opsml.registry.types.model import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
-    ApiDataSchemas,
     ApiSigTypes,
     BaseEstimator,
     DataDict,

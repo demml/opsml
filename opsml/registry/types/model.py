@@ -127,17 +127,9 @@ class OnnxModelDefinition(BaseModel):
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
 
-class ApiDataSchemas(BaseModel):
-    model_data_schema: DataDict  # expected model inputs and outputs
-    input_data_schema: Optional[Dict[str, Feature]] = None  # what the api can be fed
-
-    model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
-
-
 class ModelReturn(BaseModel):
     model_definition: Optional[OnnxModelDefinition] = None
-    api_data_schema: ApiDataSchemas
-    model_type: str = "placeholder"
+    data_schema: DataDict
 
     model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
 
@@ -338,7 +330,7 @@ class ModelMetadata(BaseModel):
     model_team: str
     opsml_version: str = __version__
     sample_data: Dict[str, Any]
-    data_schema: ApiDataSchemas
+    data_schema: DataDict
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 

@@ -20,7 +20,6 @@ from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
     AllowedDataType,
-    ApiDataSchemas,
     ArtifactStorageSpecs,
     ArtifactStorageType,
     CardType,
@@ -292,7 +291,7 @@ class ModelCard(ArtifactCard):
         # todo: refactor
         model_def = cast(OnnxModelDefinition, self.metadata.onnx_model_def)
         model_type = str(self.metadata.model_type)
-        data_schema = cast(ApiDataSchemas, self.metadata.data_schema)
+        data_schema = self.metadata.data_schema
 
         sample_api_data = self._get_sample_data_for_api()
 
