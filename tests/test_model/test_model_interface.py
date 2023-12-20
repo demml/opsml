@@ -58,6 +58,7 @@ def test_hf_pipeline_interface(huggingface_text_classification_pipeline: Hugging
     assert model.model_class == "transformers"
     assert model.task_type == "text-classification"
     assert model.backend == "pytorch"
+    assert model.data_type == "str"
 
     prediction = model.get_sample_prediction()
     assert prediction.prediction_type == "dict"

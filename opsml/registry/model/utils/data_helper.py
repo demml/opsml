@@ -227,7 +227,7 @@ class DataDictionary(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Dict[str, Any], self.data)
-        self.dtypes, self.shapes = self.get_dtypes_shapes
+        self.dtypes, self.shapes = self.get_dtypes_shapes()
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -282,11 +282,11 @@ class DataDictionary(ModelDataHelper):
         return data_type == AllowedDataType.DICT
 
 
-class TupleData(ModelDataHelper):
-    def __init__(self, input_data: Tuple[Any], data_type: str):
+class IterData(ModelDataHelper):
+    def __init__(self, input_data: Union[List[Any], Tuple[Any]], data_type: str):
         super().__init__(input_data=input_data, data_type=data_type)
 
-        self.data = cast(Tuple[Any], self.data)
+        self.data = cast(Union[List[Any], Tuple[Any]], self.data)
         self.dtypes, self.shapes = self.get_dtypes_shapes
 
     @cached_property
@@ -333,7 +333,42 @@ class TupleData(ModelDataHelper):
 
     @staticmethod
     def validate(data_type: str) -> bool:
-        return data_type == AllowedDataType.TUPLE
+        return data_type in [AllowedDataType.TUPLE, AllowedDataType.LIST]
+
+
+class StrData(ModelDataHelper):
+    def __init__(self, input_data: str, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
+
+        self.data = cast(str, self.data)
+        self.dtypes, self.shapes = self.get_dtypes_shapes
+
+    @property
+    def dtypes(self) -> List[str]:
+        return ["str"]
+
+    @property
+    def shape(self) -> List[Tuple[int, ...]]:
+        return [(0)]
+
+    @property
+    def num_dtypes(self) -> int:
+        return len(set(self.dtypes))
+
+    @property
+    def feature_dict(self) -> Dict[str, Feature]:
+        feature_dict = {}
+        for feature, type_ in zip(self.features, self.dtypes):
+            feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
+        return feature_dict
+
+    @property
+    def features(self) -> List[str]:
+        return ["input"]
+
+    @staticmethod
+    def validate(data_type: str) -> bool:
+        return data_type == AllowedDataType.STR
 
 
 def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
