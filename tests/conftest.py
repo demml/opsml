@@ -1793,7 +1793,8 @@ def pytorch_lightning_model():
     trainer.strategy.model = model
     input_sample = torch.randn((1, 64))
 
-    return LightningModel(model=trainer, sample_data=input_sample)
+    yield LightningModel(model=trainer, sample_data=input_sample)
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1846,4 +1847,6 @@ def lightning_regression():
 
     X = torch.Tensor([[1.0], [51.0], [89.0]])
 
-    return LightningModel(model=trainer, sample_data=X), MyModel
+    yield LightningModel(model=trainer, sample_data=X), MyModel
+    
+    cleanup()
