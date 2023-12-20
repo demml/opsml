@@ -10,6 +10,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import get_class_name
 from opsml.registry.types import (
     AllowedDataType,
     CommonKwargs,
@@ -19,6 +20,36 @@ from opsml.registry.types import (
 )
 
 logger = ArtifactLogger.get_logger()
+
+
+ARRAY_TYPES = [
+    AllowedDataType.NUMPY,
+    AllowedDataType.TENSORFLOW_TENSOR,
+    AllowedDataType.TORCH_TENSOR,
+]
+
+
+class ArrayHelper:
+    @classmethod
+    def get_tensor_stats(cls, data: Any) -> Tuple[str, Tuple[int, ...]]:
+        dtype = str(data.dtype__repr__()).lower()
+        shape = tuple(data.shape)
+
+        return dtype, shape
+
+    @classmethod
+    def get_numpy_stats(cls, data: Any) -> Tuple[str, Tuple[int, ...]]:
+        dtype = str(data.dtype).lower()
+        shape = data.shape
+        return dtype, shape
+
+    @classmethod
+    def get_array_stats(cls, data: Any) -> Tuple[str, Tuple[int, ...]]:
+        data_type = get_class_name(data)
+
+        if data_type == AllowedDataType.NUMPY:
+            return cls.get_numpy_stats(data)
+        return cls.get_tensor_stats(data)
 
 
 class ModelDataHelper:
@@ -31,6 +62,7 @@ class ModelDataHelper:
         """
         self._data = input_data
         self._features = ["inputs"]
+        self._data_name = get_class_name(input_data)
 
     @property
     def data(self) -> Any:
@@ -103,23 +135,25 @@ class ModelDataHelper:
         raise NotImplementedError
 
 
-class NumpyData(ModelDataHelper):
-    def __init__(self, input_data: NDArray[Any]):
+class ArrayData(ModelDataHelper):
+    """Helper for dealing with Numpy"""
+
+    def __init__(self, input_data: Any):
         super().__init__(input_data=input_data)
 
-        self.data = cast(NDArray[Any], self.data)
+        self._dtype, self._shape = ArrayHelper.get_array_stats(self._data)
 
     @property
     def dtypes(self) -> List[str]:
-        return [str(self.data.dtype).lower()]
+        return [self._dtype]
 
     @property
     def num_dtypes(self) -> int:
-        return len(self.data.dtype)
+        return len(self._dtype)
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return cast(Tuple[int, ...], self.data.shape)
+        return self._shape
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -130,7 +164,7 @@ class NumpyData(ModelDataHelper):
 
     @staticmethod
     def validate(data_type: str) -> bool:
-        return data_type == AllowedDataType.NUMPY
+        return data_type in ARRAY_TYPES
 
 
 class PandasDataFrameData(ModelDataHelper):
@@ -193,6 +227,7 @@ class DataDictionary(ModelDataHelper):
         super().__init__(input_data=input_data)
 
         self.data = cast(Dict[str, Any], self.data)
+        self.dtypes, self.shapes = self.get_dtypes_shapes
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -202,24 +237,29 @@ class DataDictionary(ModelDataHelper):
         return feature_dict
 
     @cached_property
-    def dtypes(self) -> List[str]:
+    def get_dtypes_shapes(
+        self,
+    ) -> Tuple[List[str], List[Union[str, Tuple[int, ...]]]]:
         types = []
+        shapes = []
         for _, value in self.data.items():
-            dtype = getattr(value, "dtype", None)
-            if dtype is not None:
-                types.append(str(dtype).lower())
-            else:
-                types.append(str(type(value)).lower())
+            data_name = get_class_name(value)
 
-        return types
+            if data_name in ARRAY_TYPES:
+                dtype, shape = ArrayHelper.get_array_stats(value)
+
+            else:
+                dtype = str(type(value)).lower()
+                shape = getattr(value, "shape", CommonKwargs.UNDEFINED.value)
+
+            types.append(dtype)
+            types.append(shape)
+
+        return types, shapes
 
     @property
     def num_dtypes(self) -> int:
         return len(set(self.dtypes))
-
-    @property
-    def shape(self) -> List[Union[str, Tuple[int, ...]]]:
-        return [getattr(value, "shape", CommonKwargs.UNDEFINED.value) for value in self.data.values()]
 
     @property
     def features(self) -> List[str]:
@@ -239,27 +279,30 @@ class TupleData(ModelDataHelper):
         super().__init__(input_data=input_data)
 
         self.data = cast(Tuple[Any], self.data)
+        self.dtypes, self.shapes = self.get_dtypes_shapes
 
     @cached_property
-    def dtypes(self) -> List[str]:
-        dtypes = []
+    def get_dtypes_shapes(self) -> Tuple[List[str], List[Union[str, Tuple[int, ...]]]]:
+        types = []
+        shapes = []
         for value in self.data:
-            dtype = getattr(value, "dtype", None)
+            data_name = get_class_name(value)
 
-            if dtype is not None:
-                dtypes.append(str(dtype).lower())
+            if data_name in ARRAY_TYPES:
+                dtype, shape = ArrayHelper.get_array_stats(value)
+
             else:
-                dtypes.append(str(type(value)).lower())
+                dtype = str(type(value)).lower()
+                shape = getattr(value, "shape", CommonKwargs.UNDEFINED.value)
 
-        return dtype
+            types.append(dtype)
+            types.append(shape)
+
+        return types, shapes
 
     @property
     def num_dtypes(self) -> int:
         return len(set(self.dtypes))
-
-    @property
-    def shape(self) -> List[Union[str, Tuple[int, ...]]]:
-        return [getattr(value, "shape", CommonKwargs.UNDEFINED.value) for value in self.data.values()]
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -274,7 +317,7 @@ class TupleData(ModelDataHelper):
 
     @staticmethod
     def validate(data_type: str) -> bool:
-        return data_type == AllowedDataType.NUMPY
+        return data_type == AllowedDataType.TUPLE
 
 
 def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
