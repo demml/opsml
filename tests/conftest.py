@@ -1848,5 +1848,5 @@ def lightning_regression():
     X = torch.Tensor([[1.0], [51.0], [89.0]])
 
     yield LightningModel(model=trainer, sample_data=X), MyModel
-    
+
     cleanup()

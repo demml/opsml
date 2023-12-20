@@ -13,10 +13,7 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.model.interfaces import (
-    HuggingFaceModel,
-    SupportedModel,
-)
+from opsml.registry.model.interfaces import HuggingFaceModel, SupportedModel
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage import client

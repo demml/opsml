@@ -16,7 +16,7 @@ from opsml.registry.model.interfaces import (
 from opsml.registry.types import AllowedDataType, ModelReturn
 
 
-def _test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
+def test_model_create_sklearn_no_onnx(random_forest_classifier: SklearnModel):
     model: SklearnModel = random_forest_classifier
     modelcard = ModelCard(
         model=model,
@@ -27,6 +27,30 @@ def _test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd
     )
 
     model_return = create_model(modelcard=modelcard)
+    for i in range(0, 11):
+        assert model_return.data_schema.input_features[f"col_{i}"].shape == (1,)
+        assert model_return.data_schema.input_features[f"col_{i}"].feature_type == "float64"
+    assert model_return.data_schema.output_features["outputs"].shape == (1,)
+    assert model_return.data_schema.output_features["outputs"].feature_type == "int64"
+
+
+def test_model_create_sklearn_pipeline_no_onnx(sklearn_pipeline: SklearnModel):
+    model = sklearn_pipeline
+    modelcard = ModelCard(
+        model=model,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uids=["test_uid"],
+    )
+
+    model_return = create_model(modelcard=modelcard)
+    assert model_return.data_schema.input_features["CAT1"].shape == (1,)
+    assert model_return.data_schema.input_features["CAT1"].feature_type == "object"
+    assert model_return.data_schema.input_features["num1"].shape == (1,)
+    assert model_return.data_schema.input_features["num1"].feature_type == "float64"
+    assert model_return.data_schema.output_features["outputs"].shape == (1,)
+    assert model_return.data_schema.output_features["outputs"].feature_type == "float64"
 
 
 def test_tf_create_no_onnx(load_transformer_example: TensorFlowModel):
