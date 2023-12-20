@@ -46,6 +46,7 @@ class AllowedDataType(str, Enum):
     TUPLE = "tuple"
     LIST = "list"
     STR = "str"
+    ORDERED_DICT = "collections.OrderedDict"
 
 
 class ArrowTable(BaseModel):

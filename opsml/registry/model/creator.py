@@ -8,7 +8,6 @@ from typing import Any, Dict
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.utils.data_helper import get_model_data
-from opsml.registry.model.utils.model_predict_helper import PredictHelper
 from opsml.registry.types import DataDict, Feature, ModelReturn, TrainedModelType
 from opsml.registry.types.data import AllowedDataType
 
@@ -59,10 +58,9 @@ class TrainedModelMetadataCreator(ModelCreator):
     def _get_output_schema(self) -> Dict[str, Feature]:
         try:
             sample_prediction = self.card.model.get_sample_prediction()
-            processed_prediction = PredictHelper.process_model_prediction(model=self.card.model)
 
             output_data = get_model_data(
-                input_data=processed_prediction,
+                input_data=sample_prediction.prediction,
                 data_type=sample_prediction.prediction_type,
             )
 
