@@ -188,7 +188,7 @@ class ActiveRun:
 
         uri = save_artifact_to_storage(
             artifact=artifact,
-            artifact_type=ArtifactStorageType.UNKNOWN,
+            artifact_type=ArtifactStorageType.JOBLIB,
             storage_client=self._info.storage_client,
             root_uri=self.runcard.artifact_uri,
             filename=name,

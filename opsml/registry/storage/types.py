@@ -34,7 +34,7 @@ class ArtifactStorageType(str, Enum):
     PYTORCH = "pytorch"
     TF_MODEL = "keras"
     TRANSFORMER = "transformer"
-    UNKNOWN = "unknown"
+    JOBLIB = "joblib"
 
     @staticmethod
     def from_str(value: str) -> Optional[ArtifactStorageType]:
