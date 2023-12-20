@@ -1,25 +1,19 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.model.interfaces.base import (
-    SamplePrediction,
-    SupportedModel,
-    get_model_args,
-)
+from opsml.registry.model.interfaces.base import SamplePrediction, SupportedModel
 from opsml.registry.types import (
     GENERATION_TYPES,
-    AllowedDataType,
     CommonKwargs,
-    HuggingFaceModuleType,
     HuggingFaceOnnxArgs,
     HuggingFaceTask,
     TrainedModelType,
 )
 
 try:
-    from transformers import Pipeline, PreTrainedModel, TFPreTrainedModel
+    from transformers import BatchEncoding, Pipeline, PreTrainedModel, TFPreTrainedModel
 
     class HuggingFaceModel(SupportedModel):
         """Model interface for HuggingFace models
@@ -66,6 +60,7 @@ try:
             )
         """
 
+        model: Optional[Union[Pipeline, PreTrainedModel, TFPreTrainedModel]] = None
         is_pipeline: bool = False
         backend: str
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
@@ -80,6 +75,28 @@ try:
         @onnx_model.setter
         def onnx_model(self, value: Any) -> None:
             self._onnx_model = value
+
+        @classmethod
+        def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
+            """Check sample data and returns one record to be used
+            during type inference and ONNX conversion/validation.
+
+            Returns:
+                Sample data with only one record
+            """
+            if isinstance(sample_data, list):
+                return [data[0:1] for data in sample_data]
+
+            if isinstance(sample_data, tuple):
+                return (data[0:1] for data in sample_data)
+
+            if isinstance(sample_data, dict):
+                sample_dict = {}
+                for key, value in sample_data.items():
+                    sample_dict[key] = value[0:1]
+                return sample_dict
+
+            return sample_data[0:1]
 
         @classmethod
         def _check_model_backend(cls, model: Any) -> str:
@@ -109,29 +126,20 @@ try:
                 return model_args
 
             hf_model = model_args.get("model")
-            hf_model, module, bases = get_model_args(hf_model)
+            assert hf_model is not None, "Model is not defined"
 
-            if model_args.get(CommonKwargs.IS_PIPELINE):
-                assert isinstance(hf_model, Pipeline), "Model must be a huggingface pipeline"
-                model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(
-                    hf_model.model
-                )  # hf_model is pipe that has 'model' attr
+            if isinstance(hf_model, Pipeline):
+                model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model.model)
+                model_args[CommonKwargs.IS_PIPELINE.value] = True
 
             else:
                 model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model)
-
-            if any(huggingface_module in module for huggingface_module in HuggingFaceModuleType):
-                model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.__class__.__name__
-
-            # for subclassed models
-            if hasattr(hf_model, "mro"):
-                # check bases
-                bases = [str(base) for base in hf_model.mro()]
-                for base in bases:
-                    if any(huggingface_module in base for huggingface_module in HuggingFaceModuleType):
-                        model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
+                model_args[CommonKwargs.IS_PIPELINE.value] = False
 
             sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+
+            # set args
+            model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.__class__.__name__
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
@@ -154,7 +162,9 @@ try:
             """Use model in generate mode if generate task"""
 
             assert self.sample_data is not None, "Sample data must be provided"
-            if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
+            assert self.model is not None, "Model must be provided"
+
+            if isinstance(self.data_type, (BatchEncoding, dict)):
                 return self.model.generate(**self.sample_data)
 
             return self.generate(self.sample_data)
@@ -163,7 +173,9 @@ try:
             """Use model in functional mode if functional task"""
 
             assert self.sample_data is not None, "Sample data must be provided"
-            if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
+            assert self.model is not None, "Model must be provided"
+
+            if isinstance(self.data_type, (BatchEncoding, dict)):
                 return self.model(**self.sample_data)
 
             return self.model(self.sample_data)

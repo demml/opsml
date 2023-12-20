@@ -1,8 +1,9 @@
-from typing import Any, Dict, Optional, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pydantic import model_validator
 import numpy as np
 from numpy.typing import NDArray
+from pydantic import model_validator
+
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import SupportedModel, get_model_args
 from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
@@ -96,7 +97,6 @@ try:
             )
 
             return model_args
-
 
 except ModuleNotFoundError:
 

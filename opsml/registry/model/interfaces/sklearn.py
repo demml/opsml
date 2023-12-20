@@ -1,21 +1,19 @@
-from typing import Any, Dict, Optional, Union, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from numpy.typing import NDArray
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.model.interfaces.base import (
-    SupportedModel,
-    get_model_args,
-)
-
+from opsml.registry.model.interfaces.base import SupportedModel, get_model_args
 from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
 
 try:
     from sklearn.base import BaseEstimator
 
-    VALID_DATA = Union[pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]]]
+    VALID_DATA = Union[
+        pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any
+    ]
 
     class SklearnModel(SupportedModel):
         """Model interface for Sklearn models.
@@ -44,25 +42,6 @@ try:
         sample_data: Optional[VALID_DATA] = None
         onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.SKLEARN_ESTIMATOR.value
-
-        @classmethod
-        def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
-            """Check sample data and returns one record to be used
-            during type inference and ONNX conversion/validation.
-
-            Returns:
-                Sample data with only one record
-            """
-            if isinstance(sample_data, list):
-                return [data[0:1] for data in sample_data]
-
-            if isinstance(sample_data, tuple):
-                return (data[0:1] for data in sample_data)
-
-            if isinstance(sample_data, dict):
-                return {key: data[0:1] for key, data in sample_data.items()}
-
-            return sample_data[0:1]
 
         @model_validator(mode="before")
         @classmethod
@@ -98,4 +77,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("SklearnModel requires scikit-learn to be installed. Please install scikit-learn.")
+            raise ModuleNotFoundError(
+                "SklearnModel requires scikit-learn to be installed. Please install scikit-learn."
+            )

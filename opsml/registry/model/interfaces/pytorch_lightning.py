@@ -6,7 +6,6 @@ from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import SamplePrediction, get_model_args
 from opsml.registry.model.interfaces.pytorch import PyTorchModel
 from opsml.registry.types import (
-    AllowedDataType,
     CommonKwargs,
     OnnxModelDefinition,
     TorchOnnxArgs,
@@ -39,6 +38,7 @@ try:
         LightningModel
         """
 
+        model: Optional[Trainer] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.PYTORCH_LIGHTNING.value
@@ -53,10 +53,6 @@ try:
                 return model_args
 
             model, module, bases = get_model_args(model)
-
-            from lightning import Trainer
-
-            assert isinstance(model, Trainer), "Model must be a pytorch lightning trainer"
 
             if "lightning.pytorch" in module:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.model.__class__.__name__
@@ -75,17 +71,29 @@ try:
             return model_args
 
         def get_sample_prediction(self) -> SamplePrediction:
+            assert self.model is not None, "Model is not defined"
             assert self.sample_data is not None, "Sample data must be provided"
 
-            if not isinstance(self.model, Trainer):
-                return super().get_sample_prediction()
+            # test dict input
+            if isinstance(self.sample_data, dict):
+                try:
+                    prediction = self.model.model(**self.sample_data)
+                except Exception:
+                    prediction = self.model.model(self.sample_data)
 
-            if self.data_type in [AllowedDataType.DICT, AllowedDataType.TRANSFORMER_BATCH]:
-                prediction = self.model.model(**self.sample_data)
+            # test list and tuple inputs
+            elif isinstance(self.sample_data, (list, tuple)):
+                try:
+                    prediction = self.model.model(*self.sample_data)
+                except Exception:
+                    prediction = self.model.model(self.sample_data)
+
+            # all others
             else:
                 prediction = self.model.model(self.sample_data)
 
             prediction_type = get_class_name(prediction)
+
             return SamplePrediction(prediction_type, prediction)
 
 except ModuleNotFoundError:

@@ -1,5 +1,6 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+from numpy.typing import NDArray
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
@@ -7,7 +8,9 @@ from opsml.registry.model.interfaces.base import SupportedModel, get_model_args
 from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
 
 try:
-    from lightgbm import Booster
+    from lightgbm import Booster, LGBMModel
+
+    VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 
     class LightGBMBoosterModel(SupportedModel):
         """Model interface for LightGBM Booster model class. If using the sklearn API, use SklearnModel instead.
@@ -34,6 +37,8 @@ try:
             LightGBMBoosterModel
         """
 
+        model: Optional[Union[Booster, LGBMModel]] = None
+        sample_data: Optional[VALID_DATA] = None
         onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.LGBM_BOOSTER.value
 
@@ -48,11 +53,7 @@ try:
 
             model, module, _ = get_model_args(model)
 
-            assert isinstance(
-                model, Booster
-            ), "Model must be a lightgbm booster. If using the sklearn API, use SklearnModel instead."
-
-            if "lightgbm" in module:
+            if "lightgbm" in module or isinstance(model, LGBMModel):
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
             sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
