@@ -182,7 +182,7 @@ class GCSFSStorageClient(StorageClient):
         self.client.rm(path=self.build_absolute_path(read_path), recursive=True)
 
     def open(self, filename: str, mode: str) -> BinaryIO:
-        return self.client.open(self.build_absolute_path(filename), mode)
+        return self.client.open(filename, mode)
 
     def list_files(self, storage_uri: str) -> List[str]:
         return [path.replace(self.base_path_prefix, "").lstrip("/") for path in self.client.ls(path=str(storage_uri))]
@@ -316,7 +316,7 @@ class LocalStorageClient(StorageClient):
         return files
 
     def open(self, filename: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
-        return cast(BinaryIO, open(file=self.build_absolute_path(filename), mode=mode, encoding=encoding))
+        return cast(BinaryIO, open(file=filename, mode=mode, encoding=encoding))
 
     def store(self, storage_uri: str, **kwargs: Any) -> str:
         return storage_uri

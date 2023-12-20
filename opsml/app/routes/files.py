@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
+from pathlib import Path
 from typing import Dict, cast
 from uuid import UUID
 
@@ -101,13 +102,10 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     # Files can only be uploaded to paths that have a registry dir name
     _verify_path(path=write_path)
 
-    storage_client: StorageClient = cast(StorageClient, request.app.state.storage_client)
-    abs_write_path = storage_client.build_absolute_path(write_path)
-
     try:
         file_ = ExternalFileTarget(
             filename=filename,
-            write_path=abs_write_path,
+            write_path=write_path,
             storage_client=request.app.state.storage_client,
             validator=MaxSizeValidator(MAX_FILE_SIZE),
         )
