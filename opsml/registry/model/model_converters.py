@@ -76,7 +76,7 @@ class ModelConverter:
 
     @property
     def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
-        return self.card.metadata.onnx_model_def
+        return self.card.model.onnx_model_def
 
     @property
     def is_sklearn_classifier(self) -> bool:
@@ -298,25 +298,22 @@ class ModelConverter:
         """
         initial_types, data_schema = self.get_data_types()
 
-        print(initial_types)
-        print(data_schema)
-        print()
         a
-
         if self.onnx_model_def is None:
-            model_def, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
+            model_def, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
         else:
-            model_def, input_onnx_features, output_onnx_features = self._load_onnx_model()
+            model_def, onnx_input_features, onnx_output_features = self._load_onnx_model()
 
         schema = (
             DataDict(
-                input_features=input_onnx_features,
-                output_features=output_onnx_features,
+                input_features=data_schema,
+                onnx_input_features=onnx_input_features,
+                onnx_output_features=onnx_output_features,
             ),
         )
 
-        return ModelReturn(model_definition=model_def, api_data_schema=schema)
+        return ModelReturn(model_definition=model_def, data_schema=schema)
 
     def _create_onnx_session(self, onnx_model: ModelProto) -> rt.InferenceSession:
         return rt.InferenceSession(
@@ -339,7 +336,7 @@ class SklearnOnnxModel(ModelConverter):
 
     @property
     def _is_calibrated_classifier(self) -> bool:
-        return self.card.metadata.model_class.lower() == TrainedModelType.CALIBRATED_CLASSIFIER
+        return self.card.model.model_type == TrainedModelType.CALIBRATED_CLASSIFIER
 
     @property
     def _is_pipeline(self) -> bool:
@@ -452,7 +449,7 @@ class SklearnOnnxModel(ModelConverter):
         Our inference implementation uses triton for onnx hosting which does not support sequence output
         for classification models (skl2onnx default). This defaults all sklearn classifiers to an array output
         """
-        add_model_args = self.card.metadata.onnx_args
+        add_model_args = self.card.model.onnx_args
         options = getattr(add_model_args, "options", None)
 
         if self.is_sklearn_classifier and options is None:
@@ -566,8 +563,8 @@ class PytorchArgBuilder:
 
 class PyTorchOnnxModel(ModelConverter):
     def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
-        modelcard.metadata.onnx_args = self._get_additional_model_args(
-            onnx_args=modelcard.metadata.onnx_args,
+        modelcard.model.onnx_args = self._get_additional_model_args(
+            onnx_args=modelcard.model.onnx_args,
             input_data=data_helper.data,
         )
         super().__init__(modelcard=modelcard, data_helper=data_helper)
@@ -655,7 +652,7 @@ class PyTorchOnnxModel(ModelConverter):
 
         arg_data = self._get_torch_data()
 
-        assert isinstance(self.card.metadata.onnx_args, TorchOnnxArgs)
+        assert isinstance(self.card.model.onnx_args, TorchOnnxArgs)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
             self.trained_model.eval()  # force model into evaluation mode
@@ -663,7 +660,7 @@ class PyTorchOnnxModel(ModelConverter):
                 model=self.trained_model,
                 args=arg_data,
                 f=filename,
-                **self.card.metadata.onnx_args.model_dump(exclude={"options"}),
+                **self.card.model.onnx_args.model_dump(exclude={"options"}),
             )
             onnx.checker.check_model(filename)
             model = onnx.load(filename)
