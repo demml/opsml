@@ -176,13 +176,13 @@ class ExternalFileTarget(FileTarget):  # type: ignore[misc]
         super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
 
         self.storage_client = storage_client
-        self.write_path = write_path
-        self.filepath = f"{self.write_path}/{filename}"
+        self.filepath = f"{write_path}/{filename}"
         self._create_base_path()
 
     def _create_base_path(self) -> None:
         if isinstance(self.storage_client, LocalStorageClient):
-            Path(self.write_path).mkdir(parents=True, exist_ok=True)
+            self.filepath = self.storage_client.build_absolute_path(self.filepath)
+            Path(self.filepath).parent.mkdir(parents=True, exist_ok=True)
 
     def on_start(self) -> None:
         self._fd = self.storage_client.open(self.filepath, self._mode)
