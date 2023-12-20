@@ -10,7 +10,6 @@ from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.card_deleter import delete_card_artifacts
 from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.types import RegistryTableNames
@@ -329,6 +328,5 @@ class SQLRegistryBase:
 
     def delete_card(self, card: ArtifactCard) -> None:
         """Delete a specific card"""
-
-        delete_card_artifacts(card=card, storage_client=self.storage_client)
+        self.storage_client.delete(card.uri)
         self.delete_card_record(card=card.model_dump(include={"uid", "name", "version"}))
