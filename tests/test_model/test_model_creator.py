@@ -85,6 +85,7 @@ def test_torch_no_onnx(deeplabv3_resnet50: PyTorchModel):
     assert model_return.data_schema.output_features['out'].shape == (1, 21, 400, 400)
     assert model_return.data_schema.input_features['inputs'].shape == (1, 3, 400, 400)
    
+   
 def test_lightning_no_onnx(lightning_regression: LightningModel):
     model = lightning_regression
     modelcard = ModelCard(
@@ -96,6 +97,7 @@ def test_lightning_no_onnx(lightning_regression: LightningModel):
     )
 
     model_return: ModelReturn = create_model(modelcard=modelcard)
+    print(model_return)
     assert model_return.data_schema.output_features['out'].shape == (1, 21, 400, 400)
     assert model_return.data_schema.input_features['inputs'].shape == (1, 3, 400, 400)
      
