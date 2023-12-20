@@ -17,7 +17,7 @@ from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import OpsmlImportExceptions
+from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.data_converters import OnnxDataConverter
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
@@ -183,6 +183,11 @@ class ModelConverter:
 
         if isinstance(onnx_preds, list) and isinstance(model_preds, (list, tuple)):
             for onnx_pred, model_pred in zip(onnx_preds, model_preds):
+                data_type = get_class_name(model_pred)
+
+                if data_type in [AllowedDataType.TENSORFLOW_TENSOR, AllowedDataType.PYTORCH_TENSOR]:
+                    model_pred = model_pred.numpy()
+
                 return np.testing.assert_allclose(onnx_pred, model_pred, rtol=1e-03, atol=1e-05)
 
         if isinstance(model_preds, np.ndarray):
