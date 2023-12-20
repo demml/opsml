@@ -181,7 +181,7 @@ class PandasDataFrameData(ModelDataHelper):
     def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_ in zip(self.features, self.dtypes):
-            feature_dict[feature] = Feature(feature_type=type_, shape=(1))
+            feature_dict[feature] = Feature(feature_type=type_, shape=(1,))
         return feature_dict
 
     @property
