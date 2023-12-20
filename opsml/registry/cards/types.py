@@ -76,10 +76,7 @@ class Comment(BaseModel):
         return self.__dict__ == other.__dict__
 
 
-# TODO(@damon): Make this BaseModel
-@dataclass
-class CardInfo:
-
+class CardInfo(BaseModel):
     """
     Class that holds info related to an Artifact Card
 
