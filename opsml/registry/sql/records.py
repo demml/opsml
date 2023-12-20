@@ -417,15 +417,11 @@ def load_record(
         )
     )
 
-    try:
-        loaded_record = record(
-            **{
-                **record_data,
-                **{"storage_client": storage_client},
-            }
-        )
-    except ValueError as vex:
-        print(vex)
-        raise
+    loaded_record = record(
+        **{
+            **record_data,
+            **{"storage_client": storage_client},
+        }
+    )
 
     return cast(LoadedRecordType, loaded_record)
