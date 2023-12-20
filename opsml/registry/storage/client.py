@@ -49,10 +49,10 @@ class FileSystemClient(Protocol):
     def upload(self, lpath: str, rpath: str, recursive: bool) -> str:
         ...
 
-    def copy(self, read_path: str, write_path: str, recursive=True) -> None:
+    def copy(self, read_path: str, write_path: str, recursive: bool) -> None:
         ...
 
-    def rm(self, path: str) -> None:  # pylint: disable=invalid-name
+    def rm(self, path: str, recursive: bool) -> None:  # pylint: disable=invalid-name
         ...
 
     def open(self, filename: str, mode: str) -> BinaryIO:
@@ -121,10 +121,7 @@ class StorageClient:
         return str(rpath_path.relative_to(base_path))
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs: Any) -> Optional[str]:
-        return cast(
-            Optional[str],
-            self.client.download(rpath=self.build_absolute_path(rpath), lpath=lpath, recursive=recursive),
-        )
+        return self.client.download(rpath=self.build_absolute_path(rpath), lpath=lpath, recursive=recursive)
 
     def upload(
         self,
@@ -133,9 +130,7 @@ class StorageClient:
         recursive: bool = False,
         **kwargs: Any,
     ) -> str:
-        return cast(
-            str, self.client.upload(lpath=local_path, rpath=self.build_absolute_path(write_path), recursive=recursive)
-        )
+        return self.client.upload(lpath=local_path, rpath=self.build_absolute_path(write_path), recursive=recursive)
 
     def copy(self, read_path: str, write_path: str) -> None:
         raise ValueError("Storage class does not implement a copy method")
@@ -187,7 +182,7 @@ class GCSFSStorageClient(StorageClient):
         self.client.rm(path=self.build_absolute_path(read_path), recursive=True)
 
     def open(self, filename: str, mode: str) -> BinaryIO:
-        return cast(BinaryIO, self.client.open(self.build_absolute_path(filename), mode))
+        return self.client.open(self.build_absolute_path(filename), mode)
 
     def list_files(self, storage_uri: str) -> List[str]:
         return [path.replace(self.base_path_prefix, "").lstrip("/") for path in self.client.ls(path=str(storage_uri))]
@@ -199,9 +194,9 @@ class GCSFSStorageClient(StorageClient):
         return gcsfs.GCSMap(storage_uri, gcs=self.client, check=False)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs: Any) -> Optional[str]:
-        loadable_path: str = self.client.download(
-            rpath=self.build_absolute_path(rpath), lpath=lpath, recursive=recursive
-        )
+        loadable_path = self.client.download(rpath=self.build_absolute_path(rpath), lpath=lpath, recursive=recursive)
+        if loadable_path is None:
+            return None
 
         if all(path is None for path in loadable_path):
             return os.path.join(lpath, os.path.basename(rpath))
@@ -249,7 +244,7 @@ class S3StorageClient(StorageClient):
         self.client.rm(path=read_path, recursive=True)
 
     def open(self, filename: str, mode: str) -> BinaryIO:
-        return cast(BinaryIO, self.client.open(filename, mode))
+        return self.client.open(filename, mode)
 
     def list_files(self, storage_uri: str) -> List[str]:
         # TODO(@damon): Strip the root prefix
@@ -262,7 +257,9 @@ class S3StorageClient(StorageClient):
         return s3fs.S3Map(storage_uri, s3=self.client, check=False)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs: Any) -> Optional[str]:
-        loadable_path: str = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
+        loadable_path = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
+        if loadable_path is None:
+            return None
 
         if all(path is None for path in loadable_path):
             return os.path.join(lpath, os.path.basename(rpath))

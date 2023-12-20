@@ -603,7 +603,7 @@ def _get_artifact_storage_type(
     if artifact_storage is not None:
         return artifact_storage
 
-    return ArtifactStorageType.UNKNOWN
+    return ArtifactStorageType.JOBLIB
 
 
 def save_artifact_to_storage(

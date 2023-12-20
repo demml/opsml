@@ -266,7 +266,7 @@ class RunCard(ArtifactCard):
         if bool(self.artifact_uris):
             for name, uri in self.artifact_uris.items():
                 self.artifacts[name] = load_record_artifact_from_storage(
-                    artifact_type=ArtifactStorageType.UNKNOWN,
+                    artifact_type=ArtifactStorageType.JOBLIB,
                     storage_client=client.storage_client,
                     uri=uri,
                 )
