@@ -14,6 +14,7 @@ from opsml.registry.types import (
 
 try:
     from transformers import BatchEncoding, Pipeline, PreTrainedModel, TFPreTrainedModel
+    from transformers.utils import ModelOutput
 
     class HuggingFaceModel(SupportedModel):
         """Model interface for HuggingFace models
@@ -164,7 +165,7 @@ try:
             assert self.sample_data is not None, "Sample data must be provided"
             assert self.model is not None, "Model must be provided"
 
-            if isinstance(self.data_type, (BatchEncoding, dict)):
+            if isinstance(self.sample_data, (BatchEncoding, dict)):
                 return self.model.generate(**self.sample_data)
 
             return self.generate(self.sample_data)
@@ -175,7 +176,7 @@ try:
             assert self.sample_data is not None, "Sample data must be provided"
             assert self.model is not None, "Model must be provided"
 
-            if isinstance(self.data_type, (BatchEncoding, dict)):
+            if isinstance(self.sample_data, (BatchEncoding, dict)):
                 return self.model(**self.sample_data)
 
             return self.model(self.sample_data)
@@ -205,6 +206,9 @@ try:
                 prediction = self._generate_predictions()
             else:
                 prediction = self._functional_predictions()
+
+            if isinstance(prediction, ModelOutput):
+                prediction = dict(prediction)
 
             prediction_type = get_class_name(prediction)
 

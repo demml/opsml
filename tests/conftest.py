@@ -73,7 +73,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 # opsml
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 from opsml.registry.model.challenger import ModelChallenger
-from opsml.registry.model.interfaces.supported_models import (
+from opsml.registry.model.interfaces import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
@@ -1821,10 +1821,7 @@ def lightning_regression():
 
         def forward(self, inputs_id, labels=None):
             outputs = self.fc(inputs_id)
-            loss = 0
-            if labels is not None:
-                loss = self.criterion(outputs, labels)
-            return loss, outputs
+            return outputs
 
         def train_dataloader(self):
             dataset = SimpleDataset()
@@ -1833,7 +1830,10 @@ def lightning_regression():
         def training_step(self, batch, batch_idx):
             input_ids = batch["X"]
             labels = batch["y"]
-            loss, outputs = self(input_ids, labels)
+            outputs = self(input_ids, labels)
+            loss = 0
+            if labels is not None:
+                loss = self.criterion(outputs, labels)
             return {"loss": loss}
 
         def configure_optimizers(self):

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.model.supported_models import (
+from opsml.registry.model.interfaces import (
     HuggingFaceModel,
     LightGBMBoosterModel,
     LightningModel,
