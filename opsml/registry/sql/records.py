@@ -19,7 +19,6 @@ from opsml.registry.cards.types import (
 )
 from opsml.registry.storage.artifact import load_record_artifact_from_storage
 from opsml.registry.storage.client import StorageClientType
-from opsml.registry.storage.types import ArtifactStorageSpecs
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
@@ -213,7 +212,7 @@ class LoadedDataRecord(LoadRecord):
         datacard_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=save_path),
+            uri=save_path,
         )
         assert datacard_definition is not None
         return cast(Dict[str, Any], datacard_definition)
@@ -267,7 +266,7 @@ class LoadedModelRecord(LoadRecord):
         model_card_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
+            uri=values["modelcard_uri"],
         )
         assert model_card_definition is not None
         return cast(Dict[str, Any], model_card_definition)
@@ -322,7 +321,7 @@ class LoadedAuditRecord(LoadRecord):
         audit_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
+            uri=audit_uri,
         )
         assert audit_definition is not None
         return cast(Dict[str, Any], audit_definition)
@@ -374,7 +373,7 @@ class LoadedRunRecord(LoadRecord):
         runcard_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
+            uri=runcard_uri,
         )
         assert runcard_definition is not None
         return cast(Dict[str, Any], runcard_definition)
@@ -418,11 +417,15 @@ def load_record(
         )
     )
 
-    loaded_record = record(
-        **{
-            **record_data,
-            **{"storage_client": storage_client},
-        }
-    )
+    try:
+        loaded_record = record(
+            **{
+                **record_data,
+                **{"storage_client": storage_client},
+            }
+        )
+    except ValueError as vex:
+        print(vex)
+        raise
 
     return cast(LoadedRecordType, loaded_record)

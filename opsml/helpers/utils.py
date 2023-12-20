@@ -94,6 +94,16 @@ class FileUtils:
     """Helper class for finding paths to artifacts"""
 
     @staticmethod
+    def create_path(
+        root_path: str,
+        filename: str,
+        suffix: Optional[str] = None,
+    ) -> str:
+        if suffix is not None:
+            filename += f".{suffix}"
+        return os.path.join(root_path, filename)
+
+    @staticmethod
     def find_dirpath(path: str, dir_name: str, anchor_file: str) -> Path:
         """Finds the directory path for a directory `dir_name` which contains a
         given anchor file.

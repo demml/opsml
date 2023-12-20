@@ -6,21 +6,10 @@
 import os
 import shutil
 import tempfile
-import uuid
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
-from typing import (
-    Any,
-    BinaryIO,
-    Generator,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, BinaryIO, Generator, Iterator, List, Optional, Union, cast
 
 from pyarrow.fs import LocalFileSystem
 
@@ -29,8 +18,6 @@ from opsml.helpers.utils import all_subclasses
 from opsml.registry.storage.api import ApiClient, ApiRoutes
 from opsml.registry.storage.types import (
     ApiStorageClientSettings,
-    ArtifactStorageSpecs,
-    FilePath,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientSettings,
@@ -62,34 +49,16 @@ class StorageClient:
     def is_local(self) -> bool:
         return self.settings.storage_system == StorageSystem.LOCAL
 
-    def extend_storage_spec(
-        self,
-        spec: ArtifactStorageSpecs,
-        extra_path: Optional[str] = None,
-        file_suffix: Optional[str] = None,
-    ) -> ArtifactStorageSpecs:
-        """A utility function which extends the storage spec with an optional path and suffix."""
-        ret = spec.model_copy()
-        if extra_path is not None:
-            ret.save_path = os.path.join(ret.save_path, extra_path)
-
-        ret.filename = ret.filename or uuid.uuid4().hex
-        if file_suffix is not None:
-            ret.filename = f"{ret.filename}.{file_suffix}"
-        return ret
-
     @contextmanager
-    def create_temp_save_path_with_spec(
+    def create_tmp_path(
         self,
-        spec: ArtifactStorageSpecs,
-    ) -> Generator[Tuple[str, str], None, None]:
-        """Generate both remote and local temporary paths for a given ArtifactoryStorageSpec."""
-        spec.filename = spec.filename or uuid.uuid4().hex
-        path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
+        path: str,
+    ) -> Generator[str, None, None]:
+        """Generates a temporary path for a given ArtifactStorageSpec."""
         with tempfile.TemporaryDirectory() as tmpdirname:
-            yield path, os.path.join(tmpdirname, spec.filename)
+            yield os.path.join(tmpdirname, os.path.basename(path))
 
-    def list_files(self, storage_uri: str) -> FilePath:
+    def list_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
@@ -113,8 +82,7 @@ class StorageClient:
         recursive: bool = False,
         **kwargs: Any,
     ) -> str:
-        self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
-        return write_path
+        return cast(str, self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive))
 
     def copy(self, read_path: str, write_path: str) -> None:
         raise ValueError("Storage class does not implement a copy method")
@@ -168,8 +136,9 @@ class GCSFSStorageClient(StorageClient):
     def open(self, filename: str, mode: str) -> BinaryIO:
         return cast(BinaryIO, self.client.open(filename, mode))
 
-    def list_files(self, storage_uri: str) -> FilePath:
-        return [f"gs://{path}" for path in self.client.ls(path=storage_uri)]
+    def list_files(self, storage_uri: str) -> List[str]:
+        # TODO(@damon): Remove storage root
+        return [f"gs://{path}" for path in self.client.ls(path=str(storage_uri))]
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
         """Create store for use with Zarr arrays"""
@@ -181,8 +150,7 @@ class GCSFSStorageClient(StorageClient):
         loadable_path: str = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
         if all(path is None for path in loadable_path):
-            file_ = os.path.basename(rpath)
-            return os.path.join(lpath, file_)
+            return os.path.join(lpath, os.path.basename(rpath))
         return loadable_path
 
     @staticmethod
@@ -228,8 +196,9 @@ class S3StorageClient(StorageClient):
     def open(self, filename: str, mode: str) -> BinaryIO:
         return cast(BinaryIO, self.client.open(filename, mode))
 
-    def list_files(self, storage_uri: str) -> FilePath:
-        return [f"s3://{path}" for path in self.client.ls(path=storage_uri)]
+    def list_files(self, storage_uri: str) -> List[str]:
+        # TODO(@damon): Strip the root prefix
+        return [f"s3://{path}" for path in self.client.ls(path=str(storage_uri))]
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
         """Create store for use with Zarr arrays"""
@@ -241,8 +210,7 @@ class S3StorageClient(StorageClient):
         loadable_path: str = self.client.download(rpath=rpath, lpath=lpath, recursive=recursive)
 
         if all(path is None for path in loadable_path):
-            file_ = os.path.basename(rpath)
-            return os.path.join(lpath, file_)
+            return os.path.join(lpath, os.path.basename(rpath))
         return loadable_path
 
     @staticmethod
@@ -268,26 +236,22 @@ class LocalStorageClient(StorageClient):
             write_path
 
         """
-
         if os.path.isdir(local_path):
-            write_dir = Path(write_path)
-            write_dir.mkdir(parents=True, exist_ok=True)
+            Path(local_path).mkdir(parents=True, exist_ok=True)
+            shutil.rmtree(write_path, ignore_errors=True)
             shutil.copytree(local_path, write_path, dirs_exist_ok=True)
 
         else:
-            write_dir = Path(write_path).parents[0]
-            write_dir.mkdir(parents=True, exist_ok=True)
+            write_dir = Path(write_path).parent
+            if not write_dir.exists():
+                write_dir.mkdir(parents=True, exist_ok=True)
             shutil.copy(local_path, write_path)
 
         return write_path
 
-    def list_files(self, storage_uri: str) -> FilePath:
-        path = Path(storage_uri)
-
-        if path.is_dir():
-            paths = [str(p) for p in path.rglob("*")]
-            return paths
-
+    def list_files(self, storage_uri: str) -> List[str]:
+        if os.path.isdir(storage_uri):
+            return [str(p) for p in Path(storage_uri).rglob("*")]
         return [storage_uri]
 
     def open(self, filename: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
@@ -305,27 +269,24 @@ class LocalStorageClient(StorageClient):
             write_path:
                 Path to write to
         """
-        if Path(read_path).is_dir():
+        if os.path.isdir(read_path):
             shutil.copytree(read_path, write_path, dirs_exist_ok=True)
         else:
             shutil.copyfile(read_path, write_path)
 
     def download(self, rpath: str, lpath: str, recursive: bool = False, **kwargs: Any) -> Optional[str]:
-        local_path = Path(lpath)
-        read_path = Path(rpath)
-
         # check if files have been passed (used with downloading artifacts)
         files = kwargs.get("files", [])
         if len(files) == 1:
-            filepath = Path(files[0])
-            rpath = str(filepath)
+            filepath = files[0]
+            rpath = filepath
 
-            if local_path.is_dir():
-                lpath = str(local_path / filepath.name)
+            if os.path.isdir(lpath):
+                lpath = os.path.join(lpath, os.path.basename(filepath))
 
         # check if trying to copy single file to directory
-        if read_path.is_file():
-            lpath = str(local_path / read_path.name)
+        if os.path.isfile(rpath):
+            lpath = os.path.join(lpath, os.path.basename(rpath))
 
         self.copy(read_path=rpath, write_path=lpath)
 
@@ -338,9 +299,8 @@ class LocalStorageClient(StorageClient):
             read_path:
                 Path to delete
         """
-        if Path(read_path).is_dir():
+        if os.path.isdir(read_path):
             self.client.delete_dir(read_path)
-
         else:
             self.client.delete_file(read_path)
 
@@ -363,10 +323,10 @@ class ApiStorageClient(LocalStorageClient):
             token=settings.opsml_prod_token,
         )
 
-    def list_files(self, storage_uri: str) -> FilePath:
+    def list_files(self, storage_uri: str) -> List[str]:
         response = self.api_client.post_request(
             route=ApiRoutes.LIST_FILES,
-            json={"read_path": storage_uri},
+            json={"read_path": str(storage_uri)},
         )
         files = response.get("files")
 
@@ -398,16 +358,10 @@ class ApiStorageClient(LocalStorageClient):
         raise ValueError("No storage_uri found")
 
     def upload_single_file(self, local_path: str, write_path: str) -> str:
-        filename = os.path.basename(local_path)
-
-        # paths should be directories for uploading
-        local_dir = os.path.dirname(local_path)
-        write_dir = os.path.dirname(write_path)
-
         return self._upload_file(
-            local_dir=local_dir,
-            write_dir=write_dir,
-            filename=filename,
+            local_dir=os.path.dirname(local_path),
+            write_dir=os.path.dirname(write_path),
+            filename=os.path.basename(local_path),
         )
 
     def upload_directory(self, local_path: str, write_path: str) -> str:
@@ -422,6 +376,7 @@ class ApiStorageClient(LocalStorageClient):
                 )
         return write_path
 
+    # TODO(@damon): Remove `recursive`. If it's a directory, it's recursive.
     def upload(
         self,
         local_path: str,
@@ -443,25 +398,22 @@ class ApiStorageClient(LocalStorageClient):
         Returns:
             Write path
         """
+        if os.path.isdir(local_path):
+            return self.upload_directory(local_path=local_path, write_path=write_path)
+        return self.upload_single_file(local_path=local_path, write_path=write_path)
 
-        if not os.path.isdir(local_path):
-            return self.upload_single_file(local_path=local_path, write_path=write_path)
-
-        return self.upload_directory(local_path=local_path, write_path=write_path)
-
-    def download_directory(
+    def _download_directory(
         self,
         rpath: str,
         lpath: str,
         files: List[str],
-        recursive: bool = False,
     ) -> str:
         for file_ in files:
             path = Path(file_)
-            read_dir = str(path.parents[0])
+            read_dir = str(path.parent)
 
             if path.is_dir():
-                continue  # folder name path gets added to files list when use local storage client
+                continue  # folder name path gets added to files list when we use local storage client
 
             self.api_client.stream_download_file_request(
                 route=ApiRoutes.DOWNLOAD_FILE,
@@ -489,7 +441,7 @@ class ApiStorageClient(LocalStorageClient):
         files = kwargs.get("files", None)
         if len(files) == 1:
             return self.download_file(lpath=lpath, filename=files[0])
-        return self.download_directory(rpath=rpath, lpath=lpath, files=files)
+        return self._download_directory(rpath=rpath, lpath=lpath, files=files)
 
     def store(self, storage_uri: str, **kwargs: Any) -> str:
         """Wrapper method needed for working with data artifacts (zarr)"""

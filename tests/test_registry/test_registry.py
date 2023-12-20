@@ -457,8 +457,11 @@ def test_runcard(
     model, _ = linear_regression
     run.log_artifact("reg_model", artifact=model)
     assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+
+    # register and load card
     registry.register_card(card=run)
     loaded_card = registry.load_card(uid=run.uid)
+
     assert loaded_card.uid == run.uid
     assert loaded_card.get_metric("test_metric").value == 10
     assert loaded_card.get_metric("test_metric2").value == 20
