@@ -363,7 +363,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
         """Get artifact and artifact type to save"""
 
-        if self.card.metadata.sample_data_type == AllowedDataType.DICT:
+        if self.card.model.data_type == AllowedDataType.DICT:
             return self.card.sample_input_data, AllowedDataType.DICT
 
         if self.card.metadata.sample_data_type in [AllowedDataType.PYARROW.value, AllowedDataType.PANDAS.value]:

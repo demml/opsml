@@ -7,7 +7,6 @@ import textwrap
 from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import get_class_name
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.utils.data_helper import get_model_data
 from opsml.registry.model.utils.model_predict_helper import PredictHelper
@@ -85,10 +84,7 @@ class TrainedModelMetadataCreator(ModelCreator):
         return {"placeholder": Feature(feature_type="str", shape=[1])}
 
     def create_model(self) -> ModelReturn:
-        # make predictions first in case of column type switching for input cols
         output_features = self._get_output_schema()
-
-        # this will convert categorical to string
         input_features = self._get_input_schema()
 
         return ModelReturn(
@@ -138,12 +134,17 @@ class OnnxModelCreator(ModelCreator):
 
         # Onnx supports dataframe schemas for pipelines
         # re-work this
-        if self.card.model.model_type in [
-            TrainedModelType.SKLEARN_PIPELINE,
+        if self.card.model.model_class in [
             TrainedModelType.TF_KERAS,
             TrainedModelType.PYTORCH,
         ]:
-            return AllowedDataType(self.card.metadata.sample_data_type).value
+            return AllowedDataType(self.card.model.data_type).value
+
+        if (
+            self.card.model.model_class == TrainedModelType.SKLEARN_ESTIMATOR
+            and self.card.model.model_type == TrainedModelType.SKLEARN_PIPELINE
+        ):
+            return AllowedDataType(self.card.model.data_type).value
 
         return AllowedDataType.NUMPY.value
 
@@ -158,9 +159,12 @@ class OnnxModelCreator(ModelCreator):
 
         try:
             model_data = get_model_data(
-                data_type=self.card.metadata.sample_data_type,
-                input_data=self.card.sample_input_data,
+                data_type=self.card.model.data_type,
+                input_data=self.card.model.sample_data,
             )
+            
+            print(model_data)
+            a
 
             onnx_model_return = OnnxModelConverter.convert_model(
                 modelcard=self.card,
