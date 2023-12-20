@@ -193,7 +193,7 @@ def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
         ls=MagicMock(return_value=["test"]),
-        upload=MagicMock(return_value=True),
+        upload=MagicMock(return_value="gs://test"),
         download=MagicMock(return_value="gs://test"),
         rm=MagicMock(return_value=None),
     ) as mocked_gcsfs:
@@ -205,7 +205,7 @@ def mock_s3fs():
     with patch.multiple(
         "s3fs.S3FileSystem",
         ls=MagicMock(return_value=["test"]),
-        upload=MagicMock(return_value=True),
+        upload=MagicMock(return_value="s3://test"),
         download=MagicMock(return_value="s3://test"),
         rm=MagicMock(return_value=None),
     ) as mocked_s3fs:
@@ -302,7 +302,9 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 @pytest.fixture(scope="function")
 def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Iterator[CardRegistries]:
     """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
+    previous_client = client.storage_client
     yield mock_registries(monkeypatch, test_app)
+    client.storage_client = previous_client
 
 
 @pytest.fixture(scope="function")
