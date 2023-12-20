@@ -7,6 +7,7 @@ from opsml.registry.model.interfaces.pytorch_lightning import LightningModel
 from opsml.registry.model.interfaces.sklearn import SklearnModel
 from opsml.registry.model.interfaces.tf import TensorFlowModel
 from opsml.registry.model.interfaces.xgb import XGBoostModel
+from opsml.registry.model.interfaces.base import SamplePrediction, SupportedModel
 
 SUPPORTED_MODELS = Union[
     SklearnModel,

@@ -10,10 +10,11 @@ import pandas as pd
 import polars as pl
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
+from torch import mode
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.model.interfaces import SUPPORTED_MODELS, HuggingFaceModel
+from opsml.registry.model.interfaces import SUPPORTED_MODELS, HuggingFaceModel, SupportedModel
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
@@ -67,7 +68,7 @@ class ModelCard(ArtifactCard):
         protected_namespaces=("protect_",),
     )
 
-    model: Optional[SUPPORTED_MODELS] = None
+    model: Optional[SupportedModel] = None
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata = ModelCardMetadata()

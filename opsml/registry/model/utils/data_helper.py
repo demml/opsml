@@ -32,7 +32,7 @@ ARRAY_TYPES = [
 class ArrayHelper:
     @classmethod
     def get_tensor_stats(cls, data: Any) -> Tuple[str, Tuple[int, ...]]:
-        dtype = str(data.dtype__repr__()).lower()
+        dtype = str(data.dtype.__repr__()).lower()
         shape = tuple(data.shape)
 
         return dtype, shape
@@ -102,7 +102,7 @@ class ModelDataHelper:
         raise NotImplementedError
 
     @property
-    def shape(self) -> Union[List[Tuple[int, ...]], Tuple[int, ...]]:
+    def shape(self) -> Any:
         raise NotImplementedError
 
     @property
@@ -159,7 +159,7 @@ class ArrayData(ModelDataHelper):
     def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_ in zip(self.features, self.dtypes):
-            feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
+            feature_dict[feature] = Feature(feature_type=type_, shape=self.shape)
         return feature_dict
 
     @staticmethod
@@ -181,7 +181,7 @@ class PandasDataFrameData(ModelDataHelper):
     def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_ in zip(self.features, self.dtypes):
-            feature_dict[feature] = Feature(feature_type=type_, shape=[1])
+            feature_dict[feature] = Feature(feature_type=type_, shape=(1))
         return feature_dict
 
     @property
@@ -227,25 +227,27 @@ class DataDictionary(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Dict[str, Any], self.data)
-        self.dtypes, self.shapes = self.get_dtypes_shapes()
+        self._dtypes, self._shape = self.get_dtypes_shapes
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_, shape in zip(self.features, self.dtypes, self.shape):
-            feature_dict[feature] = Feature(feature_type=type_, shape=[shape[1]])
+            if not isinstance(shape, tuple):
+                shape = (shape,)
+            feature_dict[feature] = Feature(feature_type=type_, shape=shape)
         return feature_dict
 
     @property
     def shape(self) -> List[Tuple[int, ...]]:
-        return self.shapes
+        return self._shape
 
     @cached_property
     def get_dtypes_shapes(
         self,
-    ) -> Tuple[List[str], List[Union[str, Tuple[int, ...]]]]:
-        types = []
-        shapes = []
+    ) -> Tuple[List[str], List[Tuple[int, ...]]]:
+        types: List[str] = []
+        shapes: List[Tuple[int, ...]] = []
         for _, value in self.data.items():
             data_name = get_class_name(value)
 
@@ -253,21 +255,22 @@ class DataDictionary(ModelDataHelper):
                 dtype, shape = ArrayHelper.get_array_stats(value)
 
             else:
-                dtype = str(type(value)).lower()
-                shape = getattr(value, "shape", CommonKwargs.UNDEFINED.value)
+                type_ = type(value)
+                dtype = getattr(type_, "__name__", str(type_).lower())
+                shape = getattr(value, "shape", (CommonKwargs.UNDEFINED.value,))
 
             types.append(dtype)
-            types.append(shape)
+            shapes.append(shape)
 
         return types, shapes
 
     @property
     def dtypes(self) -> List[str]:
-        return self.dtypes
+        return self._dtypes
 
     @property
     def num_dtypes(self) -> int:
-        return len(set(self.dtypes))
+        return len(set(self._dtypes))
 
     @property
     def features(self) -> List[str]:
@@ -279,7 +282,7 @@ class DataDictionary(ModelDataHelper):
 
     @staticmethod
     def validate(data_type: str) -> bool:
-        return data_type == AllowedDataType.DICT
+        return data_type in [AllowedDataType.DICT, AllowedDataType.ORDERED_DICT]
 
 
 class IterData(ModelDataHelper):
@@ -287,12 +290,13 @@ class IterData(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Union[List[Any], Tuple[Any]], self.data)
-        self.dtypes, self.shapes = self.get_dtypes_shapes
+        self._dtypes, self._shape = self.get_dtypes_shapes
 
     @cached_property
-    def get_dtypes_shapes(self) -> Tuple[List[str], List[Union[str, Tuple[int, ...]]]]:
-        types = []
-        shapes = []
+    def get_dtypes_shapes(self) -> Tuple[List[str], List[Tuple[int, ...]]]:
+        types: List[str] = []
+        shapes: List[Tuple[int, ...]] = []
+
         for value in self.data:
             data_name = get_class_name(value)
 
@@ -300,31 +304,34 @@ class IterData(ModelDataHelper):
                 dtype, shape = ArrayHelper.get_array_stats(value)
 
             else:
-                dtype = str(type(value)).lower()
-                shape = getattr(value, "shape", CommonKwargs.UNDEFINED.value)
+                type_ = type(value)
+                dtype = getattr(type_, "__name__", str(type_).lower())
+                shape = getattr(value, "shape", (CommonKwargs.UNDEFINED.value,))
 
             types.append(dtype)
-            types.append(shape)
+            shapes.append(shape)
 
         return types, shapes
 
     @property
     def dtypes(self) -> List[str]:
-        return self.dtypes
+        return self._dtypes
 
     @property
     def shape(self) -> List[Tuple[int, ...]]:
-        return self.shapes
+        return self._shape
 
     @property
     def num_dtypes(self) -> int:
-        return len(set(self.dtypes))
+        return len(set(self._dtypes))
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
-        for feature, type_ in zip(self.features, self.dtypes):
-            feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
+        for feature, type_, shape in zip(self.features, self.dtypes, self.shape):
+            if not isinstance(shape, tuple):
+                shape = (shape,)
+            feature_dict[feature] = Feature(feature_type=type_, shape=shape)
         return feature_dict
 
     @property
@@ -341,7 +348,6 @@ class StrData(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(str, self.data)
-        self.dtypes, self.shapes = self.get_dtypes_shapes
 
     @property
     def dtypes(self) -> List[str]:
@@ -359,7 +365,7 @@ class StrData(ModelDataHelper):
     def feature_dict(self) -> Dict[str, Feature]:
         feature_dict = {}
         for feature, type_ in zip(self.features, self.dtypes):
-            feature_dict[feature] = Feature(feature_type=type_, shape=list(self.shape))
+            feature_dict[feature] = Feature(feature_type=type_, shape=self.shape)
         return feature_dict
 
     @property
