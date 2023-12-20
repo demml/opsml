@@ -11,7 +11,6 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
-from opsml.registry import data
 from opsml.registry.types import (
     AllowedDataType,
     CommonKwargs,

@@ -245,6 +245,16 @@ class OpsmlImportExceptions:
             "If you wish to use the server registry",
         )
 
+    @staticmethod
+    def try_tensorflow_import() -> None:
+        """Attempts to import packages needed for the server registry"""
+
+        try_import(
+            ["mypackage"],
+            "opsml[server]",
+            "If you wish to use TensorFlowModel",
+        )
+
 
 def get_class_name(object_: object) -> str:
     """Parses object to get the fully qualified class name.

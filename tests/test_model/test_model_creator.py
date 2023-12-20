@@ -5,7 +5,7 @@ import pytest
 from sklearn.base import BaseEstimator
 
 from opsml.registry.cards import ModelCard
-from opsml.registry.model.creator import ModelCreator, OnnxModelCreator, create_model
+from opsml.registry.model.creator import ModelCreator, create_model
 from opsml.registry.model.supported_models import SklearnModel
 from opsml.registry.types import AllowedDataType
 
@@ -19,10 +19,8 @@ def _test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd
         user_email="test_email",
         datacard_uids=["test_uid"],
     )
-    
+
     model_return = create_model(modelcard=modelcard)
-    
-    
 
 
 def test_onnx_model_to_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
@@ -35,10 +33,8 @@ def test_onnx_model_to_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.Da
         datacard_uids=["test_uid"],
         to_onnx=True,
     )
-    
-    create_model(modelcard=modelcard)
 
-  
+    create_model(modelcard=modelcard)
 
 
 def _test_model_creator(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
