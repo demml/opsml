@@ -28,8 +28,9 @@ def _test_model_create_no_onnx(random_forest_classifier: Tuple[BaseEstimator, pd
 
     model_return = create_model(modelcard=modelcard)
 
-def _test_tf_create_no_onnx(load_transformer_example: TensorFlowModel):
-    
+
+def test_tf_create_no_onnx(load_transformer_example: TensorFlowModel):
+
     modelcard = ModelCard(
         model=load_transformer_example,
         name="test_model",
@@ -39,10 +40,27 @@ def _test_tf_create_no_onnx(load_transformer_example: TensorFlowModel):
     )
 
     model_return: ModelReturn = create_model(modelcard=modelcard)
-    assert model_return.data_schema.output_features["outputs"].shape == [1,2]
-    
-    
-def _test_huggingface_no_onnx(huggingface_bart: HuggingFaceModel):
+    assert model_return.data_schema.output_features["outputs"].shape == (1, 2)
+
+
+def test_tf_multi_input_create_no_onnx(load_multi_input_keras_example: TensorFlowModel):
+    model = load_multi_input_keras_example
+    modelcard = ModelCard(
+        model=model,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uids=["test_uid"],
+    )
+
+    model_return: ModelReturn = create_model(modelcard=modelcard)
+    assert model_return.data_schema.output_features["outputs"].shape == (1, 1)
+    assert model_return.data_schema.input_features["title"].shape == (1, 10)
+    assert model_return.data_schema.input_features["body"].shape == (1, 100)
+    assert model_return.data_schema.input_features["tags"].shape == (1, 12)
+
+
+def test_huggingface_no_onnx(huggingface_bart: HuggingFaceModel):
     model = huggingface_bart
     modelcard = ModelCard(
         model=model,
@@ -53,10 +71,11 @@ def _test_huggingface_no_onnx(huggingface_bart: HuggingFaceModel):
     )
 
     model_return: ModelReturn = create_model(modelcard=modelcard)
-    assert model_return.data_schema.output_features['last_hidden_state'].shape == (1, 7, 768)
-    assert model_return.data_schema.input_features['input_ids'].shape == (1, 7)
-    
-def _test_huggingface_pipeline_no_onnx(huggingface_text_classification_pipeline: HuggingFaceModel):
+    assert model_return.data_schema.output_features["last_hidden_state"].shape == (1, 7, 768)
+    assert model_return.data_schema.input_features["input_ids"].shape == (1, 7)
+
+
+def test_huggingface_pipeline_no_onnx(huggingface_text_classification_pipeline: HuggingFaceModel):
     model = huggingface_text_classification_pipeline
     modelcard = ModelCard(
         model=model,
@@ -67,10 +86,10 @@ def _test_huggingface_pipeline_no_onnx(huggingface_text_classification_pipeline:
     )
 
     model_return: ModelReturn = create_model(modelcard=modelcard)
-    assert model_return.data_schema.output_features['score'].feature_type == "float"
-    assert model_return.data_schema.input_features['input'].feature_type == "str"
-    
-    
+    assert model_return.data_schema.output_features["score"].feature_type == "float"
+    assert model_return.data_schema.input_features["input"].feature_type == "str"
+
+
 def test_torch_no_onnx(deeplabv3_resnet50: PyTorchModel):
     model = deeplabv3_resnet50
     modelcard = ModelCard(
@@ -82,14 +101,14 @@ def test_torch_no_onnx(deeplabv3_resnet50: PyTorchModel):
     )
 
     model_return: ModelReturn = create_model(modelcard=modelcard)
-    assert model_return.data_schema.output_features['out'].shape == (1, 21, 400, 400)
-    assert model_return.data_schema.input_features['inputs'].shape == (1, 3, 400, 400)
-   
-   
+    assert model_return.data_schema.output_features["out"].shape == (1, 21, 400, 400)
+    assert model_return.data_schema.input_features["inputs"].shape == (1, 3, 400, 400)
+
+
 def test_lightning_no_onnx(lightning_regression: LightningModel):
-    model = lightning_regression
+    light_model, model = lightning_regression
     modelcard = ModelCard(
-        model=model,
+        model=light_model,
         name="test_model",
         team="mlops",
         user_email="test_email",
@@ -97,11 +116,10 @@ def test_lightning_no_onnx(lightning_regression: LightningModel):
     )
 
     model_return: ModelReturn = create_model(modelcard=modelcard)
-    print(model_return)
-    assert model_return.data_schema.output_features['out'].shape == (1, 21, 400, 400)
-    assert model_return.data_schema.input_features['inputs'].shape == (1, 3, 400, 400)
-     
-    
+    assert model_return.data_schema.output_features["outputs"].feature_type == "torch.float32"
+    assert model_return.data_schema.input_features["inputs"].shape == (1, 1)
+
+
 def _test_onnx_model_to_onnx(random_forest_classifier: Tuple[BaseEstimator, pd.DataFrame]):
     model: SklearnModel = random_forest_classifier
     modelcard = ModelCard(

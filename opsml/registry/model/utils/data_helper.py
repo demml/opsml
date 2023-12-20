@@ -291,6 +291,7 @@ class IterData(ModelDataHelper):
 
         self.data = cast(Union[List[Any], Tuple[Any]], self.data)
         self._dtypes, self._shape = self.get_dtypes_shapes
+        self._features = [f"input_{i}" for i in range(len(self.data))]
 
     @cached_property
     def get_dtypes_shapes(self) -> Tuple[List[str], List[Tuple[int, ...]]]:
@@ -336,7 +337,11 @@ class IterData(ModelDataHelper):
 
     @property
     def features(self) -> List[str]:
-        return [f"input_{i}" for i in range(len(self.data))]
+        return self._features
+
+    @features.setter
+    def features(self, features: List[str]) -> None:
+        self._features = features
 
     @staticmethod
     def validate(data_type: str) -> bool:

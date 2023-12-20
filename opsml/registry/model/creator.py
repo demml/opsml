@@ -58,7 +58,6 @@ class TrainedModelMetadataCreator(ModelCreator):
     def _get_output_schema(self) -> Dict[str, Feature]:
         try:
             sample_prediction = self.card.model.get_sample_prediction()
-
             output_data = get_model_data(
                 input_data=sample_prediction.prediction,
                 data_type=sample_prediction.prediction_type,

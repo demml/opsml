@@ -10,11 +10,13 @@ import pandas as pd
 import polars as pl
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
-from torch import mode
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.model.interfaces import SUPPORTED_MODELS, HuggingFaceModel, SupportedModel
+from opsml.registry.model.interfaces import (
+    HuggingFaceModel,
+    SupportedModel,
+)
 from opsml.registry.model.predictor import OnnxModelPredictor
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
