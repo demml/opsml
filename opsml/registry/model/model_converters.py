@@ -18,6 +18,7 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
+from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.data_converters import OnnxDataConverter
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml.registry.model.utils.data_helper import ModelDataHelper
@@ -28,7 +29,6 @@ from opsml.registry.types import (
     BaseEstimator,
     DataDict,
     Feature,
-    ModelCard,
     ModelProto,
     ModelReturn,
     ModelType,
@@ -64,7 +64,11 @@ class ModelConverter:
 
     @property
     def model_type(self) -> str:
-        return self.card.metadata.model_type
+        return self.card.model.model_type
+
+    @property
+    def model_class(self) -> str:
+        return self.card.model.model_class
 
     @property
     def trained_model(self) -> Any:
@@ -671,10 +675,7 @@ class PyTorchOnnxModel(ModelConverter):
 
     @staticmethod
     def validate(model_type: str) -> bool:
-        return model_type in [
-            TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMERS,
-        ]
+        return model_type == TrainedModelType.PYTORCH
 
 
 class OnnxModelConverter:

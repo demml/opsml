@@ -8,14 +8,14 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
-
+from opsml.helpers.utils import get_class_name
+from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
 from opsml.registry.types import (
     AVAILABLE_MODEL_TYPES,
     AllowedDataType,
     DataDtypes,
     Feature,
-    ModelCard,
     OnnxModelDefinition,
     TorchOnnxArgs,
     TrainedModelType,
@@ -101,7 +101,7 @@ class DataConverter:
         return feature_dict
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
         """Validate data and model types"""
         raise NotImplementedError
 
@@ -123,7 +123,7 @@ class NumpyOnnxConverter(DataConverter):
         return {self.input_name: self.data_helper.data}
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
         if data_type == AllowedDataType.NUMPY:
             if model_type in AVAILABLE_MODEL_TYPES and model_type not in [
                 TrainedModelType.TF_KERAS,
@@ -165,8 +165,9 @@ class PandasOnnxConverter(DataConverter):
         return {self.input_name: self.data_helper.to_numpy()}
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
-        return data_type == AllowedDataType.PANDAS and model_type != TrainedModelType.SKLEARN_PIPELINE
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
+        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type != TrainedModelType.SKLEARN_PIPELINE
+        return data_type == AllowedDataType.PANDAS and model_match
 
 
 class PandasPipelineOnnxConverter(DataConverter):
@@ -204,8 +205,9 @@ class PandasPipelineOnnxConverter(DataConverter):
         return inputs
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
-        return data_type == AllowedDataType.PANDAS and model_type == TrainedModelType.SKLEARN_PIPELINE
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
+        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        return data_type == AllowedDataType.PANDAS and model_match
 
 
 class TensorflowDictOnnxConverter(DataConverter):
@@ -223,9 +225,9 @@ class TensorflowDictOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        assert isinstance(self.card.trained_model, tf.keras.Model)
+        assert isinstance(self.card.model.model, tf.keras.Model)
         spec = []
-        for input_ in self.card.trained_model.inputs:
+        for input_ in self.card.model.model.inputs:
             shape_, dtype = list(input_.shape), input_.dtype
             shape_[0] = None
             input_name = getattr(input_, "name", "inputs")
@@ -237,12 +239,16 @@ class TensorflowDictOnnxConverter(DataConverter):
         onnx_data = {}
         assert isinstance(self.data_helper.data, dict)
         for key, val in self.data_helper.data.items():
+            data_type = get_class_name(val)
+            if data_type == AllowedDataType.TENSORFLOW_TENSOR:
+                val = val.numpy()
+
             onnx_data[key] = val.astype(np.float32)
         return onnx_data
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
-        return data_type == AllowedDataType.DICT and model_type == TrainedModelType.TF_KERAS
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
+        return data_type == AllowedDataType.DICT and model_class == TrainedModelType.TF_KERAS
 
 
 class TensorflowNumpyOnnxConverter(DataConverter):
@@ -258,9 +264,9 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        assert isinstance(self.card.trained_model, tf.keras.Model)
-        # model = cast(tf.keras.Model, self.card.trained_model)
-        input_ = self.card.trained_model.inputs[0]
+        assert isinstance(self.card.model.model, tf.keras.Model)
+
+        input_ = self.card.model.model.inputs[0]
         shape_, dtype = list(input_.shape), input_.dtype
         shape_[0] = None
         self.input_name = getattr(input_, "name", "inputs")
@@ -268,11 +274,15 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         return [tf.TensorSpec(shape_, dtype, name=self.input_name)]
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
+        if self.data_helper.data_type == AllowedDataType.TENSORFLOW_TENSOR:
+            return {self.input_name: self.data_helper.data.numpy()}
         return {self.input_name: self.data_helper.data.astype(np.float32)}
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
-        return data_type == AllowedDataType.NUMPY and model_type == TrainedModelType.TF_KERAS
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
+        data_match = (data_type == AllowedDataType.NUMPY) or (data_type == AllowedDataType.TENSORFLOW_TENSOR)
+
+        return data_match and model_class == TrainedModelType.TF_KERAS
 
 
 class PyTorchOnnxDataConverter(DataConverter):
@@ -284,8 +294,8 @@ class PyTorchOnnxDataConverter(DataConverter):
         self.input_name = self._get_input_name()
 
     def _get_input_name(self) -> str:
-        assert isinstance(self.card.metadata.onnx_args, TorchOnnxArgs)
-        return self.card.metadata.onnx_args.input_names[0]
+        assert isinstance(self.card.model.onnx_args, TorchOnnxArgs)
+        return self.card.model.onnx_args.input_names[0]
 
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
@@ -299,22 +309,20 @@ class PyTorchOnnxDataConverter(DataConverter):
         return None
 
     def convert_data_to_onnx(self) -> Dict[str, Any]:
+        if self.data_helper.data_type == AllowedDataType.TORCH_TENSOR:
+            return {self.input_name: self.data_helper.data.numpy()}
         return {self.input_name: self.data_helper.data}
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
-        return data_type == AllowedDataType.NUMPY and model_type in [
-            TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMERS,
-        ]
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
+        data_match = (data_type == AllowedDataType.NUMPY) or (data_type == AllowedDataType.TORCH_TENSOR)
+        return data_match and model_type in [TrainedModelType.PYTORCH, TrainedModelType.PYTORCH_LIGHTNING]
 
 
 class PyTorchOnnxDictConverter(DataConverter):
 
     """
-    DataConverter for Pytorch models trained with dictionary inputs, such as with
-    HuggingFace language models that accept input_ids, token_type_ids and
-    attention_mask.
+    DataConverter for Pytorch models trained with dictionary inputs
     """
 
     def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
@@ -323,8 +331,8 @@ class PyTorchOnnxDictConverter(DataConverter):
         self.input_names = self._get_input_names()
 
     def _get_input_names(self) -> List[str]:
-        assert isinstance(self.card.metadata.onnx_args, TorchOnnxArgs)
-        return self.card.metadata.onnx_args.input_names
+        assert isinstance(self.card.model.onnx_args, TorchOnnxArgs)
+        return self.card.model.onnx_args.input_names
 
     def get_data_schema(self) -> Optional[Dict[str, Feature]]:
         return None
@@ -343,8 +351,12 @@ class PyTorchOnnxDictConverter(DataConverter):
 
         onnx_data = {}
         for key, val in self.data_helper.data.items():
-            dtype = str(val.dtype)
+            data_type = get_class_name(val)
 
+            if data_type == AllowedDataType.TORCH_TENSOR:
+                val = val.numpy()
+
+            dtype = str(val.dtype)
             if DataDtypes.INT32 in dtype:
                 onnx_data[key] = val.astype(np.int32)
             elif DataDtypes.INT64 in dtype:
@@ -357,11 +369,8 @@ class PyTorchOnnxDictConverter(DataConverter):
         return onnx_data
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
-        return data_type == AllowedDataType.DICT and model_type in [
-            TrainedModelType.PYTORCH,
-            TrainedModelType.TRANSFORMERS,
-        ]
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
+        return data_type == AllowedDataType.DICT and model_class in [TrainedModelType.PYTORCH, TrainedModelType.PYTORCH_LIGHTNING]
 
 
 class OnnxDataConverter:
@@ -374,8 +383,9 @@ class OnnxDataConverter:
                 converter
                 for converter in DataConverter.__subclasses__()
                 if converter.validate(
-                    model_type=modelcard.metadata.model_type,
-                    data_type=modelcard.metadata.sample_data_type,
+                    model_type=modelcard.model.model_type,
+                    data_type=modelcard.model.model_class,
+                    model_class=modelcard.model.model_class,
                 )
             )
         )

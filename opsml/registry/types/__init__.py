@@ -58,6 +58,7 @@ from opsml.registry.types.model import (
     TrainedModelType,
     ValidModelInput,
     ValidSavedSample,
+    OnnxDataProto,
 )
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,

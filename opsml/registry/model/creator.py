@@ -157,36 +157,16 @@ class OnnxModelCreator(ModelCreator):
         """
         from opsml.registry.model.model_converters import OnnxModelConverter
 
-        try:
-            model_data = get_model_data(
-                data_type=self.card.model.data_type,
-                input_data=self.card.model.sample_data,
-            )
-            
-            print(model_data)
-            a
+        model_data = get_model_data(
+            data_type=self.card.model.data_type,
+            input_data=self.card.model.sample_data,
+        )
+        onnx_model_return = OnnxModelConverter.convert_model(modelcard=self.card, data_helper=model_data)
+        onnx_model_return.model_type = self.card.metadata.model_type
+        onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
 
-            onnx_model_return = OnnxModelConverter.convert_model(
-                modelcard=self.card,
-                data_helper=model_data,
-            )
-            onnx_model_return.model_type = self.card.metadata.model_type
-            onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
-
-            # add onnx version
-            return onnx_model_return
-        except Exception as exc:
-            logger.error("Failed to convert model to onnx. {}", exc)
-            raise ValueError(
-                textwrap.dedent(
-                    f"""
-               Failed to convert model to onnx format. If you'd like to turn onnx conversion off
-               set to_onnx=False in the ModelCard. If you wish to provide your own onnx definition,
-               please refer to https://github.com/shipt/opsml/blob/main/docs/docs/cards/onnx.md.
-               Error: {exc}
-               """
-                )
-            ) from exc
+        # add onnx version
+        return onnx_model_return
 
     #
     @staticmethod
