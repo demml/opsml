@@ -21,6 +21,7 @@ from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.data_converters import OnnxDataConverter
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
+from opsml.registry.model.supported_models import SamplePrediction
 from opsml.registry.model.utils.data_helper import ModelDataHelper
 from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -37,6 +38,7 @@ from opsml.registry.types import (
     TorchOnnxArgs,
     TrainedModelType,
 )
+from opsml.registry.types.data import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -162,7 +164,7 @@ class ModelConverter:
     def _predictions_close(
         self,
         onnx_preds: List[Union[float, int, NDArray[Any]]],
-        model_preds: Union[List[Union[float, int]], Union[float, int], NDArray[Any]],
+        model_preds: SamplePrediction,
     ) -> bool:  # pragma: no cover
         """Checks if model and onnx predictions are close
 
@@ -174,36 +176,41 @@ class ModelConverter:
         Returns:
             Bool indicating if onnx and original model predictions are close
         """
+        if model_preds.prediction_type in [AllowedDataType.TENSORFLOW_TENSOR, AllowedDataType.PYTORCH_TENSOR]:
+            model_pred = model_preds.prediction.numpy()
+        else:
+            model_pred = model_preds.prediction
 
-        if isinstance(onnx_preds, list) and isinstance(model_preds, list):
-            valid_list = []
+        if isinstance(onnx_preds, list) and isinstance(model_preds, (list, tuple)):
             for onnx_pred, model_pred in zip(onnx_preds, model_preds):
-                valid = np.sum(np.abs(onnx_pred - model_pred)) <= 0.001
-                valid_list.append(valid)
-            return all(valid_list)
+                return np.testing.assert_allclose(onnx_pred, model_pred, rtol=1e-03, atol=1e-05)
 
         if isinstance(model_preds, np.ndarray):
             onnx_pred = onnx_preds[0]
             if isinstance(onnx_pred, np.ndarray):
-                return self._validate_pred_arrays(onnx_pred, model_preds)
+                return np.testing.assert_allclose(onnx_pred, model_pred, rtol=1e-03, atol=1e-05)
             raise ValueError("Model and onnx predictions should both be of type NDArray")
 
-        valid_list = [np.sum(np.abs(onnx_preds[0] - model_preds)) <= 0.001]
-        return all(valid_list)
+        return np.testing.assert_allclose(onnx_preds[0], model_pred, rtol=1e-03, atol=1e-05)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
         inputs = self.data_converter.convert_data()
-        model_preds = self.trained_model.predict(self.data_helper.data)
+        model_preds = self.card.model.get_sample_prediction()
 
         logger.info("Validating converted onnx model")
         sess = self._create_onnx_session(onnx_model=onnx_model)
-
         onnx_preds = sess.run(None, inputs)
-        if not self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds):
-            raise ValueError("Model prediction validation failed")
+
+        try:
+            self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds)
+        except (AssertionError, ValueError) as exc:
+            raise ValueError(f"Model prediction validation failed {exc}")
 
         logger.info("Onnx model validated")
+
+        # get inputs and outputs from onnx model
+        a
 
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
@@ -490,7 +497,6 @@ class SklearnOnnxModel(ModelConverter):
         """Converts sklearn model to ONNX ModelProto"""
 
         onnx_model = self._convert_sklearn(initial_types=initial_types)
-
         self.validate_model(onnx_model=onnx_model)
         return onnx_model
 
