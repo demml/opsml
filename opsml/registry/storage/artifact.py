@@ -17,7 +17,7 @@ import zarr
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FileUtils, all_subclasses
+from opsml.helpers.utils import all_subclasses
 from opsml.model.types import ModelProto
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.client import StorageClientType
@@ -82,11 +82,10 @@ class ArtifactStorage:
         raise NotImplementedError()
 
     def save_artifact(self, artifact: Any, root_uri: str, filename: str) -> str:
-        path = FileUtils.create_path(
-            root_path=root_uri,
-            filename=filename,
-            suffix=self.file_suffix,
-        )
+        if self.file_suffix is not None:
+            filename += f".{self.file_suffix}"
+        path = os.path.join(root_uri, filename)
+
         with self.storage_client.create_tmp_path(path) as tmp_uri:
             return self._save_artifact(artifact, storage_uri=path, tmp_uri=tmp_uri)
 
