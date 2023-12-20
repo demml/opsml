@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
+from opsml.registry import data
 from opsml.registry.types import (
     AllowedDataType,
     CommonKwargs,
@@ -138,8 +139,8 @@ class ModelDataHelper:
 class ArrayData(ModelDataHelper):
     """Helper for dealing with Numpy"""
 
-    def __init__(self, input_data: Any):
-        super().__init__(input_data=input_data)
+    def __init__(self, input_data: Any, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
 
         self._dtype, self._shape = ArrayHelper.get_array_stats(self._data)
 
@@ -168,8 +169,8 @@ class ArrayData(ModelDataHelper):
 
 
 class PandasDataFrameData(ModelDataHelper):
-    def __init__(self, input_data: pd.DataFrame):
-        super().__init__(input_data=input_data)
+    def __init__(self, input_data: Any, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(pd.DataFrame, self.data)
 
@@ -223,8 +224,8 @@ class PandasDataFrameData(ModelDataHelper):
 
 
 class DataDictionary(ModelDataHelper):
-    def __init__(self, input_data: Dict[str, Any]):
-        super().__init__(input_data=input_data)
+    def __init__(self, input_data: Any, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Dict[str, Any], self.data)
         self.dtypes, self.shapes = self.get_dtypes_shapes
@@ -283,8 +284,8 @@ class DataDictionary(ModelDataHelper):
 
 
 class TupleData(ModelDataHelper):
-    def __init__(self, input_data: Tuple[Any]):
-        super().__init__(input_data=input_data)
+    def __init__(self, input_data: Tuple[Any], data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Tuple[Any], self.data)
         self.dtypes, self.shapes = self.get_dtypes_shapes

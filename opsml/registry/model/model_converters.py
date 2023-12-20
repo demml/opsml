@@ -298,6 +298,11 @@ class ModelConverter:
         """
         initial_types, data_schema = self.get_data_types()
 
+        print(initial_types)
+        print(data_schema)
+        print()
+        a
+
         if self.onnx_model_def is None:
             model_def, input_onnx_features, output_onnx_features = self._create_onnx_model(initial_types)
 
@@ -320,7 +325,7 @@ class ModelConverter:
         )
 
     @staticmethod
-    def validate(model_type: str) -> bool:
+    def validate(model_class: str) -> bool:
         """validates model base class"""
         raise NotImplementedError
 
@@ -330,7 +335,7 @@ class SklearnOnnxModel(ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_type == TrainedModelType.STACKING_ESTIMATOR
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -493,8 +498,8 @@ class SklearnOnnxModel(ModelConverter):
         return onnx_model
 
     @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type in SKLEARN_SUPPORTED_MODEL_TYPES
+    def validate(model_class: str) -> bool:
+        return model_class in SKLEARN_SUPPORTED_MODEL_TYPES
 
 
 class LightGBMBoosterOnnxModel(ModelConverter):
@@ -508,8 +513,8 @@ class LightGBMBoosterOnnxModel(ModelConverter):
         return cast(ModelProto, onnx_model)
 
     @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type in LIGHTGBM_SUPPORTED_MODEL_TYPES
+    def validate(model_class: str) -> bool:
+        return model_class in LIGHTGBM_SUPPORTED_MODEL_TYPES
 
 
 class TensorflowKerasOnnxModel(ModelConverter):
@@ -529,8 +534,8 @@ class TensorflowKerasOnnxModel(ModelConverter):
         return cast(ModelProto, onnx_model)
 
     @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type in TrainedModelType.TF_KERAS
+    def validate(model_class: str) -> bool:
+        return model_class in TrainedModelType.TF_KERAS
 
 
 class PytorchArgBuilder:
@@ -674,8 +679,8 @@ class PyTorchOnnxModel(ModelConverter):
         return onnx_model
 
     @staticmethod
-    def validate(model_type: str) -> bool:
-        return model_type == TrainedModelType.PYTORCH
+    def validate(model_class: str) -> bool:
+        return model_class == TrainedModelType.PYTORCH
 
 
 class OnnxModelConverter:
@@ -698,7 +703,7 @@ class OnnxModelConverter:
             (
                 converter
                 for converter in ModelConverter.__subclasses__()
-                if converter.validate(model_type=modelcard.metadata.model_type)
+                if converter.validate(model_class=modelcard.model.model_class)
             )
         )
 

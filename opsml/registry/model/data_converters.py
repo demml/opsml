@@ -384,7 +384,7 @@ class OnnxDataConverter:
                 for converter in DataConverter.__subclasses__()
                 if converter.validate(
                     model_type=modelcard.model.model_type,
-                    data_type=modelcard.model.model_class,
+                    data_type=modelcard.model.data_type,
                     model_class=modelcard.model.model_class,
                 )
             )
