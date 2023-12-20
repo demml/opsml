@@ -18,10 +18,7 @@ from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.model.interfaces.supported_models import (
-    SUPPORTED_MODELS,
-    HuggingFaceModel,
-)
+from opsml.registry.model.interfaces import SUPPORTED_MODELS, HuggingFaceModel
 from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClientType
 from opsml.registry.types import (

@@ -20,8 +20,8 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.data_converters import OnnxDataConverter
+from opsml.registry.model.interfaces import SamplePrediction
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.model.supported_models import SamplePrediction
 from opsml.registry.model.utils.data_helper import ModelDataHelper
 from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,

@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.model.interfaces.supported_models import (
+from opsml.registry.model.interfaces import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,

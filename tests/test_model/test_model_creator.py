@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 
 from opsml.registry.cards import ModelCard
 from opsml.registry.model.creator import ModelCreator, create_model
-from opsml.registry.model.supported_models import SklearnModel
+from opsml.registry.model.interfaces import SklearnModel
 from opsml.registry.types import AllowedDataType
 
 
