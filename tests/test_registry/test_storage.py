@@ -1,5 +1,4 @@
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -32,8 +31,6 @@ def test_api_parquet(test_arrow_table, storage_client):
         root_uri=conftest.save_path(),
         filename="test",
     )
-
-    assert os.path.exists(uri)
 
     table = pq_writer.load_artifact(uri)
     assert isinstance(table, pa.Table)

@@ -96,9 +96,6 @@ class ArtifactStorage:
         file_path: str,
         tmp_path: str,
     ) -> str:
-        if self.storage_client.is_local:
-            return file_path
-
         loadable_path = self.storage_client.download(
             rpath=file_path,
             lpath=tmp_path,
@@ -117,7 +114,7 @@ class ArtifactStorage:
             loadable_filepath = self._download_artifacts(
                 files=files,
                 file_path=storage_uri,
-                tmp_path=tmpdirname,
+                tmp_path=os.path.join(tmpdirname, os.path.basename(storage_uri)),
             )
 
             return self._load_artifact(file_path=loadable_filepath, **kwargs)

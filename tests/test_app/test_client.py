@@ -1,8 +1,7 @@
-import pathlib
 import re
 import sys
 import uuid
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -741,16 +740,14 @@ def test_token_fail(
 
 
 def test_delete_fail(test_app: TestClient):
-    """Test error path"""
-
-    pathlib.Path("tests/assets/empty/model_registry").mkdir(parents=True, exist_ok=True)
-
-    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty/model_registry"})
+    response = test_app.post("/opsml/files/delete", json={"read_path": "OPSML_DATA_REGISTRY/notthere"})
 
     assert response.status_code == 200
+    resp_dict = cast(Dict[str, Any], response.json())
+    assert not resp_dict["deleted"]
 
-    # this should fail because there is no file
-    response = test_app.post("/opsml/files/delete", json={"read_path": "fail"})
+    # Invaild path: does not include a registry table
+    response = test_app.post("/opsml/files/delete", json={"read_path": "notthere"})
     assert response.status_code == 422
 
 

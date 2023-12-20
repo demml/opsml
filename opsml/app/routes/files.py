@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict
+from typing import Dict, cast
 from uuid import UUID
 
 import streaming_form_data
@@ -27,6 +27,7 @@ from opsml.app.routes.utils import (
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import RegistryTableNames
+from opsml.registry.storage.client import StorageClient
 
 logger = ArtifactLogger.get_logger()
 CHUNK_SIZE = 31457280
@@ -100,10 +101,13 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     # Files can only be uploaded to paths that have a registry dir name
     _verify_path(path=write_path)
 
+    storage_client: StorageClient = cast(StorageClient, request.app.state.storage_client)
+    abs_write_path = storage_client.build_absolute_path(write_path)
+
     try:
         file_ = ExternalFileTarget(
             filename=filename,
-            write_path=write_path,
+            write_path=abs_write_path,
             storage_client=request.app.state.storage_client,
             validator=MaxSizeValidator(MAX_FILE_SIZE),
         )
@@ -168,11 +172,14 @@ def download_file(
     # Files can only be downloaded from registry paths
     _verify_path(path=read_path)
 
+    storage_client: StorageClient = cast(StorageClient, request.app.state.storage_client)
+    abs_read_path = storage_client.build_absolute_path(read_path)
+
     try:
         storage_client = request.app.state.storage_client
         return StreamingResponse(
             storage_client.iterfile(
-                file_path=read_path,
+                file_path=abs_read_path,
                 chunk_size=CHUNK_SIZE,
             ),
             media_type="application/octet-stream",
