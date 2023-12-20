@@ -52,13 +52,13 @@ from opsml.registry.types.model import (
     ModelReturn,
     ModelType,
     OnnxAttr,
+    OnnxDataProto,
     OnnxModelDefinition,
     SeldonSigTypes,
     TorchOnnxArgs,
     TrainedModelType,
     ValidModelInput,
     ValidSavedSample,
-    OnnxDataProto,
 )
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,

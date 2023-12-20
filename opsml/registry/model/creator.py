@@ -3,19 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import textwrap
 from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.utils.data_helper import get_model_data
 from opsml.registry.model.utils.model_predict_helper import PredictHelper
-from opsml.registry.types import (
-    DataDict,
-    Feature,
-    ModelReturn,
-    TrainedModelType,
-)
+from opsml.registry.types import DataDict, Feature, ModelReturn, TrainedModelType
 from opsml.registry.types.data import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
