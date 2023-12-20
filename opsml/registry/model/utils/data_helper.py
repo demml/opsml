@@ -53,7 +53,7 @@ class ArrayHelper:
 
 
 class ModelDataHelper:
-    def __init__(self, input_data: Any):
+    def __init__(self, input_data: Any, data_type: str):
         """Base helper class for storing input/sample data associated with a trained model.
         This class is used with OnnxModelConverter
 
@@ -62,7 +62,7 @@ class ModelDataHelper:
         """
         self._data = input_data
         self._features = ["inputs"]
-        self._data_name = get_class_name(input_data)
+        self.data_type = data_type
 
     @property
     def data(self) -> Any:
@@ -236,6 +236,10 @@ class DataDictionary(ModelDataHelper):
             feature_dict[feature] = Feature(feature_type=type_, shape=[shape[1]])
         return feature_dict
 
+    @property
+    def shape(self) -> List[Tuple[int, ...]]:
+        return self.shapes
+
     @cached_property
     def get_dtypes_shapes(
         self,
@@ -256,6 +260,10 @@ class DataDictionary(ModelDataHelper):
             types.append(shape)
 
         return types, shapes
+
+    @property
+    def dtypes(self) -> List[str]:
+        return self.dtypes
 
     @property
     def num_dtypes(self) -> int:
@@ -301,6 +309,14 @@ class TupleData(ModelDataHelper):
         return types, shapes
 
     @property
+    def dtypes(self) -> List[str]:
+        return self.dtypes
+
+    @property
+    def shape(self) -> List[Tuple[int, ...]]:
+        return self.shapes
+
+    @property
     def num_dtypes(self) -> int:
         return len(set(self.dtypes))
 
@@ -336,7 +352,7 @@ def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
         )
     )
 
-    return model_data(input_data=input_data)
+    return model_data(input_data=input_data, data_type=data_type)
 
 
 class FloatTypeConverter:
