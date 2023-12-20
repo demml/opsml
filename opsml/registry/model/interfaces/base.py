@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
-import polars as pl
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.types import AllowedDataType, CommonKwargs
+from opsml.registry.types import CommonKwargs
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -69,47 +69,39 @@ class SupportedModel(BaseModel):
         Returns:
             Sample data with only one record
         """
+        if isinstance(sample_data, list):
+            return [data[0:1] for data in sample_data]
 
-        assert sample_data is not None, "Sample data must be provided"
-        sample_data_type = get_class_name(sample_data)
+        if isinstance(sample_data, tuple):
+            return (data[0:1] for data in sample_data)
 
-        # convert huggingface input if needed
-        if sample_data_type == AllowedDataType.TRANSFORMER_BATCH:
-            sample_data = dict(sample_data)
-
-        # for array types, only use one sample
-        if sample_data_type in [
-            AllowedDataType.NUMPY,
-            AllowedDataType.TENSORFLOW_TENSOR,
-            AllowedDataType.TORCH_TENSOR,
-        ]:
-            return sample_data[0:1]
-
-        if isinstance(sample_data, str):
-            return sample_data
-
-        # get sample for pandas or polars dataframes
-        if isinstance(sample_data, (pl.DataFrame, pd.DataFrame)):
-            if isinstance(sample_data, pl.DataFrame):
-                sample_data = sample_data.to_pandas()
-
-            return sample_data[0:1]
-
-        sample_dict = {}
         if isinstance(sample_data, dict):
-            for key, value in sample_data.items():
-                if hasattr(value, "shape"):
-                    if len(value.shape) > 1:  # validate one sample for array types
-                        sample_dict[key] = value[0:1]
-                else:
-                    sample_dict[key] = value
+            return {key: data[0:1] for key, data in sample_data.items()}
 
-            return sample_dict
-
-        raise ValueError(f"Provided sample data is not a valid type. Received {sample_data_type}")
+        return sample_data[0:1]
 
     def get_sample_prediction(self) -> SamplePrediction:
-        prediction = self.model.predict(self.sample_data)
+        assert self.model is not None, "Model is not defined"
+        assert self.sample_data is not None, "Sample data must be provided"
+
+        if isinstance(self.sample_data, (pd.DataFrame, np.ndarray)):
+            prediction = self.model.predict(self.sample_data)
+
+        elif isinstance(self.sample_data, dict):
+            try:
+                prediction = self.model.predict(**self.sample_data)
+            except Exception:
+                prediction = self.model.predict(self.sample_data)
+
+        elif isinstance(self.sample_data, (list, tuple)):
+            try:
+                prediction = self.model.predict(*self.sample_data)
+            except Exception:
+                prediction = self.model.predict(self.sample_data)
+
+        else:
+            prediction = self.model.predict(self.sample_data)
+
         prediction_type = get_class_name(prediction)
 
         return SamplePrediction(
