@@ -1,14 +1,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from __future__ import annotations
 
 import os
 from enum import Enum, unique
 from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
-
-from opsml.registry.data.types import AllowedDataType
 
 FilePath = Union[List[str], str]
 
@@ -23,25 +22,26 @@ class StorageSystem(Enum):
 
 @unique
 class ArtifactStorageType(str, Enum):
-    HTML = "html"
-    TF_MODEL = "keras"
-    PYTORCH = "pytorch"
-    JSON = "json"
     BOOSTER = "booster"
+    HTML = "html"
+    IMAGE = "ImageDataset"
+    JSON = "json"
+    NUMPY = "numpy.ndarray"
     ONNX = "onnx"
+    PANDAS = "pandas.core.frame.DataFrame"
+    POLARS = "polars.dataframe.frame.DataFrame"
+    PYARROW = "pyarrow"
+    PYTORCH = "pytorch"
+    TF_MODEL = "keras"
     TRANSFORMER = "transformer"
+    UNKNOWN = "unknown"
 
-
-ARTIFACT_TYPES = [
-    *list(ArtifactStorageType),
-    *[
-        AllowedDataType.NUMPY,
-        AllowedDataType.PANDAS,
-        AllowedDataType.POLARS,
-        AllowedDataType.IMAGE,
-        AllowedDataType.PYARROW,
-    ],
-]
+    @staticmethod
+    def from_str(value: str) -> Optional[ArtifactStorageType]:
+        for elt in ArtifactStorageType:
+            if value in elt.value:
+                return elt
+        return None
 
 
 class StorageClientSettings(BaseModel):
@@ -75,10 +75,3 @@ StorageSettings = Union[
     ApiStorageClientSettings,
     S3StorageClientSettings,
 ]
-
-
-class ArtifactStorageSpecs(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=False)
-
-    save_path: str
-    filename: Optional[str] = None

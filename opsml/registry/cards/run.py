@@ -8,14 +8,10 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.types import METRICS, PARAMS, CardType, Metric, Param
-from opsml.registry.sql.records import (
-    ARBITRARY_ARTIFACT_TYPE,
-    RegistryRecord,
-    RunRegistryRecord,
-)
+from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_record_artifact_from_storage
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.storage.types import ArtifactStorageType
 
 logger = ArtifactLogger.get_logger()
 
@@ -270,9 +266,9 @@ class RunCard(ArtifactCard):
         if bool(self.artifact_uris):
             for name, uri in self.artifact_uris.items():
                 self.artifacts[name] = load_record_artifact_from_storage(
-                    artifact_type=ARBITRARY_ARTIFACT_TYPE,
+                    artifact_type=ArtifactStorageType.UNKNOWN,
                     storage_client=client.storage_client,
-                    storage_spec=ArtifactStorageSpecs(save_path=uri),
+                    uri=uri,
                 )
             return None
 

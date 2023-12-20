@@ -207,8 +207,7 @@ def list_files(
 
     try:
         storage_client = request.app.state.storage_client
-        files = storage_client.list_files(read_path)
-        return ListFileResponse(files=files)
+        return ListFileResponse(files=storage_client.list_files(read_path))
 
     except Exception as error:
         raise HTTPException(

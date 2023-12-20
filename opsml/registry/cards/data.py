@@ -22,7 +22,6 @@ from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_record_artifact_from_storage
-from opsml.registry.storage.types import ArtifactStorageSpecs
 
 logger = ArtifactLogger.get_logger()
 
@@ -307,12 +306,14 @@ class DataProfileDownloader(Downloader):
 
     def download(self) -> None:
         """Downloads a data profile from storage"""
+
+        if self.card.metadata.uris.profile_uri is None:
+            raise ValueError("Cannot load data - profile_uri is not set")
+
         data_profile = load_record_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
             storage_client=self.storage_client,
-            storage_spec=ArtifactStorageSpecs(
-                save_path=self.card.metadata.uris.profile_uri,
-            ),
+            uri=self.card.metadata.uris.profile_uri,
         )
 
         setattr(self.card, "data_profile", data_profile)
@@ -334,12 +335,13 @@ class DataDownloader(Downloader):
             logger.info("Data already exists")
             return
 
+        if self.card.metadata.uris.data_uri is None:
+            raise ValueError("Cannot load data - data_uri is not set")
+
         data = load_record_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
-            storage_spec=ArtifactStorageSpecs(
-                save_path=self.card.metadata.uris.data_uri,
-            ),
+            uri=self.card.metadata.uris.data_uri,
         )
 
         data = check_data_schema(
@@ -373,12 +375,13 @@ class ImageDownloader(Downloader):
 
         kwargs = {"image_dir": data.image_dir}
 
+        if self.card.metadata.uris.data_uri is None:
+            raise ValueError("Cannot load data - data_uri is not set")
+
         load_record_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
             storage_client=self.storage_client,
-            storage_spec=ArtifactStorageSpecs(
-                save_path=self.card.metadata.uris.data_uri,
-            ),
+            uri=self.card.metadata.uris.data_uri,
             **kwargs,
         )
 

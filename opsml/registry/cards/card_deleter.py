@@ -9,6 +9,14 @@ from opsml.registry.cards.types import CardType
 from opsml.registry.storage.client import StorageClientType
 
 
+#
+# TODO(@damon): This entire class can go - move to ArtifactCard.delete.
+#
+# TODO(@damon); Just delete the tree under the card (also note that linked URIs
+# are going to be invalidated as well (i.e., models "data_card_uri" should be
+# zero'd out if the data card associated with the model is deleted - no idea how
+# to do this yet..
+#
 class CardArtifactDeleter:
     def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
         """
@@ -34,6 +42,8 @@ class CardArtifactDeleter:
 
     def _delete_artifacts(self, read_path: str) -> None:
         """Find common directory from path and delete files"""
+
+        # TODO(@damon): Delete everything under the card's uri
 
         path_split = read_path.split("/")
         version_index = path_split.index(f"v{self.card.version}")

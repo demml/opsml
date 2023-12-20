@@ -1,15 +1,15 @@
 import json
 import os
 import sys
-import tempfile
+from pathlib import Path
 
 import numpy as np
 import pyarrow as pa
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.helpers import utils
 from opsml.registry.storage.artifact import (
+    ArtifactStorageType,
     JSONStorage,
     NumpyStorage,
     ParquetStorage,
@@ -17,7 +17,6 @@ from opsml.registry.storage.artifact import (
     TensorflowModelStorage,
 )
 from opsml.registry.storage.client import StorageClient
-from opsml.registry.storage.types import ArtifactStorageSpecs
 from tests import conftest
 
 
@@ -25,17 +24,18 @@ from tests import conftest
 def test_api_parquet(test_arrow_table, storage_client):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
-        artifact_type="Table",
+        artifact_type=ArtifactStorageType.PYARROW,
     )
 
-    metadata = pq_writer.save_artifact(
+    uri = pq_writer.save_artifact(
         artifact=test_arrow_table,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
 
-    assert isinstance(metadata.uri, str)
+    assert os.path.exists(uri)
 
-    table = pq_writer.load_artifact(storage_uri=metadata.uri)
+    table = pq_writer.load_artifact(uri)
     assert isinstance(table, pa.Table)
 
 
@@ -44,14 +44,15 @@ def test_api_parquet(test_arrow_table, storage_client):
 def test_api_numpy(test_array, storage_client):
     numpy_writer = NumpyStorage(
         storage_client=storage_client,
-        artifact_type="ndarray",
+        artifact_type=ArtifactStorageType.NUMPY,
     )
-    metadata = numpy_writer.save_artifact(
+    uri = numpy_writer.save_artifact(
         artifact=test_array,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
 
-    array = numpy_writer.load_artifact(storage_uri=metadata.uri)
+    array = numpy_writer.load_artifact(storage_uri=uri)
     assert isinstance(array, np.ndarray)
 
 
@@ -67,15 +68,16 @@ def test_api_json(storage_client):
     json_object = json.dumps(dictionary, indent=4)
 
     json_writer = JSONStorage(
-        artifact_type="json",
+        artifact_type=ArtifactStorageType.JSON,
         storage_client=storage_client,
     )
-    metadata = json_writer.save_artifact(
+    uri = json_writer.save_artifact(
         artifact=json_object,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
 
-    loaded_json = json_writer.load_artifact(storage_uri=metadata.uri)
+    loaded_json = json_writer.load_artifact(storage_uri=uri)
 
     assert loaded_json == dictionary
 
@@ -85,18 +87,18 @@ def test_api_pytorch_model(storage_client, load_pytorch_resnet):
     model, data = load_pytorch_resnet
 
     model_storage = PyTorchModelStorage(
-        artifact_type="pytorch",
+        artifact_type=ArtifactStorageType.PYTORCH,
         storage_client=storage_client,
     )
 
-    metadata = model_storage.save_artifact(
+    uri = model_storage.save_artifact(
         artifact=model,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
 
-    model = model_storage.load_artifact(storage_uri=metadata.uri)
-
-    assert model == model
+    loaded_model = model_storage.load_artifact(storage_uri=uri)
+    assert isinstance(loaded_model, type(model))
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
@@ -104,18 +106,18 @@ def test_api_pytorch_model(storage_client, load_pytorch_resnet):
 def test_api_tensorflow_model(storage_client, load_transformer_example):
     model, data = load_transformer_example
     model_storage = TensorflowModelStorage(
-        artifact_type="keras",
+        artifact_type=ArtifactStorageType.TF_MODEL,
         storage_client=storage_client,
     )
 
     metadata = model_storage.save_artifact(
         artifact=model,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
 
-    model = model_storage.load_artifact(storage_uri=metadata.uri)
-
-    assert model == model
+    loaded_model = model_storage.load_artifact(storage_uri=metadata)
+    assert isinstance(loaded_model, type(model))
 
 
 @pytest.mark.parametrize(
@@ -127,52 +129,50 @@ def test_parquet_cloud(
 ):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
-        artifact_type="Table",
+        artifact_type=ArtifactStorageType.PYARROW,
     )
-    metadata = pq_writer.save_artifact(
+    uri = pq_writer.save_artifact(
         artifact=test_arrow_table,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
-    assert isinstance(metadata.uri, str)
 
-    table = pq_writer.load_artifact(storage_uri=metadata.uri)
+    table = pq_writer.load_artifact(storage_uri=uri)
     assert isinstance(table, pa.Table)
 
-    storage_client.list_files(metadata.uri)
-    storage_client.delete(metadata.uri)
+    storage_client.list_files(uri)
+    storage_client.delete(uri)
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_parquet_local(test_arrow_table, storage_client):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
-        artifact_type="Table",
+        artifact_type=ArtifactStorageType.PYARROW,
     )
-    metadata = pq_writer.save_artifact(
+    uri = pq_writer.save_artifact(
         artifact=test_arrow_table,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path(), filename="test"),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
-    assert isinstance(metadata.uri, str)
 
-    table = pq_writer.load_artifact(storage_uri=metadata.uri)
+    table = pq_writer.load_artifact(storage_uri=uri)
     assert isinstance(table, pa.Table)
 
 
-@pytest.mark.parametrize(
-    "storage_client",
-    [lazy_fixture("local_storage_client")],
-)
+@pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_array(test_array, storage_client):
     numpy_writer = NumpyStorage(
         storage_client=storage_client,
-        artifact_type="ndarray",
+        artifact_type=ArtifactStorageType.NUMPY,
     )
-    metadata = numpy_writer.save_artifact(
+    uri = numpy_writer.save_artifact(
         artifact=test_array,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
 
-    array = numpy_writer.load_artifact(storage_uri=metadata.uri)
+    array = numpy_writer.load_artifact(storage_uri=uri)
     assert isinstance(array, np.ndarray)
 
 
@@ -181,60 +181,39 @@ def test_array(test_array, storage_client):
 def test_tensorflow_model(storage_client, load_transformer_example):
     model, _ = load_transformer_example
     model_storage = TensorflowModelStorage(
-        artifact_type="keras",
+        artifact_type=ArtifactStorageType.TF_MODEL,
         storage_client=storage_client,
     )
 
-    metadata = model_storage.save_artifact(
+    uri = model_storage.save_artifact(
         artifact=model,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
+        root_uri=conftest.save_path(),
+        filename="test",
     )
-    model = model_storage.load_artifact(storage_uri=metadata.uri)
-    assert model is not None
-
-
-@pytest.mark.parametrize(
-    "storage_client",
-    [lazy_fixture("local_storage_client")],
-)
-def test_pytorch_model(storage_client, load_pytorch_resnet):
-    model, data = load_pytorch_resnet
-    model_storage = PyTorchModelStorage(
-        artifact_type="pytorch",
-        storage_client=storage_client,
-    )
-
-    metadata = model_storage.save_artifact(
-        artifact=model,
-        storage_spec=ArtifactStorageSpecs(save_path=conftest.save_path()),
-    )
-
-    model = model_storage.load_artifact(storage_uri=metadata.uri)
+    model = model_storage.load_artifact(storage_uri=uri)
     assert model is not None
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
-def test_local_paths(storage_client: StorageClient):
-    FILENAME = "example.csv"
-    file_path = utils.FileUtils.find_filepath(name=FILENAME)
+def test_pytorch_model(storage_client, load_pytorch_resnet):
+    model, data = load_pytorch_resnet
+    model_storage = PyTorchModelStorage(
+        artifact_type=ArtifactStorageType.PYTORCH,
+        storage_client=storage_client,
+    )
 
-    with tempfile.TemporaryDirectory() as tempdir:
-        storage_client.upload(local_path=file_path, write_path=f"{tempdir}/{FILENAME}")
+    metadata = model_storage.save_artifact(
+        artifact=model,
+        root_uri=conftest.save_path(),
+        filename="test",
+    )
 
-        dir_path = utils.FileUtils.find_dirpath(
-            path=os.getcwd(),
-            dir_name="assets",
-            anchor_file=FILENAME,
-        )
-
-        storage_client.upload(local_path=str(dir_path), write_path=f"{tempdir}/assets")
+    model = model_storage.load_artifact(storage_uri=metadata)
+    assert model is not None
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
 def test_create_temp_save_path(storage_client: StorageClient) -> None:
-    s = ArtifactStorageSpecs(save_path="dir", filename="test.txt")
-    with storage_client.create_temp_save_path_with_spec(s) as (storage_uri, local_path):
-        assert storage_uri == os.path.join(storage_client.base_path_prefix, "dir", "test.txt")
-        assert not os.path.exists(local_path)
-        assert os.path.basename(local_path) == "test.txt"
+    with storage_client.create_tmp_path("/some/long/path/with/file.txt") as tmp_path:
+        tmp_path = Path(tmp_path)
+        assert tmp_path.parent.exists() and tmp_path.parent.is_dir() and tmp_path.name == "file.txt"

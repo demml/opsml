@@ -183,7 +183,7 @@ class ModelChallenger:
             champion_name=str(champion.name),
             champion_version=str(champion.version),
             champion_metric=champion_metric,
-            challenger_metric=self.challenger_metric.model_copy(),
+            challenger_metric=self.challenger_metric.model_copy(deep=True),
             challenger_win=challenger_win,
         )
 

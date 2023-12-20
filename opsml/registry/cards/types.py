@@ -1,9 +1,11 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, unique
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -20,6 +22,7 @@ from opsml.model.types import (
 logger = ArtifactLogger.get_logger()
 
 
+@unique
 class RegistryType(str, Enum):
     DATA = "data"
     MODEL = "model"
@@ -67,15 +70,13 @@ class Comment(BaseModel):
     comment: str
     timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
 
-    def __eq__(self, other):  # type: ignore
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Comment):
+            return False
         return self.__dict__ == other.__dict__
 
 
-@dataclass
-class StoragePath:
-    uri: str
-
-
+# TODO(@damon): Make this BaseModel
 @dataclass
 class CardInfo:
 
@@ -114,18 +115,6 @@ class CardType(str, Enum):
     AUDITCARD = "audit"
 
 
-class PipelineCardArgs(str, Enum):
-    DATA_UIDS = "datacard_uids"
-    MODEL_UIDS = "modelcard_uids"
-    RUN_UIDS = "runcard_uids"
-
-
-class RunCardArgs(str, Enum):
-    DATA_UID = "datacard_uid"
-    MODEL_UIDS = "modelcard_uids"
-    PIPELINE_UID = "pipelinecard_uid"
-
-
 class CardVersion(BaseModel):
     name: str
     version: str
@@ -162,6 +151,7 @@ class Description(BaseModel):
         return summary
 
 
+# TODO(@damon): Make this BaseModel
 @dataclass
 class ModelCardUris:
     """Uri holder for ModelCardMetadata
@@ -296,7 +286,5 @@ class DataCardMetadata(BaseModel):
 
         return feat_dict
 
-
-NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]
 
 AuditSectionType = Dict[str, Dict[int, Dict[str, str]]]
