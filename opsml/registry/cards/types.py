@@ -148,10 +148,8 @@ class Description(BaseModel):
         return summary
 
 
-# TODO(@damon): Make this BaseModel
-@dataclass
-class ModelCardUris:
-    """Uri holder for ModelCardMetadata
+class ModelCardUris(BaseModel):
+    """ModelCard URI holder.
 
     Args:
         modelcard_uri:
