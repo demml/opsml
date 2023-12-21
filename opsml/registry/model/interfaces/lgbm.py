@@ -5,7 +5,7 @@ from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
-from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
+from opsml.registry.types import CommonKwargs, TrainedModelType
 
 try:
     from lightgbm import Booster, LGBMModel
@@ -39,7 +39,6 @@ try:
 
         model: Optional[Union[Booster, LGBMModel]] = None
         sample_data: Optional[VALID_DATA] = None
-        onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.LGBM_BOOSTER.value
 
         @model_validator(mode="before")
@@ -65,16 +64,10 @@ try:
 
             return model_args
 
-        @property
-        def supports_onnx(self) -> bool:
-            return False
-
 except ModuleNotFoundError:
 
     class LightGBMBoosterModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")

@@ -24,8 +24,8 @@ class _ModelMetadataCreator:
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
             onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
-            onnx_model_def:
-                Optional `OnnxModelDefinition`
+            onnx_model:
+                Optional `OnnxModel`
         """
         self.interface = model_interface
 

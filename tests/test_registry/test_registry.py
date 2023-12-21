@@ -583,7 +583,7 @@ def test_local_model_registry(
         model_card.input_data_schema
 
     with pytest.raises(ValueError):
-        model_card.load_onnx_model_definition()
+        model_card.load_onnx_modelinition()
 
     with pytest.raises(ValueError):
         model_card.load_trained_model()
@@ -598,16 +598,16 @@ def test_local_model_registry(
     loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
 
     assert loaded_card != model_card
-    assert loaded_card.metadata.onnx_model_def is None
+    assert loaded_card.metadata.onnx_model is None
     assert loaded_card.trained_model is None
     assert loaded_card.sample_input_data is None
 
-    loaded_card.load_onnx_model_definition()
+    loaded_card.load_onnx_modelinition()
     loaded_card.load_trained_model()
 
     assert loaded_card.trained_model is not None
     assert loaded_card.sample_input_data is not None
-    assert loaded_card.metadata.onnx_model_def is not None
+    assert loaded_card.metadata.onnx_model is not None
 
 
 def test_register_model(

@@ -12,7 +12,7 @@ from opsml.registry.types import (
     AVAILABLE_MODEL_TYPES,
     AllowedDataType,
     Feature,
-    OnnxModelDefinition,
+    OnnxModel,
     TrainedModelType,
 )
 
@@ -25,7 +25,7 @@ try:
 except ModuleNotFoundError:
     pass
 
-ModelConvertOutput = Tuple[OnnxModelDefinition, Dict[str, Feature], Optional[Dict[str, Feature]]]
+ModelConvertOutput = Tuple[OnnxModel, Dict[str, Feature], Optional[Dict[str, Feature]]]
 
 
 # lgb and xgb need to be converted to float32
@@ -127,9 +127,7 @@ class PandasOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = (
-            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type != TrainedModelType.SKLEARN_PIPELINE
-        )
+        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type != TrainedModelType.SKLEARN_PIPELINE
         return data_type == AllowedDataType.PANDAS and model_match
 
 
@@ -144,9 +142,7 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = (
-            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
-        )
+        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
         return data_type == AllowedDataType.PANDAS and model_match
 
 

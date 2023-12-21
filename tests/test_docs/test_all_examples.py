@@ -329,7 +329,7 @@ def test_custom_onnx(db_registries: CardRegistries):
     from torch import nn
 
     ## opsml
-    from opsml.model.utils.types import OnnxModelDefinition
+    from opsml.model.utils.types import OnnxModel
     from opsml.registry import CardRegistries, DataCard, ModelCard
 
     registries = CardRegistries()
@@ -412,7 +412,7 @@ def test_custom_onnx(db_registries: CardRegistries):
 
     ####### Create ModelCard
 
-    model_def = OnnxModelDefinition(
+    model_def = OnnxModel(
         onnx_version="1.14.0",
         model_bytes=onnx_model.SerializeToString(),
     )
@@ -423,7 +423,7 @@ def test_custom_onnx(db_registries: CardRegistries):
         user_email="opsml.com",
         trained_model=torch_model,
         sample_input_data=datacard.data[0:1],
-        onnx_model_def=model_def,
+        onnx_model=model_def,
         datacard_uid=datacard.uid,
         to_onnx=True,
     )

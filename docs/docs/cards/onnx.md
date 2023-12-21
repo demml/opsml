@@ -18,7 +18,7 @@ modelcard = ModelCard(
 ```
 #### Providing a Custom Onnx Definition
 
-`Opsml` also provides the flexibility of providing your own onnx definition so long as it's packaged into an `OnnxModelDefinition` `pydantic` model. The example below is taken directly from [pytorch](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html) but with `Opsml` added to the end.
+`Opsml` also provides the flexibility of providing your own onnx definition so long as it's packaged into an `OnnxModel` `pydantic` model. The example below is taken directly from [pytorch](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html) but with `Opsml` added to the end.
 
 **Example**
 
@@ -36,7 +36,7 @@ import torch.nn.init as init
 
 
 ## opsml
-from opsml.model.types import OnnxModelDefinition
+from opsml.model.types import OnnxModel
 from opsml.registry import CardRegistries, ModelCard, DataCard
 
 registries = CardRegistries()
@@ -119,7 +119,7 @@ registries.data.register_card(datacard)
 
 ####### Create ModelCard
 
-model_def = OnnxModelDefinition(
+model_def = OnnxModel(
     onnx_version="1.14.0",
     model_bytes=onnx_model.SerializeToString(),
 )
@@ -130,7 +130,7 @@ modelcard = ModelCard(
     user_email="opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],
-    onnx_model_def=model_def,
+    onnx_model=model_def,
     datacard_uid=datacard.uid,
 )
 registries.model.register_card(modelcard)

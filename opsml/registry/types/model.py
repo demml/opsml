@@ -196,7 +196,7 @@ class ModelCardMetadata(BaseModel):
             Description for your model
         onnx_model_data:
             Pydantic model containing onnx data schema
-        onnx_model_def:
+        onnx_model:
             Pydantic model containing OnnxModel definition
         model_type:
             Type of model

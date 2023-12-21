@@ -199,7 +199,7 @@ def test_byo_onnx(model_and_data):
         to_onnx=True,
     )
     predictor = modelcard.onnx_model()
-    model_def = modelcard.metadata.onnx_model_def
+    model_def = modelcard.metadata.onnx_model
 
     # byo onnx model def
     new_modelcard = ModelCard(
@@ -209,7 +209,7 @@ def test_byo_onnx(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uid="test_uid",
-        metadata=ModelCardMetadata(onnx_model_def=model_def),
+        metadata=ModelCardMetadata(onnx_model=model_def),
         to_onnx=True,
     )
     predictor = new_modelcard.onnx_model()
@@ -252,7 +252,7 @@ def test_byo_pytorch_onnx(model_and_data):
         team="mlops",
         user_email="test_email",
         datacard_uid="test_uid",
-        metadata=ModelCardMetadata(onnx_model_def=model_def),
+        metadata=ModelCardMetadata(onnx_model=model_def),
         to_onnx=True,
     )
 

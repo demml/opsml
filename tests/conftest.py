@@ -86,7 +86,7 @@ from opsml.registry.types import (
     HuggingFaceTask,
     Metric,
     ModelCardUris,
-    OnnxModelDefinition,
+    OnnxModel,
 )
 from opsml.settings.config import OpsmlConfig, config
 
@@ -682,7 +682,7 @@ def pytorch_onnx_byo():
 
         onnx_model = onnx.load(onnx_path)
 
-    model_def = OnnxModelDefinition(
+    model_def = OnnxModel(
         onnx_version="1.14.0",
         model_bytes=onnx_model.SerializeToString(),
     )

@@ -7,7 +7,6 @@ from opsml.registry.model.interfaces.base import SamplePrediction, get_model_arg
 from opsml.registry.model.interfaces.pytorch import PyTorchModel
 from opsml.registry.types import (
     CommonKwargs,
-    OnnxModelDefinition,
     TorchOnnxArgs,
     TrainedModelType,
 )
@@ -40,7 +39,6 @@ try:
 
         model: Optional[Trainer] = None
         onnx_args: Optional[TorchOnnxArgs] = None
-        onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.PYTORCH_LIGHTNING.value
 
         @model_validator(mode="before")
@@ -102,6 +100,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
