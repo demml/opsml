@@ -32,6 +32,7 @@ class CardArtifactDeleter:
     def delete_artifacts(self) -> None:
         raise NotImplementedError
 
+    # TODO: steven - should pass card type, name, version
     def _delete_artifacts(self, read_path: str) -> None:
         """Find common directory from path and delete files"""
 
