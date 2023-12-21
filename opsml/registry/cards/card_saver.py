@@ -14,12 +14,12 @@ from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
 from opsml.registry.cards.project import ProjectCard
-from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
-from opsml.registry.model.model_converters import _OnnxModelConverter
 from opsml.registry.cards.run import RunCard
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.model.interfaces import SUPPORTED_MODELS, HuggingFaceModel
+from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
+from opsml.registry.model.model_converters import _OnnxModelConverter
 from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClientType
 from opsml.registry.types import (
@@ -31,7 +31,6 @@ from opsml.registry.types import (
     HuggingFaceStorageArtifact,
     ModelMetadata,
     OnnxAttr,
-    OnnxModelDefinition,
     SaveName,
     StoragePath,
     UriNames,
@@ -159,6 +158,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         return storage_path
 
+    # TODO: steven - should be able to save tensorflow and torch datasets
     def _save_data(self) -> None:
         """Saves DataCard data to file system"""
         if self.card.data is None:
@@ -238,51 +238,55 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         return ModelMetadata(
             model_name=self.card.name,
-            model_type=self.card.metadata.model_type,
+            model_type=self.card.interface.model_type,
             onnx_uri=onnx_attr.onnx_path,
             onnx_version=onnx_attr.onnx_version,
-            model_uri=self.card.metadata.uris.trained_model_uri,
+            model_uri=self.uris[UriNames.TRAINED_MODEL_URI.value],
             model_version=self.card.version,
             model_team=self.card.team,
             sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
             data_schema=self.card.metadata.data_schema,
         )
 
-    def _get_metadata(self) -> OnnxAttr:
-        self.card._create_and_set_model_attr()  # pylint: disable=protected-access
+    def _create_metadata(self) -> OnnxAttr:
+        if not self.card.to_onnx:
+            model_metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
+            self.card.metadata.data_schema = model_metadata.data_schema
 
-        if self.card.to_onnx:
-            model_def = cast(OnnxModelDefinition, self.card.metadata.onnx_model_def)
+            return OnnxAttr()
 
-            storage_path = save_artifact_to_storage(
-                artifact=model_def.model_bytes,
-                artifact_type=ArtifactStorageType.ONNX.value,
-                storage_client=self.storage_client,
-                storage_spec=self._get_storage_spec(
-                    filename=SaveName.ONNX_MODEL.value,
-                    uri=self.uris.get(UriNames.ONNX_MODEL_URI.value),
-                ),
-                extra_path="onnx",
-            )
+        if isinstance(self.card.interface, HuggingFaceModel):
+            return OnnxAttr()
 
-            self.uris[UriNames.ONNX_MODEL_URI.value] = storage_path.uri
+        model_metadata = _OnnxModelConverter(self.card.interface).convert_model()
 
-            return OnnxAttr(
-                onnx_path=storage_path.uri,
-                onnx_version=model_def.onnx_version,
-            )
-        return OnnxAttr()
+        assert model_metadata.model_definition is not None
+        self.card.metadata.data_schema = model_metadata.data_schema
+
+        storage_path = save_artifact_to_storage(
+            artifact=model_metadata.onnx_model.sess._model_bytes,
+            artifact_type=ArtifactStorageType.ONNX.value,
+            storage_client=self.storage_client,
+            storage_spec=self._get_storage_spec(
+                filename=SaveName.ONNX_MODEL.value,
+                uri=self.uris.get(UriNames.ONNX_MODEL_URI.value),
+            ),
+            extra_path="onnx",
+        )
+
+        self.uris[UriNames.ONNX_MODEL_URI.value] = storage_path.uri
+
+        return OnnxAttr(
+            onnx_path=storage_path.uri,
+            onnx_version=model_metadata.onnx_model.onnx_version,
+        )
 
     def _save_model_metadata(self) -> None:
         self._save_trained_model()
-
-        onnx_attr = self._save_onnx_model()
-
-        self._save_trained_model()
         self._save_sample_data()
+        onnx_attr = self._create_metadata()
 
         model_metadata = self._get_model_metadata(onnx_attr=onnx_attr)
-
         metadata_path = save_artifact_to_storage(
             artifact=model_metadata.model_dump_json(),
             artifact_type=ArtifactStorageType.JSON.value,
@@ -292,7 +296,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 uri=self.uris.get(UriNames.MODEL_METADATA_URI.value),
             ),
         )
-
         self.uris[UriNames.MODEL_METADATA_URI.value] = metadata_path.uri
 
     def _save_modelcard(self) -> None:
@@ -370,20 +373,21 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.uris[UriNames.PREPROCESSOR_URI.value] = storage_path.uri
 
+    # TODO: steven - should be able to save tensorflow and torch datasets
     def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
         """Get artifact and artifact type to save"""
 
-        if self.card.model.data_type == AllowedDataType.DICT:
-            return self.card.sample_input_data, AllowedDataType.DICT
+        if self.card.interface.data_type == AllowedDataType.DICT:
+            return self.card.interface.sample_data, AllowedDataType.DICT
 
-        if self.card.metadata.sample_data_type in [AllowedDataType.PYARROW.value, AllowedDataType.PANDAS.value]:
+        if self.card.interface.data_type in [AllowedDataType.PYARROW.value, AllowedDataType.PANDAS.value]:
             arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
-                data=self.card.sample_input_data,
-                data_type=self.card.metadata.sample_data_type,
+                data=self.card.interface.sample_data,
+                data_type=self.card.interface.data_type,
             )
             return arrow_table.table, AllowedDataType.PYARROW.value
 
-        return self.card.sample_input_data, AllowedDataType.NUMPY.value
+        return self.card.interface.sample_data, AllowedDataType.NUMPY.value
 
     def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
