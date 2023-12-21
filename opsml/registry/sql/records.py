@@ -28,6 +28,28 @@ def get_timestamp() -> int:
     return int(round(time.time() * 1_000_000))
 
 
+class DataUris(BaseModel):
+    data_uri: str
+    datacard_uri: str
+    profile_uri: Optional[str] = None
+    profile_html_uri: Optional[str] = None
+
+
+class ModelUris(BaseModel):
+    trained_model_uri: str
+    sample_data_uri: str
+    modelcard_uri: str
+    model_metadata_uri: str
+    onnx_model_uri: Optional[str] = None
+    preprocessor_uri: Optional[str] = None
+
+class RunUris(BaseModel):
+    runcard_uri: str
+    artifact_uris: Optional[str] = None
+    
+class AuditUris(BaseModel):
+    audit_uri:str
+
 class SaveRecord(BaseModel):
     name: str
     team: str
@@ -38,22 +60,17 @@ class SaveRecord(BaseModel):
 
 
 class DataRegistryRecord(SaveRecord):
-    data_uri: Optional[str] = None
     data_type: Optional[str] = None
     timestamp: int = get_timestamp()
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
-    datacard_uri: str
+    uris: DataUris
 
     @model_validator(mode="before")
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         metadata: Dict[str, Any] = values["metadata"]
-        uris: Dict[str, Any] = metadata["uris"]
-
-        values["data_uri"] = uris["data_uri"]
-        values["datacard_uri"] = uris["datacard_uri"]
         values["data_type"] = metadata["data_type"]
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
@@ -63,17 +80,14 @@ class DataRegistryRecord(SaveRecord):
 
 
 class ModelRegistryRecord(SaveRecord):
-    modelcard_uri: str
     datacard_uid: str
-    trained_model_uri: str
-    model_metadata_uri: Optional[str] = None
-    sample_data_uri: str
     sample_data_type: str
     model_type: str
     timestamp: int = get_timestamp()
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
+    uris: ModelUris
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
@@ -81,11 +95,6 @@ class ModelRegistryRecord(SaveRecord):
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         metadata: Dict[str, Any] = values["metadata"]
-
-        values["modelcard_uri"] = metadata["uris"]["modelcard_uri"]
-        values["trained_model_uri"] = metadata["uris"]["trained_model_uri"]
-        values["model_metadata_uri"] = metadata["uris"]["model_metadata_uri"]
-        values["sample_data_uri"] = metadata["uris"]["sample_data_uri"]
         values["sample_data_type"] = metadata["sample_data_type"]
         values["model_type"] = metadata["model_type"]
         values["runcard_uid"] = metadata["runcard_uid"]

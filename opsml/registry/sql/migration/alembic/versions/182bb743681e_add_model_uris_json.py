@@ -21,7 +21,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    logger.info("Alembic revision: Adding aritfact uris json to model table - {}", revision)
+    logger.info("Alembic revision: Adding uris json to model table - {}", revision)
 
     bind = op.get_context().bind
     insp = sa.inspect(bind)
@@ -29,7 +29,7 @@ def upgrade() -> None:
     columns = insp.get_columns(table_name)
 
     if not "artifact_uris" in [column["name"] for column in columns]:
-        logger.info(f"Migration Adding artifact_uris column to {table_name} table")
+        logger.info(f"Migration Adding uris column to {table_name} table")
         with op.batch_alter_table(table_name) as batch_op:
             batch_op.add_column(sa.Column("uris", sa.JSON))
     
@@ -48,4 +48,10 @@ def downgrade() -> None:
         batch_op.add_column(sa.Column("modelcard_uri", sa.String(1024)))
         batch_op.add_column(sa.Column("model_metadata_uri", sa.String(1024)))
         batch_op.add_column(sa.Column("sample_data_uri", sa.String(1024)))
+        
+    table_name = RegistryTableNames.DATA.value
+    with op.batch_alter_table(table_name) as batch_op:
+        batch_op.add_column(sa.Column("data_uri", sa.String(1024)))
+        batch_op.add_column(sa.Column("datacard_uri", sa.String(1024)))
+        
             
