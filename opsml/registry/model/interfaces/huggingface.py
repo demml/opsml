@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.model.interfaces.base import SamplePrediction, ModelInterface
+from opsml.registry.model.interfaces.base import ModelInterface, SamplePrediction
 from opsml.registry.types import (
     GENERATION_TYPES,
     CommonKwargs,
@@ -224,4 +224,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )

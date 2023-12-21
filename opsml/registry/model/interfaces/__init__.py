@@ -1,6 +1,6 @@
 from typing import Union
 
-from opsml.registry.model.interfaces.base import SamplePrediction, ModelInterface
+from opsml.registry.model.interfaces.base import ModelInterface, SamplePrediction
 from opsml.registry.model.interfaces.huggingface import HuggingFaceModel
 from opsml.registry.model.interfaces.lgbm import LightGBMBoosterModel
 from opsml.registry.model.interfaces.pytorch import PyTorchModel

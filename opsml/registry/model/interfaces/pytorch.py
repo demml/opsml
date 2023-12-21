@@ -4,8 +4,8 @@ from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import (
-    SamplePrediction,
     ModelInterface,
+    SamplePrediction,
     get_model_args,
 )
 from opsml.registry.types import (

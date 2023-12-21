@@ -410,23 +410,20 @@ class FloatTypeConverter:
         """
         self.convert_all = convert_all
 
-    def _convert_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _convert_dataframe(self, data: pd.DataFrame) -> None:
         for feature, feature_type in zip(data.columns, data.dtypes):
             if not self.convert_all:
                 if DataDtypes.FLOAT64 in str(feature_type):
-                    data = data.astype({feature: np.float32})
+                    data.astype({feature: np.float32})
             else:
-                data = data.astype({feature: np.float32})
+                data.astype({feature: np.float32})
 
-        return data
-
-    def _convert_array(self, data: NDArray[Any]) -> NDArray[Any]:
+    def _convert_array(self, data: NDArray[Any]) -> None:
         dtype = str(data.dtype)
         if dtype != DataDtypes.STRING:
-            return data.astype(np.float32, copy=False)
-        return data
+            data.astype(np.float32, copy=False)
 
-    def _convert_dict(self, data: Dict[str, NDArray[Any]]) -> Dict[str, NDArray[Any]]:
+    def _convert_dict(self, data: Dict[str, NDArray[Any]]) -> None:
         for key, value in data.items():
             dtype = str(value.dtype)
             if not self.convert_all:
@@ -435,7 +432,6 @@ class FloatTypeConverter:
             else:
                 if dtype != DataDtypes.STRING:
                     data[key] = value.astype(np.float32, copy=False)
-        return data
 
     def convert_to_float(self, data: ValidModelInput) -> ValidModelInput:
         if isinstance(data, pd.DataFrame):

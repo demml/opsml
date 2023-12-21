@@ -30,10 +30,10 @@ from opsml.registry.types import (
     ModelMetadata,
     OnnxAttr,
     OnnxModelDefinition,
-    StoragePath,
-    ValidSavedSample,
     SaveName,
+    StoragePath,
     UriNames,
+    ValidSavedSample,
 )
 
 

@@ -18,11 +18,11 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
-from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.data_converters import OnnxDataConverter
-from opsml.registry.model.interfaces import SamplePrediction
+from opsml.registry.cards.model import ModelCard
+from opsml.registry.model.interfaces import ModelInterface, SamplePrediction
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.model.utils.data_helper import ModelDataHelper
+from opsml.registry.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
 from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -56,29 +56,29 @@ except ModuleNotFoundError as import_error:
 
 
 class ModelConverter:
-    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
-        self.card = modelcard
+    def __init__(self, model_interface: ModelInterface, data_helper: ModelDataHelper):
+        self.interface = model_interface
         self.data_helper = data_helper
         self.data_converter = OnnxDataConverter(
-            modelcard=modelcard,
+            model_interface=model_interface,
             data_helper=data_helper,
         )
 
     @property
     def model_type(self) -> str:
-        return self.card.model.model_type
+        return self.interface.model_type
 
     @property
     def model_class(self) -> str:
-        return self.card.model.model_class
+        return self.interface.model_class
 
     @property
     def trained_model(self) -> Any:
-        return self.card.model
+        return self.interface.model
 
     @property
     def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
-        return self.card.model.onnx_model_def
+        return self.interface.onnx_model_def
 
     @property
     def is_sklearn_classifier(self) -> bool:
@@ -107,96 +107,11 @@ class ModelConverter:
         Returns
             Encrypted model definition
         """
-
         if self.model_type in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
             OpsmlImportExceptions.try_skl2onnx_imports()
-
         elif self.model_type == TrainedModelType.TF_KERAS:
             OpsmlImportExceptions.try_tf2onnx_imports()
-
         return self.data_converter.get_data_types()
-
-    def _raise_shape_mismatch(self, onnx_shape: Tuple[int, ...], pred_shape: Tuple[int, ...]) -> None:
-        raise ValueError(
-            f"""Onnx and model prediction shape mismatch. \n
-                Onnx prediction shape: {onnx_shape} \n
-                Model prediction shape: {pred_shape}
-            """
-        )
-
-    def _validate_pred_arrays(self, onnx_preds: NDArray[Any], model_preds: NDArray[Any]) -> bool:
-        """
-        Validates onnx and original model predictions. Checks whether average diff between model and onnx
-        is <= .001.
-
-        Args:
-            onnx_preds:
-                Array of onnx model predictions
-            model_preds:
-                Array of model predictions
-        Returns:
-            bool indicating if onnx model prediction is close to original model
-        """
-
-        if model_preds.ndim != onnx_preds.ndim:
-            if model_preds.ndim < onnx_preds.ndim:
-                # onnx tends to add an extra dim
-                if onnx_preds.shape[0] == 1:
-                    onnx_preds = onnx_preds[0]
-                else:
-                    self._raise_shape_mismatch(onnx_preds.shape, model_preds.shape)
-            else:
-                self._raise_shape_mismatch(onnx_preds.shape, model_preds.shape)
-
-        # assert shapes match
-        assert onnx_preds.shape == model_preds.shape
-
-        diff = np.sum(abs(np.around(onnx_preds, 4) - np.around(model_preds, 4)))
-        n_values = reduce((lambda x, y: x * y), model_preds.shape)
-        avg_diff = np.divide(diff, n_values)
-
-        # check if raw diff value is less than a certain amount
-        if avg_diff <= 0.001:
-            return True
-
-        return False
-
-    def _predictions_close(
-        self,
-        onnx_preds: List[Union[float, int, NDArray[Any]]],
-        model_preds: SamplePrediction,
-    ) -> bool:  # pragma: no cover
-        """Checks if model and onnx predictions are close
-
-        Args:
-            onnx_preds:
-                Onnx model predictions
-            model_preds:
-                Model predictions
-        Returns:
-            Bool indicating if onnx and original model predictions are close
-        """
-        if model_preds.prediction_type in [AllowedDataType.TENSORFLOW_TENSOR, AllowedDataType.PYTORCH_TENSOR]:
-            model_pred = model_preds.prediction.numpy()
-        else:
-            model_pred = model_preds.prediction
-
-        if isinstance(onnx_preds, list) and isinstance(model_preds, (list, tuple)):
-            for onnx_pred, model_pred in zip(onnx_preds, model_preds):
-                data_type = get_class_name(model_pred)
-
-                if data_type in [AllowedDataType.TENSORFLOW_TENSOR, AllowedDataType.PYTORCH_TENSOR]:
-                    model_pred = model_pred.numpy()
-
-                return np.testing.assert_allclose(onnx_pred, model_pred, rtol=1e-03, atol=1e-05)
-
-        if isinstance(model_preds, np.ndarray):
-            onnx_pred = onnx_preds[0]
-            if isinstance(onnx_pred, np.ndarray):
-                return np.testing.assert_allclose(onnx_pred, model_pred, rtol=1e-03, atol=1e-05)
-            raise ValueError("Model and onnx predictions should both be of type NDArray")
-
-        return np.testing.assert_allclose(onnx_preds[0], model_pred, rtol=1e-03, atol=1e-05)
 
     def validate_model(self, onnx_model: ModelProto) -> None:
         """Validates an onnx model on training data"""
@@ -269,9 +184,7 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(
-        self, initial_types: List[Any]
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -312,7 +225,6 @@ class ModelConverter:
         """
         initial_types, data_schema = self.get_data_types()
 
-        a
         if self.onnx_model_def is None:
             model_def, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
@@ -346,10 +258,7 @@ class SklearnOnnxModel(ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -439,14 +348,14 @@ class SklearnOnnxModel(ModelConverter):
 
         elif self._is_stacking_estimator:
             logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
-            self.data_converter.converter.convert_to_float(convert_all=True)
+            FloatTypeConverter(convert_all=True).convert_to_float(data=self.data_helper.data)
 
         elif not self._is_pipeline and self.data_helper.num_dtypes > 1:
-            self.data_converter.converter.convert_to_float(convert_all=True)
+            FloatTypeConverter(convert_all=True).convert_to_float(data=self.data_helper.data)
 
         else:
             logger.warning("Converting all float64 data to float32")
-            self.data_converter.converter.convert_to_float(convert_all=False)
+            FloatTypeConverter(convert_all=False).convert_to_float(data=self.data_helper.data)
 
     def prepare_registries_and_data(self) -> None:
         """Updates sklearn onnx registries and convert data to float32"""
