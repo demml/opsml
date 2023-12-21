@@ -99,15 +99,13 @@ class DataDict(BaseModel):
     model_config = ConfigDict(frozen=False)
 
 
-class OnnxModelDefinition(BaseModel):
+class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
-    model_bytes: bytes = Field(..., description="Onnx model as serialized string")
-
-    model_config = ConfigDict(protected_namespaces=("protect_",))
+    sess: Any = Field(..., description="Onnx model session")
 
 
 class ModelReturn(BaseModel):
-    model_definition: Optional[OnnxModelDefinition] = None
+    onnx_model: Optional[OnnxModel] = None
     data_schema: DataDict
 
     model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
@@ -272,7 +270,6 @@ class ModelMetadata(BaseModel):
     model_type: str
     onnx_uri: Optional[str] = None
     onnx_version: Optional[str] = None
-    onnx_model_def: Optional[OnnxModelDefinition] = None
     model_uri: str
     model_version: str
     model_team: str

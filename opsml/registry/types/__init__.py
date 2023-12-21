@@ -53,7 +53,7 @@ from opsml.registry.types.model import (
     ModelType,
     OnnxAttr,
     OnnxDataProto,
-    OnnxModelDefinition,
+    OnnxModel,
     SeldonSigTypes,
     TorchOnnxArgs,
     TrainedModelType,

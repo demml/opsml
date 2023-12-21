@@ -16,8 +16,13 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.model.data_converters import OnnxDataConverter
 from opsml.registry.model.interfaces import ModelInterface
+from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
+from opsml.registry.model.utils.data_helper import (
+    FloatTypeConverter,
+    ModelDataHelper,
+    get_model_data,
+)
 from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -27,13 +32,11 @@ from opsml.registry.types import (
     Feature,
     ModelReturn,
     ModelType,
-    OnnxModelDefinition,
+    OnnxModel,
     TorchOnnxArgs,
     TrainedModelType,
 )
-from opsml.registry.model.utils.data_helper import get_model_data
 from opsml.registry.types.data import AllowedDataType
-from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
 
 logger = ArtifactLogger.get_logger()
 
@@ -59,6 +62,7 @@ class _ModelConverter:
             model_interface=model_interface,
             data_helper=data_helper,
         )
+        self.sess: Optional[rt.InferenceSession] = None
 
     @property
     def model_type(self) -> str:
@@ -73,7 +77,7 @@ class _ModelConverter:
         return self.interface.model
 
     @property
-    def onnx_model_def(self) -> Optional[OnnxModelDefinition]:
+    def onnx_model_def(self) -> Optional[OnnxModel]:
         return self.interface.onnx_model_def
 
     @property
@@ -112,10 +116,11 @@ class _ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
 
-    def _parse_onnx_signature(self, sess: rt.InferenceSession, sig_type: str) -> Dict[str, Feature]:  # type: ignore[type-arg]
+    def _parse_onnx_signature(self, sig_type: str) -> Dict[str, Feature]:  # type: ignore[type-arg]
         feature_dict = {}
+        assert self.sess is not None
 
-        signature: List[Any] = getattr(sess, f"get_{sig_type}")()
+        signature: List[Any] = getattr(self.sess, f"get_{sig_type}")()
 
         for sig in signature:
             feature_dict[sig.name] = Feature(feature_type=sig.type, shape=tuple(sig.shape))
@@ -131,14 +136,13 @@ class _ModelConverter:
         Returns:
             Tuple of input and output feature dictionaries
         """
-        onnx_sess = self._create_onnx_session(onnx_model=onnx_model)
 
-        input_dict = self._parse_onnx_signature(onnx_sess, "inputs")
-        output_dict = self._parse_onnx_signature(onnx_sess, "outputs")
+        input_dict = self._parse_onnx_signature("inputs")
+        output_dict = self._parse_onnx_signature("outputs")
 
         return input_dict, output_dict
 
-    def create_model_def(self, onnx_model: ModelProto) -> OnnxModelDefinition:
+    def create_model_def(self, onnx_model: ModelProto) -> OnnxModel:
         """Creates Model definition
 
         Args:
@@ -146,12 +150,12 @@ class _ModelConverter:
                 Onnx model
         """
 
-        return OnnxModelDefinition(
+        return OnnxModel(
             onnx_version=onnx.__version__,  # type: ignore
-            model_bytes=onnx_model.SerializeToString(),
+            sess=self.sess,
         )
 
-    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModel, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -163,6 +167,7 @@ class _ModelConverter:
         """
 
         onnx_model = self.convert_model(initial_types=initial_types)
+        self._create_onnx_session(onnx_model=onnx_model)
 
         # onnx sess can be used to get name, type, shape
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
@@ -170,14 +175,14 @@ class _ModelConverter:
 
         return model_def, input_onnx_features, output_onnx_features
 
-    def _load_onnx_model(self) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _load_onnx_model(self) -> Tuple[OnnxModel, Dict[str, Feature], Dict[str, Feature]]:
         """
         Loads onnx model from model definition
 
         Returns:
             Tuple containing onnx model definition, input features, and output features
         """
-        assert isinstance(self.onnx_model_def, OnnxModelDefinition)
+        assert isinstance(self.onnx_model_def, OnnxModel)
         onnx_model = onnx.load_from_string(self.onnx_model_def.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
@@ -193,10 +198,10 @@ class _ModelConverter:
         initial_types = self.get_data_types()
 
         if self.onnx_model_def is None:
-            model_def, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
+            onnx_model_def, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
         else:
-            model_def, onnx_input_features, onnx_output_features = self._load_onnx_model()
+            onnx_model_def, onnx_input_features, onnx_output_features = self._load_onnx_model()
 
         schema = (
             DataDict(
@@ -205,10 +210,10 @@ class _ModelConverter:
             ),
         )
 
-        return ModelReturn(model_definition=model_def, data_schema=schema)
+        return ModelReturn(model_definition=onnx_model_def, data_schema=schema)
 
     def _create_onnx_session(self, onnx_model: ModelProto) -> rt.InferenceSession:
-        return rt.InferenceSession(
+        self.sess = rt.InferenceSession(
             path_or_bytes=onnx_model.SerializeToString(),
             providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
         )
@@ -224,7 +229,10 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        return (
+            self.model_type == TrainedModelType.STACKING_REGRESSOR
+            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        )
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -501,7 +509,7 @@ class _PyTorchOnnxModel(_ModelConverter):
         return model_class == TrainedModelType.PYTORCH
 
 
-class _OnnxModelConverter:
+class _OnnxConverterHelper:
     @staticmethod
     def convert_model(model_interface: ModelInterface, data_helper: ModelDataHelper) -> ModelReturn:
         """
@@ -544,7 +552,7 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
             onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
             onnx_model_def:
-                Optional `OnnxModelDefinition`
+                Optional `OnnxModel`
         """
 
         super().__init__(model_interface=model_interface)
@@ -584,14 +592,13 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         Returns
             `ModelReturn`
         """
-        from opsml.registry.model.model_converters import _OnnxModelConverter
 
         model_data = get_model_data(
             data_type=self.interface.data_type,
             input_data=self.interface.sample_data,
         )
 
-        onnx_model_return = _OnnxModelConverter.convert_model(model_interface=self.interface, data_helper=model_data)
+        onnx_model_return = _OnnxConverterHelper.convert_model(model_interface=self.interface, data_helper=model_data)
 
         # set extras
         onnx_model_return.model_type = self.interface.model_type
