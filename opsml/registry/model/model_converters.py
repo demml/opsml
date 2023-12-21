@@ -9,6 +9,7 @@ import re
 import tempfile
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
+
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
@@ -147,7 +148,9 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(
+        self, initial_types: List[Any]
+    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -220,7 +223,10 @@ class SklearnOnnxModel(ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        return (
+            self.model_type == TrainedModelType.STACKING_REGRESSOR
+            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        )
 
     @property
     def _is_calibrated_classifier(self) -> bool:
