@@ -52,11 +52,9 @@ class CardSQLTable(Base, BaseMixin):
 
 @declarative_mixin
 class DataMixin:
-    data_uri = Column("data_uri", String(1024))
     data_type = Column("data_type", String(1024))
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
-    datacard_uri = Column("datacard_uri", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
     uris = Column("uris", JSON)
 
@@ -76,7 +74,7 @@ class ModelMixin:
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
-    artifact_uris = Column("uris", JSON)
+    uris = Column("uris", JSON)
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):

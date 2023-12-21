@@ -220,7 +220,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         self._save_datacard()
 
-        return self.card
+        return self.card, self.uris
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -391,7 +391,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self._save_modelcard()
 
-        return self.card
+        return self.card, self.uris
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -418,7 +418,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
     def save_artifacts(self) -> AuditCard:
         self._save_audit()
 
-        return self.card
+        return self.card, self.uris
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -469,7 +469,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
         self._save_run_artifacts()
         self._save_runcard()
 
-        return self.card
+        return self.card, self.uris
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -482,7 +482,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
         return cast(PipelineCard, self._card)
 
     def save_artifacts(self) -> PipelineCard:
-        return self.card
+        return self.card, self.uris
 
     @staticmethod
     def validate(card_type: str) -> bool:
