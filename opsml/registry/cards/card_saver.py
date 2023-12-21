@@ -258,7 +258,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             return OnnxAttr()
 
         model_metadata = _OnnxModelConverter(self.card.interface).convert_model()
-
         assert model_metadata.onnx_model is not None
         self.card.metadata.data_schema = model_metadata.data_schema
 
