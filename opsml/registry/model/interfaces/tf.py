@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.model.interfaces.base import SupportedModel, get_model_args
+from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
 from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
 
 try:
@@ -14,7 +14,7 @@ try:
     ARRAY = Union[NDArray, tf.Tensor]
     VALID_DATA = Union[ARRAY, Dict[str, ARRAY], List[ARRAY], Tuple[ARRAY]]
 
-    class TensorFlowModel(SupportedModel):
+    class TensorFlowModel(ModelInterface):
         """Model interface for Tensorflow models.
 
         Args:
@@ -100,7 +100,7 @@ try:
 
 except ModuleNotFoundError:
 
-    class TensorFlowModel(SupportedModel):
+    class TensorFlowModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

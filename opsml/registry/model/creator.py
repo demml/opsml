@@ -15,7 +15,7 @@ logger = ArtifactLogger.get_logger()
 
 
 class ModelCreator:
-    def __init__(self, modelcard: ModelCard):
+    def __init__(self, model_interface: ModelCard):
         """
         Args:
             Model:

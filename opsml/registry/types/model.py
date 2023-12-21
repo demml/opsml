@@ -211,53 +211,6 @@ class HuggingFaceOnnxArgs(BaseModel):
         ), "config must be a valid optimum config"
 
 
-@dataclass
-class ModelArtifactUris:
-    """Uri holder for trained model uris
-    Args:
-        modelcard_uri:
-            URI of modelcard
-        trained_model_uri:
-            URI where model is stored
-        onnx_model_uri:
-            URI where onnx model is stored
-        sample_data_uri:
-            URI of trained model sample data
-        preprocessor_uri:
-            URI where preprocessor is stored
-    """
-
-    trained_model_uri: Optional[str] = None
-    onnx_model_uri: Optional[str] = None
-    sample_data_uri: Optional[str] = None
-    preprocessor_uri: Optional[str] = None
-
-    model_config = ConfigDict(
-        protected_namespaces=("protect_",),
-        frozen=False,
-    )
-
-
-@dataclass
-class ModelCardUris:
-    """Uri holder for ModelCardMetadata
-
-    Args:
-        modelcard_uri:
-            URI of modelcard
-        model_metadata_uri:
-            URI where model metadata is stored
-    """
-
-    modelcard_uri: Optional[str] = None
-    model_metadata_uri: Optional[str] = None
-
-    model_config = ConfigDict(
-        protected_namespaces=("protect_",),
-        frozen=False,
-    )
-
-
 class ModelCardMetadata(BaseModel):
     """Create modelcard metadata
 
@@ -287,7 +240,6 @@ class ModelCardMetadata(BaseModel):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
-    uris: ModelCardUris = ModelCardUris()
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 

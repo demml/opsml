@@ -166,6 +166,8 @@ def download_file(
         Streaming file response
     """
 
+    # change get to accept registry, uuid and entitry to download
+    # entity can be data
     # prevent arbitrary file downloads
     # Files can only be downloaded from registry paths
     verify_path(path=read_path)

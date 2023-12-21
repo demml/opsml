@@ -33,7 +33,7 @@ class SamplePrediction:
     prediction: Any
 
 
-class SupportedModel(BaseModel):
+class ModelInterface(BaseModel):
     model: Optional[Any] = None
     preprocessor: Optional[Any] = None
     sample_data: Optional[Any] = None
@@ -53,6 +53,15 @@ class SupportedModel(BaseModel):
     @property
     def supports_onnx(self) -> bool:
         return True
+
+    def convert_to_onnx(self) -> Any:
+        raise NotImplementedError
+
+    def load_model(self) -> Any:
+        raise NotImplementedError
+
+    def download_artifacts(self) -> Any:
+        raise NotImplementedError
 
     @classmethod
     def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:
