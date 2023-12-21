@@ -14,6 +14,8 @@ from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
 from opsml.registry.cards.project import ProjectCard
+from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
+from opsml.registry.model.model_converters import _OnnxModelConverter
 from opsml.registry.cards.run import RunCard
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.image.dataset import ImageDataset
@@ -246,7 +248,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             data_schema=self.card.metadata.data_schema,
         )
 
-    def _save_onnx_model(self) -> OnnxAttr:
+    def _get_metadata(self) -> OnnxAttr:
         self.card._create_and_set_model_attr()  # pylint: disable=protected-access
 
         if self.card.to_onnx:

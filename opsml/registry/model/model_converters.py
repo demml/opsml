@@ -31,6 +31,9 @@ from opsml.registry.types import (
     TorchOnnxArgs,
     TrainedModelType,
 )
+from opsml.registry.model.utils.data_helper import get_model_data
+from opsml.registry.types.data import AllowedDataType
+from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
 
 logger = ArtifactLogger.get_logger()
 
@@ -526,3 +529,83 @@ class _OnnxModelConverter:
             model_interface=model_interface,
             data_helper=data_helper,
         ).convert()
+
+
+class _OnnxModelConverter(_TrainedModelMetadataCreator):
+    def __init__(self, model_interface: ModelInterface):
+        """
+        Instantiates OnnxModelCreator that is used for converting models to Onnx
+
+        Args:
+            Model:
+                Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
+            input_data:
+                Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
+            onnx_args:
+                Specific args for Pytorch onnx conversion. The won't be passed for most models
+            onnx_model_def:
+                Optional `OnnxModelDefinition`
+        """
+
+        super().__init__(model_interface=model_interface)
+        self.onnx_data_type = self.get_onnx_data_type()
+
+    def get_onnx_data_type(self) -> str:
+        """
+        Gets the current data type base on model type.
+        Currently only sklearn pipeline supports pandas dataframes.
+        All others support numpy arrays. This is needed for API signature
+        creation when loading model predictors.
+
+        Returns:
+            data type
+        """
+
+        # Onnx supports dataframe schemas for pipelines
+        # re-work this
+        if self.interface.model_class in [
+            TrainedModelType.TF_KERAS,
+            TrainedModelType.PYTORCH,
+        ]:
+            return AllowedDataType(self.interface.data_type).value
+
+        if (
+            self.interface.model_class == TrainedModelType.SKLEARN_ESTIMATOR
+            and self.interface.model_type == TrainedModelType.SKLEARN_PIPELINE
+        ):
+            return AllowedDataType(self.interface.data_type).value
+
+        return AllowedDataType.NUMPY.value
+
+    def convert_model(self) -> ModelReturn:
+        """
+        Create model card from current model and sample data
+
+        Returns
+            `ModelReturn`
+        """
+        from opsml.registry.model.model_converters import _OnnxModelConverter
+
+        model_data = get_model_data(
+            data_type=self.interface.data_type,
+            input_data=self.interface.sample_data,
+        )
+
+        onnx_model_return = _OnnxModelConverter.convert_model(model_interface=self.interface, data_helper=model_data)
+
+        # set extras
+        onnx_model_return.model_type = self.interface.model_type
+        onnx_model_return.data_schema.input_features = self._get_input_schema()
+        onnx_model_return.data_schema.output_features = self._get_output_schema()
+        onnx_model_return.data_schema.data_type = self.interface.data_type
+        onnx_model_return.data_schema.onnx_data_type = self.onnx_data_type
+
+        # add onnx version
+        return onnx_model_return
+
+    #
+    @staticmethod
+    def validate(to_onnx: bool) -> bool:
+        if to_onnx:
+            return True
+        return False
