@@ -48,7 +48,7 @@ except ModuleNotFoundError as import_error:
     raise import_error
 
 
-class ModelConverter:
+class _ModelConverter:
     def __init__(self, model_interface: ModelInterface, data_helper: ModelDataHelper):
         self.interface = model_interface
         self.data_helper = data_helper
@@ -148,9 +148,7 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(
-        self, initial_types: List[Any]
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -218,15 +216,12 @@ class ModelConverter:
         raise NotImplementedError
 
 
-class SklearnOnnxModel(ModelConverter):
+class _SklearnOnnxModel(_ModelConverter):
     """Class for converting sklearn models to onnx format"""
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -391,7 +386,7 @@ class SklearnOnnxModel(ModelConverter):
         return model_class in SKLEARN_SUPPORTED_MODEL_TYPES
 
 
-class LightGBMBoosterOnnxModel(ModelConverter):
+class _LightGBMBoosterOnnxModel(_ModelConverter):
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts lightgbm model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
@@ -405,7 +400,7 @@ class LightGBMBoosterOnnxModel(ModelConverter):
         return model_class in LIGHTGBM_SUPPORTED_MODEL_TYPES
 
 
-class TensorflowKerasOnnxModel(ModelConverter):
+class _TensorflowKerasOnnxModel(_ModelConverter):
     def _get_onnx_model_from_tuple(self, model: Any) -> Any:
         if isinstance(model, tuple):
             return model[0]
@@ -425,7 +420,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
         return model_class in TrainedModelType.TF_KERAS
 
 
-class PytorchArgBuilder:
+class _PytorchArgBuilder:
     def __init__(
         self,
         input_data: Union[NDArray[Any], Dict[str, NDArray[Any]]],
@@ -451,7 +446,7 @@ class PytorchArgBuilder:
         )
 
 
-class PyTorchOnnxModel(ModelConverter):
+class _PyTorchOnnxModel(_ModelConverter):
     def __init__(self, model_interface: ModelInterface, data_helper: ModelDataHelper):
         model_interface.onnx_args = self._get_additional_model_args(
             onnx_args=model_interface.onnx_args,
@@ -467,7 +462,7 @@ class PyTorchOnnxModel(ModelConverter):
         """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
 
         if onnx_args is None:
-            return PytorchArgBuilder(input_data=input_data).get_args()
+            return _PytorchArgBuilder(input_data=input_data).get_args()
         return onnx_args
 
     def _get_onnx_model(self) -> ModelProto:
@@ -503,7 +498,7 @@ class PyTorchOnnxModel(ModelConverter):
         return model_class == TrainedModelType.PYTORCH
 
 
-class OnnxModelConverter:
+class _OnnxModelConverter:
     @staticmethod
     def convert_model(model_interface: ModelInterface, data_helper: ModelDataHelper) -> ModelReturn:
         """
@@ -522,7 +517,7 @@ class OnnxModelConverter:
         converter = next(
             (
                 converter
-                for converter in ModelConverter.__subclasses__()
+                for converter in _ModelConverter.__subclasses__()
                 if converter.validate(model_class=model_interface.model_class)
             )
         )

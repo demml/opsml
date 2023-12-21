@@ -6,6 +6,7 @@
 from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import all_subclasses
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.model.utils.data_helper import get_model_data
 from opsml.registry.types import DataDict, Feature, ModelReturn, TrainedModelType
@@ -14,7 +15,7 @@ from opsml.registry.types.data import AllowedDataType
 logger = ArtifactLogger.get_logger()
 
 
-class _ModelCreator:
+class _ModelMetadataCreator:
     def __init__(self, model_interface: ModelInterface):
         """
         Args:
@@ -31,7 +32,7 @@ class _ModelCreator:
 
     @property
     def model(self) -> Any:
-        """Return model from modelcard"""
+        """Return model from modelinterface"""
         if self.interface.model.model_class == TrainedModelType.PYTORCH_LIGHTNING:
             return self.interface.model.model
         return self.interface.model
@@ -43,8 +44,26 @@ class _ModelCreator:
     def validate(to_onnx: bool) -> bool:
         raise NotImplementedError
 
+    @staticmethod
+    def _create_model(model_interface: ModelInterface, to_onnx: bool = False) -> ModelReturn:
+        """
+        Validates and selects a `ModeCreator` subclass and creates a `ModelReturn`
 
-class _TrainedModelMetadataCreator(_ModelCreator):
+        Args:
+            model_interface:
+                ModelInterface
+
+        Returns:
+            `ModelReturn`
+        """
+        subclasses = all_subclasses(_ModelMetadataCreator)
+
+        creator = next(creator for creator in subclasses if creator.validate(to_onnx=to_onnx))
+
+        return creator(model_interface).create_model()
+
+
+class _TrainedModelMetadataCreator(_ModelMetadataCreator):
     """Creates metadata to deploy a trained model"""
 
     def _get_input_schema(self) -> Dict[str, Feature]:
@@ -146,14 +165,14 @@ class _OnnxModelCreator(_TrainedModelMetadataCreator):
         Returns
             `ModelReturn`
         """
-        from opsml.registry.model.model_converters import OnnxModelConverter
+        from opsml.registry.model.model_converters import _OnnxModelConverter
 
         model_data = get_model_data(
             data_type=self.interface.data_type,
             input_data=self.interface.sample_data,
         )
 
-        onnx_model_return = OnnxModelConverter.convert_model(modelcard=self.interface, data_helper=model_data)
+        onnx_model_return = _OnnxModelConverter.convert_model(model_interface=self.interface, data_helper=model_data)
 
         # set extras
         onnx_model_return.model_type = self.interface.model_type
@@ -171,20 +190,3 @@ class _OnnxModelCreator(_TrainedModelMetadataCreator):
         if to_onnx:
             return True
         return False
-
-
-def create_model(model_interface: ModelInterface, to_onnx: bool = False) -> ModelReturn:
-    """
-    Validates and selects s `ModeCreator` subclass and creates a `ModelReturn`
-
-    Args:
-        modelcard:
-            ModelCard
-
-    Returns:
-        `ModelReturn`
-    """
-
-    creator = next(creator for creator in _ModelCreator.__subclasses__() if creator.validate(to_onnx=to_onnx))
-
-    return creator(model_interface).create_model()
