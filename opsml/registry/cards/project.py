@@ -24,7 +24,7 @@ class ProjectCard(ArtifactCard):
         card_args["project_id"] = f'{card_args["team"]}:{card_args["name"]}'
         return card_args
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record for a project"""
 
         return ProjectRegistryRecord(**self.model_dump())

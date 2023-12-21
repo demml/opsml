@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
@@ -275,7 +274,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _save_model_metadata(self) -> None:
         self._save_trained_model()
 
-        # onnx_attr = self._save_onnx_model()
+        onnx_attr = self._save_onnx_model()
 
         self._save_trained_model()
         self._save_sample_data()

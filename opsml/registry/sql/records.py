@@ -43,12 +43,14 @@ class ModelUris(BaseModel):
     onnx_model_uri: Optional[str] = None
     preprocessor_uri: Optional[str] = None
 
+
 class RunUris(BaseModel):
     runcard_uri: str
-    artifact_uris: Optional[str] = None
-    
+
+
 class AuditUris(BaseModel):
-    audit_uri:str
+    audit_uri: str
+
 
 class SaveRecord(BaseModel):
     name: str
