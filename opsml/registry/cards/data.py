@@ -291,7 +291,9 @@ class DataCard(ArtifactCard):
 
 
 class Downloader:
-    def __init__(self, card: ArtifactCard, storage_client: client.StorageClientType):  # pylint: disable=redefined-outer-name
+    def __init__(
+        self, card: ArtifactCard, storage_client: client.StorageClientType
+    ):  # pylint: disable=redefined-outer-name
         self.storage_client = storage_client
         self._card = card
 
