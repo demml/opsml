@@ -252,7 +252,6 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         if not self.card.to_onnx:
             model_metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
             self.card.metadata.data_schema = model_metadata.data_schema
-
             return OnnxAttr()
 
         if isinstance(self.card.interface, HuggingFaceModel):
@@ -260,7 +259,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         model_metadata = _OnnxModelConverter(self.card.interface).convert_model()
 
-        assert model_metadata.model_definition is not None
+        assert model_metadata.onnx_model is not None
         self.card.metadata.data_schema = model_metadata.data_schema
 
         storage_path = save_artifact_to_storage(
@@ -275,6 +274,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
 
         self.uris[UriNames.ONNX_MODEL_URI.value] = storage_path.uri
+
+        # add onnx model to card interface
+        assert hasattr(self.card.interface, "onnx_model")
+        self.card.interface.onnx_model = model_metadata.onnx_model
 
         return OnnxAttr(
             onnx_path=storage_path.uri,
@@ -307,7 +310,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 "storage_client",
             }
         )
-        model_dump["metadata"].pop("onnx_model_def")
+        model_dump["metadata"].pop("onnx_model")
 
         storage_path = save_artifact_to_storage(
             artifact=model_dump,

@@ -10,7 +10,6 @@ from opsml.registry.model.interfaces.base import (
 )
 from opsml.registry.types import (
     CommonKwargs,
-    OnnxModelDefinition,
     TorchOnnxArgs,
     TrainedModelType,
 )
@@ -48,7 +47,6 @@ try:
         model: Optional[torch.nn.Module] = None
         sample_data: Optional[VALID_DATA] = None
         onnx_args: Optional[TorchOnnxArgs] = None
-        onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.PYTORCH.value
 
         @classmethod

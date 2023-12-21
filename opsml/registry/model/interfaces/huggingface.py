@@ -65,17 +65,6 @@ try:
         is_pipeline: bool = False
         backend: str
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
-        _onnx_model: Optional[Any] = None
-
-        @property
-        def onnx_model(self) -> bool:
-            """Onnx version of HuggingFace model. This is only available if `to_onnx` is set to True during registration
-            or loaded from `onnx_model` method in modelcard"""
-            return self._onnx_model
-
-        @onnx_model.setter
-        def onnx_model(self, value: Any) -> None:
-            self._onnx_model = value
 
         @classmethod
         def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
@@ -224,6 +213,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")

@@ -6,7 +6,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.types import CommonKwargs
+from opsml.registry.types import CommonKwargs, OnnxModel
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -37,6 +37,7 @@ class ModelInterface(BaseModel):
     model: Optional[Any] = None
     preprocessor: Optional[Any] = None
     sample_data: Optional[Any] = None
+    onnx_model: Optional[OnnxModel] = None
     task_type: str = CommonKwargs.UNDEFINED.value
     model_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
@@ -49,10 +50,6 @@ class ModelInterface(BaseModel):
         validate_default=True,
         extra="allow",
     )
-
-    @property
-    def supports_onnx(self) -> bool:
-        return True
 
     def convert_to_onnx(self) -> Any:
         raise NotImplementedError

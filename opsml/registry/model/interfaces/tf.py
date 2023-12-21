@@ -6,7 +6,7 @@ from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
-from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
+from opsml.registry.types import CommonKwargs, TrainedModelType
 
 try:
     import tensorflow as tf
@@ -39,7 +39,6 @@ try:
 
         model: Optional[tf.keras.Model] = None
         sample_data: Optional[VALID_DATA] = None
-        onnx_model_def: Optional[OnnxModelDefinition] = None
         model_class: str = TrainedModelType.TF_KERAS.value
 
         @classmethod

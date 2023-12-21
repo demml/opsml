@@ -177,7 +177,7 @@ class ModelCard(ArtifactCard):
     #
     #    return onnx_model
 
-    # def load_onnx_model_definition(self) -> None:
+    # def load_onnx_modelinition(self) -> None:
     #    """Loads the onnx model definition"""
     #
     #    if self.metadata.uris.model_metadata_uri is None:
@@ -186,16 +186,16 @@ class ModelCard(ArtifactCard):
     #    metadata = self.interface_metadata
     #    onnx_model = self._load_onnx_model(metadata=metadata)
     #
-    #    model_def = OnnxModelDefinition(
+    #    model_def = OnnxModel(
     #        onnx_version=metadata.onnx_version,
     #        model_bytes=onnx_model.SerializeToString(),
     #    )
-    #    self.metadata.onnx_model_def = model_def
+    #    self.metadata.onnx_model = model_def
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
 
-        exclude_vars = {"model": {"model", "preprocessor", "sample_data", "onnx_model_def"}}
+        exclude_vars = {"model": {"model", "preprocessor", "sample_data", "onnx_model"}}
         dumped_model = {**self.model_dump(exclude=exclude_vars), **kwargs}
 
         return ModelRegistryRecord(**dumped_model)
@@ -210,7 +210,7 @@ class ModelCard(ArtifactCard):
     #    return version
 
     # def _set_model_attributes(self, model_return: ModelReturn) -> None:
-    #    setattr(self.metadata, "onnx_model_def", model_return.model_definition)
+    #    setattr(self.metadata, "onnx_model", model_return.model_definition)
     #    setattr(self.metadata, "data_schema", model_return.api_data_schema)
     #    setattr(self.metadata, "model_type", model_return.model_type)
 
@@ -275,14 +275,14 @@ class ModelCard(ArtifactCard):
     #   """
 
     #   # todo: clean this up
-    #   if self.metadata.onnx_model_def is None or self.metadata.data_schema is None:
+    #   if self.metadata.onnx_model is None or self.metadata.data_schema is None:
     #       self._create_and_set_model_attr()
 
     #   version = self._set_version_for_predictor()
 
     #   # recast to make mypy happy
     #   # todo: refactor
-    #   model_def = cast(OnnxModelDefinition, self.metadata.onnx_model_def)
+    #   model_def = cast(OnnxModel, self.metadata.onnx_model)
     #   model_type = str(self.metadata.model_type)
     #   data_schema = self.metadata.data_schema
 

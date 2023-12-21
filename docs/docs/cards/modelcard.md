@@ -129,7 +129,7 @@ Out of the box, `Opsml` supports a variety of common model libraries and types i
         members:
             - load_sample_data
             - load_trained_model
-            - load_onnx_model_definition
+            - load_onnx_modelinition
             - onnx_model
         show_root_heading: true
         show_source: true

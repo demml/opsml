@@ -77,8 +77,8 @@ class _ModelConverter:
         return self.interface.model
 
     @property
-    def onnx_model_def(self) -> Optional[OnnxModel]:
-        return self.interface.onnx_model_def
+    def onnx_model(self) -> Optional[OnnxModel]:
+        return self.interface.onnx_model
 
     @property
     def is_sklearn_classifier(self) -> bool:
@@ -182,11 +182,11 @@ class _ModelConverter:
         Returns:
             Tuple containing onnx model definition, input features, and output features
         """
-        assert isinstance(self.onnx_model_def, OnnxModel)
-        onnx_model = onnx.load_from_string(self.onnx_model_def.model_bytes)
+        assert isinstance(self.onnx_model, OnnxModel)
+        onnx_model = onnx.load_from_string(self.onnx_model.model_bytes)
         input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
-        return self.onnx_model_def, input_onnx_features, output_onnx_features
+        return self.onnx_model, input_onnx_features, output_onnx_features
 
     def convert(self) -> ModelReturn:
         """Converts model to onnx model, validates it, and creates an
@@ -197,11 +197,11 @@ class _ModelConverter:
         """
         initial_types = self.get_data_types()
 
-        if self.onnx_model_def is None:
-            onnx_model_def, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
+        if self.onnx_model is None:
+            onnx_model, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
         else:
-            onnx_model_def, onnx_input_features, onnx_output_features = self._load_onnx_model()
+            onnx_model, onnx_input_features, onnx_output_features = self._load_onnx_model()
 
         schema = (
             DataDict(
@@ -210,7 +210,7 @@ class _ModelConverter:
             ),
         )
 
-        return ModelReturn(model_definition=onnx_model_def, data_schema=schema)
+        return ModelReturn(model_definition=onnx_model, data_schema=schema)
 
     def _create_onnx_session(self, onnx_model: ModelProto) -> rt.InferenceSession:
         self.sess = rt.InferenceSession(
@@ -229,10 +229,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -551,7 +548,7 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
                 Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
             onnx_args:
                 Specific args for Pytorch onnx conversion. The won't be passed for most models
-            onnx_model_def:
+            onnx_model:
                 Optional `OnnxModel`
         """
 
