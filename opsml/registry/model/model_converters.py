@@ -8,15 +8,11 @@
 import re
 import tempfile
 import warnings
-from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
-from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
-from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.data_converters import OnnxDataConverter
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
@@ -30,7 +26,6 @@ from opsml.registry.types import (
     Feature,
     ModelReturn,
     ModelType,
-    OnnxDataProto,
     OnnxModelDefinition,
     TorchOnnxArgs,
     TrainedModelType,
@@ -113,24 +108,13 @@ class ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
 
-    def _parse_onnx_signature(self, signature: RepeatedCompositeFieldContainer) -> Dict[str, Feature]:  # type: ignore[type-arg]
+    def _parse_onnx_signature(self, sess: rt.InferenceSession, sig_type: str) -> Dict[str, Feature]:  # type: ignore[type-arg]
         feature_dict = {}
 
+        signature: List[Any] = getattr(sess, f"get_{sig_type}")()
+
         for sig in signature:
-            data_type = self._get_data_elem_type(sig=sig)
-            shape_dims = sig.type.tensor_type.shape.dim
-
-            dim_shape = [dim.dim_value if dim.dim_value > 0 else None for dim in shape_dims]
-
-            if sig.name == "variable":
-                name = "value"
-            else:
-                name = sig.name
-
-            feature_dict[name] = Feature(
-                feature_type=OnnxDataProto(data_type).name,
-                shape=dim_shape,
-            )
+            feature_dict[sig.name] = Feature(feature_type=sig.type, shape=tuple(sig.shape))
 
         return feature_dict
 
@@ -143,9 +127,10 @@ class ModelConverter:
         Returns:
             Tuple of input and output feature dictionaries
         """
-        # TODO: get rid of this
-        input_dict = self._parse_onnx_signature(onnx_model.graph.input)
-        output_dict = self._parse_onnx_signature(onnx_model.graph.output)
+        onnx_sess = self._create_onnx_session(onnx_model=onnx_model)
+
+        input_dict = self._parse_onnx_signature(onnx_sess, "inputs")
+        output_dict = self._parse_onnx_signature(onnx_sess, "outputs")
 
         return input_dict, output_dict
 
@@ -461,12 +446,12 @@ class PytorchArgBuilder:
 
 
 class PyTorchOnnxModel(ModelConverter):
-    def __init__(self, modelcard: ModelCard, data_helper: ModelDataHelper):
-        modelcard.model.onnx_args = self._get_additional_model_args(
-            onnx_args=modelcard.model.onnx_args,
+    def __init__(self, model_interface: ModelInterface, data_helper: ModelDataHelper):
+        model_interface.onnx_args = self._get_additional_model_args(
+            onnx_args=model_interface.onnx_args,
             input_data=data_helper.data,
         )
-        super().__init__(modelcard=modelcard, data_helper=data_helper)
+        super().__init__(model_interface=model_interface, data_helper=data_helper)
 
     def _get_additional_model_args(
         self,
@@ -478,52 +463,6 @@ class PyTorchOnnxModel(ModelConverter):
         if onnx_args is None:
             return PytorchArgBuilder(input_data=input_data).get_args()
         return onnx_args
-
-    def _post_process_prediction(self, predictions: Any) -> NDArray[Any]:
-        """Parse pytorch predictions"""
-
-        if hasattr(predictions, "logits"):
-            return predictions.logits.detach().numpy()  # type: ignore
-        if hasattr(predictions, "detach"):
-            return predictions.detach().numpy()  # type: ignore
-        if hasattr(predictions, "last_hidden_state"):
-            return predictions.last_hidden_state.detach().numpy()  # type: ignore
-
-        # for vision model
-        if isinstance(predictions, OrderedDict):
-            return predictions["out"].detach().numpy()  # type: ignore
-
-        return predictions.numpy()  # type: ignore
-
-    def _model_predict(self) -> NDArray[Any]:
-        """Generate prediction for pytorch model using sample data"""
-
-        torch_data = self._get_torch_data()
-
-        if isinstance(torch_data, tuple):
-            pred = self.trained_model(*torch_data)
-
-        elif isinstance(torch_data, dict):
-            pred = self.trained_model(**torch_data)
-
-        else:
-            pred = self.trained_model(torch_data)
-
-        return self._post_process_prediction(predictions=pred)
-
-    def _get_torch_data(self) -> Any:
-        import torch
-
-        if isinstance(self.data_helper.data, tuple):
-            return tuple(torch.from_numpy(data) for data in self.data_helper.data)  # pylint: disable=no-member
-
-        if isinstance(self.data_helper.data, dict):
-            return {
-                name: torch.from_numpy(data)  # pylint: disable=no-member
-                for name, data in self.data_helper.data.items()
-            }
-
-        return torch.from_numpy(self.data_helper.data)  # pylint: disable=no-member
 
     def _get_onnx_model(self) -> ModelProto:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
@@ -543,9 +482,8 @@ class PyTorchOnnxModel(ModelConverter):
                 **self.card.model.onnx_args.model_dump(exclude={"options"}),
             )
             onnx.checker.check_model(filename)
-            model = onnx.load(filename)
 
-        return cast(ModelProto, model)
+        return onnx.load(filename)
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""
@@ -561,15 +499,15 @@ class PyTorchOnnxModel(ModelConverter):
 
 class OnnxModelConverter:
     @staticmethod
-    def convert_model(modelcard: ModelCard, data_helper: ModelDataHelper) -> ModelReturn:
+    def convert_model(model_interface: ModelInterface, data_helper: ModelDataHelper) -> ModelReturn:
         """
         Instantiates a helper class to convert machine learning models and their input
         data to onnx format for interoperability.
 
 
         Args:
-            modelcard:
-                ModelCard class containing model-specific information for Onnx conversion
+            model_interface:
+                ModelInterface class containing model-specific information for Onnx conversion
             data_helper:
                 ModelDataHelper class containing model-specific information for Onnx conversion
 
@@ -579,11 +517,11 @@ class OnnxModelConverter:
             (
                 converter
                 for converter in ModelConverter.__subclasses__()
-                if converter.validate(model_class=modelcard.model.model_class)
+                if converter.validate(model_class=model_interface.model_class)
             )
         )
 
         return converter(
-            modelcard=modelcard,
+            model_interface=model_interface,
             data_helper=data_helper,
         ).convert()
