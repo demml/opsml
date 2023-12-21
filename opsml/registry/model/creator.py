@@ -93,7 +93,7 @@ class _TrainedModelMetadataCreator(_ModelCreator):
         return False
 
 
-class _OnnxModelCreator(_ModelCreator):
+class _OnnxModelCreator(_TrainedModelMetadataCreator):
     def __init__(self, model_interface: ModelInterface):
         """
         Instantiates OnnxModelCreator that is used for converting models to Onnx
@@ -152,9 +152,15 @@ class _OnnxModelCreator(_ModelCreator):
             data_type=self.interface.data_type,
             input_data=self.interface.sample_data,
         )
+
         onnx_model_return = OnnxModelConverter.convert_model(modelcard=self.interface, data_helper=model_data)
+
+        # set extras
         onnx_model_return.model_type = self.interface.model_type
-        onnx_model_return.api_data_schema.model_data_schema.data_type = self.onnx_data_type
+        onnx_model_return.data_schema.input_features = self._get_input_schema()
+        onnx_model_return.data_schema.output_features = self._get_output_schema()
+        onnx_model_return.data_schema.data_type = self.interface.data_type
+        onnx_model_return.data_schema.onnx_data_type = self.onnx_data_type
 
         # add onnx version
         return onnx_model_return

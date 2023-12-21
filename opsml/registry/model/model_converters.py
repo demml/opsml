@@ -28,7 +28,6 @@ from opsml.registry.types import (
     BaseEstimator,
     DataDict,
     Feature,
-    ModelProto,
     ModelReturn,
     ModelType,
     OnnxDataProto,
@@ -43,6 +42,7 @@ logger = ArtifactLogger.get_logger()
 try:
     import onnx
     import onnxruntime as rt
+    from onnx import ModelProto
 
 except ModuleNotFoundError as import_error:
     logger.error(
@@ -110,25 +110,6 @@ class ModelConverter:
             OpsmlImportExceptions.try_tf2onnx_imports()
         return self.data_converter.get_data_types()
 
-    def validate_model(self, onnx_model: ModelProto) -> None:
-        """Validates an onnx model on training data"""
-        inputs = self.data_converter.convert_data()
-        model_preds = self.card.model.get_sample_prediction()
-
-        logger.info("Validating converted onnx model")
-        sess = self._create_onnx_session(onnx_model=onnx_model)
-        onnx_preds = sess.run(None, inputs)
-
-        try:
-            self._predictions_close(onnx_preds=onnx_preds, model_preds=model_preds)
-        except (AssertionError, ValueError) as exc:
-            raise ValueError(f"Model prediction validation failed {exc}")
-
-        logger.info("Onnx model validated")
-
-        # get inputs and outputs from onnx model
-        a
-
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
 
@@ -181,9 +162,7 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(
-        self, initial_types: List[Any]
-    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -211,7 +190,7 @@ class ModelConverter:
         """
         assert isinstance(self.onnx_model_def, OnnxModelDefinition)
         onnx_model = onnx.load_from_string(self.onnx_model_def.model_bytes)
-        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=cast(ModelProto, onnx_model))
+        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
 
         return self.onnx_model_def, input_onnx_features, output_onnx_features
 
@@ -222,7 +201,7 @@ class ModelConverter:
         Returns:
             ModelReturn object containing model definition and api data schema
         """
-        initial_types, data_schema = self.get_data_types()
+        initial_types = self.get_data_types()
 
         if self.onnx_model_def is None:
             model_def, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
@@ -232,7 +211,6 @@ class ModelConverter:
 
         schema = (
             DataDict(
-                input_features=data_schema,
                 onnx_input_features=onnx_input_features,
                 onnx_output_features=onnx_output_features,
             ),
@@ -257,10 +235,7 @@ class SklearnOnnxModel(ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -418,7 +393,6 @@ class SklearnOnnxModel(ModelConverter):
         """Converts sklearn model to ONNX ModelProto"""
 
         onnx_model = self._convert_sklearn(initial_types=initial_types)
-        self.validate_model(onnx_model=onnx_model)
         return onnx_model
 
     @staticmethod
@@ -432,7 +406,6 @@ class LightGBMBoosterOnnxModel(ModelConverter):
         from onnxmltools import convert_lightgbm
 
         onnx_model = convert_lightgbm(model=self.trained_model, initial_types=initial_types)
-        self.validate_model(onnx_model=onnx_model)
 
         return cast(ModelProto, onnx_model)
 
@@ -452,8 +425,7 @@ class TensorflowKerasOnnxModel(ModelConverter):
 
         import tf2onnx
 
-        onnx_model, _ = tf2onnx.convert.from_keras(self.trained_model, initial_types, opset=13)
-        self.validate_model(onnx_model=onnx_model)
+        onnx_model, _ = tf2onnx.convert.from_keras(self.trained_model, initial_types)
 
         return cast(ModelProto, onnx_model)
 
@@ -539,25 +511,6 @@ class PyTorchOnnxModel(ModelConverter):
 
         return self._post_process_prediction(predictions=pred)
 
-    def validate_model(self, onnx_model: ModelProto) -> None:
-        """Validates an onnx model on sample data"""
-        inputs = self.data_converter.convert_data()
-        model_preds = self._model_predict()
-
-        logger.info("Validating converted onnx model")
-        sess = self._create_onnx_session(onnx_model=onnx_model)
-
-        onnx_preds = sess.run(None, inputs)
-
-        if not self._predictions_close(
-            onnx_preds=onnx_preds,
-            model_preds=model_preds,
-        ):
-            logger.error("Onnx prediction validation failed")
-            raise ValueError("Model prediction validation failed")
-
-        logger.info("Onnx model validated")
-
     def _get_torch_data(self) -> Any:
         import torch
 
@@ -598,7 +551,6 @@ class PyTorchOnnxModel(ModelConverter):
         """Converts a tensorflow keras model"""
 
         onnx_model = self._get_onnx_model()
-        self.validate_model(onnx_model=onnx_model)
 
         return onnx_model
 
