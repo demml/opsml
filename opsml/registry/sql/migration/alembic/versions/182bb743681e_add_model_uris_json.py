@@ -45,6 +45,7 @@ def downgrade() -> None:
     with op.batch_alter_table(table_name) as batch_op:
         batch_op.drop_column("artifact_uris")
         batch_op.add_column(sa.Column("trained_model_uri", sa.String(1024)))
-        batch_op.add_column(sa.Column("trained_model_uri", sa.String(1024)))
-        batch_op.add_column(sa.Column("trained_model_uri", sa.String(1024)))
+        batch_op.add_column(sa.Column("modelcard_uri", sa.String(1024)))
+        batch_op.add_column(sa.Column("model_metadata_uri", sa.String(1024)))
+        batch_op.add_column(sa.Column("sample_data_uri", sa.String(1024)))
             
