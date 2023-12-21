@@ -6,20 +6,13 @@
 
 from typing import Any, Dict, List, Optional, Tuple, cast
 
-import numpy as np
-from numpy.typing import NDArray
-
-from opsml.helpers.utils import get_class_name
-from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
 from opsml.registry.types import (
     AVAILABLE_MODEL_TYPES,
     AllowedDataType,
-    DataDtypes,
     Feature,
     OnnxModelDefinition,
-    TorchOnnxArgs,
     TrainedModelType,
 )
 
@@ -134,7 +127,9 @@ class PandasOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type != TrainedModelType.SKLEARN_PIPELINE
+        model_match = (
+            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type != TrainedModelType.SKLEARN_PIPELINE
+        )
         return data_type == AllowedDataType.PANDAS and model_match
 
 
@@ -149,7 +144,9 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        model_match = (
+            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        )
         return data_type == AllowedDataType.PANDAS and model_match
 
 
@@ -220,7 +217,8 @@ class OnnxDataConverter:
                     data_type=model_interface.data_type,
                     model_class=model_interface.model_class,
                 )
-            )
+            ),
+            DataConverter,
         )
 
         return converter(model_interface=model_interface, data_helper=data_helper)
