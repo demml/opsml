@@ -33,20 +33,9 @@ from opsml.registry.types import (
     OnnxModelDefinition,
     StoragePath,
     ValidSavedSample,
+    SaveName,
+    UriNames,
 )
-
-
-class SaveName(str, Enum):
-    DATACARD = "datacard"
-    RUNCARD = "runcard"
-    MODELCARD = "modelcard"
-    AUDIT = "audit"
-    PIPLELINECARD = "pipelinecard"
-    MODEL_METADATA = "model-metadata"
-    TRAINED_MODEL = "trained-model"
-    ONNX_MODEL = "model"
-    SAMPLE_MODEL_DATA = "sample-model-data"
-    DATA_PROFILE = "data-profile"
 
 
 class CardArtifactSaver:
@@ -63,12 +52,13 @@ class CardArtifactSaver:
 
         self._card = card
         self.storage_client = storage_client
+        self.uris: Dict[str, str] = {}  # holder for card uris
 
     @cached_property
     def card(self) -> ArtifactCard:
         return self.card
 
-    def save_artifacts(self) -> Any:
+    def save_artifacts(self) -> Tuple[Any, Any]:
         raise NotImplementedError
 
     def _get_storage_spec(self, filename: str, uri: Optional[str] = None) -> ArtifactStorageSpecs:
@@ -130,7 +120,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             storage_spec=spec,
         )
 
-        self.card.metadata.uris.datacard_uri = storage_path.uri
+        self.uris[UriNames.DATACARD_URI.value] = storage_path.uri
 
     def _convert_data_to_arrow(self) -> ArrowTable:
         """Converts data to arrow table
@@ -176,12 +166,12 @@ class DataCardArtifactSaver(CardArtifactSaver):
         if isinstance(self.card.data, ImageDataset):
             self.card.data.convert_metadata()
             storage_path = self._save_data_to_storage(data=self.card.data)
-            self.card.metadata.uris.data_uri = storage_path.uri
+            self.uris[UriNames.DATA_URI.value] = storage_path.uri
 
         else:
             arrow_table: ArrowTable = self._convert_data_to_arrow()
             storage_path = self._save_data_to_storage(data=arrow_table.table)
-            self.card.metadata.uris.data_uri = storage_path.uri
+            self.uris[UriNames.DATA_URI.value] = storage_path.uri
             self.card.metadata.feature_map = arrow_table.feature_map
 
     def _save_profile(self) -> None:
@@ -201,7 +191,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
                 uri=self.card.metadata.uris.profile_uri,
             ),
         )
-        self.card.metadata.uris.profile_uri = storage_path.uri
+        self.uris[UriNames.PROFILE_URI.value] = storage_path.uri
 
     def _save_profile_html(self) -> None:
         """Saves a profile report to file system"""
@@ -219,7 +209,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
                 uri=self.card.metadata.uris.profile_html_uri,
             ),
         )
-        self.card.metadata.uris.profile_html_uri = storage_path.uri
+        self.uris[UriNames.PROFILE_HTML_URI.value] = storage_path.uri
 
     def save_artifacts(self) -> DataCard:
         """Saves artifacts from a DataCard"""
@@ -274,7 +264,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 extra_path="onnx",
             )
 
-            self.card.metadata.uris.onnx_model_uri = storage_path.uri
+            self.uris[UriNames.ONNX_MODEL_URI.value] = storage_path.uri
 
             return OnnxAttr(
                 onnx_path=storage_path.uri,
@@ -302,7 +292,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             ),
         )
 
-        self.card.metadata.uris.model_metadata_uri = metadata_path.uri
+        self.uris[UriNames.MODEL_METADATA_URI.value] = metadata_path.uri
 
     def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""
@@ -324,7 +314,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             ),
         )
 
-        self.card.metadata.uris.modelcard_uri = storage_path.uri
+        self.uris[UriNames.MODELCARD_URI.value] = storage_path.uri
 
     def _get_model_artifact_to_save(self) -> Union[HuggingFaceStorageArtifact, SUPPORTED_MODELS]:
         """Saves a huggingface model to file system
@@ -358,7 +348,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
 
         if not isinstance(self.card.model, HuggingFaceModel):
-            self.card.metadata.uris.trained_model_uri = storage_path.uri
+            self.uris[UriNames.TRAINED_MODEL_URI.value] = storage_path.uri
 
     def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
         """Get artifact and artifact type to save"""
@@ -391,7 +381,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             artifact_type=artifact_type,
         )
 
-        self.card.metadata.uris.sample_data_uri = storage_path.uri
+        self.uris[UriNames.SAMPLE_DATA_URI.value] = storage_path.uri
 
     def save_artifacts(self) -> ModelCard:
         """Save model artifacts associated with ModelCard"""
@@ -423,7 +413,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
             ),
         )
 
-        self.card.metadata.audit_uri = storage_path.uri
+        self.uris[UriNames.AUDIT_URI.value] = storage_path.uri
 
     def save_artifacts(self) -> AuditCard:
         self._save_audit()
@@ -450,12 +440,12 @@ class RunCardArtifactSaver(CardArtifactSaver):
                 uri=self.card.runcard_uri,
             ),
         )
-        self.card.runcard_uri = storage_path.uri
+        self.uris[UriNames.RUNCARD_URI.value] = storage_path.uri
 
     def _save_run_artifacts(self) -> None:
         """Saves all artifacts associated with RunCard to filesystem"""
         artifact_uris: Dict[str, str] = {}
-
+        self.uris[UriNames.ARTIFACT_URIS.value]: Dict[str, str] = {}
         if self.card.artifact_uris is not None:
             # some cards have already been saved and thus have URIs already.
             # include them
@@ -471,6 +461,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
                     storage_spec=ArtifactStorageSpecs(save_path=str(self.card.artifact_uri), filename=name),
                 )
                 artifact_uris[name] = storage_path.uri
+                self.uris[UriNames.ARTIFACT_URIS.value][name] = storage_path.uri
 
         self.card.artifact_uris = artifact_uris
 
