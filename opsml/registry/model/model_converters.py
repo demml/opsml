@@ -9,18 +9,16 @@ import re
 import tempfile
 import warnings
 from collections import OrderedDict
-from functools import reduce
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import numpy as np
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
-from opsml.registry.model.data_converters import OnnxDataConverter
+from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.cards.model import ModelCard
-from opsml.registry.model.interfaces import ModelInterface, SamplePrediction
+from opsml.registry.model.data_converters import OnnxDataConverter
+from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
 from opsml.registry.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
 from opsml.registry.types import (
@@ -38,7 +36,6 @@ from opsml.registry.types import (
     TorchOnnxArgs,
     TrainedModelType,
 )
-from opsml.registry.types.data import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -184,7 +181,9 @@ class ModelConverter:
             model_bytes=onnx_model.SerializeToString(),
         )
 
-    def _create_onnx_model(self, initial_types: List[Any]) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
+    def _create_onnx_model(
+        self, initial_types: List[Any]
+    ) -> Tuple[OnnxModelDefinition, Dict[str, Feature], Dict[str, Feature]]:
         """Creates onnx model, validates it, and creates an onnx feature dictionary
 
         Args:
@@ -258,7 +257,10 @@ class SklearnOnnxModel(ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        return (
+            self.model_type == TrainedModelType.STACKING_REGRESSOR
+            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        )
 
     @property
     def _is_calibrated_classifier(self) -> bool:
