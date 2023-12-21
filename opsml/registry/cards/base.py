@@ -65,7 +65,7 @@ class ArtifactCard(BaseModel):
 
         return card_args
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from self attributes"""
         raise NotImplementedError
 

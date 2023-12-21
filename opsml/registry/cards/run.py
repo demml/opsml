@@ -192,12 +192,12 @@ class RunCard(ArtifactCard):
         self.artifacts = {**new_artifact, **self.artifacts}
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current RunCard"""
 
         exclude_attr = {"artifacts", "params", "metrics"}
 
-        return RunRegistryRecord(**self.model_dump(exclude=exclude_attr))
+        return RunRegistryRecord(**{**self.model_dump(exclude=exclude_attr), **kwargs})
 
     def add_artifact_uri(self, name: str, uri: str) -> None:
         """

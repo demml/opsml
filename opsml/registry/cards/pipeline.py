@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
@@ -63,7 +63,7 @@ class PipelineCard(ArtifactCard):
     def load_pipeline_code(self) -> None:
         raise NotImplementedError
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current PipelineCard"""
         return PipelineRegistryRecord(**self.model_dump())
 

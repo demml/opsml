@@ -200,11 +200,11 @@ class ModelCard(ArtifactCard):
         )
         self.metadata.onnx_model_def = model_def
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
 
         exclude_vars = {"model": {"model", "preprocessor", "sample_data", "onnx_model_def"}}
-        dumped_model = self.interface_dump(exclude=exclude_vars)
+        dumped_model = {**self.model_dump(exclude=exclude_vars), **kwargs}
 
         return ModelRegistryRecord(**dumped_model)
 

@@ -142,10 +142,10 @@ class AuditCard(ArtifactCard):
 
         self.comments.insert(0, comment_model)
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record for a audit"""
 
-        return AuditRegistryRecord(**self.model_dump())
+        return AuditRegistryRecord(**{**self.model_dump(), **kwargs})
 
     def add_card(self, card: ArtifactCard) -> None:
         """

@@ -224,10 +224,9 @@ class SQLRegistryBase:
             card:
                 Card to create a registry record from
         """
-      
-        card = save_card_artifacts(card=card, storage_client=self.storage_client)
-        record = card.create_registry_record()
 
+        card, uris = save_card_artifacts(card=card, storage_client=self.storage_client)
+        record = card.create_registry_record(**{"uris": uris})
         self.add_and_commit(card=record.model_dump())
 
     def register_card(

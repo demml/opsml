@@ -207,7 +207,7 @@ class DataCard(ArtifactCard):
             storage_client=client.storage_client,
         )
 
-    def create_registry_record(self) -> RegistryRecord:
+    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """
         Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
@@ -217,7 +217,7 @@ class DataCard(ArtifactCard):
 
         """
         exclude_attr = {"data"}
-        return DataRegistryRecord(**self.model_dump(exclude=exclude_attr))
+        return DataRegistryRecord(**{**self.model_dump(exclude=exclude_attr), **kwargs})
 
     def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:
         """
@@ -291,9 +291,7 @@ class DataCard(ArtifactCard):
 
 
 class Downloader:
-    def __init__(
-        self, card: ArtifactCard, storage_client: client.StorageClientType
-    ):  # pylint: disable=redefined-outer-name
+    def __init__(self, card: ArtifactCard, storage_client: client.StorageClientType):  # pylint: disable=redefined-outer-name
         self.storage_client = storage_client
         self._card = card
 
