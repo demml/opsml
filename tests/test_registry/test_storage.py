@@ -1,6 +1,5 @@
 import json
 import sys
-from pathlib import Path
 
 import numpy as np
 import pyarrow as pa
@@ -15,7 +14,6 @@ from opsml.registry.storage.artifact import (
     PyTorchModelStorage,
     TensorflowModelStorage,
 )
-from opsml.registry.storage.client import StorageClient
 from tests import conftest
 
 
@@ -107,20 +105,17 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
         storage_client=storage_client,
     )
 
-    metadata = model_storage.save_artifact(
+    uri = model_storage.save_artifact(
         artifact=model,
         root_uri=conftest.save_path(),
         filename="test",
     )
 
-    loaded_model = model_storage.load_artifact(storage_uri=metadata)
+    loaded_model = model_storage.load_artifact(uri)
     assert isinstance(loaded_model, type(model))
 
 
-@pytest.mark.parametrize(
-    "storage_client",
-    [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")],
-)
+@pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")])
 def test_parquet_cloud(
     test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset, mock_gcp_creds
 ):
@@ -136,9 +131,6 @@ def test_parquet_cloud(
 
     table = pq_writer.load_artifact(storage_uri=uri)
     assert isinstance(table, pa.Table)
-
-    storage_client.list_files(uri)
-    storage_client.delete(uri)
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
@@ -207,10 +199,3 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 
     model = model_storage.load_artifact(storage_uri=metadata)
     assert model is not None
-
-
-@pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])
-def test_create_temp_save_path(storage_client: StorageClient) -> None:
-    with storage_client.create_tmp_path("/some/long/path/with/file.txt") as tmp_path:
-        tmp_path = Path(tmp_path)
-        assert tmp_path.parent.exists() and tmp_path.parent.is_dir() and tmp_path.name == "file.txt"

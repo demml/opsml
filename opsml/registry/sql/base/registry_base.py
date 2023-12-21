@@ -15,13 +15,13 @@ from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
-from opsml.registry.storage.client import StorageClientType
+from opsml.registry.storage.client import StorageClient
 
 logger = ArtifactLogger.get_logger()
 
 
 class SQLRegistryBase:
-    def __init__(self, registry_type: RegistryType, storage_client: StorageClientType):
+    def __init__(self, registry_type: RegistryType, storage_client: StorageClient):
         """
         Base class for SQL Registries to inherit from
 
@@ -328,5 +328,5 @@ class SQLRegistryBase:
 
     def delete_card(self, card: ArtifactCard) -> None:
         """Delete a specific card"""
-        self.storage_client.delete(card.uri)
+        self.storage_client.rm(card.uri)
         self.delete_card_record(card=card.model_dump(include={"uid", "name", "version"}))

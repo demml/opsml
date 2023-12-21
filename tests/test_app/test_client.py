@@ -481,7 +481,7 @@ def test_metadata_download_and_registration(
     # as they do *not* use the response text, rather they assume the URL is in
     # the correct format.
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     response = test_app.get(
         url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path={model_card.metadata.uris.trained_model_uri}",
@@ -499,7 +499,7 @@ def test_metadata_download_and_registration(
         },
     )
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest patch given latest major.minor
     minor = model_card.version[0 : model_card.version.rindex(".")]
@@ -512,7 +512,7 @@ def test_metadata_download_and_registration(
     )
 
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{minor}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{minor}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest minor / patch given major only
     major = model_card.version[0 : model_card.version.index(".")]
@@ -524,7 +524,7 @@ def test_metadata_download_and_registration(
         },
     )
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{major}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{major}$", uri, re.IGNORECASE) is not None
 
     # test version fail - invalid name
     response = test_app.post(

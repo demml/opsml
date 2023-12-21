@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from opsml.registry.data.types import AllowedDataType
 from opsml.registry.sql.records import LoadedDataRecord, LoadedModelRecord
-from opsml.registry.storage.client import StorageClientType
+from opsml.registry.storage.client import StorageClient
 
 
 def test_data_metadata_backward():
@@ -14,7 +14,7 @@ def test_data_metadata_backward():
     class MockLoadedDataRecord(LoadedDataRecord):
         @classmethod
         def load_datacard_definition(
-            cls, save_path: str, storage_client: Optional[StorageClientType] = None
+            cls, save_path: str, storage_client: Optional[StorageClient] = None
         ) -> Dict[str, Any]:
             """Returned datacard for < v1.5"""
             return {
@@ -60,7 +60,7 @@ def test_model_metadata_backward():
     class MockLoadedModelRecord(LoadedModelRecord):
         @classmethod
         def load_modelcard_definition(
-            cls, values: Dict[str, Any], storage_client: Optional[StorageClientType] = None
+            cls, values: Dict[str, Any], storage_client: Optional[StorageClient] = None
         ) -> Dict[str, Any]:
             """Returned datacard for < v1.5"""
 

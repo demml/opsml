@@ -24,7 +24,7 @@ from opsml.registry.sql.semver import (
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.storage.client import StorageClientType
+from opsml.registry.storage.client import StorageClient
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
@@ -33,7 +33,7 @@ logger = ArtifactLogger.get_logger()
 class ServerRegistry(SQLRegistryBase):
     """A registry that retrieves data from a database."""
 
-    def __init__(self, registry_type: RegistryType, storage_client: StorageClientType):
+    def __init__(self, registry_type: RegistryType, storage_client: StorageClient):
         super().__init__(registry_type, storage_client)
 
         connector = DefaultConnector(tracking_uri=config.opsml_tracking_uri).get_connector()

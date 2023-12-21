@@ -16,7 +16,7 @@ def test_local_paths(tmp_path: Path, storage_client: StorageClient):
     file_path = utils.FileUtils.find_filepath(name=FILENAME)
 
     dest_path = tmp_path.joinpath(FILENAME)
-    storage_client.upload(local_path=file_path, write_path=str(dest_path))
+    storage_client.put(file_path, str(dest_path))
 
     assert dest_path.exists() and dest_path.is_file()
 
@@ -26,6 +26,12 @@ def test_local_paths(tmp_path: Path, storage_client: StorageClient):
         anchor_file=FILENAME,
     )
     dest_path = tmp_path.joinpath("assets")
-    storage_client.upload(local_path=str(dir_path), write_path=str(dest_path))
+    storage_client.put(str(dir_path), str(dest_path))
 
     assert dest_path.exists() and dest_path.is_dir()
+
+
+def test_create_temp_save_path() -> None:
+    with utils.FileUtils.create_tmp_path("/some/long/path/with/file.txt") as tmp_path:
+        tmp_path = Path(tmp_path)
+        assert tmp_path.parent.exists() and tmp_path.parent.is_dir() and tmp_path.name == "file.txt"
