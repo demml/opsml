@@ -76,7 +76,7 @@ class ModelMixin:
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
-    artifact_uris = Column("artifact_uris", JSON)
+    artifact_uris = Column("uris", JSON)
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):
