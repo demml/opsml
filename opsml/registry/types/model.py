@@ -276,6 +276,8 @@ class ModelMetadata(BaseModel):
     model_uri: str
     model_version: str
     model_team: str
+    preprocessor_name: Optional[str] = None
+    preprocessor_uri: Optional[str] = None
     opsml_version: str = __version__
     sample_data: Dict[str, Any]
     data_schema: DataDict

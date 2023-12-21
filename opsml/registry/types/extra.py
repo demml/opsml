@@ -58,6 +58,7 @@ class SaveName(str, Enum):
     PIPLELINECARD = "pipelinecard"
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
+    PREPROCESSOR = "preprocessor"
     ONNX_MODEL = "model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DATA_PROFILE = "data-profile"
