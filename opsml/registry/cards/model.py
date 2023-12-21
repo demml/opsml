@@ -45,8 +45,9 @@ class ModelCard(ArtifactCard):
             Team that this model is associated with
         user_email:
             Email to associate with card
-        trained_model:
-            Trained model. Can be of type sklearn, xgboost, lightgbm or tensorflow
+        interface:
+            Trained model interface. Can be one of SklearnModel, TensorFlowModel, PyTorchModel
+            LightningModel, LGBModel, XGBoostModel, HuggingFaceModel
         sample_input_data:
             Sample of data model was trained on
         uid:
@@ -67,7 +68,7 @@ class ModelCard(ArtifactCard):
         protected_namespaces=("protect_",),
     )
 
-    model: Optional[SupportedModel] = None
+    interface: Optional[SupportedModel] = None
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata = ModelCardMetadata()
@@ -101,15 +102,15 @@ class ModelCard(ArtifactCard):
     def load_sample_data(self) -> None:
         """Loads sample data associated with original non-onnx model"""
 
-        if self.model.data_type is None:
+        if self.interface.data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
 
         sample_data = load_artifact_from_storage(
-            artifact_type=self.model.data_type,
+            artifact_type=self.interface.data_type,
             storage_client=client.storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
-        self.model.sample_data = sample_data
+        self.interface.sample_data = sample_data
 
     def load_trained_model(self, **kwargs) -> None:
         """Loads original trained model
@@ -127,29 +128,29 @@ class ModelCard(ArtifactCard):
                 """Trained model uri and sample data uri must both be set to load a trained model""",
             )
 
-        if self.model.model is None:
+        if self.interface.model is None:
             self.load_sample_data()
 
-            if self.model.model_type is None:
+            if self.interface.model_type is None:
                 raise ValueError("Cannot load trained model - model_type is not set")
 
-            self.model = load_artifact_from_storage(
+            self.interface = load_artifact_from_storage(
                 artifact_type=self.metadata.model_class,
                 storage_client=client.storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
-                **{**{"model": self.model, "load_type": CommonKwargs.MODEL}, **kwargs},
+                **{**{"model": self.interface, "load_type": CommonKwargs.MODEL}, **kwargs},
             )
 
             if self.metadata.uris.preprocessor_uri is not None:
-                if isinstance(self.model, HuggingFaceModel):
-                    self.model = load_artifact_from_storage(
-                        artifact_type=self.model.model_class,
+                if isinstance(self.interface, HuggingFaceModel):
+                    self.interface = load_artifact_from_storage(
+                        artifact_type=self.interface.model_class,
                         storage_client=client.storage_client,
                         storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
-                        **{**{"model": self.model, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
+                        **{**{"model": self.interface, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
                     )
                 else:
-                    self.model.preprocessor = load_artifact_from_storage(
+                    self.interface.preprocessor = load_artifact_from_storage(
                         artifact_type=AllowedDataType.DICT,
                         storage_client=client.storage_client,
                         storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
@@ -190,7 +191,7 @@ class ModelCard(ArtifactCard):
         if self.metadata.uris.model_metadata_uri is None:
             raise ValueError("No model metadata exists. Please check the registry or register a new model")
 
-        metadata = self.model_metadata
+        metadata = self.interface_metadata
         onnx_model = self._load_onnx_model(metadata=metadata)
 
         model_def = OnnxModelDefinition(
@@ -203,7 +204,7 @@ class ModelCard(ArtifactCard):
         """Creates a registry record from the current ModelCard"""
 
         exclude_vars = {"model": {"model", "preprocessor", "sample_data", "onnx_model_def"}}
-        dumped_model = self.model_dump(exclude=exclude_vars)
+        dumped_model = self.interface_dump(exclude=exclude_vars)
 
         return ModelRegistryRecord(**dumped_model)
 
@@ -251,7 +252,7 @@ class ModelCard(ArtifactCard):
         )
 
         if isinstance(sample_data, np.ndarray):
-            model_data = self.model_data_schema
+            model_data = self.interface_data_schema
             input_name = next(iter(model_data.input_features.keys()))
             return {input_name: sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
 
