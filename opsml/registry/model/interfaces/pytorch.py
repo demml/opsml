@@ -5,7 +5,7 @@ from pydantic import model_validator
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import (
     SamplePrediction,
-    SupportedModel,
+    ModelInterface,
     get_model_args,
 )
 from opsml.registry.types import (
@@ -20,7 +20,7 @@ try:
 
     VALID_DATA = Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
 
-    class PyTorchModel(SupportedModel):
+    class PyTorchModel(ModelInterface):
         """Model interface for Pytorch models.
 
         Args:
@@ -128,7 +128,7 @@ try:
 
 except ModuleNotFoundError:
 
-    class PyTorchModel(SupportedModel):
+    class PyTorchModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

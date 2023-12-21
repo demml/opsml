@@ -3,7 +3,7 @@ from typing import Any, Dict
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.model.interfaces.base import SupportedModel, get_model_args
+from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
 from opsml.registry.types import CommonKwargs
 
 try:
@@ -65,7 +65,7 @@ try:
 
 except ModuleNotFoundError:
 
-    class XGBoostModel(SupportedModel):
+    class XGBoostModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.model.interfaces.base import SupportedModel, get_model_args
+from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
 from opsml.registry.types import CommonKwargs, OnnxModelDefinition, TrainedModelType
 
 try:
@@ -12,7 +12,7 @@ try:
 
     VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 
-    class LightGBMBoosterModel(SupportedModel):
+    class LightGBMBoosterModel(ModelInterface):
         """Model interface for LightGBM Booster model class. If using the sklearn API, use SklearnModel instead.
 
         Args:
@@ -71,7 +71,7 @@ try:
 
 except ModuleNotFoundError:
 
-    class LightGBMBoosterModel(SupportedModel):
+    class LightGBMBoosterModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
