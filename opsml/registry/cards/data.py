@@ -286,7 +286,7 @@ class DataCard(ArtifactCard):
 
 class Downloader:
     def __init__(
-        self, card: ArtifactCard, storage_client: client.StorageClientType
+        self, card: ArtifactCard, storage_client: client.StorageClient
     ):  # pylint: disable=redefined-outer-name
         self.storage_client = storage_client
         self._card = card
@@ -393,7 +393,7 @@ class ImageDownloader(Downloader):
 def download_object(
     card: ArtifactCard,
     artifact_type: str,
-    storage_client: client.StorageClientType,
+    storage_client: client.StorageClient,
 ) -> None:
     """Download data from storage
 

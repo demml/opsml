@@ -50,7 +50,7 @@ class _RunManager:
         return self._project_id
 
     @property
-    def storage_client(self) -> client.StorageClientType:
+    def storage_client(self) -> client.StorageClient:
         return self._storage_client
 
     @property

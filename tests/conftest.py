@@ -192,9 +192,11 @@ def local_storage_client():
 def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
+        get=MagicMock(return_value="test"),
+        get_mapper=MagicMock(return_value="test"),
         ls=MagicMock(return_value=["test"]),
-        upload=MagicMock(return_value="gs://test"),
-        download=MagicMock(return_value="gs://test"),
+        put=MagicMock(return_value="test"),
+        copy=MagicMock(return_value=None),
         rm=MagicMock(return_value=None),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
@@ -204,9 +206,11 @@ def mock_gcsfs():
 def mock_s3fs():
     with patch.multiple(
         "s3fs.S3FileSystem",
+        get=MagicMock(return_value="test"),
+        get_mapper=MagicMock(return_value="test"),
         ls=MagicMock(return_value=["test"]),
-        upload=MagicMock(return_value="s3://test"),
-        download=MagicMock(return_value="s3://test"),
+        put=MagicMock(return_value="test"),
+        copy=MagicMock(return_value=None),
         rm=MagicMock(return_value=None),
     ) as mocked_s3fs:
         yield mocked_s3fs
@@ -353,7 +357,7 @@ def mock_model_challenger() -> Any:
 
 
 @pytest.fixture(scope="function")
-def api_storage_client(api_registries: CardRegistries) -> client.StorageClientType:
+def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
     return api_registries.data._registry.storage_client
 
 

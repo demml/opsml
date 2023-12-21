@@ -28,7 +28,7 @@ from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.data.types import AllowedDataType, ArrowTable
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.storage.artifact import save_artifact_to_storage
-from opsml.registry.storage.client import StorageClientType
+from opsml.registry.storage.client import StorageClient
 from opsml.registry.storage.types import ArtifactStorageType
 
 
@@ -46,7 +46,7 @@ class SaveName(str, Enum):
 
 
 class CardArtifactSaver:
-    def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
+    def __init__(self, card: ArtifactCard, storage_client: StorageClient):
         """
         Parent class for saving artifacts belonging to cards
 
@@ -438,7 +438,7 @@ class ProjectCardArtifactSaver(CardArtifactSaver):
         return CardType.PROJECTCARD.value in card_type
 
 
-def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
+def save_card_artifacts(card: ArtifactCard, storage_client: StorageClient) -> ArtifactCard:
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:

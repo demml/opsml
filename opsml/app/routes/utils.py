@@ -22,7 +22,7 @@ from opsml.registry.cards.audit import AuditCard, AuditSections
 from opsml.registry.cards.run import RunCard
 from opsml.registry.cards.types import RegistryType
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.storage.client import LocalStorageClient, StorageClientType
+from opsml.registry.storage.client import LocalStorageClient, StorageClient
 
 logger = ArtifactLogger.get_logger()
 # Constants
@@ -168,7 +168,7 @@ class ExternalFileTarget(FileTarget):  # type: ignore[misc]
         self,
         filename: str,
         write_path: str,
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
         allow_overwrite: bool = True,
         *args: Any,
         **kwargs: Any,
@@ -180,8 +180,9 @@ class ExternalFileTarget(FileTarget):  # type: ignore[misc]
         self._create_base_path()
 
     def _create_base_path(self) -> None:
+        self.filepath = self.storage_client.build_absolute_path(self.filepath)
+
         if isinstance(self.storage_client, LocalStorageClient):
-            self.filepath = self.storage_client.build_absolute_path(self.filepath)
             Path(self.filepath).parent.mkdir(parents=True, exist_ok=True)
 
     def on_start(self) -> None:
