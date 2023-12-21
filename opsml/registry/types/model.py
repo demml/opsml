@@ -212,28 +212,45 @@ class HuggingFaceOnnxArgs(BaseModel):
 
 
 @dataclass
+class ModelArtifactUris:
+    """Uri holder for trained model uris
+    Args:
+        modelcard_uri:
+            URI of modelcard
+        trained_model_uri:
+            URI where model is stored
+        onnx_model_uri:
+            URI where onnx model is stored
+        sample_data_uri:
+            URI of trained model sample data
+        preprocessor_uri:
+            URI where preprocessor is stored
+    """
+
+    trained_model_uri: Optional[str] = None
+    onnx_model_uri: Optional[str] = None
+    sample_data_uri: Optional[str] = None
+    preprocessor_uri: Optional[str] = None
+
+    model_config = ConfigDict(
+        protected_namespaces=("protect_",),
+        frozen=False,
+    )
+
+
+@dataclass
 class ModelCardUris:
     """Uri holder for ModelCardMetadata
 
     Args:
         modelcard_uri:
             URI of modelcard
-        trained_model_uri:
-            URI where model is stored
-        sample_data_uri:
-            URI of trained model sample data
         model_metadata_uri:
             URI where model metadata is stored
-        preprocessor_uri:
-            URI where preprocessor is stored
     """
 
     modelcard_uri: Optional[str] = None
-    trained_model_uri: Optional[str] = None
-    onnx_model_uri: Optional[str] = None
     model_metadata_uri: Optional[str] = None
-    sample_data_uri: Optional[str] = None
-    preprocessor_uri: Optional[str] = None
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),

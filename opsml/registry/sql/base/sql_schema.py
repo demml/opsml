@@ -70,16 +70,13 @@ class DataSchema(Base, BaseMixin, DataMixin):
 
 @declarative_mixin
 class ModelMixin:
-    modelcard_uri = Column("modelcard_uri", String(1024))
     datacard_uid = Column("datacard_uid", String(1024))
-    trained_model_uri = Column("trained_model_uri", String(1024))
-    model_metadata_uri = Column("model_metadata_uri", String(1024))
-    sample_data_uri = Column("sample_data_uri", String(1024))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
+    artifact_uris = Column("artifact_uris", JSON)
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):
