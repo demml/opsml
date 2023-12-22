@@ -7,7 +7,7 @@ import os
 import shutil
 import warnings
 from pathlib import Path
-from typing import BinaryIO, Iterator, List, Optional, cast
+from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
 
 from fsspec import FSMap
 from pyarrow.fs import LocalFileSystem
@@ -32,14 +32,43 @@ warnings.filterwarnings("ignore", message="Hint: Inferred schema contains intege
 logger = ArtifactLogger.get_logger()
 
 
+class FileSystemProtocol(Protocol):
+    def get(self, rpath: str, lpath: str, recursive: bool = True) -> str:
+        """Copies file(s) from remote path (rpath) to local path (lpath)"""
+
+    def get_mapper(self, root: str) -> StoreLike:
+        """Creates a key/value store based on the file system"""
+
+    def ls(self, path: str) -> List[str]:  # pylint:  disable=invalid-name
+        """Lists files"""
+
+    def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
+        """Open a file"""
+
+    def iterfile(self, path: str, chunk_size: int) -> Iterator[bytes]:
+        """Open an iterator"""
+
+    def put(self, lpath: str, rpath: str, recursive: bool) -> str:
+        """Copies file(s) from local path (lpath) to remote path (rpath)"""
+
+    def copy(self, src: str, dest: str, recursive: bool = True) -> None:
+        """Copies files from src to dest within the file system"""
+
+    def rm(self, path: str, recursive: bool) -> None:  # pylint: disable=invalid-name
+        """Deletes file(s)"""
+
+    def exists(self, rpath: str) -> bool:
+        """Determines if a file or directory exists"""
+
+
 class StorageClientBase(StorageClientProtocol):
     def __init__(
         self,
         settings: StorageSettings,
-        client: Optional[StorageClientProtocol] = None,
+        client: Optional[FileSystemProtocol] = None,
     ):
         if client is None:
-            self.client = cast(StorageClientProtocol, LocalFileSystem())
+            self.client = cast(FileSystemProtocol, LocalFileSystem())
         else:
             self.client = client
         self.settings = settings
@@ -79,13 +108,13 @@ class StorageClientBase(StorageClientProtocol):
             while chunk := file_.read(chunk_size):
                 yield chunk
 
-    def put(self, lpath: str, rpath: str, recursive: bool = True) -> str:
+    def put(self, lpath: str, rpath: str) -> str:
         raise NotImplementedError
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
         raise NotImplementedError
 
-    def rm(self, path: str, recursive: bool = True) -> None:
+    def rm(self, path: str) -> None:
         raise NotImplementedError
 
 
@@ -110,34 +139,66 @@ class GCSFSStorageClient(StorageClientBase):
             client=client,
         )
 
-    def get(self, rpath: str, lpath: str, recursive: bool = True) -> str:
-        # TODO(@damon): Test this - does the GCS client return a path in the file *and* directory cases?
-        loadable_path = self.client.get(rpath=self.build_absolute_path(rpath), lpath=lpath, recursive=recursive)
-        if loadable_path is None:
-            return None
+    @property
+    def base_path_prefix(self) -> str:
+        assert self.settings.storage_uri.startswith("gs://")
+        # TODO: A regex match, set this in init
+        return f"{self.settings.storage_uri.replace('gs://', '').rstrip('/')}/"
 
-        if all(path is None for path in loadable_path):
-            return os.path.join(lpath, os.path.basename(rpath))
-        return loadable_path
+    def ensure_directory_path(self, path: str) -> str:
+        return f"{path.rstrip('/')}/"
+
+    def ensure_file_path(self, path: str) -> str:
+        return path.rstrip("/")
+
+    def get(self, rpath: str, lpath: str, recursive: bool = True) -> str:
+        abs_rpath = self.build_absolute_path(rpath)
+        if recursive:
+            abs_rpath = self.ensure_directory_path(abs_rpath)
+        else:
+            abs_rpath = self.ensure_file_path(abs_rpath)
+
+        logger.info("Getting {} to: {} recursive: {}", abs_rpath, lpath, recursive)
+        print(self.client.get(rpath=abs_rpath, lpath=lpath, recursive=recursive))
+        return lpath
 
     def get_mapper(self, root: str) -> StoreLike:
         return self.client.get_mapper(root)
 
     def ls(self, path: str) -> List[str]:
-        # TODO(@damon): Test this
-        return [path.replace(self.base_path_prefix, "").lstrip("/") for path in self.client.ls(path=path)]
+        abs_path = os.path.join(self.base_path_prefix, path)
+        # TODO: regex replace off the front only
+        return [p.replace(self.base_path_prefix, "") for p in self.client.ls(abs_path)]
 
     def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         return self.client.open(path, mode=mode, encoding=encoding)
 
-    def put(self, lpath: str, rpath: str, recursive: bool = True) -> str:
-        return self.client.put(lpath, rpath, recursive)
+    def put(self, lpath: str, rpath: str) -> str:
+        # mocking clients will *not* persist the path to the FS
+        # assert os.path.exists(lpath)
+        abs_rpath = self.build_absolute_path(rpath)
+        if os.path.isdir(lpath):
+            # Ensure we upload the *contents* of the directory to rpath, not the
+            # directory itself
+            abs_rpath = self.ensure_directory_path(abs_rpath)
+            abs_lpath = self.ensure_directory_path(lpath)
+            logger.info("Putting directory: {} rpath: {}", abs_lpath, abs_rpath)
+            self.client.put(abs_lpath, abs_rpath, True)
+        else:
+            logger.info("Putting file: {} rpath: {}", lpath, abs_rpath)
+            self.client.put(lpath, abs_rpath, False)
+        return rpath
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
         self.client.copy(src, dest, recursive)
 
-    def rm(self, path: str, recursive: bool = True) -> None:
-        self.client.rm(path, recursive)
+    def rm(self, path: str) -> None:
+        abs_path = self.build_absolute_path(path)
+        assert Path(abs_path).is_relative_to(self.base_path_prefix)
+        self.client.rm(abs_path, True)
+
+    def exists(self, path: str) -> bool:
+        return self.client.exists(self.build_absolute_path(path))
 
 
 class S3StorageClient(StorageClientBase):
@@ -175,14 +236,18 @@ class S3StorageClient(StorageClientBase):
     def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         return self.client.open(path, mode=mode, encoding=encoding)
 
-    def put(self, lpath: str, rpath: str, recursive: bool = True) -> str:
-        return self.client.put(lpath, rpath, recursive)
+    def put(self, lpath: str, rpath: str) -> str:
+        # TODO: Align w/ GCS
+        return self.client.put(lpath, rpath, True)
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
         self.client.copy(src, dest, recursive)
 
-    def rm(self, path: str, recursive: bool = True) -> None:
-        self.client.rm(path, recursive)
+    def rm(self, path: str) -> None:
+        self.client.rm(path, True)
+
+    def exists(self, path: str) -> bool:
+        return self.client.exists(self.build_absolute_path(path))
 
 
 class LocalStorageClient(StorageClientBase):
@@ -221,11 +286,9 @@ class LocalStorageClient(StorageClientBase):
     def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         return cast(BinaryIO, open(file=path, mode=mode, encoding=encoding))
 
-    def put(self, lpath: str, rpath: str, recursive: bool = True) -> str:
+    def put(self, lpath: str, rpath: str) -> str:
         assert os.path.exists(lpath)
-
         abs_remote_path = self.build_absolute_path(rpath)
-
         if os.path.isdir(lpath):
             shutil.rmtree(abs_remote_path, ignore_errors=True)
             shutil.copytree(lpath, abs_remote_path)
@@ -239,16 +302,19 @@ class LocalStorageClient(StorageClientBase):
         return rpath
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
+        # TODO(@damon): Remove recursive
         """Both src and dest are remote paths."""
-        self.put(self.build_absolute_path(src), dest, recursive)
+        self.put(self.build_absolute_path(src), dest)
 
-    def rm(self, path: str, recursive: bool = True) -> None:
-        # TODO(@damon) Remove the "recursive" parameter on rm for all clients.
+    def rm(self, path: str) -> None:
         abs_path = self.build_absolute_path(path)
         if os.path.isdir(abs_path):
             shutil.rmtree(abs_path)
         elif os.path.isfile(abs_path):
             os.remove(abs_path)
+
+    def exists(self, path: str) -> bool:
+        return self.client.exists(self.build_absolute_path(path))
 
 
 class ApiStorageClient(StorageClientBase):
@@ -296,14 +362,14 @@ class ApiStorageClient(StorageClientBase):
 
         return []
 
-    def put(self, lpath: str, rpath: str, recursive: bool = True) -> str:
-        if recursive:
+    def put(self, lpath: str, rpath: str) -> str:
+        if os.path.isdir(lpath):
             write_path_path = Path(rpath)
             for path, _, localfiles in os.walk(lpath):
                 for filename in localfiles:
                     curr_local_path = Path(path).joinpath(filename)
                     curr_write_path = write_path_path.joinpath(curr_local_path.relative_to(lpath))
-                    self.put(str(curr_local_path), str(curr_write_path), False)
+                    self.put(str(curr_local_path), str(curr_write_path))
             return rpath
 
         files = {"file": open(lpath, "rb")}  # pylint: disable=consider-using-with
@@ -337,6 +403,10 @@ class ApiStorageClient(StorageClientBase):
 
         if response.get("deleted") is False:
             raise ValueError("Failed to delete file")
+
+    def exists(self, path: str) -> bool:
+        # TODO: Implement exists
+        raise NotImplementedError
 
 
 def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:

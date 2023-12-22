@@ -14,7 +14,6 @@ from opsml.registry.storage.artifact import (
     PyTorchModelStorage,
     TensorflowModelStorage,
 )
-from opsml.registry.storage.client import StorageClient
 from tests import conftest
 
 
@@ -198,9 +197,3 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 
     model = model_storage.load_artifact(storage_uri=metadata)
     assert model is not None
-
-
-@pytest.mark.skip(reason="Requires live GCS credentials")
-def test_real_gcs(real_gcs: StorageClient) -> None:
-    print(real_gcs.ls("chlld"))
-    pass

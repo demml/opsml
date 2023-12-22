@@ -105,11 +105,14 @@ class StorageClientProtocol(Protocol):
     def iterfile(self, path: str, chunk_size: int) -> Iterator[bytes]:
         """Open an iterator"""
 
-    def put(self, lpath: str, rpath: str, recursive: bool = True) -> str:
+    def put(self, lpath: str, rpath: str) -> str:
         """Copies file(s) from local path (lpath) to remote path (rpath)"""
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
         """Copies files from src to dest within the file system"""
 
-    def rm(self, path: str, recursive: bool = True) -> None:  # pylint: disable=invalid-name
+    def rm(self, path: str) -> None:  # pylint: disable=invalid-name
         """Deletes file(s)"""
+
+    def exists(self, path: str) -> bool:
+        "Determine if a file or directory exists"
