@@ -6,13 +6,13 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
-from opsml.settings.config import config
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_team_pattern
 from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.records import RegistryRecord
 from opsml.registry.types import CardInfo
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 
