@@ -140,7 +140,6 @@ class GCSFSStorageClient(StorageClientBase):
         self.client.rm(path, recursive)
 
 
-# TODO(@damon): Remote path S3
 class S3StorageClient(StorageClientBase):
     def __init__(
         self,

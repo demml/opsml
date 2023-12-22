@@ -235,13 +235,8 @@ class GcpCredsSetter:
         Returns
             Tuple containing user credentials and project name
         """
-        user_creds, _ = google.auth.default()
-        if user_creds is None:
-            logger.info("No gcp credentials found. Using defaults")
-
-        project_name = user_creds.quota_project_id
-
-        return user_creds, project_name
+        logger.info("No gcp credentials found. Using defaults")
+        return google.auth.default()
 
     def decode_base64(self, service_base64_creds: str) -> str:
         base_64 = base64.b64decode(s=service_base64_creds).decode("utf-8")

@@ -105,6 +105,7 @@ def cleanup() -> None:
     shutil.rmtree("blah", ignore_errors=True)
 
 
+# TODO(@damon): Thesee can probably go.
 class Blob(BaseModel):
     name: str = "test_upload/test.csv"
 
@@ -174,12 +175,12 @@ def mock_gcp_creds(mock_gcp_vars):
 
 
 @pytest.fixture(scope="function")
-def gcp_storage_client(mock_gcp_creds):
+def gcp_storage_client(mock_gcp_creds, mock_gcsfs):
     return client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://test"))
 
 
 @pytest.fixture(scope="function")
-def s3_storage_client():
+def s3_storage_client(mock_s3fs):
     return client.get_storage_client(OpsmlConfig(opsml_storage_uri="s3://test"))
 
 
@@ -188,7 +189,7 @@ def local_storage_client():
     return client.get_storage_client(OpsmlConfig())
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
@@ -202,7 +203,7 @@ def mock_gcsfs():
         yield mocked_gcsfs
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def mock_s3fs():
     with patch.multiple(
         "s3fs.S3FileSystem",
@@ -450,7 +451,15 @@ def mock_gcs_storage_response():
         yield mock_requests
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
+def real_gcs() -> Iterator[GCSStorageClient]:
+    prev_client = client.storage_client
+    client.storage_client = client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://shipt-dev"))
+    yield client.storage_client
+    client.storage_client = prev_client
+
+
+@pytest.fixture
 def mock_gcs(test_df):
     class StorageClient:
         def bucket(self, gcs_bucket: str):
