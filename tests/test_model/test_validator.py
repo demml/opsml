@@ -11,7 +11,6 @@ from opsml.registry.model.interfaces import (
     PyTorchModel,
     TensorFlowModel,
 )
-
 from opsml.registry.storage.artifact import (
     load_artifact_from_storage,
     save_artifact_to_storage,
@@ -99,10 +98,6 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
     assert model.task_type == "text-classification"
     assert model.backend == "pytorch"
 
-
-
-   
-
     loaded_model = simulate_save_load(model, api_storage_client, metadata, HuggingFaceModel)
 
     assert type(loaded_model.model) == type(model.model)
@@ -133,8 +128,6 @@ def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     assert metadata.model_class == "transformers"
     assert metadata.task_type == "text-classification"
     assert model.backend == "tensorflow"
-
-
 
     assert isinstance(predictions, dict)
 

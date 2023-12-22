@@ -37,8 +37,8 @@ from opsml.registry.types import (
     FilePath,
     HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
-    StoragePath,
     OnnxModel,
+    StoragePath,
     UriNames,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
@@ -740,8 +740,8 @@ class HuggingFaceStorage(ArtifactStorage):
         model_interface: HuggingFaceModel = artifact.model_interface
 
         logger.info("Converting HuggingFace model to onnx format")
-        import optimum.onnxruntime as ort
         import onnx
+        import optimum.onnxruntime as ort
 
         # model must be created from directory
         ort_model: ort.ORTModel = getattr(ort, model_interface.onnx_args.ort_type)
@@ -945,11 +945,14 @@ def load_artifact_from_storage(
         return None
 
     storage_type = next(
-        storage_type
-        for storage_type in all_subclasses(ArtifactStorage)
-        if storage_type.validate(
-            artifact_type=artifact_type,
-        )
+        (
+            storage_type
+            for storage_type in all_subclasses(ArtifactStorage)
+            if storage_type.validate(
+                artifact_type=artifact_type,
+            )
+        ),
+        JoblibStorage,
     )
     return storage_type(
         artifact_type=artifact_type,

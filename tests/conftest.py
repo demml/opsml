@@ -82,11 +82,7 @@ from opsml.registry.model.interfaces import (
 )
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
-from opsml.registry.types import (
-    HuggingFaceTask,
-    Metric,
-    OnnxModel,
-)
+from opsml.registry.types import HuggingFaceTask, Metric, OnnxModel
 from opsml.settings.config import OpsmlConfig, config
 
 CWD = os.getcwd()
