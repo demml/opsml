@@ -69,6 +69,7 @@ class SaveName(str, Enum):
     HTML = "html"
     JSON = "json"
     DATA = "data"
+    PROFILE = "profile"
 
 
 @unique
