@@ -11,6 +11,7 @@ from opsml.registry.storage.client import StorageClientType
 from opsml.registry.types import (
     METRICS,
     PARAMS,
+    AllowedDataType,
     ArtifactStorageSpecs,
     AuditCardMetadata,
     CardVersion,
@@ -19,8 +20,6 @@ from opsml.registry.types import (
     ModelCardMetadata,
     RegistryType,
 )
-
-ARBITRARY_ARTIFACT_TYPE = "dict"
 
 
 def get_timestamp() -> int:
@@ -71,8 +70,6 @@ class DataRegistryRecord(SaveRecord):
     @model_validator(mode="before")
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        print(values)
-        a
         metadata: Dict[str, Any] = values["metadata"]
         values["data_type"] = metadata["data_type"]
         values["runcard_uid"] = metadata["runcard_uid"]
@@ -185,25 +182,24 @@ class LoadRecord(BaseModel):
 class LoadedDataRecord(LoadRecord):
     dependent_vars: Optional[List[Union[int, str]]] = None
     metadata: DataCardMetadata
+    uris: DataUris
 
     @model_validator(mode="before")
     @classmethod
     def load_attributes(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        uris = values["uris"]
         storage_client = cast(StorageClientType, values["storage_client"])
 
         datacard_definition = cls.load_datacard_definition(
-            save_path=values["datacard_uri"],
+            save_path=uris["datacard_uri"],
             storage_client=storage_client,
         )
-
         datacard_definition["storage_client"] = storage_client
 
         if datacard_definition.get("metadata") is None:  # this is None for previous v1 cards
             datacard_definition["metadata"] = cls.convert_data_metadata(datacard_definition)
-
-        datacard_definition["metadata"]["uris"]["datacard_uri"] = values.get("datacard_uri")
         datacard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
-
+        datacard_definition["uris"] = uris
         return datacard_definition
 
     @classmethod
@@ -223,7 +219,7 @@ class LoadedDataRecord(LoadRecord):
             Dictionary to be parsed by DataCard.model_validate()
         """
         datacard_definition = load_artifact_from_storage(
-            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            artifact_type=AllowedDataType.DICT,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=save_path),
         )
@@ -277,7 +273,7 @@ class LoadedModelRecord(LoadRecord):
             Dictionary to be parsed by ModelCard.parse_obj()
         """
         model_card_definition = load_artifact_from_storage(
-            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            artifact_type=AllowedDataType.DICT,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
         )
@@ -332,7 +328,7 @@ class LoadedAuditRecord(LoadRecord):
         """
 
         audit_definition = load_artifact_from_storage(
-            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            artifact_type=AllowedDataType.DICT,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
         )
@@ -384,7 +380,7 @@ class LoadedRunRecord(LoadRecord):
         """
 
         runcard_definition = load_artifact_from_storage(
-            artifact_type=ARBITRARY_ARTIFACT_TYPE,
+            artifact_type=AllowedDataType.DICT,
             storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
         )

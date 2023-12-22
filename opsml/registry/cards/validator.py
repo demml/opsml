@@ -8,6 +8,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.types import (
     AllowedDataType,
     DataCardMetadata,
+    UriNames,
     ValidData,
     check_data_type,
 )
@@ -27,6 +28,7 @@ class DataCardValidator(CardValidator):
         self,
         data: ValidData,
         sql_logic: Dict[str, str],
+        uris: Dict[str, str],
         metadata: Optional[DataCardMetadata] = None,
     ) -> None:
         """DataCardValidator validator to be used during DataCard instantiation
@@ -40,14 +42,15 @@ class DataCardValidator(CardValidator):
                 Metadata to be used for DataCard
         """
         self.data = data
-        self.metadata = metadata
         self.sql_logic = sql_logic
+        self.uris = uris
+        self.metadata = metadata
 
     @property
-    def has_data_uri(self) -> bool:
+    def has_datacard_uri(self) -> bool:
         """Checks if data uri is present in metadata"""
-        if self.metadata is not None:
-            return bool(self.check_metadata())
+        if self.uris is not None:
+            return bool(self.uris.get(UriNames.DATACARD_URI))
         return False
 
     def get_data_type(self) -> str:
@@ -56,23 +59,19 @@ class DataCardValidator(CardValidator):
             return AllowedDataType.SQL
         return check_data_type(self.data)
 
-    def check_metadata(self) -> Optional[str]:
+    def check_uris(self) -> Optional[str]:
         """Validates metadata
 
         Returns:
             Data uri if present
         """
-
-        if isinstance(self.metadata, DataCardMetadata):
-            data_uri = self.metadata.uris.data_uri
-        else:
-            assert isinstance(self.metadata, dict)
-            data_uri = self.metadata["uris"].get("data_uri")
+        data_uri = None
+        if self.uris is not None:
+            data_uri = self.uris.get(UriNames.DATACARD_URI)
 
         if self.data is None and not bool(self.sql_logic):
             if data_uri is None:
                 raise ValueError("Data or sql logic must be supplied when no data_uri is present")
-        return data_uri
 
     def get_metadata(self) -> DataCardMetadata:
         """Get metadata for DataCard
@@ -80,6 +79,8 @@ class DataCardValidator(CardValidator):
         Returns:
             `DataCardMetadata` with updated data_type
         """
+
+        self.check_uris()
         data_type = self.get_data_type()
         if self.metadata is None:
             self.metadata = DataCardMetadata(data_type=data_type)

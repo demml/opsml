@@ -82,16 +82,18 @@ class DataCard(ArtifactCard):
         """
 
         data = card_args.get("data")
+        uris = card_args.get("uris")
         metadata = card_args.get("metadata")
         sql_logic: Dict[str, str] = card_args.get("sql_logic", {})
 
         validator = DataCardValidator(
             data=data,
-            metadata=metadata,
+            uris=uris,
             sql_logic=sql_logic,
+            metadata=metadata,
         )
 
-        if validator.has_data_uri:
+        if validator.has_datacard_uri:
             return card_args
 
         card_args["metadata"] = validator.get_metadata()

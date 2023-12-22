@@ -1,40 +1,16 @@
-import pathlib
-import re
 import sys
-import uuid
-from typing import Any, Dict, List, Tuple
-from unittest.mock import MagicMock, patch
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import pytest
-from fastapi.exceptions import HTTPException
 from numpy.typing import NDArray
-from pydantic import ValidationError
 from pytest_lazyfixture import lazy_fixture
-from requests.auth import HTTPBasicAuth
-from sklearn import linear_model, pipeline
-from starlette.testclient import TestClient
 
-from opsml.app.routes.files import verify_path
-from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
-from opsml.app.routes.utils import error_to_500, list_team_name_info
-from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import (
-    AuditCard,
-    CardInfo,
     CardRegistries,
-    CardRegistry,
     DataCard,
-    DataCardMetadata,
-    ModelCard,
-    ModelCardMetadata,
-    PipelineCard,
-    RunCard,
 )
 from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.storage.api import ApiRoutes
-from opsml.settings.config import config
-from tests.conftest import TODAY_YMD
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
@@ -61,3 +37,5 @@ def test_register_data(
         data_splits=data_splits,
     )
     registry.register_card(card=data_card)
+
+    registry.load_card(uid=data_card.uid)

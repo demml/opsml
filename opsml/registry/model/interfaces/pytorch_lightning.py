@@ -5,11 +5,7 @@ from pydantic import model_validator
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import SamplePrediction, get_model_args
 from opsml.registry.model.interfaces.pytorch import PyTorchModel
-from opsml.registry.types import (
-    CommonKwargs,
-    TorchOnnxArgs,
-    TrainedModelType,
-)
+from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType
 
 try:
     from lightning import Trainer
@@ -100,4 +96,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
+            raise ModuleNotFoundError(
+                "LightningModel requires pytorch lightning to be installed. Please install lightning."
+            )
