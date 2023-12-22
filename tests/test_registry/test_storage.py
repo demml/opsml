@@ -14,6 +14,7 @@ from opsml.registry.storage.artifact import (
     PyTorchModelStorage,
     TensorflowModelStorage,
 )
+from opsml.registry.storage.client import StorageClient
 from tests import conftest
 
 
@@ -116,9 +117,7 @@ def test_api_tensorflow_model(storage_client, load_transformer_example):
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("gcp_storage_client"), lazy_fixture("s3_storage_client")])
-def test_parquet_cloud(
-    test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset, mock_gcp_creds
-):
+def test_parquet_cloud(test_arrow_table, storage_client, mock_pyarrow_parquet_write, mock_pyarrow_parquet_dataset):
     pq_writer = ParquetStorage(
         storage_client=storage_client,
         artifact_type=ArtifactStorageType.PYARROW,
@@ -199,3 +198,9 @@ def test_pytorch_model(storage_client, load_pytorch_resnet):
 
     model = model_storage.load_artifact(storage_uri=metadata)
     assert model is not None
+
+
+@pytest.mark.skip(reason="Requires live GCS credentials")
+def test_real_gcs(real_gcs: StorageClient) -> None:
+    print(real_gcs.ls("chlld"))
+    pass
