@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
@@ -97,27 +96,6 @@ def check_data_type(data: ValidData) -> str:
     )
 
 
-@dataclass
-class DataCardUris:
-    """Data uri holder for DataCardMetadata
-
-    Args:
-        data_uri:
-            Location where converted data is stored
-        datacard_uri:
-            Location where DataCard is stored
-        profile_uri:
-            Location where profile is stored
-        profile_html_uri:
-            Location where profile html is stored
-    """
-
-    data_uri: Optional[str] = None
-    datacard_uri: Optional[str] = None
-    profile_uri: Optional[str] = None
-    profile_html_uri: Optional[str] = None
-
-
 class DataCardMetadata(BaseModel):
 
     """Create a DataCard metadata
@@ -150,7 +128,6 @@ class DataCardMetadata(BaseModel):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
-    uris: DataCardUris = DataCardUris()
 
     @field_validator("feature_descriptions", mode="before")
     @classmethod

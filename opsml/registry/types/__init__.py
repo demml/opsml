@@ -66,4 +66,5 @@ from opsml.registry.types.storage import (
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
+    StorageRequest,
 )

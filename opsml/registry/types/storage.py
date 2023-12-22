@@ -53,3 +53,9 @@ class ArtifactStorageSpecs(BaseModel):
 
     save_path: str
     filename: Optional[str] = None
+
+
+class StorageRequest(BaseModel):
+    registry: str
+    card_uid: str
+    uri_name: str
