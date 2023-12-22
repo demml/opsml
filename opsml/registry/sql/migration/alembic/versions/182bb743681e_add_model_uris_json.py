@@ -29,7 +29,7 @@ def upgrade() -> None:
     table_name = RegistryTableNames.MODEL.value
     columns = insp.get_columns(table_name)
 
-    if not "artifact_uris" in [column["name"] for column in columns]:
+    if not "uris" in [column["name"] for column in columns]:
         logger.info(f"Migration Adding uris column to {table_name} table")
         with op.batch_alter_table(table_name) as batch_op:
             batch_op.add_column(sa.Column("uris", sa.JSON))

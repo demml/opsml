@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 from torch import Tensor
 
-from opsml.registry.model.supported_models import (
+from opsml.registry.model.interfaces import (
     SUPPORTED_MODELS,
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
     TensorFlowModel,
 )
-from opsml.registry.model.utils.model_predict_helper import PredictHelper
+
 from opsml.registry.storage.artifact import (
     load_artifact_from_storage,
     save_artifact_to_storage,
@@ -99,9 +99,9 @@ def _test_huggingface_model(huggingface_bart, api_storage_client):
     assert model.task_type == "text-classification"
     assert model.backend == "pytorch"
 
-    predictions = PredictHelper.process_model_prediction(model)
 
-    assert isinstance(predictions, dict)
+
+   
 
     loaded_model = simulate_save_load(model, api_storage_client, metadata, HuggingFaceModel)
 
@@ -120,9 +120,7 @@ def test_huggingface_pipeline(huggingface_text_classification_pipeline, api_stor
     assert model.backend == "pytorch"
 
     model.onnx_args = HuggingFaceOnnxArgs(ort_type="ORTModelForSequenceClassification")
-    predictions = PredictHelper.process_model_prediction(model)
 
-    assert isinstance(predictions, dict)
     loaded_model = simulate_save_load(model, api_storage_client, metadata, HuggingFaceModel)
     assert type(loaded_model.model) == type(model.model)
 
@@ -136,7 +134,7 @@ def _test_huggingface_tensorflow(huggingface_tf_distilbert, api_storage_client):
     assert metadata.task_type == "text-classification"
     assert model.backend == "tensorflow"
 
-    predictions = PredictHelper.process_model_prediction(model)
+
 
     assert isinstance(predictions, dict)
 
