@@ -254,6 +254,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             self.card.metadata.data_schema = model_metadata.data_schema
             return OnnxAttr()
 
+        # TODO: steven - make sure onnx model is saved to huggingface model when saving trained model
         if isinstance(self.card.interface, HuggingFaceModel):
             return OnnxAttr()
 

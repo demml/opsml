@@ -5,7 +5,7 @@ import pytest
 from sklearn.base import BaseEstimator
 
 from opsml.registry.cards import ModelCard
-from opsml.registry.model.creator import ModelCreator, create_model
+from opsml.registry.model.metadata_creator import ModelCreator, create_model
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
     LightningModel,

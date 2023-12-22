@@ -143,3 +143,4 @@ class HuggingFaceStorageArtifact:
     model_interface: Any
     metadata: ModelCardMetadata
     to_onnx: bool = False
+    uris: Dict[str, str] = {}
