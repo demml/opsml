@@ -4,8 +4,9 @@
 
 import os
 from enum import Enum, unique
-from typing import Any, List, Optional, Union
 from pathlib import Path
+from typing import Any, List, Optional, Union
+
 from pydantic import BaseModel, ConfigDict, field_validator
 
 FilePath = Union[List[str], str]

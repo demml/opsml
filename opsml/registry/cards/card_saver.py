@@ -2,11 +2,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import pyarrow as pa
 from numpy.typing import NDArray
-from pathlib import Path
+
 from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard

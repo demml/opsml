@@ -392,14 +392,14 @@ class ApiStorageClient(LocalStorageClient):
 
     def _upload_file(
         self,
-        local_dir: str,
-        write_dir: str,
+        client_dir: Path,
+        server_dir: Path,
         filename: str,
         recursive: bool = False,
         **kwargs: Any,
     ) -> str:
-        files = {"file": open(os.path.join(local_dir, filename), "rb")}  # pylint: disable=consider-using-with
-        headers = {"Filename": filename, "WritePath": write_dir}
+        files = {"file": open(client_dir / filename, "rb")}  # pylint: disable=consider-using-with
+        headers = {"Filename": filename, "WritePath": str(server_dir)}
 
         response = self.api_client.stream_post_request(
             route=ApiRoutes.UPLOAD,
@@ -412,35 +412,34 @@ class ApiStorageClient(LocalStorageClient):
             return storage_uri
         raise ValueError("No storage_uri found")
 
-    def upload_single_file(self, local_path: str, write_path: str) -> str:
-        filename = os.path.basename(local_path)
+    def upload_single_file(
+        self,
+        client_path: Path,
+        server_path: Path,
+    ) -> str:
+        filename = client_path.name
 
         # paths should be directories for uploading
-        local_dir = os.path.dirname(local_path)
-        write_dir = os.path.dirname(write_path)
+        client_dir = client_path.parent
+        server_dir = server_path.parent
 
-        return self._upload_file(
-            local_dir=local_dir,
-            write_dir=write_dir,
-            filename=filename,
-        )
+        return self._upload_file(client_dir, server_dir, filename)
 
-    def upload_directory(self, local_path: str, write_path: str) -> str:
-        for path, _, files in os.walk(local_path):
-            for filename in files:
-                write_dir = path.replace(local_path, write_path)
+    def upload_directory(self, client_dir: Path, server_dir: Path) -> str:
+        for path_object in client_dir.rglob("*"):
+            if path_object.is_file():
+                _client_file_dir = path_object.parent
+                _server_file_dir = str(_client_file_dir).replace(str(client_dir), str(server_dir))
+                filename = path_object.name
 
-                self._upload_file(
-                    local_dir=path,
-                    write_dir=write_dir,
-                    filename=filename,
-                )
-        return write_path
+                self._upload_file(_client_file_dir, _server_file_dir, filename)
+
+        return server_dir
 
     def upload(
         self,
-        local_path: str,
-        write_path: str,
+        client_path: Path,
+        server_path: Path,
         recursive: bool = False,
         **kwargs: Any,
     ) -> str:
@@ -459,10 +458,10 @@ class ApiStorageClient(LocalStorageClient):
             Write path
         """
 
-        if not os.path.isdir(local_path):
-            return self.upload_single_file(local_path=local_path, write_path=write_path)
+        if not client_path.is_dir():
+            return self.upload_single_file(client_path, server_path)
 
-        return self.upload_directory(local_path=local_path, write_path=write_path)
+        return self.upload_directory(client_path, server_path)
 
     def download_directory(
         self,
