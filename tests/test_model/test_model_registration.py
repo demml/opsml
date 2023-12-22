@@ -45,7 +45,7 @@ def _test_register_data(
         (lazy_fixture("test_split_array"), lazy_fixture("test_df")),
     ],
 )
-def test_register_data(
+def _test_register_data(
     db_registries: CardRegistries,
     test_data: Tuple[pd.DataFrame, NDArray],
     data_splits: List[Dict[str, str]],

@@ -3,18 +3,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from enum import Enum
+from enum import Enum, unique
 from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
 FilePath = Union[List[str], str]
-
-
-class ArtifactStorageType(str, Enum):
-    HTML = "html"
-    JSON = "json"
-    ONNX = "onnx"
 
 
 class StorageClientSettings(BaseModel):
@@ -56,6 +50,15 @@ class ArtifactStorageSpecs(BaseModel):
 
 
 class StorageRequest(BaseModel):
-    registry: str
+    registry_type: str
     card_uid: str
     uri_name: str
+    save_to_local: bool = False
+
+
+@unique
+class StorageSystem(str, Enum):
+    GCS = "gcs"
+    S3 = "s3"
+    LOCAL = "local"
+    API = "api"

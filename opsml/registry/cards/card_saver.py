@@ -26,7 +26,6 @@ from opsml.registry.types import (
     AllowedDataType,
     ArrowTable,
     ArtifactStorageSpecs,
-    ArtifactStorageType,
     CardType,
     HuggingFaceStorageArtifact,
     ModelMetadata,
@@ -203,7 +202,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
 
         storage_path = save_artifact_to_storage(
             artifact=profile_html,
-            artifact_type=ArtifactStorageType.HTML.value,
+            artifact_type=SaveName.HTML.value,
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
                 filename=SaveName.DATA_PROFILE.value,
@@ -264,7 +263,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         storage_path = save_artifact_to_storage(
             artifact=model_metadata.onnx_model.sess._model_bytes,
-            artifact_type=ArtifactStorageType.ONNX.value,
+            artifact_type=SaveName.ONNX.value,
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
                 filename=SaveName.ONNX_MODEL.value,
@@ -292,7 +291,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         model_metadata = self._get_model_metadata(onnx_attr=onnx_attr)
         metadata_path = save_artifact_to_storage(
             artifact=model_metadata.model_dump_json(),
-            artifact_type=ArtifactStorageType.JSON.value,
+            artifact_type=SaveName.JSON.value,
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
                 filename=SaveName.MODEL_METADATA.value,
