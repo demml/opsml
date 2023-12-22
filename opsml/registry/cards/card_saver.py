@@ -333,7 +333,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         if isinstance(self.card.model, HuggingFaceModel):
             return HuggingFaceStorageArtifact(
-                model_interface=self.card.model,
+                model_interface=self.card.interface,
                 metadata=self.card.metadata,
                 to_onnx=self.card.to_onnx,
             )
