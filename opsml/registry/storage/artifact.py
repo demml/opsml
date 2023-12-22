@@ -95,7 +95,7 @@ class OnnxStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         Path(tmp_uri).write_bytes(artifact)
-        return self.storage_client.put(tmp_uri, storage_uri, False)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         from onnx import load
@@ -123,7 +123,7 @@ class JoblibStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         joblib.dump(artifact, tmp_uri)
-        return self.storage_client.put(tmp_uri, storage_uri, False)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         return joblib.load(file_path)
@@ -149,7 +149,7 @@ class ImageDataStorage(ArtifactStorage):
 
     def _save_artifact(self, artifact: ImageDataset, storage_uri: str, tmp_uri: str) -> str:
         storage_path = os.path.join(storage_uri, artifact.image_dir)
-        return self.storage_client.put(artifact.image_dir, storage_path, True)
+        return self.storage_client.put(artifact.image_dir, storage_path)
 
     def _load_artifact(self, file_path: str) -> Any:
         raise NotImplementedError()
@@ -182,7 +182,7 @@ class ParquetStorage(ArtifactStorage):
         # TODO(@damon): NOTE: This will use the GCS file system. I think we
         # *always* want the local file system here.
         pq.write_table(table=artifact, where=tmp_uri)
-        return self.storage_client.put(tmp_uri, storage_uri, False)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         # TODO(@damon): verify w/ tests
@@ -218,20 +218,12 @@ class NumpyStorage(ArtifactStorage):
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
-        # TODO: See if we can move away from `store` and use the local file system
-        store = self.storage_client.get_mapper(tmp_uri)
-        zarr.save(store, artifact)
-        self.storage_client.put(tmp_uri, storage_uri, True)
+        zarr.save(tmp_uri, artifact)
+        self.storage_client.put(tmp_uri, storage_uri)
         return storage_uri
 
     def _load_artifact(self, file_path: str) -> Any:
-        # TODO(@damon): Verify this
         return zarr.load(file_path)
-        # store = self.storage_client.store(
-        #     storage_uri=file_path,
-        #     **{"store_type": "download"},
-        # )
-        # return zarr.load(store)  # type: ignore
 
     def load_artifact(self, storage_uri: str, **kwargs: Any) -> Any:
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -273,7 +265,7 @@ class HTMLStorage(ArtifactStorage):
         """
 
         Path(tmp_uri).write_text(artifact, encoding="utf-8")
-        return self.storage_client.put(tmp_uri, storage_uri, False)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         return Path(file_path).read_text(encoding="utf-8")
@@ -313,7 +305,7 @@ class JSONStorage(ArtifactStorage):
         """
 
         Path(tmp_uri).write_text(artifact, encoding="utf-8")
-        return self.storage_client.put(tmp_uri, storage_uri, False)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         with open(file_path, encoding="utf-8") as json_file:
@@ -354,7 +346,7 @@ class TensorflowModelStorage(ArtifactStorage):
         """
 
         artifact.save(tmp_uri)
-        return self.storage_client.put(tmp_uri, storage_uri, True)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         import tensorflow as tf
@@ -403,7 +395,7 @@ class PyTorchModelStorage(ArtifactStorage):
         import torch
 
         torch.save(artifact, tmp_uri)
-        return self.storage_client.put(tmp_uri, storage_uri, False)
+        return self.storage_client.put(tmp_uri, storage_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         import torch

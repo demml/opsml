@@ -251,7 +251,7 @@ def delete_files(
         if len(files.files) == 0:
             return DeleteFileResponse(deleted=False)
 
-        storage_client.rm(payload.read_path, True)
+        storage_client.rm(payload.read_path)
         return DeleteFileResponse(deleted=True)
 
     except Exception as error:

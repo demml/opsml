@@ -8,12 +8,10 @@
 import base64
 import json
 import os
-from typing import Any, Optional, Tuple, Union, cast
+from typing import Optional, Tuple, cast
 
-import google.auth
-from google.auth.credentials import Credentials
-from google.cloud import storage
 from google.oauth2 import service_account
+from google.oauth2.service_account import Credentials
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
@@ -25,179 +23,6 @@ class GcpCreds(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     creds: Optional[Credentials] = None
     project: Optional[str] = None
-
-
-class GCPService:
-    def __init__(
-        self,
-        gcp_credentials: Optional[Credentials] = None,
-    ):
-        """Generic init"""
-
-    @staticmethod
-    def valid_service_name(service_name: str) -> bool:
-        """Validates service name"""
-        raise NotImplementedError
-
-
-class GCSStorageClient(GCPService):
-    def __init__(
-        self,
-        gcp_credentials: Optional[Credentials] = None,
-    ):
-        """Instantiates GCP storage client
-
-        Args:
-            gcp_credentials (Credentials): Credentials with permissions for
-            gcp storage client
-
-        """
-        self.client = storage.Client(credentials=gcp_credentials)
-
-    def list_objects(
-        self,
-        gcs_bucket: Union[str, None] = None,
-        prefix: Union[str, None] = None,
-    ) -> Any:
-        """List object is a given bucket with the specified prefix
-
-        Args:
-            gcs_bucket (str): Name of GCS bucket
-            prefix (str): Blob prefix
-
-        Returns:
-            List of storage blobs
-
-        """
-        bucket = self.client.bucket(gcs_bucket)
-        blobs = bucket.list_blobs(prefix=prefix)
-        return blobs
-
-    def download_object(
-        self,
-        gcs_bucket: str,
-        blob_path: Union[str, None] = None,
-        destination_filename: Union[str, None] = None,
-    ) -> None:
-        """Download an object from gcs
-
-        Args:
-            gcs_bucket (str): Name of GCS bucket
-            blob_path (str): Path to object in gcs (including object name)
-            destination_filename (str): Local filename to download to.
-
-        """
-
-        bucket = self.client.bucket(gcs_bucket)
-        blob = bucket.blob(blob_path)
-        blob.download_to_filename(destination_filename)
-
-        logger.info("Successfully downloaded gs://{}/{}", gcs_bucket, blob_path)
-
-    def download_object_from_uri(self, gcs_uri: str) -> str:
-        bucket, blob, filename = self.parse_gcs_uri(gcs_uri=gcs_uri)
-
-        self.download_object(
-            gcs_bucket=bucket,
-            blob_path=blob,
-            destination_filename=filename,
-        )
-
-        return filename
-
-    def delete_object(
-        self,
-        gcs_bucket: str,
-        blob_path: Union[str, None] = None,
-    ) -> None:
-        """Delete object from gcs
-
-        Args:
-            gcs_bucket:
-                Name of GCS bucket
-            blob_path:
-                Path to object in gcs (including object name)
-
-        """
-
-        bucket = self.client.bucket(gcs_bucket)
-        blob = bucket.blob(blob_path)
-        blob.delete()
-
-        logger.info("Successfully deleted gs://{}/{}", gcs_bucket, blob_path)
-
-    def parse_gcs_uri(self, gcs_uri: str) -> Tuple[str, str, str]:
-        """Parses gcs url
-
-        Args:
-            gcs_uri:
-                Uri for gcs object
-
-        Return:
-            gcs_bucket blob_path and filename
-        """
-
-        split_url = gcs_uri.split("/")
-        bucket = split_url[2]
-        blob_path = "/".join(split_url[3:])
-        filename = split_url[-1]
-
-        return bucket, blob_path, filename
-
-    def delete_object_from_uri(self, gcs_uri: str) -> None:
-        """Delete object from gcs
-
-        Args:
-            gcs_uri:
-                GCS uri of object
-
-        """
-
-        bucket, blob_path, _ = self.parse_gcs_uri(
-            gcs_uri,
-        )
-
-        self.delete_object(
-            bucket,
-            blob_path,
-        )
-
-    def upload(
-        self,
-        gcs_bucket: str,
-        filename: str,
-        destination_path: str,
-    ) -> str:
-        """Upload local file to gcs
-
-        Args:
-            gcs_bucket:
-                Name of gcs bucket
-            filename:
-                Local filename to upload
-            destination_path:
-                gcs path to write to
-
-        Returns:
-            Location of gcs object
-
-        """
-
-        bucket = self.client.bucket(gcs_bucket)
-        blob = bucket.blob(destination_path)
-        blob.upload_from_filename(filename)
-        gcs_uri = f"gs://{gcs_bucket}/{destination_path}"
-
-        logger.info("Uploaded {} to {}", filename, gcs_uri)
-
-        return gcs_uri
-
-    @staticmethod
-    def valid_service_name(service_name: str) -> bool:
-        return service_name == "storage"
-
-
-ClientTypes = GCSStorageClient
 
 
 class GcpCredsSetter:
@@ -215,28 +40,10 @@ class GcpCredsSetter:
         )
 
     def get_base64_creds(self) -> Tuple[Optional[Credentials], Optional[str]]:
-        if not self.has_service_base64_creds:
-            return self.get_gcp_sdk_creds()
+        if self.service_base64_creds is not None:
+            return self.create_gcp_creds_from_base64(self.service_base64_creds)
 
-        return self.create_gcp_creds_from_base64(
-            service_base64_creds=str(
-                self.service_base64_creds,
-            )
-        )
-
-    @property
-    def has_service_base64_creds(self) -> bool:
-        """Has environment creds"""
-        return bool(self.service_base64_creds)
-
-    def get_gcp_sdk_creds(self) -> Tuple[Optional[Credentials], Optional[str]]:
-        """Pulls google cloud sdk creds from local env
-
-        Returns
-            Tuple containing user credentials and project name
-        """
-        logger.info("No gcp credentials found. Using defaults")
-        return google.auth.default()
+        return [None, None]
 
     def decode_base64(self, service_base64_creds: str) -> str:
         base_64 = base64.b64decode(s=service_base64_creds).decode("utf-8")

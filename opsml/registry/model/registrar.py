@@ -171,7 +171,7 @@ class ModelRegistrar:
             local_path = f"{tmpdirname}/model-settings.json"
             with open(local_path, "w", encoding="utf-8") as outfile:
                 json.dump(model_settings, outfile)
-            self.storage_client.put(local_path, registry_path, False)
+            self.storage_client.put(local_path, registry_path)
         logger.info("ModelRegistrar: registered model settings: {} path={}", model_settings, registry_path)
 
     def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
