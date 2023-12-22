@@ -62,7 +62,12 @@ class _ModelConverter:
             model_interface=model_interface,
             data_helper=data_helper,
         )
-        self.sess: Optional[rt.InferenceSession] = None
+        self._sess: Optional[rt.InferenceSession] = None
+
+    @property
+    def sess(self) -> rt.InferenceSession:
+        assert self._sess is not None
+        return self._sess
 
     @property
     def model_type(self) -> str:
@@ -116,18 +121,20 @@ class _ModelConverter:
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
 
-    def _parse_onnx_signature(self, sig_type: str) -> Dict[str, Feature]:  # type: ignore[type-arg]
+    @classmethod
+    def _parse_onnx_signature(cls, sess: rt.InferenceSession, sig_type: str) -> Dict[str, Feature]:  # type: ignore[type-arg]
         feature_dict = {}
-        assert self.sess is not None
+        assert sess is not None
 
-        signature: List[Any] = getattr(self.sess, f"get_{sig_type}")()
+        signature: List[Any] = getattr(sess, f"get_{sig_type}")()
 
         for sig in signature:
             feature_dict[sig.name] = Feature(feature_type=sig.type, shape=tuple(sig.shape))
 
         return feature_dict
 
-    def create_feature_dict(self, onnx_model: ModelProto) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
+    @classmethod
+    def create_feature_dict(cls, sess: rt.InferenceSession) -> Tuple[Dict[str, Feature], Dict[str, Feature]]:
         """Creates feature dictionary from onnx model
 
         Args:
@@ -137,12 +144,12 @@ class _ModelConverter:
             Tuple of input and output feature dictionaries
         """
 
-        input_dict = self._parse_onnx_signature("inputs")
-        output_dict = self._parse_onnx_signature("outputs")
+        input_dict = cls._parse_onnx_signature(sess, "inputs")
+        output_dict = cls._parse_onnx_signature(sess, "outputs")
 
         return input_dict, output_dict
 
-    def create_model_def(self, onnx_model: ModelProto) -> OnnxModel:
+    def create_model_def(self) -> OnnxModel:
         """Creates Model definition
 
         Args:
@@ -170,7 +177,7 @@ class _ModelConverter:
         self._create_onnx_session(onnx_model=onnx_model)
 
         # onnx sess can be used to get name, type, shape
-        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
+        input_onnx_features, output_onnx_features = self.create_feature_dict(sess=self.sess)
         model_def = self.create_model_def(onnx_model=onnx_model)
 
         return model_def, input_onnx_features, output_onnx_features
@@ -212,8 +219,8 @@ class _ModelConverter:
 
         return ModelReturn(model_definition=onnx_model, data_schema=schema)
 
-    def _create_onnx_session(self, onnx_model: ModelProto) -> rt.InferenceSession:
-        self.sess = rt.InferenceSession(
+    def _create_onnx_session(self, onnx_model: ModelProto) -> None:
+        self._sess = rt.InferenceSession(
             path_or_bytes=onnx_model.SerializeToString(),
             providers=rt.get_available_providers(),  # failure when not setting default providers as of rt 1.16
         )
@@ -567,13 +574,6 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         """
 
         # Onnx supports dataframe schemas for pipelines
-        # re-work this
-        if self.interface.model_class in [
-            TrainedModelType.TF_KERAS,
-            TrainedModelType.PYTORCH,
-        ]:
-            return AllowedDataType(self.interface.data_type).value
-
         if (
             self.interface.model_class == TrainedModelType.SKLEARN_ESTIMATOR
             and self.interface.model_type == TrainedModelType.SKLEARN_PIPELINE

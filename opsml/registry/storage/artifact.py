@@ -38,6 +38,8 @@ from opsml.registry.types import (
     HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
     StoragePath,
+    OnnxModel,
+    UriNames,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
@@ -739,6 +741,7 @@ class HuggingFaceStorage(ArtifactStorage):
 
         logger.info("Converting HuggingFace model to onnx format")
         import optimum.onnxruntime as ort
+        import onnx
 
         # model must be created from directory
         ort_model: ort.ORTModel = getattr(ort, model_interface.onnx_args.ort_type)
@@ -756,17 +759,17 @@ class HuggingFaceStorage(ArtifactStorage):
         if model_interface.is_pipeline:
             from transformers import pipeline
 
-            model_interface.onnx_model = pipeline(
-                model_interface.task_type,
-                model=onnx_model,
-                tokenizer=model_interface.model.tokenizer,
+            model_interface.onnx_model = OnnxModel(
+                onnx_version=onnx.__version__,
+                sess=pipeline(
+                    model_interface.task_type,
+                    model=onnx_model,
+                    tokenizer=model_interface.model.tokenizer,
+                ),
             )
 
         else:
             model_interface.onnx_model = onnx_model
-
-        # set onnx path
-        artifact.metadata.uris.onnx_model_uri = onnx_path
 
     def _save_model(self, artifact: HuggingFaceStorageArtifact, tmp_uri: str) -> str:
         """Saves a huggingface model to directory"""
@@ -789,13 +792,31 @@ class HuggingFaceStorage(ArtifactStorage):
     def _set_uris(self, artifact: HuggingFaceStorageArtifact, registered_path: str) -> None:
         """Sets metadata uris after uploading to server"""
 
-        artifact.metadata.uris.trained_model_uri = str(Path(registered_path, CommonKwargs.MODEL.value))
+        artifact.uris[UriNames.TRAINED_MODEL_URI.value] = str(Path(registered_path, CommonKwargs.MODEL.value))
 
         if self.saved_metadata[CommonKwargs.PREPROCESSOR.value]:
-            artifact.metadata.uris.preprocessor_uri = str(Path(registered_path, CommonKwargs.PREPROCESSOR.value))
+            artifact.uris[UriNames.PREPROCESSOR_URI.value] = str(Path(registered_path, CommonKwargs.PREPROCESSOR.value))
 
         if self.saved_metadata[CommonKwargs.ONNX.value]:
-            artifact.metadata.uris.onnx_model_uri = str(Path(registered_path, CommonKwargs.ONNX.value))
+            artifact.uris[UriNames.ONNX_MODEL_URI.value] = str(Path(registered_path, CommonKwargs.ONNX.value))
+
+    def _set_metadata(self, artifact: HuggingFaceStorageArtifact) -> None:
+        from opsml.registry.model.model_converters import _TrainedModelMetadataCreator
+
+        metadata = _TrainedModelMetadataCreator(artifact=artifact.model_interface).get_model_metadata()
+
+        if self.saved_metadata[CommonKwargs.ONNX.value]:
+            from opsml.registry.model.model_converters import _ModelConverter
+
+            onnx_input_features, onnx_output_features = _ModelConverter(
+                artifact=artifact.model_interface,
+            ).create_feature_dict(artifact.model_interface.onnx_model.sess)
+
+            metadata.data_schema.onnx_input_features = onnx_input_features
+            metadata.data_schema.onnx_output_features = onnx_output_features
+            metadata.data_schema.onnx_data_type = AllowedDataType.NUMPY.value
+
+        artifact.metadata.data_schema = metadata.data_schema
 
     def _save_artifact(self, artifact: HuggingFaceStorageArtifact, storage_uri: str, tmp_uri: str) -> str:
         """
@@ -829,10 +850,8 @@ class HuggingFaceStorage(ArtifactStorage):
             **{"is_dir": True},
         )
 
-        self._set_uris(
-            artifact=artifact,
-            registered_path=registered_path,
-        )
+        self._set_uris(artifact=artifact, registered_path=registered_path)
+        self._set_metadata(artifact=artifact)
 
         return registered_path
 
