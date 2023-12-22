@@ -5,6 +5,7 @@
 
 import json
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any, Optional, cast
 
@@ -14,7 +15,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
 from numpy.typing import NDArray
-import uuid
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.image.dataset import ImageDataset
@@ -28,7 +29,6 @@ from opsml.registry.storage import client
 from opsml.registry.storage.downloader import Downloader
 from opsml.registry.types import (
     AllowedDataType,
-    ArtifactClass,
     CommonKwargs,
     FilePath,
     HuggingFaceOnnxArgs,
@@ -108,6 +108,8 @@ class ArtifactStorage:
     def save_artifact(self, artifact: Any, storage_request: StorageRequest) -> StoragePath:
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = storage_request.filename or uuid.uuid4().hex
+            if self.file_suffix is not None:
+                filename = f"{filename}.{self.file_suffix}"
 
         pass
         # with tempfile.TemporaryDirectory() as tmp_dir:
@@ -151,13 +153,10 @@ class OnnxStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             file_suffix=SaveName.ONNX.value,
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -201,8 +200,6 @@ class JoblibStorage(ArtifactStorage):
         super().__init__(
             artifact_type=artifact_type,
             file_suffix=SaveName.JOBLIB.value,
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -239,12 +236,9 @@ class ImageDataStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            artifact_class=ArtifactClass.DATA.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: ImageDataset, storage_uri: str, tmp_uri: str) -> str:
@@ -292,13 +286,10 @@ class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             file_suffix=SaveName.PARQUET.value,
-            artifact_class=ArtifactClass.DATA.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -362,16 +353,8 @@ class ParquetStorage(ArtifactStorage):
 class NumpyStorage(ArtifactStorage):
     """Class that saves and loads a numpy ndarray"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-        extra_path: Optional[str] = None,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            artifact_class=ArtifactClass.DATA.value,
-            extra_path=extra_path,
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type)
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
         """
@@ -417,13 +400,10 @@ class HTMLStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             file_suffix=SaveName.HTML.value,
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -458,13 +438,10 @@ class JSONStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             file_suffix=SaveName.JSON.value,
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
@@ -500,14 +477,8 @@ class TensorFlowModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix=None,
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
-        )
+        super().__init__(artifact_type=artifact_type)
 
     def _save_artifact(self, artifact: TensorFlowModel, storage_uri: str, tmp_uri: str) -> str:
         """Saves a tensorflow model
@@ -550,14 +521,8 @@ class PyTorchModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix="pt",
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
-        )
+        super().__init__(artifact_type=artifact_type, file_suffix="pt")
 
     def _save_artifact(self, artifact: PyTorchModel, storage_uri: str, tmp_uri: str) -> str:
         """
@@ -598,13 +563,10 @@ class PyTorchLightningModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             file_suffix="ckpt",
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
         )
 
     def _save_artifact(self, artifact: LightningModel, storage_uri: str, tmp_uri: str) -> str:
@@ -666,17 +628,8 @@ class PyTorchLightningModelStorage(ArtifactStorage):
 class HuggingFaceStorage(ArtifactStorage):
     """Class that saves and loads a huggingface model"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-        extra_path: Optional[str] = None,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix=None,
-            artifact_class=ArtifactClass.OTHER.value,
-            extra_path=extra_path,
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type)
         self.saved_metadata = {
             CommonKwargs.MODEL.value: False,
             CommonKwargs.PREPROCESSOR.value: False,

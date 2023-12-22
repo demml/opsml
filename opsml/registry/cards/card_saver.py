@@ -2,9 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
-from httpx import request
 
 import pyarrow as pa
 from numpy.typing import NDArray
