@@ -312,7 +312,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 
         # Cards rely on global storage state - so set it to API
         client.storage_client = client.get_storage_client(cfg)
-        return CardRegistries(client.storage_client)
+        return CardRegistries()
 
 
 @pytest.fixture(scope="function")
@@ -325,9 +325,10 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
 def db_registries() -> CardRegistries:
     """Returns CardRegistries configured with a local client (to simulate "client" mode)."""
     cleanup()
+    
     # Cards rely on global storage state - so set it to local.
     client.storage_client = client.get_storage_client(config)
-    yield CardRegistries(client.storage_client)
+    yield CardRegistries()
     cleanup()
 
 
