@@ -17,7 +17,6 @@ from opsml.registry.types import (
     Comment,
     DataCardMetadata,
     ModelCardMetadata,
-    ModelCardUris,
     RegistryType,
 )
 
@@ -255,7 +254,7 @@ class LoadedModelRecord(LoadRecord):
         modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["metadata"]["model_type"] = values.get("model_type", "undefined")
         modelcard_definition["storage_client"] = values.get("storage_client")
-        modelcard_definition["metadata"]["uris"] = ModelCardUris(
+        modelcard_definition["metadata"]["uris"] = ModelUris(
             model_metadata_uri=values.get("model_metadata_uri"),
             trained_model_uri=values.get("trained_model_uri"),
             modelcard_uri=values.get("modelcard_uri"),

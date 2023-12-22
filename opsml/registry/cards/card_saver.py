@@ -306,12 +306,10 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         model_dump = self.card.model_dump(
             exclude={
-                {"model": {"model", "sample_data", "preprocessor"}},
+                {"interface": {"model", "sample_data", "preprocessor", "onnx_model"}},
                 "storage_client",
             }
         )
-        model_dump["metadata"].pop("onnx_model")
-
         storage_path = save_artifact_to_storage(
             artifact=model_dump,
             storage_client=self.storage_client,
@@ -336,6 +334,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 model_interface=self.card.interface,
                 metadata=self.card.metadata,
                 to_onnx=self.card.to_onnx,
+                uris=self.uris,
             )
 
         return self.card.model
