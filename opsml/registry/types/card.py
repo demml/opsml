@@ -142,5 +142,5 @@ class StoragePath:
 class HuggingFaceStorageArtifact:
     model_interface: Any
     metadata: ModelCardMetadata
+    uris: Dict[str, str]
     to_onnx: bool = False
-    uris: Dict[str, str] = {}

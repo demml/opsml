@@ -85,7 +85,6 @@ from opsml.registry.storage import client
 from opsml.registry.types import (
     HuggingFaceTask,
     Metric,
-    ModelCardUris,
     OnnxModel,
 )
 from opsml.settings.config import OpsmlConfig, config
@@ -937,7 +936,6 @@ def test_model_card(sklearn_pipeline):
         team="mlops",
         user_email="mlops.com",
         version="1.0.0",
-        uris=ModelCardUris(trained_model_uri="test"),
     )
     return model_card
 

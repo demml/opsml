@@ -11,7 +11,6 @@ from opsml.registry.types import (
     DataCardMetadata,
     Description,
     ModelCardMetadata,
-    ModelCardUris,
 )
 
 __all__ = [
@@ -26,6 +25,5 @@ __all__ = [
     "DataCardMetadata",
     "Description",
     "ModelCardMetadata",
-    "ModelCardUris",
     "DataSplit",
 ]

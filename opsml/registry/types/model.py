@@ -208,8 +208,6 @@ class ModelCardMetadata(BaseModel):
             RunCard associated with the ModelCard
         pipelinecard_uid:
             Associated PipelineCard
-        uris:
-            ModelCardUris object containing all uris associated with ModelCard
     """
 
     description: Description = Description()
