@@ -161,6 +161,8 @@ class DataFormatter:
             schema: Dict[str,str]
         """
         if isinstance(data, pd.DataFrame):
+            print(data.dtypes.to_dict())
+            a
             return cast(Dict[str, Any], data.dtypes.to_dict())
 
         if isinstance(data, pl.DataFrame):
