@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import pyarrow as pa
 from numpy.typing import NDArray
-
+from pathlib import Path
 from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -121,7 +121,10 @@ class DataCardArtifactSaver(CardArtifactSaver):
             card_uid=self.card.uid,
             uri_name=UriNames.DATACARD_URI.value,
             filename=SaveName.DATACARD.value,
-            uri_path=self.uris.get(UriNames.DATACARD_URI.value, self.card.uri),
+            uri_path=self.uris.get(
+                UriNames.DATACARD_URI.value,
+                Path(self.card.uri, SaveName.DATACARD.value),
+            ),
         )
 
         storage_path = save_artifact_to_storage(

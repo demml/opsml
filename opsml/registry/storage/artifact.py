@@ -75,25 +75,25 @@ class ArtifactStorage:
 
     def _upload_artifact(
         self,
-        file_path: str,
-        storage_uri: str,
+        client_path: Path,
+        server_path: Path,
         recursive: bool = False,
         **kwargs: Any,
     ) -> str:
         """Carries out post processing for proxy clients
 
         Args:
-            file_path:
-                File path used for writing
-            storage_uri:
-                Storage Uri. Can be the same as file_path
+            client_path:
+                Path on client to upload
+            server_path:
+                Path on server to upload to
             recursive:
                 Whether to recursively upload all files and folder in a given path
         """
 
         return self.storage_client.upload(
-            local_path=file_path,
-            write_path=storage_uri,
+            local_path=client_path,
+            write_path=server_path,
             recursive=recursive,
             **kwargs,
         )
@@ -101,42 +101,31 @@ class ArtifactStorage:
     def _load_artifact(self, file_path: FilePath) -> Any:
         raise NotImplementedError
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """Saves an artifact"""
         raise NotImplementedError
 
-    def save_artifact(self, artifact: Any, storage_request: StorageRequest) -> StoragePath:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            filename = storage_request.filename or uuid.uuid4().hex
+    def save_artifact(self, artifact: Any, storage_request: StorageRequest) -> str:
+        # set storage path for server
+        server_path = storage_request.uri_path
+
+        # create tmp dir for client
+        with tempfile.TemporaryDirectory() as client_dir:
+            file_name = storage_request.filename or uuid.uuid4().hex
+
+            client_path = Path(client_dir, file_name)
+            server_path = server_path / file_name
+
             if self.file_suffix is not None:
-                filename = f"{filename}.{self.file_suffix}"
+                client_path.with_suffix(self.file_suffix)
+                server_path.with_suffix(self.file_suffix)
 
-        pass
-        # with tempfile.TemporaryDirectory() as tmp_dir:
-        #
-        #
-        #
-        # spec.filename = spec.filename or uuid.uuid4().hex
-        # path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
-        # with tempfile.TemporaryDirectory() as tmpdirname:
-        #    yield path, os.path.join(tmpdirname, spec.filenam
-        #
-
-        # with self.storage_client.create_temp_save_path_with_spec(
-        #    self.storage_client.extend_storage_spec(
-        #        storage_spec,
-        #        extra_path=self.extra_path,
-        #        file_suffix=self.file_suffix,
-        #    )
-        # ) as temp_output:
-        #    storage_uri, tmp_uri = temp_output
-        #    storage_uri = self._save_artifact(
-        #        artifact=artifact,
-        #        storage_uri=storage_uri,
-        #        tmp_uri=tmp_uri,
-        #    )
-
-        # return StoragePath(uri=storage_uri)
+            # save artifact
+            return self._save_artifact(
+                artifact=artifact,
+                server_path=server_path,
+                client_path=client_path,
+            )
 
     def load_artifact(self, lpath: str, **kwargs: Any) -> Any:
         return self._load_artifact(file_path=lpath, **kwargs)
@@ -150,16 +139,10 @@ class ArtifactStorage:
 class OnnxStorage(ArtifactStorage):
     """Class that saves and onnx model"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix=SaveName.ONNX.value,
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type, file_suffix=SaveName.ONNX.value)
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """
         Writes the onnx artifact to onnx file
 
@@ -176,8 +159,8 @@ class OnnxStorage(ArtifactStorage):
             Storage path
         """
 
-        _ = Path(str(tmp_uri)).write_bytes(artifact)
-        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+        _ = client_path.write_bytes(artifact)
+        return self._upload_artifact(file_path=client_path, storage_uri=server_path)
 
     def _load_artifact(self, file_path: FilePath) -> ModelProto:
         from onnx import load
@@ -192,17 +175,10 @@ class OnnxStorage(ArtifactStorage):
 class JoblibStorage(ArtifactStorage):
     """Class that saves and loads a joblib object"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-        extra_path: Optional[str] = None,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix=SaveName.JOBLIB.value,
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type, file_suffix=SaveName.JOBLIB.value)
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """
         Writes the artifact as a joblib file to a storage_uri
 
@@ -219,8 +195,8 @@ class JoblibStorage(ArtifactStorage):
             Storage path
         """
 
-        joblib.dump(artifact, tmp_uri)
-        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+        joblib.dump(artifact, str(client_path))
+        return self._upload_artifact(client_path, server_path)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         return joblib.load(file_path)
@@ -241,7 +217,7 @@ class ImageDataStorage(ArtifactStorage):
             artifact_type=artifact_type,
         )
 
-    def _save_artifact(self, artifact: ImageDataset, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: ImageDataset, server_path: Path, client_path: Path) -> str:
         """
         Writes image directory to storage client location
 
@@ -256,10 +232,10 @@ class ImageDataStorage(ArtifactStorage):
         Returns:
             Storage path
         """
-        storage_path = f"{storage_uri}/{artifact.image_dir}"
+        storage_path = server_path / artifact.image_dir
         return self.storage_client.upload(
             local_path=artifact.image_dir,
-            write_path=storage_path,
+            write_path=str(storage_path),
             is_dir=True,
         )
 
@@ -283,16 +259,10 @@ class ImageDataStorage(ArtifactStorage):
 class ParquetStorage(ArtifactStorage):
     """Class that saves and loads a parquet file"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix=SaveName.PARQUET.value,
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type, file_suffix=SaveName.PARQUET.value)
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """
         Writes the artifact as a parquet table to the specified storage location
 
@@ -308,11 +278,11 @@ class ParquetStorage(ArtifactStorage):
         Returns:
             Storage path
         """
-        pq.write_table(table=artifact, where=tmp_uri, filesystem=self.storage_filesystem)
+        pq.write_table(table=artifact, where=str(client_path), filesystem=self.storage_filesystem)
 
         return self.storage_client.upload(
-            local_path=tmp_uri,
-            write_path=storage_uri,
+            local_path=str(client_path),
+            write_path=str(server_path),
             **{"is_dir": False},
         )
 
@@ -356,7 +326,7 @@ class NumpyStorage(ArtifactStorage):
     def __init__(self, artifact_type: str):
         super().__init__(artifact_type=artifact_type)
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """
         Writes the artifact as a zarr array to the specified storage location
 
@@ -373,12 +343,12 @@ class NumpyStorage(ArtifactStorage):
             Storage path
         """
 
-        store = self.storage_client.store(storage_uri=tmp_uri)
+        store = self.storage_client.store(storage_uri=str(client_path))
         zarr.save(store, artifact)
 
         return self.storage_client.upload(
-            local_path=tmp_uri,
-            write_path=storage_uri,
+            local_path=str(client_path),
+            write_path=str(server_path),
             **{"is_dir": True},
         )
 
@@ -406,7 +376,7 @@ class HTMLStorage(ArtifactStorage):
             file_suffix=SaveName.HTML.value,
         )
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """Writes the artifact as a json file to a storage_uri
 
         Args:
@@ -421,8 +391,8 @@ class HTMLStorage(ArtifactStorage):
             Storage path
         """
 
-        Path(tmp_uri).write_text(artifact, encoding="utf-8")
-        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+        client_path.write_text(artifact, encoding="utf-8")
+        return self._upload_artifact(client_path, server_path)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         return Path(str(file_path)).read_text(encoding="utf-8")
@@ -435,16 +405,10 @@ class HTMLStorage(ArtifactStorage):
 class JSONStorage(ArtifactStorage):
     """Class that saves and loads a joblib object"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix=SaveName.JSON.value,
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type, file_suffix=SaveName.JSON.value)
 
-    def _save_artifact(self, artifact: Any, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """Writes the artifact as a json file to a storage_uri
 
         Args:
@@ -459,8 +423,8 @@ class JSONStorage(ArtifactStorage):
             Storage path
         """
 
-        Path(tmp_uri).write_text(artifact, encoding="utf-8")
-        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+        client_path.write_text(artifact, encoding="utf-8")
+        return self._upload_artifact(client_path, server_path)
 
     def _load_artifact(self, file_path: FilePath) -> Any:
         with open(str(file_path), encoding="utf-8") as json_file:
@@ -480,7 +444,7 @@ class TensorFlowModelStorage(ArtifactStorage):
     ):
         super().__init__(artifact_type=artifact_type)
 
-    def _save_artifact(self, artifact: TensorFlowModel, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: TensorFlowModel, server_path: Path, client_path: Path) -> str:
         """Saves a tensorflow model
 
         Args:
@@ -495,10 +459,10 @@ class TensorFlowModelStorage(ArtifactStorage):
             Storage path
         """
 
-        artifact.model.save(tmp_uri)
+        artifact.model.save(str(client_path))
         return self._upload_artifact(
-            file_path=tmp_uri,
-            storage_uri=storage_uri,
+            file_path=str(client_path),
+            storage_uri=str(server_path),
             recursive=True,
             **{"is_dir": True},
         )
@@ -524,7 +488,7 @@ class PyTorchModelStorage(ArtifactStorage):
     ):
         super().__init__(artifact_type=artifact_type, file_suffix="pt")
 
-    def _save_artifact(self, artifact: PyTorchModel, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: PyTorchModel, server_path: Path, client_path: Path) -> str:
         """
         Saves a pytorch model
 
@@ -541,8 +505,8 @@ class PyTorchModelStorage(ArtifactStorage):
         """
         import torch
 
-        torch.save(artifact.model, tmp_uri)
-        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+        torch.save(artifact.model, client_path)
+        return self._upload_artifact(client_path, server_path)
 
     def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> PyTorchModel:
         import torch
@@ -560,16 +524,10 @@ class PyTorchModelStorage(ArtifactStorage):
 class PyTorchLightningModelStorage(ArtifactStorage):
     """Class that saves and loads a pytorch model"""
 
-    def __init__(
-        self,
-        artifact_type: str,
-    ):
-        super().__init__(
-            artifact_type=artifact_type,
-            file_suffix="ckpt",
-        )
+    def __init__(self, artifact_type: str):
+        super().__init__(artifact_type=artifact_type, file_suffix="ckpt")
 
-    def _save_artifact(self, artifact: LightningModel, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: LightningModel, server_path: Path, client_path: Path) -> str:
         """
         Saves a pytorch lightning model
 
@@ -587,9 +545,9 @@ class PyTorchLightningModelStorage(ArtifactStorage):
         from lightning import Trainer
 
         trainer = cast(Trainer, artifact.model)
-        trainer.save_checkpoint(tmp_uri)
+        trainer.save_checkpoint(client_path)
 
-        return self._upload_artifact(file_path=tmp_uri, storage_uri=storage_uri)
+        return self._upload_artifact(client_path, server_path)
 
     def _load_artifact(self, file_path: FilePath, **kwargs: Any) -> LightningModel:
         """Loads a pytorch lightning model. It is expected that a model
@@ -636,7 +594,7 @@ class HuggingFaceStorage(ArtifactStorage):
             CommonKwargs.ONNX.value: False,
         }
 
-    def _convert_to_onnx(self, artifact: HuggingFaceStorageArtifact, tmp_uri: str, model_path: str) -> None:
+    def _convert_to_onnx(self, artifact: HuggingFaceStorageArtifact, client_path: Path, model_path: Path) -> None:
         # set args
         model_interface: HuggingFaceModel = artifact.model_interface
 
@@ -646,7 +604,7 @@ class HuggingFaceStorage(ArtifactStorage):
 
         # model must be created from directory
         ort_model: ort.ORTModel = getattr(ort, model_interface.onnx_args.ort_type)
-        onnx_path = str(Path(tmp_uri, CommonKwargs.ONNX.value))
+        onnx_path = client_path / CommonKwargs.ONNX.value
         onnx_model = ort_model.from_pretrained(
             model_path,
             export=True,
@@ -672,19 +630,19 @@ class HuggingFaceStorage(ArtifactStorage):
         else:
             model_interface.onnx_model = onnx_model
 
-    def _save_model(self, artifact: HuggingFaceStorageArtifact, tmp_uri: str) -> str:
+    def _save_model(self, artifact: HuggingFaceStorageArtifact, client_path: Path) -> Path:
         """Saves a huggingface model to directory"""
 
         logger.info("Saving HuggingFace model")
         model_interface: HuggingFaceModel = artifact.model_interface
-        model_path = str(Path(tmp_uri, CommonKwargs.MODEL.value))
+        model_path = client_path / CommonKwargs.MODEL.value
         model_interface.model.save_pretrained(model_path)
         self.saved_metadata[CommonKwargs.MODEL.value] = True
 
         # save preprocessor if present
         if model_interface.preprocessor is not None:
             logger.info("Saving HuggingFace preprocessor")
-            preprocessor_path = str(Path(tmp_uri, CommonKwargs.PREPROCESSOR.value))
+            preprocessor_path = client_path / CommonKwargs.PREPROCESSOR.value
             model_interface.preprocessor.save_pretrained(preprocessor_path)
             self.saved_metadata[CommonKwargs.PREPROCESSOR.value] = True
 
@@ -719,7 +677,7 @@ class HuggingFaceStorage(ArtifactStorage):
 
         artifact.metadata.data_schema = metadata.data_schema
 
-    def _save_artifact(self, artifact: HuggingFaceStorageArtifact, storage_uri: str, tmp_uri: str) -> str:
+    def _save_artifact(self, artifact: HuggingFaceStorageArtifact, server_path: Path, client_path: Path) -> str:
         """
         Saves a huggingface model
 
@@ -735,19 +693,19 @@ class HuggingFaceStorage(ArtifactStorage):
             Storage path
         """
 
-        model_path = self._save_model(artifact, tmp_uri)
+        model_path = self._save_model(artifact, client_path)
 
         if artifact.to_onnx:
             assert isinstance(
                 artifact.model_interface.onnx_args, HuggingFaceOnnxArgs
             ), "onnx_args must be provided when saving a converting a huggingface model"
 
-            self._convert_to_onnx(artifact=artifact, tmp_uri=tmp_uri, model_path=model_path)
+            self._convert_to_onnx(artifact=artifact, client_path=client_path, model_path=model_path)
 
         registered_path = self._upload_artifact(
-            file_path=tmp_uri,
-            storage_uri=storage_uri,
-            recursive=True,
+            client_path,
+            server_path,
+            True,
             **{"is_dir": True},
         )
 
