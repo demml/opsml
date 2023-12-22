@@ -11,7 +11,6 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.model.interfaces import HuggingFaceModel, ModelInterface
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
     AllowedDataType,
@@ -21,6 +20,9 @@ from opsml.registry.types import (
     CommonKwargs,
     ModelCardMetadata,
     ModelMetadata,
+    UriNames,
+    RegistryType,
+    StorageRequest,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -99,7 +101,11 @@ class ModelCard(ArtifactCard):
 
         sample_data = load_artifact_from_storage(
             artifact_type=self.interface.data_type,
-            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
+            storage_request=StorageRequest(
+                registry_type=self.card_type,
+                card_uid=self.uid,
+                uri_name=UriNames.SAMPLE_DATA_URI.value,
+            ),
         )
         self.interface.sample_data = sample_data
 
@@ -127,7 +133,11 @@ class ModelCard(ArtifactCard):
 
             self.interface = load_artifact_from_storage(
                 artifact_type=self.metadata.model_class,
-                storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                storage_request=StorageRequest(
+                    registry_type=self.card_type,
+                    card_uid=self.uid,
+                    uri_name=UriNames.TRAINED_MODEL_URI.value,
+                ),
                 **{**{"model": self.interface, "load_type": CommonKwargs.MODEL}, **kwargs},
             )
 
@@ -135,13 +145,21 @@ class ModelCard(ArtifactCard):
                 if isinstance(self.interface, HuggingFaceModel):
                     self.interface = load_artifact_from_storage(
                         artifact_type=self.interface.model_class,
-                        storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                        storage_request=StorageRequest(
+                            registry_type=self.card_type,
+                            card_uid=self.card.uid,
+                            uri_name=UriNames.TRAINED_MODEL_URI.value,
+                        ),
                         **{**{"model": self.interface, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
                     )
                 else:
                     self.interface.preprocessor = load_artifact_from_storage(
                         artifact_type=AllowedDataType.DICT,
-                        storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                        storage_request=StorageRequest(
+                            registry_type=self.card_type,
+                            card_uid=self.card.uid,
+                            uri_name=UriNames.TRAINED_MODEL_URI.value,
+                        ),
                     )
 
     @property
@@ -149,7 +167,11 @@ class ModelCard(ArtifactCard):
         """Loads `ModelMetadata` class"""
         model_metadata = load_artifact_from_storage(
             artifact_type=SaveName.JSON.value,
-            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
+            storage_request=StorageRequest(
+                registry_type=self.card_type,
+                card_uid=self.card.uid,
+                uri_name=UriNames.MODEL_METADATA_URI.value,
+            ),
         )
 
         return ModelMetadata.model_validate(model_metadata)

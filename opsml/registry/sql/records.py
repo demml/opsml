@@ -19,6 +19,8 @@ from opsml.registry.types import (
     DataCardMetadata,
     ModelCardMetadata,
     RegistryType,
+    StorageRequest,
+    UriNames,
 )
 
 
@@ -172,7 +174,6 @@ class LoadRecord(BaseModel):
     uid: str
     user_email: str
     tags: Dict[str, str]
-    storage_client: Optional[StorageClientType] = None
 
     @staticmethod
     def validate_table(registry_type: RegistryType) -> bool:
@@ -188,13 +189,8 @@ class LoadedDataRecord(LoadRecord):
     @classmethod
     def load_attributes(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         uris = values["uris"]
-        storage_client = cast(StorageClientType, values["storage_client"])
 
-        datacard_definition = cls.load_datacard_definition(
-            save_path=uris["datacard_uri"],
-            storage_client=storage_client,
-        )
-        datacard_definition["storage_client"] = storage_client
+        datacard_definition = cls.load_datacard_definition(values)
 
         if datacard_definition.get("metadata") is None:  # this is None for previous v1 cards
             datacard_definition["metadata"] = cls.convert_data_metadata(datacard_definition)
@@ -208,11 +204,7 @@ class LoadedDataRecord(LoadRecord):
         return DataCardMetadata(**card_def).model_dump()
 
     @classmethod
-    def load_datacard_definition(
-        cls,
-        save_path: str,
-        storage_client: StorageClientType,
-    ) -> Dict[str, Any]:
+    def load_datacard_definition(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Loads a model card definition from current attributes
 
         Returns:
@@ -220,9 +212,13 @@ class LoadedDataRecord(LoadRecord):
         """
         datacard_definition = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_spec=ArtifactStorageSpecs(save_path=save_path),
+            storage_request=StorageRequest(
+                registry_type=RegistryType.DATA,
+                card_uid=values["uid"],
+                uri_name=UriNames.DATACARD_URI.value,
+                uri_path=values["uris"][UriNames.DATACARD_URI.value],
+            ),
         )
-        assert datacard_definition is not None
         return cast(Dict[str, Any], datacard_definition)
 
     @staticmethod
@@ -233,6 +229,7 @@ class LoadedDataRecord(LoadRecord):
 class LoadedModelRecord(LoadRecord):
     datacard_uid: str
     metadata: ModelCardMetadata
+    uris: ModelUris
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
@@ -250,22 +247,11 @@ class LoadedModelRecord(LoadRecord):
         modelcard_definition["metadata"]["auditcard_uid"] = values.get("auditcard_uid")
         modelcard_definition["metadata"]["sample_data_type"] = values.get("sample_data_type")
         modelcard_definition["metadata"]["model_type"] = values.get("model_type", "undefined")
-        modelcard_definition["storage_client"] = values.get("storage_client")
-        modelcard_definition["metadata"]["uris"] = ModelUris(
-            model_metadata_uri=values.get("model_metadata_uri"),
-            trained_model_uri=values.get("trained_model_uri"),
-            modelcard_uri=values.get("modelcard_uri"),
-            sample_data_uri=values.get("sample_data_uri"),
-        )
 
         return modelcard_definition
 
     @classmethod
-    def load_modelcard_definition(
-        cls,
-        values: Dict[str, Any],
-        storage_client: StorageClientType,
-    ) -> Dict[str, Any]:
+    def load_modelcard_definition(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Loads a model card definition from current attributes
 
         Returns:
@@ -273,9 +259,14 @@ class LoadedModelRecord(LoadRecord):
         """
         model_card_definition = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
+            storage_request=StorageRequest(
+                registry_type=RegistryType.MODEL,
+                card_uid=values["uid"],
+                uri_name=UriNames.MODELCARD_URI,
+                uri_path=values["uris"][UriNames.MODELCARD_URI.value],
+            ),
         )
-        assert model_card_definition is not None
+
         return cast(Dict[str, Any], model_card_definition)
 
     @classmethod
@@ -297,40 +288,17 @@ class LoadedAuditRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_audit_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
-
-        audit = cls._load_audit(
-            audit_uri=values["audit_uri"],
-            storage_client=storage_client,
-        )
-        audit["metadata"]["audit_uri"] = values["audit_uri"]
-
-        return audit
-
-    @classmethod
-    def _load_audit(
-        cls,
-        audit_uri: str,
-        storage_client: StorageClientType,
-    ) -> Dict[str, Any]:
-        """Loads a audit artifact from an audit uri
-
-        Args:
-            audit_uri:
-                URI to audit artifact
-            storage_client:
-                Storage client to use for loading
-
-        Returns:
-            Audit dictionary
-        """
-
-        audit_definition = load_artifact_from_storage(
+        audit_definition: Dict[str, Any] = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
+            storage_request=StorageRequest(
+                registry_type=RegistryType.AUDIT,
+                card_uid=values["uid"],
+                uri_name=UriNames.AUDIT_URI,
+                uri_path=values["uris"][UriNames.AUDIT_URI.value],
+            ),
         )
-        assert audit_definition is not None
-        return cast(Dict[str, Any], audit_definition)
+
+        return audit_definition
 
     @staticmethod
     def validate_table(registry_type: RegistryType) -> bool:
@@ -352,36 +320,17 @@ class LoadedRunRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_run_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
-
-        runcard_definition = cls.load_runcard_definition(
-            runcard_uri=values["runcard_uri"],
-            storage_client=storage_client,
+        runcard_definition: Dict[str, Any] = load_artifact_from_storage(
+            artifact_type=AllowedDataType.DICT,
+            storage_request=StorageRequest(
+                registry_type=RegistryType.RUN,
+                card_uid=values["uid"],
+                uri_name=UriNames.RUNCARD_URI,
+                uri_path=values["uris"][UriNames.RUNCARD_URI.value],
+            ),
         )
-
-        runcard_definition["runcard_uri"] = values.get("runcard_uri")
-        runcard_definition["storage_client"] = values.get("storage_client")
 
         return runcard_definition
-
-    @classmethod
-    def load_runcard_definition(
-        cls,
-        runcard_uri: str,
-        storage_client: StorageClientType,
-    ) -> Dict[str, Any]:
-        """Loads a model card definition from current attributes
-
-        Returns:
-            Dictionary to be parsed by RunCard.model_validate()
-        """
-
-        runcard_definition = load_artifact_from_storage(
-            artifact_type=AllowedDataType.DICT,
-            storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
-        )
-        assert runcard_definition is not None
-        return cast(Dict[str, Any], runcard_definition)
 
     @staticmethod
     def validate_table(registry_type: RegistryType) -> bool:

@@ -884,7 +884,7 @@ def load_artifact_from_storage(
     artifact_type: str,
     storage_request: StorageRequest,
     **kwargs: Any,
-) -> Optional[Any]:
+) -> Any:
     with tempfile.TemporaryDirectory() as lpath:
         Downloader(storage_request=storage_request).download(lpath)
         storage_type = next(
