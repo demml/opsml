@@ -134,11 +134,6 @@ AuditSectionType = Dict[str, Dict[int, Dict[str, str]]]
 
 
 @dataclass
-class StoragePath:
-    uri: str
-
-
-@dataclass
 class HuggingFaceStorageArtifact:
     model_interface: Any
     metadata: ModelCardMetadata

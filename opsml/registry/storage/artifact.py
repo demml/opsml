@@ -778,7 +778,7 @@ def save_artifact_to_storage(
     artifact: Any,
     storage_request: StorageRequest,
     artifact_type: str,
-) -> StoragePath:
+) -> str:
     storage_type: ArtifactStorage = next(
         (
             storage_type
