@@ -11,7 +11,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_team_pattern
 from opsml.registry.sql.base.types import RegistryTableNames
 from opsml.registry.sql.records import RegistryRecord
-from opsml.registry.types import CardInfo
+from opsml.registry.types import CardInfo, _OPSML_STORAGE_ROOT
 
 logger = ArtifactLogger.get_logger()
 
@@ -77,7 +77,13 @@ class ArtifactCard(BaseModel):
         """The base URI to use for the card and it's artifacts.."""
         if self.version is None:
             raise ValueError("Could not create card uri - version is not set")
-        return Path(RegistryTableNames.from_str(self.card_type).value, self.team, self.name, f"v{self.version}")
+        return Path(
+            _OPSML_STORAGE_ROOT,
+            RegistryTableNames.from_str(self.card_type).value,
+            self.team,
+            self.name,
+            f"v{self.version}",
+        )
 
     @property
     def artifact_uri(self) -> Path:

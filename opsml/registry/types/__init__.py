@@ -73,4 +73,5 @@ from opsml.registry.types.storage import (
     StorageRequest,
     StorageSettings,
     StorageSystem,
+    _OPSML_STORAGE_ROOT,
 )
