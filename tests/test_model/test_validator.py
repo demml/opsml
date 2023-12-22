@@ -62,7 +62,6 @@ def simulate_save_load(
 
         loaded_model = load_artifact_from_storage(
             artifact_type=model.model_class,
-            storage_client=api_storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=metadata.uris.trained_model_uri),
             **{**{"model": loaded_model, "load_type": "model"}, **kwargs},
         )
@@ -70,7 +69,6 @@ def simulate_save_load(
         if metadata.uris.preprocessor_uri is not None:
             loaded_model = load_artifact_from_storage(
                 artifact_type=model.model_class,
-                storage_client=api_storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=metadata.uris.preprocessor_uri),
                 **{**{"model": loaded_model, "load_type": "preprocessor"}, **kwargs},
             )
@@ -78,7 +76,6 @@ def simulate_save_load(
     else:
         loaded_model = load_artifact_from_storage(
             artifact_type=model.model_class,
-            storage_client=api_storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=storage_path.uri),
             **{**{"model": loaded_model}, **kwargs},
         )

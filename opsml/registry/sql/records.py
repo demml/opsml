@@ -220,7 +220,6 @@ class LoadedDataRecord(LoadRecord):
         """
         datacard_definition = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=save_path),
         )
         assert datacard_definition is not None
@@ -274,7 +273,6 @@ class LoadedModelRecord(LoadRecord):
         """
         model_card_definition = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
         )
         assert model_card_definition is not None
@@ -329,7 +327,6 @@ class LoadedAuditRecord(LoadRecord):
 
         audit_definition = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
         )
         assert audit_definition is not None
@@ -381,7 +378,6 @@ class LoadedRunRecord(LoadRecord):
 
         runcard_definition = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_client=storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
         )
         assert runcard_definition is not None

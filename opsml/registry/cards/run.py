@@ -274,7 +274,6 @@ class RunCard(ArtifactCard):
             for name, uri in self.artifact_uris.items():
                 self.artifacts[name] = load_artifact_from_storage(
                     artifact_type=AllowedDataType.DICT,
-                    storage_client=client.storage_client,
                     storage_spec=ArtifactStorageSpecs(save_path=uri),
                 )
             return None

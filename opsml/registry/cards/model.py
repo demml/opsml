@@ -16,7 +16,7 @@ from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
     AllowedDataType,
     ArtifactStorageSpecs,
-    ArtifactStorageType,
+    SaveName,
     CardType,
     CommonKwargs,
     ModelCardMetadata,
@@ -99,7 +99,6 @@ class ModelCard(ArtifactCard):
 
         sample_data = load_artifact_from_storage(
             artifact_type=self.interface.data_type,
-            storage_client=client.storage_client,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
         )
         self.interface.sample_data = sample_data
@@ -128,7 +127,6 @@ class ModelCard(ArtifactCard):
 
             self.interface = load_artifact_from_storage(
                 artifact_type=self.metadata.model_class,
-                storage_client=client.storage_client,
                 storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
                 **{**{"model": self.interface, "load_type": CommonKwargs.MODEL}, **kwargs},
             )
@@ -137,14 +135,12 @@ class ModelCard(ArtifactCard):
                 if isinstance(self.interface, HuggingFaceModel):
                     self.interface = load_artifact_from_storage(
                         artifact_type=self.interface.model_class,
-                        storage_client=client.storage_client,
                         storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
                         **{**{"model": self.interface, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
                     )
                 else:
                     self.interface.preprocessor = load_artifact_from_storage(
                         artifact_type=AllowedDataType.DICT,
-                        storage_client=client.storage_client,
                         storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
                     )
 
@@ -152,8 +148,7 @@ class ModelCard(ArtifactCard):
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
         model_metadata = load_artifact_from_storage(
-            artifact_type=ArtifactStorageType.JSON.value,
-            storage_client=client.storage_client,
+            artifact_type=SaveName.JSON.value,
             storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
         )
 

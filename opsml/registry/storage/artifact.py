@@ -24,15 +24,12 @@ from opsml.registry.model.interfaces import (
     PyTorchModel,
     TensorFlowModel,
 )
-from opsml.registry.storage.client import (
-    ArtifactClass,
-    StorageClientType,
-    StorageSystem,
-)
+from opsml.registry.storage import client
+from opsml.registry.storage.downloader import Downloader
+
 from opsml.registry.types import (
     AllowedDataType,
     ArtifactStorageSpecs,
-    ArtifactStorageType,
     CommonKwargs,
     FilePath,
     HuggingFaceOnnxArgs,
@@ -41,6 +38,8 @@ from opsml.registry.types import (
     StoragePath,
     UriNames,
     StorageRequest,
+    ArtifactClass,
+    SaveName,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
@@ -53,7 +52,6 @@ class ArtifactStorage:
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         file_suffix: Optional[str] = None,
         artifact_class: Optional[str] = None,
         extra_path: Optional[str] = None,
@@ -71,24 +69,15 @@ class ArtifactStorage:
         self.file_suffix = file_suffix
         self.extra_path = extra_path
         self.artifact_type = artifact_type
-        self.storage_client = storage_client
         self.artifact_class = artifact_class
 
     @property
-    def is_data(self) -> bool:
-        return self.artifact_class == ArtifactClass.DATA
-
-    @property
-    def is_storage_a_proxy(self) -> bool:
-        return self.storage_client.backend not in [StorageSystem.GCS, StorageSystem.LOCAL, StorageSystem.S3]
-
-    @property
-    def is_storage_local(self) -> bool:
-        return StorageSystem(self.storage_client.backend) == StorageSystem.LOCAL
-
-    @property
     def storage_filesystem(self) -> Any:
-        return self.storage_client.client
+        return client.storage_client.client
+
+    @property
+    def storage_client(self) -> client.StorageClientType:
+        return client.storage_client
 
     def _upload_artifact(
         self,
@@ -139,35 +128,8 @@ class ArtifactStorage:
 
             return StoragePath(uri=storage_uri)
 
-    def _download_artifacts(
-        self,
-        storage_request: StorageRequest,
-        tmp_path: str,
-    ) -> Any:
-        # if self.is_storage_local:
-        # return file_path
-
-        loadable_path = self.storage_client.download(
-            storage_request=storage_request,
-            lpath=tmp_path,
-            recursive=False,
-            # **{"files": files},
-        )
-
-        return loadable_path or tmp_path
-
-    def load_artifact(self, storage_request: StorageRequest, **kwargs: Any) -> Any:
-        # files = self.storage_client.list_files(storage_uri=storage_uri)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            loadable_filepath = self._download_artifacts(
-                # files=files,
-                # file_path=storage_uri,
-                tmp_path=tmpdirname,
-            )
-
-            artifact = self._load_artifact(file_path=loadable_filepath, **kwargs)
-
-        return artifact
+    def load_artifact(self, lpath: str, **kwargs: Any) -> Any:
+        return self._load_artifact(file_path=lpath, **kwargs)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -181,13 +143,11 @@ class OnnxStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
-            file_suffix="onnx",
+            file_suffix=SaveName.ONNX.value,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
@@ -219,7 +179,7 @@ class OnnxStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.ONNX
+        return artifact_type == SaveName.ONNX
 
 
 class JoblibStorage(ArtifactStorage):
@@ -228,13 +188,11 @@ class JoblibStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
-            file_suffix="joblib",
+            file_suffix=SaveName.JOBLIB.value,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
@@ -273,12 +231,10 @@ class ImageDataStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             artifact_class=ArtifactClass.DATA.value,
             extra_path=extra_path,
         )
@@ -328,13 +284,11 @@ class ParquetStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
-            file_suffix="parquet",
+            file_suffix=SaveName.PARQUET.value,
             artifact_class=ArtifactClass.DATA.value,
             extra_path=extra_path,
         )
@@ -403,12 +357,10 @@ class NumpyStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             artifact_class=ArtifactClass.DATA.value,
             extra_path=extra_path,
         )
@@ -457,13 +409,12 @@ class HTMLStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
             storage_client=storage_client,
-            file_suffix="html",
+            file_suffix=SaveName.HTML.value,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
@@ -491,7 +442,7 @@ class HTMLStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.HTML
+        return artifact_type == SaveName.HTML
 
 
 class JSONStorage(ArtifactStorage):
@@ -500,13 +451,11 @@ class JSONStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
-            file_suffix="json",
+            file_suffix=SaveName.JSON.value,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
         )
@@ -535,7 +484,7 @@ class JSONStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return artifact_type == ArtifactStorageType.JSON
+        return artifact_type == SaveName.JSON
 
 
 class TensorFlowModelStorage(ArtifactStorage):
@@ -544,12 +493,10 @@ class TensorFlowModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             file_suffix=None,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
@@ -910,7 +857,6 @@ class LightGBMBoosterStorage(JoblibStorage):
 
 def save_artifact_to_storage(
     artifact: Any,
-    storage_client: StorageClientType,
     storage_spec: ArtifactStorageSpecs,
     artifact_type: Optional[str] = None,
     extra_path: Optional[str] = None,
@@ -929,7 +875,6 @@ def save_artifact_to_storage(
     )
 
     return storage_type(
-        storage_client=storage_client,
         artifact_type=_artifact_type,
         extra_path=extra_path,
     ).save_artifact(artifact=artifact, storage_spec=storage_spec)
@@ -937,21 +882,23 @@ def save_artifact_to_storage(
 
 def load_artifact_from_storage(
     artifact_type: str,
-    storage_client: StorageClientType,
     storage_request: StorageRequest,
     **kwargs: Any,
 ) -> Optional[Any]:
-    storage_type = next(
-        (
-            storage_type
-            for storage_type in all_subclasses(ArtifactStorage)
-            if storage_type.validate(
-                artifact_type=artifact_type,
-            )
-        ),
-        JoblibStorage,
-    )
-    return storage_type(
-        artifact_type=artifact_type,
-        storage_client=storage_client,
-    ).load_artifact(storage_request=storage_request, **kwargs)
+    with tempfile.TemporaryDirectory() as lpath:
+        Downloader(storage_request=storage_request).download(lpath)
+        storage_type = next(
+            (
+                storage_type
+                for storage_type in all_subclasses(ArtifactStorage)
+                if storage_type.validate(
+                    artifact_type=artifact_type,
+                )
+            ),
+            JoblibStorage,
+        )
+
+        return storage_type(artifact_type=artifact_type).load_artifact(
+            storage_request=storage_request,
+            **kwargs,
+        )

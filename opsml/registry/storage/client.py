@@ -10,7 +10,6 @@ import tempfile
 import uuid
 import warnings
 from contextlib import contextmanager
-from enum import Enum
 from pathlib import Path
 from typing import (
     Any,
@@ -37,6 +36,7 @@ from opsml.registry.types import (
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
+    StorageSystem,
 )
 from opsml.settings.config import OpsmlConfig, config
 
@@ -44,31 +44,6 @@ warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer*")
 
 logger = ArtifactLogger.get_logger()
-
-
-class StorageSystem(str, Enum):
-    GCS = "gcs"
-    S3 = "s3"
-    LOCAL = "local"
-    API = "api"
-
-
-class ArtifactClass(str, Enum):
-    DATA = "data"
-    OTHER = "other"
-
-
-class DataArtifactNames(str, Enum):
-    PARQUET = "parquet"
-    ZARR = "zarr"
-    DATACARD = "datacard"
-
-
-class ModelArtifactNames(str, Enum):
-    MODELCARD = "modelcard"
-    TRAINED_MODEL = "trained-model"
-    MODEL_METADATA = "model-metadata"
-    ONNX = ".onnx"
 
 
 OPSML_PATTERN = "OPSML_+(\\S+)+_REGISTRY"

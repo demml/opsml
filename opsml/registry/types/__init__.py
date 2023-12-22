@@ -24,7 +24,7 @@ from opsml.registry.types.data import (
     ValidData,
     check_data_type,
 )
-from opsml.registry.types.extra import CommonKwargs, Description, SaveName, UriNames
+from opsml.registry.types.extra import CommonKwargs, Description, SaveName, UriNames, ArtifactClass
 from opsml.registry.types.huggingface import (
     GENERATION_TYPES,
     HuggingFaceORTModel,
@@ -60,11 +60,11 @@ from opsml.registry.types.model import (
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,
     ArtifactStorageSpecs,
-    ArtifactStorageType,
     FilePath,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientSettings,
     StorageSettings,
     StorageRequest,
+    StorageSystem,
 )

@@ -20,13 +20,7 @@ from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.types import (
-    AllowedDataType,
-    ArtifactStorageSpecs,
-    CardType,
-    DataCardMetadata,
-    ValidData,
-)
+from opsml.registry.types import AllowedDataType, ArtifactStorageSpecs, CardType, DataCardMetadata, ValidData, RegistryType
 
 logger = ArtifactLogger.get_logger()
 
@@ -293,8 +287,7 @@ class DataCard(ArtifactCard):
 
 
 class Downloader:
-    def __init__(self, card: ArtifactCard, storage_client: client.StorageClientType):  # pylint: disable=redefined-outer-name
-        self.storage_client = storage_client
+    def __init__(self, card: ArtifactCard):  # pylint: disable=redefined-outer-name
         self._card = card
 
     def download(self) -> None:
@@ -312,9 +305,9 @@ class DataProfileDownloader(Downloader):
 
     def download(self) -> None:
         """Downloads a data profile from storage"""
+
         data_profile = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.profile_uri,
             ),
@@ -341,7 +334,6 @@ class DataDownloader(Downloader):
 
         data = load_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
-            storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.data_uri,
             ),
@@ -380,7 +372,6 @@ class ImageDownloader(Downloader):
 
         load_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
-            storage_client=self.storage_client,
             storage_spec=ArtifactStorageSpecs(
                 save_path=self.card.metadata.uris.data_uri,
             ),

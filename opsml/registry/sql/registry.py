@@ -100,9 +100,8 @@ class CardRegistry:
         info: Optional[CardInfo] = None,
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
-        as_dataframe: bool = False,
         ignore_release_candidates: bool = False,
-    ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
+    ) -> List[Dict[str, Any]]:
         """Retrieves records from registry
 
         Args:
@@ -159,8 +158,8 @@ class CardRegistry:
             ignore_release_candidates=ignore_release_candidates,
         )
 
-        if as_dataframe:
-            return pd.DataFrame(card_list)
+        # if as_dataframe:
+        # return pd.DataFrame(card_list)
 
         return card_list
 

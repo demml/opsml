@@ -62,6 +62,18 @@ class SaveName(str, Enum):
     ONNX_MODEL = "model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DATA_PROFILE = "data-profile"
+    ONNX = "onnx"
+    PARQUET = "parquet"
+    ZARR = "zarr"
+    JOBLIB = "joblib"
+    HTML = "html"
+    JSON = "json"
+
+
+@unique
+class ArtifactClass(str, Enum):
+    DATA = "data"
+    OTHER = "other"
 
 
 class Description(BaseModel):
