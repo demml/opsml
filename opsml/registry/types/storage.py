@@ -53,7 +53,7 @@ class StorageRequest(BaseModel):
     registry_type: str
     card_uid: str
     uri_name: str
-    save_to_local: bool = False
+    uri_path: Optional[str] = None
 
 
 @unique

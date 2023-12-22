@@ -20,7 +20,15 @@ from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.types import AllowedDataType, ArtifactStorageSpecs, CardType, DataCardMetadata, ValidData, RegistryType
+from opsml.registry.types import (
+    AllowedDataType,
+    CardType,
+    DataCardMetadata,
+    ValidData,
+    RegistryType,
+    StorageRequest,
+    UriNames,
+)
 
 logger = ArtifactLogger.get_logger()
 
@@ -308,8 +316,10 @@ class DataProfileDownloader(Downloader):
 
         data_profile = load_artifact_from_storage(
             artifact_type=AllowedDataType.DICT,
-            storage_spec=ArtifactStorageSpecs(
-                save_path=self.card.metadata.uris.profile_uri,
+            storage_request=StorageRequest(
+                registry_type=self.card.card_type,
+                card_uid=self.card.uid,
+                uri_name=UriNames.PROFILE_URI,
             ),
         )
 
@@ -334,8 +344,10 @@ class DataDownloader(Downloader):
 
         data = load_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
-            storage_spec=ArtifactStorageSpecs(
-                save_path=self.card.metadata.uris.data_uri,
+            storage_request=StorageRequest(
+                registry_type=self.card.card_type,
+                card_uid=self.card.uid,
+                uri_name=UriNames.DATA_URI,
             ),
         )
 
@@ -372,8 +384,10 @@ class ImageDownloader(Downloader):
 
         load_artifact_from_storage(
             artifact_type=self.card.metadata.data_type,
-            storage_spec=ArtifactStorageSpecs(
-                save_path=self.card.metadata.uris.data_uri,
+            storage_request=StorageRequest(
+                registry_type=self.card.card_type,
+                card_uid=self.card.uid,
+                uri_name=UriNames.DATA_URI,
             ),
             **kwargs,
         )
