@@ -4,6 +4,7 @@
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
+from httpx import request
 
 import pyarrow as pa
 from numpy.typing import NDArray
@@ -35,6 +36,7 @@ from opsml.registry.types import (
     UriNames,
     ValidSavedSample,
 )
+from opsml.registry.types.storage import StorageRequest
 
 
 class CardArtifactSaver:
@@ -65,35 +67,37 @@ class CardArtifactSaver:
     def save_artifacts(self) -> Tuple[Any, Any]:
         raise NotImplementedError
 
-    def _get_storage_spec(self, filename: str, uri: Optional[str] = None) -> ArtifactStorageSpecs:
-        """
-        Gets storage spec for saving
+    # def _get_storage_spec(self, filename: str, uri: Optional[str] = None, uri) -> ArtifactStorageSpecs:
+    #    """
+    #    Gets storage spec for saving
 
-        Args:
-            uri:
-                Base URI to write the file to
-            filename:
-                Name of file
+    #    Args:
+    #        uri:
+    #            Base URI to write the file to
+    #        filename:
+    #            Name of file
 
-        """
-        if uri is None:
-            return ArtifactStorageSpecs(save_path=str(self.card.uri), filename=filename)
+    #    """
+    #    if uri is None:
+    #        return StorageRequest(registry_type=self.card.card_type, card_uid=self.card.uid, uri_name=)
 
-        return ArtifactStorageSpecs(save_path=self._resolve_dir(uri), filename=filename)
+    #    ArtifactStorageSpecs(save_path=str(self.card.uri), filename=filename)
 
-    def _resolve_dir(self, uri: str) -> str:
-        """
-        Resolve a file dir uri for card updates
+    #    return ArtifactStorageSpecs(save_path=self._resolve_dir(uri), filename=filename)
 
-        Args:
-            uri:
-                path to file
-        Returns
-            Resolved uri *directory* relative to the card.
-        """
-        base_path = Path(self.storage_client.base_path_prefix)
-        uri_path = Path(uri).parent
-        return str(uri_path.relative_to(base_path))
+    # def _resolve_dir(self, uri: str) -> str:
+    #    """
+    #    Resolve a file dir uri for card updates
+    #
+    #    Args:
+    #        uri:
+    #            path to file
+    #    Returns
+    #        Resolved uri *directory* relative to the card.
+    #    """
+    #    base_path = Path(self.storage_client.base_path_prefix)
+    #    uri_path = Path(uri).parent
+    #    return str(uri_path.relative_to(base_path))
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -114,14 +118,17 @@ class DataCardArtifactSaver(CardArtifactSaver):
         if AllowedDataType.IMAGE not in self.card.metadata.data_type:
             exclude_attr.add("data")
 
-        spec = self._get_storage_spec(
+        storage_request = StorageRequest(
+            registry_type=self.card.card_type,
+            card_uid=self.card.uid,
+            uri_name=UriNames.DATACARD_URI.value,
             filename=SaveName.DATACARD.value,
-            uri=self.uris.get(UriNames.DATACARD_URI.value),
+            uri_path=self.uris.get(UriNames.DATACARD_URI.value, self.card.uri),
         )
+
         storage_path = save_artifact_to_storage(
             artifact=self.card.model_dump(exclude=exclude_attr),
-            storage_client=self.storage_client,
-            storage_spec=spec,
+            storage_request=storage_request,
         )
 
         self.uris[UriNames.DATACARD_URI.value] = storage_path.uri

@@ -14,7 +14,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
 from numpy.typing import NDArray
-
+import uuid
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
 from opsml.registry.image.dataset import ImageDataset
@@ -29,7 +29,6 @@ from opsml.registry.storage.downloader import Downloader
 from opsml.registry.types import (
     AllowedDataType,
     ArtifactClass,
-    ArtifactStorageSpecs,
     CommonKwargs,
     FilePath,
     HuggingFaceOnnxArgs,
@@ -52,8 +51,6 @@ class ArtifactStorage:
         self,
         artifact_type: str,
         file_suffix: Optional[str] = None,
-        artifact_class: Optional[str] = None,
-        extra_path: Optional[str] = None,
     ):
         """Instantiates base ArtifactStorage class
 
@@ -66,9 +63,7 @@ class ArtifactStorage:
         """
 
         self.file_suffix = file_suffix
-        self.extra_path = extra_path
         self.artifact_type = artifact_type
-        self.artifact_class = artifact_class
 
     @property
     def storage_filesystem(self) -> Any:
@@ -110,22 +105,36 @@ class ArtifactStorage:
         """Saves an artifact"""
         raise NotImplementedError
 
-    def save_artifact(self, artifact: Any, storage_spec: ArtifactStorageSpecs) -> StoragePath:
-        with self.storage_client.create_temp_save_path_with_spec(
-            self.storage_client.extend_storage_spec(
-                storage_spec,
-                extra_path=self.extra_path,
-                file_suffix=self.file_suffix,
-            )
-        ) as temp_output:
-            storage_uri, tmp_uri = temp_output
-            storage_uri = self._save_artifact(
-                artifact=artifact,
-                storage_uri=storage_uri,
-                tmp_uri=tmp_uri,
-            )
+    def save_artifact(self, artifact: Any, storage_request: StorageRequest) -> StoragePath:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            filename = storage_request.filename or uuid.uuid4().hex
 
-            return StoragePath(uri=storage_uri)
+        pass
+        # with tempfile.TemporaryDirectory() as tmp_dir:
+        #
+        #
+        #
+        # spec.filename = spec.filename or uuid.uuid4().hex
+        # path = os.path.join(self.base_path_prefix, spec.save_path, spec.filename)
+        # with tempfile.TemporaryDirectory() as tmpdirname:
+        #    yield path, os.path.join(tmpdirname, spec.filenam
+        #
+
+        # with self.storage_client.create_temp_save_path_with_spec(
+        #    self.storage_client.extend_storage_spec(
+        #        storage_spec,
+        #        extra_path=self.extra_path,
+        #        file_suffix=self.file_suffix,
+        #    )
+        # ) as temp_output:
+        #    storage_uri, tmp_uri = temp_output
+        #    storage_uri = self._save_artifact(
+        #        artifact=artifact,
+        #        storage_uri=storage_uri,
+        #        tmp_uri=tmp_uri,
+        #    )
+
+        # return StoragePath(uri=storage_uri)
 
     def load_artifact(self, lpath: str, **kwargs: Any) -> Any:
         return self._load_artifact(file_path=lpath, **kwargs)
@@ -849,27 +858,24 @@ class LightGBMBoosterStorage(JoblibStorage):
 
 def save_artifact_to_storage(
     artifact: Any,
-    storage_spec: ArtifactStorageSpecs,
-    artifact_type: Optional[str] = None,
-    extra_path: Optional[str] = None,
+    storage_request: StorageRequest,
+    artifact_type: str,
 ) -> StoragePath:
-    _artifact_type: str = artifact_type or artifact.__class__.__name__
-
-    storage_type = next(
+    storage_type: ArtifactStorage = next(
         (
             storage_type
             for storage_type in ArtifactStorage.__subclasses__()
             if storage_type.validate(
-                artifact_type=_artifact_type,
+                artifact_type=artifact_type,
             )
         ),
         JoblibStorage,
     )
 
-    return storage_type(
-        artifact_type=_artifact_type,
-        extra_path=extra_path,
-    ).save_artifact(artifact=artifact, storage_spec=storage_spec)
+    return storage_type(artifact_type=artifact_type).save_artifact(
+        artifact=artifact,
+        storage_request=storage_request,
+    )
 
 
 def load_artifact_from_storage(

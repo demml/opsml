@@ -10,6 +10,8 @@ from pydantic import BaseModel, ConfigDict
 
 FilePath = Union[List[str], str]
 
+_OPSML_STORAGE_ROOT = "opsml://"
+
 
 class StorageClientSettings(BaseModel):
     storage_type: str = "local"
@@ -42,18 +44,12 @@ StorageSettings = Union[
 ]
 
 
-class ArtifactStorageSpecs(BaseModel):
-    model_config = ConfigDict(extra="allow", frozen=False)
-
-    save_path: str
-    filename: Optional[str] = None
-
-
 class StorageRequest(BaseModel):
     registry_type: str
     card_uid: str
     uri_name: str
     uri_path: Optional[str] = None
+    filename: Optional[str] = None
 
 
 @unique
