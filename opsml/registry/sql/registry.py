@@ -300,14 +300,3 @@ class CardRegistries:
         self.pipeline = CardRegistry(registry_type=RegistryType.PIPELINE)
         self.project = CardRegistry(registry_type=RegistryType.PROJECT)
         self.audit = CardRegistry(registry_type=RegistryType.AUDIT)
-
-    @property
-    def storage_client(self) -> client.StorageClient:
-        return client.storage_client
-
-    @storage_client.setter
-    def storage_client(self, storage_client: client.StorageClient) -> None:
-        client.storage_client = storage_client
-        for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
-            registry: CardRegistry = getattr(self, attr)
-            registry._registry.storage_client = storage_client
