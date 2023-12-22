@@ -126,9 +126,9 @@ class StorageClient:
         write_path: str,
         recursive: bool = False,
         **kwargs: Any,
-    ) -> str:
+    ) -> Path:
         self.client.upload(lpath=local_path, rpath=write_path, recursive=recursive)
-        return write_path
+        return Path(write_path)
 
     def copy(self, read_path: str, write_path: str) -> None:
         raise ValueError("Storage class does not implement a copy method")
@@ -267,7 +267,7 @@ class S3StorageClient(StorageClient):
 
 
 class LocalStorageClient(StorageClient):
-    def upload(self, local_path: str, write_path: str, recursive: bool = False, **kwargs: Any) -> str:
+    def upload(self, client_path: Path, server_path: Path, recursive: bool = False, **kwargs: Any) -> str:
         """Uploads (copies) local_path to write_path
 
         Args:
@@ -284,18 +284,16 @@ class LocalStorageClient(StorageClient):
             write_path
 
         """
-
-        if os.path.isdir(local_path):
-            write_dir = Path(write_path)
-            write_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(local_path, write_path, dirs_exist_ok=True)
+        if client_path.is_dir():
+            client_path.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(str(client_path), str(server_path), dirs_exist_ok=True)
 
         else:
-            write_dir = Path(write_path).parents[0]
+            write_dir = server_path.parents[0]
             write_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy(local_path, write_path)
+            shutil.copy(str(client_path), str(server_path))
 
-        return write_path
+        return server_path
 
     def list_files(self, storage_uri: str) -> FilePath:
         path = Path(storage_uri)

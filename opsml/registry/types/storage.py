@@ -5,12 +5,10 @@
 import os
 from enum import Enum, unique
 from typing import Any, List, Optional, Union
-
-from pydantic import BaseModel, ConfigDict
+from pathlib import Path
+from pydantic import BaseModel, ConfigDict, field_validator
 
 FilePath = Union[List[str], str]
-
-_OPSML_STORAGE_ROOT = "opsml://"
 
 
 class StorageClientSettings(BaseModel):
@@ -48,8 +46,16 @@ class StorageRequest(BaseModel):
     registry_type: str
     card_uid: str
     uri_name: str
-    uri_path: Optional[str] = None
+    uri_path: Optional[Path] = None
     filename: Optional[str] = None
+
+    @field_validator("uri_path", pre=True)
+    def validate_uri_path(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            return Path(v)
+        return v
 
 
 @unique

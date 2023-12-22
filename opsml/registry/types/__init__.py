@@ -64,7 +64,6 @@ from opsml.registry.types.model import (
     ValidSavedSample,
 )
 from opsml.registry.types.storage import (
-    _OPSML_STORAGE_ROOT,
     ApiStorageClientSettings,
     ArtifactStorageSpecs,
     FilePath,
