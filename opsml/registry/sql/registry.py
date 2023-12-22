@@ -3,9 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import textwrap
-from typing import Any, Dict, List, Optional, Type, Union, cast
+from typing import Any, Dict, List, Optional, Type, cast
 
-import pandas as pd
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import (

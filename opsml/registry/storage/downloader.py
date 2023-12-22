@@ -1,6 +1,6 @@
-from opsml.registry.types import StorageRequest, StorageSystem
-from opsml.registry.storage import client
 from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.storage import client
+from opsml.registry.types import StorageRequest, StorageSystem
 
 
 class Downloader:
@@ -10,9 +10,9 @@ class Downloader:
     def get_path_from_uris(self) -> str:
         """Retries uri path from registry"""
 
-        registry = CardRegistry(
-            self.storage_request.registry_type,
-        ).list_cards(uid=self.storage_request.card_uid)[0]
+        registry = CardRegistry(self.storage_request.registry_type,).list_cards(
+            uid=self.storage_request.card_uid
+        )[0]
 
         uris = registry.get("uris")
         assert uris is not None, "URIs not found in registry"

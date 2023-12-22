@@ -325,7 +325,7 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
 def db_registries() -> CardRegistries:
     """Returns CardRegistries configured with a local client (to simulate "client" mode)."""
     cleanup()
-    
+
     # Cards rely on global storage state - so set it to local.
     client.storage_client = client.get_storage_client(config)
     yield CardRegistries()
