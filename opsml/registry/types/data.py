@@ -46,6 +46,7 @@ class AllowedDataType(str, Enum):
     LIST = "list"
     STR = "str"
     ORDERED_DICT = "collections.OrderedDict"
+    JOBLIB = "joblib"
 
 
 class ArrowTable(BaseModel):

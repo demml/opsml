@@ -158,14 +158,22 @@ class DataCardArtifactSaver(CardArtifactSaver):
         Returns:
             StoragePath
         """
+        storage_request = (
+            StorageRequest(
+                registry_type=self.card.card_type,
+                card_uid=self.card.uid,
+                uri_name=UriNames.DATA_URI.value,
+                filename=self.card.name,
+                uri_path=self.uris.get(
+                    UriNames.DATA_URI.value,
+                    Path(self.card.uri, SaveName.DATA.value),
+                ),
+            ),
+        )
 
         storage_path = save_artifact_to_storage(
             artifact=data,
-            storage_client=self.storage_client,
-            storage_spec=self._get_storage_spec(
-                filename=self.card.name,
-                uri=self.uris.get(UriNames.DATA_URI.value),
-            ),
+            storage_request=storage_request,
             artifact_type=self.card.metadata.data_type,
         )
 
@@ -197,13 +205,23 @@ class DataCardArtifactSaver(CardArtifactSaver):
         # This is a requirement for loading with ydata-profiling
         profile_bytes = self.card.data_profile.dumps()
 
+        storage_request = (
+            StorageRequest(
+                registry_type=self.card.card_type,
+                card_uid=self.card.uid,
+                uri_name=UriNames.PROFILE_URI.value,
+                filename=SaveName.DATA_PROFILE.value,
+                uri_path=self.uris.get(
+                    UriNames.PROFILE_URI.value,
+                    Path(self.card.uri, SaveName.DATA.value),
+                ),
+            ),
+        )
+
         storage_path = save_artifact_to_storage(
             artifact=profile_bytes,
-            storage_client=self.storage_client,
-            storage_spec=self._get_storage_spec(
-                filename=SaveName.DATA_PROFILE.value,
-                uri=self.uris.get(UriNames.PROFILE_URI.value),
-            ),
+            storage_request=storage_request,
+            artifact_type=AllowedDataType.JOBLIB.value,
         )
         self.uris[UriNames.PROFILE_URI.value] = storage_path.uri
 

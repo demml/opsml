@@ -103,7 +103,7 @@ class StorageClient:
         with tempfile.TemporaryDirectory() as tmpdirname:
             yield path, os.path.join(tmpdirname, spec.filename)
 
-    def list_files(self, storage_uri: str) -> FilePath:
+    def list_files(self, storage_uri: str) -> List[str]:
         raise NotImplementedError
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
@@ -183,7 +183,7 @@ class GCSFSStorageClient(StorageClient):
     def open(self, filename: str, mode: str) -> BinaryIO:
         return cast(BinaryIO, self.client.open(filename, mode))
 
-    def list_files(self, storage_uri: str) -> FilePath:
+    def list_files(self, storage_uri: str) -> List[str]:
         return [f"gs://{path}" for path in self.client.ls(path=storage_uri)]
 
     def store(self, storage_uri: str, **kwargs: Any) -> Any:
@@ -295,7 +295,7 @@ class LocalStorageClient(StorageClient):
 
         return server_path
 
-    def list_files(self, storage_uri: str) -> FilePath:
+    def list_files(self, storage_uri: str) -> List[str]:
         path = Path(storage_uri)
 
         if path.is_dir():
@@ -378,7 +378,7 @@ class ApiStorageClient(LocalStorageClient):
             token=settings.opsml_prod_token,
         )
 
-    def list_files(self, storage_uri: str) -> FilePath:
+    def list_files(self, storage_uri: str) -> List[str]:
         response = self.api_client.post_request(
             route=ApiRoutes.LIST_FILES,
             json={"read_path": storage_uri},
