@@ -5,7 +5,6 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Type, cast
 
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import (
     ArtifactCard,
