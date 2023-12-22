@@ -43,7 +43,7 @@ class GcpCredsSetter:
         if self.service_base64_creds is not None:
             return self.create_gcp_creds_from_base64(self.service_base64_creds)
 
-        return [None, None]
+        return (None, None)
 
     def decode_base64(self, service_base64_creds: str) -> str:
         base_64 = base64.b64decode(s=service_base64_creds).decode("utf-8")
