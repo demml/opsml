@@ -38,7 +38,12 @@ from opsml.registry.types import (
 
 
 class CardArtifactSaver:
-    def __init__(self, card: ArtifactCard, storage_client: StorageClientType):
+    def __init__(
+        self,
+        card: ArtifactCard,
+        storage_client: StorageClientType,
+        uris: Optional[Dict[str, str]] = None,
+    ):
         """
         Parent class for saving artifacts belonging to cards
 
@@ -51,7 +56,7 @@ class CardArtifactSaver:
 
         self._card = card
         self.storage_client = storage_client
-        self.uris: Dict[str, str] = {}  # holder for card uris
+        self.uris = uris or {}  # holder for card uris
 
     @cached_property
     def card(self) -> ArtifactCard:
@@ -529,7 +534,11 @@ class ProjectCardArtifactSaver(CardArtifactSaver):
         return CardType.PROJECTCARD.value in card_type
 
 
-def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -> ArtifactCard:
+def save_card_artifacts(
+    card: ArtifactCard,
+    storage_client: StorageClientType,
+    uris: Optional[Dict[str, str]] = None,
+) -> ArtifactCard:
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:
@@ -548,6 +557,6 @@ def save_card_artifacts(card: ArtifactCard, storage_client: StorageClientType) -
         if card_saver.validate(card_type=card.__class__.__name__.lower())
     )
 
-    saver = card_saver(card=card, storage_client=storage_client)
+    saver = card_saver(card=card, storage_client=storage_client, uris=uris)
 
     return saver.save_artifacts()  # type: ignore

@@ -215,20 +215,6 @@ class SQLRegistryBase:
         if card.uid is None:
             card.uid = self._get_uid()
 
-    def _create_registry_record(self, card: ArtifactCard) -> None:
-        """
-        Creates a registry record from a given ArtifactCard.
-        Saves artifacts prior to creating record
-
-        Args:
-            card:
-                Card to create a registry record from
-        """
-
-        card, uris = save_card_artifacts(card=card, storage_client=self.storage_client)
-        record = card.create_registry_record(**{"uris": uris})
-        self.add_and_commit(card=record.model_dump())
-
     def register_card(
         self,
         card: ArtifactCard,
@@ -251,14 +237,14 @@ class SQLRegistryBase:
         """
 
         self._validate_card_type(card=card)
-        self._set_card_version(
-            card=card,
-            version_type=version_type,
-            pre_tag=pre_tag,
-            build_tag=build_tag,
-        )
+        self._set_card_version(card=card, version_type=version_type, pre_tag=pre_tag, build_tag=build_tag)
         self._set_card_uid(card=card)
         self._create_registry_record(card=card)
+
+        card, uris = save_card_artifacts(card=card, storage_client=self.storage_client)
+        record = card.create_registry_record(**{"uris": uris})
+
+        self.add_and_commit(card=record.model_dump())
 
     def update_card(self, card: ArtifactCard) -> None:
         """
@@ -268,8 +254,9 @@ class SQLRegistryBase:
             card:
                 Card to update
         """
-        card = save_card_artifacts(card=card, storage_client=self.storage_client)
-        record = card.create_registry_record()
+        record = self.list_cards(uid=card.uid, limit=1)[0]
+        card, uris = save_card_artifacts(card=card, storage_client=self.storage_client, uris=record.get("uris"))
+        record = card.create_registry_record(**{"uris": uris})
         self.update_card_record(card=record.model_dump())
 
     def list_cards(
