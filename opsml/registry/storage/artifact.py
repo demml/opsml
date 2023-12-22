@@ -112,13 +112,20 @@ class ArtifactStorage:
         # create tmp dir for client
         with tempfile.TemporaryDirectory() as client_dir:
             file_name = storage_request.filename or uuid.uuid4().hex
-
             client_path = Path(client_dir, file_name)
-            server_path = server_path / file_name
-
             if self.file_suffix is not None:
                 client_path.with_suffix(self.file_suffix)
-                server_path.with_suffix(self.file_suffix)
+
+            # check path in case of uploading previously uploaded
+            # Mainly for update_card method
+            if bool(self.storage_client.list_files(storage_uri=str(server_path))):
+                logger.warning("File already exists at {}. Overwriting", str(server_path))
+
+            # for new items
+            else:
+                server_path = server_path / file_name
+                if self.file_suffix is not None:
+                    server_path.with_suffix(self.file_suffix)
 
             # save artifact
             return self._save_artifact(
@@ -203,7 +210,7 @@ class JoblibStorage(ArtifactStorage):
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
-        return False
+        return artifact_type == AllowedDataType.JOBLIB
 
 
 class ImageDataStorage(ArtifactStorage):

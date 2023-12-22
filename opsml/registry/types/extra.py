@@ -68,6 +68,7 @@ class SaveName(str, Enum):
     JOBLIB = "joblib"
     HTML = "html"
     JSON = "json"
+    DATA = "data"
 
 
 @unique
