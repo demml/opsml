@@ -161,9 +161,8 @@ class DataFormatter:
             schema: Dict[str,str]
         """
         if isinstance(data, pd.DataFrame):
-            print(data.dtypes.to_dict())
-            a
-            return cast(Dict[str, Any], data.dtypes.to_dict())
+            feature_map = {key: str(value).lower() for key, value in data.dtypes.to_dict().items()}
+            return cast(Dict[str, Any], feature_map)
 
         if isinstance(data, pl.DataFrame):
             return cast(Dict[str, Any], data.schema)

@@ -6,10 +6,7 @@ import pytest
 from numpy.typing import NDArray
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.registry import (
-    CardRegistries,
-    DataCard,
-)
+from opsml.registry import CardRegistries, DataCard
 from opsml.registry.sql.registry import CardRegistries
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
