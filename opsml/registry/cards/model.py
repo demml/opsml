@@ -14,15 +14,13 @@ from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
     AllowedDataType,
-    ArtifactStorageSpecs,
-    SaveName,
     CardType,
     CommonKwargs,
     ModelCardMetadata,
     ModelMetadata,
-    UriNames,
-    RegistryType,
+    SaveName,
     StorageRequest,
+    UriNames,
 )
 
 logger = ArtifactLogger.get_logger()

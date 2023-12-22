@@ -24,10 +24,9 @@ from opsml.registry.types import (
     AllowedDataType,
     CardType,
     DataCardMetadata,
-    ValidData,
-    RegistryType,
     StorageRequest,
     UriNames,
+    ValidData,
 )
 
 logger = ArtifactLogger.get_logger()

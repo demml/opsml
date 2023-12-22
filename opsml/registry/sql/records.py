@@ -12,7 +12,6 @@ from opsml.registry.types import (
     METRICS,
     PARAMS,
     AllowedDataType,
-    ArtifactStorageSpecs,
     AuditCardMetadata,
     CardVersion,
     Comment,

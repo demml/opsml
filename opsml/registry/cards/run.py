@@ -13,7 +13,6 @@ from opsml.registry.types import (
     METRICS,
     PARAMS,
     AllowedDataType,
-    ArtifactStorageSpecs,
     CardType,
     Metric,
     Param,

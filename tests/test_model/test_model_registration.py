@@ -25,8 +25,7 @@ def _test_register_data(
 ):
     # create data card
     registry = api_registries.data
-    a
-
+   
     data_card = DataCard(
         data=test_data,
         name="test_df",

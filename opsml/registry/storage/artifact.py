@@ -26,20 +26,19 @@ from opsml.registry.model.interfaces import (
 )
 from opsml.registry.storage import client
 from opsml.registry.storage.downloader import Downloader
-
 from opsml.registry.types import (
     AllowedDataType,
+    ArtifactClass,
     ArtifactStorageSpecs,
     CommonKwargs,
     FilePath,
     HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
     OnnxModel,
-    StoragePath,
-    UriNames,
-    StorageRequest,
-    ArtifactClass,
     SaveName,
+    StoragePath,
+    StorageRequest,
+    UriNames,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
@@ -413,7 +412,6 @@ class HTMLStorage(ArtifactStorage):
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             file_suffix=SaveName.HTML.value,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
@@ -543,12 +541,10 @@ class PyTorchModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             file_suffix="pt",
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
@@ -593,12 +589,10 @@ class PyTorchLightningModelStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             file_suffix="ckpt",
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
@@ -666,12 +660,10 @@ class HuggingFaceStorage(ArtifactStorage):
     def __init__(
         self,
         artifact_type: str,
-        storage_client: StorageClientType,
         extra_path: Optional[str] = None,
     ):
         super().__init__(
             artifact_type=artifact_type,
-            storage_client=storage_client,
             file_suffix=None,
             artifact_class=ArtifactClass.OTHER.value,
             extra_path=extra_path,
