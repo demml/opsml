@@ -40,6 +40,7 @@ from opsml.registry.types import (
     OnnxModel,
     StoragePath,
     UriNames,
+    StorageRequest,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
@@ -140,28 +141,27 @@ class ArtifactStorage:
 
     def _download_artifacts(
         self,
-        files: FilePath,
-        file_path: str,
+        storage_request: StorageRequest,
         tmp_path: str,
     ) -> Any:
-        if self.is_storage_local:
-            return file_path
+        # if self.is_storage_local:
+        # return file_path
 
         loadable_path = self.storage_client.download(
-            rpath=file_path,
+            storage_request=storage_request,
             lpath=tmp_path,
             recursive=False,
-            **{"files": files},
+            # **{"files": files},
         )
 
         return loadable_path or tmp_path
 
-    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Any:
-        files = self.storage_client.list_files(storage_uri=storage_uri)
+    def load_artifact(self, storage_request: StorageRequest, **kwargs: Any) -> Any:
+        # files = self.storage_client.list_files(storage_uri=storage_uri)
         with tempfile.TemporaryDirectory() as tmpdirname:
             loadable_filepath = self._download_artifacts(
-                files=files,
-                file_path=storage_uri,
+                # files=files,
+                # file_path=storage_uri,
                 tmp_path=tmpdirname,
             )
 
@@ -938,12 +938,9 @@ def save_artifact_to_storage(
 def load_artifact_from_storage(
     artifact_type: str,
     storage_client: StorageClientType,
-    storage_spec: ArtifactStorageSpecs,
+    storage_request: StorageRequest,
     **kwargs: Any,
 ) -> Optional[Any]:
-    if not bool(storage_spec.save_path):
-        return None
-
     storage_type = next(
         (
             storage_type
@@ -957,4 +954,4 @@ def load_artifact_from_storage(
     return storage_type(
         artifact_type=artifact_type,
         storage_client=storage_client,
-    ).load_artifact(storage_uri=storage_spec.save_path, **kwargs)
+    ).load_artifact(storage_request=storage_request, **kwargs)

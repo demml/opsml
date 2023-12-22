@@ -35,7 +35,7 @@ table_name_card_map = {
 
 
 class CardRegistry:
-    def __init__(self, registry_type: RegistryType, storage_client: client.StorageClientType):
+    def __init__(self, registry_type: RegistryType):
         """
         Interface for connecting to any of the ArtifactCard registries
 
@@ -52,7 +52,7 @@ class CardRegistry:
             data_registry = CardRegistry(RegistryType.DATA, settings)s
         """
 
-        self._registry = self._set_registry(registry_type, storage_client)
+        self._registry = self._set_registry(registry_type)
         self.table_name = self._registry.table_name
 
     @property
@@ -60,7 +60,7 @@ class CardRegistry:
         "Registry type for card registry"
         return self._registry.registry_type
 
-    def _set_registry(self, registry_type: RegistryType, storage_client: client.StorageClientType) -> SQLRegistryBase:
+    def _set_registry(self, registry_type: RegistryType) -> SQLRegistryBase:
         """Sets the underlying registry.
 
         IMPORTANT: We need to delay importing ServerRegistry until we know we
@@ -85,7 +85,10 @@ class CardRegistry:
                 registry_name=registry_type.value,
             )
         )
-        return registry(registry_type=registry_type, storage_client=storage_client)
+        return registry(
+            registry_type=registry_type,
+            storage_client=client.storage_client,
+        )
 
     def list_cards(
         self,
@@ -288,14 +291,23 @@ class CardRegistry:
 
 
 class CardRegistries:
-    def __init__(self, storage_client: Optional[client.StorageClientType] = None) -> None:
+    def __init__(self) -> None:
         """Instantiates class that contains all registries"""
-        if storage_client is None:
-            storage_client = client.storage_client
 
-        self.data = CardRegistry(registry_type=RegistryType.DATA, storage_client=storage_client)
-        self.model = CardRegistry(registry_type=RegistryType.MODEL, storage_client=storage_client)
-        self.run = CardRegistry(registry_type=RegistryType.RUN, storage_client=storage_client)
-        self.pipeline = CardRegistry(registry_type=RegistryType.PIPELINE, storage_client=storage_client)
-        self.project = CardRegistry(registry_type=RegistryType.PROJECT, storage_client=storage_client)
-        self.audit = CardRegistry(registry_type=RegistryType.AUDIT, storage_client=storage_client)
+        self.data = CardRegistry(registry_type=RegistryType.DATA)
+        self.model = CardRegistry(registry_type=RegistryType.MODEL)
+        self.run = CardRegistry(registry_type=RegistryType.RUN)
+        self.pipeline = CardRegistry(registry_type=RegistryType.PIPELINE)
+        self.project = CardRegistry(registry_type=RegistryType.PROJECT)
+        self.audit = CardRegistry(registry_type=RegistryType.AUDIT)
+
+    @property
+    def storage_client(self) -> client.StorageClient:
+        return client.storage_client
+
+    @storage_client.setter
+    def storage_client(self, storage_client: client.StorageClient) -> None:
+        client.storage_client = storage_client
+        for attr in ["data", "model", "run", "project", "pipeline", "audit"]:
+            registry: CardRegistry = getattr(self, attr)
+            registry._registry.storage_client = storage_client
