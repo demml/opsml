@@ -7,12 +7,9 @@ import os
 from enum import Enum, unique
 from pathlib import Path
 from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, Union
-from fsspec import FSMap
-from pydantic import BaseModel, ConfigDict, field_validator
-from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, Union
 
 from fsspec import FSMap
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 FilePath = Union[List[str], str]
 StoreLike = Union[FSMap, str]

@@ -50,7 +50,9 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
     return [card["version"] for card in registry.list_cards(name=model, team=team, as_dataframe=False)]
 
 
-def get_names_teams_versions(registry: CardRegistry, team: str, name: str) -> Tuple[Sequence[str], Sequence[str], List[str]]:
+def get_names_teams_versions(
+    registry: CardRegistry, team: str, name: str
+) -> Tuple[Sequence[str], Sequence[str], List[str]]:
     """Helper functions to get the names, teams, and versions for a given registry
 
     Args:

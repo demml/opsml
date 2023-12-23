@@ -15,8 +15,8 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.records import LoadedRecordType
 from opsml.registry.sql.semver import CardVersion, VersionType
 from opsml.registry.storage.api import api_routes
-from opsml.registry.types import RegistryType
 from opsml.registry.storage.client import ApiStorageClient, StorageClient
+from opsml.registry.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 

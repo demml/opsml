@@ -12,7 +12,6 @@ from opsml.registry.storage.artifact import (
     NumpyStorage,
     ParquetStorage,
     PyTorchModelStorage,
-    TensorFlowModelStorage,
 )
 from tests import conftest
 

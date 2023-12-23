@@ -4,7 +4,6 @@
 from functools import cached_property
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
-import numpy as np
 import pyarrow as pa
 from numpy.typing import NDArray
 
@@ -25,16 +24,14 @@ from opsml.registry.storage.client import StorageClientType
 from opsml.registry.types import (
     AllowedDataType,
     ArrowTable,
-    ArtifactStorageSpecs,
     CardType,
     HuggingFaceStorageArtifact,
     ModelMetadata,
     OnnxAttr,
     SaveName,
-    StoragePath,
+    StorageRequest,
     UriNames,
     ValidSavedSample,
-    StorageRequest,
 )
 
 

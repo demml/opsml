@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional, Union, cast
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.registry.storage.artifact import load_artifact_from_storage
-from opsml.registry.storage.client import StorageClientType
 from opsml.registry.types import (
     METRICS,
     PARAMS,

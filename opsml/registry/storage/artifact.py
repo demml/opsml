@@ -29,21 +29,17 @@ from opsml.registry.storage import client
 from opsml.registry.storage.downloader import Downloader
 from opsml.registry.types import (
     AllowedDataType,
+    ArtifactStorageType,
     CommonKwargs,
     FilePath,
     HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
     OnnxModel,
     SaveName,
-    StoragePath,
     StorageRequest,
     UriNames,
-    ArtifactStorageType,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
-
-from opsml.registry.storage.client import StorageClient
-
 
 logger = ArtifactLogger.get_logger()
 
