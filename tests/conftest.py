@@ -68,9 +68,8 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
-from opsml.helpers.gcp_utils import GcpCreds, GCSStorageClient
+from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model.challenger import ModelChallenger
-from opsml.model.types import OnnxModelDefinition
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml

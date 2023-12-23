@@ -8,6 +8,7 @@ from opsml.registry.model.interfaces.pytorch import PyTorchModel
 from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType
 
 try:
+    import torch
     from lightning import Trainer
 
     class LightningModel(PyTorchModel):
@@ -89,6 +90,29 @@ try:
             prediction_type = get_class_name(prediction)
 
             return SamplePrediction(prediction_type, prediction)
+
+        def save_model(self, path: Path) -> None:
+            assert self.model is not None, "No model detected in interface"
+            self.model.save_checkpoint(client_path)
+
+        def load_model(self, path: Path, **kwargs) -> None:
+            """Load lightning model from path"""
+
+            model_arch = kwargs[CommonKwargs.MODEL_ARCH]
+
+            try:
+                if model_arch is not None:
+                    # attempt to load checkpoint into model
+                    self.model = model_arch.load_from_checkpoint(file_path)
+
+                else:
+                    # load via torch
+                    import torch
+
+                    self.model = torch.load(file_path)
+
+            except Exception as e:
+                raise ValueError(f"Unable to load pytorch lightning model: {e}")
 
 except ModuleNotFoundError:
 

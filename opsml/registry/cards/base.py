@@ -2,8 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger

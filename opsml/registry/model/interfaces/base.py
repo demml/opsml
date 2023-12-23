@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
+import joblib
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
@@ -54,10 +56,31 @@ class ModelInterface(BaseModel):
     def convert_to_onnx(self) -> Any:
         raise NotImplementedError
 
-    def load_model(self) -> Any:
-        raise NotImplementedError
+    def load_model(self, path: Path) -> None:
+        """Load model from pathlib object
+
+        Args:
+            path:
+                Pathlib object
+        """
+
+        self.model = joblib.load(file_path)
 
     def download_artifacts(self) -> Any:
+        raise NotImplementedError
+
+    def save_model(self, path: Path) -> None:
+        """Saves model to path. Base implementation use Joblib
+
+        Args:
+            path:
+                Pathlib object
+        """
+        assert self.model is not None, "No model detected in interface"
+
+        joblib.dump(self.model, path)
+
+    def load_model(self, path: Path) -> None:
         raise NotImplementedError
 
     @classmethod

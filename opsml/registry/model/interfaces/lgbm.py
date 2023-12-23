@@ -64,6 +64,11 @@ try:
 
             return model_args
 
+        def load_model(self, path: Path) -> None:
+            """Loads lightgbm booster model"""
+
+            self.model = lgb.Booster(model_file=path)
+
 except ModuleNotFoundError:
 
     class LightGBMBoosterModel(ModelInterface):
