@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from __future__ import annotations
 import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -61,7 +62,9 @@ class Comment(BaseModel):
     comment: str
     timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
 
-    def __eq__(self, other):  # type: ignore
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Comment):
+            return False
         return self.__dict__ == other.__dict__
 
 
