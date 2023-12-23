@@ -36,19 +36,13 @@
             "name": "webserver",
             "type": "python",
             "request": "launch",
-            "module": "gunicorn",
+            "module": "uvicorn",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-                "-k",
-                "uvicorn.workers.UvicornWorker",
-                "--config=opsml/app/gunicorn_conf.py",
-                "opsml.app.main:run_app()"
+                "opsml.app.main:run_app"
             ],
-            "env": {
-                "OPSML_TRACKING_URI": "sqlite:///tmp.db",
-                "OPSML_STORAGE_URI": "./mlruns",
-            }
+            "envFile": "${workspaceFolder}/.env",
         },
         {
             "name": "example",
@@ -58,9 +52,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [],
-            "env": {
-                "OPSML_TRACKING_URI": "http://127.0.0.1:8000",
-            }
+            "envFile": "${workspaceFolder}/.env",
         },
     ]
 }

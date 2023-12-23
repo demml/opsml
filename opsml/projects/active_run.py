@@ -13,7 +13,8 @@ from opsml.registry.cards.run import RunCard
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage.artifact import save_artifact_to_storage
-from opsml.registry.storage.client import StorageClientType
+from opsml.registry.storage.client import StorageClient
+from opsml.registry.storage.types import ArtifactStorageType
 from opsml.registry.types import (
     METRICS,
     PARAMS,
@@ -29,7 +30,7 @@ logger = ArtifactLogger.get_logger()
 class RunInfo:
     def __init__(
         self,
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
         registries: CardRegistries,
         runcard: RunCard,
         run_id: str,
@@ -191,15 +192,14 @@ class ActiveRun:
         """
         self._verify_active()
 
-        spec = ArtifactStorageSpecs(save_path=str(self.runcard.artifact_uri), filename=name)
-
-        storage_path = save_artifact_to_storage(
+        uri = save_artifact_to_storage(
             artifact=artifact,
+            artifact_type=ArtifactStorageType.JOBLIB,
             storage_client=self._info.storage_client,
-            storage_spec=spec,
-            artifact_type="joblib",
+            root_uri=self.runcard.artifact_uri,
+            filename=name,
         )
-        self.runcard.add_artifact_uri(name=name, uri=storage_path.uri)
+        self.runcard.add_artifact_uri(name=name, uri=uri)
 
     def log_metric(
         self,

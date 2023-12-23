@@ -7,9 +7,11 @@ import importlib.util
 import os
 import re
 import string
+import tempfile
+from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Set, Type, Union
 
 from opsml.helpers import exceptions
 from opsml.helpers.logging import ArtifactLogger
@@ -92,6 +94,14 @@ class TypeChecker:
 
 class FileUtils:
     """Helper class for finding paths to artifacts"""
+
+    @staticmethod
+    @contextmanager
+    def create_tmp_path(
+        path: str,
+    ) -> Generator[str, None, None]:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            yield os.path.join(tmpdirname, os.path.basename(path))
 
     @staticmethod
     def find_dirpath(path: str, dir_name: str, anchor_file: str) -> Path:

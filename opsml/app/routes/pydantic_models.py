@@ -12,10 +12,6 @@ from opsml.registry.sql.semver import CardVersion, VersionType
 from opsml.registry.types import METRICS, Comment
 
 
-class StorageUri(BaseModel):
-    storage_uri: str
-
-
 class HealthCheckResult(BaseModel):
     is_alive: bool
 

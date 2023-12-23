@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.storage.client import StorageClientType
+from opsml.registry.storage.client import StorageClient
 from opsml.registry.types import ModelMetadata
 
 logger = ArtifactLogger.get_logger()
@@ -40,7 +40,7 @@ class ModelRegistrar:
 
     def __init__(
         self,
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
     ):
         """Instantiates Registrar class
 
@@ -53,7 +53,7 @@ class ModelRegistrar:
 
     def _registry_path(self, request: RegistrationRequest) -> str:
         """Returns hardcoded uri"""
-        return f"{self.storage_client.base_path_prefix}/model_registry/{request.name}/v{request.version}"
+        return f"model_registry/{request.name}/v{request.version}"
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.
@@ -68,7 +68,7 @@ class ModelRegistrar:
 
         try:
             path = self._registry_path(request)
-            files = self.storage_client.list_files(path)
+            files = self.storage_client.ls(path)
 
             if len(files) == 0 or files[0] == path:
                 # no files or only an empty directory exists
@@ -112,11 +112,11 @@ class ModelRegistrar:
         # delete existing model if it exists
         if self.is_registered(request):
             logger.info("Model detected in registry path. Deleting: {}", registry_path)
-            self.storage_client.delete(registry_path)
+            self.storage_client.rm(registry_path)
             assert not self.is_registered(request)
 
         # register the model
-        self.storage_client.copy(read_path=read_path, write_path=registry_path)
+        self.storage_client.copy(read_path, registry_path, False)
 
         # register model settings
         self.register_model_settings(metadata, registry_path, model_uri)
@@ -171,7 +171,7 @@ class ModelRegistrar:
             local_path = f"{tmpdirname}/model-settings.json"
             with open(local_path, "w", encoding="utf-8") as outfile:
                 json.dump(model_settings, outfile)
-            self.storage_client.upload(local_path=local_path, write_path=registry_path)
+            self.storage_client.put(local_path, registry_path)
         logger.info("ModelRegistrar: registered model settings: {} path={}", model_settings, registry_path)
 
     def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:

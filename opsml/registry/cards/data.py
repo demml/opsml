@@ -249,8 +249,7 @@ class DataCard(ArtifactCard):
                 Name for sql query
             query:
                 SQL query
-            filename:
-                Filename of sql query
+            filename: Filename of sql query
         """
         if query is not None:
             self.sql_logic[name] = query
@@ -399,7 +398,7 @@ class ImageDownloader(Downloader):
 def download_object(
     card: ArtifactCard,
     artifact_type: str,
-    storage_client: client.StorageClientType,  # pylint: disable=redefined-outer-name
+    storage_client: client.StorageClient,
 ) -> None:
     """Download data from storage
 
