@@ -1,10 +1,9 @@
-# pylint: disable=too-many-lines
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from pathlib import Path
+import os
 from typing import Any, Dict, Optional
-
+from pathlib import Path
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -79,8 +78,8 @@ class ArtifactCard(BaseModel):
         self.tags[key] = str(value)
 
     @property
-    def uri(self) -> Path:
-        """The base URI to use for the card and it's artifacts.."""
+    def uri(self) -> str:
+        """The base URI to use for the card and it's artifacts."""
         if self.version is None:
             raise ValueError("Could not create card uri - version is not set")
         return Path(
@@ -92,9 +91,9 @@ class ArtifactCard(BaseModel):
         )
 
     @property
-    def artifact_uri(self) -> Path:
+    def artifact_uri(self) -> str:
         """Returns the root URI to which artifacts associated with this card should be saved."""
-        return self.uri.joinpath("artifacts")
+        return os.path.join(self.uri, "artifacts")
 
     @property
     def card_type(self) -> str:

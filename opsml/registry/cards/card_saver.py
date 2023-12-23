@@ -2,9 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
+import numpy as np
 import pyarrow as pa
 from numpy.typing import NDArray
 
@@ -34,8 +34,8 @@ from opsml.registry.types import (
     StoragePath,
     UriNames,
     ValidSavedSample,
+    StorageRequest,
 )
-from opsml.registry.types.storage import StorageRequest
 
 
 class CardArtifactSaver:
@@ -116,15 +116,15 @@ class DataCardArtifactSaver(CardArtifactSaver):
         arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
         return arrow_table
 
-    def _save_data_to_storage(self, data: Union[pa.Table, NDArray[Any], ImageDataset]) -> StoragePath:
-        """Saves pyarrow table to file system
+    def _save_data_to_storage(self, data: Union[pa.Table, NDArray[Any], ImageDataset]) -> str:
+        """Saves data to
 
         Args:
             data:
                 either numpy array , pyarrow table or image dataset
 
         Returns:
-            StoragePath
+            Data URI
         """
         storage_request = (
             StorageRequest(
@@ -139,7 +139,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
             ),
         )
 
-        storage_path = save_artifact_to_storage(
+        return save_artifact_to_storage(
             artifact=data,
             storage_request=storage_request,
             artifact_type=self.card.metadata.data_type,
@@ -251,7 +251,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             model_uri=self.uris[UriNames.TRAINED_MODEL_URI.value],
             model_version=self.card.version,
             model_team=self.card.team,
-            sample_data=self.card._get_sample_data_for_api(),  # pylint: disable=protected-access
+            sample_data=self.card.get_sample_data_for_api(),
             data_schema=self.card.metadata.data_schema,
         )
 
@@ -394,7 +394,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 data=self.card.interface.sample_data,
                 data_type=self.card.interface.data_type,
             )
-            return arrow_table.table, AllowedDataType.PYARROW.value
+            return arrow_table.table, ArtifactStorageType.PYARROW
 
         return self.card.interface.sample_data, AllowedDataType.NUMPY.value
 
@@ -407,10 +407,11 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         )
         artifact, artifact_type = self._get_artifact_and_type()
 
-        storage_path = save_artifact_to_storage(
+        uri = save_artifact_to_storage(
             artifact=artifact,
             storage_client=self.storage_client,
-            storage_spec=storage_spec,
+            root_uri=self.card.uri,
+            filename=SaveName.SAMPLE_MODEL_DATA.value,
             artifact_type=artifact_type,
         )
 
@@ -419,6 +420,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def save_artifacts(self) -> ModelCard:
         """Save model artifacts associated with ModelCard"""
 
+        # TODO(@damon): Determine if we should *always* save model_metadata
         if self.card.metadata.uris.model_metadata_uri is None:
             self._save_model_metadata()
 
@@ -437,7 +439,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
         return cast(AuditCard, self._card)
 
     def _save_audit(self) -> None:
-        storage_path = save_artifact_to_storage(
+        uri = save_artifact_to_storage(
             artifact=self.card.model_dump(),
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
@@ -465,7 +467,8 @@ class RunCardArtifactSaver(CardArtifactSaver):
 
     def _save_runcard(self) -> None:
         """Saves a runcard"""
-        storage_path = save_artifact_to_storage(
+
+        uri = save_artifact_to_storage(
             artifact=self.card.model_dump(exclude={"artifacts", "storage_client"}),
             storage_client=self.storage_client,
             storage_spec=self._get_storage_spec(
@@ -492,7 +495,8 @@ class RunCardArtifactSaver(CardArtifactSaver):
                 storage_path = save_artifact_to_storage(
                     artifact=artifact,
                     storage_client=self.storage_client,
-                    storage_spec=ArtifactStorageSpecs(save_path=str(self.card.artifact_uri), filename=name),
+                    root_uri=self.card.artifact_uri,
+                    filename=name,
                 )
 
                 artifact_uris[name] = storage_path

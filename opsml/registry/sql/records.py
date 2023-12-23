@@ -235,7 +235,7 @@ class LoadedModelRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_model_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
+        storage_client = cast(StorageClient, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
             storage_client=storage_client,
@@ -360,7 +360,7 @@ LoadedRecordType = Union[
 def load_record(
     registry_type: RegistryType,
     record_data: Dict[str, Any],
-    storage_client: StorageClientType,
+    storage_client: StorageClient,
 ) -> LoadedRecordType:
     record = next(
         record
@@ -376,5 +376,4 @@ def load_record(
             **{"storage_client": storage_client},
         }
     )
-
     return cast(LoadedRecordType, loaded_record)

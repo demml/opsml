@@ -15,8 +15,8 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.records import LoadedRecordType
 from opsml.registry.sql.semver import CardVersion, VersionType
 from opsml.registry.storage.api import api_routes
-from opsml.registry.storage.client import ApiStorageClient, StorageClientType
 from opsml.registry.types import RegistryType
+from opsml.registry.storage.client import ApiStorageClient, StorageClient
 
 logger = ArtifactLogger.get_logger()
 
@@ -24,7 +24,7 @@ logger = ArtifactLogger.get_logger()
 class ClientRegistry(SQLRegistryBase):
     """A registry that retrieves data from an opsml server instance."""
 
-    def __init__(self, registry_type: RegistryType, storage_client: StorageClientType):
+    def __init__(self, registry_type: RegistryType, storage_client: StorageClient):
         super().__init__(registry_type, storage_client)
 
         assert isinstance(storage_client, ApiStorageClient)

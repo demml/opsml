@@ -457,8 +457,11 @@ def test_runcard(
     model, _ = linear_regression
     run.log_artifact("reg_model", artifact=model)
     assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+
+    # register and load card
     registry.register_card(card=run)
     loaded_card = registry.load_card(uid=run.uid)
+
     assert loaded_card.uid == run.uid
     assert loaded_card.get_metric("test_metric").value == 10
     assert loaded_card.get_metric("test_metric2").value == 20
@@ -556,7 +559,6 @@ def test_local_model_registry(
     sklearn_pipeline: Pipeline,
 ):
     # create data card
-    data_registry = db_registries.data
     model, data = sklearn_pipeline
     data_card = DataCard(
         data=data,
@@ -564,7 +566,7 @@ def test_local_model_registry(
         team="mlops",
         user_email="mlops.com",
     )
-    data_registry.register_card(card=data_card)
+    db_registries.data.register_card(card=data_card)
 
     model_card = ModelCard(
         trained_model=model,
@@ -588,14 +590,19 @@ def test_local_model_registry(
     with pytest.raises(ValueError):
         model_card.load_trained_model()
 
-    model_registry = db_registries.model
-    model_registry.register_card(model_card)
+    db_registries.model.register_card(model_card)
 
-    assert path.exists(model_card.metadata.uris.model_metadata_uri)
-    assert path.exists(model_card.metadata.uris.trained_model_uri)
-    assert path.exists(model_card.metadata.uris.sample_data_uri)
+    assert path.exists(
+        db_registries.model._registry.storage_client.build_absolute_path(model_card.metadata.uris.model_metadata_uri)
+    )
+    assert path.exists(
+        db_registries.model._registry.storage_client.build_absolute_path(model_card.metadata.uris.trained_model_uri)
+    )
+    assert path.exists(
+        db_registries.model._registry.storage_client.build_absolute_path(model_card.metadata.uris.sample_data_uri)
+    )
 
-    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
+    loaded_card: ModelCard = db_registries.model.load_card(uid=model_card.uid)
 
     assert loaded_card != model_card
     assert loaded_card.metadata.onnx_model is None
