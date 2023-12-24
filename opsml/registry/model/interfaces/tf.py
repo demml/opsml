@@ -96,20 +96,20 @@ try:
             )
 
             return model_args
-        
-        def save_model(self, path:Path) -> None:
+
+        def save_model(self, path: Path) -> None:
             """Save tensorflow model to path
-            
+
             Args:
                 path:
                     pathlib object
             """
-            
+
             self.model.save(self.model, path)
-            
-        def load_model(self, path:Path) -> None:
+
+        def load_model(self, path: Path) -> None:
             """Load tensorflow model from path
-            
+
             Args:
                 path:
                     pathlib object
