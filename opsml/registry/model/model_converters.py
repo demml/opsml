@@ -36,7 +36,6 @@ from opsml.registry.types import (
     TorchOnnxArgs,
     TrainedModelType,
 )
-from opsml.registry.types.data import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
 
@@ -236,7 +235,10 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        return (
+            self.model_type == TrainedModelType.STACKING_REGRESSOR
+            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        )
 
     @property
     def _is_calibrated_classifier(self) -> bool:
