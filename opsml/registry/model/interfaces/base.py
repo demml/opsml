@@ -104,6 +104,18 @@ class ModelInterface(BaseModel):
 
         return metadata
 
+    def load_onnx_model(self, path: Path) -> None:
+        """Load onnx model from pathlib object
+
+        Args:
+            path:
+                Pathlib object
+        """
+        from onnxruntime import InferenceSession
+
+        onnx_path = path.with_suffix(".onnx")
+        self.onnx_model.sess = InferenceSession(onnx_path)
+
     def download_artifacts(self) -> Any:
         raise NotImplementedError
 
