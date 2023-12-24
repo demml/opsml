@@ -56,18 +56,6 @@ class ModelInterface(BaseModel):
         extra="allow",
     )
 
-    def convert_to_onnx(self) -> ModelReturn:
-        # don't want to try and import onnx unless we need to
-        from opsml.registry.model.model_converters import _OnnxModelConverter
-
-        converted_attr = _OnnxModelConverter(self).convert_model()
-        self.onnx_model = converted_attr.onnx_model
-
-        return converted_attr
-
-    def download_artifacts(self) -> Any:
-        raise NotImplementedError
-
     def save_model(self, path: Path) -> None:
         """Saves model to path. Base implementation use Joblib
 
@@ -76,7 +64,7 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.model is not None, "No model detected in interface"
-        joblib.dump(self.model, path)
+        joblib.dump(self.model, path.with_suffix(".joblib"))
 
     def save_preprocessor(self, path: Path) -> None:
         """Saves preprocessor to path if present. Base implementation use Joblib
@@ -85,8 +73,8 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        if self.preprocessor is not None:
-            joblib.dump(self.preprocessor, path)
+        assert self.preprocessor is not None, "No preprocessor detected in interface"
+        joblib.dump(self.preprocessor, path.with_suffix(".joblib"))
 
     def load_model(self, path: Path) -> None:
         """Load model from pathlib object
@@ -96,7 +84,28 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
 
-        self.model = joblib.load(path)
+        self.model = joblib.load(path.with_suffix(".joblib"))
+
+    def load_preprocessor(self, path: Path) -> None:
+        """Load preprocessor from pathlib object
+
+        Args:
+            path:
+                Pathlib object
+        """
+        self.preprocessor = joblib.load(path.with_suffix(".joblib"))
+
+    def convert_to_onnx(self) -> ModelReturn:
+        # don't want to try and import onnx unless we need to
+        from opsml.registry.model.model_converters import _OnnxModelConverter
+
+        metadata = _OnnxModelConverter(self).convert_model()
+        self.onnx_model = metadata.onnx_model
+
+        return metadata
+
+    def download_artifacts(self) -> Any:
+        raise NotImplementedError
 
     @classmethod
     def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:

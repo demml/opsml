@@ -223,10 +223,10 @@ try:
             self.model.save_pretrained(model_path)
 
         def save_preprocessor(self, path: Path) -> None:
-            if self.preprocessor is not None:
-                logger.info("Saving HuggingFace preprocessor")
-                preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
-                self.preprocessor.save_pretrained(preprocessor_path)
+            assert self.preprocessor is not None, "No preprocessor detected in interface"
+            logger.info("Saving HuggingFace preprocessor")
+            preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+            self.preprocessor.save_pretrained(preprocessor_path)
 
         def convert_to_onnx(self, path: Path) -> ModelReturn:
             """Converts a huggingface model or pipeline to onnx via optimum library.
@@ -261,13 +261,19 @@ try:
                     sess=pipeline(
                         self.task_type,
                         model=onnx_model,
-                        tokenizer=self.model.tokenizer,
+                        tokenizer=self.model.processor,
                     ),
                 )
             else:
                 self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model))
+
+        def load_preprocessor(self, path: Path) -> None:
+            preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+            self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(
+                preprocessor_path,
+            )
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load huggingface model from path"""
@@ -277,9 +283,6 @@ try:
                 self.model = transformers.pipeline(self.task_type, model_path)
             else:
                 self.model = getattr(transformers, self.model_type).from_pretrained(model_path)
-                if self.preprocessor_name != CommonKwargs.UNDEFINED.value:
-                    preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
-                    self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(preprocessor_path)
 
         def load_onnx_model(self, path: Path) -> None:
             """Load onnx model from path"""
@@ -295,7 +298,7 @@ try:
                 provider=self.onnx_args.provider,
             )
 
-            if self.preprocessor_name != CommonKwargs.UNDEFINED.value:
+            if self.preprocessor_name != CommonKwargs.UNDEFINED.value and self.preprocessor is None:
                 preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
                 self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(preprocessor_path)
 
