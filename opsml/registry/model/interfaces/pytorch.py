@@ -119,6 +119,25 @@ try:
             prediction_type = get_class_name(prediction)
 
             return SamplePrediction(prediction_type, prediction)
+        
+        def save_model(self, path:Path) -> None:
+            """Save pytorch model to path
+            
+            Args:
+                path:
+                    pathlib object
+            """
+            
+            torch.save(self.model, path)
+            
+        def load_model(self, path:Path) -> None:
+            """Load pytorch model from path
+            
+            Args:
+                path:
+                    pathlib object
+            """
+            self.model = torch.load(path)
 
 except ModuleNotFoundError:
 
