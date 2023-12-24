@@ -80,22 +80,6 @@ StorageSettings = Union[
 ]
 
 
-class StorageRequest(BaseModel):
-    registry_type: str
-    card_uid: str
-    uri_name: str
-    uri_path: Optional[Path] = None
-    filename: Optional[str] = None
-
-    @field_validator("uri_path", pre=True)
-    def validate_uri_path(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, str):
-            return Path(v)
-        return v
-
-
 class StorageClientProtocol(Protocol):
     def build_absolute_path(self, rpath: str) -> str:
         """Returns an absolute path for the given remote path"""

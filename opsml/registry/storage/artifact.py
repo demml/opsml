@@ -6,7 +6,6 @@
 import json
 import os
 import tempfile
-import uuid
 from pathlib import Path
 from typing import Any, Optional, Type, Union, cast
 
@@ -38,6 +37,7 @@ from opsml.registry.types import (
     SaveName,
     StorageRequest,
     UriNames,
+    Suffix,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 
@@ -103,45 +103,12 @@ class ArtifactStorage:
         """Saves an artifact"""
         raise NotImplementedError()
 
-    def save_artifact(self, artifact: Any, storage_request: StorageRequest) -> str:
+    def save_artifact(self, artifact: Any, path: Path) -> str:
         # set storage path for server
-        server_path = storage_request.uri_path
-
-        # create tmp dir for client
-        with tempfile.TemporaryDirectory() as client_dir:
-            file_name = storage_request.filename or uuid.uuid4().hex
-            client_path = Path(client_dir, file_name)
-            if self.file_suffix is not None:
-                client_path.with_suffix(self.file_suffix)
-
-            # check path in case of uploading previously uploaded
-            # Mainly for update_card method
-            if bool(self.storage_client.list_files(storage_uri=str(server_path))):
-                logger.warning("File already exists at {}. Overwriting", str(server_path))
-
-            # for new items
-            else:
-                server_path = server_path / file_name
-                if self.file_suffix is not None:
-                    server_path.with_suffix(self.file_suffix)
-
-            # save artifact
-            return self._save_artifact(
-                artifact=artifact,
-                server_path=server_path,
-                client_path=client_path,
-            )
+        return self._save_artifact(artifact=artifact, path=path)
 
     def load_artifact(self, lpath: str, **kwargs: Any) -> Any:
         return self._load_artifact(file_path=lpath, **kwargs)
-
-    def save_artifact(self, artifact: Any, root_uri: str, filename: str) -> str:
-        if self.file_suffix is not None:
-            filename += f".{self.file_suffix}"
-        path = os.path.join(root_uri, filename)
-
-        with FileUtils.create_tmp_path(path) as tmp_uri:
-            return self._save_artifact(artifact, storage_uri=path, tmp_uri=tmp_uri)
 
     def _load_artifact(self, file_path: str) -> Any:
         raise NotImplementedError()
@@ -168,7 +135,7 @@ class OnnxStorage(ArtifactStorage):
     """Class that saves and onnx model"""
 
     def __init__(self, artifact_type: str):
-        super().__init__(artifact_type=artifact_type, file_suffix=SaveName.ONNX.value)
+        super().__init__(artifact_type=artifact_type, file_suffix=f".{SaveName.ONNX.value}")
 
     def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
         """
@@ -204,9 +171,9 @@ class JoblibStorage(ArtifactStorage):
     """Class that saves and loads a joblib object"""
 
     def __init__(self, artifact_type: str):
-        super().__init__(artifact_type=artifact_type, file_suffix=SaveName.JOBLIB.value)
+        super().__init__(artifact_type=artifact_type, file_suffix=Suffix.JOBLIB)
 
-    def _save_artifact(self, artifact: Any, server_path: Path, client_path: Path) -> str:
+    def _save_artifact(self, artifact: Any, path: Path) -> None:
         """
         Writes the artifact as a joblib file to a storage_uri
 
@@ -222,12 +189,10 @@ class JoblibStorage(ArtifactStorage):
         Returns:
             Storage path
         """
+        joblib.dump(artifact, path.with_suffix(self.file_suffix))
 
-        joblib.dump(artifact, str(client_path))
-        return self._upload_artifact(client_path, server_path)
-
-    def _load_artifact(self, file_path: str) -> Any:
-        return joblib.load(file_path)
+    def _load_artifact(self, path: Path) -> Any:
+        return joblib.load(path.with_suffix(self.file_suffix))
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -819,11 +784,7 @@ def _get_artifact_storage_type(
     return ArtifactStorageType.JOBLIB
 
 
-def save_artifact_to_storage(
-    artifact: Any,
-    storage_request: StorageRequest,
-    artifact_type: str,
-) -> str:
+def save_artifact_to_storage(artifact: Any, path: Path, artifact_type: str) -> str:
     storage_type: ArtifactStorage = next(
         (
             storage_type
@@ -837,7 +798,7 @@ def save_artifact_to_storage(
 
     return storage_type(artifact_type=artifact_type).save_artifact(
         artifact=artifact,
-        storage_request=storage_request,
+        path=path,
     )
 
 
