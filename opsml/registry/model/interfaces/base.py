@@ -7,11 +7,9 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
-from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
-from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel
-
-logger = ArtifactLogger.get_logger()
+from opsml.registry.data.formatter import DataFormatter
+from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel, AllowedDataType, ArrowTable
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -125,6 +123,26 @@ class ModelInterface(BaseModel):
             return preprocessor.__class__.__name__
 
         return CommonKwargs.UNDEFINED.value
+
+    def save_sample_data(self, path: Path) -> None:
+        """Serialized and save sample data to path.
+
+        Args:
+            path:
+                Pathlib object
+        """
+
+        joblib.dump(self.sample_data, path.with_suffix(".joblib"))
+
+    def load_sample_data(self, path: Path) -> None:
+        """Serialized and save sample data to path.
+
+        Args:
+            path:
+                Pathlib object
+        """
+
+        self.sample_data = joblib.load(path)
 
     @classmethod
     def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:

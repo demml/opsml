@@ -24,13 +24,7 @@ from opsml.registry.types.data import (
     ValidData,
     check_data_type,
 )
-from opsml.registry.types.extra import (
-    ArtifactClass,
-    CommonKwargs,
-    Description,
-    SaveName,
-    UriNames,
-)
+from opsml.registry.types.extra import ArtifactClass, CommonKwargs, Description, SaveName, UriNames, Suffix
 from opsml.registry.types.huggingface import (
     GENERATION_TYPES,
     HuggingFaceORTModel,

@@ -245,16 +245,25 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         save_path = path / SaveName.TRAINED_MODEL.value
         self.card.interface.save_model(save_path)
 
-    def _save_preprocessor(self) -> None:
-        pass
+    def _save_preprocessor(self, path: Path) -> None:
+        """Save preprocessor via model interface"""
+        
+        if self.card.interface.preprocessor is not None:
+            save_path = path / SaveName.PREPROCESSOR.value
+            self.card.interface.save_preprocessor(save_path)
+        
 
     def _save_sample_data(self) -> None:
         pass
+    
+    def _save_onnx_model(self) -> None:
 
     def save_model_artifacts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             dir_path = Path(tmpdir)
             self._save_model(dir_path)
+            self._save_preprocessor()
+            self._save_o
 
         storage_path = save_artifact_to_storage(
             artifact=self.card.interface.model,
@@ -411,8 +420,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
 
         self.uris[UriNames.PREPROCESSOR_URI.value] = storage_path
 
-    # TODO: steven - should be able to save tensorflow and torch datasets
-    def _get_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
+    def _get_data_artifact_and_type(self) -> Tuple[ValidSavedSample, str]:
         """Get artifact and artifact type to save"""
 
         if self.card.interface.data_type == AllowedDataType.DICT:
@@ -423,7 +431,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
                 data=self.card.interface.sample_data,
                 data_type=self.card.interface.data_type,
             )
-            return arrow_table.table, ArtifactStorageType.PYARROW
+            return arrow_table.table, AllowedDataType.PYARROW.value
 
         return self.card.interface.sample_data, AllowedDataType.NUMPY.value
 

@@ -3,7 +3,6 @@ from typing import Any, Dict, Optional, Union, cast
 
 from pydantic import field_validator, model_validator
 
-from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import ModelInterface, SamplePrediction
 from opsml.registry.types import (
@@ -16,7 +15,6 @@ from opsml.registry.types import (
     TrainedModelType,
 )
 
-logger = ArtifactLogger.get_logger()
 
 try:
     import transformers
@@ -218,13 +216,11 @@ try:
 
         def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
-            logger.info("Saving HuggingFace model")
             model_path = path / CommonKwargs.MODEL.value
             self.model.save_pretrained(model_path)
 
         def save_preprocessor(self, path: Path) -> None:
             assert self.preprocessor is not None, "No preprocessor detected in interface"
-            logger.info("Saving HuggingFace preprocessor")
             preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
             self.preprocessor.save_pretrained(preprocessor_path)
 
@@ -327,6 +323,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")

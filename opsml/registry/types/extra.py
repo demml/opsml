@@ -62,14 +62,18 @@ class SaveName(str, Enum):
     ONNX_MODEL = "model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DATA_PROFILE = "data-profile"
-    ONNX = "onnx"
-    PARQUET = "parquet"
-    ZARR = "zarr"
-    JOBLIB = "joblib"
-    HTML = "html"
-    JSON = "json"
     DATA = "data"
     PROFILE = "profile"
+
+
+@unique
+class Suffix(str, Enum):
+    ONNX = ".onnx"
+    PARQUET = ".parquet"
+    ZARR = ".zarr"
+    JOBLIB = ".joblib"
+    HTML = ".html"
+    JSON = ".json"
 
 
 @unique
