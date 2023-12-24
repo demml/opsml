@@ -7,8 +7,11 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
-from opsml.registry.types import CommonKwargs, OnnxModel, ModelReturn
+from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel
+
+logger = ArtifactLogger.get_logger()
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -73,19 +76,17 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.model is not None, "No model detected in interface"
-
         joblib.dump(self.model, path)
 
     def save_preprocessor(self, path: Path) -> None:
-        """Saves preprocessor to path. Base implementation use Joblib
+        """Saves preprocessor to path if present. Base implementation use Joblib
 
         Args:
             path:
                 Pathlib object
         """
-        assert self.preprocessor is not None, "No preprocessor detected in interface"
-
-        joblib.dump(self.preprocessor, path)
+        if self.preprocessor is not None:
+            joblib.dump(self.preprocessor, path)
 
     def load_model(self, path: Path) -> None:
         """Load model from pathlib object

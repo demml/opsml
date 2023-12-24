@@ -11,11 +11,10 @@ from opsml.registry.types import (
     CommonKwargs,
     HuggingFaceOnnxArgs,
     HuggingFaceTask,
+    ModelReturn,
     OnnxModel,
     TrainedModelType,
-    ModelReturn,
 )
-
 
 logger = ArtifactLogger.get_logger()
 
@@ -224,10 +223,10 @@ try:
             self.model.save_pretrained(model_path)
 
         def save_preprocessor(self, path: Path) -> None:
-            assert self.preprocessor is not None, "No preprocessor detected in interface"
-            logger.info("Saving HuggingFace preprocessor")
-            preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
-            self.preprocessor.save_pretrained(preprocessor_path)
+            if self.preprocessor is not None:
+                logger.info("Saving HuggingFace preprocessor")
+                preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+                self.preprocessor.save_pretrained(preprocessor_path)
 
         def convert_to_onnx(self, path: Path) -> ModelReturn:
             """Converts a huggingface model or pipeline to onnx via optimum library.
@@ -238,8 +237,9 @@ try:
                     Path to save onnx model
             """
             import onnx
-            import optimum.onnxruntime as ort
             import onnxruntime as rt
+            import optimum.onnxruntime as ort
+
             from opsml.registry.model.model_converters import _get_onnx_metadata
 
             ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
@@ -324,4 +324,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
