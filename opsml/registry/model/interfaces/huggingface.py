@@ -1,17 +1,31 @@
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from pydantic import field_validator, model_validator
-from pathlib import Path
+
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import ModelInterface, SamplePrediction
-from opsml.registry.types import GENERATION_TYPES, CommonKwargs, HuggingFaceOnnxArgs, HuggingFaceTask, TrainedModelType, OnnxModel
-from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.types import (
+    GENERATION_TYPES,
+    CommonKwargs,
+    HuggingFaceOnnxArgs,
+    HuggingFaceTask,
+    OnnxModel,
+    TrainedModelType,
+)
 
 logger = ArtifactLogger.get_logger()
 
 try:
     import transformers
-    from transformers import BatchEncoding, Pipeline, PreTrainedModel, TFPreTrainedModel, pipeline
+    from transformers import (
+        BatchEncoding,
+        Pipeline,
+        PreTrainedModel,
+        TFPreTrainedModel,
+        pipeline,
+    )
     from transformers.utils import ModelOutput
 
     class HuggingFaceModel(ModelInterface):
@@ -307,4 +321,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
