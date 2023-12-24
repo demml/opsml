@@ -56,16 +56,6 @@ class ModelInterface(BaseModel):
     def convert_to_onnx(self) -> Any:
         raise NotImplementedError
 
-    def load_model(self, path: Path) -> None:
-        """Load model from pathlib object
-
-        Args:
-            path:
-                Pathlib object
-        """
-
-        self.model = joblib.load(file_path)
-
     def download_artifacts(self) -> Any:
         raise NotImplementedError
 
@@ -81,7 +71,14 @@ class ModelInterface(BaseModel):
         joblib.dump(self.model, path)
 
     def load_model(self, path: Path) -> None:
-        raise NotImplementedError
+        """Load model from pathlib object
+
+        Args:
+            path:
+                Pathlib object
+        """
+
+        self.model = joblib.load(path)
 
     @classmethod
     def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:

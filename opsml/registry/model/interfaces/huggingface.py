@@ -1,19 +1,17 @@
 from typing import Any, Dict, Optional, Union
 
 from pydantic import field_validator, model_validator
-
+from pathlib import Path
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import ModelInterface, SamplePrediction
-from opsml.registry.types import (
-    GENERATION_TYPES,
-    CommonKwargs,
-    HuggingFaceOnnxArgs,
-    HuggingFaceTask,
-    TrainedModelType,
-)
+from opsml.registry.types import GENERATION_TYPES, CommonKwargs, HuggingFaceOnnxArgs, HuggingFaceTask, TrainedModelType, OnnxModel
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger()
 
 try:
-    from transformers import BatchEncoding, Pipeline, PreTrainedModel, TFPreTrainedModel
+    import transformers
+    from transformers import BatchEncoding, Pipeline, PreTrainedModel, TFPreTrainedModel, pipeline
     from transformers.utils import ModelOutput
 
     class HuggingFaceModel(ModelInterface):
@@ -203,6 +201,102 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
+        def save_model(self, path: Path) -> None:
+            assert self.model is not None, "No model detected in interface"
+            logger.info("Saving HuggingFace model")
+            model_path = path / CommonKwargs.MODEL.value
+            self.model.save_pretrained(model_path)
+
+        def save_preprocessor(self, path: Path) -> None:
+            assert self.preprocessor is not None, "No preprocessor detected in interface"
+            logger.info("Saving HuggingFace preprocessor")
+            preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+            self.preprocessor.save_pretrained(preprocessor_path)
+
+        def convert_to_onnx(self, path: Path) -> None:
+            """Converts a huggingface model or pipeline to onnx via optimum library.
+            Converted model or pipeline is accessible via the `onnx_model` attribute.
+
+            Args:
+                path:
+                    Path to save onnx model
+            """
+            import onnx
+            import optimum.onnxruntime as ort
+
+            ort_model = getattr(ort, self.onnx_args.ort_type)
+            onnx_path = path / CommonKwargs.ONNX.value
+            model_path = path / CommonKwargs.MODEL.value
+            onnx_model = ort_model.from_pretrained(
+                model_path,
+                export=True,
+                config=self.onnx_args.config,
+                provider=self.onnx_args.provider,
+            )
+            onnx_model.save_pretrained(onnx_path)
+
+            if self.is_pipeline:
+                from transformers import pipeline
+
+                self.onnx_model = OnnxModel(
+                    onnx_version=onnx.__version__,
+                    sess=pipeline(
+                        self.task_type,
+                        model=onnx_model,
+                        tokenizer=self.model.tokenizer,
+                    ),
+                )
+            else:
+                self.onnx_model = OnnxModel(
+                    onnx_version=onnx.__version__,
+                    sess=onnx_model,
+                )
+
+        def load_model(self, path: Path, **kwargs) -> None:
+            """Load huggingface model from path"""
+
+            model_path = path / CommonKwargs.MODEL.value
+            if self.is_pipeline:
+                self.model = transformers.pipeline(self.task_type, model_path)
+            else:
+                self.model = getattr(transformers, self.model_type).from_pretrained(model_path)
+                if self.preprocessor_name != CommonKwargs.UNDEFINED.value:
+                    preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+                    self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(preprocessor_path)
+
+        def load_onnx_model(self, path: Path) -> None:
+            """Load onnx model from path"""
+            import onnx
+            import optimum.onnxruntime as ort
+
+            onnx_path = path / CommonKwargs.ONNX.value
+
+            ort_model = getattr(ort, self.onnx_args.ort_type)
+            onnx_model = ort_model.from_pretrained(
+                onnx_path,
+                config=self.onnx_args.config,
+                provider=self.onnx_args.provider,
+            )
+
+            if self.preprocessor_name != CommonKwargs.UNDEFINED.value:
+                preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+                self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(preprocessor_path)
+
+            if self.is_pipeline:
+                self.onnx_model = OnnxModel(
+                    onnx_version=onnx.__version__,
+                    sess=pipeline(
+                        self.task_type,
+                        model=onnx_model,
+                        tokenizer=self.preprocessor,
+                    ),
+                )
+            else:
+                self.onnx_model = OnnxModel(
+                    onnx_version=onnx.__version__,
+                    sess=onnx_model,
+                )
+
         @property
         def model_class(self) -> str:
             return TrainedModelType.TRANSFORMERS.value
@@ -213,6 +307,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
