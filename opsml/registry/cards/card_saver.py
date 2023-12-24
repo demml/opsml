@@ -1,7 +1,9 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import tempfile
 from functools import cached_property
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import pyarrow as pa
@@ -236,6 +238,36 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     @cached_property
     def card(self) -> ModelCard:
         return cast(ModelCard, self._card)
+
+    def _save_model(self, path: Path) -> None:
+        """Saves a model via model interface"""
+
+        save_path = path / SaveName.TRAINED_MODEL.value
+        self.card.interface.save_model(save_path)
+
+    def _save_preprocessor(self) -> None:
+        pass
+
+    def _save_sample_data(self) -> None:
+        pass
+
+    def save_model_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dir_path = Path(tmpdir)
+            self._save_model(dir_path)
+
+        storage_path = save_artifact_to_storage(
+            artifact=self.card.interface.model,
+            artifact_type=self.card.interface.model_type,
+            storage_client=self.storage_client,
+            storage_spec=self._get_storage_spec(
+                filename=SaveName.MODEL.value,
+                uri=self.uris.get(UriNames.MODEL_URI.value),
+            ),
+            extra_path="model",
+        )
+
+        self.uris[UriNames.MODEL_URI.value] = storage_path
 
     def _get_model_metadata(self, onnx_attr: OnnxAttr) -> ModelMetadata:
         """Create Onnx Model from trained model"""
