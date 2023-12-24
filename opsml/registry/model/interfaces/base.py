@@ -8,7 +8,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.types import CommonKwargs, OnnxModel
+from opsml.registry.types import CommonKwargs, OnnxModel, ModelReturn
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -53,8 +53,14 @@ class ModelInterface(BaseModel):
         extra="allow",
     )
 
-    def convert_to_onnx(self) -> Any:
-        raise NotImplementedError
+    def convert_to_onnx(self) -> ModelReturn:
+        # don't want to try and import onnx unless we need to
+        from opsml.registry.model.model_converters import _OnnxModelConverter
+
+        converted_attr = _OnnxModelConverter(self).convert_model()
+        self.onnx_model = converted_attr.onnx_model
+
+        return converted_attr
 
     def download_artifacts(self) -> Any:
         raise NotImplementedError
@@ -69,6 +75,17 @@ class ModelInterface(BaseModel):
         assert self.model is not None, "No model detected in interface"
 
         joblib.dump(self.model, path)
+
+    def save_preprocessor(self, path: Path) -> None:
+        """Saves preprocessor to path. Base implementation use Joblib
+
+        Args:
+            path:
+                Pathlib object
+        """
+        assert self.preprocessor is not None, "No preprocessor detected in interface"
+
+        joblib.dump(self.preprocessor, path)
 
     def load_model(self, path: Path) -> None:
         """Load model from pathlib object

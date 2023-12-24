@@ -236,10 +236,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -552,38 +549,11 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         Instantiates OnnxModelCreator that is used for converting models to Onnx
 
         Args:
-            Model:
-                Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
-            input_data:
-                Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
-            onnx_args:
-                Specific args for Pytorch onnx conversion. The won't be passed for most models
-            onnx_model:
-                Optional `OnnxModel`
+            model_interface:
+                ModelInterface class containing model-specific information for Onnx conversion
         """
 
         super().__init__(model_interface=model_interface)
-        self.onnx_data_type = self.get_onnx_data_type()
-
-    def get_onnx_data_type(self) -> str:
-        """
-        Gets the current data type base on model type.
-        Currently only sklearn pipeline supports pandas dataframes.
-        All others support numpy arrays. This is needed for API signature
-        creation when loading model predictors.
-
-        Returns:
-            data type
-        """
-
-        # Onnx supports dataframe schemas for pipelines
-        if (
-            self.interface.model_class == TrainedModelType.SKLEARN_ESTIMATOR
-            and self.interface.model_type == TrainedModelType.SKLEARN_PIPELINE
-        ):
-            return AllowedDataType(self.interface.data_type).value
-
-        return AllowedDataType.NUMPY.value
 
     def convert_model(self) -> ModelReturn:
         """
@@ -605,7 +575,6 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         onnx_model_return.data_schema.input_features = self._get_input_schema()
         onnx_model_return.data_schema.output_features = self._get_output_schema()
         onnx_model_return.data_schema.data_type = self.interface.data_type
-        onnx_model_return.data_schema.onnx_data_type = self.onnx_data_type
 
         # add onnx version
         return onnx_model_return
@@ -616,3 +585,27 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         if to_onnx:
             return True
         return False
+
+
+def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.InferenceSession) -> ModelReturn:
+    """Helper for extracting model metadata for a model that is skipping auto onnx conversion.
+    This is primarily used for huggingface models.
+
+    Args:
+        model_interface:
+            ModelInterface
+        onnx_model:
+            Onnx inference session
+    """
+    # set metadata
+    meta_creator = _TrainedModelMetadataCreator(model_interface)
+    metadata = meta_creator.get_model_metadata()
+
+    onnx_input_features, onnx_output_features = _ModelConverter.create_feature_dict(
+        cast(rt.InferenceSession, onnx_model.model),
+    )
+
+    metadata.data_schema.onnx_input_features = onnx_input_features
+    metadata.data_schema.onnx_output_features = onnx_output_features
+
+    return metadata

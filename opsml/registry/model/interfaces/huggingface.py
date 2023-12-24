@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 from pydantic import field_validator, model_validator
 
@@ -13,7 +13,9 @@ from opsml.registry.types import (
     HuggingFaceTask,
     OnnxModel,
     TrainedModelType,
+    ModelReturn,
 )
+
 
 logger = ArtifactLogger.get_logger()
 
@@ -227,7 +229,7 @@ try:
             preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
             self.preprocessor.save_pretrained(preprocessor_path)
 
-        def convert_to_onnx(self, path: Path) -> None:
+        def convert_to_onnx(self, path: Path) -> ModelReturn:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
 
@@ -237,8 +239,10 @@ try:
             """
             import onnx
             import optimum.onnxruntime as ort
+            import onnxruntime as rt
+            from opsml.registry.model.model_converters import _get_onnx_metadata
 
-            ort_model = getattr(ort, self.onnx_args.ort_type)
+            ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
             onnx_path = path / CommonKwargs.ONNX.value
             model_path = path / CommonKwargs.MODEL.value
             onnx_model = ort_model.from_pretrained(
@@ -261,10 +265,9 @@ try:
                     ),
                 )
             else:
-                self.onnx_model = OnnxModel(
-                    onnx_version=onnx.__version__,
-                    sess=onnx_model,
-                )
+                self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
+
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model))
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load huggingface model from path"""
@@ -321,6 +324,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")

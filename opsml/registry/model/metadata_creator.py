@@ -18,14 +18,8 @@ class _ModelMetadataCreator:
     def __init__(self, model_interface: ModelInterface):
         """
         Args:
-            Model:
-                Model to convert (BaseEstimator, Pipeline, StackingRegressor, Booster)
-            input_data:
-                Sample of data used to train model (pd.DataFrame, np.ndarray, dict of np.ndarray)
-            onnx_args:
-                Specific args for Pytorch onnx conversion. The won't be passed for most models
-            onnx_model:
-                Optional `OnnxModel`
+            model_interface:
+                Interface to model
         """
         self.interface = model_interface
 
@@ -42,7 +36,14 @@ class _ModelMetadataCreator:
 
 
 class _TrainedModelMetadataCreator(_ModelMetadataCreator):
-    """Creates metadata to deploy a trained model"""
+    def __init__(self, model_interface: ModelInterface):
+        """Creates metadata to deploy a trained model
+
+        Args:
+            model_interface:
+                Interface to model
+        """
+        super().__init__(model_interface)
 
     def _get_input_schema(self) -> Dict[str, Feature]:
         model_data = get_model_data(
