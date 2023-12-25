@@ -13,6 +13,7 @@ from opsml.registry.types import (
     ModelReturn,
     OnnxModel,
     TrainedModelType,
+    SaveName,
 )
 
 
@@ -216,21 +217,20 @@ try:
 
         def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
-            model_path = path / CommonKwargs.MODEL.value
-            self.model.save_pretrained(model_path)
+            self.model.save_pretrained(path)
 
         def save_preprocessor(self, path: Path) -> None:
             assert self.preprocessor is not None, "No preprocessor detected in interface"
-            preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
-            self.preprocessor.save_pretrained(preprocessor_path)
+            self.preprocessor.save_pretrained(path)
 
         def convert_to_onnx(self, path: Path) -> ModelReturn:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
 
+
             Args:
                 path:
-                    Path to save onnx model
+                    Path to save onnx model. This path will be path to onnx file
             """
             import onnx
             import onnxruntime as rt
@@ -239,15 +239,14 @@ try:
             from opsml.registry.model.model_converters import _get_onnx_metadata
 
             ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
-            onnx_path = path / CommonKwargs.ONNX.value
-            model_path = path / CommonKwargs.MODEL.value
+            model_path = path.parent / SaveName.TRAINED_MODEL
             onnx_model = ort_model.from_pretrained(
                 model_path,
                 export=True,
                 config=self.onnx_args.config,
                 provider=self.onnx_args.provider,
             )
-            onnx_model.save_pretrained(onnx_path)
+            onnx_model.save_pretrained(path)
 
             if self.is_pipeline:
                 from transformers import pipeline
@@ -257,7 +256,7 @@ try:
                     sess=pipeline(
                         self.task_type,
                         model=onnx_model,
-                        tokenizer=self.model.processor,
+                        tokenizer=self.preprocessor,
                     ),
                 )
             else:
