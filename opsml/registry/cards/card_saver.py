@@ -38,14 +38,10 @@ from opsml.registry.types import (
 
 
 class CardArtifactSaver:
-    def __init__(
-        self,
-        card: ArtifactCard,
-        storage_client: StorageClientType,
-        uris: Optional[Dict[str, str]] = None,
-    ):
+    def __init__(self, card: ArtifactCard):
         """
-        Parent class for saving artifacts belonging to cards
+        Parent class for saving artifacts belonging to cards.
+        ArtifactSaver controls pathing for all card objects
 
         Args:
             card:
@@ -55,8 +51,6 @@ class CardArtifactSaver:
         """
 
         self._card = card
-        self.storage_client = storage_client
-        self.uris = uris or {}  # holder for card uris
 
     @cached_property
     def card(self) -> ArtifactCard:
@@ -242,28 +236,33 @@ class ModelCardArtifactSaver(CardArtifactSaver):
     def _save_model(self, path: Path) -> None:
         """Saves a model via model interface"""
 
-        save_path = path / SaveName.TRAINED_MODEL.value
+        save_path = path / SaveName.TRAINED_MODEL
         self.card.interface.save_model(save_path)
 
     def _save_preprocessor(self, path: Path) -> None:
         """Save preprocessor via model interface"""
-        
-        if self.card.interface.preprocessor is not None:
-            save_path = path / SaveName.PREPROCESSOR.value
-            self.card.interface.save_preprocessor(save_path)
-        
 
-    def _save_sample_data(self) -> None:
-        pass
-    
-    def _save_onnx_model(self) -> None:
+        if self.card.interface.preprocessor is not None:
+            save_path = path / SaveName.PREPROCESSOR
+            self.card.interface.save_preprocessor(save_path)
+
+    def _save_sample_data(self, path: Path) -> None:
+        """Saves sample data associated with ModelCard to filesystem"""
+
+        save_path = path / SaveName.SAMPLE_MODEL_DATA
+        self.card.interface.save_sample_data(save_path)
+
+    def _save_onnx_model(self, path: Path) -> None:
+        if self.card.interface.onnx_model is not None:
+            save_path = path / SaveName.ONNX_MODEL
+            self.card.interface.convert_onnx_model(save_path)
 
     def save_model_artifacts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             dir_path = Path(tmpdir)
             self._save_model(dir_path)
             self._save_preprocessor()
-            self._save_o
+            self._save_onnx_model()
 
         storage_path = save_artifact_to_storage(
             artifact=self.card.interface.model,

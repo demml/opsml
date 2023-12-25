@@ -59,7 +59,7 @@ class SaveName(str, Enum):
     MODEL_METADATA = "model-metadata"
     TRAINED_MODEL = "trained-model"
     PREPROCESSOR = "preprocessor"
-    ONNX_MODEL = "model"
+    ONNX_MODEL = "onnx-model"
     SAMPLE_MODEL_DATA = "sample-model-data"
     DATA_PROFILE = "data-profile"
     DATA = "data"

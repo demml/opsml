@@ -93,12 +93,16 @@ class ModelInterface(BaseModel):
         """
         self.preprocessor = joblib.load(path.with_suffix(".joblib"))
 
-    def convert_to_onnx(self) -> ModelReturn:
+    def convert_to_onnx(self, path: Path) -> ModelReturn:
         # don't want to try and import onnx unless we need to
         from opsml.registry.model.model_converters import _OnnxModelConverter
+        import onnxruntime as rt
 
         metadata = _OnnxModelConverter(self).convert_model()
         self.onnx_model = metadata.onnx_model
+
+        sess: rt.InferenceSession = self.onnx_model.sess
+        path.write_bytes(sess._model_bytes)
 
         return metadata
 
