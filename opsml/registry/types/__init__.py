@@ -67,4 +67,6 @@ from opsml.registry.types.storage import (
     StorageRequest,
     StorageSettings,
     StorageSystem,
+    StorageClientProtocol,
+    StoreLike,
 )
