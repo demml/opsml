@@ -5,10 +5,11 @@ import tempfile
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
-
+from pydantic import BaseModel
 import pyarrow as pa
 from numpy.typing import NDArray
-
+import json
+import joblib
 from opsml.registry.cards.audit import AuditCard
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -34,7 +35,18 @@ from opsml.registry.types import (
     StorageRequest,
     UriNames,
     ValidSavedSample,
+    CommonKwargs,
+    DataDict,
 )
+from opsml.registry.types.extra import Suffix
+from opsml.registry.storage import client
+
+
+class CardUris(BaseModel):
+    trained_model_uri: str = CommonKwargs.UNDEFINED.value
+    preprocessor_uri: Optional[str] = None
+    sample_data_uri: Optional[str] = None
+    onnx_model_uri: Optional[str] = None
 
 
 class CardArtifactSaver:
@@ -51,6 +63,7 @@ class CardArtifactSaver:
         """
 
         self._card = card
+        self._card_uris = CardUris()
 
     @cached_property
     def card(self) -> ArtifactCard:
@@ -237,60 +250,83 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         """Saves a model via model interface"""
 
         save_path = path / SaveName.TRAINED_MODEL
-        self.card.interface.save_model(save_path)
+        saved_path = self.card.interface.save_model(save_path)
+        self._card_uris.trained_model_uri = saved_path
 
     def _save_preprocessor(self, path: Path) -> None:
         """Save preprocessor via model interface"""
 
         if self.card.interface.preprocessor is not None:
             save_path = path / SaveName.PREPROCESSOR
-            self.card.interface.save_preprocessor(save_path)
+            saved_path = self.card.interface.save_preprocessor(save_path)
+            self._card_uris.preprocessor_uri = saved_path
 
     def _save_sample_data(self, path: Path) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
 
         save_path = path / SaveName.SAMPLE_MODEL_DATA
         self.card.interface.save_sample_data(save_path)
+        self._card_uris.sample_data_uri = save_path
 
     def _save_onnx_model(self, path: Path) -> None:
-        if self.card.interface.onnx_model is not None:
+        if self.card.to_onnx is not None:
             save_path = path / SaveName.ONNX_MODEL
-            self.card.interface.convert_onnx_model(save_path)
+            metadata, saved_path = self.card.interface.convert_to_onnx(save_path)
+        else:
+            metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
+            saved_path = None
+
+        # set card data schema
+        self.card.metadata.data_schema = metadata.data_schema
+        self._card_uris.onnx_model_uri = saved_path
+
+    def _get_model_metadata(self) -> ModelMetadata:
+        """Create Onnx Model from trained model"""
+        if self.card.interface.onnx_model is not None:
+            onnx_version = self.card.interface.onnx_model.onnx_version
+        else:
+            onnx_version = None
+
+        return ModelMetadata(
+            model_name=self.card.name,
+            model_type=self.card.interface.model_type,
+            onnx_uri=self._card_uris.onnx_model_uri,
+            onnx_version=onnx_version,
+            model_uri=self._card_uris.trained_model_uri,
+            model_version=self.card.version,
+            model_team=self.card.team,
+            data_schema=cast(DataDict, self.card.metadata.data_schema),
+        )
+
+    def _save_metadata(self, path: Path) -> None:
+        model_metadata = self._get_model_metadata()
+
+        # save model metadata to json
+        save_path = Path(path / SaveName.MODEL_METADATA).with_suffix(Suffix.JSON.value)
+        with save_path.open("w", encoding="utf-8") as target_file:
+            json.dump(model_metadata.model_dump_json(), target_file)
+
+    def _save_modelcard(self, path: Path) -> None:
+        """Saves a modelcard to file system"""
+        model_dump = self.card.model_dump(
+            exclude={
+                {"interface": {"model", "sample_data", "preprocessor", "onnx_model"}},
+            }
+        )
+
+        save_path = Path(path / SaveName.MODELCARD).with_suffix(Suffix.JOBLIB.value)
+        joblib.dump(model_dump, save_path)
 
     def save_model_artifacts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             dir_path = Path(tmpdir)
             self._save_model(dir_path)
-            self._save_preprocessor()
-            self._save_onnx_model()
-
-        storage_path = save_artifact_to_storage(
-            artifact=self.card.interface.model,
-            artifact_type=self.card.interface.model_type,
-            storage_client=self.storage_client,
-            storage_spec=self._get_storage_spec(
-                filename=SaveName.MODEL.value,
-                uri=self.uris.get(UriNames.MODEL_URI.value),
-            ),
-            extra_path="model",
-        )
-
-        self.uris[UriNames.MODEL_URI.value] = storage_path
-
-    def _get_model_metadata(self, onnx_attr: OnnxAttr) -> ModelMetadata:
-        """Create Onnx Model from trained model"""
-
-        return ModelMetadata(
-            model_name=self.card.name,
-            model_type=self.card.interface.model_type,
-            onnx_uri=onnx_attr.onnx_path,
-            onnx_version=onnx_attr.onnx_version,
-            model_uri=self.uris[UriNames.TRAINED_MODEL_URI.value],
-            model_version=self.card.version,
-            model_team=self.card.team,
-            sample_data=self.card.get_sample_data_for_api(),
-            data_schema=self.card.metadata.data_schema,
-        )
+            self._save_preprocessor(dir_path)
+            self._save_onnx_model(dir_path)
+            self._save_sample_data(dir_path)
+            self._save_metadata(dir_path)
+            self._save_modelcard(dir_path)
+            client.storage_client.put(dir_path, self.card.uri)
 
     def _create_metadata(self) -> OnnxAttr:
         if not self.card.to_onnx:

@@ -31,5 +31,12 @@ class OpsmlConfig(BaseSettings):
         """
         return not str(self.opsml_tracking_uri).lower().strip().startswith("http")
 
+    @property
+    def storage_root(self) -> str:
+        """Returns the root of the storage URI"""
+        if self.is_tracking_local:
+            return config.opsml_storage_uri
+        return "opsml-root:/"
+
 
 config = OpsmlConfig()
