@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -104,7 +105,7 @@ try:
                 path:
                     pathlib object
             """
-
+            assert self.model is not None, "Model is not initialized"
             self.model.save(self.model, path)
 
         def load_model(self, path: Path) -> None:

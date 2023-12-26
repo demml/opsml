@@ -5,22 +5,15 @@
 from functools import cached_property
 from typing import Any, Dict, Optional
 
-from pydantic import ConfigDict, model_validator
+from pydantic import ConfigDict, SerializeAsAny, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.model.interfaces import HuggingFaceModel, ModelInterface
+from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
-from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
-    AllowedDataType,
     CardType,
-    CommonKwargs,
     ModelCardMetadata,
-    ModelMetadata,
-    SaveName,
-    StorageRequest,
-    UriNames,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -60,7 +53,7 @@ class ModelCard(ArtifactCard):
         protected_namespaces=("protect_",),
     )
 
-    interface: Optional[ModelInterface] = None
+    interface: SerializeAsAny[ModelInterface] = None
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata = ModelCardMetadata()
@@ -97,82 +90,82 @@ class ModelCard(ArtifactCard):
         if self.interface.data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
 
-        sample_data = load_artifact_from_storage(
-            artifact_type=self.interface.data_type,
-            storage_request=StorageRequest(
-                registry_type=self.card_type,
-                card_uid=self.uid,
-                uri_name=UriNames.SAMPLE_DATA_URI.value,
-            ),
-        )
-        self.interface.sample_data = sample_data
+        # sample_data = load_artifact_from_storage(
+        #    artifact_type=self.interface.data_type,
+        #    storage_request=StorageRequest(
+        #        registry_type=self.card_type,
+        #        card_uid=self.uid,
+        #        uri_name=UriNames.SAMPLE_DATA_URI.value,
+        #    ),
+        # )
+        # self.interface.sample_data = sample_data
 
-    def load_trained_model(self, **kwargs) -> None:
-        """Loads original trained model
+    # ef load_trained_model(self, **kwargs) -> None:
+    #   """Loads original trained model
 
-        Args:
-            kwargs:
-                Additional kwargs to pass to the model class. Currently, this is only
-                used for `pytorch lightning` models that need to be loaded via a checkpoint.
-                In this case, `pytorch lightning` expects a defined model to load the checkpoint into.
-                This is passed in via the `model_arch` kwarg.
-        """
+    #   Args:
+    #       kwargs:
+    #           Additional kwargs to pass to the model class. Currently, this is only
+    #           used for `pytorch lightning` models that need to be loaded via a checkpoint.
+    #           In this case, `pytorch lightning` expects a defined model to load the checkpoint into.
+    #           This is passed in via the `model_arch` kwarg.
+    #   """
 
-        if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
-            raise ValueError(
-                """Trained model uri and sample data uri must both be set to load a trained model""",
-            )
+    #   if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
+    #       raise ValueError(
+    #           """Trained model uri and sample data uri must both be set to load a trained model""",
+    #       )
 
-        if self.interface.model is None:
-            self.load_sample_data()
+    #   if self.interface.model is None:
+    #       self.load_sample_data()
 
-            if self.interface.model_type is None:
-                raise ValueError("Cannot load trained model - model_type is not set")
+    #       if self.interface.model_type is None:
+    #           raise ValueError("Cannot load trained model - model_type is not set")
 
-            self.interface = load_artifact_from_storage(
-                artifact_type=self.metadata.model_class,
-                storage_request=StorageRequest(
-                    registry_type=self.card_type,
-                    card_uid=self.uid,
-                    uri_name=UriNames.TRAINED_MODEL_URI.value,
-                ),
-                **{**{"model": self.interface, "load_type": CommonKwargs.MODEL}, **kwargs},
-            )
+    #       self.interface = load_artifact_from_storage(
+    #           artifact_type=self.metadata.model_class,
+    #           storage_request=StorageRequest(
+    #               registry_type=self.card_type,
+    #               card_uid=self.uid,
+    #               uri_name=UriNames.TRAINED_MODEL_URI.value,
+    #           ),
+    #           **{**{"model": self.interface, "load_type": CommonKwargs.MODEL}, **kwargs},
+    #       )
 
-            if self.metadata.uris.preprocessor_uri is not None:
-                if isinstance(self.interface, HuggingFaceModel):
-                    self.interface = load_artifact_from_storage(
-                        artifact_type=self.interface.model_class,
-                        storage_request=StorageRequest(
-                            registry_type=self.card_type,
-                            card_uid=self.card.uid,
-                            uri_name=UriNames.TRAINED_MODEL_URI.value,
-                        ),
-                        **{**{"model": self.interface, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
-                    )
-                else:
-                    self.interface.preprocessor = load_artifact_from_storage(
-                        artifact_type=AllowedDataType.DICT,
-                        storage_request=StorageRequest(
-                            registry_type=self.card_type,
-                            card_uid=self.card.uid,
-                            uri_name=UriNames.TRAINED_MODEL_URI.value,
-                        ),
-                    )
+    #       if self.metadata.uris.preprocessor_uri is not None:
+    #           if isinstance(self.interface, HuggingFaceModel):
+    #               self.interface = load_artifact_from_storage(
+    #                   artifact_type=self.interface.model_class,
+    #                   storage_request=StorageRequest(
+    #                       registry_type=self.card_type,
+    #                       card_uid=self.card.uid,
+    #                       uri_name=UriNames.TRAINED_MODEL_URI.value,
+    #                   ),
+    #                   **{**{"model": self.interface, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
+    #               )
+    #           else:
+    #               self.interface.preprocessor = load_artifact_from_storage(
+    #                   artifact_type=AllowedDataType.DICT,
+    #                   storage_request=StorageRequest(
+    #                       registry_type=self.card_type,
+    #                       card_uid=self.card.uid,
+    #                       uri_name=UriNames.TRAINED_MODEL_URI.value,
+    #                   ),
+    #               )
 
-    @property
-    def model_metadata(self) -> ModelMetadata:
-        """Loads `ModelMetadata` class"""
-        model_metadata = load_artifact_from_storage(
-            artifact_type=SaveName.JSON.value,
-            storage_request=StorageRequest(
-                registry_type=self.card_type,
-                card_uid=self.card.uid,
-                uri_name=UriNames.MODEL_METADATA_URI.value,
-            ),
-        )
-
-        return ModelMetadata.model_validate(model_metadata)
+    # @property
+    # def model_metadata(self) -> ModelMetadata:
+    #    """Loads `ModelMetadata` class"""
+    #    model_metadata = load_artifact_from_storage(
+    #        artifact_type=SaveName.JSON.value,
+    #        storage_request=StorageRequest(
+    #            registry_type=self.card_type,
+    #            card_uid=self.card.uid,
+    #            uri_name=UriNames.MODEL_METADATA_URI.value,
+    #        ),
+    #    )
+    #
+    #    return ModelMetadata.model_validate(model_metadata)
 
     # def _load_onnx_model(self, metadata: ModelMetadata) -> Any:
     #    """Loads the actual onnx file

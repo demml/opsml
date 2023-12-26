@@ -8,11 +8,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.types import (
-    CommonKwargs,
-    ModelReturn,
-    OnnxModel,
-)
+from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel
 from opsml.registry.types.extra import Suffix
 
 
@@ -49,6 +45,7 @@ class ModelInterface(BaseModel):
     model_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
     data_type: str = CommonKwargs.UNDEFINED.value
+    model_class: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -69,6 +66,8 @@ class ModelInterface(BaseModel):
         save_path = path.with_suffix(".joblib")
         joblib.dump(self.model, save_path)
 
+        return save_path
+
     def save_preprocessor(self, path: Path) -> Path:
         """Saves preprocessor to path if present. Base implementation use Joblib
 
@@ -79,6 +78,8 @@ class ModelInterface(BaseModel):
         assert self.preprocessor is not None, "No preprocessor detected in interface"
         save_path = path.with_suffix(".joblib")
         joblib.dump(self.preprocessor, save_path)
+
+        return save_path
 
     def load_model(self, path: Path) -> Path:
         """Load model from pathlib object
@@ -138,15 +139,16 @@ class ModelInterface(BaseModel):
 
         return CommonKwargs.UNDEFINED.value
 
-    def save_sample_data(self, path: Path) -> None:
+    def save_sample_data(self, path: Path) -> Path:
         """Serialized and save sample data to path.
 
         Args:
             path:
                 Pathlib object
         """
-
-        joblib.dump(self.sample_data, path.with_suffix(".joblib"))
+        save_path = path.with_suffix(".joblib")
+        joblib.dump(self.sample_data, save_path)
+        return save_path
 
     def load_sample_data(self, path: Path) -> None:
         """Serialized and save sample data to path.
@@ -205,7 +207,3 @@ class ModelInterface(BaseModel):
             prediction_type,
             prediction,
         )
-
-    @property
-    def model_class(self) -> str:
-        raise NotImplementedError

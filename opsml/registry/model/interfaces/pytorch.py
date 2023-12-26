@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import model_validator
@@ -128,7 +129,7 @@ try:
                     pathlib object
             """
 
-            torch.save(self.model, path)
+            torch.save(self.model, path.with_suffix(".pt"))
 
         def load_model(self, path: Path) -> None:
             """Load pytorch model from path
@@ -137,7 +138,7 @@ try:
                 path:
                     pathlib object
             """
-            self.model = torch.load(path)
+            self.model = torch.load(path.with_suffix(".pt"))
 
 except ModuleNotFoundError:
 

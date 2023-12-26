@@ -69,7 +69,6 @@ from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
 from opsml.helpers.gcp_utils import GcpCreds
-from opsml.model.challenger import ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
 
 # opsml
@@ -1032,8 +1031,6 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
-
-    print(type(inputs))
 
     model = HuggingFaceModel(
         model=model,

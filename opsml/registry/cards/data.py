@@ -14,18 +14,14 @@ from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.validator import DataCardValidator
-from opsml.registry.data.formatter import check_data_schema
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
-from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
     AllowedDataType,
     CardType,
     DataCardMetadata,
-    StorageRequest,
-    UriNames,
     ValidData,
 )
 
@@ -312,16 +308,17 @@ class DataProfileDownloader(Downloader):
     def download(self) -> None:
         """Downloads a data profile from storage"""
 
-        data_profile = load_artifact_from_storage(
-            artifact_type=AllowedDataType.DICT,
-            storage_request=StorageRequest(
-                registry_type=self.card.card_type,
-                card_uid=self.card.uid,
-                uri_name=UriNames.PROFILE_URI,
-            ),
-        )
+        # data_profile = load_artifact_from_storage(
+        #    artifact_type=AllowedDataType.DICT,
+        #    storage_request=StorageRequest(
+        #        registry_type=self.card.card_type,
+        #        card_uid=self.card.uid,
+        #        uri_name=UriNames.PROFILE_URI,
+        #    ),
+        # )
 
-        setattr(self.card, "data_profile", data_profile)
+    #
+    # setattr(self.card, "data_profile", data_profile)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -340,21 +337,21 @@ class DataDownloader(Downloader):
             logger.info("Data already exists")
             return
 
-        data = load_artifact_from_storage(
-            artifact_type=self.card.metadata.data_type,
-            storage_request=StorageRequest(
-                registry_type=self.card.card_type,
-                card_uid=self.card.uid,
-                uri_name=UriNames.DATA_URI,
-            ),
-        )
+    # data = load_artifact_from_storage(
+    #    artifact_type=self.card.metadata.data_type,
+    #    storage_request=StorageRequest(
+    #        registry_type=self.card.card_type,
+    #        card_uid=self.card.uid,
+    #        uri_name=UriNames.DATA_URI,
+    #    ),
+    # )
 
-        data = check_data_schema(
-            data,
-            cast(Dict[str, str], self.card.metadata.feature_map),
-            self.card.metadata.data_type,
-        )
-        setattr(self.card, "data", data)
+    # data = check_data_schema(
+    #    data,
+    #    cast(Dict[str, str], self.card.metadata.feature_map),
+    #    self.card.metadata.data_type,
+    # )
+    # setattr(self.card, "data", data)
 
     @staticmethod
     def validate(artifact_type: str) -> bool:
@@ -378,17 +375,18 @@ class ImageDownloader(Downloader):
             logger.info("Image data already exists")
             return
 
-        kwargs = {"image_dir": data.image_dir}
+        # kwargs = {"image_dir": data.image_dir}
 
-        load_artifact_from_storage(
-            artifact_type=self.card.metadata.data_type,
-            storage_request=StorageRequest(
-                registry_type=self.card.card_type,
-                card_uid=self.card.uid,
-                uri_name=UriNames.DATA_URI,
-            ),
-            **kwargs,
-        )
+    #
+    # load_artifact_from_storage(
+    #    artifact_type=self.card.metadata.data_type,
+    #    storage_request=StorageRequest(
+    #        registry_type=self.card.card_type,
+    #        card_uid=self.card.uid,
+    #        uri_name=UriNames.DATA_URI,
+    #    ),
+    #    **kwargs,
+    # )
 
     @staticmethod
     def validate(artifact_type: str) -> bool:

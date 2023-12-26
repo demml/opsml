@@ -16,7 +16,6 @@ from opsml.registry.storage.artifact import (
     save_artifact_to_storage,
 )
 from opsml.registry.types import (
-    ArtifactStorageSpecs,
     HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
     ModelCardMetadata,

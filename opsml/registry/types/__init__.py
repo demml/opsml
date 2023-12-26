@@ -14,7 +14,6 @@ from opsml.registry.types.card import (
     PipelineCardArgs,
     RegistryType,
     RunCardArgs,
-    StoragePath,
 )
 from opsml.registry.types.data import (
     AllowedDataType,
@@ -66,13 +65,12 @@ from opsml.registry.types.model import (
 )
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,
-    ArtifactStorageSpecs,
+    ArtifactStorageType,
     FilePath,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientProtocol,
     StorageClientSettings,
-    StorageRequest,
     StorageSettings,
     StorageSystem,
     StoreLike,

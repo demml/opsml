@@ -148,7 +148,7 @@ class _ModelConverter:
 
         return input_dict, output_dict
 
-    def create_model_def(self) -> OnnxModel:
+    def create_onnx_model_def(self) -> OnnxModel:
         """Creates Model definition
 
         Args:
@@ -177,7 +177,7 @@ class _ModelConverter:
 
         # onnx sess can be used to get name, type, shape
         input_onnx_features, output_onnx_features = self.create_feature_dict(sess=self.sess)
-        model_def = self.create_model_def(onnx_model=onnx_model)
+        model_def = self.create_onnx_model_def()
 
         return model_def, input_onnx_features, output_onnx_features
 
@@ -209,14 +209,12 @@ class _ModelConverter:
         else:
             onnx_model, onnx_input_features, onnx_output_features = self._load_onnx_model()
 
-        schema = (
-            DataDict(
-                onnx_input_features=onnx_input_features,
-                onnx_output_features=onnx_output_features,
-            ),
+        schema = DataDict(
+            onnx_input_features=onnx_input_features,
+            onnx_output_features=onnx_output_features,
         )
 
-        return ModelReturn(model_definition=onnx_model, data_schema=schema)
+        return ModelReturn(onnx_model=onnx_model, data_schema=schema)
 
     def _create_onnx_session(self, onnx_model: ModelProto) -> None:
         self._sess = rt.InferenceSession(
@@ -242,7 +240,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_calibrated_classifier(self) -> bool:
-        return self.card.model.model_type == TrainedModelType.CALIBRATED_CLASSIFIER
+        return self.interface.model_type == TrainedModelType.CALIBRATED_CLASSIFIER
 
     @property
     def _is_pipeline(self) -> bool:
@@ -355,8 +353,12 @@ class _SklearnOnnxModel(_ModelConverter):
         Our inference implementation uses triton for onnx hosting which does not support sequence output
         for classification models (skl2onnx default). This defaults all sklearn classifiers to an array output
         """
-        add_model_args = self.card.model.onnx_args
-        options = getattr(add_model_args, "options", None)
+
+        if hasattr(self.interface, "onnx_args"):
+            add_model_args = self.interface.onnx_args
+            options = getattr(add_model_args, "options", None)
+        else:
+            options = None
 
         if self.is_sklearn_classifier and options is None:
             return {"zipmap": False}
@@ -573,7 +575,6 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         onnx_model_return = _OnnxConverterHelper.convert_model(model_interface=self.interface, data_helper=model_data)
 
         # set extras
-        onnx_model_return.model_type = self.interface.model_type
         onnx_model_return.data_schema.input_features = self._get_input_schema()
         onnx_model_return.data_schema.output_features = self._get_output_schema()
         onnx_model_return.data_schema.data_type = self.interface.data_type

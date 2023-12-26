@@ -14,6 +14,7 @@ import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import zarr
+from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
@@ -25,7 +26,6 @@ from opsml.registry.model.interfaces import (
     TensorFlowModel,
 )
 from opsml.registry.storage import client
-from opsml.registry.storage.downloader import Downloader
 from opsml.registry.types import (
     AllowedDataType,
     ArtifactStorageType,
@@ -35,7 +35,6 @@ from opsml.registry.types import (
     HuggingFaceStorageArtifact,
     OnnxModel,
     SaveName,
-    StorageRequest,
     Suffix,
     UriNames,
 )
@@ -68,7 +67,7 @@ class ArtifactStorage:
         return client.storage_client.client
 
     @property
-    def storage_client(self) -> client.StorageClientType:
+    def storage_client(self) -> Any:
         return client.storage_client
 
     def _upload_artifact(
@@ -802,25 +801,24 @@ def save_artifact_to_storage(artifact: Any, path: Path, artifact_type: str) -> s
     )
 
 
-def load_artifact_from_storage(
-    artifact_type: str,
-    storage_request: StorageRequest,
-    **kwargs: Any,
-) -> Any:
-    with tempfile.TemporaryDirectory() as lpath:
-        Downloader(storage_request=storage_request).download(lpath)
-        storage_type = next(
-            (
-                storage_type
-                for storage_type in all_subclasses(ArtifactStorage)
-                if storage_type.validate(
-                    artifact_type=artifact_type,
-                )
-            ),
-            JoblibStorage,
-        )
+def load_artifact_from_storage(artifact_type: str, **kwargs: Any) -> Any:
+    ...
+    # with tempfile.TemporaryDirectory() as lpath:
+    #    Downloader(storage_request=storage_request).download(lpath)
+    #    storage_type = next(
+    #        (
+    #            storage_type
+    #            for storage_type in all_subclasses(ArtifactStorage)
+    #            if storage_type.validate(
+    #                artifact_type=artifact_type,
+    #            )
+    #        ),
+    #        JoblibStorage,
+    #    )
 
-        return storage_type(artifact_type=artifact_type).load_artifact(
-            storage_request=storage_request,
-            **kwargs,
-        )
+
+#
+#    return storage_type(artifact_type=artifact_type).load_artifact(
+#        storage_request=storage_request,
+#        **kwargs,
+#    )

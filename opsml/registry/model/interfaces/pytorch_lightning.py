@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from pydantic import model_validator
@@ -8,7 +9,6 @@ from opsml.registry.model.interfaces.pytorch import PyTorchModel
 from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType
 
 try:
-    import torch
     from lightning import Trainer
 
     class LightningModel(PyTorchModel):
@@ -93,7 +93,7 @@ try:
 
         def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
-            self.model.save_checkpoint(client_path)
+            self.model.save_checkpoint(path.with_suffix(".ckpt"))
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load lightning model from path"""
@@ -103,13 +103,13 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    self.model = model_arch.load_from_checkpoint(file_path)
+                    self.model = model_arch.load_from_checkpoint(path.with_suffix(".ckpt"))
 
                 else:
                     # load via torch
                     import torch
 
-                    self.model = torch.load(file_path)
+                    self.model = torch.load(path.with_suffix(".ckpt"))
 
             except Exception as e:
                 raise ValueError(f"Unable to load pytorch lightning model: {e}")
