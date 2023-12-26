@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from numpy.typing import NDArray
@@ -8,6 +9,7 @@ from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
 from opsml.registry.types import CommonKwargs, TrainedModelType
 
 try:
+    import lightgbm as lgb
     from lightgbm import Booster, LGBMModel
 
     VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]

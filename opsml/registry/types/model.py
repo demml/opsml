@@ -265,7 +265,9 @@ class OnnxAttr:
 
 class ModelMetadata(BaseModel):
     model_name: str
+    model_class: str
     model_type: str
+    model_interface: str
     onnx_uri: Optional[str] = None
     onnx_version: Optional[str] = None
     model_uri: str
@@ -274,7 +276,6 @@ class ModelMetadata(BaseModel):
     preprocessor_name: Optional[str] = None
     preprocessor_uri: Optional[str] = None
     opsml_version: str = __version__
-    sample_data: Dict[str, Any]
     data_schema: DataDict
 
     model_config = ConfigDict(protected_namespaces=("protect_",))

@@ -8,16 +8,12 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
-from opsml.registry.storage.artifact import load_artifact_from_storage
 from opsml.registry.types import (
     METRICS,
     PARAMS,
-    AllowedDataType,
     CardType,
     Metric,
     Param,
-    StorageRequest,
-    UriNames,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -274,17 +270,17 @@ class RunCard(ArtifactCard):
     # - get path of artifact
     # - download artifact
     def load_artifacts(self) -> None:
-        if bool(self.artifact_uris):
-            for name, uri in self.artifact_uris.items():
-                self.artifacts[name] = load_artifact_from_storage(
-                    artifact_type=AllowedDataType.DICT,
-                    storage_request=StorageRequest(
-                        registry_type=self.card_type,
-                        card_uid=self.card.uid,
-                        uri_name=UriNames.TRAINED_MODEL_URI.value,
-                    ),
-                )
-            return None
+        # if bool(self.artifact_uris):
+        #    for name, uri in self.artifact_uris.items():
+        #        self.artifacts[name] = load_artifact_from_storage(
+        #            artifact_type=AllowedDataType.DICT,
+        #            storage_request=StorageRequest(
+        #                registry_type=self.card_type,
+        #                card_uid=self.card.uid,
+        #                uri_name=UriNames.TRAINED_MODEL_URI.value,
+        #            ),
+        #        )
+        #    return None
 
         logger.info("No artifact uris associated with RunCard")
         return None
