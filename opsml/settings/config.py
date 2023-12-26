@@ -15,6 +15,7 @@ class OpsmlConfig(BaseSettings):
     opsml_storage_uri: str = "./mlruns"
     opsml_tracking_uri: str = "sqlite:///tmp.db"
     opsml_prod_token: str = "staging"
+    opsml_proxy_root: str = "opsml-root:/"
 
     # API client username / password
     opsml_username: Optional[str] = None
@@ -35,8 +36,8 @@ class OpsmlConfig(BaseSettings):
     def storage_root(self) -> str:
         """Returns the root of the storage URI"""
         if self.is_tracking_local:
-            return config.opsml_storage_uri
-        return "opsml-root:/"
+            return self.opsml_storage_uri
+        return self.opsml_proxy_root
 
 
 config = OpsmlConfig()
