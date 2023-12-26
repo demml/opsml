@@ -36,8 +36,8 @@ from opsml.registry.types import (
     OnnxModel,
     SaveName,
     StorageRequest,
-    UriNames,
     Suffix,
+    UriNames,
 )
 from opsml.registry.types.model import ModelProto, TrainedModelType
 

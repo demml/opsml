@@ -8,9 +8,12 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.utils import get_class_name
-from opsml.registry.data.formatter import DataFormatter
-from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel, AllowedDataType, ArrowTable
-from opsml.registry.types.extra import SaveName, Suffix
+from opsml.registry.types import (
+    CommonKwargs,
+    ModelReturn,
+    OnnxModel,
+)
+from opsml.registry.types.extra import Suffix
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -99,8 +102,9 @@ class ModelInterface(BaseModel):
 
     def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
         # don't want to try and import onnx unless we need to
-        from opsml.registry.model.model_converters import _OnnxModelConverter
         import onnxruntime as rt
+
+        from opsml.registry.model.model_converters import _OnnxModelConverter
 
         if self.onnx_model is None:
             metadata = _OnnxModelConverter(self).convert_model()
