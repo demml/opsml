@@ -18,12 +18,7 @@ from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.image.dataset import ImageDataset
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
-from opsml.registry.types import (
-    AllowedDataType,
-    CardType,
-    DataCardMetadata,
-    ValidData,
-)
+from opsml.registry.types import AllowedDataType, CardType, DataCardMetadata, ValidData
 
 logger = ArtifactLogger.get_logger()
 

@@ -8,13 +8,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
-from opsml.registry.types import (
-    METRICS,
-    PARAMS,
-    CardType,
-    Metric,
-    Param,
-)
+from opsml.registry.types import METRICS, PARAMS, CardType, Metric, Param
 
 logger = ArtifactLogger.get_logger()
 
