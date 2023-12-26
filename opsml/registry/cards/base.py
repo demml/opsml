@@ -79,7 +79,7 @@ class ArtifactCard(BaseModel):
         self.tags[key] = str(value)
 
     @property
-    def uri(self) -> str:
+    def uri(self) -> Path:
         """The base URI to use for the card and it's artifacts."""
         if self.version is None:
             raise ValueError("Could not create card uri - version is not set")

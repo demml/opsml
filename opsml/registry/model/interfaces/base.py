@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from opsml.helpers.utils import get_class_name
 from opsml.registry.data.formatter import DataFormatter
 from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel, AllowedDataType, ArrowTable
+from opsml.registry.types.extra import SaveName, Suffix
 
 
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
@@ -54,7 +55,7 @@ class ModelInterface(BaseModel):
         extra="allow",
     )
 
-    def save_model(self, path: Path) -> None:
+    def save_model(self, path: Path) -> Path:
         """Saves model to path. Base implementation use Joblib
 
         Args:
@@ -62,9 +63,10 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.model is not None, "No model detected in interface"
-        joblib.dump(self.model, path.with_suffix(".joblib"))
+        save_path = path.with_suffix(".joblib")
+        joblib.dump(self.model, save_path)
 
-    def save_preprocessor(self, path: Path) -> None:
+    def save_preprocessor(self, path: Path) -> Path:
         """Saves preprocessor to path if present. Base implementation use Joblib
 
         Args:
@@ -72,39 +74,43 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.preprocessor is not None, "No preprocessor detected in interface"
-        joblib.dump(self.preprocessor, path.with_suffix(".joblib"))
+        save_path = path.with_suffix(".joblib")
+        joblib.dump(self.preprocessor, save_path)
 
-    def load_model(self, path: Path) -> None:
+    def load_model(self, path: Path) -> Path:
         """Load model from pathlib object
 
         Args:
             path:
                 Pathlib object
         """
+        save_path = path.with_suffix(".joblib")
+        self.model = joblib.load(save_path)
 
-        self.model = joblib.load(path.with_suffix(".joblib"))
-
-    def load_preprocessor(self, path: Path) -> None:
+    def load_preprocessor(self, path: Path) -> Path:
         """Load preprocessor from pathlib object
 
         Args:
             path:
                 Pathlib object
         """
-        self.preprocessor = joblib.load(path.with_suffix(".joblib"))
+        save_path = path.with_suffix(".joblib")
+        self.preprocessor = joblib.load(save_path)
 
-    def convert_to_onnx(self, path: Path) -> ModelReturn:
+    def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
         # don't want to try and import onnx unless we need to
         from opsml.registry.model.model_converters import _OnnxModelConverter
         import onnxruntime as rt
 
-        metadata = _OnnxModelConverter(self).convert_model()
-        self.onnx_model = metadata.onnx_model
+        if self.onnx_model is None:
+            metadata = _OnnxModelConverter(self).convert_model()
+            self.onnx_model = metadata.onnx_model
 
         sess: rt.InferenceSession = self.onnx_model.sess
+        path = path.with_suffix(Suffix.ONNX.value)
         path.write_bytes(sess._model_bytes)
 
-        return metadata
+        return metadata, path
 
     def load_onnx_model(self, path: Path) -> None:
         """Load onnx model from pathlib object

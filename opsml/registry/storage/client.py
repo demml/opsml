@@ -108,7 +108,7 @@ class StorageClientBase(StorageClientProtocol):
             while chunk := file_.read(chunk_size):
                 yield chunk
 
-    def put(self, lpath: str, rpath: str) -> str:
+    def put(self, lpath: Path, rpath: Path) -> str:
         raise NotImplementedError
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
@@ -362,30 +362,24 @@ class ApiStorageClient(StorageClientBase):
 
         return []
 
-    def put(self, lpath: str, rpath: str) -> str:
-        if os.path.isdir(lpath):
-            write_path_path = Path(rpath)
-            for path, _, localfiles in os.walk(lpath):
-                for filename in localfiles:
-                    curr_local_path = Path(path).joinpath(filename)
-                    curr_write_path = write_path_path.joinpath(curr_local_path.relative_to(lpath))
-                    self.put(str(curr_local_path), str(curr_write_path))
-            return rpath
+    def put(self, lpath: Path, rpath: Path) -> None:
+        # this will iterate through all dirs and files
+        for curr_lpath in lpath.rglob("*"):
+            if curr_lpath.is_file():
+                curr_rpath = rpath / curr_lpath.relative_to(lpath)
 
-        files = {"file": open(lpath, "rb")}  # pylint: disable=consider-using-with
-        headers = {"Filename": os.path.basename(rpath), "WritePath": os.path.dirname(rpath)}
+                files = {"file": open(curr_lpath, "rb")}  # pylint: disable=consider-using-with
+                headers = {"Filename": str(curr_rpath.name), "WritePath": str(curr_rpath.parent)}
 
-        response = self.api_client.stream_post_request(
-            route=ApiRoutes.UPLOAD,
-            files=files,
-            headers=headers,
-        )
-        storage_uri: Optional[str] = response.get("storage_uri")
+                response = self.api_client.stream_post_request(
+                    route=ApiRoutes.UPLOAD,
+                    files=files,
+                    headers=headers,
+                )
+                storage_uri: Optional[str] = response.get("storage_uri")
 
-        if storage_uri is not None:
-            return storage_uri
-
-        raise ValueError("No storage_uri found")
+                if storage_uri is None:
+                    raise ValueError("Failed to write file to storage")
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
         raise NotImplementedError
