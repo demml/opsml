@@ -81,12 +81,6 @@ StorageSettings = Union[
 
 
 class StorageClientProtocol(Protocol):
-    def build_absolute_path(self, rpath: str) -> str:
-        """Returns an absolute path for the given remote path"""
-
-    def build_relative_path(self, rpath: str) -> str:
-        """Returns the relative path from the storage root to rpath"""
-
     @property
     def base_path_prefix(self) -> str:
         """The root storage prefix. Used when absolute storage paths are required."""
