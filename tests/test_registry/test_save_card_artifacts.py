@@ -1,8 +1,9 @@
+from pathlib import Path
+
 from opsml.registry.cards import ModelCard
 from opsml.registry.cards.card_saver import save_card_artifacts
 from opsml.registry.model.interfaces import SklearnModel
 from opsml.registry.types import SaveName
-from pathlib import Path
 from tests.conftest import cleanup
 
 
@@ -19,7 +20,7 @@ def test_save_modelcard_local_client(random_forest_classifier: SklearnModel):
     )
 
     save_card_artifacts(modelcard)
-    
+
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib").exists()
     assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib").exists()
     assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx").exists()
