@@ -12,10 +12,9 @@ from opsml.registry.types import (
     HuggingFaceTask,
     ModelReturn,
     OnnxModel,
-    TrainedModelType,
     SaveName,
+    TrainedModelType,
 )
-
 
 try:
     import transformers
@@ -322,4 +321,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
