@@ -48,7 +48,6 @@ class DataCard(ArtifactCard):
     """
 
     interface: Optional[DataInterface] = None
-    sql_logic: Dict[str, str] = {}
     metadata: DataCardMetadata = DataCardMetadata()
 
     @field_validator("sql_logic", mode="before")

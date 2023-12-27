@@ -11,6 +11,26 @@ from opsml.registry.types import AllowedDataType, Feature, Suffix
 
 
 class PandasData(DataInterface):
+    """Pandas interface
+
+    Args:
+        data:
+            Pandas DataFrame
+        dependent_vars:
+            List of dependent variables. Can be string or index if using numpy
+        data_splits:
+            Optional list of `DataSplit`
+        sql_logic:
+            Dictionary of strings containing sql logic or sql files used to create the data
+        data_profile:
+            Optional ydata-profiling `ProfileReport`
+        feature_map:
+            Dictionary of features -> automatically generated
+        feature_descriptions:
+            Dictionary or feature descriptions
+        sql_logic:
+            Sql logic used to generate data
+    """
     data: Optional[pd.DataFrame] = None
 
     def save_data(self, path: Path) -> Path:
