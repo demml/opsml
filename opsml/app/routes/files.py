@@ -5,7 +5,7 @@
 import os
 from typing import Dict, cast, Annotated
 from uuid import UUID
-
+from pathlib import Path
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -151,7 +151,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     }
 
 
-@router.get("/files/download", name="download_file")
+@router.get("/files/download/{read_path}", name="download_file")
 def download_file(
     request: Request,
     read_path: Annotated[str, Depends(swap_opsml_root)],
@@ -192,11 +192,8 @@ def download_file(
         ) from error
 
 
-@router.post("/files/list", name="list_files")
-def list_files(
-    request: Request,
-    payload: ListFileRequest,
-) -> ListFileResponse:
+@router.get("/files/list/{read_path}", name="list_files")
+def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_root)]) -> ListFileResponse:
     """Lists files
 
     Args:
@@ -208,13 +205,11 @@ def list_files(
     Returns:
         `ListFileResponse`
     """
-
-    read_path = payload.read_path
     _verify_path(path=read_path)
 
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
-        return ListFileResponse(files=storage_client.ls(read_path))
+        return ListFileResponse(files=storage_client.ls(Path(read_path)))
 
     except Exception as error:
         raise HTTPException(
@@ -223,10 +218,14 @@ def list_files(
         ) from error
 
 
-@router.post("/files/delete", name="delete_files", dependencies=[Depends(verify_token)])
+@router.get(
+    "/files/delete/{read_path}",
+    name="delete_files",
+    dependencies=[Depends(verify_token), Depends(swap_opsml_root)],
+)
 def delete_files(
     request: Request,
-    payload: DeleteFileRequest,
+    read_path: Annotated[str, Depends(swap_opsml_root)],
 ) -> DeleteFileResponse:
     """Deletes a file
 
@@ -242,7 +241,6 @@ def delete_files(
 
     # prevent arbitrary lists
     # Files can only be listed from pre-defined registry paths
-    read_path = payload.read_path
     _verify_path(path=read_path)
 
     try:
@@ -250,14 +248,14 @@ def delete_files(
 
         files = list_files(
             request=request,
-            payload=ListFileRequest(read_path=payload.read_path),
+            payload=ListFileRequest(read_path=read_path),
         )
 
-        # no point of deleting when its empty
+        # no point of deleting when it's empty
         if len(files.files) == 0:
             return DeleteFileResponse(deleted=False)
 
-        storage_client.rm(payload.read_path)
+        storage_client.rm(read_path)
         return DeleteFileResponse(deleted=True)
 
     except Exception as error:
