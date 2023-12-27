@@ -36,7 +36,10 @@ try:
 
         model: Optional[Trainer] = None
         onnx_args: Optional[TorchOnnxArgs] = None
-        model_class: str = TrainedModelType.PYTORCH_LIGHTNING.value
+
+        @property
+        def model_class(self) -> str:
+            raise TrainedModelType.PYTORCH_LIGHTNING.value
 
         @model_validator(mode="before")
         @classmethod
@@ -44,7 +47,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("model_uri", False):
+            if model_args.get("load_card", False):
                 return model_args
 
             model, module, bases = get_model_args(model)
@@ -120,6 +123,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")

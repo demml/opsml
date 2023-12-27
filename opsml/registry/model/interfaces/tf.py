@@ -40,8 +40,13 @@ try:
 
         model: Optional[tf.keras.Model] = None
         sample_data: Optional[VALID_DATA] = None
-        model_class: str = TrainedModelType.TF_KERAS.value
 
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.TF_KERAS.value
+        
+        
         @classmethod
         def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
             """Check sample data and returns one record to be used
@@ -74,7 +79,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("model_uri", False):
+            if model_args.get("load_card", False):
                 return model_args
 
             model, module, bases = get_model_args(model)

@@ -41,7 +41,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("model_uri", False):
+            if model_args.get("load_card", False):
                 return model_args
 
             model, _, bases = get_model_args(model)

@@ -41,7 +41,10 @@ try:
 
         model: Optional[Union[Booster, LGBMModel]] = None
         sample_data: Optional[VALID_DATA] = None
-        model_class: str = TrainedModelType.LGBM_BOOSTER.value
+
+        @property
+        def model_class(self) -> str:
+            raise TrainedModelType.LGBM_BOOSTER.value
 
         @model_validator(mode="before")
         @classmethod
@@ -49,7 +52,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("model_uri", False):
+            if model_args.get("load_card", False):
                 return model_args
 
             model, module, _ = get_model_args(model)
@@ -77,6 +80,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")

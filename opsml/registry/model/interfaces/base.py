@@ -45,7 +45,6 @@ class ModelInterface(BaseModel):
     model_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
     data_type: str = CommonKwargs.UNDEFINED.value
-    model_class: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -54,6 +53,10 @@ class ModelInterface(BaseModel):
         validate_default=True,
         extra="allow",
     )
+
+    @property
+    def model_class(self) -> str:
+        raise NotImplementedError
 
     def save_model(self, path: Path) -> Path:
         """Saves model to path. Base implementation use Joblib

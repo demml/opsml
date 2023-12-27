@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast, Tuple
 
 from pydantic import field_validator, model_validator
 
@@ -214,15 +214,17 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
-        def save_model(self, path: Path) -> None:
+        def save_model(self, path: Path) -> Path:
             assert self.model is not None, "No model detected in interface"
             self.model.save_pretrained(path)
+            return path
 
-        def save_preprocessor(self, path: Path) -> None:
+        def save_preprocessor(self, path: Path) -> Path:
             assert self.preprocessor is not None, "No preprocessor detected in interface"
             self.preprocessor.save_pretrained(path)
+            return path
 
-        def convert_to_onnx(self, path: Path) -> ModelReturn:
+        def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
 
@@ -261,13 +263,11 @@ try:
             else:
                 self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model))
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model)), path
 
         def load_preprocessor(self, path: Path) -> None:
-            preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
-            self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(
-                preprocessor_path,
-            )
+            # preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
+            self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load huggingface model from path"""
@@ -321,6 +321,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
