@@ -170,14 +170,12 @@ def download_file(
     # Files can only be downloaded from registry paths
     _verify_path(path=read_path)
 
-    # TODO (steven): Swap root path for server path
     storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
-    abs_read_path = storage_client.build_absolute_path(read_path)
 
     try:
         storage_client = request.app.state.storage_client
         return StreamingResponse(
-            storage_client.iterfile(abs_read_path, CHUNK_SIZE),
+            storage_client.iterfile(Path(read_path), CHUNK_SIZE),
             media_type="application/octet-stream",
         )
 

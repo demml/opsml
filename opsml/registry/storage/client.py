@@ -166,7 +166,7 @@ class ApiStorageClient(StorageClientBase):
             token=settings.opsml_prod_token,
         )
 
-    def get(self, rpath: str, lpath: str, recursive: bool = True) -> None:
+    def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> None:
         if recursive:
             for file in self.ls(rpath):
                 rel_path = Path(file).relative_to(rpath)
@@ -174,22 +174,19 @@ class ApiStorageClient(StorageClientBase):
 
         self.api_client.stream_download_file_request(
             route=ApiRoutes.DOWNLOAD_FILE,
-            local_dir=str(Path(lpath).parent),
-            read_dir=str(Path(rpath).parent),
-            filename=Path(rpath).name,
+            local_dir=lpath.parent,
+            read_dir=rpath.parent,
+            filename=rpath.name,
         )
 
-    def ls(self, path: str) -> List[str]:
-        response = self.api_client.post_request(
-            route=ApiRoutes.LIST_FILES,
-            json={"read_path": path},
-        )
-        files = response.get("files")
+    def ls(self, path: Path) -> List[str]:
+        route = Path(ApiRoutes.LIST_FILES, path)
+        response = self.api_client.get_request(route=route.as_posix())
 
-        if files is not None:
-            return cast(List[str], files)
+        # storage clients always return a list
+        files: List[str] = response["files"]
 
-        return []
+        return files
 
     def put(self, lpath: Path, rpath: Path) -> None:
         # this will iterate through all dirs and files
@@ -197,12 +194,12 @@ class ApiStorageClient(StorageClientBase):
             if curr_lpath.is_file():
                 curr_rpath = rpath / curr_lpath.relative_to(lpath)
 
-                files = {"file": open(curr_lpath, "rb")}  # pylint: disable=consider-using-with
+                file_ = {"file": open(curr_lpath, "rb")}  # pylint: disable=consider-using-with
                 headers = {"Filename": str(curr_rpath.name), "WritePath": str(curr_rpath.parent)}
 
                 response = self.api_client.stream_post_request(
                     route=ApiRoutes.UPLOAD,
-                    files=files,
+                    files=file_,
                     headers=headers,
                 )
                 storage_uri: Optional[str] = response.get("storage_uri")
@@ -216,13 +213,9 @@ class ApiStorageClient(StorageClientBase):
     def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         raise NotImplementedError
 
-    def rm(self, path: str, recursive: bool = False) -> None:
-        # TODO:(@damon): Implement recursive delete on the API client
-        assert not recursive
-        response = self.api_client.post_request(
-            route=ApiRoutes.DELETE_FILE,
-            json={"read_path": path},
-        )
+    def rm(self, path: Path) -> None:
+        route = Path(ApiRoutes.DELETE_FILE, path)
+        response = self.api_client.get_request(route=route.as_posix())
 
         if response.get("deleted") is False:
             raise ValueError("Failed to delete file")

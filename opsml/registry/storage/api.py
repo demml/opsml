@@ -145,18 +145,16 @@ class ApiClient:
     def stream_download_file_request(
         self,
         route: str,
-        local_dir: str,
+        local_dir: Path,
         filename: str,
-        read_dir: str,
+        read_dir: Path,
     ) -> Dict[str, Any]:
-        Path(local_dir).mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
+        local_dir.mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
+        read_path = read_dir / filename
+        local_path = local_dir / filename
 
-        read_path = os.path.join(read_dir, filename)
-        with open(os.path.join(local_dir, filename), "wb") as local_file:
-            with self.client.stream(
-                method="GET",
-                url=f"{self._base_url}/{route}?read_path={read_path}",
-            ) as response:
+        with open(local_path.as_posix(), "wb") as local_file:
+            with self.client.stream(method="GET", url=f"{self._base_url}/{route}/{read_path.as_posix()}") as response:
                 for data in response.iter_bytes():
                     local_file.write(data)
 
