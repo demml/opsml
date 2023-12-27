@@ -21,7 +21,7 @@ class DataInterface(BaseModel):
     data_splits: List[DataSplit] = []
     dependent_vars: List[Union[int, str]] = []
     data_profile: Optional[ProfileReport] = None
-    feature_map: Dict[str, Dict[str, Feature]] = {}
+    feature_map: Dict[str, Feature] = {}
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

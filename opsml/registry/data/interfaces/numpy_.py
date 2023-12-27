@@ -13,6 +13,9 @@ class NumpyData(DataInterface):
 
     def save_data(self, path: Path) -> Path:
         """Saves numpy array as a zarr file"""
+
+        assert self.data is not None, "No data detected in interface"
+
         save_path = path.with_suffix(Suffix.ZARR.value)
         zarr.save(save_path, self.data)
 
