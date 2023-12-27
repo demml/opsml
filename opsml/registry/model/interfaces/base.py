@@ -81,7 +81,7 @@ class ModelInterface(BaseModel):
 
         return save_path
 
-    def load_model(self, path: Path) -> Path:
+    def load_model(self, path: Path) -> None:
         """Load model from pathlib object
 
         Args:
@@ -91,7 +91,7 @@ class ModelInterface(BaseModel):
         save_path = path.with_suffix(".joblib")
         self.model = joblib.load(save_path)
 
-    def load_preprocessor(self, path: Path) -> Path:
+    def load_preprocessor(self, path: Path) -> None:
         """Load preprocessor from pathlib object
 
         Args:
