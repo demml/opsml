@@ -31,6 +31,7 @@ class PandasData(DataInterface):
         sql_logic:
             Sql logic used to generate data
     """
+
     data: Optional[pd.DataFrame] = None
 
     def save_data(self, path: Path) -> Path:
