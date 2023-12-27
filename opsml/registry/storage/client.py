@@ -194,8 +194,8 @@ class ApiStorageClient(StorageClientBase):
             if curr_lpath.is_file():
                 curr_rpath = rpath / curr_lpath.relative_to(lpath)
 
-                file_ = {"file": open(curr_lpath, "rb")}  # pylint: disable=consider-using-with
-                headers = {"Filename": str(curr_rpath.name), "WritePath": str(curr_rpath.parent)}
+                file_ = {"file": open(curr_lpath.as_posix(), "rb")}  # pylint: disable=consider-using-with
+                headers = {"write_path": curr_rpath.as_posix()}
 
                 response = self.api_client.stream_post_request(
                     route=ApiRoutes.UPLOAD,

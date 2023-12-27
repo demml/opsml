@@ -24,7 +24,6 @@ class ApiRoutes:
     DELETE_CARD = "cards/delete"
     DATA_PROFILE = "data/profile"
     COMPARE_DATA = "data/compare"
-    UPLOAD = "upload"
     REGISTER_MODEL = "models/register"
     MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
@@ -32,6 +31,7 @@ class ApiRoutes:
     DOWNLOAD_FILE = "files/download"
     DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"
+    UPLOAD = "files/upload"
 
 
 api_routes = ApiRoutes()
@@ -122,8 +122,8 @@ class ApiClient:
             method="POST",
             url=f"{self._base_url}/{route}",
             files=files,
-            headers=headers,
             json=json,
+            headers=headers,
         ) as response:
             for data in response.iter_bytes():
                 result += data.decode("utf-8")
