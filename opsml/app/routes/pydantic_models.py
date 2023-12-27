@@ -63,6 +63,10 @@ class DownloadFileRequest(BaseModel):
     read_path: Optional[str] = None
 
 
+class PutFileRequest(BaseModel):
+    write_path: str
+
+
 class ListCardRequest(BaseModel):
     name: Optional[str] = None
     team: Optional[str] = None

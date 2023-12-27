@@ -13,7 +13,10 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
 from opsml.app.core.dependencies import swap_opsml_root, verify_token
-from opsml.app.routes.pydantic_models import DeleteFileResponse, ListFileResponse
+from opsml.app.routes.pydantic_models import (
+    DeleteFileResponse,
+    ListFileResponse,
+)
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
@@ -31,14 +34,19 @@ MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 router = APIRouter()
 
 
-@router.put("/upload/{write_path}", name="upload", dependencies=[Depends(verify_token)])
-async def upload_file(
-    request: Request,
-    write_path: Annotated[str, Depends(swap_opsml_root)],
-) -> Dict[str, str]:  # pragma: no cover
+@router.post("/files/upload", name="upload", dependencies=[Depends(verify_token)])
+async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     """Uploads files in chunks to storage destination"""
 
-    write_path = Path(write_path)
+    write_path = request.headers.get("write_path")
+
+    if write_path is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="No write path provided",
+        )
+
+    write_path = Path(swap_opsml_root(write_path))
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
     if write_path.suffix == "":
@@ -67,8 +75,8 @@ async def upload_file(
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"""
-               Maximum request body size limit ({MAX_REQUEST_BODY_SIZE}.
-               Bytes exceeded ({error.body_len} bytes read)""",
+              Maximum request body size limit ({MAX_REQUEST_BODY_SIZE}.
+              Bytes exceeded ({error.body_len} bytes read)""",
         ) from error
 
     except streaming_form_data.validators.ValidationError as error:
