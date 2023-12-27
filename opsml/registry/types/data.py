@@ -122,8 +122,6 @@ class DataCardMetadata(BaseModel):
 
     description: Description = Description()
     feature_map: Optional[Dict[str, Optional[Any]]] = None
-    data_type: str = "undefined"
-    feature_descriptions: Dict[str, str] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
