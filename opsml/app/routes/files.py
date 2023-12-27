@@ -15,9 +15,7 @@ from streaming_form_data.validators import MaxSizeValidator
 
 from opsml.app.core.dependencies import verify_token, swap_opsml_root
 from opsml.app.routes.pydantic_models import (
-    DeleteFileRequest,
     DeleteFileResponse,
-    ListFileRequest,
     ListFileResponse,
 )
 from opsml.app.routes.utils import (
@@ -199,8 +197,8 @@ def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_ro
     Args:
         request:
             request object
-        payload:
-            `ListFileRequest`
+        read_path:
+            path to read
 
     Returns:
         `ListFileResponse`
@@ -246,16 +244,13 @@ def delete_files(
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
 
-        files = list_files(
-            request=request,
-            payload=ListFileRequest(read_path=read_path),
-        )
+        files = list_files(request=request, read_path=read_path)
 
         # no point of deleting when it's empty
         if len(files.files) == 0:
             return DeleteFileResponse(deleted=False)
 
-        storage_client.rm(read_path)
+        storage_client.rm(Path(read_path))
         return DeleteFileResponse(deleted=True)
 
     except Exception as error:
