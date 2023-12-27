@@ -5,7 +5,7 @@ import joblib
 import pandas as pd
 import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
-
+from opsml.helpers.utils import FileUtils
 from opsml.helpers.logging import ArtifactLogger
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
@@ -15,7 +15,28 @@ logger = ArtifactLogger.get_logger()
 
 
 class DataInterface(BaseModel):
-    """Base data interface for all data types"""
+    """Base data interface for all data types
+
+    Args:
+        data:
+            Data. Can be a pyarrow table, pandas dataframe, polars dataframe
+            or numpy array
+        dependent_vars:
+            List of dependent variables. Can be string or index if using numpy
+        data_splits:
+            Optional list of `DataSplit`
+        sql_logic:
+            Dictionary of strings containing sql logic or sql files used to create the data
+        data_profile:
+            Optional ydata-profiling `ProfileReport`
+        feature_map:
+            Dictionary of features -> automatically generated
+        feature_descriptions:
+            Dictionary or feature descriptions
+        sql_logic:
+            Sql logic used to generate data
+
+    """
 
     data: Optional[Any] = None
     data_splits: List[DataSplit] = []
@@ -23,6 +44,7 @@ class DataInterface(BaseModel):
     data_profile: Optional[ProfileReport] = None
     feature_map: Dict[str, Feature] = {}
     feature_descriptions: Dict[str, str] = {}
+    sql_logic: Dict[str, str] = {}
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -33,6 +55,25 @@ class DataInterface(BaseModel):
     @property
     def data_type(self) -> str:
         raise NotImplementedError
+
+    @field_validator("sql_logic", mode="before")
+    @classmethod
+    def _load_sql(cls, sql_logic: Dict[str, str]) -> Dict[str, str]:
+        if not bool(sql_logic):
+            return sql_logic
+
+        for name, query in sql_logic.items():
+            if ".sql" in query:
+                try:
+                    sql_path = FileUtils.find_filepath(name=query)
+                    with open(sql_path, "r", encoding="utf-8") as file_:
+                        query_ = file_.read()
+                    sql_logic[name] = query_
+
+                except Exception as error:
+                    raise ValueError(f"Could not load sql file {query}. {error}") from error
+
+        return sql_logic
 
     @field_validator("data_profile", mode="before")
     @classmethod
