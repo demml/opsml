@@ -31,6 +31,7 @@ class PolarsData(DataInterface):
         sql_logic:
             Sql logic used to generate data
     """
+
     data: Optional[pl.DataFrame] = None
 
     def save_data(self, path: Path) -> Path:
