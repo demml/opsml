@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.types import Suffix, Feature
+from opsml.registry.types import Feature, Suffix
 
 logger = ArtifactLogger.get_logger()
 

@@ -1,10 +1,8 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from abc import ABC, abstractmethod
 from typing import Any, Dict, Union, cast
 
-import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
@@ -13,146 +11,6 @@ from numpy.typing import NDArray
 from opsml.registry.types import AllowedDataType, Feature
 
 ValidArrowData = Union[NDArray[Any], pd.DataFrame, pl.DataFrame, pa.Table]
-
-
-# changing input type to any to handle a variety of data types which may be optionally installed (polars)
-class ArrowFormatter(ABC):
-    @staticmethod
-    @abstractmethod
-    def convert(data: Any) -> pa.Table:
-        """Converts data to pyarrow"""
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def validate_data(data_type: str) -> bool:
-        """Validate data to formatter"""
-        raise NotImplementedError
-
-
-class PolarsFormatter(ArrowFormatter):
-    @staticmethod
-    def convert(data: pl.DataFrame) -> pa.Table:
-        """Convert pandas dataframe to pyarrow table
-
-        Args:
-            data:
-                Polar dataframe
-
-        Returns
-            ArrowTable pydantic class containing table and table type
-        """
-
-        return data.to_arrow()
-
-    @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.POLARS == data_type
-
-
-class PandasFormatter(ArrowFormatter):
-    @staticmethod
-    def convert(data: pd.DataFrame) -> pa.Table:
-        """Convert pandas dataframe to pyarrow table
-
-        Args:
-            data:
-                Pandas dataframe to convert
-
-        Returns
-            ArrowTable pydantic class containing table and table type
-        """
-
-        return pa.Table.from_pandas(data, preserve_index=False)
-
-    @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.PANDAS == data_type
-
-
-class ArrowTableFormatter(ArrowFormatter):
-    @staticmethod
-    def convert(data: pa.Table) -> pa.Table:
-        """Take pyarrow table and returns pyarrow table
-
-        Args:
-            data (pyarrow table): Pyarrow table
-
-        Returns
-            ArrowTable pydantic class containing table and table type
-        """
-
-        return data
-
-    @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.PYARROW == data_type
-
-
-# Run tests for data formatter
-class DataFormatter:
-    @staticmethod
-    def convert_data_to_arrow(
-        data: Union[
-            pa.Table,
-            pd.DataFrame,
-            pl.DataFrame,
-        ],
-        data_type: str,
-    ) -> ArrowTable:
-        """
-        Converts a pandas dataframe or numpy array into a py arrow table.
-        Args:
-            data:
-                Pandas dataframe or numpy array.
-            data_type:
-                Data type of data.
-        Returns:
-            py arrow table
-        """
-
-        converter = next(
-            (
-                arrow_formatter
-                for arrow_formatter in ArrowFormatter.__subclasses__()
-                if arrow_formatter.validate_data(data_type=data_type)
-            )
-        )
-
-        return converter.convert(data=data)
-
-    @staticmethod
-    def create_table_schema(
-        data: Union[
-            pa.Table,
-            NDArray[Any],
-            pd.DataFrame,
-            pl.DataFrame,
-        ],
-    ) -> Dict[str, Any]:
-        """
-        Generates a schema (column: type) from a py arrow table.
-        Args:
-            data: py arrow table.
-        Returns:
-            schema: Dict[str,str]
-        """
-        if isinstance(data, pd.DataFrame):
-            feature_map = {key: str(value).lower() for key, value in data.dtypes.to_dict().items()}
-            return cast(Dict[str, Any], feature_map)
-
-        if isinstance(data, pl.DataFrame):
-            return cast(Dict[str, Any], data.schema)
-
-        if isinstance(data, pa.Table):
-            schema = data.schema
-
-            return {feature: str(type_) for feature, type_ in zip(schema.names, schema.types)}
-
-        if isinstance(data, np.ndarray):
-            return {"numpy_dtype": str(data.dtype)}
-
-        return {"data_type": None}
 
 
 class SchemaValidator:
