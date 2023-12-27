@@ -5,7 +5,7 @@
 from functools import cached_property
 from typing import Any, Dict, Optional
 
-from pydantic import ConfigDict, SerializeAsAny, model_validator
+from pydantic import ConfigDict, SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
@@ -54,20 +54,6 @@ class ModelCard(ArtifactCard):
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata = ModelCardMetadata()
-
-    @model_validator(mode="before")
-    @classmethod
-    def _check_args(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Converts trained model to modelcard"""
-
-        uid = values.get("uid")
-        version = values.get("version")
-
-        # no need to check if already registered
-        if all([uid, version]):
-            return values
-
-        return values
 
     # @property
     # def model_data_schema(self) -> DataDict:
