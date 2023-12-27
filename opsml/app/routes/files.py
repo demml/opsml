@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict, cast
+from typing import Dict, cast, Annotated
 from uuid import UUID
 
 import streaming_form_data
@@ -13,7 +13,7 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
-from opsml.app.core.dependencies import verify_token
+from opsml.app.core.dependencies import verify_token, swap_opsml_root
 from opsml.app.routes.pydantic_models import (
     DeleteFileRequest,
     DeleteFileResponse,
@@ -97,6 +97,9 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
             detail="No write path provided",
         )
 
+    # check root path
+    write_path = swap_opsml_root(write_path)
+
     # prevent arbitrary file uploads to random dirs
     # Files can only be uploaded to paths that have a registry dir name
     _verify_path(path=write_path)
@@ -151,7 +154,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
 @router.get("/files/download", name="download_file")
 def download_file(
     request: Request,
-    read_path: str,
+    read_path: Annotated[str, Depends(swap_opsml_root)],
 ) -> StreamingResponse:
     """Downloads a file
 
