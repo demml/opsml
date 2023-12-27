@@ -2,10 +2,8 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
 from pathlib import Path
 from typing import Annotated, Dict, cast
-from uuid import UUID
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -22,7 +20,6 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import RegistryTableNames
 from opsml.registry.storage.client import StorageClientBase
 
 logger = ArtifactLogger.get_logger()
@@ -34,75 +31,24 @@ MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 router = APIRouter()
 
 
-def _verify_path(path: str) -> None:
-    """Verifies path contains one of our card table names.
-
-    All files being read from or written to opsml should be written to one of
-    our known good card directories - which are the smae as our SQL table names.
-
-    Args:
-        path: path to verify
-
-    Raises:
-        HTTPException: Invalid path
-    """
-    # For v1 and v2 all artifacts belong to a registry (exception being mlflow artifacts)
-    if any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
-        return
-
-    # Determine if this an mlflow URI. opsml allowed mlflow links in early versions
-    #
-    # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path>/artifacts with artifact_path being a uid
-    has_artifacts, has_uuid = False, False
-    for split in path.split("/"):
-        if split == "artifacts":
-            has_artifacts = True
-            continue
-        try:
-            UUID(split, version=4)  # we use uuid4
-            has_uuid = True
-        except ValueError:
-            pass
-
-    if has_uuid and has_artifacts:
-        return
-
-    raise HTTPException(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        detail="Path is not a valid registry path",
-    )
-
-
-@router.post("/upload", name="upload", dependencies=[Depends(verify_token)])
-async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
+@router.put("/upload/{write_path}", name="upload", dependencies=[Depends(verify_token)])
+async def upload_file(
+    request: Request,
+    write_path: Annotated[str, Depends(swap_opsml_root)],
+) -> Dict[str, str]:  # pragma: no cover
     """Uploads files in chunks to storage destination"""
 
-    filename = request.headers.get("Filename")
-    write_path = request.headers.get("WritePath")
+    write_path = Path(write_path)
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
-    if filename is None:
+    if write_path.suffix == "":
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Filename header is missing",
+            detail="No filename with suffix provided",
         )
-
-    if write_path is None:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="No write path provided",
-        )
-
-    # check root path
-    write_path = swap_opsml_root(write_path)
-
-    # prevent arbitrary file uploads to random dirs
-    # Files can only be uploaded to paths that have a registry dir name
-    _verify_path(path=write_path)
 
     try:
         file_ = ExternalFileTarget(
-            filename=filename,
             write_path=write_path,
             storage_client=request.app.state.storage_client,
             validator=MaxSizeValidator(MAX_FILE_SIZE),
@@ -142,9 +88,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File is missing",
         )
-    return {
-        "storage_uri": os.path.join(write_path, filename),
-    }
+    return {"storage_uri": write_path.as_posix()}
 
 
 @router.get("/files/download/{read_path}", name="download_file")
@@ -163,13 +107,6 @@ def download_file(
     Returns:
         Streaming file response
     """
-
-    # change get to accept registry, uuid and entitry to download
-    # entity can be data
-    # prevent arbitrary file downloads
-    # Files can only be downloaded from registry paths
-    _verify_path(path=read_path)
-
     storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
 
     try:
@@ -199,8 +136,6 @@ def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_ro
     Returns:
         `ListFileResponse`
     """
-    _verify_path(path=read_path)
-
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
         return ListFileResponse(files=storage_client.ls(Path(read_path)))
@@ -212,11 +147,7 @@ def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_ro
         ) from error
 
 
-@router.get(
-    "/files/delete/{read_path}",
-    name="delete_files",
-    dependencies=[Depends(verify_token), Depends(swap_opsml_root)],
-)
+@router.get("/files/delete/{read_path}", name="delete_files", dependencies=[Depends(verify_token)])
 def delete_files(
     request: Request,
     read_path: Annotated[str, Depends(swap_opsml_root)],
@@ -232,10 +163,6 @@ def delete_files(
     Returns:
         `DeleteFileResponse`
     """
-
-    # prevent arbitrary lists
-    # Files can only be listed from pre-defined registry paths
-    _verify_path(path=read_path)
 
     try:
         storage_client: StorageClientBase = request.app.state.storage_client

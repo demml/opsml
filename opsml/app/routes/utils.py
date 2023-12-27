@@ -50,7 +50,9 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
     return [card["version"] for card in registry.list_cards(name=model, team=team, as_dataframe=False)]
 
 
-def get_names_teams_versions(registry: CardRegistry, team: str, name: str) -> Tuple[Sequence[str], Sequence[str], List[str]]:
+def get_names_teams_versions(
+    registry: CardRegistry, team: str, name: str
+) -> Tuple[Sequence[str], Sequence[str], List[str]]:
     """Helper functions to get the names, teams, and versions for a given registry
 
     Args:
@@ -164,23 +166,22 @@ class MaxBodySizeValidator:
 class ExternalFileTarget(FileTarget):  # type: ignore[misc]
     def __init__(  # pylint: disable=keyword-arg-before-vararg
         self,
-        filename: str,
-        write_path: str,
+        write_path: Path,
         storage_client: StorageClient,
         allow_overwrite: bool = True,
         *args: Any,
         **kwargs: Any,
     ):
-        super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
+        super().__init__(filename=write_path.name, allow_overwrite=allow_overwrite, *args, **kwargs)
 
         self.storage_client = storage_client
-        self.filepath = Path(write_path, filename)
+        self.write_path = write_path
 
         if isinstance(self.storage_client, LocalStorageClient):
-            self.filepath.parent.mkdir(parents=True, exist_ok=True)
+            self.write_path.parent.mkdir(parents=True, exist_ok=True)
 
     def on_start(self) -> None:
-        self._fd = self.storage_client.open(self.filepath, self._mode)
+        self._fd = self.storage_client.open(self.write_path, self._mode)
 
 
 def list_team_name_info(registry: CardRegistry, team: Optional[str] = None) -> ListTeamNameInfo:
