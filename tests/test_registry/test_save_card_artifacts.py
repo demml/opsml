@@ -44,8 +44,4 @@ def test_save_modelcard_api_client(random_forest_classifier: SklearnModel, api_s
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib").exists()
     assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib").exists()
     assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx").exists()
-    #cleanup()
-    
-    
-    
-    
+    # cleanup()

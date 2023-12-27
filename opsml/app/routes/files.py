@@ -3,9 +3,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict, cast, Annotated
-from uuid import UUID
 from pathlib import Path
+from typing import Annotated, Dict, cast
+from uuid import UUID
+
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -13,11 +14,8 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
-from opsml.app.core.dependencies import verify_token, swap_opsml_root
-from opsml.app.routes.pydantic_models import (
-    DeleteFileResponse,
-    ListFileResponse,
-)
+from opsml.app.core.dependencies import swap_opsml_root, verify_token
+from opsml.app.routes.pydantic_models import DeleteFileResponse, ListFileResponse
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
