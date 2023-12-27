@@ -50,9 +50,7 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
     return [card["version"] for card in registry.list_cards(name=model, team=team, as_dataframe=False)]
 
 
-def get_names_teams_versions(
-    registry: CardRegistry, team: str, name: str
-) -> Tuple[Sequence[str], Sequence[str], List[str]]:
+def get_names_teams_versions(registry: CardRegistry, team: str, name: str) -> Tuple[Sequence[str], Sequence[str], List[str]]:
     """Helper functions to get the names, teams, and versions for a given registry
 
     Args:
@@ -176,14 +174,10 @@ class ExternalFileTarget(FileTarget):  # type: ignore[misc]
         super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
 
         self.storage_client = storage_client
-        self.filepath = f"{write_path}/{filename}"
-        self._create_base_path()
-
-    def _create_base_path(self) -> None:
-        self.filepath = self.storage_client.build_absolute_path(self.filepath)
+        self.filepath = Path(write_path, filename)
 
         if isinstance(self.storage_client, LocalStorageClient):
-            Path(self.filepath).parent.mkdir(parents=True, exist_ok=True)
+            self.filepath.parent.mkdir(parents=True, exist_ok=True)
 
     def on_start(self) -> None:
         self._fd = self.storage_client.open(self.filepath, self._mode)
