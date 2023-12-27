@@ -19,7 +19,7 @@ ValidArrowData = Union[NDArray[Any], pd.DataFrame, pl.DataFrame, pa.Table]
 class ArrowFormatter(ABC):
     @staticmethod
     @abstractmethod
-    def convert(data: Any) -> ArrowTable:
+    def convert(data: Any) -> pa.Table:
         """Converts data to pyarrow"""
         raise NotImplementedError
 
@@ -32,7 +32,7 @@ class ArrowFormatter(ABC):
 
 class PolarsFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: pl.DataFrame) -> ArrowTable:
+    def convert(data: pl.DataFrame) -> pa.Table:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -43,7 +43,7 @@ class PolarsFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        return ArrowTable(table=data.to_arrow())
+        return data.to_arrow()
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
@@ -52,7 +52,7 @@ class PolarsFormatter(ArrowFormatter):
 
 class PandasFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: pd.DataFrame) -> ArrowTable:
+    def convert(data: pd.DataFrame) -> pa.Table:
         """Convert pandas dataframe to pyarrow table
 
         Args:
@@ -63,38 +63,16 @@ class PandasFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        pa_table = pa.Table.from_pandas(data, preserve_index=False)
-
-        return ArrowTable(table=pa_table)
+        return pa.Table.from_pandas(data, preserve_index=False)
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
         return AllowedDataType.PANDAS == data_type
 
 
-class NumpyFormatter(ArrowFormatter):
-    @staticmethod
-    def convert(data: NDArray[Any]) -> ArrowTable:
-        """Convert numpy array to pyarrow table
-
-        Args:
-            data (np.ndarray): Numpy array to convert.
-            Assumes data is in shape (rows, columns).
-
-        Returns
-            Numpy array
-        """
-
-        return ArrowTable(table=data)
-
-    @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.NUMPY == data_type
-
-
 class ArrowTableFormatter(ArrowFormatter):
     @staticmethod
-    def convert(data: pa.Table) -> ArrowTable:
+    def convert(data: pa.Table) -> pa.Table:
         """Take pyarrow table and returns pyarrow table
 
         Args:
@@ -104,7 +82,7 @@ class ArrowTableFormatter(ArrowFormatter):
             ArrowTable pydantic class containing table and table type
         """
 
-        return ArrowTable(table=data)
+        return data
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
@@ -119,7 +97,6 @@ class DataFormatter:
             pa.Table,
             pd.DataFrame,
             pl.DataFrame,
-            NDArray[Any],
         ],
         data_type: str,
     ) -> ArrowTable:
