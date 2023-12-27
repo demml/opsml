@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, field_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.image.dataset import ImageDataset
@@ -49,12 +49,11 @@ class AllowedDataType(str, Enum):
     JOBLIB = "joblib"
 
 
-class ArrowTable(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    table: Union[pa.Table, np.ndarray]  # type: ignore
-    storage_uri: Optional[str] = None
-    feature_map: Optional[Dict[str, Any]] = None
+# class ArrowTable(BaseModel):
+#    model_config = ConfigDict(arbitrary_types_allowed=True)
+#
+#    table: Union[pa.Table, np.ndarray]
+#    feature_map: Optional[Dict[str, Any]] = None
 
 
 def check_data_type(data: ValidData) -> str:

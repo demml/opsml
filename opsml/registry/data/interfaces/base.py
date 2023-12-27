@@ -1,18 +1,15 @@
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import joblib
-import numpy as np
-import polars as pl
 import pandas as pd
+import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.profile.profile_data import DataProfiler, ProfileReport
-from opsml.helpers.utils import get_class_name
-from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel
-from opsml.registry.types.extra import Suffix
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
+from opsml.registry.types.extra import Suffix
 
 logger = ArtifactLogger.get_logger()
 
@@ -24,13 +21,17 @@ class DataInterface(BaseModel):
     data_splits: List[DataSplit] = []
     dependent_vars: List[Union[int, str]] = []
     data_profile: Optional[ProfileReport] = None
-    data_type: str = CommonKwargs.UNDEFINED.value
+    feature_map: Dict[str, str] = {}
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=False,
         validate_default=True,
     )
+
+    @property
+    def data_type(self) -> str:
+        raise NotImplementedError
 
     @field_validator("data_profile", mode="before")
     @classmethod

@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-import os
 import tempfile
 from pathlib import Path
 from typing import Any, Optional, Type, Union, cast
@@ -111,18 +110,6 @@ class ArtifactStorage:
 
     def _load_artifact(self, file_path: str) -> Any:
         raise NotImplementedError()
-
-    def load_artifact(self, storage_uri: str, **kwargs: Any) -> Any:
-        """Loads a single file artifact.
-
-        Artifacts that represent directories must override load_artifact and
-        implement their own loading behavior.
-        """
-
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            tmppath = os.path.join(tmpdirname, os.path.basename(storage_uri))
-            uri = self.storage_client.get(storage_uri, tmppath, recursive=False)
-            return self._load_artifact(uri)
 
     @staticmethod
     def validate(artifact_type: ArtifactStorageType) -> bool:
