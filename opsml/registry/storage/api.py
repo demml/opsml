@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import json as py_json
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
