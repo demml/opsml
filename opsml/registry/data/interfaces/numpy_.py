@@ -17,7 +17,7 @@ class NumpyData(DataInterface):
         zarr.save(save_path, self.data)
 
         self.feature_map = {
-            "numpy_array": Feature(
+            "features": Feature(
                 feature_type=str(self.data.dtype),
                 shape=self.data.shape,
             )

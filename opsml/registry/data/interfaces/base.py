@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.types.extra import Suffix
+from opsml.registry.types import Suffix, Feature
 
 logger = ArtifactLogger.get_logger()
 
@@ -21,7 +21,7 @@ class DataInterface(BaseModel):
     data_splits: List[DataSplit] = []
     dependent_vars: List[Union[int, str]] = []
     data_profile: Optional[ProfileReport] = None
-    feature_map: Dict[str, str] = {}
+    feature_map: Dict[str, Dict[str, Feature]] = {}
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -89,11 +89,12 @@ class DataInterface(BaseModel):
 
         if save_type == "html":
             profile_artifact = self.data_profile.to_html()
+            save_path = path.with_suffix(Suffix.HTML.value)
+            save_path.write_text(profile_artifact, encoding="utf-8")
         else:
             profile_artifact = self.data_profile.dumps()
-
-        save_path = path.with_suffix(Suffix.JOBLIB.value)
-        joblib.dump(profile_artifact, save_path)
+            save_path = path.with_suffix(Suffix.JOBLIB.value)
+            joblib.dump(profile_artifact, save_path)
 
         return save_path
 
