@@ -111,20 +111,10 @@ class ApiClient:
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(
-        self,
-        route: str,
-        json: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        self, route: str, files: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         result = ""
-        with self.client.stream(
-            method="POST",
-            url=f"{self._base_url}/{route}",
-            files=files,
-            json=json,
-            headers=headers,
-        ) as response:
+        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
             for data in response.iter_bytes():
                 result += data.decode("utf-8")
 
