@@ -10,7 +10,7 @@ import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
 
-from opsml.registry.types import AllowedDataType, ArrowTable
+from opsml.registry.types import AllowedDataType, Feature
 
 ValidArrowData = Union[NDArray[Any], pd.DataFrame, pl.DataFrame, pa.Table]
 
@@ -178,7 +178,7 @@ class PolarsSchemaValidator(SchemaValidator):
     def __init__(
         self,
         data: pl.DataFrame,
-        schema: pl.type_aliases.SchemaDict,
+        schema: Dict[str, Feature],
     ):
         """Instantiates schema validator for Polars dataframes
 
@@ -194,8 +194,7 @@ class PolarsSchemaValidator(SchemaValidator):
     def validate_schema(self) -> pl.DataFrame:
         """Validate polars schema. Columns are converted if schema does not match"""
 
-        if self.data.schema != self.schema:
-            self.data = self.data.with_columns([pl.col(col).cast(self.schema[col]) for col in self.data.columns])
+        self.data = self.data.with_columns([pl.col(col).cast(self.schema[col]) for col in self.data.columns])
 
         return cast(pl.DataFrame, self.data)
 
@@ -208,7 +207,7 @@ class PandasSchemaValidator(SchemaValidator):
     def __init__(
         self,
         data: pd.DataFrame,
-        schema: Dict[str, str],
+        schema: Dict[str, Feature],
     ):
         """Instantiates schema validator for Polars dataframes
 
@@ -223,11 +222,10 @@ class PandasSchemaValidator(SchemaValidator):
     def validate_schema(self) -> pd.DataFrame:
         """Validate pandas schema. Columns are converted if schema does not match"""
 
-        if self.data.dtypes.to_dict() != self.schema:
-            for col in self.data.columns:
-                self.data[col] = self.data[col].astype(self.schema[col])
+        for col in self.data.columns:
+            self.data[col] = self.data[col].astype(self.schema[col])
 
-        return self.data
+        return cast(pd.DataFrame, self.data)
 
     @staticmethod
     def validate_data(data_type: str) -> bool:
@@ -236,7 +234,7 @@ class PandasSchemaValidator(SchemaValidator):
 
 def check_data_schema(
     data: ValidArrowData,
-    schema: Dict[str, str],
+    schema: Dict[str, Feature],
     data_type: str,
 ) -> ValidArrowData:
     """Check if data schema matches schema

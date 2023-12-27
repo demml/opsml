@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import pandas as pd
 import pyarrow as pa
@@ -7,6 +7,7 @@ import pyarrow.parquet as pq
 
 from opsml.registry.data.interfaces.base import DataInterface
 from opsml.registry.types import AllowedDataType, Feature, Suffix
+from opsml.registry.data.formatter import check_data_schema
 
 
 class PandasData(DataInterface):
@@ -19,7 +20,7 @@ class PandasData(DataInterface):
         arrow_table = pa.Table.from_pandas(self.data, preserve_index=False)
         self.feature_map = {
             key: Feature(
-                feature_type=str(value).lower(),
+                feature_type=str(value),
                 shape=(1,),
             )
             for key, value in self.data.dtypes.to_dict().items()
@@ -34,7 +35,14 @@ class PandasData(DataInterface):
 
         load_path = path.with_suffix(Suffix.PARQUET.value)
         pa_table: pa.Table = pq.ParquetDataset(path_or_paths=load_path).read()
-        self.data = pa_table.to_pandas()
+
+        data = check_data_schema(
+            pa_table.to_pandas(),
+            self.feature_map,
+            self.data_type,
+        )
+
+        self.data = cast(pd.DataFrame, data)
 
     @property
     def data_type(self) -> str:
