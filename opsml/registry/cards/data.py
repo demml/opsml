@@ -2,23 +2,16 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import os
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, Optional, Union
 
-import pandas as pd
-import polars as pl
-from pydantic import field_validator, model_validator
+from pydantic import field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
-from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.validator import DataCardValidator
-from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.image.dataset import ImageDataset
+from opsml.registry.data.interfaces import DataInterface
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
-from opsml.registry.storage import client
-from opsml.registry.types import AllowedDataType, CardType, DataCardMetadata, ValidData
+from opsml.registry.types import CardType, DataCardMetadata
 
 logger = ArtifactLogger.get_logger()
 
@@ -54,51 +47,9 @@ class DataCard(ArtifactCard):
 
     """
 
-    data: Optional[ValidData] = None
-    data_splits: List[DataSplit] = []
-    dependent_vars: List[Union[int, str]] = []
+    interface: Optional[DataInterface] = None
     sql_logic: Dict[str, str] = {}
-    data_profile: Optional[ProfileReport] = None
     metadata: DataCardMetadata = DataCardMetadata()
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_data(cls, card_args: Dict[str, Any]) -> ValidData:
-        """Custom data validator to check data type.
-
-        Options for validation are:
-            - Card can provide data, a data_uri or sql_logic (and any combination)
-            - If a data_uri is present, data and sql_logic are not required (data has already been saved)
-            - If data is not present and sql_logic is present, validation passes
-            - If data is present, data types are checked
-        """
-
-        data = card_args.get("data")
-        uris = card_args.get("uris")
-        metadata = card_args.get("metadata")
-        sql_logic: Dict[str, str] = card_args.get("sql_logic", {})
-
-        validator = DataCardValidator(
-            data=data,
-            uris=uris,
-            sql_logic=sql_logic,
-            metadata=metadata,
-        )
-
-        if validator.has_datacard_uri:
-            return card_args
-
-        card_args["metadata"] = validator.get_metadata()
-        return card_args
-
-    @field_validator("data_profile", mode="before")
-    @classmethod
-    def _check_profile(cls, profile: Optional[ProfileReport]) -> Optional[ProfileReport]:
-        if profile is not None:
-            from ydata_profiling import ProfileReport as ydata_profile
-
-            assert isinstance(profile, ydata_profile)
-        return profile
 
     @field_validator("sql_logic", mode="before")
     @classmethod
@@ -118,88 +69,6 @@ class DataCard(ArtifactCard):
                     raise ValueError(f"Could not load sql file {query}. {error}") from error
 
         return sql_logic
-
-    def split_data(self) -> Optional[DataHolder]:
-        """
-        Loops through data splits and splits data either by indexing or
-        column values
-
-        Example:
-
-            ```python
-            card_info = CardInfo(name="linnerrud", team="tutorial", user_email="user@email.com")
-            data_card = DataCard(
-                info=card_info,
-                data=data,
-                dependent_vars=["Pulse"],
-                # define splits
-                data_splits=[
-                    {"label": "train", "indices": train_idx},
-                    {"label": "test", "indices": test_idx},
-                ],
-
-            )
-
-            splits = data_card.split_data()
-            print(splits.train.X.head())
-
-               Chins  Situps  Jumps
-            0    5.0   162.0   60.0
-            1    2.0   110.0   60.0
-            2   12.0   101.0  101.0
-            3   12.0   105.0   37.0
-            4   13.0   155.0   58.0
-            ```
-
-        Returns
-            Class containing data splits
-        """
-        if self.data is None:
-            self.load_data()
-
-        assert not isinstance(self.data, ImageDataset), "ImageDataset splits are not currently supported"
-
-        if len(self.data_splits) > 0:
-            data_holder = DataHolder()
-            for data_split in self.data_splits:
-                label, data = DataSplitter.split(
-                    split=data_split,
-                    dependent_vars=self.dependent_vars,
-                    data=self.data,
-                    data_type=self.metadata.data_type,
-                )
-                setattr(data_holder, label, data)
-
-            return data_holder
-        raise ValueError("No data splits provided")
-
-    def load_data(self) -> None:
-        """Loads DataCard data from storage"""
-
-        # download data
-        download_object(
-            card=self,
-            artifact_type=self.metadata.data_type,
-            storage_client=client.storage_client,
-        )
-
-    def load_profile(self) -> None:
-        """Loads DataCard data profile from storage"""
-
-        if self.data_profile is not None:
-            logger.info("Data profile already exists")
-            return
-
-        if self.metadata.uris.profile_uri is None:
-            logger.info("DataCard is not associated with a data profile")
-            return
-
-        # download data profile
-        download_object(
-            card=self,
-            artifact_type=AllowedDataType.PROFILE,
-            storage_client=client.storage_client,
-        )
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """
@@ -254,160 +123,137 @@ class DataCard(ArtifactCard):
         else:
             raise ValueError("SQL Query or Filename must be provided")
 
-    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
-        """Creates a data profile report
-
-        Args:
-            sample_perc:
-                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
-                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
-
-        """
-
-        if isinstance(self.data, (pl.DataFrame, pd.DataFrame)):
-            if self.data_profile is None:
-                self.data_profile = DataProfiler.create_profile_report(
-                    data=self.data,
-                    name=self.name,
-                    sample_perc=min(sample_perc, 1),  # max of 1
-                )
-                return self.data_profile
-
-            logger.info("Data profile already exists")
-            return self.data_profile
-
-        raise ValueError("A pandas dataframe type is required to create a data profile")
-
     @property
     def card_type(self) -> str:
         return CardType.DATACARD.value
 
 
-class Downloader:
-    def __init__(self, card: ArtifactCard):  # pylint: disable=redefined-outer-name
-        self._card = card
-
-    def download(self) -> None:
-        raise NotImplementedError
-
-    @staticmethod
-    def validate(artifact_type: str) -> bool:
-        raise NotImplementedError
-
-
-class DataProfileDownloader(Downloader):
-    @property
-    def card(self) -> DataCard:
-        return cast(DataCard, self._card)
-
-    def download(self) -> None:
-        """Downloads a data profile from storage"""
-
-        # data_profile = load_artifact_from_storage(
-        #    artifact_type=AllowedDataType.DICT,
-        #    storage_request=StorageRequest(
-        #        registry_type=self.card.card_type,
-        #        card_uid=self.card.uid,
-        #        uri_name=UriNames.PROFILE_URI,
-        #    ),
-        # )
-
-    #
-    # setattr(self.card, "data_profile", data_profile)
-
-    @staticmethod
-    def validate(artifact_type: str) -> bool:
-        return AllowedDataType.PROFILE in artifact_type
-
-
-class DataDownloader(Downloader):
-    """Class for downloading data from storage"""
-
-    @property
-    def card(self) -> DataCard:
-        return cast(DataCard, self._card)
-
-    def download(self) -> None:
-        if self.card.data is not None:
-            logger.info("Data already exists")
-            return
-
-    # data = load_artifact_from_storage(
-    #    artifact_type=self.card.metadata.data_type,
-    #    storage_request=StorageRequest(
-    #        registry_type=self.card.card_type,
-    #        card_uid=self.card.uid,
-    #        uri_name=UriNames.DATA_URI,
-    #    ),
-    # )
-
-    # data = check_data_schema(
-    #    data,
-    #    cast(Dict[str, str], self.card.metadata.feature_map),
-    #    self.card.metadata.data_type,
-    # )
-    # setattr(self.card, "data", data)
-
-    @staticmethod
-    def validate(artifact_type: str) -> bool:
-        return artifact_type in [
-            AllowedDataType.NUMPY,
-            AllowedDataType.PANDAS,
-            AllowedDataType.POLARS,
-            AllowedDataType.PYARROW,
-            AllowedDataType.DICT,
-        ]
-
-
-class ImageDownloader(Downloader):
-    @property
-    def card(self) -> DataCard:
-        return cast(DataCard, self._card)
-
-    def download(self) -> None:
-        data = cast(ImageDataset, self.card.data)
-        if os.path.exists(data.image_dir):
-            logger.info("Image data already exists")
-            return
-
-        # kwargs = {"image_dir": data.image_dir}
-
-    #
-    # load_artifact_from_storage(
-    #    artifact_type=self.card.metadata.data_type,
-    #    storage_request=StorageRequest(
-    #        registry_type=self.card.card_type,
-    #        card_uid=self.card.uid,
-    #        uri_name=UriNames.DATA_URI,
-    #    ),
-    #    **kwargs,
-    # )
-
-    @staticmethod
-    def validate(artifact_type: str) -> bool:
-        return AllowedDataType.IMAGE in artifact_type
-
-
-def download_object(
-    card: ArtifactCard,
-    artifact_type: str,
-    storage_client: client.StorageClient,
-) -> None:
-    """Download data from storage
-
-    Args:
-        card:
-            Artifact Card
-        storage_client:
-            Storage client to use for downloading data
-        artifact_type:
-            Type of artifact to download
-    """
-    downloader = next(
-        downloader
-        for downloader in Downloader.__subclasses__()
-        if downloader.validate(
-            artifact_type=artifact_type,
-        )
-    )
-    return downloader(card=card, storage_client=storage_client).download()
+# class Downloader:
+#    def __init__(self, card: ArtifactCard):  # pylint: disable=redefined-outer-name
+#        self._card = card
+#
+#    def download(self) -> None:
+#        raise NotImplementedError
+#
+#    @staticmethod
+#    def validate(artifact_type: str) -> bool:
+#        raise NotImplementedError
+#
+#
+# class DataProfileDownloader(Downloader):
+#    @property
+#    def card(self) -> DataCard:
+#        return cast(DataCard, self._card)
+#
+#    def download(self) -> None:
+#        """Downloads a data profile from storage"""
+#
+#        # data_profile = load_artifact_from_storage(
+#        #    artifact_type=AllowedDataType.DICT,
+#        #    storage_request=StorageRequest(
+#        #        registry_type=self.card.card_type,
+#        #        card_uid=self.card.uid,
+#        #        uri_name=UriNames.PROFILE_URI,
+#        #    ),
+#        # )
+#
+#    #
+#    # setattr(self.card, "data_profile", data_profile)
+#
+#    @staticmethod
+#    def validate(artifact_type: str) -> bool:
+#        return AllowedDataType.PROFILE in artifact_type
+#
+#
+# class DataDownloader(Downloader):
+#    """Class for downloading data from storage"""
+#
+#    @property
+#    def card(self) -> DataCard:
+#        return cast(DataCard, self._card)
+#
+#    def download(self) -> None:
+#        if self.card.data is not None:
+#            logger.info("Data already exists")
+#            return
+#
+#    # data = load_artifact_from_storage(
+#    #    artifact_type=self.card.metadata.data_type,
+#    #    storage_request=StorageRequest(
+#    #        registry_type=self.card.card_type,
+#    #        card_uid=self.card.uid,
+#    #        uri_name=UriNames.DATA_URI,
+#    #    ),
+#    # )
+#
+#    # data = check_data_schema(
+#    #    data,
+#    #    cast(Dict[str, str], self.card.metadata.feature_map),
+#    #    self.card.metadata.data_type,
+#    # )
+#    # setattr(self.card, "data", data)
+#
+#    @staticmethod
+#    def validate(artifact_type: str) -> bool:
+#        return artifact_type in [
+#            AllowedDataType.NUMPY,
+#            AllowedDataType.PANDAS,
+#            AllowedDataType.POLARS,
+#            AllowedDataType.PYARROW,
+#            AllowedDataType.DICT,
+#        ]
+#
+#
+# class ImageDownloader(Downloader):
+#    @property
+#    def card(self) -> DataCard:
+#        return cast(DataCard, self._card)
+#
+#    def download(self) -> None:
+#        data = cast(ImageDataset, self.card.data)
+#        if os.path.exists(data.image_dir):
+#            logger.info("Image data already exists")
+#            return
+#
+#        # kwargs = {"image_dir": data.image_dir}
+#
+#    #
+#    # load_artifact_from_storage(
+#    #    artifact_type=self.card.metadata.data_type,
+#    #    storage_request=StorageRequest(
+#    #        registry_type=self.card.card_type,
+#    #        card_uid=self.card.uid,
+#    #        uri_name=UriNames.DATA_URI,
+#    #    ),
+#    #    **kwargs,
+#    # )
+#
+#    @staticmethod
+#    def validate(artifact_type: str) -> bool:
+#        return AllowedDataType.IMAGE in artifact_type
+#
+#
+# def download_object(
+#    card: ArtifactCard,
+#    artifact_type: str,
+#    storage_client: client.StorageClient,
+# ) -> None:
+#    """Download data from storage
+#
+#    Args:
+#        card:
+#            Artifact Card
+#        storage_client:
+#            Storage client to use for downloading data
+#        artifact_type:
+#            Type of artifact to download
+#    """
+#    downloader = next(
+#        downloader
+#        for downloader in Downloader.__subclasses__()
+#        if downloader.validate(
+#            artifact_type=artifact_type,
+#        )
+#    )
+#    return downloader(card=card, storage_client=storage_client).download()
+#
