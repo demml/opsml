@@ -19,34 +19,25 @@ class DataCard(ArtifactCard):
     """Create a DataCard from your data.
 
     Args:
-        data:
-            Data to use for data card. Can be a pyarrow table, pandas dataframe, polars dataframe
-            or numpy array
+        interface:
+            Instance of `DataInterface` that contains data
         name:
             What to name the data
         team:
             Team that this data is associated with
         user_email:
             Email to associate with data card
-        dependent_vars:
-            List of dependent variables. Can be string or index if using numpy
-        data_splits:
-            Optional list of `DataSplit`
-        sql_logic:
-            Dictionary of strings containing sql logic or sql files used to create the data
         version:
             DataCard version
         uid:
             Unique id assigned to the DataCard
-        data_profile:
-            Optional ydata-profiling `ProfileReport`
 
     Returns:
         DataCard
 
     """
 
-    interface: SerializeAsAny[DataInterface] = None
+    interface: SerializeAsAny[DataInterface]
     metadata: DataCardMetadata = DataCardMetadata()
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
