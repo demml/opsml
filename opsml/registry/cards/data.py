@@ -2,12 +2,11 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
-from pydantic import field_validator, SerializeAsAny
+from pydantic import SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FileUtils
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.data.interfaces import DataInterface
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord

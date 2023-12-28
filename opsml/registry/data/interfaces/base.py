@@ -10,7 +10,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.types import Feature, Suffix, CommonKwargs
+from opsml.registry.types import CommonKwargs, Feature, Suffix
 
 logger = ArtifactLogger.get_logger()
 

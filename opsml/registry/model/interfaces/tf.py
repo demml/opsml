@@ -41,12 +41,10 @@ try:
         model: Optional[tf.keras.Model] = None
         sample_data: Optional[VALID_DATA] = None
 
-
         @property
         def model_class(self) -> str:
             return TrainedModelType.TF_KERAS.value
-        
-        
+
         @classmethod
         def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
             """Check sample data and returns one record to be used

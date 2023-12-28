@@ -209,7 +209,7 @@ class _ModelConverter:
         else:
             onnx_model, onnx_input_features, onnx_output_features = self._load_onnx_model()
 
-        schema = (
+        schema = DataSchema(
             onnx_input_features=onnx_input_features,
             onnx_output_features=onnx_output_features,
         )

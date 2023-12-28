@@ -44,7 +44,7 @@ try:
         @property
         def model_class(self) -> str:
             return TrainedModelType.SKLEARN_ESTIMATOR.value
-        
+
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

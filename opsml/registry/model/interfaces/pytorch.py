@@ -48,7 +48,7 @@ try:
         @property
         def model_class(self) -> str:
             return TrainedModelType.PYTORCH_LIGHTNING.value
-        
+
         @classmethod
         def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
             """Check sample data and returns one record to be used
