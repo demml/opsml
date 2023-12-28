@@ -120,6 +120,11 @@ try:
             """
             self.model = tf.keras.models.load_model(path)
 
+        @property
+        def storage_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return ""
+
 except ModuleNotFoundError:
 
     class TensorFlowModel(ModelInterface):

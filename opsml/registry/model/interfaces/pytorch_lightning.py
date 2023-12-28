@@ -6,7 +6,7 @@ from pydantic import model_validator
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import SamplePrediction, get_model_args
 from opsml.registry.model.interfaces.pytorch import PyTorchModel
-from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType
+from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType, Suffix
 
 try:
     from lightning import Trainer
@@ -47,7 +47,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("load_card", False):
+            if model_args.get("load_interface", False):
                 return model_args
 
             model, module, bases = get_model_args(model)
@@ -96,7 +96,7 @@ try:
 
         def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
-            self.model.save_checkpoint(path.with_suffix(".ckpt"))
+            self.model.save_checkpoint(path.with_suffix(self.storage_suffix))
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load lightning model from path"""
@@ -106,16 +106,21 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    self.model = model_arch.load_from_checkpoint(path.with_suffix(".ckpt"))
+                    self.model = model_arch.load_from_checkpoint(path.with_suffix(self.storage_suffix))
 
                 else:
                     # load via torch
                     import torch
 
-                    self.model = torch.load(path.with_suffix(".ckpt"))
+                    self.model = torch.load(path.with_suffix(self.storage_suffix))
 
             except Exception as e:
                 raise ValueError(f"Unable to load pytorch lightning model: {e}")
+
+        @property
+        def storage_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return Suffix.CKPT.value
 
 except ModuleNotFoundError:
 
@@ -123,6 +128,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")

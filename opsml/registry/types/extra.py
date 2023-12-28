@@ -74,6 +74,8 @@ class Suffix(str, Enum):
     JOBLIB = ".joblib"
     HTML = ".html"
     JSON = ".json"
+    CKPT = ".ckpt"
+    PT = ".pt"
 
 
 @unique

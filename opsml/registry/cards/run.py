@@ -56,7 +56,6 @@ class RunCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     metrics: METRICS = {}
     parameters: PARAMS = {}
-    artifacts: Dict[str, Any] = {}
     artifact_uris: Dict[str, str] = {}
     tags: Dict[str, str] = {}
     project_id: Optional[str] = None
@@ -161,7 +160,7 @@ class RunCard(ArtifactCard):
         for key, value in metrics.items():
             self.log_metric(key, value, step)
 
-    def log_artifact(self, name: str, artifact: Any) -> None:
+    def log_artifact_from_file(self, name: str, artifact: Any) -> None:
         """
         Append any artifact associated with your run to
         the RunCard. The artifact will be saved and the uri
@@ -186,7 +185,7 @@ class RunCard(ArtifactCard):
 
         return RunRegistryRecord(**{**self.model_dump(exclude=exclude_attr), **kwargs})
 
-    def add_artifact_uri(self, name: str, uri: str) -> None:
+    def _add_artifact_uri(self, name: str, uri: str) -> None:
         """
         Adds an artifact_uri to the runcard
 
