@@ -2,11 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import tempfile
+from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import cast, Iterator
-
-from matplotlib import path
+from typing import Iterator, cast
 
 
 from opsml.registry.cards.base import ArtifactCard
@@ -14,11 +13,8 @@ from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.interfaces.huggingface import HuggingFaceModel
 from opsml.registry.storage import client
-from opsml.registry.types import CardType, SaveName, UriNames
+from opsml.registry.types import CardType, SaveName
 from opsml.registry.types.extra import Suffix
-
-
-from contextlib import contextmanager
 
 
 class CardLoader:
@@ -149,12 +145,7 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(
-            lpath,
-            rpath,
-            SaveName.SAMPLE_MODEL_DATA.value,
-            Suffix.JOBLIB.value,
-        )
+        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value)
         self.card.interface.load_sample_data(lpath)
 
     def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
