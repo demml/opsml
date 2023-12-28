@@ -145,7 +145,7 @@ class DataCardSaver(CardSaver):
         except Exception as e:
             # remove any files that have been uploaded
             self.storage_client.rm(self.rpath)
-            logger.error(f"Error saving data artifacts: {e}")
+            logger.error("Error saving data artifacts: {}", e)
             raise e
 
     @staticmethod
@@ -254,7 +254,7 @@ class ModelCardSaver(CardSaver):
             except Exception as e:
                 # remove any files that have been uploaded
                 self.storage_client.rm(self.rpath)
-                logger.error(f"Error saving model artifacts: {e}")
+                logger.error("Error saving model artifacts: {}", e)
                 raise e
 
     @staticmethod
