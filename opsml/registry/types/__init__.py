@@ -75,3 +75,4 @@ from opsml.registry.types.storage import (
     StorageSystem,
     StoreLike,
 )
+from opsml.registry.types.sql import RegistryTableNames
