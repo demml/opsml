@@ -9,10 +9,10 @@ from pydantic import ConfigDict, SerializeAsAny, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.card_loader import ModelCardLoader
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.types import CardType, ModelCardMetadata
-from opsml.registry.cards.card_loader import ModelCardLoader
 
 logger = ArtifactLogger.get_logger()
 
