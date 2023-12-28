@@ -314,9 +314,7 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
     """
 
     card_saver = next(
-        card_saver
-        for card_saver in CardArtifactSaver.__subclasses__()
-        if card_saver.validate(card_type=card.__class__.__name__.lower())
+        card_saver for card_saver in CardArtifactSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
     )
 
     saver = card_saver(card=card)
