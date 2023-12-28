@@ -168,9 +168,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
 
 
 class TeamsResponse(BaseModel):
@@ -195,6 +193,10 @@ class ListFileResponse(BaseModel):
 
 class DeleteFileResponse(BaseModel):
     deleted: bool
+
+
+class FileExistsResponse(BaseModel):
+    exists: bool
 
 
 class DeleteFileRequest(BaseModel):

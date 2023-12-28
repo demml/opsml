@@ -42,8 +42,21 @@ class CardLoader:
     def card(self) -> ArtifactCard:
         return self.card
 
-    def save_artifacts(self) -> Tuple[Any, Any]:
-        raise NotImplementedError
+    @cached_property
+    def storage_suffix(self) -> str:
+        return self.card.interface.storage_suffix
+
+    def _load_object(self, object_path: str, suffix: str) -> Path:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lpath = Path(tmp_dir)
+            rpath = self.card.uri
+
+            load_lpath = Path(lpath, object_path).with_suffix(suffix)
+            load_rpath = Path(rpath, object_path).with_suffix(suffix)
+
+            self.storage_client.get(load_rpath, load_lpath)
+
+            return load_lpath
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -51,6 +64,8 @@ class CardLoader:
 
 
 class DataCardLoader(CardLoader):
+    """DataCard loader. Methods are meant to be called individually"""
+
     @cached_property
     def card(self) -> DataCard:
         return cast(DataCard, self._card)
@@ -61,62 +76,59 @@ class DataCardLoader(CardLoader):
         if self.card.interface.data is not None:
             return None
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            lpath = Path(tmp_dir)
-            rpath = self.card.uri
+        lpath = self._load_object(SaveName.DATA.value, self.storage_suffix)
+        self.card.interface.load_data(lpath)
 
-            load_rpath = self.rpath / SaveName.DATA.value
-
-            self.storage_client.get(lpath, rpath)
-
-        save_path = self.lpath / SaveName.DATA.value
-        _ = self.card.interface.save_data(save_path)
-
-        # set feature map on metadata
-        self.card.metadata.feature_map = self.card.interface.feature_map
-
-    def _save_data_profile(self) -> None:
+    def load_data_profile(self) -> None:
         """Saves a data profile"""
 
-        if self.card.data_profile is None:
-            return
+        # check exists
+        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
+        if not self.storage_client.exists(rpath):
+            return None
 
-        save_path = self.lpath / SaveName.DATA_PROFILE.value
+        # load data profile
+        lpath = self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value)
+        self.card.interface.load_profile(lpath)
 
-        # save html and joblib version
-        _ = self.card.interface.save_data_profile(save_path, save_type="html")
-        _ = self.card.interface.save_data_profile(save_path, save_type="joblib")
+    @staticmethod
+    def validate(card_type: str) -> bool:
+        return CardType.DATACARD.value in card_type
 
-    def _save_datacard(self) -> None:
-        """Saves a datacard to file system"""
 
-        exclude_attr = {"interface": {"data", "data_profile"}}
+class ModelCardLoader(CardLoader):
+    """ModelCard loader. Methods are meant to be called individually"""
 
-        dumped_datacard = self.card.model_dump(exclude=exclude_attr)
+    @cached_property
+    def card(self) -> ModelCard:
+        return cast(ModelCard, self._card)
 
-        save_path = Path(self.lpath / SaveName.DATACARD.value).with_suffix(Suffix.JOBLIB.value)
-        joblib.dump(dumped_datacard, save_path)
+    def load_sample_data(self) -> None:
+        pass
 
-    def save_artifacts(self) -> DataCard:
-        """Saves artifacts from a DataCard"""
+    def load_preprocessor(self) -> None:
+        pass
 
-        # quick checks
-        if self.card.interface is None:
-            raise ValueError("DataCard must have a data interface to save artifacts")
+    def load_model(self) -> None:
+        """Saves a data via data interface"""
 
-        if self.card.interface.data is None and bool(self.card.interface.sql_logic) is None:
-            raise ValueError("DataInterface must have data or sql logic")
+        if self.card.interface.model is not None:
+            return None
 
-        # set type needed for loading
-        self.card.metadata.interface_type = self.card.interface.__class__.__name__
+        lpath = self._load_object(SaveName.TRAINED_MODEL, self.storage_suffix)
+        self.card.interface.load_data(lpath)
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            self.card_uris.lpath = Path(tmp_dir)
-            self.card_uris.rpath = self.card.uri
-            self._save_data()
-            self._save_data_profile()
-            self._save_datacard()
-            self.storage_client.put(self.lpath, self.rpath)
+    def load_data_profile(self) -> None:
+        """Saves a data profile"""
+
+        # check exists
+        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
+        if not self.storage_client.exists(rpath):
+            return None
+
+        # load data profile
+        lpath = self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value)
+        self.card.interface.load_profile(lpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:

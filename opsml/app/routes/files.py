@@ -13,7 +13,7 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
 from opsml.app.core.dependencies import swap_opsml_root, verify_token
-from opsml.app.routes.pydantic_models import DeleteFileResponse, ListFileResponse
+from opsml.app.routes.pydantic_models import DeleteFileResponse, ListFileResponse, FileExistsResponse
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
@@ -115,7 +115,6 @@ def download_file(
     storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
 
     try:
-        storage_client = request.app.state.storage_client
         return StreamingResponse(
             storage_client.iterfile(Path(read_path), CHUNK_SIZE),
             media_type="application/octet-stream",
@@ -150,6 +149,26 @@ def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_ro
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error listing files. {error}",
         ) from error
+
+
+@router.get("/files/exists/{read_path}", name="download_file")
+def file_exists(
+    request: Request,
+    read_path: Annotated[str, Depends(swap_opsml_root)],
+) -> FileExistsResponse:
+    """Checks if path exists
+
+    Args:
+        request:
+            request object
+        read_path:
+            path to file
+
+    Returns:
+        FileExistsResponse
+    """
+    storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
+    return storage_client.exists(Path(read_path))
 
 
 @router.get("/files/delete/{read_path}", name="delete_files", dependencies=[Depends(verify_token)])

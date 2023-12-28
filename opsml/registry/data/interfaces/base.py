@@ -134,7 +134,7 @@ class DataInterface(BaseModel):
 
         return save_path
 
-    def load_data(self, path: Path) -> Path:
+    def load_data(self, path: Path) -> None:
         """Load data from pathlib object
 
         Args:
@@ -145,7 +145,7 @@ class DataInterface(BaseModel):
         save_path = path.with_suffix(self.storage_suffix)
         self.data = joblib.load(save_path)
 
-    def load_profile(self, path: Path) -> Path:
+    def load_profile(self, path: Path) -> None:
         """Load data profile from pathlib object
 
         Args:
