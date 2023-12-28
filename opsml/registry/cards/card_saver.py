@@ -5,6 +5,7 @@ import tempfile
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Optional, Tuple, cast
+from venv import logger
 
 import joblib
 from pydantic import BaseModel
@@ -132,13 +133,20 @@ class DataCardArtifactSaver(CardArtifactSaver):
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            self.card_uris.lpath = Path(tmp_dir)
-            self.card_uris.rpath = self.card.uri
-            self._save_data()
-            self._save_data_profile()
-            self._save_datacard()
-            self.storage_client.put(self.lpath, self.rpath)
+        try:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                self.card_uris.lpath = Path(tmp_dir)
+                self.card_uris.rpath = self.card.uri
+                self._save_data()
+                self._save_data_profile()
+                self._save_datacard()
+                self.storage_client.put(self.lpath, self.rpath)
+
+        except Exception as e:
+            # remove any files that have been uploaded
+            self.storage_client.rm(self.rpath)
+            logger.error(f"Error saving data artifacts: {e}")
+            raise e
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -234,13 +242,20 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
 
-            self._save_model()
-            self._save_preprocessor()
-            self._save_onnx_model()
-            self._save_sample_data()
-            self._save_modelcard()
-            self._save_metadata()
-            self.storage_client.put(self.lpath, self.rpath)
+            try:
+                self._save_model()
+                self._save_preprocessor()
+                self._save_onnx_model()
+                self._save_sample_data()
+                self._save_modelcard()
+                self._save_metadata()
+                self.storage_client.put(self.lpath, self.rpath)
+
+            except Exception as e:
+                # remove any files that have been uploaded
+                self.storage_client.rm(self.rpath)
+                logger.error(f"Error saving model artifacts: {e}")
+                raise e
 
     @staticmethod
     def validate(card_type: str) -> bool:
