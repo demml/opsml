@@ -7,7 +7,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import Iterator, cast
 
-
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
@@ -165,7 +164,7 @@ class ModelCardLoader(CardLoader):
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix)
         self.card.interface.load_preprocessor(lpath)
 
-    def _load_model(self, lpath: Path, rpath: Path) -> None:
+    def _load_model(self, lpath: Path, rpath: Path, **kwargs) -> None:
         """Load model to interface
 
         Args:
@@ -179,7 +178,7 @@ class ModelCardLoader(CardLoader):
             return None
 
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.storage_suffix)
-        self.card.interface.load_model(lpath)
+        self.card.interface.load_model(lpath, **kwargs)
 
     def load_onnx_model(self) -> None:
         """Load onnx model to interface

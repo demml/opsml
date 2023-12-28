@@ -12,6 +12,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.types import CardType, ModelCardMetadata
+from opsml.registry.cards.card_loader import ModelCardLoader
 
 logger = ArtifactLogger.get_logger()
 
@@ -65,11 +66,14 @@ class ModelCard(ArtifactCard):
         except ValueError:
             raise ValueError("Datacard uid is not a valid uuid")
 
-    def load_sample_data(self) -> None:
-        """Loads sample data associated with original non-onnx model"""
+    def load_model(self) -> None:
+        """Loads model, preprocessor and sample data to interface"""
+        ModelCardLoader(self).load_model()
 
-        if self.interface.data_type is None:
-            raise ValueError("Cannot load sample data - sample_data_type is not set")
+    def load_onnx_model(self) -> None:
+        """Loads onnx model to interface"""
+
+        ModelCardLoader(self).load_onnx_model()
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""

@@ -45,7 +45,7 @@ class CardUris(BaseModel):
         return str(resolved_path)
 
 
-class CardArtifactSaver:
+class CardSaver:
     def __init__(self, card: ArtifactCard):
         """
         Parent class for saving artifacts belonging to cards.
@@ -84,7 +84,7 @@ class CardArtifactSaver:
         raise NotImplementedError
 
 
-class DataCardArtifactSaver(CardArtifactSaver):
+class DataCardSaver(CardSaver):
     @cached_property
     def card(self) -> DataCard:
         return cast(DataCard, self._card)
@@ -153,7 +153,7 @@ class DataCardArtifactSaver(CardArtifactSaver):
         return CardType.DATACARD.value in card_type
 
 
-class ModelCardArtifactSaver(CardArtifactSaver):
+class ModelCardSaver(CardSaver):
     @cached_property
     def card(self) -> ModelCard:
         return cast(ModelCard, self._card)
@@ -262,7 +262,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         return CardType.MODELCARD.value in card_type
 
 
-class AuditCardArtifactSaver(CardArtifactSaver):
+class AuditCardSaver(CardSaver):
     @cached_property
     def card(self) -> AuditCard:
         return cast(AuditCard, self._card)
@@ -284,7 +284,7 @@ class AuditCardArtifactSaver(CardArtifactSaver):
         return CardType.AUDITCARD.value in card_type
 
 
-class RunCardArtifactSaver(CardArtifactSaver):
+class RunCardSaver(CardSaver):
     @cached_property
     def card(self) -> RunCard:
         return cast(RunCard, self._card)
@@ -304,7 +304,7 @@ class RunCardArtifactSaver(CardArtifactSaver):
         return CardType.RUNCARD.value in card_type
 
 
-class PipelineCardArtifactSaver(CardArtifactSaver):
+class PipelineCardSaver(CardSaver):
     @cached_property
     def card(self) -> PipelineCard:
         return cast(PipelineCard, self._card)
@@ -314,7 +314,7 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
         return CardType.PIPELINECARD.value in card_type
 
 
-class ProjectCardArtifactSaver(CardArtifactSaver):
+class ProjectCardSaver(CardSaver):
     @cached_property
     def card(self) -> ProjectCard:
         return cast(ProjectCard, self._card)
@@ -338,9 +338,7 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardArtifactSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
