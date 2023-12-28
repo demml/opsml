@@ -266,35 +266,27 @@ try:
             return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model)), path
 
         def load_preprocessor(self, path: Path) -> None:
-            # preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load huggingface model from path"""
 
-            model_path = path / CommonKwargs.MODEL.value
             if self.is_pipeline:
-                self.model = transformers.pipeline(self.task_type, model_path)
+                self.model = transformers.pipeline(self.task_type, path)
             else:
-                self.model = getattr(transformers, self.model_type).from_pretrained(model_path)
+                self.model = getattr(transformers, self.model_type).from_pretrained(path)
 
         def load_onnx_model(self, path: Path) -> None:
             """Load onnx model from path"""
             import onnx
             import optimum.onnxruntime as ort
 
-            onnx_path = path / CommonKwargs.ONNX.value
-
             ort_model = getattr(ort, self.onnx_args.ort_type)
             onnx_model = ort_model.from_pretrained(
-                onnx_path,
+                path,
                 config=self.onnx_args.config,
                 provider=self.onnx_args.provider,
             )
-
-            if self.preprocessor_name != CommonKwargs.UNDEFINED.value and self.preprocessor is None:
-                preprocessor_path = path / CommonKwargs.PREPROCESSOR.value
-                self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(preprocessor_path)
 
             if self.is_pipeline:
                 self.onnx_model = OnnxModel(
@@ -326,4 +318,6 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )

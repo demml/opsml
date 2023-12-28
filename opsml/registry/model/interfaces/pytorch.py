@@ -9,7 +9,7 @@ from opsml.registry.model.interfaces.base import (
     SamplePrediction,
     get_model_args,
 )
-from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType, Suffix
+from opsml.registry.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
     import torch

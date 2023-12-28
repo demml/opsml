@@ -149,7 +149,7 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(self.storage_suffix)
+        save_path = path.with_suffix(Suffix.JOBLIB.value)
         joblib.dump(self.sample_data, save_path)
         return save_path
 
