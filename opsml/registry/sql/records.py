@@ -3,8 +3,13 @@
 # LICENSE file in the root directory of this source tree.
 import time
 from typing import Any, Dict, List, Optional, Union, cast
+from pathlib import Path
+import tempfile
 
+import joblib
+from opsml.registry.storage import client
 from pydantic import BaseModel, ConfigDict, model_validator
+from opsml.settings.config import config
 
 from opsml.registry.types import (
     METRICS,
@@ -15,6 +20,8 @@ from opsml.registry.types import (
     DataCardMetadata,
     ModelCardMetadata,
     RegistryType,
+    SaveName,
+    Suffix,
 )
 
 
@@ -22,20 +29,28 @@ def get_timestamp() -> int:
     return int(round(time.time() * 1_000_000))
 
 
-class DataUris(BaseModel):
-    data_uri: str
-    datacard_uri: str
-    profile_uri: Optional[str] = None
-    profile_html_uri: Optional[str] = None
+def load_card(rpath: str, object_path: str) -> Dict[str, Any]:
+    """Loads an ArtifactCard definition from a server path
 
+    Args:
+        rpath:
+            server path
+        object_path:
+            object-specific name for pathing
 
-class ModelUris(BaseModel):
-    trained_model_uri: str
-    sample_data_uri: str
-    modelcard_uri: str
-    model_metadata_uri: str
-    onnx_model_uri: Optional[str] = None
-    preprocessor_uri: Optional[str] = None
+    Returns:
+        Dictionary to be inserted into ArtifactCard
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        lpath = Path(tmp_dir)
+
+        load_lpath = Path(lpath, object_path).with_suffix(Suffix.JOBLIB.value)
+        load_rpath = Path(rpath, object_path).with_suffix(Suffix.JOBLIB.value)
+
+        client.storage_client.get(load_rpath, load_lpath)
+
+        card: Dict[str, Any] = joblib.load(load_lpath)
+        return card
 
 
 class RunUris(BaseModel):
@@ -61,7 +76,6 @@ class DataRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
-    uris: DataUris
 
     @model_validator(mode="before")
     @classmethod
@@ -83,13 +97,14 @@ class ModelRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
-    uris: ModelUris
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        rpath = Path(con)
+
         metadata: Dict[str, Any] = values["metadata"]
         values["sample_data_type"] = metadata["sample_data_type"]
         values["model_type"] = metadata["model_type"]
