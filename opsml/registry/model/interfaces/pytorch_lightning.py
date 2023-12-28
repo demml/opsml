@@ -101,7 +101,7 @@ try:
         def load_model(self, path: Path, **kwargs) -> None:
             """Load lightning model from path"""
 
-            model_arch = kwargs[CommonKwargs.MODEL_ARCH]
+            model_arch = kwargs[CommonKwargs.MODEL_ARCH.value]
 
             try:
                 if model_arch is not None:
@@ -128,6 +128,4 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")

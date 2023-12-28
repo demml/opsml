@@ -11,6 +11,7 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.data.interfaces import DataInterface
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.types import CardType, DataCardMetadata
+from opsml.registry.cards.card_loader import DataCardLoader
 
 logger = ArtifactLogger.get_logger()
 
@@ -39,6 +40,18 @@ class DataCard(ArtifactCard):
 
     interface: SerializeAsAny[DataInterface]
     metadata: DataCardMetadata = DataCardMetadata()
+
+    def load_model(self):
+        """
+        Load data to interface
+        """
+        DataCardLoader(self).load_data()
+
+    def load_data_profile(self):
+        """
+        Load data to interface
+        """
+        DataCardLoader(self).load_data_profile()
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """
