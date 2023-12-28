@@ -4,7 +4,7 @@
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Optional, Tuple, cast
 
 import joblib
 from pydantic import BaseModel
@@ -18,7 +18,6 @@ from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
 from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.registry.storage import client
-from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.types import CardType, ModelMetadata, SaveName, UriNames
 from opsml.registry.types.extra import Suffix
 
@@ -244,19 +243,16 @@ class AuditCardArtifactSaver(CardArtifactSaver):
         return cast(AuditCard, self._card)
 
     def _save_audit(self) -> None:
-        uri = save_artifact_to_storage(
-            artifact=self.card.model_dump(),
-            storage_client=self.storage_client,
-            storage_spec=self._get_storage_spec(
-                filename=SaveName.AUDIT,
-                uri=self.uris.get(UriNames.AUDIT_URI.value),
-            ),
-        )
+        dumped_audit = self.card.model_dump()
+
+        save_path = Path(self.lpath / SaveName.AUDIT.value).with_suffix(Suffix.JOBLIB.value)
+        joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> AuditCard:
-        self._save_audit()
-
-        return self.card, self.uris
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.card_uris.lpath = Path(tmp_dir)
+            self.card_uris.rpath = self.card.uri
+            self._save_audit()
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -271,46 +267,12 @@ class RunCardArtifactSaver(CardArtifactSaver):
     def _save_runcard(self) -> None:
         """Saves a runcard"""
 
-        uri = save_artifact_to_storage(
-            artifact=self.card.model_dump(exclude={"artifacts", "storage_client"}),
-            storage_client=self.storage_client,
-            storage_spec=self._get_storage_spec(
-                filename=SaveName.RUNCARD.value,
-                uri=self.uris.get(UriNames.RUNCARD_URI.value),
-            ),
-        )
-
-    def _save_run_artifacts(self) -> None:
-        """Saves all artifacts associated with RunCard to filesystem"""
-        artifact_uris: Dict[str, str] = {}
-        self.uris[UriNames.ARTIFACT_URIS.value]: Dict[str, str] = {}
-        if self.card.artifact_uris is not None:
-            # some cards have already been saved and thus have URIs already.
-            # include them
-            artifact_uris = self.card.artifact_uris
-
-        if self.card.artifacts is not None:
-            for name, artifact in self.card.artifacts.items():
-                if name in artifact_uris:
-                    continue
-
-                storage_path = save_artifact_to_storage(
-                    artifact=artifact,
-                    storage_client=self.storage_client,
-                    root_uri=self.card.artifact_uri,
-                    filename=name,
-                )
-
-                artifact_uris[name] = storage_path
-                self.uris[UriNames.ARTIFACT_URIS.value][name] = storage_path
-
-        self.card.artifact_uris = artifact_uris
+        dumped_audit = self.card.model_dump(exclude={"artifacts"})
+        save_path = Path(self.lpath / SaveName.RUNCARD.value).with_suffix(Suffix.JOBLIB.value)
+        joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> RunCard:
-        self._save_run_artifacts()
         self._save_runcard()
-
-        return self.card, self.uris
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -322,9 +284,6 @@ class PipelineCardArtifactSaver(CardArtifactSaver):
     def card(self) -> PipelineCard:
         return cast(PipelineCard, self._card)
 
-    def save_artifacts(self) -> PipelineCard:
-        return self.card, self.uris
-
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.PIPELINECARD.value in card_type
@@ -334,9 +293,6 @@ class ProjectCardArtifactSaver(CardArtifactSaver):
     @cached_property
     def card(self) -> ProjectCard:
         return cast(ProjectCard, self._card)
-
-    def save_artifacts(self) -> ProjectCard:
-        return self.card
 
     @staticmethod
     def validate(card_type: str) -> bool:
