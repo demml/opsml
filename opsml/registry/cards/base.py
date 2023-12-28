@@ -92,9 +92,9 @@ class ArtifactCard(BaseModel):
         )
 
     @property
-    def artifact_uri(self) -> str:
+    def artifact_uri(self) -> Path:
         """Returns the root URI to which artifacts associated with this card should be saved."""
-        return os.path.join(self.uri, "artifacts")
+        return self.uri / "artifacts"
 
     @property
     def card_type(self) -> str:

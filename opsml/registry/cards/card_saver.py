@@ -122,6 +122,13 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def save_artifacts(self) -> DataCard:
         """Saves artifacts from a DataCard"""
 
+        # quick checks
+        if self.card.interface is None:
+            raise ValueError("DataCard must have a data interface to save artifacts")
+
+        if self.card.interface.data is None and bool(self.card.interface.sql_logic) is None:
+            raise ValueError("DataInterface must have data or sql logic")
+
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
 
@@ -217,6 +224,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         joblib.dump(dumped_model, save_path)
 
     def save_artifacts(self):
+        if self.card.interface is None:
+            raise ValueError("ModelCard must have a data interface to save artifacts")
+
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
 

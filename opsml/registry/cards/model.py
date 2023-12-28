@@ -4,8 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
 from typing import Any, Dict, Optional
-
-from pydantic import ConfigDict, SerializeAsAny
+from attr import validate
+from uuid import UUID
+from pydantic import ConfigDict, SerializeAsAny, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
@@ -30,8 +31,6 @@ class ModelCard(ArtifactCard):
         interface:
             Trained model interface. Can be one of SklearnModel, TensorFlowModel, PyTorchModel
             LightningModel, LGBModel, XGBoostModel, HuggingFaceModel
-        sample_input_data:
-            Sample of data model was trained on
         uid:
             Unique id (assigned if card has been registered)
         version:
@@ -46,142 +45,32 @@ class ModelCard(ArtifactCard):
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
-        ignored_types=(cached_property,),
         protected_namespaces=("protect_",),
+        validate_assignment=True,
     )
 
-    interface: SerializeAsAny[ModelInterface] = None
+    interface: SerializeAsAny[ModelInterface]
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata = ModelCardMetadata()
 
-    # @property
-    # def model_data_schema(self) -> DataSchema:
-    #    if self.metadata.data_schema is not None:
-    #        return self.metadata.data_schema.model_data_schema
-    #    raise ValueError("Model data schema has not been set")
-    #
-    # @property
-    # def input_data_schema(self) -> Dict[str, Feature]:
-    #    if self.metadata.data_schema is not None and self.metadata.data_schema.input_data_schema is not None:
-    #        return self.metadata.data_schema.input_data_schema
-    #    raise ValueError("Model input data schema has not been set or is not needed for this model")
+    @field_validator("datacard_uid", mode="before")
+    def check_uid(cls, datacard_uid: Optional[str] = None):
+        if datacard_uid is None:
+            raise datacard_uid
+
+        try:
+            UUID(datacard_uid, version=4)  # we use uuid4
+            return datacard_uid
+
+        except ValueError:
+            raise ValueError("Datacard uid is not a valid uuid")
 
     def load_sample_data(self) -> None:
         """Loads sample data associated with original non-onnx model"""
 
         if self.interface.data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
-
-        # sample_data = load_artifact_from_storage(
-        #    artifact_type=self.interface.data_type,
-        #    storage_request=StorageRequest(
-        #        registry_type=self.card_type,
-        #        card_uid=self.uid,
-        #        uri_name=UriNames.SAMPLE_DATA_URI.value,
-        #    ),
-        # )
-        # self.interface.sample_data = sample_data
-
-    # ef load_trained_model(self, **kwargs) -> None:
-    #   """Loads original trained model
-
-    #   Args:
-    #       kwargs:
-    #           Additional kwargs to pass to the model class. Currently, this is only
-    #           used for `pytorch lightning` models that need to be loaded via a checkpoint.
-    #           In this case, `pytorch lightning` expects a defined model to load the checkpoint into.
-    #           This is passed in via the `model_arch` kwarg.
-    #   """
-
-    #   if not all([bool(self.metadata.uris.trained_model_uri), bool(self.metadata.uris.sample_data_uri)]):
-    #       raise ValueError(
-    #           """Trained model uri and sample data uri must both be set to load a trained model""",
-    #       )
-
-    #   if self.interface.model is None:
-    #       self.load_sample_data()
-
-    #       if self.interface.model_type is None:
-    #           raise ValueError("Cannot load trained model - model_type is not set")
-
-    #       self.interface = load_artifact_from_storage(
-    #           artifact_type=self.metadata.model_class,
-    #           storage_request=StorageRequest(
-    #               registry_type=self.card_type,
-    #               card_uid=self.uid,
-    #               uri_name=UriNames.TRAINED_MODEL_URI.value,
-    #           ),
-    #           **{**{"model": self.interface, "load_type": CommonKwargs.MODEL}, **kwargs},
-    #       )
-
-    #       if self.metadata.uris.preprocessor_uri is not None:
-    #           if isinstance(self.interface, HuggingFaceModel):
-    #               self.interface = load_artifact_from_storage(
-    #                   artifact_type=self.interface.model_class,
-    #                   storage_request=StorageRequest(
-    #                       registry_type=self.card_type,
-    #                       card_uid=self.card.uid,
-    #                       uri_name=UriNames.TRAINED_MODEL_URI.value,
-    #                   ),
-    #                   **{**{"model": self.interface, "load_type": CommonKwargs.PREPROCESSOR}, **kwargs},
-    #               )
-    #           else:
-    #               self.interface.preprocessor = load_artifact_from_storage(
-    #                   artifact_type=AllowedDataType.DICT,
-    #                   storage_request=StorageRequest(
-    #                       registry_type=self.card_type,
-    #                       card_uid=self.card.uid,
-    #                       uri_name=UriNames.TRAINED_MODEL_URI.value,
-    #                   ),
-    #               )
-
-    # @property
-    # def model_metadata(self) -> ModelMetadata:
-    #    """Loads `ModelMetadata` class"""
-    #    model_metadata = load_artifact_from_storage(
-    #        artifact_type=SaveName.JSON.value,
-    #        storage_request=StorageRequest(
-    #            registry_type=self.card_type,
-    #            card_uid=self.card.uid,
-    #            uri_name=UriNames.MODEL_METADATA_URI.value,
-    #        ),
-    #    )
-    #
-    #    return ModelMetadata.model_validate(model_metadata)
-
-    # def _load_onnx_model(self, metadata: ModelMetadata) -> Any:
-    #    """Loads the actual onnx file
-    #
-    #    Args:
-    #        metadata:
-    #            `ModelMetadata`
-    #    """
-    #    if metadata.onnx_uri is None:
-    #        raise ValueError("Onnx uri is not specified")
-    #
-    #    onnx_model = load_artifact_from_storage(
-    #        artifact_type=ArtifactStorageType.ONNX.value,
-    #        storage_client=client.storage_client,
-    #        storage_spec=ArtifactStorageSpecs(save_path=metadata.onnx_uri),
-    #    )
-    #
-    #    return onnx_model
-
-    # def load_onnx_modelinition(self) -> None:
-    #    """Loads the onnx model definition"""
-    #
-    #    if self.metadata.uris.model_metadata_uri is None:
-    #        raise ValueError("No model metadata exists. Please check the registry or register a new model")
-    #
-    #    metadata = self.interface_metadata
-    #    onnx_model = self._load_onnx_model(metadata=metadata)
-    #
-    #    model_def = OnnxModel(
-    #        onnx_version=metadata.onnx_version,
-    #        model_bytes=onnx_model.SerializeToString(),
-    #    )
-    #    self.metadata.onnx_model = model_def
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
@@ -190,105 +79,6 @@ class ModelCard(ArtifactCard):
         dumped_model = {**self.model_dump(exclude=exclude_vars), **kwargs}
 
         return ModelRegistryRecord(**dumped_model)
-
-    # def _set_version_for_predictor(self) -> str:
-    #    if self.version is None:
-    #        logger.warning("""ModelCard has no version (not registered). Defaulting to 1 (for testing only)""")
-    #        version = "1.0.0"
-    #    else:
-    #        version = self.version
-    #
-    #    return version
-
-    # def _set_model_attributes(self, model_return: ModelReturn) -> None:
-    #    setattr(self.metadata, "onnx_model", model_return.model_definition)
-    #    setattr(self.metadata, "data_schema", model_return.api_data_schema)
-    #    setattr(self.metadata, "model_type", model_return.model_type)
-
-    # def _create_and_set_model_attr(self) -> None:
-    #    """
-    #    Creates Onnx model from trained model and sample input data
-    #    and sets Card attributes
-    #
-    #    """
-    #
-    #    from opsml.registry.model.creator import (  # pylint: disable=import-outside-toplevel
-    #        create_model,
-    #    )
-    #
-    #    model_return = create_model(modelcard=self)
-    #
-    #    self._set_model_attributes(model_return=model_return)
-
-    # def _get_sample_data_for_api(self) -> Dict[str, Any]:
-    #    """
-    #    Converts sample data to dictionary that can be used
-    #    to validate an onnx model
-    #    """
-    #
-    #    if self.sample_input_data is None:
-    #        self.load_sample_data()
-    #
-    #    sample_data = cast(
-    #        Union[pd.DataFrame, NDArray[Any], Dict[str, Any]],
-    #        self.sample_input_data,
-    #    )
-    #
-    #    if isinstance(sample_data, np.ndarray):
-    #        model_data = self.interface_data_schema
-    #        input_name = next(iter(model_data.input_features.keys()))
-    #        return {input_name: sample_data[0, :].tolist()}  # pylint: disable=unsubscriptable-object
-    #
-    #    if isinstance(sample_data, pd.DataFrame):
-    #        record = list(sample_data[0:1].T.to_dict().values())[0]  # pylint: disable=unsubscriptable-object
-    #        return cast(Dict[str, Any], record)
-    #
-    #    if isinstance(sample_data, pl.DataFrame):
-    #        record = list(sample_data.to_pandas()[0:1].T.to_dict().values())[0]
-    #        return cast(Dict[str, Any], record)
-    #
-    #    record = {}
-    #    for feat, val in sample_data.items():
-    #        record[feat] = np.ravel(val).tolist()
-    #    return cast(Dict[str, Any], record)
-
-    # ef onnx_model(self, start_onnx_runtime: bool = True) -> OnnxModelPredictor:
-    #   """
-    #   Loads an onnx model from string or creates an onnx model from trained model
-
-    #   Args:
-    #       start_onnx_runtime:
-    #           Whether to start the onnx runtime session or not
-
-    #   Returns
-    #       `OnnxModelPredictor`
-
-    #   """
-
-    #   # todo: clean this up
-    #   if self.metadata.onnx_model is None or self.metadata.data_schema is None:
-    #       self._create_and_set_model_attr()
-
-    #   version = self._set_version_for_predictor()
-
-    #   # recast to make mypy happy
-    #   # todo: refactor
-    #   model_def = cast(OnnxModel, self.metadata.onnx_model)
-    #   model_type = str(self.metadata.model_type)
-    #   data_schema = self.metadata.data_schema
-
-    #   sample_api_data = self._get_sample_data_for_api()
-
-    #   return OnnxModelPredictor(
-    #       model_name=self.name,
-    #       model_type=model_type,
-    #       model_definition=model_def.model_bytes,
-    #       data_schema=data_schema,
-    #       model_version=version,
-    #       onnx_version=model_def.onnx_version,
-    #       sample_api_data=sample_api_data,
-    #       start_sess=start_onnx_runtime,
-    #   )
 
     @property
     def card_type(self) -> str:
