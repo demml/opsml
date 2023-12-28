@@ -39,7 +39,7 @@ class DataCard(ArtifactCard):
     """
 
     interface: SerializeAsAny[DataInterface]
-    metadata: DataCardMetadata = DataCardMetadata()
+    metadata: SerializeAsAny[DataCardMetadata] = DataCardMetadata()
 
     def load_model(self):
         """

@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import textwrap
-from typing import Any, Dict, List, Optional, Type, cast
+from typing import Any, Dict, List, Optional, Type
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards import (
@@ -15,6 +15,7 @@ from opsml.registry.cards import (
     PipelineCard,
     RunCard,
 )
+from opsml.registry.cards.card_loader import load_card_from_record
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage import client
@@ -199,15 +200,16 @@ class CardRegistry:
             version = version or info.version
             tags = tags or info.tags
 
-        record = self._registry.load_card_record(
+        records = self.list_cards(
             uid=uid,
             name=name,
             version=version,
             tags=tags,
             ignore_release_candidates=ignore_release_candidates,
+            limit=1,
         )
-        card = table_name_card_map[self.registry_type.value]
-        return cast(ArtifactCard, card(**record.model_dump()))
+
+        return load_card_from_record(records[0], self.registry_type)
 
     def register_card(
         self,

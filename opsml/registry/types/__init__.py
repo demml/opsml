@@ -63,6 +63,7 @@ from opsml.registry.types.model import (
     ValidModelInput,
     ValidSavedSample,
 )
+from opsml.registry.types.sql import RegistryTableNames
 from opsml.registry.types.storage import (
     ApiStorageClientSettings,
     ArtifactStorageType,
@@ -75,4 +76,3 @@ from opsml.registry.types.storage import (
     StorageSystem,
     StoreLike,
 )
-from opsml.registry.types.sql import RegistryTableNames

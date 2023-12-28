@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, SerializeAsAny
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.image.dataset import ImageDataset
@@ -121,8 +121,8 @@ class DataCardMetadata(BaseModel):
     """
 
     interface_type: str = ""
-    description: Description = Description()
-    feature_map: Dict[str, Feature] = {}
+    description: SerializeAsAny[Description] = Description()
+    feature_map: Dict[str, SerializeAsAny[Feature]] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None

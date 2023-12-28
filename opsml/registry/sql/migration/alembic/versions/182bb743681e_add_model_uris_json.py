@@ -26,7 +26,7 @@ def upgrade() -> None:
 
     bind = op.get_context().bind
     insp = sa.inspect(bind)
-    
+
     # model table cleanup
     table_name = RegistryTableNames.MODEL.value
     columns = insp.get_columns(table_name)
@@ -45,7 +45,7 @@ def upgrade() -> None:
     # data table cleanup
     table_name = RegistryTableNames.DATA.value
     columns = insp.get_columns(table_name)
-    
+
     for column in columns:
         if column["name"] in [
             "data_uri",
@@ -54,7 +54,7 @@ def upgrade() -> None:
             logger.info("Dropping {} column from {} table", column["name"], table_name)
             with op.batch_alter_table(table_name) as batch_op:
                 batch_op.drop_column(column["name"])
-    
+
 
 def downgrade() -> None:
     table_name = RegistryTableNames.MODEL.value

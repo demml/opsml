@@ -23,7 +23,7 @@ from opsml.registry.sql.semver import (
     VersionType,
 )
 from opsml.registry.storage.client import StorageClient
-from opsml.registry.types import RegistryType, RegistryTableNames
+from opsml.registry.types import RegistryTableNames, RegistryType
 from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()

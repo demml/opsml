@@ -51,9 +51,7 @@ class CommonKwargs(str, Enum):
 
 @unique
 class SaveName(str, Enum):
-    DATACARD = "datacard"
-    RUNCARD = "runcard"
-    MODELCARD = "modelcard"
+    CARD = "card"
     AUDIT = "audit"
     PIPLELINECARD = "pipelinecard"
     MODEL_METADATA = "model-metadata"

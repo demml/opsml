@@ -5,15 +5,35 @@ import tempfile
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Iterator, cast
+from typing import Any, Dict, Iterator, cast
+
+import joblib
+from pydantic import BaseModel
 
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
 from opsml.registry.model.interfaces.huggingface import HuggingFaceModel
 from opsml.registry.storage import client
-from opsml.registry.types import CardType, SaveName
-from opsml.registry.types.extra import Suffix
+from opsml.registry.types import (
+    CardType,
+    RegistryTableNames,
+    RegistryType,
+    SaveName,
+    Suffix,
+)
+from opsml.settings.config import config
+
+
+class CardArgs(BaseModel):
+    name: str
+    team: str
+    version: str
+    table_name: str
+
+    @property
+    def uri(self) -> Path:
+        return Path(config.storage_root, self.table_name, self.team, self.name, f"v{self.version}")
 
 
 class CardLoader:
@@ -40,7 +60,32 @@ class CardLoader:
     def storage_suffix(self) -> str:
         return self.card.interface.storage_suffix
 
-    def download(self, lpath: Path, rpath: Path, object_path: str, suffix: str) -> Path:
+    @staticmethod
+    def get_rpath_from_args(card_args: Dict[str, Any], registry_type: RegistryType) -> Path:
+        """Get remote path from card args
+
+        Args:
+            card_args:
+                Card args to use to get remote path
+            registry_type:
+                Registry type to use to get remote path
+        Returns:
+            Remote path
+        """
+
+        table_name = RegistryTableNames.from_str(registry_type.value).value
+        args = CardArgs(**card_args, table_name=table_name)
+
+        return args.uri
+
+    @staticmethod
+    def download(
+        lpath: Path,
+        rpath: Path,
+        object_path: str,
+        suffix: str,
+        storage_client: client.StorageClientBase,
+    ) -> Path:
         """Download file from rpath to lpath
 
         Args:
@@ -52,11 +97,13 @@ class CardLoader:
                 Path to object to load
             suffix:
                 Suffix to add to object_path
+            storage_client:
+                Storage client to use
         """
         load_lpath = Path(lpath, object_path).with_suffix(suffix)
         load_rpath = Path(rpath, object_path).with_suffix(suffix)
 
-        self.storage_client.get(load_rpath, load_lpath)
+        storage_client.get(load_rpath, load_lpath)
 
         return load_lpath
 
@@ -76,7 +123,7 @@ class CardLoader:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
 
-            yield self.download(lpath, rpath, object_path, suffix)
+            yield self.download(lpath, rpath, object_path, suffix, self.storage_client)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -144,7 +191,8 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value)
+        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value, self.storage_client)
+
         self.card.interface.load_sample_data(lpath)
 
     def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
@@ -161,7 +209,7 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix)
+        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix, self.storage_client)
         self.card.interface.load_preprocessor(lpath)
 
     def _load_model(self, lpath: Path, rpath: Path, **kwargs) -> None:
@@ -214,3 +262,26 @@ class ModelCardLoader(CardLoader):
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.MODELCARD.value in card_type
+
+
+def load_card_from_record(card_record: Dict[str, Any], registry_type: RegistryType) -> None:
+    """Load card from record
+
+    Args:
+        card:
+            Card to load
+    """
+    # this should be part of the actual loader
+    # start here tomorrow
+    rpath = CardLoader.get_rpath_from_args(card_record, registry_type)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        lpath = Path(tmp_dir)
+        rpath = CardLoader.get_rpath_from_args(card_record, registry_type)
+        load_path = CardLoader.download(lpath, rpath, SaveName.CARD.value, Suffix.JOBLIB.value, client.storage_client)
+        loaded_card: Dict[str, Any] = joblib.load(load_path)
+
+        if registry_type == RegistryType.MODEL or registry_type == RegistryType.DATA:
+            # load interface
+            interface_type: str = loaded_card["metadata"]["interface_type"]
+
+            # get interface type
