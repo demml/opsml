@@ -8,7 +8,7 @@ from typing import Any, Dict
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.model.utils.data_helper import get_model_data
-from opsml.registry.types import DataDict, Feature, ModelReturn, TrainedModelType
+from opsml.registry.types import DataSchema, Feature, ModelReturn, TrainedModelType
 from opsml.registry.types.data import AllowedDataType
 
 logger = ArtifactLogger.get_logger()
@@ -77,7 +77,7 @@ class _TrainedModelMetadataCreator(_ModelMetadataCreator):
         input_features = self._get_input_schema()
 
         return ModelReturn(
-            data_schema=DataDict(
+            data_schema=DataSchema(
                 input_features=input_features,
                 output_features=output_features,
                 data_type=self.interface.data_type,

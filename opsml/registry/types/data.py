@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ from pydantic import BaseModel, field_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.types.extra import Description
+from opsml.registry.types import Description, Feature
 
 ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]  # type: ignore
 
@@ -120,8 +120,9 @@ class DataCardMetadata(BaseModel):
             DataCardUris object containing all uris associated with DataCard
     """
 
+    interface_type: str = ""
     description: Description = Description()
-    feature_map: Optional[Dict[str, Optional[Any]]] = None
+    feature_map: Dict[str, Feature] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None

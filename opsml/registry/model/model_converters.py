@@ -28,7 +28,7 @@ from opsml.registry.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
     BaseEstimator,
-    DataDict,
+    DataSchema,
     Feature,
     ModelReturn,
     ModelType,
@@ -209,7 +209,7 @@ class _ModelConverter:
         else:
             onnx_model, onnx_input_features, onnx_output_features = self._load_onnx_model()
 
-        schema = DataDict(
+        schema = (
             onnx_input_features=onnx_input_features,
             onnx_output_features=onnx_output_features,
         )

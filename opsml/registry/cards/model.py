@@ -56,7 +56,7 @@ class ModelCard(ArtifactCard):
     metadata: ModelCardMetadata = ModelCardMetadata()
 
     # @property
-    # def model_data_schema(self) -> DataDict:
+    # def model_data_schema(self) -> DataSchema:
     #    if self.metadata.data_schema is not None:
     #        return self.metadata.data_schema.model_data_schema
     #    raise ValueError("Model data schema has not been set")

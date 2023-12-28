@@ -43,7 +43,7 @@ from opsml.registry.types.model import (
     UPDATE_REGISTRY_MODELS,
     ApiSigTypes,
     BaseEstimator,
-    DataDict,
+    DataSchema,
     DataDtypes,
     Feature,
     Graph,
