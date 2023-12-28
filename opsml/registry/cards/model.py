@@ -52,7 +52,7 @@ class ModelCard(ArtifactCard):
     interface: SerializeAsAny[ModelInterface]
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
-    metadata: ModelCardMetadata = ModelCardMetadata()
+    metadata: SerializeAsAny[ModelCardMetadata] = ModelCardMetadata()
 
     @field_validator("datacard_uid", mode="before")
     def check_uid(cls, datacard_uid: Optional[str] = None):

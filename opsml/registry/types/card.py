@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.types.model import ModelCardMetadata
@@ -54,8 +54,8 @@ class Param(BaseModel):
     value: Union[float, int, str]
 
 
-METRICS = Dict[str, List[Metric]]
-PARAMS = Dict[str, List[Param]]
+METRICS = Dict[str, List[SerializeAsAny[Metric]]]
+PARAMS = Dict[str, List[SerializeAsAny[Param]]]
 
 
 class Comment(BaseModel):
@@ -127,9 +127,9 @@ class CardVersion(BaseModel):
 
 class AuditCardMetadata(BaseModel):
     audit_uri: Optional[str] = None
-    datacards: List[CardVersion] = []
-    modelcards: List[CardVersion] = []
-    runcards: List[CardVersion] = []
+    datacards: List[SerializeAsAny[CardVersion]] = []
+    modelcards: List[SerializeAsAny[CardVersion]] = []
+    runcards: List[SerializeAsAny[CardVersion]] = []
 
 
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]

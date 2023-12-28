@@ -9,7 +9,7 @@ import os
 from typing import Any, Dict, List, Optional, cast
 
 import yaml
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, SerializeAsAny
 from rich.console import Console
 from rich.table import Table
 
@@ -39,13 +39,13 @@ class Question(BaseModel):
 
 
 class AuditSections(BaseModel):
-    business_understanding: Dict[int, Question]
-    data_understanding: Dict[int, Question]
-    data_preparation: Dict[int, Question]
-    modeling: Dict[int, Question]
-    evaluation: Dict[int, Question]
-    deployment_ops: Dict[int, Question]
-    misc: Dict[int, Question]
+    business_understanding: Dict[int, SerializeAsAny[Question]]
+    data_understanding: Dict[int, SerializeAsAny[Question]]
+    data_preparation: Dict[int, SerializeAsAny[Question]]
+    modeling: Dict[int, SerializeAsAny[Question]]
+    evaluation: Dict[int, SerializeAsAny[Question]]
+    deployment_ops: Dict[int, SerializeAsAny[Question]]
+    misc: Dict[int, SerializeAsAny[Question]]
 
     @model_validator(mode="before")
     @classmethod
@@ -120,10 +120,10 @@ class AuditCard(ArtifactCard):
             Whether the audit has been approved
     """
 
-    audit: AuditSections = AuditSections()
+    audit: SerializeAsAny[AuditSections] = AuditSections()
     approved: bool = False
-    comments: List[Comment] = []
-    metadata: AuditCardMetadata = AuditCardMetadata()
+    comments: List[SerializeAsAny[Comment]] = []
+    metadata: SerializeAsAny[AuditCardMetadata] = AuditCardMetadata()
 
     def add_comment(self, name: str, comment: str) -> None:
         """Adds comment to AuditCard

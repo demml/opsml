@@ -117,7 +117,7 @@ class DataCardSaver(CardSaver):
 
         dumped_datacard = self.card.model_dump(exclude=exclude_attr)
 
-        save_path = Path(self.lpath / SaveName.DATACARD.value).with_suffix(Suffix.JOBLIB.value)
+        save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_datacard, save_path)
 
     def save_artifacts(self) -> DataCard:
@@ -228,7 +228,7 @@ class ModelCardSaver(CardSaver):
             }
         )
 
-        save_path = Path(self.lpath / SaveName.MODELCARD.value).with_suffix(Suffix.JOBLIB.value)
+        save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_model, save_path)
 
     def save_artifacts(self):
@@ -269,8 +269,7 @@ class AuditCardSaver(CardSaver):
 
     def _save_audit(self) -> None:
         dumped_audit = self.card.model_dump()
-
-        save_path = Path(self.lpath / SaveName.AUDIT.value).with_suffix(Suffix.JOBLIB.value)
+        save_path = Path(self.lpath, SaveName.AUDIT.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> AuditCard:
@@ -293,7 +292,7 @@ class RunCardSaver(CardSaver):
         """Saves a runcard"""
 
         dumped_audit = self.card.model_dump(exclude={"artifacts"})
-        save_path = Path(self.lpath / SaveName.RUNCARD.value).with_suffix(Suffix.JOBLIB.value)
+        save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> RunCard:
@@ -338,9 +337,7 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

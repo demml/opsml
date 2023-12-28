@@ -10,6 +10,8 @@ from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
 from opsml.registry.types import METRICS, PARAMS, CardType, Metric, Param
 
+from pydantic import SerializeAsAny
+
 logger = ArtifactLogger.get_logger()
 
 
