@@ -31,7 +31,8 @@ class ApiRoutes:
     DOWNLOAD_FILE = "files/download"
     DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"
-    UPLOAD = "files/upload"
+    UPLOAD_FILE = "files/upload"
+    FILE_EXISTS = "files/exists"
 
 
 api_routes = ApiRoutes()
@@ -114,9 +115,7 @@ class ApiClient:
         self, route: str, files: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         result = ""
-        with self.client.stream(
-            method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
-        ) as response:
+        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
             for data in response.iter_bytes():
                 result += data.decode("utf-8")
 

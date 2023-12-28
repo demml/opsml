@@ -106,8 +106,8 @@ class StorageClientBase(StorageClientProtocol):
     def rm(self, path: Path) -> None:
         self.client.rm(str(path), True)
 
-    def exists(self, path: str) -> bool:
-        return self.client.exists(str(path))
+    def exists(self, path: Path) -> bool:
+        return self.client.exists(path=str(path))
 
 
 class GCSFSStorageClient(StorageClientBase):
@@ -195,7 +195,7 @@ class ApiStorageClient(StorageClientBase):
                 curr_rpath = rpath / curr_lpath.relative_to(lpath)
 
                 response = self.api_client.stream_post_request(
-                    route=ApiRoutes.UPLOAD,
+                    route=ApiRoutes.UPLOAD_FILE,
                     files={"file": open(curr_lpath.as_posix(), "rb")},
                     headers={"write_path": curr_rpath.as_posix()},
                 )
@@ -217,9 +217,17 @@ class ApiStorageClient(StorageClientBase):
         if response.get("deleted") is False:
             raise ValueError("Failed to delete file")
 
-    def exists(self, path: str) -> bool:
-        # TODO: Implement exists
-        raise NotImplementedError
+    def exists(self, path: Path) -> bool:
+        """Checks if file exists on server
+
+        Args:
+            path:
+                Path to file
+        """
+        route = Path(ApiRoutes.FILE_EXISTS, path)
+        response = self.api_client.get_request(route=route.as_posix())
+
+        return response.get("exists", False)
 
 
 def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
