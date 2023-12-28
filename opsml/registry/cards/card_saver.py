@@ -27,7 +27,6 @@ from opsml.registry.types import (
     AllowedDataType,
     ArrowTable,
     CardType,
-    DataDict,
     ModelMetadata,
     SaveName,
     UriNames,
@@ -36,6 +35,7 @@ from opsml.registry.types.extra import Suffix
 
 
 class CardUris(BaseModel):
+    data_uri: Optional[Path] = None
     trained_model_uri: Optional[Path] = None
     preprocessor_uri: Optional[Path] = None
     sample_data_uri: Optional[Path] = None
@@ -100,83 +100,50 @@ class DataCardArtifactSaver(CardArtifactSaver):
     def card(self) -> DataCard:
         return cast(DataCard, self._card)
 
+    def _save_data(self) -> None:
+        """Saves a data via data interface"""
+
+        save_path = self.lpath / SaveName.DATA.value
+        _ = self.card.interface.save_data(save_path)
+
+        # set feature map on metadata
+        self.card.metadata.feature_map = self.card.interface.feature_map
+
+    def _save_data_profile(self) -> None:
+        """Saves a data profile"""
+
+        if self.card.data_profile is None:
+            return
+
+        save_path = self.lpath / SaveName.DATA_PROFILE.value
+
+        # save html and joblib version
+        _ = self.card.interface.save_data_profile(save_path, save_type="html")
+        _ = self.card.interface.save_data_profile(save_path, save_type="joblib")
+
     def _save_datacard(self) -> None:
         """Saves a datacard to file system"""
 
-        exclude_attr = {"data_profile", "storage_client"}
+        exclude_attr = {"interface": {"data", "data_profile"}}
 
-        # ImageDataSets use pydantic models for data
-        if AllowedDataType.IMAGE not in self.card.metadata.data_type:
-            exclude_attr.add("data")
+        dumped_datacard = self.card.model_dump(exclude=exclude_attr)
 
-    def _convert_data_to_arrow(self) -> ArrowTable:
-        """Converts data to arrow table
-
-        Returns:
-            arrow table model
-        """
-        arrow_table: ArrowTable = DataFormatter.convert_data_to_arrow(
-            data=self.card.data,
-            data_type=self.card.metadata.data_type,
-        )
-        arrow_table.feature_map = DataFormatter.create_table_schema(data=self.card.data)
-        return arrow_table
-
-    def _save_data_to_storage(self, data: Union[pa.Table, NDArray[Any], ImageDataset]) -> str:
-        """Saves data to
-
-        Args:
-            data:
-                either numpy array , pyarrow table or image dataset
-
-        Returns:
-            Data URI
-        """
-        pass
-
-    # TODO: steven - should be able to save tensorflow and torch datasets
-    def _save_data(self) -> None:
-        """Saves DataCard data to file system"""
-        if self.card.data is None:
-            return
-
-        if isinstance(self.card.data, ImageDataset):
-            self.card.data.convert_metadata()
-            storage_path = self._save_data_to_storage(data=self.card.data)
-            self.uris[UriNames.DATA_URI.value] = storage_path
-
-        else:
-            arrow_table: ArrowTable = self._convert_data_to_arrow()
-            storage_path = self._save_data_to_storage(data=arrow_table.table)
-            self.uris[UriNames.DATA_URI.value] = storage_path
-            self.card.metadata.feature_map = arrow_table.feature_map
-
-    def _save_profile(self) -> None:
-        """Saves a datacard data profile"""
-        if self.card.data_profile is None:
-            return
-
-        # profile report needs to be dumped to bytes and saved in joblib/pickle format
-        # This is a requirement for loading with ydata-profiling
-        profile_bytes = self.card.data_profile.dumps()
-
-    def _save_profile_html(self) -> None:
-        """Saves a profile report to file system"""
-        if self.card.data_profile is None:
-            return
-
-        profile_html = self.card.data_profile.to_html()
+        save_path = Path(self.lpath / SaveName.DATACARD.value).with_suffix(Suffix.JOBLIB.value)
+        joblib.dump(dumped_datacard, save_path)
 
     def save_artifacts(self) -> DataCard:
         """Saves artifacts from a DataCard"""
 
-        self._save_data()
-        self._save_profile()
-        self._save_profile_html()
+        # set type needed for loading
+        self.card.metadata.interface_type = self.card.interface.__class__.__name__
 
-        self._save_datacard()
-
-        return self.card, self.uris
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.card_uris.lpath = Path(tmp_dir)
+            self.card_uris.rpath = self.card.uri
+            self._save_data()
+            self._save_data_profile()
+            self._save_datacard()
+            self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -239,7 +206,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
             model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
             model_version=self.card.version,
             model_team=self.card.team,
-            data_schema=cast(DataDict, self.card.metadata.data_schema),
+            data_schema=self.card.metadata.data_schema,
         )
 
     def _save_metadata(self) -> None:
@@ -262,6 +229,9 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         joblib.dump(dumped_model, save_path)
 
     def save_artifacts(self):
+        # set type needed for loading
+        self.card.metadata.interface_type = self.card.interface.__class__.__name__
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri

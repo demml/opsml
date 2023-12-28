@@ -10,7 +10,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
-from opsml.registry.types import Feature, Suffix
+from opsml.registry.types import Feature, Suffix, CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
@@ -76,6 +76,35 @@ class DataInterface(BaseModel):
 
         return sql_logic
 
+    def add_sql(
+        self,
+        name: str,
+        query: Optional[str] = None,
+        filename: Optional[str] = None,
+    ) -> None:
+        """
+        Adds a query or query from file to the sql_logic dictionary. Either a query or
+        a filename pointing to a sql file are required in addition to a name.
+
+        Args:
+            name:
+                Name for sql query
+            query:
+                SQL query
+            filename: Filename of sql query
+        """
+        if query is not None:
+            self.sql_logic[name] = query
+
+        elif filename is not None:
+            sql_path = str(FileUtils.find_filepath(name=filename))
+            with open(sql_path, "r", encoding="utf-8") as file_:
+                query = file_.read()
+            self.sql_logic[name] = query
+
+        else:
+            raise ValueError("SQL Query or Filename must be provided")
+
     @field_validator("data_profile", mode="before")
     @classmethod
     def _check_profile(cls, profile: Optional[ProfileReport]) -> Optional[ProfileReport]:
@@ -95,6 +124,13 @@ class DataInterface(BaseModel):
         assert self.data is not None, "No data detected in interface"
         save_path = path.with_suffix(Suffix.JOBLIB.value)
         joblib.dump(self.data, save_path)
+
+        self.feature_map = {
+            "features": Feature(
+                feature_type=str(type(self.data)),
+                shape=CommonKwargs.UNDEFINED.value,
+            )
+        }
 
         return save_path
 

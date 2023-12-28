@@ -86,7 +86,7 @@ class Feature(BaseModel):
     shape: Tuple[Any, ...]
 
 
-class DataDict(BaseModel):
+class DataSchema(BaseModel):
     """Datamodel for feature info"""
 
     data_type: Optional[str] = None
@@ -106,7 +106,7 @@ class OnnxModel(BaseModel):
 
 class ModelReturn(BaseModel):
     onnx_model: Optional[OnnxModel] = None
-    data_schema: DataDict
+    data_schema: DataSchema
 
     model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
 
@@ -210,8 +210,9 @@ class ModelCardMetadata(BaseModel):
             Associated PipelineCard
     """
 
+    interface_type: str = ""
     description: Description = Description()
-    data_schema: Optional[DataDict] = None
+    data_schema: DataSchema = DataSchema()
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
@@ -276,7 +277,7 @@ class ModelMetadata(BaseModel):
     preprocessor_name: Optional[str] = None
     preprocessor_uri: Optional[str] = None
     opsml_version: str = __version__
-    data_schema: DataDict
+    data_schema: DataSchema
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
