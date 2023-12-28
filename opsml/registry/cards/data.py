@@ -8,10 +8,10 @@ from pydantic import SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
+from opsml.registry.cards.card_loader import DataCardLoader
 from opsml.registry.data.interfaces import DataInterface
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.types import CardType, DataCardMetadata
-from opsml.registry.cards.card_loader import DataCardLoader
 
 logger = ArtifactLogger.get_logger()
 

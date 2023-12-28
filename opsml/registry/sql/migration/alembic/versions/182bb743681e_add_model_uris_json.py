@@ -26,30 +26,39 @@ def upgrade() -> None:
 
     bind = op.get_context().bind
     insp = sa.inspect(bind)
+    
+    # model table cleanup
     table_name = RegistryTableNames.MODEL.value
     columns = insp.get_columns(table_name)
 
-    if not "uris" in [column["name"] for column in columns]:
-        logger.info(f"Migration Adding uris column to {table_name} table")
-        with op.batch_alter_table(table_name) as batch_op:
-            batch_op.add_column(sa.Column("uris", sa.JSON))
+    for column in columns:
+        if column["name"] in [
+            "modelcard_uri",
+            "trained_model_uri",
+            "model_metadata_uri",
+            "sample_data_uri",
+        ]:
+            logger.info("Dropping {} column from {} table", column["name"], table_name)
+            with op.batch_alter_table(table_name) as batch_op:
+                batch_op.drop_column(column["name"])
 
-        for column in columns:
-            if column["name"] in [
-                "modelcard_uri",
-                "trained_model_uri",
-                "model_metadata_uri",
-                "sample_data_uri",
-            ]:
-                logger.info("Dropping {} column from {} table", column["name"], table_name)
-                with op.batch_alter_table(table_name) as batch_op:
-                    batch_op.drop_column(column["name"])
-
+    # data table cleanup
+    table_name = RegistryTableNames.DATA.value
+    columns = insp.get_columns(table_name)
+    
+    for column in columns:
+        if column["name"] in [
+            "data_uri",
+            "datacard_uri",
+        ]:
+            logger.info("Dropping {} column from {} table", column["name"], table_name)
+            with op.batch_alter_table(table_name) as batch_op:
+                batch_op.drop_column(column["name"])
+    
 
 def downgrade() -> None:
     table_name = RegistryTableNames.MODEL.value
     with op.batch_alter_table(table_name) as batch_op:
-        batch_op.drop_column("artifact_uris")
         batch_op.add_column(sa.Column("trained_model_uri", sa.String(1024)))
         batch_op.add_column(sa.Column("modelcard_uri", sa.String(1024)))
         batch_op.add_column(sa.Column("model_metadata_uri", sa.String(1024)))

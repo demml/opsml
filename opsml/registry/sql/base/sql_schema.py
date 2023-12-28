@@ -56,7 +56,6 @@ class DataMixin:
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
-    uris = Column("uris", JSON)
 
 
 class DataSchema(Base, BaseMixin, DataMixin):
@@ -74,7 +73,6 @@ class ModelMixin:
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
-    uris = Column("uris", JSON)
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):
