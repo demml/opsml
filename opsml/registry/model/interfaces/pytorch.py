@@ -9,7 +9,7 @@ from opsml.registry.model.interfaces.base import (
     SamplePrediction,
     get_model_args,
 )
-from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType
+from opsml.registry.types import CommonKwargs, TorchOnnxArgs, TrainedModelType, Suffix
 
 try:
     import torch
@@ -80,7 +80,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("load_card", False):
+            if model_args.get("load_interface", False):
                 return model_args
 
             model, _, bases = get_model_args(model)
@@ -132,7 +132,7 @@ try:
                     pathlib object
             """
 
-            torch.save(self.model, path.with_suffix(".pt"))
+            torch.save(self.model, path.with_suffix(self.storage_suffix))
 
         def load_model(self, path: Path) -> None:
             """Load pytorch model from path
@@ -141,7 +141,12 @@ try:
                 path:
                     pathlib object
             """
-            self.model = torch.load(path.with_suffix(".pt"))
+            self.model = torch.load(path.with_suffix(self.storage_suffix))
+
+        @property
+        def storage_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return Suffix.PT.value
 
 except ModuleNotFoundError:
 

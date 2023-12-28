@@ -123,7 +123,7 @@ try:
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             # passed as extra when modelcard is being loaded
-            if model_args.get("model_uri") is not None:
+            if model_args.get("load_interface") is not None:
                 return model_args
 
             hf_model = model_args.get("model")
@@ -315,12 +315,15 @@ try:
         def model_class(self) -> str:
             return TrainedModelType.TRANSFORMERS.value
 
+        @property
+        def storage_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return ""
+
 except ModuleNotFoundError:
 
     class HuggingFaceModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")

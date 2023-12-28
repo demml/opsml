@@ -52,7 +52,7 @@ try:
             model = model_args.get("model")
 
             # passed as extra when modelcard is being loaded
-            if model_args.get("load_card", False):
+            if model_args.get("load_interface", False):
                 return model_args
 
             model, module, _ = get_model_args(model)
@@ -74,12 +74,11 @@ try:
 
             self.model = lgb.Booster(model_file=path)
 
+
 except ModuleNotFoundError:
 
     class LightGBMBoosterModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")

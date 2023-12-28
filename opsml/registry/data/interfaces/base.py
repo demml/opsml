@@ -122,7 +122,7 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
         assert self.data is not None, "No data detected in interface"
-        save_path = path.with_suffix(Suffix.JOBLIB.value)
+        save_path = path.with_suffix(self.storage_suffix)
         joblib.dump(self.data, save_path)
 
         self.feature_map = {
@@ -142,7 +142,7 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
 
-        save_path = path.with_suffix(Suffix.JOBLIB.value)
+        save_path = path.with_suffix(self.storage_suffix)
         self.data = joblib.load(save_path)
 
     def load_profile(self, path: Path) -> Path:
@@ -153,7 +153,7 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
 
-        save_path = path.with_suffix(Suffix.JOBLIB.value)
+        save_path = path.with_suffix(self.storage_suffix)
         self.data_profile = joblib.load(save_path)
 
     def save_data_profile(self, path: Path, save_type: str) -> Path:
@@ -172,7 +172,7 @@ class DataInterface(BaseModel):
             save_path.write_text(profile_artifact, encoding="utf-8")
         else:
             profile_artifact = self.data_profile.dumps()
-            save_path = path.with_suffix(Suffix.JOBLIB.value)
+            save_path = path.with_suffix(self.storage_suffix)
             joblib.dump(profile_artifact, save_path)
 
         return save_path
@@ -252,3 +252,8 @@ class DataInterface(BaseModel):
 
             return data_holder
         raise ValueError("No data splits provided")
+
+    @property
+    def storage_suffix(self) -> str:
+        """Returns suffix for storage"""
+        return Suffix.JOBLIB.value

@@ -66,7 +66,7 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.model is not None, "No model detected in interface"
-        save_path = path.with_suffix(".joblib")
+        save_path = path.with_suffix(self.storage_suffix)
         joblib.dump(self.model, save_path)
 
         return save_path
@@ -79,7 +79,7 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.preprocessor is not None, "No preprocessor detected in interface"
-        save_path = path.with_suffix(".joblib")
+        save_path = path.with_suffix(self.storage_suffix)
         joblib.dump(self.preprocessor, save_path)
 
         return save_path
@@ -91,7 +91,7 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(".joblib")
+        save_path = path.with_suffix(self.storage_suffix)
         self.model = joblib.load(save_path)
 
     def load_preprocessor(self, path: Path) -> None:
@@ -101,7 +101,7 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(".joblib")
+        save_path = path.with_suffix(self.storage_suffix)
         self.preprocessor = joblib.load(save_path)
 
     def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
@@ -149,7 +149,7 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(".joblib")
+        save_path = path.with_suffix(self.storage_suffix)
         joblib.dump(self.sample_data, save_path)
         return save_path
 
@@ -210,3 +210,8 @@ class ModelInterface(BaseModel):
             prediction_type,
             prediction,
         )
+
+    @property
+    def storage_suffix(self) -> str:
+        """Returns suffix for storage"""
+        return Suffix.JOBLIB.value
