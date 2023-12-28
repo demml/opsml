@@ -15,11 +15,6 @@ from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 
-if config.is_tracking_local:
-    _OPSML_STORAGE_ROOT = config.opsml_storage_uri
-else:
-    _OPSML_STORAGE_ROOT = "opsml-root://"
-
 
 class ArtifactCard(BaseModel):
     """Base pydantic class for artifact cards"""
@@ -83,7 +78,7 @@ class ArtifactCard(BaseModel):
         if self.version is None:
             raise ValueError("Could not create card uri - version is not set")
         return Path(
-            _OPSML_STORAGE_ROOT,
+            config.storage_root,
             RegistryTableNames.from_str(self.card_type).value,
             self.team,
             self.name,
