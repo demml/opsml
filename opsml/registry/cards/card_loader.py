@@ -4,22 +4,21 @@
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Optional, Tuple, cast
+from typing import cast, Iterator
 
-import joblib
-from pydantic import BaseModel
+from matplotlib import path
 
-from opsml.registry.cards.audit import AuditCard
+
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
 from opsml.registry.cards.model import ModelCard
-from opsml.registry.cards.pipeline import PipelineCard
-from opsml.registry.cards.project import ProjectCard
-from opsml.registry.cards.run import RunCard
-from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
+from opsml.registry.model.interfaces.huggingface import HuggingFaceModel
 from opsml.registry.storage import client
-from opsml.registry.types import CardType, ModelMetadata, SaveName, UriNames
+from opsml.registry.types import CardType, SaveName, UriNames
 from opsml.registry.types.extra import Suffix
+
+
+from contextlib import contextmanager
 
 
 class CardLoader:
@@ -46,17 +45,43 @@ class CardLoader:
     def storage_suffix(self) -> str:
         return self.card.interface.storage_suffix
 
-    def _load_object(self, object_path: str, suffix: str) -> Path:
+    def download(self, lpath: Path, rpath: Path, object_path: str, suffix: str) -> Path:
+        """Download file from rpath to lpath
+
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+            object_path:
+                Path to object to load
+            suffix:
+                Suffix to add to object_path
+        """
+        load_lpath = Path(lpath, object_path).with_suffix(suffix)
+        load_rpath = Path(rpath, object_path).with_suffix(suffix)
+
+        self.storage_client.get(load_rpath, load_lpath)
+
+        return load_lpath
+
+    @contextmanager
+    def _load_object(self, object_path: str, suffix: str) -> Iterator[Path]:
+        """Loads object from server storage to local path
+
+        Args:
+            object_path:
+                Path to object to load
+            suffix:
+                Suffix to add to object_path
+        Returns:
+            Path to downloaded_object
+        """
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
 
-            load_lpath = Path(lpath, object_path).with_suffix(suffix)
-            load_rpath = Path(rpath, object_path).with_suffix(suffix)
-
-            self.storage_client.get(load_rpath, load_lpath)
-
-            return load_lpath
+            yield self.download(lpath, rpath, object_path, suffix)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -76,8 +101,8 @@ class DataCardLoader(CardLoader):
         if self.card.interface.data is not None:
             return None
 
-        lpath = self._load_object(SaveName.DATA.value, self.storage_suffix)
-        self.card.interface.load_data(lpath)
+        with self._load_object(SaveName.DATA.value, self.storage_suffix) as lpath:
+            self.card.interface.load_data(lpath)
 
     def load_data_profile(self) -> None:
         """Saves a data profile"""
@@ -88,8 +113,8 @@ class DataCardLoader(CardLoader):
             return None
 
         # load data profile
-        lpath = self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value)
-        self.card.interface.load_profile(lpath)
+        with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
+            self.card.interface.load_profile(lpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -103,33 +128,99 @@ class ModelCardLoader(CardLoader):
     def card(self) -> ModelCard:
         return cast(ModelCard, self._card)
 
-    def load_sample_data(self) -> None:
-        pass
+    @property
+    def onnx_suffix(self) -> str:
+        """Get onnx suffix to load file. HuggingFaceModel uses a directory path"""
+        if not isinstance(self.card.interface, HuggingFaceModel):
+            return Suffix.ONNX.value
+        return ""
 
-    def load_preprocessor(self) -> None:
-        pass
+    def _load_sample_data(self, lpath: Path, rpath: Path) -> None:
+        """Load sample data for model interface. Sample data is always saved via joblib
 
-    def load_model(self) -> None:
-        """Saves a data via data interface"""
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+        """
+
+        load_rpath = Path(self.card.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        if not self.storage_client.exists(load_rpath):
+            return None
+
+        lpath = self.download(
+            lpath,
+            rpath,
+            SaveName.SAMPLE_MODEL_DATA.value,
+            Suffix.JOBLIB.value,
+        )
+        self.card.interface.load_sample_data(lpath)
+
+    def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
+        """Load Preprocessor for model interface
+
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+        """
+
+        load_rpath = Path(self.card.uri, SaveName.PREPROCESSOR.value).with_suffix(self.storage_suffix)
+        if not self.storage_client.exists(load_rpath):
+            return None
+
+        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix)
+        self.card.interface.load_preprocessor(lpath)
+
+    def _load_model(self, lpath: Path, rpath: Path) -> None:
+        """Load model to interface
+
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+        """
 
         if self.card.interface.model is not None:
             return None
 
-        lpath = self._load_object(SaveName.TRAINED_MODEL, self.storage_suffix)
-        self.card.interface.load_data(lpath)
+        lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.storage_suffix)
+        self.card.interface.load_model(lpath)
 
-    def load_data_profile(self) -> None:
-        """Saves a data profile"""
+    def load_onnx_model(self) -> None:
+        """Load onnx model to interface
 
-        # check exists
-        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
-        if not self.storage_client.exists(rpath):
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+        """
+
+        if self.card.interface.onnx_model is not None:
             return None
 
-        # load data profile
-        lpath = self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value)
-        self.card.interface.load_profile(lpath)
+        load_rpath = Path(self.card.uri, SaveName.ONNX_MODEL.value).with_suffix(self.onnx_suffix)
+        if not self.storage_client.exists(load_rpath):
+            return None
+
+        # onnx model is loaded separately
+        with self._load_object(SaveName.ONNX_MODEL.value, self.onnx_suffix) as lpath:
+            self.card.interface.load_onnx_model(lpath)
+
+    def load_model(self) -> None:
+        """Load model, preprocessor and sample data"""
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lpath = Path(tmp_dir)
+            rpath = self.card.uri
+            self._load_model(lpath, rpath)
+            self._load_preprocessor(lpath, rpath)
+            self._load_sample_data(lpath, rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
-        return CardType.DATACARD.value in card_type
+        return CardType.MODELCARD.value in card_type

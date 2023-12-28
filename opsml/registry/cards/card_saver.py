@@ -173,7 +173,7 @@ class ModelCardArtifactSaver(CardArtifactSaver):
         self.card_uris.sample_data_uri = saved_path
 
     def _save_onnx_model(self) -> None:
-        if self.card.to_onnx is not None:
+        if self.card.to_onnx:
             save_path = self.lpath / SaveName.ONNX_MODEL.value
             metadata, saved_path = self.card.interface.convert_to_onnx(save_path)
         else:
