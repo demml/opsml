@@ -237,6 +237,7 @@ class ModelCardSaver(CardSaver):
 
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
+        self.card.interface.modelcard_uid = str(self.card.uid)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)

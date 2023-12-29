@@ -28,6 +28,7 @@ from opsml.registry.types import (
     SaveName,
     Suffix,
 )
+from opsml.registry.types.model import OnnxModel
 from opsml.settings.config import config
 
 table_name_card_map = {
@@ -100,13 +101,12 @@ class CardLoader:
 
         return args.uri
 
-    @staticmethod
     def download(
+        self,
         lpath: Path,
         rpath: Path,
         object_path: str,
         suffix: str,
-        storage_client: client.StorageClientBase,
     ) -> Path:
         """Download file from rpath to lpath
 
@@ -125,7 +125,12 @@ class CardLoader:
         load_lpath = Path(lpath, object_path).with_suffix(suffix)
         load_rpath = Path(rpath, object_path).with_suffix(suffix)
 
-        storage_client.get(load_rpath, load_lpath)
+        if not suffix:
+            recursive = True
+        else:
+            recursive = False
+
+        self.storage_client.get(load_rpath, load_lpath, recursive)
 
         return load_lpath
 
@@ -153,7 +158,7 @@ class CardLoader:
             lpath = Path(tmp_dir)
             rpath = rpath or self.card.uri
 
-            yield self.download(lpath, rpath, object_path, suffix, self.storage_client)
+            yield self.download(lpath, rpath, object_path, suffix)
 
     def load_card(self) -> ArtifactCard:
         """Loads an ArtifactCard from card arguments
@@ -165,6 +170,7 @@ class CardLoader:
         with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
             loaded_card: Dict[str, Any] = joblib.load(lpath)
 
+        # load interface
         if self.registry_type == RegistryType.MODEL or self.registry_type == RegistryType.DATA:
             # load interface
             interface_type: str = loaded_card["metadata"]["interface_type"]
@@ -174,6 +180,7 @@ class CardLoader:
             else:
                 interface = get_data_interface(interface_type)
 
+            loaded_card["interface"]["load_card"] = True
             loaded_interface = interface(**loaded_card["interface"])
             loaded_card["interface"] = loaded_interface
 
@@ -247,7 +254,7 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value, self.storage_client)
+        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value)
 
         self.card.interface.load_sample_data(lpath)
 
@@ -265,7 +272,7 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix, self.storage_client)
+        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix)
         self.card.interface.load_preprocessor(lpath)
 
     def _load_model(self, lpath: Path, rpath: Path, **kwargs) -> None:
@@ -303,6 +310,7 @@ class ModelCardLoader(CardLoader):
 
         # onnx model is loaded separately
         with self._load_object(SaveName.ONNX_MODEL.value, self.onnx_suffix) as lpath:
+            self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(lpath)
 
     def load_model(self) -> None:

@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 import joblib
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from opsml.helpers.utils import all_subclasses, get_class_name
 from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel
@@ -45,6 +46,7 @@ class ModelInterface(BaseModel):
     model_type: str = CommonKwargs.UNDEFINED.value
     preprocessor_name: str = CommonKwargs.UNDEFINED.value
     data_type: str = CommonKwargs.UNDEFINED.value
+    modelcard_uid: str = ""
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -57,6 +59,28 @@ class ModelInterface(BaseModel):
     @property
     def model_class(self) -> str:
         raise NotImplementedError
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        if model_args.get("modelcard_uid") is not None:
+            return model_args
+
+        return model_args
+
+    @field_validator("modelcard_uid", mode="before")
+    @classmethod
+    def check_modelcard_uid(cls, modelcard_uid: str) -> Dict[str, Any]:
+        # empty strings are falsey
+        if not modelcard_uid:
+            return modelcard_uid
+
+        try:
+            UUID(modelcard_uid, version=4)  # we use uuid4
+            return modelcard_uid
+
+        except ValueError:
+            raise ValueError("Datacard uid is not a valid uuid")
 
     def save_model(self, path: Path) -> Path:
         """Saves model to path. Base implementation use Joblib

@@ -10,11 +10,12 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, SerializeAsAny, field_validator
+from pydantic import BaseModel
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.image.dataset import ImageDataset
-from opsml.registry.types import Description, Feature
+from opsml.registry.types.extra import Description
+from opsml.registry.types.model import Feature
 
 ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]  # type: ignore
 
@@ -121,21 +122,9 @@ class DataCardMetadata(BaseModel):
     """
 
     interface_type: str = ""
-    description: SerializeAsAny[Description] = Description()
-    feature_map: Dict[str, SerializeAsAny[Feature]] = {}
+    description: Description = Description()
+    feature_map: Dict[str, Feature] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
-
-    @field_validator("feature_descriptions", mode="before")
-    @classmethod
-    def lower_descriptions(cls, feature_descriptions: Dict[str, str]) -> Dict[str, str]:
-        if not bool(feature_descriptions):
-            return feature_descriptions
-
-        feat_dict = {}
-        for feature, description in feature_descriptions.items():
-            feat_dict[feature.lower()] = description.lower()
-
-        return feat_dict

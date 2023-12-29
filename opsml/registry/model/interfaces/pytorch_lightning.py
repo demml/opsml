@@ -46,8 +46,7 @@ try:
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             model = model_args.get("model")
 
-            # passed as extra when modelcard is being loaded
-            if model_args.get("load_interface", False):
+            if model_args.get("modelcard_uid") is not None:
                 return model_args
 
             model, module, bases = get_model_args(model)

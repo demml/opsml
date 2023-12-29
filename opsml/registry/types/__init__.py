@@ -18,7 +18,6 @@ from opsml.registry.types.card import (
 from opsml.registry.types.data import (
     AllowedDataType,
     AllowedTableTypes,
-    ArrowTable,
     DataCardMetadata,
     ValidData,
     check_data_type,
