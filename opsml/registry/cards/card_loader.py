@@ -5,7 +5,7 @@ import tempfile
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, cast
+from typing import Any, Dict, Iterator, cast, Optional
 
 import joblib
 from pydantic import BaseModel
@@ -37,31 +37,39 @@ class CardArgs(BaseModel):
 
 
 class CardLoader:
-    def __init__(self, card: ArtifactCard):
+    def __init__(
+        self,
+        card: Optional[ArtifactCard] = None,
+        card_args: Optional[Dict[str, Any]] = None,
+        registry_type: Optional[RegistryType] = None,
+    ):
         """
-        Parent class for saving artifacts belonging to cards.
-        ArtifactSaver controls pathing for all card objects
+        Parent class for saving artifacts belonging to cards or loading cards.
 
         Args:
             card:
                 ArtifactCard with artifacts to save
-            card_storage_info:
-                Extra info to use with artifact storage
+            card_args:
+                Card args to use to get remote path (injected during card loading)
+            registry_type:
+                Registry type to use. (For loading artifact cards)
         """
 
         self._card = card
+        self.card_args = card_args
+        self.registry_type = registry_type
         self.storage_client = client.storage_client
 
     @cached_property
     def card(self) -> ArtifactCard:
-        return self.card
+        assert self._card is not None
+        return self._card
 
     @cached_property
     def storage_suffix(self) -> str:
         return self.card.interface.storage_suffix
 
-    @staticmethod
-    def get_rpath_from_args(card_args: Dict[str, Any], registry_type: RegistryType) -> Path:
+    def get_rpath_from_args(self) -> Path:
         """Get remote path from card args
 
         Args:
@@ -73,8 +81,8 @@ class CardLoader:
             Remote path
         """
 
-        table_name = RegistryTableNames.from_str(registry_type.value).value
-        args = CardArgs(**card_args, table_name=table_name)
+        table_name = RegistryTableNames.from_str(self.registry_type.value).value
+        args = CardArgs(**self.card_args, table_name=table_name)
 
         return args.uri
 
@@ -108,7 +116,12 @@ class CardLoader:
         return load_lpath
 
     @contextmanager
-    def _load_object(self, object_path: str, suffix: str) -> Iterator[Path]:
+    def _load_object(
+        self,
+        object_path: str,
+        suffix: str,
+        rpath: Optional[Path] = None,
+    ) -> Iterator[Path]:
         """Loads object from server storage to local path
 
         Args:
@@ -116,14 +129,28 @@ class CardLoader:
                 Path to object to load
             suffix:
                 Suffix to add to object_path
+            rpath:
+                Remote path to load file
+
         Returns:
             Path to downloaded_object
         """
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
-            rpath = self.card.uri
+            rpath = rpath or self.card.uri
 
             yield self.download(lpath, rpath, object_path, suffix, self.storage_client)
+
+    def load_card(self):
+        rpath = self.get_rpath_from_args()
+        with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
+            loaded_card: Dict[str, Any] = joblib.load(lpath)
+
+        if self.registry_type == RegistryType.MODEL or self.registry_type == RegistryType.DATA:
+            # load interface
+            interface_type: str = loaded_card["metadata"]["interface_type"]
+
+            # load interface
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -135,6 +162,7 @@ class DataCardLoader(CardLoader):
 
     @cached_property
     def card(self) -> DataCard:
+        assert isinstance(self._card, DataCard)
         return cast(DataCard, self._card)
 
     def load_data(self) -> None:
@@ -168,6 +196,7 @@ class ModelCardLoader(CardLoader):
 
     @cached_property
     def card(self) -> ModelCard:
+        assert isinstance(self._card, ModelCard)
         return cast(ModelCard, self._card)
 
     @property
@@ -271,8 +300,9 @@ def load_card_from_record(card_record: Dict[str, Any], registry_type: RegistryTy
         card:
             Card to load
     """
-    # this should be part of the actual loader
-    # start here tomorrow
+
+    loader = CardLoader(card_args=card_record, registry_type=registry_type)
+
     rpath = CardLoader.get_rpath_from_args(card_record, registry_type)
     with tempfile.TemporaryDirectory() as tmp_dir:
         lpath = Path(tmp_dir)
