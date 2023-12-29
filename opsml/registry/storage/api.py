@@ -101,20 +101,22 @@ class ApiClient:
         detail = response.json().get("detail")
         raise ValueError(f"""Failed to to make server call for post request Url: {route}, {detail}""")
 
-    @retry(reraise=True, stop=stop_after_attempt(3))
+    @retry(reraise=True, stop=stop_after_attempt(1))
     def get_request(self, route: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         response = self.client.get(url=f"{self._base_url}/{route}", params=params)
 
         if response.status_code == 200:
             return cast(Dict[str, Any], response.json())
 
-        raise ValueError(f"""Failed to to make server call for get request Url: {route}""")
+        detail = response.json().get("detail")
+        raise ValueError(f"""Failed to to make server call for get request Url: {route}, {detail}""")
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(
         self, route: str, files: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         result = ""
+
         with self.client.stream(
             method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
         ) as response:
@@ -146,7 +148,11 @@ class ApiClient:
         local_path = local_dir / filename
 
         with open(local_path.as_posix(), "wb") as local_file:
-            with self.client.stream(method="GET", url=f"{self._base_url}/{route}/{read_path.as_posix()}") as response:
+            with self.client.stream(
+                method="GET",
+                url=f"{self._base_url}/{route}",
+                params={"path": read_path.as_posix()},
+            ) as response:
                 for data in response.iter_bytes():
                     local_file.write(data)
 

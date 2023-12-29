@@ -95,13 +95,14 @@ class DataSchema(BaseModel):
     onnx_input_features: Optional[Dict[str, Feature]] = None
     onnx_output_features: Optional[Dict[str, Feature]] = None
     onnx_data_type: Optional[str] = None
+    onnx_version: Optional[str] = None
 
     model_config = ConfigDict(frozen=False)
 
 
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
-    sess: Any = Field(..., description="Onnx model session")
+    sess: Any = Field(None, description="Onnx model session")
 
 
 class ModelReturn(BaseModel):

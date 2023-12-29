@@ -180,8 +180,10 @@ class ApiStorageClient(StorageClientBase):
         )
 
     def ls(self, path: Path) -> List[str]:
-        route = Path(ApiRoutes.LIST_FILES, path)
-        response = self.api_client.get_request(route=route.as_posix())
+        response = self.api_client.get_request(
+            route=ApiRoutes.LIST_FILES,
+            params={"path": path},
+        )
 
         # storage clients always return a list
         files: List[str] = response["files"]
@@ -224,8 +226,11 @@ class ApiStorageClient(StorageClientBase):
             path:
                 Path to file
         """
-        route = Path(ApiRoutes.FILE_EXISTS, path)
-        response = self.api_client.get_request(route=route.as_posix())
+
+        response = self.api_client.get_request(
+            route=ApiRoutes.FILE_EXISTS,
+            params={"path": path.as_posix()},
+        )
 
         return response.get("exists", False)
 

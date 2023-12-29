@@ -8,10 +8,8 @@ from semver import VersionInfo
 
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import clean_string
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.sql.records import LoadedRecordType, load_record
 from opsml.registry.sql.semver import CardVersion, SemVerUtils, VersionType
 from opsml.registry.storage.client import StorageClient
 from opsml.registry.types import RegistryTableNames, RegistryType
@@ -285,31 +283,6 @@ class SQLRegistryBase:
                     sorted_records.append(record)
 
         return sorted_records
-
-    def load_card_record(
-        self,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        uid: Optional[str] = None,
-        ignore_release_candidates: bool = False,
-    ) -> LoadedRecordType:
-        cleaned_name = clean_string(name)
-
-        record = self.list_cards(
-            name=cleaned_name,
-            version=version,
-            uid=uid,
-            limit=1,
-            tags=tags,
-            ignore_release_candidates=ignore_release_candidates,
-        )
-
-        return load_record(
-            registry_type=self.registry_type,
-            record_data=record[0],
-            storage_client=self.storage_client,
-        )
 
     def delete_card(self, card: ArtifactCard) -> None:
         """Delete a specific card"""

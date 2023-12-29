@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, ConfigDict, SerializeAsAny, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_team_pattern
@@ -29,7 +29,7 @@ class ArtifactCard(BaseModel):
     user_email: str
     version: Optional[str] = None
     uid: Optional[str] = None
-    info: Optional[SerializeAsAny[CardInfo]] = None
+    info: Optional[CardInfo] = None
     tags: Dict[str, str] = {}
 
     @model_validator(mode="before")

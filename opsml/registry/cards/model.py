@@ -5,11 +5,10 @@
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from pydantic import ConfigDict, SerializeAsAny, field_validator
+from pydantic import ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.card_loader import ModelCardLoader
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.types import CardType, ModelCardMetadata
@@ -49,15 +48,16 @@ class ModelCard(ArtifactCard):
         validate_assignment=True,
     )
 
-    interface: SerializeAsAny[ModelInterface]
+    interface: ModelInterface
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
-    metadata: SerializeAsAny[ModelCardMetadata] = ModelCardMetadata()
+    metadata: ModelCardMetadata = ModelCardMetadata()
 
     @field_validator("datacard_uid", mode="before")
+    @classmethod
     def check_uid(cls, datacard_uid: Optional[str] = None):
         if datacard_uid is None:
-            raise datacard_uid
+            return datacard_uid
 
         try:
             UUID(datacard_uid, version=4)  # we use uuid4
@@ -68,10 +68,13 @@ class ModelCard(ArtifactCard):
 
     def load_model(self) -> None:
         """Loads model, preprocessor and sample data to interface"""
+        from opsml.registry.cards.card_loader import ModelCardLoader
+
         ModelCardLoader(self).load_model()
 
     def load_onnx_model(self) -> None:
         """Loads onnx model to interface"""
+        from opsml.registry.cards.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_onnx_model()
 

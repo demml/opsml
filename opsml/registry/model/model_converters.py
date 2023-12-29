@@ -212,6 +212,7 @@ class _ModelConverter:
         schema = DataSchema(
             onnx_input_features=onnx_input_features,
             onnx_output_features=onnx_output_features,
+            onnx_version=onnx.__version__,
         )
 
         return ModelReturn(onnx_model=onnx_model, data_schema=schema)

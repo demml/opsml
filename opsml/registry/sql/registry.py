@@ -6,6 +6,7 @@ import textwrap
 from typing import Any, Dict, List, Optional, Type
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import clean_string
 from opsml.registry.cards import (
     ArtifactCard,
     AuditCard,
@@ -157,9 +158,6 @@ class CardRegistry:
             ignore_release_candidates=ignore_release_candidates,
         )
 
-        # if as_dataframe:
-        # return pd.DataFrame(card_list)
-
         return card_list
 
     def load_card(
@@ -199,6 +197,8 @@ class CardRegistry:
             uid = uid or info.uid
             version = version or info.version
             tags = tags or info.tags
+
+        name = clean_string(name)
 
         records = self.list_cards(
             uid=uid,

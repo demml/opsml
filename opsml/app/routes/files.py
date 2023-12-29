@@ -100,10 +100,10 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     return {"storage_uri": write_path.as_posix()}
 
 
-@router.get("/files/download/{read_path}", name="download_file")
+@router.get("/files/download", name="download_file")
 def download_file(
     request: Request,
-    read_path: Annotated[str, Depends(swap_opsml_root)],
+    path: Annotated[str, Depends(swap_opsml_root)],
 ) -> StreamingResponse:
     """Downloads a file
 
@@ -120,7 +120,7 @@ def download_file(
 
     try:
         return StreamingResponse(
-            storage_client.iterfile(Path(read_path), CHUNK_SIZE),
+            storage_client.iterfile(Path(path), CHUNK_SIZE),
             media_type="application/octet-stream",
         )
 
@@ -131,8 +131,8 @@ def download_file(
         ) from error
 
 
-@router.get("/files/list/{read_path}", name="list_files")
-def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_root)]) -> ListFileResponse:
+@router.get("/files/list", name="list_files")
+def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)]) -> ListFileResponse:
     """Lists files
 
     Args:
@@ -146,7 +146,7 @@ def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_ro
     """
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
-        return ListFileResponse(files=storage_client.ls(Path(read_path)))
+        return ListFileResponse(files=storage_client.ls(Path(path)))
 
     except Exception as error:
         raise HTTPException(
@@ -155,10 +155,10 @@ def list_files(request: Request, read_path: Annotated[str, Depends(swap_opsml_ro
         ) from error
 
 
-@router.get("/files/exists/{read_path}", name="download_file")
+@router.get("/files/exists", name="file_exists")
 def file_exists(
     request: Request,
-    read_path: Annotated[str, Depends(swap_opsml_root)],
+    path: Annotated[str, Depends(swap_opsml_root)],
 ) -> FileExistsResponse:
     """Checks if path exists
 
@@ -166,19 +166,22 @@ def file_exists(
         request:
             request object
         read_path:
-            path to file
+            path to files
 
     Returns:
         FileExistsResponse
     """
+
     storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
-    return storage_client.exists(Path(read_path))
+    exists = storage_client.exists(Path(path))
+
+    return FileExistsResponse(exists=exists)
 
 
-@router.get("/files/delete/{read_path}", name="delete_files", dependencies=[Depends(verify_token)])
+@router.get("/files/delete", name="delete_files", dependencies=[Depends(verify_token)])
 def delete_files(
     request: Request,
-    read_path: Annotated[str, Depends(swap_opsml_root)],
+    path: Annotated[str, Depends(swap_opsml_root)],
 ) -> DeleteFileResponse:
     """Deletes a file
 
@@ -195,13 +198,13 @@ def delete_files(
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
 
-        files = list_files(request=request, read_path=read_path)
+        files = list_files(request=request, read_path=path)
 
         # no point of deleting when it's empty
         if len(files.files) == 0:
             return DeleteFileResponse(deleted=False)
 
-        storage_client.rm(Path(read_path))
+        storage_client.rm(Path(path))
         return DeleteFileResponse(deleted=True)
 
     except Exception as error:
