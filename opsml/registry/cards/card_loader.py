@@ -10,10 +10,8 @@ from typing import Any, Dict, Iterator, cast, Optional
 import joblib
 from pydantic import BaseModel
 
-from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.data import DataCard
-from opsml.registry.cards.model import ModelCard
-from opsml.registry.model.interfaces.huggingface import HuggingFaceModel
+from opsml.registry.cards import DataCard, ModelCard, RunCard, PipelineCard, AuditCard, ArtifactCard
+from opsml.registry.model.interfaces import HuggingFaceModel, get_model_interface
 from opsml.registry.storage import client
 from opsml.registry.types import (
     CardType,
@@ -23,6 +21,14 @@ from opsml.registry.types import (
     Suffix,
 )
 from opsml.settings.config import config
+
+table_name_card_map = {
+    RegistryType.DATA.value: DataCard,
+    RegistryType.MODEL.value: ModelCard,
+    RegistryType.RUN.value: RunCard,
+    RegistryType.PIPELINE.value: PipelineCard,
+    RegistryType.AUDIT.value: AuditCard,
+}
 
 
 class CardArgs(BaseModel):
@@ -149,6 +155,14 @@ class CardLoader:
         if self.registry_type == RegistryType.MODEL or self.registry_type == RegistryType.DATA:
             # load interface
             interface_type: str = loaded_card["metadata"]["interface_type"]
+
+            if self.registry_type == RegistryType.MODEL:
+                interface = get_model_interface(interface_type)
+            else:
+                interface = None
+
+            loaded_interface = interface(**loaded_card["interface"])
+            loaded_card["interface"] = loaded_interface
 
             # load interface
 

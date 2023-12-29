@@ -20,30 +20,6 @@ def get_timestamp() -> int:
     return int(round(time.time() * 1_000_000))
 
 
-def load_card(rpath: str, object_path: str) -> Dict[str, Any]:
-    """Loads an ArtifactCard definition from a server path
-
-    Args:
-        rpath:
-            server path
-        object_path:
-            object-specific name for pathing
-
-    Returns:
-        Dictionary to be inserted into ArtifactCard
-    """
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        lpath = Path(tmp_dir)
-
-        load_lpath = Path(lpath, object_path).with_suffix(Suffix.JOBLIB.value)
-        load_rpath = Path(rpath, object_path).with_suffix(Suffix.JOBLIB.value)
-
-        client.storage_client.get(load_rpath, load_lpath)
-
-        card: Dict[str, Any] = joblib.load(load_lpath)
-        return card
-
-
 class RunUris(BaseModel):
     runcard_uri: str
 
