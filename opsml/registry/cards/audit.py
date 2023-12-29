@@ -9,7 +9,7 @@ import os
 from typing import Any, Dict, List, Optional, cast
 
 import yaml
-from pydantic import BaseModel, ConfigDict, model_validator, SerializeAsAny
+from pydantic import BaseModel, ConfigDict, SerializeAsAny, model_validator
 from rich.console import Console
 from rich.table import Table
 

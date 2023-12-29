@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
-from opsml.helpers.utils import get_class_name, all_subclasses
+from opsml.helpers.utils import all_subclasses, get_class_name
 from opsml.registry.types import CommonKwargs, ModelReturn, OnnxModel
 from opsml.registry.types.extra import Suffix
 
@@ -225,8 +225,8 @@ def get_model_interface(interface_type: str) -> ModelInterface:
     """Load model interface from pathlib object
 
     Args:
-        path:
-            Pathlib object
+        interface_type:
+            Name of interface
     """
     return next(
         (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),

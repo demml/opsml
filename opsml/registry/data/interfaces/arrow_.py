@@ -8,7 +8,7 @@ from opsml.registry.data.interfaces.base import DataInterface
 from opsml.registry.types import AllowedDataType, Feature, Suffix
 
 
-class PolarsData(DataInterface):
+class ArrowData(DataInterface):
 
     """Arrow Table data interface
 
@@ -67,3 +67,7 @@ class PolarsData(DataInterface):
     def storage_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.PARQUET.value
+
+    @staticmethod
+    def name() -> str:
+        return ArrowData.__name__

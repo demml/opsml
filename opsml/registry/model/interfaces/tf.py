@@ -124,8 +124,7 @@ try:
         def storage_suffix(self) -> str:
             """Returns suffix for storage"""
             return ""
-        
-        
+
         @staticmethod
         def name() -> str:
             return TensorFlowModel.__name__

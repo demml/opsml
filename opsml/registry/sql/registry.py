@@ -15,7 +15,7 @@ from opsml.registry.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.cards.card_loader import load_card_from_record
+from opsml.registry.cards.card_loader import CardLoader
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.semver import VersionType
 from opsml.registry.storage import client
@@ -209,7 +209,10 @@ class CardRegistry:
             limit=1,
         )
 
-        return load_card_from_record(records[0], self.registry_type)
+        return CardLoader(
+            card_args=records[0],
+            registry_type=self.registry_type,
+        ).load_card()
 
     def register_card(
         self,

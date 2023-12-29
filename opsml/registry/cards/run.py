@@ -4,13 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Optional, Union
 
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
 from opsml.registry.types import METRICS, PARAMS, CardType, Metric, Param
-
-from pydantic import SerializeAsAny
 
 logger = ArtifactLogger.get_logger()
 

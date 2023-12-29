@@ -5,12 +5,20 @@ import tempfile
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, cast, Optional
+from typing import Any, Dict, Iterator, Optional, cast
 
 import joblib
 from pydantic import BaseModel
 
-from opsml.registry.cards import DataCard, ModelCard, RunCard, PipelineCard, AuditCard, ArtifactCard
+from opsml.registry.cards import (
+    ArtifactCard,
+    AuditCard,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    RunCard,
+)
+from opsml.registry.data.interfaces import get_data_interface
 from opsml.registry.model.interfaces import HuggingFaceModel, get_model_interface
 from opsml.registry.storage import client
 from opsml.registry.types import (
@@ -147,7 +155,12 @@ class CardLoader:
 
             yield self.download(lpath, rpath, object_path, suffix, self.storage_client)
 
-    def load_card(self):
+    def load_card(self) -> ArtifactCard:
+        """Loads an ArtifactCard from card arguments
+
+        Returns:
+            Loaded ArtifactCard
+        """
         rpath = self.get_rpath_from_args()
         with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
             loaded_card: Dict[str, Any] = joblib.load(lpath)
@@ -159,12 +172,12 @@ class CardLoader:
             if self.registry_type == RegistryType.MODEL:
                 interface = get_model_interface(interface_type)
             else:
-                interface = None
+                interface = get_data_interface(interface_type)
 
             loaded_interface = interface(**loaded_card["interface"])
             loaded_card["interface"] = loaded_interface
 
-            # load interface
+        return cast(ArtifactCard, table_name_card_map[self.registry_type.value](**loaded_card))
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -177,7 +190,7 @@ class DataCardLoader(CardLoader):
     @cached_property
     def card(self) -> DataCard:
         assert isinstance(self._card, DataCard)
-        return cast(DataCard, self._card)
+        return self._card
 
     def load_data(self) -> None:
         """Saves a data via data interface"""
@@ -211,7 +224,7 @@ class ModelCardLoader(CardLoader):
     @cached_property
     def card(self) -> ModelCard:
         assert isinstance(self._card, ModelCard)
-        return cast(ModelCard, self._card)
+        return self._card
 
     @property
     def onnx_suffix(self) -> str:
@@ -305,27 +318,3 @@ class ModelCardLoader(CardLoader):
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.MODELCARD.value in card_type
-
-
-def load_card_from_record(card_record: Dict[str, Any], registry_type: RegistryType) -> None:
-    """Load card from record
-
-    Args:
-        card:
-            Card to load
-    """
-
-    loader = CardLoader(card_args=card_record, registry_type=registry_type)
-
-    rpath = CardLoader.get_rpath_from_args(card_record, registry_type)
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        lpath = Path(tmp_dir)
-        rpath = CardLoader.get_rpath_from_args(card_record, registry_type)
-        load_path = CardLoader.download(lpath, rpath, SaveName.CARD.value, Suffix.JOBLIB.value, client.storage_client)
-        loaded_card: Dict[str, Any] = joblib.load(load_path)
-
-        if registry_type == RegistryType.MODEL or registry_type == RegistryType.DATA:
-            # load interface
-            interface_type: str = loaded_card["metadata"]["interface_type"]
-
-            # get interface type

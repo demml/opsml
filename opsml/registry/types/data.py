@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, field_validator, SerializeAsAny
+from pydantic import BaseModel, SerializeAsAny, field_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.registry.image.dataset import ImageDataset
