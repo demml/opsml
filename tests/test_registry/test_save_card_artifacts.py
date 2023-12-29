@@ -29,7 +29,7 @@ def _test_save_modelcard_local_client(random_forest_classifier: SklearnModel):
     # cleanup()
 
 
-def test_save_modelcard_api_client(
+def test_save_sklearn_modelcard_api_client(
     random_forest_classifier: SklearnModel,
     api_storage_client: client.StorageClientBase,
 ):
