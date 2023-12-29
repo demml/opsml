@@ -11,9 +11,7 @@ from opsml.registry.types import CommonKwargs, TrainedModelType
 try:
     from sklearn.base import BaseEstimator
 
-    VALID_DATA = Union[
-        pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any
-    ]
+    VALID_DATA = Union[pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 
     class SklearnModel(ModelInterface):
         """Model interface for Sklearn models.
@@ -73,12 +71,18 @@ try:
 
             return model_args
 
+        @staticmethod
+        def name() -> str:
+            return SklearnModel.__name__
+
 except ModuleNotFoundError:
 
     class SklearnModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "SklearnModel requires scikit-learn to be installed. Please install scikit-learn."
-            )
+            raise ModuleNotFoundError("SklearnModel requires scikit-learn to be installed. Please install scikit-learn.")
+
+        @staticmethod
+        def name() -> str:
+            return SklearnModel.__name__

@@ -312,12 +312,18 @@ try:
             """Returns suffix for storage"""
             return ""
 
+        @staticmethod
+        def name() -> str:
+            return HuggingFaceModel.__name__
+
 except ModuleNotFoundError:
 
     class HuggingFaceModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+
+        @staticmethod
+        def name() -> str:
+            return HuggingFaceModel.__name__

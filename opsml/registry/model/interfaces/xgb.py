@@ -63,6 +63,10 @@ try:
 
             return model_args
 
+        @staticmethod
+        def name() -> str:
+            return XGBoostModel.__name__
+
 except ModuleNotFoundError:
 
     class XGBoostModel(ModelInterface):
@@ -70,3 +74,7 @@ except ModuleNotFoundError:
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             raise ModuleNotFoundError("XGBoostModel requires xgboost to be installed. Please install xgboost.")
+
+        @staticmethod
+        def name() -> str:
+            return XGBoostModel.__name__

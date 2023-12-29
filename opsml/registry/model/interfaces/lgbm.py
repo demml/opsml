@@ -74,12 +74,18 @@ try:
 
             self.model = lgb.Booster(model_file=path)
 
+        @staticmethod
+        def name() -> str:
+            return LightGBMBoosterModel.__name__
+
 except ModuleNotFoundError:
 
     class LightGBMBoosterModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
+
+        @staticmethod
+        def name() -> str:
+            return LightGBMBoosterModel.__name__

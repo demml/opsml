@@ -124,6 +124,11 @@ try:
         def storage_suffix(self) -> str:
             """Returns suffix for storage"""
             return ""
+        
+        
+        @staticmethod
+        def name() -> str:
+            return TensorFlowModel.__name__
 
 except ModuleNotFoundError:
 
@@ -132,3 +137,7 @@ except ModuleNotFoundError:
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             raise ModuleNotFoundError("TensorFlowModel requires tensorflow to be installed. Please install tensorflow.")
+
+        @staticmethod
+        def name() -> str:
+            return TensorFlowModel.__name__

@@ -148,6 +148,10 @@ try:
             """Returns suffix for storage"""
             return Suffix.PT.value
 
+        @staticmethod
+        def name() -> str:
+            return PyTorchModel.__name__
+
 except ModuleNotFoundError:
 
     class PyTorchModel(ModelInterface):
@@ -155,3 +159,7 @@ except ModuleNotFoundError:
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             raise ModuleNotFoundError("PyTorchModel requires torch to be installed. Please install pytorch.")
+
+        @staticmethod
+        def name() -> str:
+            return PyTorchModel.__name__
