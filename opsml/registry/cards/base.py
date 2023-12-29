@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, ConfigDict, model_validator, SerializeAsAny
+from pydantic import BaseModel, ConfigDict, SerializeAsAny, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_team_pattern

@@ -7,7 +7,7 @@ import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import FileUtils
+from opsml.helpers.utils import FileUtils, all_subclasses
 from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.registry.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.registry.types import CommonKwargs, Feature, Suffix
@@ -257,3 +257,20 @@ class DataInterface(BaseModel):
     def storage_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value
+
+    @staticmethod
+    def name() -> str:
+        return DataInterface.__name__
+
+
+def get_data_interface(interface_type: str) -> DataInterface:
+    """Load model interface from pathlib object
+
+    Args:
+        interface_type:
+            Name of interface
+    """
+    return next(
+        (cls for cls in all_subclasses(DataInterface) if cls.name() == interface_type),
+        DataInterface,
+    )

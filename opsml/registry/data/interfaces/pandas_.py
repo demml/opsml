@@ -73,3 +73,7 @@ class PandasData(DataInterface):
     def storage_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.PARQUET.value
+
+    @staticmethod
+    def name() -> str:
+        return PandasData.__name__

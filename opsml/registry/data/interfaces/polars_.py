@@ -71,3 +71,7 @@ class PolarsData(DataInterface):
     def storage_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.PARQUET.value
+
+    @staticmethod
+    def name() -> str:
+        return PolarsData.__name__

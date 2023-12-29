@@ -62,3 +62,7 @@ class NumpyData(DataInterface):
     def storage_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.ZARR.value
+
+    @staticmethod
+    def name() -> str:
+        return NumpyData.__name__
