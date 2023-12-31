@@ -122,7 +122,7 @@ try:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            if model_args.get("modelcard_uid") is not None:
+            if model_args.get("modelcard_uid", False):
                 return model_args
 
             hf_model = model_args.get("model")
@@ -321,9 +321,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:

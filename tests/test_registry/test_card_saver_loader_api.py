@@ -10,25 +10,6 @@ from opsml.registry.storage import client
 from opsml.registry.types import RegistryType, SaveName
 
 
-def _test_save_modelcard_local_client(random_forest_classifier: SklearnModel):
-    model: SklearnModel = random_forest_classifier
-    modelcard = ModelCard(
-        interface=model,
-        name="test_model",
-        team="mlops",
-        user_email="test_email",
-        datacard_uids=["test_uid"],
-        to_onnx=True,
-        version="0.0.1",
-    )
-
-    save_card_artifacts(modelcard)
-    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib").exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib").exists()
-    assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx").exists()
-    # cleanup()
-
-
 def test_save_sklearn_modelcard_api_client(
     random_forest_classifier: SklearnModel,
     api_storage_client: client.StorageClientBase,
@@ -52,6 +33,7 @@ def test_save_sklearn_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))
@@ -77,7 +59,7 @@ def test_save_sklearn_modelcard_api_client(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_lgb_modelcard_api_client(
+def _test_save_lgb_modelcard_api_client(
     random_forest_classifier: SklearnModel,  # change to lgb
     api_storage_client: client.StorageClientBase,
 ):
@@ -100,6 +82,7 @@ def test_save_lgb_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))

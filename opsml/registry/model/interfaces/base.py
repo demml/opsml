@@ -63,7 +63,7 @@ class ModelInterface(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        if model_args.get("modelcard_uid") is not None:
+        if model_args.get("modelcard_uid", False):
             return model_args
 
         return model_args

@@ -46,7 +46,7 @@ try:
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             model = model_args.get("model")
 
-            if model_args.get("modelcard_uid") is not None:
+            if model_args.get("modelcard_uid", False):
                 return model_args
 
             model, module, bases = get_model_args(model)
@@ -131,9 +131,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
         @staticmethod
         def name() -> str:

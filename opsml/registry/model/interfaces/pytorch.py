@@ -79,7 +79,7 @@ try:
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             model = model_args.get("model")
 
-            if model_args.get("modelcard_uid") is not None:
+            if model_args.get("modelcard_uid", False):
                 return model_args
 
             model, _, bases = get_model_args(model)

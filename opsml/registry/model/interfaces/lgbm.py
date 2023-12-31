@@ -51,7 +51,7 @@ try:
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
             model = model_args.get("model")
 
-            if model_args.get("modelcard_uid") is not None:
+            if model_args.get("modelcard_uid", False):
                 return model_args
 
             model, module, _ = get_model_args(model)
@@ -83,9 +83,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
 
         @staticmethod
         def name() -> str:
