@@ -57,10 +57,6 @@ class _ModelConverter:
     def __init__(self, model_interface: ModelInterface, data_helper: ModelDataHelper):
         self.interface = model_interface
         self.data_helper = data_helper
-        self.data_converter = OnnxDataConverter(
-            model_interface=model_interface,
-            data_helper=data_helper,
-        )
         self._sess: Optional[rt.InferenceSession] = None
 
     @property
@@ -115,7 +111,7 @@ class _ModelConverter:
             OpsmlImportExceptions.try_skl2onnx_imports()
         elif self.model_type == TrainedModelType.TF_KERAS:
             OpsmlImportExceptions.try_tf2onnx_imports()
-        return self.data_converter.get_data_types()
+        return OnnxDataConverter(model_interface=self.interface, data_helper=self.data_helper).get_data_types()
 
     def _get_data_elem_type(self, sig: Any) -> int:
         return int(sig.type.tensor_type.elem_type)
@@ -202,6 +198,9 @@ class _ModelConverter:
             ModelReturn object containing model definition and api data schema
         """
         initial_types = self.get_data_types()
+
+        print(initial_types)
+        a
 
         if self.onnx_model is None:
             onnx_model, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
@@ -299,7 +298,6 @@ class _SklearnOnnxModel(_ModelConverter):
         return updated
 
     def update_sklearn_onnx_registries(self) -> bool:
-        a
         if self._is_pipeline:
             return self._update_onnx_registries_pipelines()
 
@@ -325,20 +323,23 @@ class _SklearnOnnxModel(_ModelConverter):
 
         elif self._is_stacking_estimator:
             logger.warning("Converting all numeric data to float32 for Sklearn Stacking")
-            FloatTypeConverter(convert_all=True).convert_to_float(data=self.data_helper.data)
+            self.data_helper.data = FloatTypeConverter(convert_all=True).convert_to_float(data=self.data_helper.data)
 
         elif not self._is_pipeline and self.data_helper.num_dtypes > 1:
-            FloatTypeConverter(convert_all=True).convert_to_float(data=self.data_helper.data)
+            self.data_helper.data = FloatTypeConverter(convert_all=True).convert_to_float(data=self.data_helper.data)
 
         else:
             logger.warning("Converting all float64 data to float32")
-            FloatTypeConverter(convert_all=False).convert_to_float(data=self.data_helper.data)
+            self.data_helper.data = FloatTypeConverter(convert_all=False).convert_to_float(data=self.data_helper.data)
 
     def prepare_registries_and_data(self) -> None:
         """Updates sklearn onnx registries and convert data to float32"""
 
         self.update_sklearn_onnx_registries()
         self._convert_data_for_onnx()
+
+        print(self.interface.sample_data.dtypes)
+        a
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for sklearn onnx models"""
