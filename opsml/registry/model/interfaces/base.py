@@ -90,6 +90,7 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.model is not None, "No model detected in interface"
+
         save_path = path.with_suffix(self.storage_suffix)
         joblib.dump(self.model, save_path)
 

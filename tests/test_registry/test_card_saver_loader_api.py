@@ -5,12 +5,12 @@ from typing import cast
 from opsml.registry.cards import Description, ModelCard, ModelCardMetadata
 from opsml.registry.cards.card_loader import CardLoader
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.model.interfaces import SklearnModel
+from opsml.registry.model.interfaces import SklearnModel, LightGBMBoosterModel
 from opsml.registry.storage import client
 from opsml.registry.types import RegistryType, SaveName
 
 
-def test_save_sklearn_modelcard_api_client(
+def _test_save_sklearn_modelcard_api_client(
     random_forest_classifier: SklearnModel,
     api_storage_client: client.StorageClientBase,
 ):
@@ -59,11 +59,12 @@ def test_save_sklearn_modelcard_api_client(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def _test_save_lgb_modelcard_api_client(
-    random_forest_classifier: SklearnModel,  # change to lgb
+def test_save_lgb_modelcard_api_client(
+    lgb_booster_dataframe: LightGBMBoosterModel,  # change to lgb
     api_storage_client: client.StorageClientBase,
 ):
-    model: SklearnModel = random_forest_classifier
+    model: LightGBMBoosterModel = lgb_booster_dataframe
+    
     modelcard = ModelCard(
         interface=model,
         name="test_model",

@@ -14,7 +14,7 @@ try:
 
     VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 
-    class LightGBMBoosterModel(ModelInterface):
+    class LightGBMModel(ModelInterface):
         """Model interface for LightGBM Booster model class. If using the sklearn API, use SklearnModel instead.
 
         Args:
@@ -44,7 +44,9 @@ try:
 
         @property
         def model_class(self) -> str:
-            raise TrainedModelType.LGBM_BOOSTER.value
+            if "Booster" in self.model_type:
+                return TrainedModelType.LGBM_BOOSTER.value
+            return TrainedModelType.SKLEARN_ESTIMATOR.value
 
         @model_validator(mode="before")
         @classmethod
@@ -69,9 +71,15 @@ try:
             return model_args
 
         def load_model(self, path: Path) -> None:
-            """Loads lightgbm booster model"""
+            """Loads lightgbm booster or sklearn model"""
 
-            self.model = lgb.Booster(model_file=path)
+            load_path = path.with_suffix(self.storage_suffix)
+
+            if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
+                self.model = lgb.Booster(model_file=load_path)
+
+            else:
+                super().load_model(path)
 
         @staticmethod
         def name() -> str:

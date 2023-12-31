@@ -128,7 +128,12 @@ class PandasOnnxConverter(DataConverter):
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
         model_match = (
-            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type != TrainedModelType.SKLEARN_PIPELINE
+            model_class
+            in [
+                TrainedModelType.SKLEARN_ESTIMATOR,
+                TrainedModelType.LGBM_BOOSTER,
+            ]
+            and model_type != TrainedModelType.SKLEARN_PIPELINE
         )
         return data_type == AllowedDataType.PANDAS and model_match
 
@@ -144,9 +149,7 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = (
-            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
-        )
+        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
         return data_type == AllowedDataType.PANDAS and model_match
 
 
@@ -173,7 +176,7 @@ class TensorflowDictOnnxConverter(DataConverter):
         return spec
 
     @staticmethod
-    def validate(data_type: str, model_type: str) -> bool:
+    def validate(data_type: str, model_type: str, model_class: str) -> bool:
         return data_type == AllowedDataType.DICT and model_type == TrainedModelType.TF_KERAS
 
 
