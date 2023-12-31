@@ -76,6 +76,7 @@ from opsml.registry import CardRegistries, DataSplit, ModelCard
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
+    LightGBMBoosterModel,
     LightningModel,
     PyTorchModel,
     SklearnModel,
@@ -827,6 +828,7 @@ def random_forest_classifier(drift_dataframe):
         model=reg,
         sample_data=X_train[:100],
         task_type="classification",
+        preprocessor=StandardScaler(),
     )
 
 
@@ -893,10 +895,20 @@ def lgb_booster_dataframe(drift_dataframe):
     }
     # train
     gbm = lgb.train(
-        params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
+        params,
+        lgb_train,
+        num_boost_round=20,
+        valid_sets=lgb_eval,
+        callbacks=[
+            lgb.early_stopping(stopping_rounds=5),
+        ],
     )
 
-    return gbm, X_train[:100]
+    return LightGBMBoosterModel(
+        model=gbm,
+        sample_data=X_train[:100],
+        preprocessor=StandardScaler(),
+    )
 
 
 @pytest.fixture(scope="module")
