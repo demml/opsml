@@ -10,7 +10,7 @@ from opsml.registry.storage import client
 from opsml.registry.types import RegistryType, SaveName
 
 
-def _test_save_sklearn_modelcard_api_client(
+def test_save_sklearn_modelcard_api_client(
     random_forest_classifier: SklearnModel,
     api_storage_client: client.StorageClientBase,
 ):
@@ -59,7 +59,7 @@ def _test_save_sklearn_modelcard_api_client(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def _test_save_lgb_booster_modelcard_api_client(
+def test_save_lgb_booster_modelcard_api_client(
     lgb_booster_model: LightGBMModel,  # change to lgb
     api_storage_client: client.StorageClientBase,
 ):
