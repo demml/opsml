@@ -414,9 +414,9 @@ class FloatTypeConverter:
         for feature, feature_type in zip(data.columns, data.dtypes):
             if not self.convert_all:
                 if DataDtypes.FLOAT64 in str(feature_type):
-                    data.astype({feature: np.float32})
+                    data = data.astype({feature: np.float32}, copy=False)
             else:
-                data.astype({feature: np.float32})
+                data = data.astype({feature: np.float32})
 
         return data
 

@@ -199,9 +199,6 @@ class _ModelConverter:
         """
         initial_types = self.get_data_types()
 
-        print(initial_types)
-        a
-
         if self.onnx_model is None:
             onnx_model, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
@@ -337,9 +334,6 @@ class _SklearnOnnxModel(_ModelConverter):
 
         self.update_sklearn_onnx_registries()
         self._convert_data_for_onnx()
-
-        print(self.interface.sample_data.dtypes)
-        a
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for sklearn onnx models"""
