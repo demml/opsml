@@ -131,7 +131,7 @@ try:
                     pathlib object
             """
 
-            torch.save(self.model, path.with_suffix(self.storage_suffix))
+            torch.save(self.model, path.with_suffix(self.model_suffix))
 
         def load_model(self, path: Path) -> None:
             """Load pytorch model from path
@@ -140,10 +140,10 @@ try:
                 path:
                     pathlib object
             """
-            self.model = torch.load(path.with_suffix(self.storage_suffix))
+            self.model = torch.load(path.with_suffix(self.model_suffix))
 
         @property
-        def storage_suffix(self) -> str:
+        def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.PT.value
 

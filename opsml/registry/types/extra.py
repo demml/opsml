@@ -74,6 +74,7 @@ class Suffix(str, Enum):
     JSON = ".json"
     CKPT = ".ckpt"
     PT = ".pt"
+    TEXT = ".txt"
 
 
 @unique

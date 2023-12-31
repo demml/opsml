@@ -95,7 +95,7 @@ try:
 
         def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
-            self.model.save_checkpoint(path.with_suffix(self.storage_suffix))
+            self.model.save_checkpoint(path.with_suffix(self.model_suffix))
 
         def load_model(self, path: Path, **kwargs) -> None:
             """Load lightning model from path"""
@@ -105,19 +105,19 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    self.model = model_arch.load_from_checkpoint(path.with_suffix(self.storage_suffix))
+                    self.model = model_arch.load_from_checkpoint(path.with_suffix(self.model_suffix))
 
                 else:
                     # load via torch
                     import torch
 
-                    self.model = torch.load(path.with_suffix(self.storage_suffix))
+                    self.model = torch.load(path.with_suffix(self.model_suffix))
 
             except Exception as e:
                 raise ValueError(f"Unable to load pytorch lightning model: {e}")
 
         @property
-        def storage_suffix(self) -> str:
+        def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.CKPT.value
 

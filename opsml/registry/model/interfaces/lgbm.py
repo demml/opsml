@@ -7,6 +7,7 @@ from pydantic import model_validator
 from opsml.helpers.utils import get_class_name
 from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
 from opsml.registry.types import CommonKwargs, TrainedModelType
+from opsml.registry.types.extra import Suffix
 
 try:
     import lightgbm as lgb
@@ -70,20 +71,49 @@ try:
 
             return model_args
 
-        def load_model(self, path: Path) -> None:
-            """Loads lightgbm booster or sklearn model"""
+        def save_model(self, path: Path) -> Path:
+            """Saves lgb model according to model format. Booster models are saved to text.
+            Sklearn models are saved via joblib.
 
-            load_path = path.with_suffix(self.storage_suffix)
+            Args:
+                path:
+                    base path to save model to
+            """
 
             if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
+                save_path = path.with_suffix(Suffix.TEXT.value)
+                self.model.save_model(filename=save_path)
+
+                return save_path
+
+            return super().save_model(path)
+
+        def load_model(self, path: Path) -> None:
+            """Loads lightgbm booster or sklearn model
+
+
+            Args:
+                path:
+                    base path to load from
+            """
+
+            if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
+                load_path = path.with_suffix(Suffix.TEXT.value)
                 self.model = lgb.Booster(model_file=load_path)
 
             else:
                 super().load_model(path)
 
+        @property
+        def model_suffix(self) -> str:
+            if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
+                return Suffix.TEXT.value
+
+            return super().model_suffix
+
         @staticmethod
         def name() -> str:
-            return LightGBMBoosterModel.__name__
+            return LightGBMModel.__name__
 
 except ModuleNotFoundError:
 

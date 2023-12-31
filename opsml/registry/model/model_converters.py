@@ -203,6 +203,8 @@ class _ModelConverter:
         """
         initial_types = self.get_data_types()
 
+        print(initial_types)
+
         if self.onnx_model is None:
             onnx_model, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
@@ -234,10 +236,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
