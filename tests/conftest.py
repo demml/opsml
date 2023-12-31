@@ -68,6 +68,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
+from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.projects import OpsmlProject, ProjectInfo
 
@@ -82,7 +83,6 @@ from opsml.registry.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.helpers.data import create_fake_data
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
 from opsml.registry.types import HuggingFaceTask, Metric, OnnxModel
@@ -543,7 +543,7 @@ def test_polars_split():
 @pytest.fixture(scope="session")
 def example_dataframe():
     X, y = create_fake_data(n_samples=1000)
-    
+
     return X, y, X, y
 
 
@@ -570,7 +570,7 @@ def regression_data_polars(regression_data):
 
 
 @pytest.fixture(scope="session")
-def load_pytorch_language():
+def pytorch_language_model():
     import torch
     from transformers import AutoTokenizer
 
@@ -580,12 +580,16 @@ def load_pytorch_language():
         "this is a test",
         padding="max_length",
         truncation=True,
-        return_tensors="tf",
-    ).input_ids
-    sample_data = {"input_ids": data.numpy()}
+        return_tensors="pt",
+    )
+
     loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
 
-    return loaded_model, sample_data
+    return PyTorchModel(
+        model=loaded_model,
+        preprocessor=tokenizer,
+        sample_data=dict(data),
+    )
 
 
 @pytest.fixture(scope="session")
@@ -862,17 +866,19 @@ def lgb_classifier_calibrated_pipeline(example_dataframe):
 
     return pipe, X_test[:10]
 
+
 @pytest.fixture
 def lgb_regressor_model(example_dataframe):
     X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5)
     reg.fit(X_train.to_numpy(), y_train)
-    
+
     return LightGBMModel(
         model=reg,
         sample_data=X_train[:100],
         preprocessor=StandardScaler(),
     )
+
 
 @pytest.fixture
 def lgb_booster_model(example_dataframe):
