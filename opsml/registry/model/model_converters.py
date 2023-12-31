@@ -203,8 +203,6 @@ class _ModelConverter:
         """
         initial_types = self.get_data_types()
 
-        print(initial_types)
-
         if self.onnx_model is None:
             onnx_model, onnx_input_features, onnx_output_features = self._create_onnx_model(initial_types)
 
@@ -301,6 +299,7 @@ class _SklearnOnnxModel(_ModelConverter):
         return updated
 
     def update_sklearn_onnx_registries(self) -> bool:
+        a
         if self._is_pipeline:
             return self._update_onnx_registries_pipelines()
 
