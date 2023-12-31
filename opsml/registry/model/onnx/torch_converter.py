@@ -14,7 +14,7 @@ from onnx import ModelProto
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.model.interfaces import PyTorchModel
-from opsml.registry.types import TorchOnnxArgs, TrainedModelType
+from opsml.registry.types import TorchOnnxArgs
 from opsml.registry.types.extra import Suffix
 
 logger = ArtifactLogger.get_logger()
@@ -79,19 +79,8 @@ class _PyTorchOnnxModel:
 
         # export to file
         torch.onnx.export(
-            model=self.trained_model,
+            model=interface.model,
             args=arg_data,
             f=save_path.as_posix(),
             **onnx_args.model_dump(exclude={"options"}),
         )
-
-    def convert_model(self, initial_types: List[Any]) -> ModelProto:
-        """Converts a tensorflow keras model"""
-
-        onnx_model = self._get_onnx_model()
-
-        return onnx_model
-
-    @staticmethod
-    def validate(model_class: str) -> bool:
-        return model_class == TrainedModelType.PYTORCH
