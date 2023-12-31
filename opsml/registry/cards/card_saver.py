@@ -243,20 +243,13 @@ class ModelCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
 
-            try:
-                self._save_model()
-                self._save_preprocessor()
-                self._save_onnx_model()
-                self._save_sample_data()
-                self._save_modelcard()
-                self._save_metadata()
-                self.storage_client.put(self.lpath, self.rpath)
-
-            except Exception as e:
-                # remove any files that have been uploaded
-                self.storage_client.rm(self.rpath)
-                logger.error("Error saving model artifacts: {}", e)
-                raise e
+            self._save_model()
+            self._save_preprocessor()
+            self._save_onnx_model()
+            self._save_sample_data()
+            self._save_modelcard()
+            self._save_metadata()
+            self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -338,9 +331,7 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

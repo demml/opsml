@@ -39,7 +39,7 @@ try:
 
         @property
         def model_class(self) -> str:
-            raise TrainedModelType.PYTORCH_LIGHTNING.value
+            return TrainedModelType.PYTORCH_LIGHTNING.value
 
         @model_validator(mode="before")
         @classmethod
