@@ -82,6 +82,7 @@ from opsml.registry.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
+from opsml.helpers.data import create_fake_data
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
 from opsml.registry.types import HuggingFaceTask, Metric, OnnxModel
@@ -539,24 +540,11 @@ def test_polars_split():
     return [DataSplit(label="train", column_name="foo", column_value=0)]
 
 
-@pytest.fixture(scope="module")
-def drift_dataframe():
-    mu_1 = -4  # mean of the first distribution
-    mu_2 = 4  # mean of the second distribution
-    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
-    cat = np.random.randint(0, 3, 1000).reshape(-1, 1)
-    X_train = np.hstack((X_train, cat))
-    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
-    cat = np.random.randint(2, 5, 1000).reshape(-1, 1)
-    X_test = np.hstack((X_test, cat))
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-    X_train = pd.DataFrame(X_train, columns=col_names)
-    X_test = pd.DataFrame(X_test, columns=col_names)
-    y_train = np.random.randint(1, 10, size=(1000, 1))
-    y_test = np.random.randint(1, 10, size=(1000, 1))
-    return X_train, y_train, X_test, y_test
+@pytest.fixture(scope="session")
+def example_dataframe():
+    X, y = create_fake_data(n_samples=1000)
+    
+    return X, y, X, y
 
 
 ###############################################################################
@@ -811,16 +799,16 @@ def sklearn_pipeline_advanced() -> tuple[Pipeline, pd.DataFrame]:
 
 
 @pytest.fixture
-def xgb_df_regressor(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def xgb_df_regressor(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = XGBRegressor(n_estimators=5, max_depth=3)
     reg.fit(X_train.to_numpy(), y_train)
     return reg, X_train[:100]
 
 
 @pytest.fixture
-def random_forest_classifier(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def random_forest_classifier(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = ensemble.RandomForestClassifier(n_estimators=5)
     reg.fit(X_train.to_numpy(), y_train)
 
@@ -833,8 +821,8 @@ def random_forest_classifier(drift_dataframe):
 
 
 @pytest.fixture
-def lgb_classifier(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_classifier(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMClassifier(
         n_estimators=3,
         max_depth=3,
@@ -845,8 +833,8 @@ def lgb_classifier(drift_dataframe):
 
 
 @pytest.fixture
-def lgb_classifier_calibrated(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_classifier_calibrated(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMClassifier(
         n_estimators=3,
         max_depth=3,
@@ -861,8 +849,8 @@ def lgb_classifier_calibrated(drift_dataframe):
 
 
 @pytest.fixture
-def lgb_classifier_calibrated_pipeline(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_classifier_calibrated_pipeline(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMClassifier(
         n_estimators=3,
         max_depth=3,
@@ -874,10 +862,21 @@ def lgb_classifier_calibrated_pipeline(drift_dataframe):
 
     return pipe, X_test[:10]
 
+@pytest.fixture
+def lgb_regressor_model(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+    reg = lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5)
+    reg.fit(X_train.to_numpy(), y_train)
+    
+    return LightGBMModel(
+        model=reg,
+        sample_data=X_train[:100],
+        preprocessor=StandardScaler(),
+    )
 
 @pytest.fixture
-def lgb_booster_dataframe(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_booster_model(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     # create dataset for lightgbm
     lgb_train = lgb.Dataset(X_train, y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
@@ -1394,113 +1393,113 @@ def hist_booster_classifier(classification_data):
 
 
 @pytest.fixture(scope="module")
-def hist_booster_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def hist_booster_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = ensemble.HistGradientBoostingRegressor(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def huber_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def huber_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.HuberRegressor(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def knn_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def knn_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neighbors.KNeighborsRegressor(n_neighbors=2).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def knn_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def knn_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X_train, y_train)
     return clf, X_train
 
 
 @pytest.fixture(scope="module")
-def lars_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lars_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Lars().fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def lars_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lars_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LarsCV(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def lasso_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Lasso().fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def lasso_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoCV(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def lasso_lars_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_lars_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLars().fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def lasso_lars_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_lars_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLarsCV(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def lasso_lars_ic_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_lars_ic_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLarsIC().fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def linear_svc(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def linear_svc(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.LinearSVC(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def linear_svr(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def linear_svr(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.LinearSVR(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def logistic_regression_cv(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def logistic_regression_cv(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LogisticRegressionCV(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def mlp_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def mlp_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neural_network.MLPClassifier(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def mlp_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def mlp_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neural_network.MLPRegressor(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
@@ -1564,134 +1563,134 @@ def multinomial_nb():
 
 
 @pytest.fixture(scope="module")
-def nu_svc(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def nu_svc(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.NuSVC(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def nu_svr(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def nu_svr(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.NuSVR(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def pls_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def pls_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = cross_decomposition.PLSRegression(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def passive_aggressive_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def passive_aggressive_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PassiveAggressiveClassifier(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def passive_aggressive_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def passive_aggressive_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PassiveAggressiveRegressor(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def perceptron(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def perceptron(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Perceptron(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def poisson_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def poisson_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PoissonRegressor(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def quantile_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def quantile_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.QuantileRegressor(solver="highs").fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def ransac_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ransac_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RANSACRegressor(max_trials=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def radius_neighbors_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def radius_neighbors_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neighbors.RadiusNeighborsRegressor().fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def radius_neighbors_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def radius_neighbors_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf = neighbors.RadiusNeighborsClassifier().fit(X_train, y_train)
     return clf, X_train
 
 
 @pytest.fixture(scope="module")
-def ridge_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Ridge().fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def ridge_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RidgeCV(cv=2).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def ridge_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RidgeClassifier(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def ridge_cv_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_cv_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.RidgeClassifierCV(cv=2).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def sgd_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def sgd_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.SGDClassifier(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def sgd_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def sgd_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.SGDRegressor(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def svc(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def svc(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.SVC(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def svr(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def svr(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.SVR(max_iter=10).fit(X_train, y_train)
     return reg, X_train
 
@@ -1714,22 +1713,22 @@ def stacking_classifier():
 
 
 @pytest.fixture(scope="module")
-def theilsen_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def theilsen_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.TheilSenRegressor(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def tweedie_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def tweedie_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.TweedieRegressor(max_iter=5).fit(X_train, y_train)
     return reg, X_train
 
 
 @pytest.fixture(scope="module")
-def voting_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def voting_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf1 = linear_model.LogisticRegression(multi_class="multinomial", max_iter=5)
     clf2 = ensemble.RandomForestClassifier(n_estimators=5, random_state=1)
     clf3 = naive_bayes.GaussianNB()
@@ -1741,8 +1740,8 @@ def voting_classifier(drift_dataframe):
 
 
 @pytest.fixture(scope="module")
-def voting_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def voting_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf1 = linear_model.LinearRegression()
     clf2 = ensemble.RandomForestRegressor(n_estimators=5, random_state=1)
     clf3 = linear_model.Lasso()

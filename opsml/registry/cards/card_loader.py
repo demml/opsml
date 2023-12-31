@@ -80,10 +80,6 @@ class CardLoader:
         assert self._card is not None
         return self._card
 
-    @cached_property
-    def storage_suffix(self) -> str:
-        return self.card.interface.storage_suffix
-
     def get_rpath_from_args(self) -> Path:
         """Get remote path from card args
 
@@ -199,6 +195,10 @@ class DataCardLoader(CardLoader):
         assert isinstance(self._card, DataCard)
         return self._card
 
+    @cached_property
+    def storage_suffix(self) -> str:
+        return self.card.interface.storage_suffix
+
     def load_data(self) -> None:
         """Saves a data via data interface"""
 
@@ -232,6 +232,14 @@ class ModelCardLoader(CardLoader):
     def card(self) -> ModelCard:
         assert isinstance(self._card, ModelCard)
         return self._card
+
+    @cached_property
+    def model_suffix(self) -> str:
+        return self.card.interface.model_suffix
+
+    @cached_property
+    def preprocessor_suffix(self) -> str:
+        return self.card.interface.preprocessor_suffix
 
     @property
     def onnx_suffix(self) -> str:
@@ -268,11 +276,11 @@ class ModelCardLoader(CardLoader):
                 Remote path to load file
         """
 
-        load_rpath = Path(self.card.uri, SaveName.PREPROCESSOR.value).with_suffix(self.storage_suffix)
+        load_rpath = Path(self.card.uri, SaveName.PREPROCESSOR.value).with_suffix(self.preprocessor_suffix)
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.storage_suffix)
+        lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
         self.card.interface.load_preprocessor(lpath)
 
     def _load_model(self, lpath: Path, rpath: Path, **kwargs) -> None:
@@ -288,7 +296,7 @@ class ModelCardLoader(CardLoader):
         if self.card.interface.model is not None:
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.storage_suffix)
+        lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
         self.card.interface.load_model(lpath, **kwargs)
 
     def load_onnx_model(self) -> None:

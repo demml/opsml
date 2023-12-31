@@ -307,7 +307,7 @@ try:
             return TrainedModelType.TRANSFORMERS.value
 
         @property
-        def storage_suffix(self) -> str:
+        def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return ""
 
