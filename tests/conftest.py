@@ -76,7 +76,7 @@ from opsml.registry import CardRegistries, DataSplit, ModelCard
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
-    LightGBMBoosterModel,
+    LightGBMModel,
     LightningModel,
     PyTorchModel,
     SklearnModel,
@@ -904,7 +904,7 @@ def lgb_booster_dataframe(drift_dataframe):
         ],
     )
 
-    return LightGBMBoosterModel(
+    return LightGBMModel(
         model=gbm,
         sample_data=X_train[:100],
         preprocessor=StandardScaler(),
