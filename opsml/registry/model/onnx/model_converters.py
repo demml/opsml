@@ -14,10 +14,14 @@ from numpy.typing import NDArray
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
-from opsml.registry.model.data_converters import OnnxDataConverter
-from opsml.registry.model.interfaces import ModelInterface
-from opsml.registry.model.metadata_creator import _TrainedModelMetadataCreator
-from opsml.registry.model.registry_updaters import OnnxRegistryUpdater
+from opsml.registry.model.interfaces import (
+    ModelInterface,
+    PyTorchModel,
+    TensorFlowModel,
+)
+from opsml.registry.model.onnx.data_converters import OnnxDataConverter
+from opsml.registry.model.onnx.metadata_creator import _TrainedModelMetadataCreator
+from opsml.registry.model.onnx.registry_updaters import OnnxRegistryUpdater
 from opsml.registry.model.utils.data_helper import (
     FloatTypeConverter,
     ModelDataHelper,
@@ -55,9 +59,13 @@ except ModuleNotFoundError as import_error:
 
 class _ModelConverter:
     def __init__(self, model_interface: ModelInterface, data_helper: ModelDataHelper):
-        self.interface = model_interface
+        self._interface = model_interface
         self.data_helper = data_helper
         self._sess: Optional[rt.InferenceSession] = None
+
+    @property
+    def interface(self) -> ModelInterface:
+        return cast(ModelInterface, self._interface)
 
     @property
     def sess(self) -> rt.InferenceSession:
@@ -230,7 +238,10 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        return (
+            self.model_type == TrainedModelType.STACKING_REGRESSOR
+            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
+        )
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -414,6 +425,10 @@ class _LightGBMBoosterOnnxModel(_ModelConverter):
 
 
 class _TensorflowKerasOnnxModel(_ModelConverter):
+    @property
+    def interface(self) -> TensorFlowModel:
+        return cast(TensorFlowModel, self._interface)
+
     def _get_onnx_model_from_tuple(self, model: Any) -> Any:
         if isinstance(model, tuple):
             return model[0]
@@ -467,6 +482,10 @@ class _PyTorchOnnxModel(_ModelConverter):
         )
         super().__init__(model_interface=model_interface, data_helper=data_helper)
 
+    @property
+    def interface(self) -> PyTorchModel:
+        return cast(PyTorchModel, self._interface)
+
     def _get_additional_model_args(
         self,
         input_data: Any,
@@ -483,9 +502,18 @@ class _PyTorchOnnxModel(_ModelConverter):
 
         import torch
 
-        arg_data = self._get_torch_data()
+        assert isinstance(self.interface.onnx_args, TorchOnnxArgs)
 
-        assert isinstance(self.card.model.onnx_args, TorchOnnxArgs)
+        # coerce data into tuple or tensor for torch.onnx.export
+        if isinstance(self.data_helper.data, torch.Tensor):
+            arg_data = self.data_helper.data
+
+        elif isinstance(self.data_helper.data, dict):
+            arg_data = tuple(self.data_helper.data.values())
+
+        else:
+            arg_data = tuple(self.data_helper.data)
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = f"{tmp_dir}/model.onnx"
             self.trained_model.eval()  # force model into evaluation mode
@@ -493,11 +521,8 @@ class _PyTorchOnnxModel(_ModelConverter):
                 model=self.trained_model,
                 args=arg_data,
                 f=filename,
-                **self.card.model.onnx_args.model_dump(exclude={"options"}),
+                **self.interface.onnx_args.model_dump(exclude={"options"}),
             )
-            onnx.checker.check_model(filename)
-
-        return onnx.load(filename)
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""
