@@ -5,25 +5,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import tempfile
-from typing import Any, Dict, List, Optional, Union, cast
+from pathlib import Path
+from typing import List, Tuple, Union
 
-from numpy.typing import NDArray
-from onnx import ModelProto
+import onnx
+import onnxruntime as rt
+import torch
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.model.interfaces import PyTorchModel
-from opsml.registry.model.utils.data_helper import ModelDataHelper
-from opsml.registry.types import TorchOnnxArgs, TrainedModelType
+from opsml.registry.model.interfaces.pytorch import VALID_DATA
+from opsml.registry.types import OnnxModel, TorchOnnxArgs
 
 logger = ArtifactLogger.get_logger()
 
 
 class _PytorchArgBuilder:
-    def __init__(
-        self,
-        input_data: Union[NDArray[Any], Dict[str, NDArray[Any]]],
-    ):
+    def __init__(self, input_data: VALID_DATA):
         self.input_data = input_data
 
     def _get_input_names(self) -> List[str]:
@@ -46,62 +44,49 @@ class _PytorchArgBuilder:
 
 
 class _PyTorchOnnxModel:
-    def __init__(self, model_interface: PyTorchModel, data_helper: ModelDataHelper):
-        model_interface.onnx_args = self._get_additional_model_args(
-            onnx_args=model_interface.onnx_args,
-            input_data=data_helper.data,
-        )
-        super().__init__(model_interface=model_interface, data_helper=data_helper)
+    def __init__(self, model_interface: PyTorchModel):
+        self.interface = model_interface
 
-    @property
-    def interface(self) -> PyTorchModel:
-        return cast(PyTorchModel, self._interface)
-
-    def _get_additional_model_args(
-        self,
-        input_data: Any,
-        onnx_args: Optional[TorchOnnxArgs] = None,
-    ) -> TorchOnnxArgs:
+    def _get_additional_model_args(self) -> TorchOnnxArgs:
         """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
 
-        if onnx_args is None:
-            return _PytorchArgBuilder(input_data=input_data).get_args()
-        return onnx_args
+        if self.interface.onnx_args is None:
+            return _PytorchArgBuilder(input_data=self.interface.sample_data).get_args()
+        return self.interface.onnx_args
 
-    def _get_onnx_model(self) -> ModelProto:
+    def _coerce_data_for_onnx(self) -> Union[torch.Tensor, Tuple[torch.Tensor, ...]]:
+        assert self.interface.sample_data is not None, "Sample data must not be None"
+
+        if isinstance(self.interface.sample_data, dict):
+            return tuple(self.interface.sample_data.values())
+        elif isinstance(self.interface.sample_data, torch.Tensor):
+            return self.interface.sample_data
+        return tuple(self.interface.sample_data)
+
+    def _load_onnx_model(self, path: Path) -> rt.InferenceSession:
+        return rt.InferenceSession(
+            path_or_bytes=path,
+            providers=rt.get_available_providers(),
+        )
+
+    def convert_to_onnx(self, path: Path) -> OnnxModel:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
+        assert self.interface.model is not None, "Model must not be None"
 
-        import torch
+        arg_data = self._coerce_data_for_onnx()
+        onnx_args = self._get_additional_model_args()
 
-        assert isinstance(self.interface.onnx_args, TorchOnnxArgs)
+        # export
+        self.interface.model.eval()  # force model into evaluation mode
+        torch.onnx.export(
+            model=self.interface.model,
+            args=arg_data,
+            f=path.as_posix(),
+            **onnx_args.model_dump(exclude={"options"}),
+        )
 
-        # coerce data into tuple or tensor for torch.onnx.export
-        if isinstance(self.data_helper.data, torch.Tensor):
-            arg_data = self.data_helper.data
-
-        elif isinstance(self.data_helper.data, dict):
-            arg_data = tuple(self.data_helper.data.values())
-
-        else:
-            arg_data = tuple(self.data_helper.data)
-
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            filename = f"{tmp_dir}/model.onnx"
-            self.trained_model.eval()  # force model into evaluation mode
-            torch.onnx.export(
-                model=self.trained_model,
-                args=arg_data,
-                f=filename,
-                **self.interface.onnx_args.model_dump(exclude={"options"}),
-            )
-
-    def convert_model(self, initial_types: List[Any]) -> ModelProto:
-        """Converts a tensorflow keras model"""
-
-        onnx_model = self._get_onnx_model()
-
-        return onnx_model
-
-    @staticmethod
-    def validate(model_class: str) -> bool:
-        return model_class == TrainedModelType.PYTORCH
+        # load
+        return OnnxModel(
+            onnx_version=onnx.__version__,
+            sess=self._load_onnx_model(path=path),
+        )

@@ -236,7 +236,7 @@ try:
             import onnxruntime as rt
             import optimum.onnxruntime as ort
 
-            from opsml.registry.model.model_converters import _get_onnx_metadata
+            from opsml.registry.model.onnx.model_converters import _get_onnx_metadata
 
             ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
             model_path = path.parent / SaveName.TRAINED_MODEL

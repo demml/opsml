@@ -634,12 +634,14 @@ class HuggingFaceStorage(ArtifactStorage):
             artifact.uris[UriNames.ONNX_MODEL_URI.value] = str(Path(registered_path, CommonKwargs.ONNX.value))
 
     def _set_metadata(self, artifact: HuggingFaceStorageArtifact) -> None:
-        from opsml.registry.model.model_converters import _TrainedModelMetadataCreator
+        from opsml.registry.model.onnx.model_converters import (
+            _TrainedModelMetadataCreator,
+        )
 
         metadata = _TrainedModelMetadataCreator(artifact=artifact.model_interface).get_model_metadata()
 
         if self.saved_metadata[CommonKwargs.ONNX.value]:
-            from opsml.registry.model.model_converters import _ModelConverter
+            from opsml.registry.model.onnx.model_converters import _ModelConverter
 
             onnx_input_features, onnx_output_features = _ModelConverter(
                 artifact=artifact.model_interface,
