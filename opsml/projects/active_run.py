@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Any, Dict, Optional, Union, cast
-
+from pathlib import Path
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -12,15 +12,8 @@ from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.run import RunCard
 from opsml.registry.sql.registry import CardRegistries, CardRegistry
 from opsml.registry.sql.semver import VersionType
-from opsml.registry.storage.artifact import save_artifact_to_storage
 from opsml.registry.storage.client import StorageClient
-from opsml.registry.types import (
-    METRICS,
-    PARAMS,
-    ArtifactStorageType,
-    CardInfo,
-    CardType,
-)
+from opsml.registry.types import METRICS, PARAMS, CardInfo, CardType, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -178,27 +171,25 @@ class ActiveRun:
             info=info,
         )
 
-    def log_artifact(self, name: str, artifact: Any) -> None:
+    def log_artifact(self, local_path: Union[str, Path], artifact_path: Optional[Union[str, Path]] = None) -> None:
         """
-        Append any artifact associated with your run to an ActiveRun. Artifact
-        must be pickleable (saved with joblib)
+        Log a local file or directory to the opsml server and associate with the current run.
 
         Args:
-            name:
-                Artifact name
-            artifact:
-                Artifact
+            local_path:
+                Local path to file or directory. Can be string or pathlike object
+            artifact_path:
+                Optional path to store artifact in opsml server. If not provided, 'artifacts' will be used
         """
+
         self._verify_active()
 
-        uri = save_artifact_to_storage(
-            artifact=artifact,
-            artifact_type=ArtifactStorageType.JOBLIB,
-            storage_client=self._info.storage_client,
-            root_uri=self.runcard.artifact_uri,
-            filename=name,
-        )
-        self.runcard.add_artifact_uri(name=name, uri=uri)
+        lpath = Path(local_path)
+        rpath = self.runcard.uri / (artifact_path or SaveName.ARTIFACTS.value)
+
+        self._info.storage_client.put(lpath, rpath)
+
+        self.runcard._add_artifact_uri(name=lpath.as_posix(), uri=rpath.as_posix())
 
     def log_metric(
         self,
