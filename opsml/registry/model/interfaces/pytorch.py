@@ -1,20 +1,14 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from pydantic import model_validator
-
-from opsml.helpers.utils import get_class_name
+from opsml.helpers.utils import get_class_name, OpsmlImportExceptions
 from opsml.registry.model.interfaces.base import (
     ModelInterface,
     SamplePrediction,
     get_model_args,
 )
-from opsml.registry.types import (
-    CommonKwargs,
-    Suffix,
-    TorchOnnxArgs,
-    TrainedModelType,
-)
+from opsml.registry.types import CommonKwargs, ModelReturn, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
     import torch
@@ -147,6 +141,26 @@ try:
             """
             self.model = torch.load(path.with_suffix(self.model_suffix))
 
+        def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
+            # import packages for onnx conversion
+            OpsmlImportExceptions.try_torchonnx_imports()
+
+            from opsml.registry.model.onnx.torch_converter import _PyTorchOnnxModel
+            from opsml.registry.model.onnx.model_converters import _get_onnx_metadata
+            import onnxruntime as rt
+
+            # get save path
+            save_path = path.with_suffix(Suffix.ONNX.value)
+
+            if self.onnx_model is None:
+                self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=save_path)
+            else:
+                sess: rt.InferenceSession = self.onnx_model.sess
+                path = path.with_suffix(Suffix.ONNX.value)
+                path.write_bytes(sess._model_bytes)
+
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.model)), path
+
         @property
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
@@ -157,6 +171,7 @@ try:
             return PyTorchModel.__name__
 
 except ModuleNotFoundError:
+    VALID_DATA = Any
 
     class PyTorchModel(ModelInterface):
         @model_validator(mode="before")

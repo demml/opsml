@@ -12,7 +12,7 @@ from opsml.registry.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.model.metadata_creator import ModelCreator, create_model
+from opsml.registry.model.onnx.metadata_creator import ModelCreator, create_model
 from opsml.registry.types import AllowedDataType, ModelReturn
 
 

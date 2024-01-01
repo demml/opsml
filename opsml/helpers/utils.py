@@ -227,6 +227,15 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> Non
 
 class OpsmlImportExceptions:
     @staticmethod
+    def try_torchonnx_imports() -> None:
+        """Attempts to import packages needed for onnx conversion of sklearn models"""
+        try_import(
+            ["onnx", "onnxruntime"],
+            "opsml[torch_onnx]",
+            "If you wish to convert your model to onnx",
+        )
+
+    @staticmethod
     def try_skl2onnx_imports() -> None:
         """Attempts to import packages needed for onnx conversion of sklearn models"""
         try_import(
