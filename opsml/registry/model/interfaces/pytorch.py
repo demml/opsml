@@ -167,7 +167,7 @@ try:
                 path = path.with_suffix(Suffix.ONNX.value)
                 path.write_bytes(sess._model_bytes)
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.model)), path
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess)), path
 
         @property
         def model_suffix(self) -> str:

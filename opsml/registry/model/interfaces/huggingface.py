@@ -262,7 +262,7 @@ try:
             else:
                 self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model)), path
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess)), path
 
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
@@ -321,9 +321,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:
