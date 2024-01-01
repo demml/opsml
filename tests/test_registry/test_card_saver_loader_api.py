@@ -187,7 +187,7 @@ def test_save_torch_modelcard_api_client(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-    a
+    
     # load objects
     loader = CardLoader(
         card_args={
@@ -203,7 +203,13 @@ def test_save_torch_modelcard_api_client(
 
     #
     loaded_card.load_model()
+
+    model.model.load_state_dict(loaded_card.interface.model)
+    loaded_card.interface.model = model.model
+    
+    
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    
     #
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None

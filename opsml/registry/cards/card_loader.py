@@ -316,7 +316,6 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return None
 
-        # onnx model is loaded separately
         with self._load_object(SaveName.ONNX_MODEL.value, self.onnx_suffix) as lpath:
             self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(lpath)

@@ -188,7 +188,6 @@ class ModelCardSaver(CardSaver):
             metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
             saved_path = None
 
-        # set card data schema
         self.card.metadata.data_schema = metadata.data_schema
         self.card_uris.onnx_model_uri = saved_path
 
@@ -331,9 +330,7 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
