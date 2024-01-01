@@ -17,6 +17,7 @@ from opsml.registry.cards.model import ModelCard
 from opsml.registry.cards.pipeline import PipelineCard
 from opsml.registry.cards.project import ProjectCard
 from opsml.registry.cards.run import RunCard
+from opsml.registry.model.interfaces.huggingface import HuggingFaceModel
 from opsml.registry.model.onnx.metadata_creator import _TrainedModelMetadataCreator
 from opsml.registry.storage import client
 from opsml.registry.types import CardType, ModelMetadata, SaveName, UriNames
@@ -29,6 +30,7 @@ class CardUris(BaseModel):
     preprocessor_uri: Optional[Path] = None
     sample_data_uri: Optional[Path] = None
     onnx_model_uri: Optional[Path] = None
+    quantized_model_uri: Optional[Path] = None
 
     lpath: Optional[Path] = None
     rpath: Optional[Path] = None
@@ -184,6 +186,13 @@ class ModelCardSaver(CardSaver):
         if self.card.to_onnx:
             save_path = self.lpath / SaveName.ONNX_MODEL.value
             metadata, saved_path = self.card.interface.convert_to_onnx(save_path)
+
+            if isinstance(self.card.interface, HuggingFaceModel):
+                assert self.card.interface.onnx_args is not None, "onnx_args must be set for HuggingFaceModel"
+
+                if self.card.interface.onnx_args.quantize:
+                    self.card_uris.quantized_model_uri = self.lpath / SaveName.QUANTIZED_MODEL.value
+
         else:
             metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
             saved_path = None
@@ -198,7 +207,7 @@ class ModelCardSaver(CardSaver):
         else:
             onnx_version = None
 
-        return ModelMetadata(
+        metadata = ModelMetadata(
             model_name=self.card.name,
             model_class=self.card.interface.model_class,
             model_type=self.card.interface.model_type,
@@ -210,6 +219,12 @@ class ModelCardSaver(CardSaver):
             model_team=self.card.team,
             data_schema=self.card.metadata.data_schema,
         )
+
+        # in case of huggingface quantized model, we add extra metadata
+        if self.card_uris.quantized_model_uri is not None:
+            metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
+
+        return metadata
 
     def _save_metadata(self) -> None:
         model_metadata = self._get_model_metadata()

@@ -223,6 +223,27 @@ try:
             self.preprocessor.save_pretrained(path)
             return path
 
+        def _quantize_model(self, path: Path, onnx_model: Any) -> None:
+            """Quantizes an huggingface model
+
+            Args:
+                path:
+                    parent path to save too
+                onnx_model:
+                    onnx model to quantize
+
+            Returns:
+                Path to quantized model
+            """
+            assert self.onnx_args.config is not None, "No quantization config provided"
+
+            from optimum.onnxruntime import ORTQuantizer
+
+            save_path = path / SaveName.QUANTIZED_MODEL.value
+            quantizer = ORTQuantizer.from_pretrained(onnx_model)
+
+            quantizer.quantize(save_dir=save_path, quantization_config=self.onnx_args.config)
+
         def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
@@ -232,6 +253,11 @@ try:
                 path:
                     Path to save onnx model. This path will be path to onnx file
             """
+
+            assert (
+                self.onnx_args is not None
+            ), "No onnx args provided. If converting to onnx, provide a HuggingFaceOnnxArgs instance"
+
             import onnx
             import onnxruntime as rt
             import optimum.onnxruntime as ort
@@ -239,13 +265,8 @@ try:
             from opsml.registry.model.onnx.base_converter import _get_onnx_metadata
 
             ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
-            model_path = path.parent / SaveName.TRAINED_MODEL
-            onnx_model = ort_model.from_pretrained(
-                model_path,
-                export=True,
-                config=self.onnx_args.config,
-                provider=self.onnx_args.provider,
-            )
+            model_path = path.parent / SaveName.TRAINED_MODEL.value
+            onnx_model = ort_model.from_pretrained(model_path, export=True, provider=self.onnx_args.provider)
             onnx_model.save_pretrained(path)
 
             if self.is_pipeline:
@@ -261,6 +282,9 @@ try:
                 )
             else:
                 self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
+
+            if self.onnx_args.quantize:
+                self._quantize_model(path.parent, onnx_model)
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess)), path
 
@@ -321,9 +345,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:

@@ -85,7 +85,13 @@ from opsml.registry.model.interfaces import (
 )
 from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
-from opsml.registry.types import HuggingFaceTask, Metric, OnnxModel
+from opsml.registry.types import (
+    HuggingFaceOnnxArgs,
+    HuggingFaceORTModel,
+    HuggingFaceTask,
+    Metric,
+    OnnxModel,
+)
 from opsml.settings.config import OpsmlConfig, config
 
 CWD = os.getcwd()
@@ -1074,7 +1080,8 @@ def huggingface_text_classification_pipeline():
 @pytest.fixture(scope="module")
 def huggingface_tf_distilbert() -> HuggingFaceModel:
     from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
-
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
+    
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
@@ -1084,6 +1091,34 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
         preprocessor=tokenizer,
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            quantize=True,
+            config = AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False)
+        ),
+    )
+
+    return model
+
+@pytest.fixture(scope="module")
+def huggingface_torch_distilbert() -> HuggingFaceModel:
+    from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
+    
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
+    inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
+
+    model = HuggingFaceModel(
+        model=model,
+        preprocessor=tokenizer,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            quantize=True,
+            config = AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False)
+        ),
     )
 
     return model
@@ -1884,4 +1919,3 @@ def lightning_regression():
     X = torch.Tensor([[1.0], [51.0], [89.0]])
 
     return LightningModel(model=trainer, sample_data=X), MyModel
-

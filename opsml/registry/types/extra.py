@@ -63,6 +63,7 @@ class SaveName(str, Enum):
     DATA = "data"
     PROFILE = "profile"
     ARTIFACTS = "artifacts"
+    QUANTIZED_MODEL = "quantized-model"
 
 
 @unique
