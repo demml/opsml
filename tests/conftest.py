@@ -570,7 +570,7 @@ def regression_data_polars(regression_data):
 
 
 @pytest.fixture(scope="session")
-def pytorch_language_model():
+def huggingface_language_model():
     import torch
     from transformers import AutoTokenizer
 
@@ -589,6 +589,36 @@ def pytorch_language_model():
         model=loaded_model,
         preprocessor=tokenizer,
         sample_data=dict(data),
+    )
+
+
+@pytest.fixture(scope="module")
+def pytorch_simple():
+    class Polynomial3(torch.nn.Module):
+        def __init__(self):
+            """
+            In the constructor we instantiate four parameters and assign them as
+            member parameters.
+            """
+            super().__init__()
+            self.x1 = torch.nn.Parameter(torch.randn(()))
+            self.x2 = torch.nn.Parameter(torch.randn(()))
+
+        def forward(self, x1: torch.Tensor, x2: torch.Tensor):
+            """
+            In the forward function we accept a Tensor of input data and we must return
+            a Tensor of output data. We can use Modules defined in the constructor as
+            well as arbitrary operators on Tensors.
+            """
+            return self.x1 + self.x2 * x1 * x2
+
+    model = Polynomial3()
+    inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
+
+    return PyTorchModel(
+        model=model,
+        sample_data=inputs,
+        save_args={"as_state_dict": True},
     )
 
 

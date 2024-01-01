@@ -14,6 +14,7 @@ from opsml.registry.types import (
     ModelReturn,
     Suffix,
     TorchOnnxArgs,
+    TorchSaveArgs,
     TrainedModelType,
 )
 
@@ -50,6 +51,7 @@ try:
         model: Optional[torch.nn.Module] = None
         sample_data: Optional[VALID_DATA] = None
         onnx_args: Optional[TorchOnnxArgs] = None
+        save_args: TorchSaveArgs = TorchSaveArgs()
 
         @property
         def model_class(self) -> str:
@@ -129,17 +131,23 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
-        def save_model(self, path: Path) -> None:
+        def save_model(self, path: Path) -> Path:
             """Save pytorch model to path
 
             Args:
                 path:
                     pathlib object
             """
+            save_path = path.with_suffix(self.model_suffix)
 
-            torch.save(self.model, path.with_suffix(self.model_suffix))
+            if self.save_args.as_state_dict:
+                torch.save(self.model.state_dict(), save_path)
+            else:
+                torch.save(self.model, save_path)
 
-        def load_model(self, path: Path) -> None:
+            return save_path
+
+        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load pytorch model from path
 
             Args:

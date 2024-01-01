@@ -58,6 +58,7 @@ from opsml.registry.types.model import (
     OnnxModel,
     SeldonSigTypes,
     TorchOnnxArgs,
+    TorchSaveArgs,
     TrainedModelType,
     ValidModelInput,
     ValidSavedSample,

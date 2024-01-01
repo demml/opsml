@@ -161,10 +161,10 @@ def _test_save_lgb_sklearn_modelcard_api_client(
 
 
 def test_save_torch_modelcard_api_client(
-    pytorch_language_model: PyTorchModel,
+    pytorch_simple: PyTorchModel,
     api_storage_client: client.StorageClientBase,
 ):
-    model: PyTorchModel = pytorch_language_model
+    model: PyTorchModel = pytorch_simple
 
     modelcard = ModelCard(
         interface=model,
@@ -184,7 +184,6 @@ def test_save_torch_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".pt"))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))

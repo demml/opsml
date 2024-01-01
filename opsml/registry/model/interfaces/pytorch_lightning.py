@@ -97,7 +97,7 @@ try:
             assert self.model is not None, "No model detected in interface"
             self.model.save_checkpoint(path.with_suffix(self.model_suffix))
 
-        def load_model(self, path: Path, **kwargs) -> None:
+        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load lightning model from path"""
 
             model_arch = kwargs[CommonKwargs.MODEL_ARCH.value]

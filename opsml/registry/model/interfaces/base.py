@@ -109,7 +109,7 @@ class ModelInterface(BaseModel):
 
         return save_path
 
-    def load_model(self, path: Path) -> None:
+    def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
         """Load model from pathlib object
 
         Args:
