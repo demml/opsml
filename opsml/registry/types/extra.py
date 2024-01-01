@@ -62,6 +62,7 @@ class SaveName(str, Enum):
     DATA_PROFILE = "data-profile"
     DATA = "data"
     PROFILE = "profile"
+    ARTIFACTS = "artifacts"
 
 
 @unique
