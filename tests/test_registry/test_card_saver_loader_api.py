@@ -5,14 +5,9 @@ from typing import cast
 from opsml.registry.cards import Description, ModelCard, ModelCardMetadata
 from opsml.registry.cards.card_loader import CardLoader
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.model.interfaces import (
-    LightGBMModel,
-    LightningModel,
-    PyTorchModel,
-    SklearnModel,
-)
+from opsml.registry.model.interfaces import LightGBMModel, PyTorchModel, SklearnModel, LightningModel
 from opsml.registry.storage import client
-from opsml.registry.types import CommonKwargs, RegistryType, SaveName
+from opsml.registry.types import RegistryType, SaveName, CommonKwargs
 
 
 def _test_save_sklearn_modelcard_api_client(
@@ -192,7 +187,7 @@ def _test_save_torch_modelcard_api_client(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-
+    
     # load objects
     loader = CardLoader(
         card_args={
@@ -211,20 +206,20 @@ def _test_save_torch_modelcard_api_client(
 
     model.model.load_state_dict(loaded_card.interface.model)
     loaded_card.interface.model = model.model
-
+    
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
-
+    
     #
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-
 def test_save_torch_lightning_modelcard_api_client(
-    pytorch_lightning_model: LightningModel,
+    lightning_regression: LightningModel,
     api_storage_client: client.StorageClientBase,
 ):
-    model: LightningModel = pytorch_lightning_model
+    model, model_arch = lightning_regression
+    model = cast(LightningModel, model)
 
     modelcard = ModelCard(
         interface=model,
@@ -247,7 +242,7 @@ def test_save_torch_lightning_modelcard_api_client(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-
+    
     # load objects
     loader = CardLoader(
         card_args={
@@ -261,14 +256,11 @@ def test_save_torch_lightning_modelcard_api_client(
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
 
-    #
-    loaded_card.load_model(**{CommonKwargs.MODEL_ARCH.value: model.model})
+    # pytorch lightning model need model arch to load
+    loaded_card.load_model(**{CommonKwargs.MODEL_ARCH.value: model_arch})
 
-    model.model.load_state_dict(loaded_card.interface.model)
-    loaded_card.interface.model = model.model
-
-    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
-
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model.model)
+    
     #
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
