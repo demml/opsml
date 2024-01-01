@@ -2,13 +2,20 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from pydantic import model_validator
-from opsml.helpers.utils import get_class_name, OpsmlImportExceptions
+
+from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.registry.model.interfaces.base import (
     ModelInterface,
     SamplePrediction,
     get_model_args,
 )
-from opsml.registry.types import CommonKwargs, ModelReturn, Suffix, TorchOnnxArgs, TrainedModelType
+from opsml.registry.types import (
+    CommonKwargs,
+    ModelReturn,
+    Suffix,
+    TorchOnnxArgs,
+    TrainedModelType,
+)
 
 try:
     import torch
@@ -145,9 +152,10 @@ try:
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
 
-            from opsml.registry.model.onnx.torch_converter import _PyTorchOnnxModel
-            from opsml.registry.model.onnx.model_converters import _get_onnx_metadata
             import onnxruntime as rt
+
+            from opsml.registry.model.onnx.model_converters import _get_onnx_metadata
+            from opsml.registry.model.onnx.torch_converter import _PyTorchOnnxModel
 
             # get save path
             save_path = path.with_suffix(Suffix.ONNX.value)
