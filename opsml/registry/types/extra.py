@@ -27,6 +27,7 @@ class UriNames(str, Enum):
     RUNCARD_URI = "runcard_uri"
     ARTIFACT_URIS = "artifact_uris"
     AUDIT_URI = "audit_uri"
+    QUANTIZED_MODEL_URI = "quantized_model_uri"
 
 
 @unique
