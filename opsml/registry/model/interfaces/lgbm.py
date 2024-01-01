@@ -88,7 +88,7 @@ try:
 
             return super().save_model(path)
 
-        def load_model(self, path: Path) -> None:
+        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Loads lightgbm booster or sklearn model
 
 

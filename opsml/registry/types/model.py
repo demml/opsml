@@ -112,14 +112,30 @@ class ModelReturn(BaseModel):
     model_config = ConfigDict(frozen=False, protected_namespaces=("protect_",))
 
 
-class TorchOnnxArgs(BaseModel):
+class TorchSaveArgs(BaseModel):
+    """Torch save arguments.
+
+    Args:
+        as_state_dict:
+            Indicates to save the torch model in state_dict format. If True, the model
+            architecture will need to be provided at load time.
     """
-    input_names (List[str]): Optional list containing input names for model inputs.
-    This is a PyTorch-specific attribute
-    output_names (List[str]): Optional list containing output names for model outputs.
-    This is a PyTorch-specific attribute
-    dynamic_axes (Dictionary): Optional PyTorch attribute that defines dynamic axes
-    constant_folding (bool): Whether to use constant folding optimization. Default is True
+
+    as_state_dict: bool = False
+
+
+class TorchOnnxArgs(BaseModel):
+    """Optional arguments to pass to torch when converting to onnx
+
+    Args:
+        input_names:
+            Optional list containing input names for model inputs.
+        output_names:
+            Optional list containing output names for model outputs.
+        dynamic_axes:
+            Optional PyTorch attribute that defines dynamic axes
+        constant_folding:
+            Whether to use constant folding optimization. Default is True
     """
 
     input_names: List[str]

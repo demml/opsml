@@ -267,7 +267,7 @@ try:
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
-        def load_model(self, path: Path, **kwargs) -> None:
+        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load huggingface model from path"""
 
             if self.is_pipeline:
@@ -321,7 +321,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
 
         @staticmethod
         def name() -> str:
