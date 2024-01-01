@@ -1,12 +1,18 @@
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple, cast
 
 from pydantic import model_validator
 
-from opsml.helpers.utils import get_class_name
+from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.registry.model.interfaces.base import SamplePrediction, get_model_args
 from opsml.registry.model.interfaces.pytorch import PyTorchModel
-from opsml.registry.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
+from opsml.registry.types import (
+    CommonKwargs,
+    ModelReturn,
+    Suffix,
+    TorchOnnxArgs,
+    TrainedModelType,
+)
 
 try:
     from lightning import Trainer
@@ -105,7 +111,10 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    self.model = model_arch.load_from_checkpoint(path.with_suffix(self.model_suffix))
+                    self.model = model_arch.load_from_checkpoint(
+                        checkpoint_path=path.with_suffix(self.model_suffix),
+                        **kwargs,
+                    )
 
                 else:
                     # load via torch
@@ -115,6 +124,29 @@ try:
 
             except Exception as e:
                 raise ValueError(f"Unable to load pytorch lightning model: {e}")
+
+        def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
+            # import packages for onnx conversion
+            OpsmlImportExceptions.try_torchonnx_imports()
+
+            import onnxruntime as rt
+
+            from opsml.registry.model.onnx.base_converter import _get_onnx_metadata
+            from opsml.registry.model.onnx.torch_converter import (
+                _PyTorchLightningOnnxModel,
+            )
+
+            # get save path
+            save_path = path.with_suffix(Suffix.ONNX.value)
+
+            if self.onnx_model is None:
+                self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(path=save_path)
+            else:
+                sess: rt.InferenceSession = self.onnx_model.sess
+                path = path.with_suffix(Suffix.ONNX.value)
+                path.write_bytes(sess._model_bytes)
+
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess)), path
 
         @property
         def model_suffix(self) -> str:
