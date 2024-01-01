@@ -3,8 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Optional, Union, cast
 from pathlib import Path
+from typing import Any, Dict, Optional, Union, cast
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.cards.data import DataCard
@@ -171,7 +172,11 @@ class ActiveRun:
             info=info,
         )
 
-    def log_artifact(self, local_path: Union[str, Path], artifact_path: Optional[Union[str, Path]] = None) -> None:
+    def log_artifact(
+        self,
+        local_path: Union[str, Path],
+        artifact_path: Optional[Union[str, Path]] = None,
+    ) -> None:
         """
         Log a local file or directory to the opsml server and associate with the current run.
 
@@ -188,7 +193,6 @@ class ActiveRun:
         rpath = self.runcard.uri / (artifact_path or SaveName.ARTIFACTS.value)
 
         self._info.storage_client.put(lpath, rpath)
-
         self.runcard._add_artifact_uri(name=lpath.as_posix(), uri=rpath.as_posix())
 
     def log_metric(
