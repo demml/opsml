@@ -133,7 +133,7 @@ class ModelInterface(BaseModel):
         # don't want to try and import onnx unless we need to
         import onnxruntime as rt
 
-        from opsml.registry.model.onnx.model_converters import _OnnxModelConverter
+        from opsml.registry.model.onnx.base_converter import _OnnxModelConverter
 
         if self.onnx_model is None:
             metadata = _OnnxModelConverter(self).convert_model()

@@ -236,7 +236,7 @@ try:
             import onnxruntime as rt
             import optimum.onnxruntime as ort
 
-            from opsml.registry.model.onnx.model_converters import _get_onnx_metadata
+            from opsml.registry.model.onnx.base_converter import _get_onnx_metadata
 
             ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
             model_path = path.parent / SaveName.TRAINED_MODEL
@@ -321,9 +321,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:
