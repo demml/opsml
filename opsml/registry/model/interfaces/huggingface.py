@@ -36,7 +36,7 @@ try:
             preprocessor:
                 HuggingFace preprocessor
             sample_data:
-                Sample data to be used for type inference and ONNX conversion/validation.
+                Sample data to be used for type inference.
                 This should match exactly what the model expects as input. See example below.
             task_type:
                 Task type for HuggingFace model. See `HuggingFaceTask` for supported tasks.
@@ -321,9 +321,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:

@@ -9,11 +9,11 @@ from opsml.registry.model.interfaces.base import ModelInterface, get_model_args
 from opsml.registry.types import CommonKwargs, TrainedModelType
 from opsml.registry.types.extra import Suffix
 
+VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
+
 try:
     import lightgbm as lgb
     from lightgbm import Booster, LGBMModel
-
-    VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 
     class LightGBMModel(ModelInterface):
         """Model interface for LightGBM Booster model class. If using the sklearn API, use SklearnModel instead.
@@ -121,9 +121,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
 
         @staticmethod
         def name() -> str:
