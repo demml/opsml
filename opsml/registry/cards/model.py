@@ -66,11 +66,11 @@ class ModelCard(ArtifactCard):
         except ValueError:
             raise ValueError("Datacard uid is not a valid uuid")
 
-    def load_model(self) -> None:
+    def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Loads model, preprocessor and sample data to interface"""
         from opsml.registry.cards.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_model()
+        ModelCardLoader(self).load_model(**kwargs)
 
     def load_onnx_model(self) -> None:
         """Loads onnx model to interface"""

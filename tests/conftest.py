@@ -1826,12 +1826,11 @@ def pytorch_lightning_model():
 
     trainer = L.Trainer()
     model = SimpleModel()
+
     # set model
     trainer.strategy.model = model
     input_sample = torch.randn((1, 64))
-
-    yield LightningModel(model=trainer, sample_data=input_sample)
-    cleanup()
+    return LightningModel(model=trainer, sample_data=input_sample)
 
 
 @pytest.fixture(scope="module")

@@ -13,7 +13,7 @@ import onnxruntime as rt
 import torch
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.model.interfaces import PyTorchModel
+from opsml.registry.model.interfaces import LightningModel, PyTorchModel
 from opsml.registry.model.interfaces.pytorch import VALID_DATA
 from opsml.registry.types import OnnxModel, TorchOnnxArgs
 
@@ -82,6 +82,43 @@ class _PyTorchOnnxModel:
             model=self.interface.model,
             args=arg_data,
             f=path.as_posix(),
+            **onnx_args.model_dump(exclude={"options"}),
+        )
+
+        # load
+        return OnnxModel(
+            onnx_version=onnx.__version__,
+            sess=self._load_onnx_model(path=path),
+        )
+
+
+class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
+    def __init__(self, model_interface: LightningModel):
+        self.interface = model_interface
+
+    def _get_additional_model_args(self) -> TorchOnnxArgs:
+        """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
+
+        if self.interface.onnx_args is None:
+            return _PytorchArgBuilder(input_data=self.interface.sample_data).get_args()
+        return self.interface.onnx_args
+
+    def _load_onnx_model(self, path: Path) -> rt.InferenceSession:
+        return rt.InferenceSession(
+            path_or_bytes=path,
+            providers=rt.get_available_providers(),
+        )
+
+    def convert_to_onnx(self, path: Path) -> OnnxModel:
+        """Converts Pytorch model into Onnx model through torch.onnx.export method"""
+        assert self.interface.model is not None, "Trainer must not be None"
+        assert self.interface.model.model is not None, "Model must not be None"
+
+        onnx_args = self._get_additional_model_args()
+
+        self.interface.model.model.to_onnx(
+            path.as_posix(),
+            self.interface.sample_data,
             **onnx_args.model_dump(exclude={"options"}),
         )
 

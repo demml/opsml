@@ -283,7 +283,7 @@ class ModelCardLoader(CardLoader):
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
         self.card.interface.load_preprocessor(lpath)
 
-    def _load_model(self, lpath: Path, rpath: Path, **kwargs) -> None:
+    def _load_model(self, lpath: Path, rpath: Path, **kwargs: Dict[str, Any]) -> None:
         """Load model to interface
 
         Args:
@@ -320,13 +320,13 @@ class ModelCardLoader(CardLoader):
             self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(lpath)
 
-    def load_model(self) -> None:
+    def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Load model, preprocessor and sample data"""
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
-            self._load_model(lpath, rpath)
+            self._load_model(lpath, rpath, **kwargs)
             self._load_preprocessor(lpath, rpath)
             self._load_sample_data(lpath, rpath)
 
