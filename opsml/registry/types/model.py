@@ -161,6 +161,7 @@ class HuggingFaceOnnxArgs(BaseModel):
 
     ort_type: str
     provider: str = "CPUExecutionProvider"
+    quantize: bool = False
     config: Optional[Any] = None
 
     @field_validator("ort_type", mode="before")
@@ -180,25 +181,15 @@ class HuggingFaceOnnxArgs(BaseModel):
             return config
 
         from optimum.onnxruntime import (
-            AutoCalibrationConfig,
-            AutoOptimizationConfig,
             AutoQuantizationConfig,
-            CalibrationConfig,
-            OptimizationConfig,
             ORTConfig,
             QuantizationConfig,
-            QuantizationModel,
         )
 
         assert isinstance(
             config,
             (
-                CalibrationConfig,
-                AutoCalibrationConfig,
-                QuantizationModel,
                 AutoQuantizationConfig,
-                OptimizationConfig,
-                AutoOptimizationConfig,
                 ORTConfig,
                 QuantizationConfig,
             ),
@@ -296,7 +287,10 @@ class ModelMetadata(BaseModel):
     opsml_version: str = __version__
     data_schema: DataSchema
 
-    model_config = ConfigDict(protected_namespaces=("protect_",))
+    model_config = ConfigDict(
+        protected_namespaces=("protect_",),
+        extra="allow",
+    )
 
 
 class ModelDownloadInfo(BaseModel):
