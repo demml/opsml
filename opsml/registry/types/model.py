@@ -195,6 +195,8 @@ class HuggingFaceOnnxArgs(BaseModel):
             ),
         ), "config must be a valid optimum config"
 
+        return config
+
 
 class ModelCardMetadata(BaseModel):
     """Create modelcard metadata

@@ -286,7 +286,7 @@ try:
             if self.onnx_args.quantize:
                 self._quantize_model(path.parent, onnx_model)
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess)), path
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model)), path
 
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)

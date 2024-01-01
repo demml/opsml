@@ -1102,11 +1102,11 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
 
 @pytest.fixture(scope="module")
 def huggingface_torch_distilbert() -> HuggingFaceModel:
-    from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
+    from transformers import AutoTokenizer, DistilBertForSequenceClassification
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
     
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
+    model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
 
     model = HuggingFaceModel(
@@ -1120,7 +1120,7 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
             config = AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False)
         ),
     )
-
+    
     return model
 
 
