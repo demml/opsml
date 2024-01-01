@@ -99,9 +99,11 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
-        def save_model(self, path: Path) -> None:
+        def save_model(self, path: Path) -> Path:
             assert self.model is not None, "No model detected in interface"
-            self.model.save_checkpoint(path.with_suffix(self.model_suffix))
+            save_path = path.with_suffix(self.model_suffix)
+            self.model.save_checkpoint(save_path)
+            return save_path
 
         def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load lightning model from path"""
@@ -163,9 +165,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
         @staticmethod
         def name() -> str:
