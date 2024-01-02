@@ -214,15 +214,13 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
-        def save_model(self, path: Path) -> Path:
+        def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
             self.model.save_pretrained(path)
-            return path
 
-        def save_preprocessor(self, path: Path) -> Path:
+        def save_preprocessor(self, path: Path) -> None:
             assert self.preprocessor is not None, "No preprocessor detected in interface"
             self.preprocessor.save_pretrained(path)
-            return path
 
         def _quantize_model(self, path: Path, onnx_model: Any) -> None:
             """Quantizes an huggingface model
@@ -259,6 +257,10 @@ try:
                 self.onnx_args is not None
             ), "No onnx args provided. If converting to onnx, provide a HuggingFaceOnnxArgs instance"
 
+            # ensure no suffix (this is an exception to the rule to all model interfaces)
+            # hunggingface prefers to save onnx models in dirs instead of single model.onnx file
+            path = path.with_suffix("")
+
             import onnx
             import onnxruntime as rt
             import optimum.onnxruntime as ort
@@ -287,7 +289,7 @@ try:
             if self.onnx_args.quantize:
                 self._quantize_model(path.parent, onnx_model)
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model)), path
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model))
 
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
@@ -351,7 +353,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
 
         @staticmethod
         def name() -> str:

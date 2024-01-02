@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 import joblib
 import pandas as pd
 import polars as pl
+from fastapi.types import NoneType
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -114,7 +115,7 @@ class DataInterface(BaseModel):
             assert isinstance(profile, ydata_profile)
         return profile
 
-    def save_data(self, path: Path) -> Path:
+    def save_data(self, path: Path) -> None:
         """Saves data to path. Base implementation use Joblib
 
         Args:
@@ -122,8 +123,7 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
         assert self.data is not None, "No data detected in interface"
-        save_path = path.with_suffix(self.data_suffix)
-        joblib.dump(self.data, save_path)
+        joblib.dump(self.data, path)
 
         self.feature_map = {
             "features": Feature(
@@ -131,8 +131,6 @@ class DataInterface(BaseModel):
                 shape=CommonKwargs.UNDEFINED.value,
             )
         }
-
-        return save_path
 
     def load_data(self, path: Path) -> None:
         """Load data from pathlib object
@@ -142,8 +140,7 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
 
-        save_path = path.with_suffix(self.data_suffix)
-        self.data = joblib.load(save_path)
+        self.data = joblib.load(path)
 
     def load_profile(self, path: Path) -> None:
         """Load data profile from pathlib object
@@ -153,10 +150,9 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
 
-        save_path = path.with_suffix(Suffix.JOBLIB.value)
-        self.data_profile = joblib.load(save_path)
+        self.data_profile = joblib.load(path)
 
-    def save_data_profile(self, path: Path, save_type: str) -> Path:
+    def save_data_profile(self, path: Path) -> NoneType:
         """Saves data profile to path. Data profiles are saved as joblib
         joblib
 
@@ -166,16 +162,12 @@ class DataInterface(BaseModel):
         """
         assert self.data_profile is not None, "No data profile detected in interface"
 
-        if save_type == "html":
+        if path.suffix == Suffix.HTML.value:
             profile_artifact = self.data_profile.to_html()
-            save_path = path.with_suffix(Suffix.HTML.value)
-            save_path.write_text(profile_artifact, encoding="utf-8")
+            path.write_text(profile_artifact, encoding="utf-8")
         else:
             profile_artifact = self.data_profile.dumps()
-            save_path = path.with_suffix(Suffix.JOBLIB.value)
-            joblib.dump(profile_artifact, save_path)
-
-        return save_path
+            joblib.dump(profile_artifact, path)
 
     def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
         """Creates a data profile report

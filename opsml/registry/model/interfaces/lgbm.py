@@ -81,12 +81,10 @@ try:
             """
 
             if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
-                save_path = path.with_suffix(Suffix.TEXT.value)
-                self.model.save_model(filename=save_path)
+                self.model.save_model(filename=path)
 
-                return save_path
-
-            return super().save_model(path)
+            else:
+                super().save_model(path)
 
         def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Loads lightgbm booster or sklearn model
@@ -98,9 +96,7 @@ try:
             """
 
             if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
-                load_path = path.with_suffix(Suffix.TEXT.value)
-                self.model = lgb.Booster(model_file=load_path)
-
+                self.model = lgb.Booster(model_file=path)
             else:
                 super().load_model(path)
 

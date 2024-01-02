@@ -100,7 +100,7 @@ try:
 
             return model_args
 
-        def save_model(self, path: Path) -> Path:
+        def save_model(self, path: Path) -> None:
             """Save tensorflow model to path
 
             Args:
@@ -108,9 +108,7 @@ try:
                     pathlib object
             """
             assert self.model is not None, "Model is not initialized"
-            save_path = path.with_suffix(self.model_suffix)
-            self.model.save(save_path)
-            return save_path
+            self.model.save(path)
 
         def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load tensorflow model from path
@@ -119,11 +117,7 @@ try:
                 path:
                     pathlib object
             """
-            from fsspec.implementations.local import LocalFileSystem
-
-            fs = LocalFileSystem()
-            print(fs.find(path))
-            self.model = tf.keras.models.load_model(path.with_suffix(self.model_suffix), **kwargs)
+            self.model = tf.keras.models.load_model(path, **kwargs)
 
         @property
         def model_suffix(self) -> str:

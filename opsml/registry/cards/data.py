@@ -6,9 +6,10 @@
 # IMPORTANT: We need `Optional` imported here in order for Pydantic to be able to
 # deserialize DataCard.
 #
-from typing import Any, Dict, Union, Optional  # noqa # pylint: disable=unused-import
+from typing import Any, Dict, Optional, Union  # noqa # pylint: disable=unused-import
 
 from pydantic import SerializeAsAny
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.data.interfaces import DataInterface

@@ -131,21 +131,18 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
-        def save_model(self, path: Path) -> Path:
+        def save_model(self, path: Path) -> None:
             """Save pytorch model to path
 
             Args:
                 path:
                     pathlib object
             """
-            save_path = path.with_suffix(self.model_suffix)
 
             if self.save_args.as_state_dict:
-                torch.save(self.model.state_dict(), save_path)
+                torch.save(self.model.state_dict(), path)
             else:
-                torch.save(self.model, save_path)
-
-            return save_path
+                torch.save(self.model, path)
 
         def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load pytorch model from path
@@ -154,9 +151,9 @@ try:
                 path:
                     pathlib object
             """
-            self.model = torch.load(path.with_suffix(self.model_suffix))
+            self.model = torch.load(path)
 
-        def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
+        def convert_to_onnx(self, path: Path) -> ModelReturn:
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
 
@@ -165,14 +162,10 @@ try:
             from opsml.registry.model.onnx import _get_onnx_metadata
             from opsml.registry.model.onnx.torch_converter import _PyTorchOnnxModel
 
-            # get save path
-            save_path = path.with_suffix(Suffix.ONNX.value)
-
             if self.onnx_model is None:
-                self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=save_path)
+                self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=path)
             else:
                 sess: rt.InferenceSession = self.onnx_model.sess
-                path = path.with_suffix(Suffix.ONNX.value)
                 path.write_bytes(sess._model_bytes)
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess)), path
