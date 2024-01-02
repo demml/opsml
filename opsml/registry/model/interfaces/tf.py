@@ -119,10 +119,11 @@ try:
                 path:
                     pathlib object
             """
-            self.model = tf.keras.models.load_model(
-                path.with_suffix(self.model_suffix),
-                **kwargs,
-            )
+            from fsspec.implementations.local import LocalFileSystem
+
+            fs = LocalFileSystem()
+            print(fs.find(path))
+            self.model = tf.keras.models.load_model(path.with_suffix(self.model_suffix), **kwargs)
 
         @property
         def model_suffix(self) -> str:

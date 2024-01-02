@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
 import tempfile
 from contextlib import contextmanager
 from functools import cached_property
@@ -118,17 +119,11 @@ class CardLoader:
             storage_client:
                 Storage client to use
         """
+        # print(lpath, object_path, suffix)
         load_lpath = Path(lpath, object_path).with_suffix(suffix)
         load_rpath = Path(rpath, object_path).with_suffix(suffix)
 
-        if not suffix:
-            recursive = True
-        else:
-            recursive = False
-
-        print(f"Downloading {load_rpath} to {load_lpath} {recursive}")
-        self.storage_client.get(load_rpath, load_lpath, recursive)
-
+        self.storage_client.get(load_rpath, load_lpath)
         return load_lpath
 
     @contextmanager
@@ -196,8 +191,8 @@ class DataCardLoader(CardLoader):
         return self._card
 
     @cached_property
-    def storage_suffix(self) -> str:
-        return self.card.interface.storage_suffix
+    def data_suffix(self) -> str:
+        return self.card.interface.data_suffix
 
     def load_data(self) -> None:
         """Saves a data via data interface"""
@@ -205,7 +200,7 @@ class DataCardLoader(CardLoader):
         if self.card.interface.data is not None:
             return None
 
-        with self._load_object(SaveName.DATA.value, self.storage_suffix) as lpath:
+        with self._load_object(SaveName.DATA.value, self.data_suffix) as lpath:
             self.card.interface.load_data(lpath)
 
     def load_data_profile(self) -> None:

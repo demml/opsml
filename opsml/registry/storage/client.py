@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
 
 from fsspec.implementations.local import LocalFileSystem
+from torch import NoneType
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.storage.api import ApiClient, ApiRoutes
@@ -38,6 +39,9 @@ class FileSystemProtocol(Protocol):
 
     def ls(self, path: str) -> List[str]:  # pylint:  disable=invalid-name
         """Lists files"""
+
+    def find(self, path: str) -> List[str]:
+        """Recursively list all files excluding directories"""
 
     def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         """Open a file"""
@@ -70,8 +74,7 @@ class StorageClientBase(StorageClientProtocol):
             self.client = client
         self.settings = settings
 
-    def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> str:
-        logger.info("Getting {} to: {}", rpath, lpath)
+    def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> NoneType:
         self.client.get(rpath=str(rpath), lpath=str(lpath), recursive=recursive)
 
     def get_mapper(self, root: str) -> StoreLike:
@@ -79,6 +82,9 @@ class StorageClientBase(StorageClientProtocol):
 
     def ls(self, path: Path) -> List[str]:
         return self.client.ls(str(path))
+
+    def find(self, path: Path) -> List[str]:
+        return self.client.find(str(path))
 
     def open(self, path: Path, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         return self.client.open(str(path), mode=mode, encoding=encoding)
@@ -94,10 +100,10 @@ class StorageClientBase(StorageClientProtocol):
         if lpath.is_dir():
             abs_lpath = f"{str(lpath)}/"  # pathlib strips trailing slashes
             abs_rpath = f"{str(rpath)}/"
-            logger.info("Putting directory: {} rpath: {}", abs_lpath, abs_rpath)
+            # logger.info("Putting directory: {} rpath: {}", abs_lpath, abs_rpath)
             self.client.put(abs_lpath, abs_rpath, True)
         else:
-            logger.info("Putting file: {} rpath: {}", lpath, abs_rpath)
+            # logger.info("Putting file: {} rpath: {}", lpath, rpath)
             self.client.put(str(lpath), str(rpath), False)
 
     def copy(self, src: Path, dest: Path, recursive: bool = True) -> None:
@@ -167,19 +173,29 @@ class ApiStorageClient(StorageClientBase):
         )
 
     def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> None:
-        if recursive:
-            for file in self.ls(rpath):
-                rpath = Path(file)
-                self.get(rpath, Path(lpath) / rpath.name, rpath.is_dir())
+        """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-        self.api_client.stream_download_file_request(
-            route=ApiRoutes.DOWNLOAD_FILE,
-            local_dir=lpath.parent,
-            read_dir=rpath.parent,
-            filename=rpath.name,
-        )
+        # print(self.find(rpath))
+        for file in self.find(rpath):
+            _rpath = Path(file)
 
-    def ls(self, path: Path) -> List[str]:
+            # for single files
+            if _rpath.name == lpath.name:
+                _lpath = lpath
+
+            # for files in nested dirs
+            else:
+                index = _rpath.parts.index(lpath.name)
+                _lpath = lpath.joinpath(*_rpath.parts[index + 1 :])
+
+            self.api_client.stream_download_file_request(
+                route=ApiRoutes.DOWNLOAD_FILE,
+                local_dir=_lpath.parent,
+                read_dir=_rpath.parent,
+                filename=_rpath.name,
+            )
+
+    def find(self, path: Path) -> List[str]:
         response = self.api_client.get_request(
             route=ApiRoutes.LIST_FILES,
             params={"path": path},

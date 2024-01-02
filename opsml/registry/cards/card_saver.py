@@ -5,7 +5,6 @@ import tempfile
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Optional, Tuple, cast
-from venv import logger
 
 import joblib
 from pydantic import BaseModel
@@ -103,7 +102,7 @@ class DataCardSaver(CardSaver):
     def _save_data_profile(self) -> None:
         """Saves a data profile"""
 
-        if self.card.data_profile is None:
+        if self.card.interface.data_profile is None:
             return
 
         save_path = self.lpath / SaveName.DATA_PROFILE.value
@@ -135,20 +134,13 @@ class DataCardSaver(CardSaver):
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
 
-        try:
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                self.card_uris.lpath = Path(tmp_dir)
-                self.card_uris.rpath = self.card.uri
-                self._save_data()
-                self._save_data_profile()
-                self._save_datacard()
-                self.storage_client.put(self.lpath, self.rpath)
-
-        except Exception as e:
-            # remove any files that have been uploaded
-            self.storage_client.rm(self.rpath)
-            logger.error("Error saving data artifacts: {}", e)
-            raise e
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.card_uris.lpath = Path(tmp_dir)
+            self.card_uris.rpath = self.card.uri
+            self._save_data()
+            self._save_data_profile()
+            self._save_datacard()
+            self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -352,9 +344,7 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
