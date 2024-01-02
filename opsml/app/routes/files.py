@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
-from typing import Dict
+from typing import Dict, cast
 from uuid import UUID
 
 import streaming_form_data
@@ -27,6 +27,7 @@ from opsml.app.routes.utils import (
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import RegistryTableNames
+from opsml.registry.storage.client import StorageClientBase
 
 logger = ArtifactLogger.get_logger()
 CHUNK_SIZE = 31457280
@@ -168,13 +169,13 @@ def download_file(
     # Files can only be downloaded from registry paths
     _verify_path(path=read_path)
 
+    storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
+    abs_read_path = storage_client.build_absolute_path(read_path)
+
     try:
         storage_client = request.app.state.storage_client
         return StreamingResponse(
-            storage_client.iterfile(
-                file_path=read_path,
-                chunk_size=CHUNK_SIZE,
-            ),
+            storage_client.iterfile(abs_read_path, CHUNK_SIZE),
             media_type="application/octet-stream",
         )
 
@@ -206,9 +207,8 @@ def list_files(
     _verify_path(path=read_path)
 
     try:
-        storage_client = request.app.state.storage_client
-        files = storage_client.list_files(read_path)
-        return ListFileResponse(files=files)
+        storage_client: StorageClientBase = request.app.state.storage_client
+        return ListFileResponse(files=storage_client.ls(read_path))
 
     except Exception as error:
         raise HTTPException(
@@ -240,7 +240,7 @@ def delete_files(
     _verify_path(path=read_path)
 
     try:
-        storage_client = request.app.state.storage_client
+        storage_client: StorageClientBase = request.app.state.storage_client
 
         files = list_files(
             request=request,
@@ -251,7 +251,7 @@ def delete_files(
         if len(files.files) == 0:
             return DeleteFileResponse(deleted=False)
 
-        storage_client.delete(payload.read_path)
+        storage_client.rm(payload.read_path)
         return DeleteFileResponse(deleted=True)
 
     except Exception as error:

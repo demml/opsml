@@ -28,7 +28,7 @@ from opsml.registry.cards.validator import ModelCardValidator
 from opsml.registry.sql.records import ModelRegistryRecord, RegistryRecord
 from opsml.registry.storage import client
 from opsml.registry.storage.artifact import load_record_artifact_from_storage
-from opsml.registry.storage.types import ArtifactStorageSpecs, ArtifactStorageType
+from opsml.registry.storage.types import ArtifactStorageType
 
 logger = ArtifactLogger.get_logger()
 
@@ -121,10 +121,13 @@ class ModelCard(ArtifactCard):
         if self.metadata.sample_data_type is None:
             raise ValueError("Cannot load sample data - sample_data_type is not set")
 
+        if self.metadata.uris.sample_data_uri is None:
+            raise ValueError("Cannot load sample data - sample_data_uri is not set")
+
         sample_data = load_record_artifact_from_storage(
             artifact_type=self.metadata.sample_data_type,
             storage_client=client.storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.sample_data_uri),
+            uri=self.metadata.uris.sample_data_uri,
         )
         self.sample_input_data = sample_data
 
@@ -142,20 +145,27 @@ class ModelCard(ArtifactCard):
             if self.metadata.model_type is None:
                 raise ValueError("Cannot load trained model - model_type is not set")
 
+            if self.metadata.uris.trained_model_uri is None:
+                raise ValueError("Cannot load trained model - trained_model_uri is not set")
+
             trained_model = load_record_artifact_from_storage(
                 artifact_type=self.metadata.model_type,
                 storage_client=client.storage_client,
-                storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.trained_model_uri),
+                uri=self.metadata.uris.trained_model_uri,
             )
             self.trained_model = trained_model
 
     @property
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
+
+        if self.metadata.uris.model_metadata_uri is None:
+            raise ValueError("Cannot load model metadata - model_metadata_uri is not set")
+
         model_metadata = load_record_artifact_from_storage(
             artifact_type=ArtifactStorageType.JSON.value,
             storage_client=client.storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=self.metadata.uris.model_metadata_uri),
+            uri=self.metadata.uris.model_metadata_uri,
         )
 
         return ModelMetadata.model_validate(model_metadata)
@@ -173,7 +183,7 @@ class ModelCard(ArtifactCard):
         onnx_model = load_record_artifact_from_storage(
             artifact_type=ArtifactStorageType.ONNX.value,
             storage_client=client.storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=metadata.onnx_uri),
+            uri=metadata.onnx_uri,
         )
 
         return onnx_model
@@ -216,7 +226,7 @@ class ModelCard(ArtifactCard):
         setattr(self.metadata, "data_schema", model_return.api_data_schema)
         setattr(self.metadata, "model_type", model_return.model_type)
 
-    def _create_and_set_model_attr(self) -> None:
+    def create_and_set_model_attr(self) -> None:
         """
         Creates Onnx model from trained model and sample input data
         and sets Card attributes
@@ -231,7 +241,7 @@ class ModelCard(ArtifactCard):
 
         self._set_model_attributes(model_return=model_return)
 
-    def _get_sample_data_for_api(self) -> Dict[str, Any]:
+    def get_sample_data_for_api(self) -> Dict[str, Any]:
         """
         Converts sample data to dictionary that can be used
         to validate an onnx model
@@ -278,7 +288,7 @@ class ModelCard(ArtifactCard):
 
         # todo: clean this up
         if self.metadata.onnx_model_def is None or self.metadata.data_schema is None:
-            self._create_and_set_model_attr()
+            self.create_and_set_model_attr()
 
         version = self._set_version_for_predictor()
 
@@ -288,7 +298,7 @@ class ModelCard(ArtifactCard):
         model_type = str(self.metadata.model_type)
         data_schema = cast(ApiDataSchemas, self.metadata.data_schema)
 
-        sample_api_data = self._get_sample_data_for_api()
+        sample_api_data = self.get_sample_data_for_api()
 
         return OnnxModelPredictor(
             model_name=self.name,
