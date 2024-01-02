@@ -54,22 +54,22 @@ class _TrainedModelMetadataCreator(_ModelMetadataCreator):
         return model_data.feature_dict
 
     def _get_output_schema(self) -> Dict[str, Feature]:
-        # try:
-        sample_prediction = self.interface.get_sample_prediction()
+        try:
+            sample_prediction = self.interface.get_sample_prediction()
 
-        output_data = get_model_data(
-            input_data=sample_prediction.prediction,
-            data_type=sample_prediction.prediction_type,
-        )
+            output_data = get_model_data(
+                input_data=sample_prediction.prediction,
+                data_type=sample_prediction.prediction_type,
+            )
 
-        # pandas will use column names as features
-        if sample_prediction.prediction_type != AllowedDataType.PANDAS:
-            output_data.features = ["outputs"]
+            # pandas will use column names as features
+            if sample_prediction.prediction_type != AllowedDataType.PANDAS:
+                output_data.features = ["outputs"]
 
-        return output_data.feature_dict
+            return output_data.feature_dict
 
-        # except Exception as error:
-        # logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
+        except Exception as error:
+            logger.error("Failed to determine prediction output. Defaulting to placeholder. {}", error)
 
         return {"placeholder": Feature(feature_type="str", shape=[1])}
 

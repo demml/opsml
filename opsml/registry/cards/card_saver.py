@@ -222,7 +222,7 @@ class ModelCardSaver(CardSaver):
 
         # in case of huggingface quantized model, we add extra metadata
         if self.card_uris.quantized_model_uri is not None:
-            metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL.value)
+            metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
 
         return metadata
 
@@ -238,7 +238,13 @@ class ModelCardSaver(CardSaver):
 
         dumped_model = self.card.model_dump(
             exclude={
-                "interface": {"model", "preprocessor", "sample_data", "onnx_model"},
+                "interface": {
+                    "model",
+                    "preprocessor",
+                    "sample_data",
+                    "onnx_model",
+                    "onnx_args",
+                },
             }
         )
 

@@ -291,11 +291,11 @@ def test_save_huggingface_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.QUANTIZED_MODEL.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-    a
+    
     # load objects
     loader = CardLoader(
         card_args={
@@ -309,10 +309,8 @@ def test_save_huggingface_modelcard_api_client(
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
 
-    # pytorch lightning model need model arch to load
     loaded_card.load_model()
-
-    assert type(loaded_card.interface.model) == type(modelcard.interface.model.model)
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
     
     #
     loaded_card.load_onnx_model()

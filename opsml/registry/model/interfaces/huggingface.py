@@ -85,13 +85,14 @@ try:
             Returns:
                 Sample data with only one record
             """
+
             if isinstance(sample_data, list):
                 return [data[0:1] for data in sample_data]
 
             if isinstance(sample_data, tuple):
                 return (data[0:1] for data in sample_data)
 
-            if isinstance(sample_data, dict):
+            if isinstance(sample_data, (BatchEncoding, dict)):
                 sample_dict = {}
                 for key, value in sample_data.items():
                     sample_dict[key] = value[0:1]

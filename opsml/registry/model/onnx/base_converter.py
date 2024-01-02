@@ -302,8 +302,6 @@ def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.Inference
     # set metadata
     meta_creator = _TrainedModelMetadataCreator(model_interface)
     metadata = meta_creator.get_model_metadata()
-    a
-
     onnx_input_features, onnx_output_features = _ModelConverter.create_feature_dict(onnx_model)
 
     metadata.data_schema.onnx_input_features = onnx_input_features
