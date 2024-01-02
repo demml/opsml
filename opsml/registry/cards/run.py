@@ -2,15 +2,28 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
+import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
 from opsml.registry.storage import client
-from opsml.registry.types import METRICS, PARAMS, CardType, Metric, Param, SaveName
+from opsml.registry.types import (
+    ARTIFACT_URIS,
+    METRICS,
+    PARAMS,
+    Artifact,
+    CardType,
+    Metric,
+    Param,
+    RegistryTableNames,
+    SaveName,
+)
+from opsml.settings.config import config
 
 logger = ArtifactLogger.get_logger()
 
@@ -55,10 +68,9 @@ class RunCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     metrics: METRICS = {}
     parameters: PARAMS = {}
-    artifact_uris: Dict[str, str] = {}
+    artifact_uris: ARTIFACT_URIS = {}
     tags: Dict[str, str] = {}
     project_id: Optional[str] = None
-    runcard_uri: Optional[str] = None
 
     def add_tag(self, key: str, value: str) -> None:
         """
@@ -161,6 +173,7 @@ class RunCard(ArtifactCard):
 
     def log_artifact_from_file(
         self,
+        name: str,
         local_path: Union[str, Path],
         artifact_path: Optional[Union[str, Path]] = None,
     ) -> None:
@@ -168,6 +181,8 @@ class RunCard(ArtifactCard):
         Log a local file or directory to the opsml server and associate with the current run.
 
         Args:
+            name:
+                Name to assign to artifact(s)
             local_path:
                 Local path to file or directory. Can be string or pathlike object
             artifact_path:
@@ -175,18 +190,26 @@ class RunCard(ArtifactCard):
         """
 
         lpath = Path(local_path)
-        rpath = self.runcard.uri / (artifact_path or SaveName.ARTIFACTS.value)
-        client.storage_client.put(lpath, rpath)
-        self._add_artifact_uri(name=lpath.as_posix(), uri=rpath.as_posix())
+        rpath = self.uri / (artifact_path or SaveName.ARTIFACTS.value)
 
-    def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
+        if lpath.is_file():
+            rpath = rpath / lpath.name
+
+        client.storage_client.put(lpath, rpath)
+        self._add_artifact_uri(
+            name=name,
+            local_path=lpath.as_posix(),
+            remote_path=rpath.as_posix(),
+        )
+
+    def create_registry_record(self) -> RegistryRecord:
         """Creates a registry record from the current RunCard"""
 
         exclude_attr = {"params", "metrics"}
 
-        return RunRegistryRecord(**{**self.model_dump(exclude=exclude_attr), **kwargs})
+        return RunRegistryRecord(**self.model_dump(exclude=exclude_attr))
 
-    def _add_artifact_uri(self, name: str, uri: str) -> None:
+    def _add_artifact_uri(self, name: str, local_path: str, remote_path: str) -> None:
         """
         Adds an artifact_uri to the runcard
 
@@ -197,7 +220,11 @@ class RunCard(ArtifactCard):
                 Uri where artifact is stored
         """
 
-        self.artifact_uris[name] = uri
+        self.artifact_uris[name] = Artifact(
+            name=name,
+            local_path=local_path,
+            remote_path=remote_path,
+        )
 
     def add_card_uid(self, card_type: str, uid: str) -> None:
         """
@@ -259,14 +286,46 @@ class RunCard(ArtifactCard):
 
         raise ValueError(f"Param {param} is not defined")
 
-    def load_artifacts(self) -> None:
+    def load_artifacts(self, name: str) -> None:
         """Loads artifacts from artifact_uris"""
         if bool(self.artifact_uris) is False:
             logger.info("No artifact uris associated with RunCard")
             return None
 
-        for lpath, rpath in self.artifact_uris.items():
-            client.storage_client.get(rpath, lpath)
+        if name is not None:
+            artifact = self.artifact_uris.get(name)
+            client.storage_client.get(
+                Path(artifact.remote_path),
+                Path(artifact.local_path),
+            )
+
+        else:
+            for _, artifact in self.artifact_uris.items():
+                client.storage_client.get(
+                    Path(artifact.remote_path),
+                    Path(artifact.local_path),
+                )
+
+    @property
+    def uri(self) -> Path:
+        """The base URI to use for the card and it's artifacts."""
+
+        # when using runcard outside of run context
+        if self.version is None:
+            if self.uid is None:
+                self.uid = uuid.uuid4().hex
+
+            end_path = self.uid
+        else:
+            end_path = f"v{self.version}"
+
+        return Path(
+            config.storage_root,
+            RegistryTableNames.from_str(self.card_type).value,
+            self.team,
+            self.name,
+            end_path,
+        )
 
     @property
     def card_type(self) -> str:

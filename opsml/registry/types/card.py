@@ -54,8 +54,15 @@ class Param(BaseModel):
     value: Union[float, int, str]
 
 
-METRICS = Dict[str, List[SerializeAsAny[Metric]]]
-PARAMS = Dict[str, List[SerializeAsAny[Param]]]
+class Artifact(BaseModel):
+    local_path: str
+    remote_path: str
+    name: str
+
+
+METRICS = Dict[str, List[Metric]]
+PARAMS = Dict[str, List[Param]]
+ARTIFACT_URIS = Dict[str, Artifact]
 
 
 class Comment(BaseModel):
