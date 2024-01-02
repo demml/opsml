@@ -74,7 +74,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 
 # opsml
-from opsml.registry.data.interfaces import NumpyData
+from opsml.registry.data.interfaces import NumpyData, PandasData
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
@@ -508,15 +508,24 @@ def test_split_array() -> List[DataSplit]:
 
 
 @pytest.fixture
-def test_df() -> pd.DataFrame:
+def pandas_data() -> pd.DataFrame:
     df = pd.DataFrame(
         {
-            "year": [2020, 2022, 2019, 2021],
-            "n_legs": [2, 4, 5, 100],
-            "animals": ["Flamingo", "Horse", "Brittle stars", "Centipede"],
+            "year": [2020, 2022, 2019, 2020, 2020, 2022, 2019, 20211],
+            "n_legs": [2, 4, 5, 100, 2, 4, 5, 100],
+            "animals": [
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+            ],
         }
     )
-    return df
+    return PandasData(data=df)
 
 
 @pytest.fixture(scope="session")

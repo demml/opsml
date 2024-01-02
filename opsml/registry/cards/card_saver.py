@@ -93,8 +93,8 @@ class DataCardSaver(CardSaver):
     def _save_data(self) -> None:
         """Saves a data via data interface"""
 
-        save_path = self.lpath / SaveName.DATA.value
-        _ = self.card.interface.save_data(save_path)
+        save_path = (self.lpath / SaveName.DATA.value).with_suffix(self.card.interface.data_suffix)
+        self.card.interface.save_data(save_path)
 
         # set feature map on metadata
         self.card.metadata.feature_map = self.card.interface.feature_map
@@ -108,8 +108,8 @@ class DataCardSaver(CardSaver):
         save_path = self.lpath / SaveName.DATA_PROFILE.value
 
         # save html and joblib version
-        _ = self.card.interface.save_data_profile(save_path, save_type="html")
-        _ = self.card.interface.save_data_profile(save_path, save_type="joblib")
+        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.HTML.value))
+        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.JOBLIB.value))
 
     def _save_datacard(self) -> None:
         """Saves a datacard to file system"""
@@ -155,35 +155,38 @@ class ModelCardSaver(CardSaver):
     def _save_model(self) -> None:
         """Saves a model via model interface"""
 
-        save_path = self.lpath / SaveName.TRAINED_MODEL.value
-        saved_path = self.card.interface.save_model(save_path)
-        self.card_uris.trained_model_uri = saved_path
+        save_path = (self.lpath / SaveName.TRAINED_MODEL.value).with_suffix(self.card.interface.model_suffix)
+
+        self.card.interface.save_model(save_path)
+        self.card_uris.trained_model_uri = save_path
 
     def _save_preprocessor(self) -> None:
         """Save preprocessor via model interface"""
 
         if self.card.interface.preprocessor is not None:
-            save_path = self.lpath / SaveName.PREPROCESSOR.value
-            saved_path = self.card.interface.save_preprocessor(save_path)
-            self.card_uris.preprocessor_uri = saved_path
+            save_path = (self.lpath / SaveName.PREPROCESSOR.value).with_suffix(self.card.interface.preprocessor_suffix)
+            self.card.interface.save_preprocessor(save_path)
+            self.card_uris.preprocessor_uri = save_path
 
     def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
 
-        save_path = self.lpath / SaveName.SAMPLE_MODEL_DATA.value
-        saved_path = self.card.interface.save_sample_data(save_path)
-        self.card_uris.sample_data_uri = saved_path
+        save_path = (self.lpath / SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        self.card.interface.save_sample_data(save_path)
+        self.card_uris.sample_data_uri = save_path
 
     def _save_onnx_model(self) -> None:
         if self.card.to_onnx:
-            save_path = self.lpath / SaveName.ONNX_MODEL.value
-            metadata, saved_path = self.card.interface.convert_to_onnx(save_path)
+            save_path = (self.lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
+            metadata = self.card.interface.convert_to_onnx(save_path)
 
             if isinstance(self.card.interface, HuggingFaceModel):
                 assert self.card.interface.onnx_args is not None, "onnx_args must be set for HuggingFaceModel"
-
                 if self.card.interface.onnx_args.quantize:
                     self.card_uris.quantized_model_uri = self.lpath / SaveName.QUANTIZED_MODEL.value
+
+                # remove suffix for uris
+                save_path = save_path.with_suffix("")
 
         else:
             metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
@@ -344,7 +347,9 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 

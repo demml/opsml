@@ -34,7 +34,7 @@ class PandasData(DataInterface):
 
     data: Optional[pd.DataFrame] = None
 
-    def save_data(self, path: Path) -> Path:
+    def save_data(self, path: Path) -> None:
         """Saves pandas dataframe to parquet"""
 
         assert self.data is not None, "No data detected in interface"
@@ -46,16 +46,12 @@ class PandasData(DataInterface):
             )
             for key, value in self.data.dtypes.to_dict().items()
         }
-        save_path = path.with_suffix(self.data_suffix)
         pq.write_table(arrow_table, path)
-
-        return save_path
 
     def load_data(self, path: Path) -> None:
         """Load parquet dataset to pandas dataframe"""
 
-        load_path = path.with_suffix(self.data_suffix)
-        pa_table: pa.Table = pq.ParquetDataset(path_or_paths=load_path).read()
+        pa_table: pa.Table = pq.ParquetDataset(path_or_paths=path).read()
 
         data = check_data_schema(
             pa_table.to_pandas(),

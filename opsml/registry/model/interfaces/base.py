@@ -82,7 +82,7 @@ class ModelInterface(BaseModel):
         except ValueError:
             raise ValueError("Datacard uid is not a valid uuid")
 
-    def save_model(self, path: Path) -> Path:
+    def save_model(self, path: Path) -> None:
         """Saves model to path. Base implementation use Joblib
 
         Args:
@@ -90,13 +90,9 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.model is not None, "No model detected in interface"
+        joblib.dump(self.model, path)
 
-        save_path = path.with_suffix(self.model_suffix)
-        joblib.dump(self.model, save_path)
-
-        return save_path
-
-    def save_preprocessor(self, path: Path) -> Path:
+    def save_preprocessor(self, path: Path) -> None:
         """Saves preprocessor to path if present. Base implementation use Joblib
 
         Args:
@@ -104,10 +100,7 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
         assert self.preprocessor is not None, "No preprocessor detected in interface"
-        save_path = path.with_suffix(self.preprocessor_suffix)
-        joblib.dump(self.preprocessor, save_path)
-
-        return save_path
+        joblib.dump(self.preprocessor, path)
 
     def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
         """Load model from pathlib object
@@ -116,8 +109,7 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(self.model_suffix)
-        self.model = joblib.load(save_path)
+        self.model = joblib.load(path)
 
     def load_preprocessor(self, path: Path) -> None:
         """Load preprocessor from pathlib object
@@ -126,10 +118,9 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(self.preprocessor_suffix)
-        self.preprocessor = joblib.load(save_path)
+        self.preprocessor = joblib.load(path)
 
-    def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
+    def convert_to_onnx(self, path: Path) -> ModelReturn:
         # don't want to try and import onnx unless we need to
         import onnxruntime as rt
 
@@ -143,7 +134,7 @@ class ModelInterface(BaseModel):
         path = path.with_suffix(Suffix.ONNX.value)
         path.write_bytes(sess._model_bytes)
 
-        return metadata, path
+        return metadata
 
     def load_onnx_model(self, path: Path) -> None:
         """Load onnx model from pathlib object
@@ -154,8 +145,7 @@ class ModelInterface(BaseModel):
         """
         from onnxruntime import InferenceSession
 
-        onnx_path = path.with_suffix(Suffix.ONNX.value)
-        self.onnx_model.sess = InferenceSession(onnx_path)
+        self.onnx_model.sess = InferenceSession(path)
 
     def download_artifacts(self) -> Any:
         raise NotImplementedError
@@ -167,16 +157,14 @@ class ModelInterface(BaseModel):
 
         return CommonKwargs.UNDEFINED.value
 
-    def save_sample_data(self, path: Path) -> Path:
+    def save_sample_data(self, path: Path) -> None:
         """Serialized and save sample data to path.
 
         Args:
             path:
                 Pathlib object
         """
-        save_path = path.with_suffix(Suffix.JOBLIB.value)
-        joblib.dump(self.sample_data, save_path)
-        return save_path
+        joblib.dump(self.sample_data, path)
 
     def load_sample_data(self, path: Path) -> None:
         """Serialized and save sample data to path.

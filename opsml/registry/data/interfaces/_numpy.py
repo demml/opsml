@@ -32,13 +32,12 @@ class NumpyData(DataInterface):
 
     data: Optional[np.ndarray] = None
 
-    def save_data(self, path: Path) -> Path:
+    def save_data(self, path: Path) -> None:
         """Saves numpy array as a zarr file"""
 
         assert self.data is not None, "No data detected in interface"
 
-        save_path = path.with_suffix(self.data_suffix)
-        zarr.save(save_path, self.data)
+        zarr.save(path, self.data)
 
         self.feature_map = {
             "features": Feature(
@@ -46,8 +45,6 @@ class NumpyData(DataInterface):
                 shape=self.data.shape,
             )
         }
-
-        return save_path
 
     def load_data(self, path: Path) -> None:
         """Load numpy array from zarr file"""

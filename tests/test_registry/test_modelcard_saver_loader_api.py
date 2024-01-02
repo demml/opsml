@@ -72,7 +72,6 @@ def test_save_huggingface_modelcard_api_client(
     loaded_card.load_onnx_model(load_quantized=True)
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
-    
 
 
 def test_save_sklearn_modelcard_api_client(
