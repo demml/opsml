@@ -1001,10 +1001,10 @@ def linear_regression_polars(regression_data_polars: pl.DataFrame):
 
 
 @pytest.fixture(scope="module")
-def linear_regression(regression_data):
+def linear_regression(regression_data) -> SklearnModel:
     X, y = regression_data
     reg = linear_model.LinearRegression().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture

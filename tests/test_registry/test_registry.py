@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
-from numpy.typing import NDArray
 from pydantic import ValidationError
 from pytest_lazyfixture import lazy_fixture
 from sklearn import linear_model
@@ -158,6 +157,7 @@ def test_datacard_sql_register_date(sql_data: SqlData, db_registries: CardRegist
         team="mlops",
         user_email="mlops.com",
     )
+
     registry.register_card(card=data_card)
     record = data_card.create_registry_record()
 
@@ -181,20 +181,19 @@ def test_datacard_sql_register_file(sql_file: SqlData, db_registries: CardRegist
         team="mlops",
         user_email="mlops.com",
     )
-
     registry.register_card(card=data_card)
     loaded_card = registry.load_card(uid=data_card.uid)
     assert loaded_card.interface.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
 
-def _test_unique_name_fail(db_registries: CardRegistries):
+def test_unique_name_fail(sql_file: SqlData, db_registries: CardRegistries):
     # create data card
     registry = db_registries.data
     data_card = DataCard(
+        interface=sql_file,
         name="test_name_fail",
         team="mlops",
         user_email="mlops.com",
-        sql_logic={"test": "test_sql.sql"},
     )
 
     registry.register_card(card=data_card)
@@ -202,95 +201,40 @@ def _test_unique_name_fail(db_registries: CardRegistries):
     # test registering card with same name and different team
     with pytest.raises(ValueError):
         data_card = DataCard(
+            interface=sql_file,
             name="test_name_fail",
             team="fail_teams",
             user_email="mlops.com",
-            sql_logic={"test": "test_sql.sql"},
         )
 
         registry.register_card(card=data_card)
 
 
-def _test_datacard_sql(db_registries: CardRegistries, test_array: NDArray):
-    # create data card
-    db_registries.data
-    data_card = DataCard(
-        data=test_array,
-        name="test_sql",
-        team="mlops",
-        user_email="mlops.com",
-    )
-
-    name = "test"
-    query = "select * from test_table"
-    data_card.add_sql(name=name, query=query)
-
-    assert data_card.sql_logic[name] == query
-
-    name = "test"
-    filename = "test_sql.sql"
-    data_card.add_sql(name=name, filename=filename)
-
-    assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
-
-    ### Test add failure
-    with pytest.raises(FileNotFoundError):
-        data_card.add_sql(name="fail", filename="fail.sql")
-
-    with pytest.raises(ValueError):
-        data_card.add_sql(name="fail")
-
-    ## Test instantiation
-    data_card = DataCard(data=test_array, name="test_df", team="mlops", user_email="mlops.com", sql_logic={name: query})
-    assert data_card.sql_logic[name] == query
-
-    data_card = DataCard(
-        data=test_array,
-        name="test_sql",
-        team="mlops",
-        user_email="mlops.com",
-        sql_logic={name: filename},
-    )
-    assert data_card.sql_logic[name] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
-
-    ## Test instantiation failure
-    with pytest.raises(ValueError):
-        data_card = DataCard(
-            data=test_array,
-            name="test_sql",
-            team="mlops",
-            user_email="mlops.com",
-            sql_logic={"fail": "fail.sql"},
-        )
-
-
-def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArray):
+def test_semver_registry_list(
+    numpy_data: NumpyData,
+    db_registries: CardRegistries,
+):
     # create data card
     registry = db_registries.data
 
     # version 1
     for i in range(0, 5):
         data_card = DataCard(
-            data=test_array,
+            interface=numpy_data,
             name="test_semver",
             team="mlops",
             user_email="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
-    cards = registry.list_cards(
-        name="test_semver",
-        team="mlops",
-        version="^1.0.0",
-        as_dataframe=False,
-    )
+    cards = registry.list_cards(name="test_semver", team="mlops", version="^1.0.0")
 
     assert len(cards) == 1
     assert cards[0]["version"] == "1.0.4"
 
     # version 2
     data_card = DataCard(
-        data=test_array,
+        interface=numpy_data,
         name="test_semver",
         team="mlops",
         user_email="mlops.com",
@@ -299,7 +243,7 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
 
     for i in range(0, 12):
         data_card = DataCard(
-            data=test_array,
+            interface=numpy_data,
             name="test_semver",
             team="mlops",
             user_email="mlops.com",
@@ -307,26 +251,16 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
         registry.register_card(card=data_card)
 
     # should return 13 versions
-    cards = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="2.*.*",
-        as_dataframe=False,
-    )
+    cards = registry.list_cards(name=data_card.name, team=data_card.team, version="2.*.*")
     assert len(cards) == 13
 
-    cards = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="^2.0.0",
-        as_dataframe=False,
-    )
+    cards = registry.list_cards(name=data_card.name, team=data_card.team, version="^2.0.0")
     cards[0]["version"] == "2.12.0"
     assert len(cards) == 1
 
     # pre-release
     data_card_pre = DataCard(
-        data=test_array,
+        interface=numpy_data,
         name="test_semver",
         team="mlops",
         user_email="mlops.com",
@@ -334,12 +268,7 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
     )
     registry.register_card(card=data_card_pre)
 
-    records = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="3.*.*",
-        as_dataframe=False,
-    )
+    records = registry.list_cards(name=data_card.name, team=data_card.team, version="3.*.*")
 
     assert len(records) == 1
 
@@ -347,19 +276,14 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
     registry.update_card(card=data_card_pre)
 
     # check update works
-    records = registry.list_cards(
-        name=data_card.name,
-        team=data_card.team,
-        version="3.*.*",
-        as_dataframe=False,
-    )
+    records = registry.list_cards(name=data_card.name, team=data_card.team, version="3.*.*")
 
     assert records[0]["version"] == "3.0.0"
 
     with pytest.raises(VersionError):
         # try registering card where version already exists
         data_card = DataCard(
-            data=test_array,
+            interface=numpy_data,
             name="test_semver",
             team="mlops",
             user_email="mlops.com",
@@ -370,7 +294,7 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
     with pytest.raises(ValueError):
         # try invalid semver
         data_card = DataCard(
-            data=test_array,
+            interface=numpy_data,
             name="test_semver",
             team="mlops",
             user_email="mlops.com",
@@ -380,7 +304,7 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
 
     # pre-release
     data_card_pre = DataCard(
-        data=test_array,
+        interface=numpy_data,
         name="test_semver",
         team="mlops",
         user_email="mlops.com",
@@ -391,19 +315,14 @@ def _test_semver_registry_list(db_registries: CardRegistries, test_array: NDArra
     # test patch semver sort
     for i in range(0, 5):
         data_card = DataCard(
-            data=test_array,
+            interface=numpy_data,
             name="patch",
             team="mlops",
             user_email="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
-    cards = registry.list_cards(
-        name="patch",
-        team="mlops",
-        version="^1.0.0",
-        as_dataframe=False,
-    )
+    cards = registry.list_cards(name="patch", team="mlops", version="^1.0.0")
 
     assert cards[0]["version"] == "1.0.4"
 

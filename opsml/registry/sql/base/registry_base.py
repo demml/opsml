@@ -250,8 +250,8 @@ class SQLRegistryBase:
                 Card to update
         """
         record = self.list_cards(uid=card.uid, limit=1)[0]
-        card, uris = save_card_artifacts(card=card, storage_client=self.storage_client, uris=record.get("uris"))
-        record = card.create_registry_record(**{"uris": uris})
+        save_card_artifacts(card=card)
+        record = card.create_registry_record()
         self.update_card_record(card=record.model_dump())
 
     def list_cards(

@@ -2,13 +2,15 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.sql.records import RegistryRecord, RunRegistryRecord
-from opsml.registry.types import METRICS, PARAMS, CardType, Metric, Param
+from opsml.registry.storage import client
+from opsml.registry.types import METRICS, PARAMS, CardType, Metric, Param, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -160,29 +162,30 @@ class RunCard(ArtifactCard):
         for key, value in metrics.items():
             self.log_metric(key, value, step)
 
-    def log_artifact_from_file(self, name: str, artifact: Any) -> None:
+    def log_artifact_from_file(
+        self,
+        local_path: Union[str, Path],
+        artifact_path: Optional[Union[str, Path]] = None,
+    ) -> None:
         """
-        Append any artifact associated with your run to
-        the RunCard. The artifact will be saved and the uri
-        will be appended to the RunCard. Artifact must be pickleable
-        (saved with joblib)
+        Log a local file or directory to the opsml server and associate with the current run.
 
         Args:
-            name:
-                Artifact name
-            artifact:
-                Artifact
+            local_path:
+                Local path to file or directory. Can be string or pathlike object
+            artifact_path:
+                Optional path to store artifact in opsml server. If not provided, 'artifacts' will be used
         """
 
-        # TODO: Steven - remove this
-        new_artifact = {name: artifact}
-        self.artifacts = {**new_artifact, **self.artifacts}
-        setattr(self, "artifacts", {**new_artifact, **self.artifacts})
+        lpath = Path(local_path)
+        rpath = self.runcard.uri / (artifact_path or SaveName.ARTIFACTS.value)
+        client.storage_client.put(lpath, rpath)
+        self._add_artifact_uri(name=lpath.as_posix(), uri=rpath.as_posix())
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current RunCard"""
 
-        exclude_attr = {"artifacts", "params", "metrics"}
+        exclude_attr = {"params", "metrics"}
 
         return RunRegistryRecord(**{**self.model_dump(exclude=exclude_attr), **kwargs})
 
