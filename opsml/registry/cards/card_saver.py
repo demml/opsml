@@ -190,10 +190,10 @@ class ModelCardSaver(CardSaver):
 
         else:
             metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
-            saved_path = None
+            save_path = None
 
         self.card.metadata.data_schema = metadata.data_schema
-        self.card_uris.onnx_model_uri = saved_path
+        self.card_uris.onnx_model_uri = save_path
 
     def _get_model_metadata(self) -> ModelMetadata:
         """Create Onnx Model from trained model"""
