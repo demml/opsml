@@ -172,7 +172,7 @@ class ActiveRun:
             info=info,
         )
 
-    def log_artifact(
+    def log_artifact_from_file(
         self,
         local_path: Union[str, Path],
         artifact_path: Optional[Union[str, Path]] = None,
