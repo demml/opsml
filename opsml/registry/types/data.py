@@ -122,6 +122,7 @@ class DataCardMetadata(BaseModel):
     """
 
     interface_type: str = ""
+    data_type: str = ""
     description: Description = Description()
     feature_map: Dict[str, Feature] = {}
     additional_info: Dict[str, Union[float, int, str]] = {}

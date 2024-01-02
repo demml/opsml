@@ -174,6 +174,7 @@ class RunCard(ArtifactCard):
                 Artifact
         """
 
+        # TODO: Steven - remove this
         new_artifact = {name: artifact}
         self.artifacts = {**new_artifact, **self.artifacts}
         setattr(self, "artifacts", {**new_artifact, **self.artifacts})

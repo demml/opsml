@@ -18,8 +18,6 @@ class NumpyData(DataInterface):
             List of dependent variables. Can be string or index if using numpy
         data_splits:
             Optional list of `DataSplit`
-        sql_logic:
-            Dictionary of strings containing sql logic or sql files used to create the data
         data_profile:
             Optional ydata-profiling `ProfileReport`
         feature_map:

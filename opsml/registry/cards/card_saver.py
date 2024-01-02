@@ -4,7 +4,7 @@
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Optional, Tuple, cast
+from typing import Optional, cast
 
 import joblib
 from pydantic import BaseModel
@@ -77,7 +77,7 @@ class CardSaver:
     def card(self) -> ArtifactCard:
         return self.card
 
-    def save_artifacts(self) -> Tuple[Any, Any]:
+    def save_artifacts(self) -> None:
         raise NotImplementedError
 
     @staticmethod
@@ -92,6 +92,9 @@ class DataCardSaver(CardSaver):
 
     def _save_data(self) -> None:
         """Saves a data via data interface"""
+
+        if self.card.interface.data is None:
+            return None
 
         save_path = (self.lpath / SaveName.DATA.value).with_suffix(self.card.interface.data_suffix)
         self.card.interface.save_data(save_path)
@@ -121,7 +124,7 @@ class DataCardSaver(CardSaver):
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_datacard, save_path)
 
-    def save_artifacts(self) -> DataCard:
+    def save_artifacts(self) -> None:
         """Saves artifacts from a DataCard"""
 
         # quick checks
@@ -133,6 +136,7 @@ class DataCardSaver(CardSaver):
 
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
+        self.card.metadata.data_type = self.card.interface.data_type
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
@@ -247,7 +251,7 @@ class ModelCardSaver(CardSaver):
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_model, save_path)
 
-    def save_artifacts(self):
+    def save_artifacts(self) -> None:
         if self.card.interface is None:
             raise ValueError("ModelCard must have a data interface to save artifacts")
 
@@ -282,11 +286,12 @@ class AuditCardSaver(CardSaver):
         save_path = Path(self.lpath, SaveName.AUDIT.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
-    def save_artifacts(self) -> AuditCard:
+    def save_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
             self._save_audit()
+            self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -305,8 +310,12 @@ class RunCardSaver(CardSaver):
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
-    def save_artifacts(self) -> RunCard:
-        self._save_runcard()
+    def save_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.card_uris.lpath = Path(tmp_dir)
+            self.card_uris.rpath = self.card.uri
+            self._save_runcard()
+            self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -333,7 +342,7 @@ class ProjectCardSaver(CardSaver):
         return CardType.PROJECTCARD.value in card_type
 
 
-def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
+def save_card_artifacts(card: ArtifactCard) -> None:
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:
