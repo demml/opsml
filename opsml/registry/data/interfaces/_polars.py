@@ -45,7 +45,7 @@ class PolarsData(DataInterface):
             )
             for key, value in self.data.schema.items()
         }
-        save_path = path.with_suffix(self.storage_suffix)
+        save_path = path.with_suffix(self.data_suffix)
         pq.write_table(self.data.to_arrow(), path)
 
         return save_path
@@ -53,7 +53,7 @@ class PolarsData(DataInterface):
     def load_data(self, path: Path) -> None:
         """Load parquet dataset to pandas dataframe"""
 
-        load_path = path.with_suffix(self.storage_suffix)
+        load_path = path.with_suffix(self.data_suffix)
         pa_table: pa.Table = pq.ParquetDataset(path_or_paths=load_path).read()
         data = check_data_schema(
             pl.from_arrow(data=pa_table),
@@ -68,7 +68,7 @@ class PolarsData(DataInterface):
         return AllowedDataType.POLARS.value
 
     @property
-    def storage_suffix(self) -> str:
+    def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.PARQUET.value
 

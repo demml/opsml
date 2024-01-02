@@ -37,7 +37,7 @@ class NumpyData(DataInterface):
 
         assert self.data is not None, "No data detected in interface"
 
-        save_path = path.with_suffix(self.storage_suffix)
+        save_path = path.with_suffix(self.data_suffix)
         zarr.save(save_path, self.data)
 
         self.feature_map = {
@@ -59,7 +59,7 @@ class NumpyData(DataInterface):
         return AllowedDataType.NUMPY.value
 
     @property
-    def storage_suffix(self) -> str:
+    def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.ZARR.value
 

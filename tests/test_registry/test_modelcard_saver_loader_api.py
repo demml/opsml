@@ -11,7 +11,7 @@ from opsml.registry.model.interfaces import (
     LightningModel,
     PyTorchModel,
     SklearnModel,
-    TensorFlowModel
+    TensorFlowModel,
 )
 from opsml.registry.storage import client
 from opsml.registry.types import CommonKwargs, RegistryType, SaveName
@@ -381,7 +381,6 @@ def test_save_tensorflow_modelcard_api_client(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
-
 
 
 def test_save_tensorflow_multi_input_modelcard_api_client(
