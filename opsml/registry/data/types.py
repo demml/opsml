@@ -87,7 +87,7 @@ def check_data_type(data: ValidData) -> str:
         return AllowedDataType.PYARROW.value
 
     raise ValueError(
-        f"""Data must be one of the following types: numpy array, pandas dataframe, 
+        f"""Data must be one of the following types: numpy array, pandas dataframe,
         polars dataframe, pyarrow table, or ImageDataset. Received {str(type(data))}
         """
     )

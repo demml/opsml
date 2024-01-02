@@ -1,8 +1,7 @@
-import pathlib
 import re
 import sys
 import uuid
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -213,14 +212,21 @@ def test_run_card(
     run.log_metrics({"test_metric2": 20})
     assert run.get_metric("test_metric").value == 10
     assert run.get_metric("test_metric2").value == 20
+
     # save artifacts
     model, _ = linear_regression
     run.log_artifact("reg_model", artifact=model)
     assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
     registry.register_card(card=run)
 
-    loaded_card = registry.load_card(uid=run.uid)
+    # Load the card and verify artifacts / metrics
+    loaded_card: RunCard = registry.load_card(uid=run.uid)
     assert loaded_card.uid == run.uid
+    assert loaded_card.get_metric("test_metric").value == 10
+    assert loaded_card.get_metric("test_metric2").value == 20
+
+    loaded_card.load_artifacts()
+    loaded_card.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
 
 
 def test_register_model(
@@ -253,7 +259,7 @@ def test_register_model(
     model_registry = api_registries.model
     model_registry.register_card(model_card1)
 
-    loaded_card = model_registry.load_card(uid=model_card1.uid)
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card1.uid)
     loaded_card.load_trained_model()
     loaded_card.trained_model = model
     loaded_card.sample_input_data = data[0:1]
@@ -475,7 +481,7 @@ def test_metadata_download_and_registration(
     # as they do *not* use the response text, rather they assume the URL is in
     # the correct format.
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     response = test_app.get(
         url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path={model_card.metadata.uris.trained_model_uri}",
@@ -493,7 +499,7 @@ def test_metadata_download_and_registration(
         },
     )
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{model_card.version}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest patch given latest major.minor
     minor = model_card.version[0 : model_card.version.rindex(".")]
@@ -506,7 +512,7 @@ def test_metadata_download_and_registration(
     )
 
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{minor}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{minor}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest minor / patch given major only
     major = model_card.version[0 : model_card.version.index(".")]
@@ -518,7 +524,7 @@ def test_metadata_download_and_registration(
         },
     )
     uri = response.json()
-    assert re.search(rf"/model_registry/test-model/v{major}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"model_registry/test-model/v{major}$", uri, re.IGNORECASE) is not None
 
     # test version fail - invalid name
     response = test_app.post(
@@ -734,16 +740,14 @@ def test_token_fail(
 
 
 def test_delete_fail(test_app: TestClient):
-    """Test error path"""
-
-    pathlib.Path("tests/assets/empty/model_registry").mkdir(parents=True, exist_ok=True)
-
-    response = test_app.post("/opsml/files/delete", json={"read_path": "tests/assets/empty/model_registry"})
+    response = test_app.post("/opsml/files/delete", json={"read_path": "OPSML_DATA_REGISTRY/notthere"})
 
     assert response.status_code == 200
+    resp_dict = cast(Dict[str, Any], response.json())
+    assert not resp_dict["deleted"]
 
-    # this should fail because there is no file
-    response = test_app.post("/opsml/files/delete", json={"read_path": "fail"})
+    # Invaild path: does not include a registry table
+    response = test_app.post("/opsml/files/delete", json={"read_path": "notthere"})
     assert response.status_code == 422
 
 

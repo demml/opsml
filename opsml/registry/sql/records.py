@@ -18,8 +18,7 @@ from opsml.registry.cards.types import (
     RegistryType,
 )
 from opsml.registry.storage.artifact import load_record_artifact_from_storage
-from opsml.registry.storage.client import StorageClientType
-from opsml.registry.storage.types import ArtifactStorageSpecs
+from opsml.registry.storage.client import StorageClient
 
 ARBITRARY_ARTIFACT_TYPE = "dict"
 
@@ -163,7 +162,7 @@ class LoadRecord(BaseModel):
     uid: str
     user_email: str
     tags: Dict[str, str]
-    storage_client: Optional[StorageClientType] = None
+    storage_client: Optional[StorageClient] = None
 
     @staticmethod
     def validate_table(registry_type: RegistryType) -> bool:
@@ -177,7 +176,7 @@ class LoadedDataRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_attributes(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
+        storage_client = cast(StorageClient, values["storage_client"])
 
         datacard_definition = cls.load_datacard_definition(
             save_path=values["datacard_uri"],
@@ -203,7 +202,7 @@ class LoadedDataRecord(LoadRecord):
     def load_datacard_definition(
         cls,
         save_path: str,
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
     ) -> Dict[str, Any]:
         """Loads a model card definition from current attributes
 
@@ -213,7 +212,7 @@ class LoadedDataRecord(LoadRecord):
         datacard_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=save_path),
+            uri=save_path,
         )
         assert datacard_definition is not None
         return cast(Dict[str, Any], datacard_definition)
@@ -232,7 +231,7 @@ class LoadedModelRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_model_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
+        storage_client = cast(StorageClient, values["storage_client"])
         modelcard_definition = cls.load_modelcard_definition(
             values=values,
             storage_client=storage_client,
@@ -257,7 +256,7 @@ class LoadedModelRecord(LoadRecord):
     def load_modelcard_definition(
         cls,
         values: Dict[str, Any],
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
     ) -> Dict[str, Any]:
         """Loads a model card definition from current attributes
 
@@ -267,7 +266,7 @@ class LoadedModelRecord(LoadRecord):
         model_card_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=values["modelcard_uri"]),
+            uri=values["modelcard_uri"],
         )
         assert model_card_definition is not None
         return cast(Dict[str, Any], model_card_definition)
@@ -291,7 +290,7 @@ class LoadedAuditRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_audit_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
+        storage_client = cast(StorageClient, values["storage_client"])
 
         audit = cls._load_audit(
             audit_uri=values["audit_uri"],
@@ -305,7 +304,7 @@ class LoadedAuditRecord(LoadRecord):
     def _load_audit(
         cls,
         audit_uri: str,
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
     ) -> Dict[str, Any]:
         """Loads a audit artifact from an audit uri
 
@@ -322,7 +321,7 @@ class LoadedAuditRecord(LoadRecord):
         audit_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=audit_uri),
+            uri=audit_uri,
         )
         assert audit_definition is not None
         return cast(Dict[str, Any], audit_definition)
@@ -347,7 +346,7 @@ class LoadedRunRecord(LoadRecord):
     @model_validator(mode="before")
     @classmethod
     def load_run_attr(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        storage_client = cast(StorageClientType, values["storage_client"])
+        storage_client = cast(StorageClient, values["storage_client"])
 
         runcard_definition = cls.load_runcard_definition(
             runcard_uri=values["runcard_uri"],
@@ -363,7 +362,7 @@ class LoadedRunRecord(LoadRecord):
     def load_runcard_definition(
         cls,
         runcard_uri: str,
-        storage_client: StorageClientType,
+        storage_client: StorageClient,
     ) -> Dict[str, Any]:
         """Loads a model card definition from current attributes
 
@@ -374,7 +373,7 @@ class LoadedRunRecord(LoadRecord):
         runcard_definition = load_record_artifact_from_storage(
             artifact_type=ARBITRARY_ARTIFACT_TYPE,
             storage_client=storage_client,
-            storage_spec=ArtifactStorageSpecs(save_path=runcard_uri),
+            uri=runcard_uri,
         )
         assert runcard_definition is not None
         return cast(Dict[str, Any], runcard_definition)
@@ -408,7 +407,7 @@ LoadedRecordType = Union[
 def load_record(
     registry_type: RegistryType,
     record_data: Dict[str, Any],
-    storage_client: StorageClientType,
+    storage_client: StorageClient,
 ) -> LoadedRecordType:
     record = next(
         record
@@ -424,5 +423,4 @@ def load_record(
             **{"storage_client": storage_client},
         }
     )
-
     return cast(LoadedRecordType, loaded_record)

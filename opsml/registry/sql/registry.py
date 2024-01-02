@@ -35,7 +35,7 @@ table_name_card_map = {
 
 
 class CardRegistry:
-    def __init__(self, registry_type: RegistryType, storage_client: client.StorageClientType):
+    def __init__(self, registry_type: RegistryType, storage_client: client.StorageClient):
         """
         Interface for connecting to any of the ArtifactCard registries
 
@@ -60,7 +60,7 @@ class CardRegistry:
         "Registry type for card registry"
         return self._registry.registry_type
 
-    def _set_registry(self, registry_type: RegistryType, storage_client: client.StorageClientType) -> SQLRegistryBase:
+    def _set_registry(self, registry_type: RegistryType, storage_client: client.StorageClient) -> SQLRegistryBase:
         """Sets the underlying registry.
 
         IMPORTANT: We need to delay importing ServerRegistry until we know we
@@ -288,7 +288,7 @@ class CardRegistry:
 
 
 class CardRegistries:
-    def __init__(self, storage_client: Optional[client.StorageClientType] = None) -> None:
+    def __init__(self, storage_client: Optional[client.StorageClient] = None) -> None:
         """Instantiates class that contains all registries"""
         if storage_client is None:
             storage_client = client.storage_client
