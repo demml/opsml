@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 import zarr
 
-from opsml.registry.data.interfaces.base import DataInterface
+from opsml.registry.data.interfaces._base import DataInterface
 from opsml.registry.types import AllowedDataType, Feature, Suffix
 
 

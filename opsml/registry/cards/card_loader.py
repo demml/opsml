@@ -126,6 +126,7 @@ class CardLoader:
         else:
             recursive = False
 
+        print(f"Downloading {load_rpath} to {load_lpath} {recursive}")
         self.storage_client.get(load_rpath, load_lpath, recursive)
 
         return load_lpath

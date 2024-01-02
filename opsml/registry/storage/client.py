@@ -170,7 +170,7 @@ class ApiStorageClient(StorageClientBase):
         if recursive:
             for file in self.ls(rpath):
                 rpath = Path(file)
-                self.get(rpath, Path(lpath) / rpath.name, False)
+                self.get(rpath, Path(lpath) / rpath.name, rpath.is_dir())
 
         self.api_client.stream_download_file_request(
             route=ApiRoutes.DOWNLOAD_FILE,

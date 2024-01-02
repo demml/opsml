@@ -149,9 +149,7 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = (
-            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
-        )
+        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
         return data_type == AllowedDataType.PANDAS and model_match
 
 
@@ -192,9 +190,9 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        assert isinstance(self.card.model.model, tf.keras.Model)
+        assert isinstance(self.interface.model, tf.keras.Model)
 
-        input_ = self.card.model.model.inputs[0]
+        input_ = self.interface.model.inputs[0]
         shape_, dtype = list(input_.shape), input_.dtype
         shape_[0] = None
         self.input_name = getattr(input_, "name", "inputs")
