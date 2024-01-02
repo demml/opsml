@@ -71,9 +71,10 @@ from xgboost import XGBRegressor
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry import CardRegistries, DataSplit, ModelCard
 
 # opsml
-from opsml.registry import CardRegistries, DataSplit, ModelCard
+from opsml.registry.data.interfaces import NumpyData
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
@@ -490,9 +491,14 @@ def real_gcs() -> Iterator[client.StorageClient]:
 
 
 @pytest.fixture
-def test_array() -> np.ndarray[Any, np.float64]:
+def test_numpy_array() -> np.ndarray[Any, np.float64]:
     data = np.random.rand(10, 100)
-    return data
+    return NumpyData(
+        data=data,
+        datasplits=[
+            DataSplit(label="train", indices=np.array([0, 1, 2])),
+        ],
+    )
 
 
 @pytest.fixture

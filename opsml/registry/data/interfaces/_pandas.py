@@ -46,7 +46,7 @@ class PandasData(DataInterface):
             )
             for key, value in self.data.dtypes.to_dict().items()
         }
-        save_path = path.with_suffix(self.storage_suffix)
+        save_path = path.with_suffix(self.data_suffix)
         pq.write_table(arrow_table, path)
 
         return save_path
@@ -54,7 +54,7 @@ class PandasData(DataInterface):
     def load_data(self, path: Path) -> None:
         """Load parquet dataset to pandas dataframe"""
 
-        load_path = path.with_suffix(self.storage_suffix)
+        load_path = path.with_suffix(self.data_suffix)
         pa_table: pa.Table = pq.ParquetDataset(path_or_paths=load_path).read()
 
         data = check_data_schema(
@@ -70,7 +70,7 @@ class PandasData(DataInterface):
         return AllowedDataType.PANDAS.value
 
     @property
-    def storage_suffix(self) -> str:
+    def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.PARQUET.value
 
