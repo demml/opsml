@@ -120,14 +120,11 @@ def test_register_data(
     assert "mlops" in registry._registry.unique_teams
 
 
-def test_datacard_sql_register(db_registries: CardRegistries):
+def test_datacard_sql_register(sql_data: SqlData, db_registries: CardRegistries):
     # create data card
     registry = db_registries.data
-    sql_interface = SqlData(
-        sql_logic={"test": "select * from test_table"}, feature_descriptions={"test": "test_description"}
-    )
     data_card = DataCard(
-        interface=sql_interface,
+        interface=sql_data,
         name="test_sql",
         team="mlops",
         user_email="mlops.com",
@@ -135,58 +132,32 @@ def test_datacard_sql_register(db_registries: CardRegistries):
             description=Description(summary="data_readme.md"),
         ),
     )
-
-    registry.register_card(card=data_card)
-    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
-    assert loaded_card.sql_logic.get("test") is not None
-    assert data_card.name == "test-sql"
-    assert data_card.team == "mlops"
-    assert data_card.version >= "1.0.0"
-
-
-def _test_datacard_tags(db_registries: CardRegistries):
-    # create data card
-    registry = db_registries.data
-    data_card = DataCard(
-        name="test_tags",
-        team="mlops",
-        user_email="mlops.com",
-        sql_logic={"test": "select * from test_table"},
-        metadata=DataCardMetadata(
-            feature_descriptions={"test": "test_description"},
-        ),
-    )
     data_card.add_tag("test", "hello")
 
     registry.register_card(card=data_card)
-
-    cards = registry.list_cards(
-        name="test_tags",
-        team="mlops",
-        tags={"test": "hello"},
-        as_dataframe=False,
-    )
-
-    assert cards[0]["tags"] == {"test": "hello"}
-
-    data_card = registry.load_card(
-        name="test_tags",
-        tags={"test": "hello"},
-    )
-
+    loaded_card: DataCard = registry.load_card(uid=data_card.uid)
+    assert loaded_card.interface.sql_logic.get("test") is not None
+    assert data_card.name == "test-sql"
+    assert data_card.team == "mlops"
+    assert data_card.version >= "1.0.0"
     assert data_card.tags == {"test": "hello"}
 
+    cards = registry.list_cards(
+        uid=data_card.uid,
+        tags={"test": "hello"},
+    )
+    assert cards[0]["tags"] == {"test": "hello"}
 
-def _test_datacard_sql_register_date(db_registries: CardRegistries):
+
+def test_datacard_sql_register_date(sql_data: SqlData, db_registries: CardRegistries):
     # create data card at current time
     registry = db_registries.data
     data_card = DataCard(
-        name="test_date",
+        interface=sql_data,
+        name="test_sql",
         team="mlops",
         user_email="mlops.com",
-        sql_logic={"test": "select * from test_table"},
     )
-
     registry.register_card(card=data_card)
     record = data_card.create_registry_record()
 
@@ -201,19 +172,19 @@ def _test_datacard_sql_register_date(db_registries: CardRegistries):
     assert len(cards) >= 1
 
 
-def _test_datacard_sql_register_file(db_registries: CardRegistries):
+def test_datacard_sql_register_file(sql_file: SqlData, db_registries: CardRegistries):
     # create data card
     registry = db_registries.data
     data_card = DataCard(
+        interface=sql_file,
         name="test_file",
         team="mlops",
         user_email="mlops.com",
-        sql_logic={"test": "test_sql.sql"},
     )
 
     registry.register_card(card=data_card)
     loaded_card = registry.load_card(uid=data_card.uid)
-    assert loaded_card.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
+    assert loaded_card.interface.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
 
 def _test_unique_name_fail(db_registries: CardRegistries):

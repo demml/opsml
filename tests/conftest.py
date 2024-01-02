@@ -74,7 +74,13 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 
 # opsml
-from opsml.registry.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData
+from opsml.registry.data.interfaces import (
+    ArrowData,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    SqlData,
+)
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
@@ -520,6 +526,21 @@ def pandas_data() -> pd.DataFrame:
         }
     )
     return PandasData(data=df)
+
+
+@pytest.fixture(scope="session")
+def sql_data():
+    return SqlData(
+        sql_logic={"test": "select * from test_table"},
+        feature_descriptions={"test": "test_description"},
+    )
+
+
+@pytest.fixture()
+def sql_file():
+    return SqlData(
+        sql_logic={"test": "test_sql.sql"},
+    )
 
 
 @pytest.fixture(scope="session")
