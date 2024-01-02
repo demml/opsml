@@ -162,7 +162,7 @@ try:
 
             import onnxruntime as rt
 
-            from opsml.registry.model.onnx.base_converter import _get_onnx_metadata
+            from opsml.registry.model.onnx import _get_onnx_metadata
             from opsml.registry.model.onnx.torch_converter import _PyTorchOnnxModel
 
             # get save path

@@ -133,7 +133,7 @@ try:
 
             import onnxruntime as rt
 
-            from opsml.registry.model.onnx.base_converter import _get_onnx_metadata
+            from opsml.registry.model.onnx import _get_onnx_metadata
             from opsml.registry.model.onnx.torch_converter import (
                 _PyTorchLightningOnnxModel,
             )
@@ -165,9 +165,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
         @staticmethod
         def name() -> str:

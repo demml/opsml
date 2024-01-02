@@ -11,9 +11,8 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
 from opsml.registry.model.interfaces import ModelInterface
 from opsml.registry.model.onnx.data_converters import OnnxDataConverter
-from opsml.registry.model.onnx.metadata_creator import _TrainedModelMetadataCreator
 from opsml.registry.model.onnx.registry_updaters import OnnxRegistryUpdater
-from opsml.registry.model.utils.data_helper import ModelDataHelper, get_model_data
+from opsml.registry.model.utils.data_helper import ModelDataHelper
 from opsml.registry.types import (
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
     SKLEARN_SUPPORTED_MODEL_TYPES,
@@ -214,98 +213,3 @@ class _ModelConverter:
     def validate(model_class: str) -> bool:
         """validates model base class"""
         raise NotImplementedError
-
-
-class _OnnxConverterHelper:
-    @staticmethod
-    def convert_model(model_interface: ModelInterface, data_helper: ModelDataHelper) -> ModelReturn:
-        """
-        Instantiates a helper class to convert machine learning models and their input
-        data to onnx format for interoperability.
-
-
-        Args:
-            model_interface:
-                ModelInterface class containing model-specific information for Onnx conversion
-            data_helper:
-                ModelDataHelper class containing model-specific information for Onnx conversion
-
-        """
-
-        converter = next(
-            (
-                converter
-                for converter in _ModelConverter.__subclasses__()
-                if converter.validate(model_class=model_interface.model_class)
-            )
-        )
-
-        return converter(
-            model_interface=model_interface,
-            data_helper=data_helper,
-        ).convert()
-
-
-class _OnnxModelConverter(_TrainedModelMetadataCreator):
-    def __init__(self, model_interface: ModelInterface):
-        """
-        Instantiates OnnxModelCreator that is used for converting models to Onnx
-
-        Args:
-            model_interface:
-                ModelInterface class containing model-specific information for Onnx conversion
-        """
-
-        super().__init__(model_interface=model_interface)
-
-    def convert_model(self) -> ModelReturn:
-        """
-        Create model card from current model and sample data
-
-        Returns
-            `ModelReturn`
-        """
-
-        model_data = get_model_data(
-            data_type=self.interface.data_type,
-            input_data=self.interface.sample_data,
-        )
-
-        onnx_model_return = _OnnxConverterHelper.convert_model(model_interface=self.interface, data_helper=model_data)
-
-        # set extras
-        onnx_model_return.data_schema.input_features = self._get_input_schema()
-        onnx_model_return.data_schema.output_features = self._get_output_schema()
-        onnx_model_return.data_schema.data_type = self.interface.data_type
-
-        # add onnx version
-        return onnx_model_return
-
-    #
-    @staticmethod
-    def validate(to_onnx: bool) -> bool:
-        if to_onnx:
-            return True
-        return False
-
-
-def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.InferenceSession) -> ModelReturn:
-    """Helper for extracting model metadata for a model that is skipping auto onnx conversion.
-    This is primarily used for huggingface models.
-
-    Args:
-        model_interface:
-            ModelInterface
-        onnx_model:
-            Onnx inference session
-    """
-    # set metadata
-    meta_creator = _TrainedModelMetadataCreator(model_interface)
-    metadata = meta_creator.get_model_metadata()
-    onnx_input_features, onnx_output_features = _ModelConverter.create_feature_dict(onnx_model)
-
-    metadata.data_schema.onnx_input_features = onnx_input_features
-    metadata.data_schema.onnx_output_features = onnx_output_features
-    metadata.data_schema.onnx_version = onnx.__version__
-
-    return metadata

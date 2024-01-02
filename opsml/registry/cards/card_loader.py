@@ -298,7 +298,7 @@ class ModelCardLoader(CardLoader):
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
         self.card.interface.load_model(lpath, **kwargs)
 
-    def load_onnx_model(self) -> None:
+    def load_onnx_model(self, load_quantized: bool = False) -> None:
         """Load onnx model to interface
 
         Args:
@@ -308,14 +308,15 @@ class ModelCardLoader(CardLoader):
                 Remote path to load file
         """
 
+        save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
         if self.card.interface.onnx_model is not None:
             return None
 
-        load_rpath = Path(self.card.uri, SaveName.ONNX_MODEL.value).with_suffix(self.onnx_suffix)
+        load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
         if not self.storage_client.exists(load_rpath):
             return None
 
-        with self._load_object(SaveName.ONNX_MODEL.value, self.onnx_suffix) as lpath:
+        with self._load_object(save_name, self.onnx_suffix) as lpath:
             self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(lpath)
 

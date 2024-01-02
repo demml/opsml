@@ -1079,9 +1079,9 @@ def huggingface_text_classification_pipeline():
 
 @pytest.fixture(scope="module")
 def huggingface_tf_distilbert() -> HuggingFaceModel:
-    from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
-    
+    from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
+
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
@@ -1094,17 +1094,18 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
         onnx_args=HuggingFaceOnnxArgs(
             ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
-            config = AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False)
+            config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
     )
 
     return model
 
+
 @pytest.fixture(scope="module")
 def huggingface_torch_distilbert() -> HuggingFaceModel:
-    from transformers import AutoTokenizer, DistilBertForSequenceClassification
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
-    
+    from transformers import AutoTokenizer, DistilBertForSequenceClassification
+
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
@@ -1117,10 +1118,10 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
         onnx_args=HuggingFaceOnnxArgs(
             ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
-            config = AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False)
+            config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
     )
-    
+
     return model
 
 

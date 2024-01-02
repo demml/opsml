@@ -201,4 +201,5 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @staticmethod
     def validate(model_class: str) -> bool:
+        print(model_class)
         return model_class in SKLEARN_SUPPORTED_MODEL_TYPES
