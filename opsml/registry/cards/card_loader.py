@@ -176,7 +176,6 @@ class CardLoader:
             else:
                 interface = get_data_interface(interface_type)
 
-            loaded_card["interface"]["load_card"] = True
             loaded_interface = interface(**loaded_card["interface"])
             loaded_card["interface"] = loaded_interface
 

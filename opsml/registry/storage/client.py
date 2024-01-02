@@ -169,8 +169,8 @@ class ApiStorageClient(StorageClientBase):
     def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> None:
         if recursive:
             for file in self.ls(rpath):
-                rel_path = Path(file).relative_to(rpath)
-                self.get(file, str(Path(lpath).joinpath(rel_path)), False)
+                rpath = Path(file)
+                self.get(rpath, Path(lpath) / rpath.name, False)
 
         self.api_client.stream_download_file_request(
             route=ApiRoutes.DOWNLOAD_FILE,

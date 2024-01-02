@@ -5,7 +5,7 @@
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict, SerializeAsAny, field_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
@@ -48,7 +48,7 @@ class ModelCard(ArtifactCard):
         validate_assignment=True,
     )
 
-    interface: ModelInterface
+    interface: SerializeAsAny[ModelInterface]
     datacard_uid: Optional[str] = None
     to_onnx: bool = False
     metadata: ModelCardMetadata = ModelCardMetadata()
