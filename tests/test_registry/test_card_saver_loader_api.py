@@ -16,7 +16,6 @@ from opsml.registry.storage import client
 from opsml.registry.types import CommonKwargs, RegistryType, SaveName
 
 
-
 def test_save_huggingface_modelcard_api_client(
     huggingface_torch_distilbert: HuggingFaceModel,
     api_storage_client: client.StorageClientBase,
@@ -329,5 +328,6 @@ def test_save_torch_lightning_modelcard_api_client(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
 
 # add tf test
