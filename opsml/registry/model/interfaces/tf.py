@@ -100,7 +100,7 @@ try:
 
             return model_args
 
-        def save_model(self, path: Path) -> None:
+        def save_model(self, path: Path) -> Path:
             """Save tensorflow model to path
 
             Args:
@@ -108,16 +108,21 @@ try:
                     pathlib object
             """
             assert self.model is not None, "Model is not initialized"
-            self.model.save(self.model, path)
+            save_path = path.with_suffix(self.model_suffix)
+            self.model.save(save_path)
+            return save_path
 
-        def load_model(self, path: Path) -> None:
+        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
             """Load tensorflow model from path
 
             Args:
                 path:
                     pathlib object
             """
-            self.model = tf.keras.models.load_model(path)
+            self.model = tf.keras.models.load_model(
+                path.with_suffix(self.model_suffix),
+                **kwargs,
+            )
 
         @property
         def model_suffix(self) -> str:
