@@ -41,9 +41,6 @@ class RunCard(ArtifactCard):
             Metrics can also be added via class methods.
         parameters:
             Parameters associated with a RunCard
-        artifacts:
-            Optional dictionary of artifacts (i.e. plots, reports) to associate
-            with the current run.
         artifact_uris:
             Optional dictionary of artifact uris associated with artifacts.
         uid:
@@ -262,25 +259,14 @@ class RunCard(ArtifactCard):
 
         raise ValueError(f"Param {param} is not defined")
 
-    # TODO: steven - fix this
-    # for each artifact
-    # - get path of artifact
-    # - download artifact
     def load_artifacts(self) -> None:
-        # if bool(self.artifact_uris):
-        #    for name, uri in self.artifact_uris.items():
-        #        self.artifacts[name] = load_artifact_from_storage(
-        #            artifact_type=AllowedDataType.DICT,
-        #            storage_request=StorageRequest(
-        #                registry_type=self.card_type,
-        #                card_uid=self.card.uid,
-        #                uri_name=UriNames.TRAINED_MODEL_URI.value,
-        #            ),
-        #        )
-        #    return None
+        """Loads artifacts from artifact_uris"""
+        if bool(self.artifact_uris) is False:
+            logger.info("No artifact uris associated with RunCard")
+            return None
 
-        logger.info("No artifact uris associated with RunCard")
-        return None
+        for lpath, rpath in self.artifact_uris.items():
+            client.storage_client.get(rpath, lpath)
 
     @property
     def card_type(self) -> str:
