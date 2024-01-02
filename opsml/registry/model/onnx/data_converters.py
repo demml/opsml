@@ -177,7 +177,7 @@ class TensorflowDictOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        return data_type == AllowedDataType.DICT and model_type == TrainedModelType.TF_KERAS
+        return data_type == AllowedDataType.DICT and model_class == TrainedModelType.TF_KERAS
 
 
 class TensorflowNumpyOnnxConverter(DataConverter):
