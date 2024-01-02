@@ -353,7 +353,7 @@ def db_registries() -> CardRegistries:
     # Cards rely on global storage state - so set it to local.
     client.storage_client = client.get_storage_client(config)
     yield CardRegistries()
-    #cleanup()
+    cleanup()
 
 
 @pytest.fixture
