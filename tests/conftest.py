@@ -713,7 +713,7 @@ def pytorch_onnx_byo():
 
 
 @pytest.fixture(scope="session")
-def load_transformer_example():
+def tf_transformer_example():
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
@@ -723,7 +723,7 @@ def load_transformer_example():
 
 
 @pytest.fixture
-def load_multi_input_keras_example():
+def multi_input_tf_example():
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")

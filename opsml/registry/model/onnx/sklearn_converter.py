@@ -32,10 +32,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -201,5 +198,4 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @staticmethod
     def validate(model_class: str) -> bool:
-        print(model_class)
         return model_class in SKLEARN_SUPPORTED_MODEL_TYPES
