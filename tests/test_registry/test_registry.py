@@ -1,8 +1,11 @@
+import os
 import sys
 import uuid
 from os import path
+from pathlib import Path
 from typing import Tuple
 
+import joblib
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -32,6 +35,7 @@ from opsml.registry.data.interfaces import (
     PolarsData,
     SqlData,
 )
+from opsml.registry.model.interfaces import SklearnModel
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
 from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS
@@ -327,8 +331,8 @@ def test_semver_registry_list(
     assert cards[0]["version"] == "1.0.4"
 
 
-def _test_runcard(
-    linear_regression: linear_model.LinearRegression,
+def test_runcard(
+    linear_regression: SklearnModel,
     db_registries: CardRegistries,
 ):
     registry = db_registries.run
@@ -343,15 +347,21 @@ def _test_runcard(
     assert run.get_metric("test_metric").value == 10
     assert run.get_metric("test_metric2").value == 20
 
-    # save artifacts
-    model, _ = linear_regression
-    run.log_artifact("reg_model", artifact=model)
-    assert run.artifacts.get("reg_model").__class__.__name__ == "LinearRegression"
+    # log artifact from file
+    name = uuid.uuid4().hex
+    save_path = f"tests/assets/{name}.joblib"
+    joblib.dump(linear_regression.model, save_path)
+    run.log_artifact_from_file("linear_reg", save_path)
+    assert run.artifact_uris.get("linear_reg") is not None
+    os.remove(save_path)
 
     # register and load card
     registry.register_card(card=run)
-    loaded_card = registry.load_card(uid=run.uid)
+    loaded_card: RunCard = registry.load_card(uid=run.uid)
 
+    loaded_card.load_artifacts("linear_reg")
+    assert Path(loaded_card.artifact_uris.get("linear_reg").local_path).exists()
+    os.remove(loaded_card.artifact_uris.get("linear_reg").local_path)
     assert loaded_card.uid == run.uid
     assert loaded_card.get_metric("test_metric").value == 10
     assert loaded_card.get_metric("test_metric2").value == 20
@@ -368,7 +378,7 @@ def _test_runcard(
 
     # params take floats, ints, str
     with pytest.raises(ValueError):
-        loaded_card.log_parameter("test_fail", model)
+        loaded_card.log_parameter("test_fail", linear_regression.model)
 
     # test updating
     loaded_card.log_metric("updated_metric", 20)
@@ -377,7 +387,6 @@ def _test_runcard(
     # should be same runid
     loaded_card = registry.load_card(uid=run.uid)
     assert loaded_card.get_metric("updated_metric").value == 20
-    assert loaded_card.runcard_uri == run.runcard_uri
 
 
 def _test_local_model_registry_to_onnx(

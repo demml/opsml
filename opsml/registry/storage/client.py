@@ -75,7 +75,20 @@ class StorageClientBase(StorageClientProtocol):
         self.settings = settings
 
     def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> NoneType:
-        self.client.get(rpath=str(rpath), lpath=str(lpath), recursive=recursive)
+        # handle rpath
+        if rpath.suffix:
+            recursive = False
+            abs_rpath = str(rpath)
+        else:
+            abs_rpath = f"{str(rpath)}/"
+
+        # handle lpath
+        if lpath.suffix:
+            abs_lpath = f"{str(lpath.parent)}/"
+        else:
+            abs_lpath = f"{str(lpath)}/"
+
+        self.client.get(rpath=abs_rpath, lpath=abs_lpath, recursive=recursive)
 
     def get_mapper(self, root: str) -> StoreLike:
         return self.client.get_mapper(root)
@@ -155,7 +168,13 @@ class S3StorageClient(StorageClientBase):
 
 
 class LocalStorageClient(StorageClientBase):
-    ...
+    def put(self, lpath: Path, rpath: Path) -> None:
+        if rpath.suffix:
+            rpath.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            rpath.mkdir(parents=True, exist_ok=True)
+
+        super().put(lpath, rpath)
 
 
 class ApiStorageClient(StorageClientBase):

@@ -1,7 +1,9 @@
 from opsml.registry.types.card import (
+    ARTIFACT_URIS,
     METRICS,
     NON_PIPELINE_CARDS,
     PARAMS,
+    Artifact,
     AuditCardMetadata,
     AuditSectionType,
     CardInfo,

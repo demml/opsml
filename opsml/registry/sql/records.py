@@ -78,10 +78,9 @@ class RunRegistryRecord(SaveRecord):
     modelcard_uids: Optional[List[str]] = None
     pipelinecard_uid: Optional[str] = None
     project_id: Optional[str] = None
-    artifact_uris: Optional[Dict[str, str]] = None
+    artifact_uris: Optional[Dict[str, Dict[str, str]]] = None
     tags: Dict[str, str]
     timestamp: int = get_timestamp()
-    runcard_uri: str
 
 
 class PipelineRegistryRecord(SaveRecord):
