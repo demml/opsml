@@ -243,10 +243,11 @@ class ModelCardSaver(CardSaver):
                     "preprocessor",
                     "sample_data",
                     "onnx_model",
-                    "onnx_args",
                 },
             }
         )
+        if dumped_model["interface"].get("onnx_args") is not None:
+            dumped_model["interface"]["onnx_args"].pop("config")
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_model, save_path)
@@ -351,7 +352,9 @@ def save_card_artifacts(card: ArtifactCard) -> ArtifactCard:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 

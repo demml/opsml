@@ -72,11 +72,11 @@ class ModelCard(ArtifactCard):
 
         ModelCardLoader(self).load_model(**kwargs)
 
-    def load_onnx_model(self) -> None:
+    def load_onnx_model(self, **kwargs: Dict[str, Any]) -> None:
         """Loads onnx model to interface"""
         from opsml.registry.cards.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_onnx_model()
+        ModelCardLoader(self).load_onnx_model(**kwargs)
 
     def create_registry_record(self, **kwargs: Dict[str, Any]) -> RegistryRecord:
         """Creates a registry record from the current ModelCard"""
