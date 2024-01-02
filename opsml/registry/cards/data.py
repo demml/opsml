@@ -2,8 +2,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, Union
 
+# IMPORTANT: We need `Optional` imported here in order for Pydantic to be able to
+# deserialize DataCard.
+#
+from typing import Any, Dict, Union, Optional  # noqa # pylint: disable=unused-import
+
+from pydantic import SerializeAsAny
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.data.interfaces import DataInterface
@@ -35,10 +40,10 @@ class DataCard(ArtifactCard):
 
     """
 
-    interface: DataInterface
+    interface: SerializeAsAny[DataInterface]
     metadata: DataCardMetadata = DataCardMetadata()
 
-    def load_model(self):
+    def load_data(self):
         """
         Load data to interface
         """
@@ -58,10 +63,8 @@ class DataCard(ArtifactCard):
         """
         Creates required metadata for registering the current data card.
         Implemented with a DataRegistry object.
-
-        Returns:
+            Returns:
             Registry metadata
-
         """
         exclude_attr = {"data"}
         return DataRegistryRecord(**{**self.model_dump(exclude=exclude_attr), **kwargs})

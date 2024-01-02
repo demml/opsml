@@ -68,7 +68,7 @@ class ModelRegistrar:
 
         try:
             path = self._registry_path(request)
-            files = self.storage_client.ls(path)
+            files = self.storage_client.find(path)
 
             if len(files) == 0 or files[0] == path:
                 # no files or only an empty directory exists

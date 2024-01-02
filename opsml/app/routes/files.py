@@ -50,12 +50,6 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     write_path = Path(swap_opsml_root(write_path))
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
-    if write_path.suffix == "":
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="No filename with suffix provided",
-        )
-
     try:
         file_ = ExternalFileTarget(
             write_path=write_path,
@@ -146,7 +140,7 @@ def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)])
     """
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
-        return ListFileResponse(files=storage_client.ls(Path(path)))
+        return ListFileResponse(files=storage_client.find(Path(path)))
 
     except Exception as error:
         raise HTTPException(

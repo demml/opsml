@@ -62,6 +62,7 @@ def test_save_huggingface_modelcard_api_client(
 
     loaded_card.load_model()
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    assert type(loaded_card.interface.preprocessor) == type(modelcard.interface.preprocessor)
 
     #
     loaded_card.load_onnx_model()
@@ -71,6 +72,7 @@ def test_save_huggingface_modelcard_api_client(
     loaded_card.load_onnx_model(load_quantized=True)
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+    
 
 
 def test_save_sklearn_modelcard_api_client(

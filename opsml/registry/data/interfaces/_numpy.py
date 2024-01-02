@@ -51,8 +51,7 @@ class NumpyData(DataInterface):
 
     def load_data(self, path: Path) -> None:
         """Load numpy array from zarr file"""
-        load_path = path.with_suffix(self.storage_suffix)
-        self.data = zarr.load(load_path)
+        self.data = zarr.load(path)
 
     @property
     def data_type(self) -> str:
