@@ -235,10 +235,9 @@ class SQLRegistryBase:
         self._validate_card_type(card=card)
         self._set_card_version(card=card, version_type=version_type, pre_tag=pre_tag, build_tag=build_tag)
         self._set_card_uid(card=card)
-        self._create_registry_record(card=card)
 
-        card, uris = save_card_artifacts(card=card, storage_client=self.storage_client)
-        record = card.create_registry_record(**{"uris": uris})
+        save_card_artifacts(card=card)
+        record = card.create_registry_record()
 
         self.add_and_commit(card=record.model_dump())
 

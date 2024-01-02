@@ -1,7 +1,7 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, List, Optional
+from typing import Any, Iterator, Optional
 
 warnings.filterwarnings("ignore")
 
@@ -502,12 +502,6 @@ def numpy_data() -> np.ndarray[Any, np.float64]:
 
 
 @pytest.fixture
-def test_split_array() -> List[DataSplit]:
-    indices = np.array([0, 1, 2])
-    return [DataSplit(label="train", indices=indices)]
-
-
-@pytest.fixture
 def pandas_data() -> pd.DataFrame:
     df = pd.DataFrame(
         {
@@ -546,7 +540,16 @@ def polars_data():
             "y": [1, 2, 3, 4, 5, 6],
         }
     )
-    return PolarsData(data=df)
+    return PolarsData(
+        data=df,
+        data_splits=[
+            DataSplit(
+                label="train",
+                column_name="foo",
+                column_value=0,
+            )
+        ],
+    )
 
 
 @pytest.fixture
@@ -554,11 +557,6 @@ def pandas_timestamp_df():
     df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
     df["date"] = pd.to_datetime(df["date"])
     return df
-
-
-@pytest.fixture(scope="session")
-def test_polars_split():
-    return [DataSplit(label="train", column_name="foo", column_value=0)]
 
 
 @pytest.fixture(scope="session")
