@@ -5,7 +5,7 @@ from typing import cast
 from opsml.registry.cards import DataCard
 from opsml.registry.cards.card_loader import CardLoader
 from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.data.interfaces import NumpyData, PandasData, PolarsData, ArrowData
+from opsml.registry.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData
 from opsml.registry.storage import client
 from opsml.registry.types import RegistryType, SaveName
 from opsml.registry.types.extra import Suffix
@@ -88,9 +88,10 @@ def test_pandas_api_client(
 
     loaded_card.load_data()
     assert type(loaded_card.interface.data) == type(datacard.interface.data)
-    
+
     loaded_card.load_data_profile()
     assert loaded_card.interface.data_profile is not None
+
 
 def test_polars_api_client(
     polars_data: PolarsData,
@@ -131,9 +132,10 @@ def test_polars_api_client(
 
     loaded_card.load_data()
     assert type(loaded_card.interface.data) == type(datacard.interface.data)
-    
+
     loaded_card.load_data_profile()
     assert loaded_card.interface.data_profile is not None
+
 
 def test_arrow_api_client(
     arrow_data: ArrowData,

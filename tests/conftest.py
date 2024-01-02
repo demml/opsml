@@ -74,7 +74,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 
 # opsml
-from opsml.registry.data.interfaces import NumpyData, PandasData, PolarsData, ArrowData
+from opsml.registry.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
