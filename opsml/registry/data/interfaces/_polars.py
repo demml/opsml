@@ -6,7 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from opsml.registry.data.formatter import check_data_schema
-from opsml.registry.data.interfaces.base import DataInterface
+from opsml.registry.data.interfaces._base import DataInterface
 from opsml.registry.types import AllowedDataType, Feature, Suffix
 
 
