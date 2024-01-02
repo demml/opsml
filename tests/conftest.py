@@ -74,7 +74,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, DataSplit, ModelCard
 
 # opsml
-from opsml.registry.data.interfaces import NumpyData, PandasData
+from opsml.registry.data.interfaces import NumpyData, PandasData, PolarsData, ArrowData
 from opsml.registry.model.challenger import ModelChallenger
 from opsml.registry.model.interfaces import (
     HuggingFaceModel,
@@ -491,7 +491,7 @@ def real_gcs() -> Iterator[client.StorageClient]:
 
 
 @pytest.fixture
-def test_numpy_array() -> np.ndarray[Any, np.float64]:
+def numpy_data() -> np.ndarray[Any, np.float64]:
     data = np.random.rand(10, 100)
     return NumpyData(
         data=data,
@@ -529,16 +529,16 @@ def pandas_data() -> pd.DataFrame:
 
 
 @pytest.fixture(scope="session")
-def test_arrow_table():
+def arrow_data():
     n_legs = pa.array([2, 4, 5, 100])
     animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
     names = ["n_legs", "animals"]
     table = pa.Table.from_arrays([n_legs, animals], names=names)
-    return table
+    return ArrowData(data=table)
 
 
 @pytest.fixture(scope="session")
-def test_polars_dataframe():
+def polars_data():
     df = pl.DataFrame(
         {
             "foo": [1, 2, 3, 4, 5, 6],
@@ -546,7 +546,7 @@ def test_polars_dataframe():
             "y": [1, 2, 3, 4, 5, 6],
         }
     )
-    return df
+    return PolarsData(data=df)
 
 
 @pytest.fixture

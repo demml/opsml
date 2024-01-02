@@ -17,7 +17,7 @@ class SchemaValidator:
     def __init__(
         self,
         data: Any,
-        schema: Any,
+        schema: Dict[str, Feature],
     ):
         self.data = data
         self.schema = schema
@@ -52,7 +52,9 @@ class PolarsSchemaValidator(SchemaValidator):
     def validate_schema(self) -> pl.DataFrame:
         """Validate polars schema. Columns are converted if schema does not match"""
 
-        self.data = self.data.with_columns([pl.col(col).cast(self.schema[col]) for col in self.data.columns])
+        self.data = self.data.with_columns(
+            [pl.col(col).cast(getattr(pl, self.schema[col].feature_type)) for col in self.data.columns]
+        )
 
         return cast(pl.DataFrame, self.data)
 
@@ -81,7 +83,7 @@ class PandasSchemaValidator(SchemaValidator):
         """Validate pandas schema. Columns are converted if schema does not match"""
 
         for col in self.data.columns:
-            self.data[col] = self.data[col].astype(self.schema[col])
+            self.data[col] = self.data[col].astype(self.schema[col].feature_type)
 
         return cast(pd.DataFrame, self.data)
 
