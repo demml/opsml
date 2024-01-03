@@ -6,14 +6,20 @@
 # IMPORTANT: We need `Optional` imported here in order for Pydantic to be able to
 # deserialize DataCard.
 #
-from typing import Any, Dict, Optional, Union  # noqa # pylint: disable=unused-import
+from typing import (  # noqa # pylint: disable=unused-import
+    Any,
+    Dict,
+    List,
+    Optional,
+    Union,
+)
 
 from pydantic import SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.cards.base import ArtifactCard
 from opsml.registry.data.interfaces import DataInterface
-from opsml.registry.data.splitter import DataHolder
+from opsml.registry.data.splitter import DataHolder, DataSplit
 from opsml.registry.sql.records import DataRegistryRecord, RegistryRecord
 from opsml.registry.types import CardType, DataCardMetadata
 
@@ -86,6 +92,11 @@ class DataCard(ArtifactCard):
     def split_data(self) -> DataHolder:
         """Splits data interface according to data split logic"""
         return self.interface.split_data()
+
+    @property
+    def data_splits(self) -> List[DataSplit]:
+        """Returns data splits"""
+        return self.interface.data_splits
 
     @property
     def card_type(self) -> str:
