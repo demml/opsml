@@ -90,7 +90,6 @@ from opsml.registry.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.sql.connectors.connector import LocalSQLConnection
 from opsml.registry.storage import client
 from opsml.registry.types import (
     HuggingFaceOnnxArgs,
@@ -211,11 +210,6 @@ def gcp_storage_client(mock_gcp_creds, mock_gcsfs):
 
 
 @pytest.fixture
-def s3_storage_client(mock_s3fs):
-    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="s3://test"))
-
-
-@pytest.fixture
 def local_storage_client():
     return client.get_storage_client(OpsmlConfig())
 
@@ -224,8 +218,9 @@ def local_storage_client():
 def gcsfs_bucket() -> Path:
     return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
 
+
 @pytest.fixture
-def gcsfs_integration_client(gcsfs_bucket:Path) -> client.GCSFSStorageClient:
+def gcsfs_integration_client(gcsfs_bucket: Path) -> client.GCSFSStorageClient:
     return client.get_storage_client(
         OpsmlConfig(opsml_storage_uri=f"gs://{gcsfs_bucket.as_posix()}"),
     )
@@ -244,71 +239,6 @@ def mock_gcsfs():
         exists=MagicMock(return_value=True),
     ) as mocked_gcsfs:
         yield mocked_gcsfs
-
-
-@pytest.fixture
-def mock_s3fs():
-    with patch.multiple(
-        "s3fs.S3FileSystem",
-        get=MagicMock(return_value="test"),
-        get_mapper=MagicMock(return_value="test"),
-        ls=MagicMock(return_value=["test"]),
-        put=MagicMock(return_value="test"),
-        copy=MagicMock(return_value=None),
-        rm=MagicMock(return_value=None),
-        exists=MagicMock(return_value=True),
-    ) as mocked_s3fs:
-        yield mocked_s3fs
-
-
-@pytest.fixture
-def mock_pathlib():
-    with patch.multiple(
-        "pathlib.Path",
-        mkdir=MagicMock(return_value=None),
-    ) as mocked_pathlib:
-        yield mocked_pathlib
-
-
-@pytest.fixture
-def mock_joblib_storage(mock_pathlib):
-    with patch.multiple(
-        "opsml.registry.storage.artifact.JoblibStorage",
-        _write_joblib=MagicMock(return_value=None),
-        _load_artifact=MagicMock(return_value=None),
-    ) as mocked_joblib:
-        yield mocked_joblib
-
-
-@pytest.fixture
-def mock_json_storage(mock_pathlib):
-    with patch.multiple(
-        "opsml.registry.storage.artifact.JSONStorage",
-        _write_json=MagicMock(return_value=None),
-        _load_artifact=MagicMock(return_value=None),
-    ) as mocked_json:
-        yield mocked_json
-
-
-@pytest.fixture
-def mock_artifact_storage_clients(mock_json_storage, mock_joblib_storage):
-    yield mock_json_storage, mock_joblib_storage
-
-
-@pytest.fixture
-def mock_pyarrow_parquet_write(mock_pathlib):
-    with patch.multiple("pyarrow.parquet", write_table=MagicMock(return_value=True)) as mock_:
-        yield mock_
-
-
-@pytest.fixture
-def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
-    with patch("pyarrow.parquet.ParquetDataset") as mock_:
-        mock_dataset = mock_.return_value
-        mock_dataset.read.return_value = test_arrow_table
-        mock_dataset.read.to_pandas.return_value = test_df
-
-        yield mock_dataset
 
 
 @pytest.fixture(scope="module")
@@ -408,50 +338,12 @@ def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
 
 
 @pytest.fixture
-def mock_typer():
-    with patch.multiple("typer", launch=MagicMock(return_value=0)) as mock_typer:
-        yield mock_typer
-
-
-@pytest.fixture
 def mock_opsml_app_run():
     with patch.multiple("opsml.app.main.OpsmlApp", run=MagicMock(return_value=0)) as mock_opsml_app_run:
         yield mock_opsml_app_run
 
 
 ######## local clients
-
-
-@pytest.fixture(scope="module")
-def experiment_table_to_migrate():
-    from sqlalchemy import JSON, Column, String
-    from sqlalchemy.orm import declarative_mixin
-
-    @declarative_mixin
-    class ExperimentMixin:
-        data_card_uids = Column("data_card_uids", JSON)
-        model_card_uids = Column("model_card_uids", JSON)
-        pipeline_card_uid = Column("pipeline_card_uid", String(512))
-        project_id = Column("project_id", String(512))
-        artifact_uris = Column("artifact_uris", JSON)
-        metrics = Column("metrics", JSON)
-        parameters = Column("parameters", JSON)
-        tags = Column("tags", JSON)
-
-    class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
-        __tablename__ = "OPSML_EXPERIMENT_REGISTRY"
-
-        def __repr__(self):
-            return f"<SqlMetric({self.__tablename__}"
-
-    yield ExperimentSchema
-
-
-@pytest.fixture
-def mock_local_engine():
-    local_client = LocalSQLConnection(tracking_uri="sqlite://")
-    local_client.get_engine()
-    return
 
 
 @pytest.fixture
@@ -494,14 +386,6 @@ def mock_gcs_storage_response():
 
     with patch("httpx.Client", MockHTTPX) as mock_requests:
         yield mock_requests
-
-
-@pytest.fixture
-def real_gcs() -> Iterator[client.StorageClient]:
-    prev_client = client.storage_client
-    client.storage_client = client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://shipt-dev"))
-    yield client.storage_client
-    client.storage_client = prev_client
 
 
 ######### Data for registry tests
