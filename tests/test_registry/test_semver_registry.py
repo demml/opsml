@@ -2,11 +2,11 @@ import pytest
 
 from opsml.helpers.exceptions import VersionError
 from opsml.registry import CardRegistries, DataCard
-from opsml.registry.sql.registry import CardRegistry
 from opsml.registry.data.interfaces import SqlData
+from opsml.registry.sql.registry import CardRegistry
 
 
-def test_version_tags(sql_data:SqlData, db_registries: CardRegistries):
+def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     registry: CardRegistry = db_registries.data
 
     kwargs = {

@@ -587,7 +587,7 @@ def polars_data():
 def pandas_timestamp_df():
     df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
     df["date"] = pd.to_datetime(df["date"])
-    return df
+    return PandasData(data=df)
 
 
 @pytest.fixture(scope="session")
@@ -786,13 +786,13 @@ def load_pytorch_resnet():
 
 
 @pytest.fixture(scope="session")
-def iris_data() -> pd.DataFrame:
+def iris_data() -> PandasData:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
     x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
     x["target"] = iris["target"]
 
-    return x
+    return PandasData(data=x, dependent_vars=["target"])
 
 
 @pytest.fixture(scope="session")
