@@ -124,8 +124,7 @@ class ModelInterface(BaseModel):
         # don't want to try and import onnx unless we need to
         import onnxruntime as rt
 
-        from opsml.registry.model.onnx import _get_onnx_metadata
-        from opsml.registry.model.onnx import _OnnxModelConverter
+        from opsml.registry.model.onnx import _get_onnx_metadata, _OnnxModelConverter
 
         if self.onnx_model is None:
             metadata = _OnnxModelConverter(self).convert_model()
