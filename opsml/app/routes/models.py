@@ -73,10 +73,7 @@ async def model_versions_page(
         model = model or selected_model[0]["name"]
         version = version or selected_model[0]["version"]
 
-    versions = cast(
-        List[Dict[str, Any]],
-        registry.list_cards(name=model, as_dataframe=False, limit=50),
-    )
+    versions = registry.list_cards(name=model, limit=50)
     metadata = post_model_metadata(
         request=request,
         payload=CardRequest(uid=uid, name=model, version=version),
@@ -187,7 +184,6 @@ def post_model_metrics(
         name=payload.name,
         team=payload.team,
         version=payload.version,
-        as_dataframe=False,
     )
 
     if len(cards) > 1:

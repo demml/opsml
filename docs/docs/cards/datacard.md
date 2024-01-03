@@ -64,7 +64,7 @@ print(data_card.version)
 # list cards
 cards = data_registry.list_cards(
     uid=data_card.uid, 
-    as_dataframe=False,
+    ,
     )  # can also supply, name, team, version
 print(cards[0])
 

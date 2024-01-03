@@ -80,13 +80,19 @@ def test_register_data(
     data_card.create_data_profile()
     registry.register_card(card=data_card)
 
-    df = registry.list_cards(name=data_card.name, team=data_card.team, max_date=TODAY_YMD, as_dataframe=True)
+    df = registry.list_cards(
+        name=data_card.name,
+        team=data_card.team,
+        max_date=TODAY_YMD,
+    )
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(name=data_card.name, as_dataframe=True)
+    df = registry.list_cards(
+        name=data_card.name,
+    )
     assert isinstance(df, pd.DataFrame)
 
-    df = registry.list_cards(as_dataframe=True)
+    df = registry.list_cards()
     assert isinstance(df, pd.DataFrame)
 
     # Verify teams / names

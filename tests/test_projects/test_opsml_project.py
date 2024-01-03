@@ -202,7 +202,9 @@ def test_run_fail(db_registries: CardRegistries) -> None:
     assert proj.get_metric("m1").value == 1.1
 
     # Failed run should still exist
-    cards = proj._run_mgr.registries.run.list_cards(uid=info.run_id, as_dataframe=False)
+    cards = proj._run_mgr.registries.run.list_cards(
+        uid=info.run_id,
+    )
     assert len(cards) == 1
 
 

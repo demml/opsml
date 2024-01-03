@@ -2,7 +2,7 @@ from typing import Tuple, cast
 
 import pytest
 
-from opsml import DataCard, ModelCard
+from opsml.cards import DataCard, ModelCard
 from opsml.data import PandasData
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model import SklearnModel

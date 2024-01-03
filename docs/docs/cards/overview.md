@@ -62,7 +62,7 @@ Return either a list of dictionaries or a dataframe containing card metadata.
   registry.list_cards(name="linear-reg", team="opsml", version="~2.3.4") 
   # list card with name "linear-reg" with team "opsml" and latest version < 2.4.0
 
-  registry.list_cards(uid=uid, as_dataframe=False)
+  registry.list_cards(uid=uid, )
   # list card by uid
   # will return a list of dictionaries instead of a dataframe
 
@@ -84,7 +84,7 @@ Load an Artifact card from a registry.
   from opsml import CardRegistry
   model_registry = CardRegistry(registry_name="model")
 
-  example_record = model_registry.list_cards(name="linnerrud", as_dataframe=False)[0]
+  example_record = model_registry.list_cards(name="linnerrud", )[0]
 
   model_card = model_registry.load_card(uid=example_record.get("uid"))
   print(model_card.version)
