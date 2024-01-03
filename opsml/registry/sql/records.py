@@ -17,10 +17,6 @@ class RunUris(BaseModel):
     runcard_uri: str
 
 
-class AuditUris(BaseModel):
-    audit_uri: str
-
-
 class SaveRecord(BaseModel):
     name: str
     team: str

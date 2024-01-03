@@ -133,7 +133,6 @@ class CardVersion(BaseModel):
 
 
 class AuditCardMetadata(BaseModel):
-    audit_uri: Optional[str] = None
     datacards: List[SerializeAsAny[CardVersion]] = []
     modelcards: List[SerializeAsAny[CardVersion]] = []
     runcards: List[SerializeAsAny[CardVersion]] = []

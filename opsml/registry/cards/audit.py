@@ -114,8 +114,6 @@ class AuditCard(ArtifactCard):
             Email to associate with the AuditCard
         audit:
             AuditSections object containing the audit questions and responses
-        audit_uri:
-            URI to the audit report
         approved:
             Whether the audit has been approved
     """
