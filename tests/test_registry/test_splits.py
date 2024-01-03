@@ -6,21 +6,17 @@ from pytest_lazyfixture import lazy_fixture
 
 from opsml.registry import CardRegistries
 from opsml.registry.cards import DataCard, DataSplit
+from opsml.registry.data.interfaces import PandasData
 from opsml.registry.sql.registry import CardInfo, CardRegistry
 
 card_info = CardInfo(name="test-data", team="opsml", user_email="@opsml.com")
 
 
-@pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
-    # list of dicts will automatically be converted to DataSplit
-    data_split = [
-        {"label": "train", "column_name": "year", "column_value": 2020},
-        {"label": "test", "column_name": "year", "column_value": 2021},
-    ]
-    data_card = DataCard(data=test_data, info=card_info, data_splits=data_split)
-    assert data_card.data_splits[0].column_name == "year"
-    assert data_card.data_splits[0].column_value == 2020
+def test_data_card_splits_column_pandas(pandas_data: PandasData):
+
+    data_card = DataCard(interface=pandas_data, info=card_info)
+    assert data_card.interface.data_splits[0].column_name == "year"
+    assert data_card.interface.data_splits[0].column_value == 2020
 
     splits = data_card.split_data()
 
@@ -28,10 +24,8 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
     assert splits.test.X.shape[0] == 1
 
     data_card = DataCard(
-        data=test_data,
+        interface=pandas_data,
         info=card_info,
-        data_splits=data_split,
-        dependent_vars=["n_legs"],
     )
     assert data_card.data_splits[0].column_name == "year"
     assert data_card.data_splits[0].column_value == 2020
@@ -43,32 +37,26 @@ def test_data_card_splits_column_pandas(test_data: pd.DataFrame):
     assert isinstance(splits.train.X, pd.DataFrame)
 
 
-def test_data_splits_pandas_inequalities(
-    iris_data: pd.DataFrame,
-    pandas_timestamp_df: pd.DataFrame,
-):
+def test_data_splits_pandas_inequalities(iris_data: PandasData, pandas_timestamp_df: PandasData):
     data = iris_data
+    data_splits = [
+        DataSplit(
+            label="train",
+            column_name="sepal_width_cm",
+            column_value=3.0,
+            inequality=">=",
+        ),
+        DataSplit(
+            label="test",
+            column_name="sepal_width_cm",
+            column_value=3.0,
+            inequality="<",
+        ),
+    ]
+    data.data_splits = data_splits
 
     # test ">= and <"
-    data_card = DataCard(
-        data=data,
-        info=card_info,
-        dependent_vars=["target"],
-        data_splits=[
-            DataSplit(
-                label="train",
-                column_name="sepal_width_cm",
-                column_value=3.0,
-                inequality=">=",
-            ),
-            DataSplit(
-                label="test",
-                column_name="sepal_width_cm",
-                column_value=3.0,
-                inequality="<",
-            ),
-        ],
-    )
+    data_card = DataCard(interface=data, info=card_info)
 
     data_splits = data_card.split_data()
     assert data_splits.train.X.shape[0] == 93
@@ -76,26 +64,24 @@ def test_data_splits_pandas_inequalities(
     assert data_splits.test.X.shape[0] == 57
     assert data_splits.test.y.shape[0] == 57
 
+    data_splits = [
+        DataSplit(
+            label="train",
+            column_name="sepal_width_cm",
+            column_value=3.0,
+            inequality=">",
+        ),
+        DataSplit(
+            label="test",
+            column_name="sepal_width_cm",
+            column_value=3.0,
+            inequality="<=",
+        ),
+    ]
+    data.data_splits = data_splits
+
     # test "> and <="
-    data_card = DataCard(
-        data=data,
-        info=card_info,
-        dependent_vars=["target"],
-        data_splits=[
-            DataSplit(
-                label="train",
-                column_name="sepal_width_cm",
-                column_value=3.0,
-                inequality=">",
-            ),
-            DataSplit(
-                label="test",
-                column_name="sepal_width_cm",
-                column_value=3.0,
-                inequality="<=",
-            ),
-        ],
-    )
+    data_card = DataCard(interface=data, info=card_info)
 
     data_splits = data_card.split_data()
     assert data_splits.train.X is not None
@@ -103,24 +89,22 @@ def test_data_splits_pandas_inequalities(
     assert data_splits.test.X is not None
     assert data_splits.test.y is not None
 
+    data_splits = [
+        DataSplit(
+            label="train",
+            column_name="sepal_width_cm",
+            column_value=3.0,
+        ),
+        DataSplit(
+            label="test",
+            column_name="sepal_width_cm",
+            column_value=2.0,
+        ),
+    ]
+    data.data_splits = data_splits
+
     # test "=="
-    data_card = DataCard(
-        data=data,
-        info=card_info,
-        dependent_vars=["target"],
-        data_splits=[
-            DataSplit(
-                label="train",
-                column_name="sepal_width_cm",
-                column_value=3.0,
-            ),
-            DataSplit(
-                label="test",
-                column_name="sepal_width_cm",
-                column_value=2.0,
-            ),
-        ],
-    )
+    data_card = DataCard(data=data, info=card_info)
 
     data_splits = data_card.split_data()
     assert data_splits.train.X is not None
@@ -130,22 +114,21 @@ def test_data_splits_pandas_inequalities(
 
     ### test timestamp
     date_split = pd.to_datetime("2019-01-01").floor("D")
-    data_card = DataCard(
-        data=pandas_timestamp_df,
-        info=card_info,
-        data_splits=[
-            DataSplit(
-                label="train",
-                column_name="date",
-                column_value=date_split,
-                inequality=">",
-            ),
-        ],
-    )
+    data_splits = [
+        DataSplit(
+            label="train",
+            column_name="date",
+            column_value=date_split,
+            inequality=">",
+        ),
+    ]
+    data.data_splits = data_splits
+
+    data_card = DataCard(interface=pandas_timestamp_df, info=card_info)
 
     data_splits = data_card.split_data()
     assert data_splits.train.X.shape[0] == 1
-
+# working on split logic
 
 @pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
 def test_data_card_splits_row_pandas(test_data: pd.DataFrame):

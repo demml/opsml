@@ -1,4 +1,3 @@
-
 import uuid
 from pathlib import Path
 from typing import cast
@@ -17,9 +16,7 @@ from opsml.registry.model.interfaces import (
 from opsml.registry.types import CommonKwargs, RegistryType, SaveName
 
 
-def test_save_huggingface_modelcard(
-    huggingface_torch_distilbert: HuggingFaceModel
-):
+def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel):
     model: HuggingFaceModel = huggingface_torch_distilbert
 
     modelcard = ModelCard(
@@ -73,9 +70,7 @@ def test_save_huggingface_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_sklearn_modelcard(
-    random_forest_classifier: SklearnModel
-):
+def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
     model: SklearnModel = random_forest_classifier
     modelcard = ModelCard(
         interface=model,
@@ -122,7 +117,7 @@ def test_save_sklearn_modelcard(
 
 
 def test_save_lgb_booster_modelcard(
-    lgb_booster_model: LightGBMModel,  
+    lgb_booster_model: LightGBMModel,
 ):
     model: LightGBMModel = lgb_booster_model
 
@@ -171,7 +166,7 @@ def test_save_lgb_booster_modelcard(
 
 
 def test_save_lgb_sklearn_modelcard(
-    lgb_regressor_model: LightGBMModel,  
+    lgb_regressor_model: LightGBMModel,
 ):
     model: LightGBMModel = lgb_regressor_model
 
