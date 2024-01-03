@@ -17,12 +17,12 @@ from fastapi.templating import Jinja2Templates
 from streaming_form_data.targets import FileTarget
 
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
+from opsml.cards.audit import AuditCard, AuditSections
+from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.audit import AuditCard, AuditSections
-from opsml.registry.cards.run import RunCard
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.storage.client import LocalStorageClient, StorageClient
-from opsml.registry.types import RegistryType
+from opsml.registry.registry import CardRegistries, CardRegistry
+from opsml.storage.client import LocalStorageClient, StorageClient
+from opsml.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 # Constants

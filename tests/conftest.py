@@ -68,21 +68,14 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
-from opsml.helpers.data import create_fake_data
-from opsml.helpers.gcp_utils import GcpCreds
-from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import CardRegistries, DataSplit, ModelCard
+from opsml import CardRegistries, DataSplit, ModelCard
 
 # opsml
-from opsml.registry.data.interfaces import (
-    ArrowData,
-    NumpyData,
-    PandasData,
-    PolarsData,
-    SqlData,
-)
-from opsml.registry.model.challenger import ModelChallenger
-from opsml.registry.model.interfaces import (
+from opsml.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData, SqlData
+from opsml.helpers.data import create_fake_data
+from opsml.helpers.gcp_utils import GcpCreds
+from opsml.model.challenger import ModelChallenger
+from opsml.model.interfaces import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -90,15 +83,16 @@ from opsml.registry.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.storage import client
-from opsml.registry.types import (
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.settings.config import OpsmlConfig, config
+from opsml.storage import client
+from opsml.types import (
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
     HuggingFaceTask,
     Metric,
     OnnxModel,
 )
-from opsml.settings.config import OpsmlConfig, config
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)

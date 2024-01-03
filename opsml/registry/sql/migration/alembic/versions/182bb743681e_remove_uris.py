@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from alembic import op
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.types import RegistryTableNames
+from opsml.types import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 

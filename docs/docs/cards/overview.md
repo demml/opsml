@@ -33,7 +33,7 @@ Return either a list of dictionaries or a dataframe containing card metadata.
 
   ```python
 
-  from opsml.registry import CardRegistry
+  from opsml import CardRegistry
 
   registry = CardRegistry(registry_name="model") # can be "data", "model", "run", "pipeline
 
@@ -81,7 +81,7 @@ Load an Artifact card from a registry.
 
 ```python
 
-  from opsml.registry import CardRegistry
+  from opsml import CardRegistry
   model_registry = CardRegistry(registry_name="model")
 
   example_record = model_registry.list_cards(name="linnerrud", as_dataframe=False)[0]
@@ -103,7 +103,7 @@ Register a card to a registry
 
 ```python
 
-  from opsml.registry import CardRegistry
+  from opsml import CardRegistry
 
   model_registry = CardRegistry(registry_name="model")
 

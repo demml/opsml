@@ -24,7 +24,7 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.storage.client import StorageClientBase
+from opsml.storage.client import StorageClientBase
 
 logger = ArtifactLogger.get_logger()
 CHUNK_SIZE = 31457280

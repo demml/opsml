@@ -1,6 +1,6 @@
 from sklearn.linear_model import LinearRegression
 
-from opsml.registry.model.interfaces import (
+from opsml.model.interfaces import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,

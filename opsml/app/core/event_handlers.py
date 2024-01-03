@@ -9,10 +9,10 @@ import rollbar
 from fastapi import FastAPI, Response
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.model.registrar import ModelRegistrar
-from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.storage import client
+from opsml.model.registrar import ModelRegistrar
+from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
+from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
 

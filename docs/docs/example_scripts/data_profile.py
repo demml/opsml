@@ -7,7 +7,7 @@ os.environ["OPSML_TRACKING_URI"] = "http://localhost:8889/"
 from sklearn.datasets import load_linnerud
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry
+from opsml import CardInfo, DataCard, CardRegistry
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse

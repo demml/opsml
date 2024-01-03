@@ -3,8 +3,8 @@ import sys
 import pytest
 from sklearn import linear_model
 
+from opsml import CardRegistries, DataCard, ModelCard
 from opsml.projects import ProjectInfo
-from opsml.registry import CardRegistries, DataCard, ModelCard
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
@@ -25,10 +25,9 @@ def test_challenger_example(
     from sklearn.metrics import mean_absolute_error
     from sklearn.model_selection import train_test_split
 
-    from opsml.projects import ProjectInfo
-
     # Opsml
-    from opsml.registry import CardInfo, DataCard, DataSplit, ModelCard
+    from opsml import CardInfo, DataCard, DataSplit, ModelCard
+    from opsml.projects import ProjectInfo
 
     ### **Create Example Data**
 
@@ -155,7 +154,7 @@ def test_datacard(db_registries: CardRegistries):
     from sklearn.model_selection import train_test_split
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, DataSplit
+    from opsml import CardInfo, DataCard, DataSplit
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -199,7 +198,7 @@ def test_datacard(db_registries: CardRegistries):
 def test_data_splits():
     import polars as pl
 
-    from opsml.registry import CardInfo, DataCard, DataSplit
+    from opsml import CardInfo, DataCard, DataSplit
 
     info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
 
@@ -226,7 +225,7 @@ def test_data_splits():
 
     import numpy as np
 
-    from opsml.registry import CardInfo, DataCard, DataSplit
+    from opsml import CardInfo, DataCard, DataSplit
 
     info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
 
@@ -241,7 +240,7 @@ def test_data_splits():
 
     import numpy as np
 
-    from opsml.registry import CardInfo, DataCard, DataSplit
+    from opsml import CardInfo, DataCard, DataSplit
 
     info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
 
@@ -259,7 +258,7 @@ def test_data_profile(db_registries: CardRegistries):
     from sklearn.datasets import load_linnerud
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard
+    from opsml import CardInfo, DataCard
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -279,7 +278,7 @@ def test_data_profile(db_registries: CardRegistries):
 
     from ydata_profiling import ProfileReport
 
-    from opsml.registry import DataCard
+    from opsml import DataCard
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -292,10 +291,9 @@ def test_data_profile(db_registries: CardRegistries):
     import numpy as np
     from sklearn.datasets import load_linnerud
 
-    from opsml.profile import DataProfiler
-
     # Opsml
-    from opsml.registry import CardInfo, DataCard
+    from opsml import CardInfo, DataCard
+    from opsml.profile import DataProfiler
 
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
@@ -328,9 +326,10 @@ def test_custom_onnx(db_registries: CardRegistries):
     import torch.utils.model_zoo as model_zoo
     from torch import nn
 
+    from opsml import CardRegistries, DataCard, ModelCard
+
     ## opsml
     from opsml.model.utils.types import OnnxModel
-    from opsml.registry import CardRegistries, DataCard, ModelCard
 
     registries = CardRegistries()
     registries.data = db_registries.data
@@ -503,7 +502,7 @@ def test_runcard_opsml_example(
     from sklearn.metrics import mean_absolute_percentage_error
 
     # from opsml.projects import OpsmlProject, ProjectInfo
-    from opsml.registry import CardInfo, DataCard, ModelCard
+    from opsml import CardInfo, DataCard, ModelCard
 
     card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
@@ -567,7 +566,7 @@ def test_index_example(db_registries: CardRegistries):
     from sklearn.model_selection import train_test_split
 
     # Opsml
-    from opsml.registry import CardInfo, DataCard, DataSplit, ModelCard
+    from opsml import CardInfo, DataCard, DataSplit, ModelCard
 
     # set up registries
     data_registry = db_registries.data
@@ -633,8 +632,8 @@ def test_quickstart(
     import pandas as pd
     from sklearn.linear_model import LinearRegression
 
+    from opsml import DataCard, ModelCard
     from opsml.projects import ProjectInfo
-    from opsml.registry import DataCard, ModelCard
 
     def fake_data():
         X_train = np.random.normal(-4, 2.0, size=(1000, 10))

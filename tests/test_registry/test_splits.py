@@ -3,10 +3,10 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from opsml.registry import CardRegistries
-from opsml.registry.cards import DataCard, DataSplit
-from opsml.registry.data.interfaces import NumpyData, PandasData, PolarsData
-from opsml.registry.sql.registry import CardInfo, CardRegistry
+from opsml import CardRegistries
+from opsml.cards import DataCard, DataSplit
+from opsml.data.interfaces import NumpyData, PandasData, PolarsData
+from opsml.registry.registry import CardInfo, CardRegistry
 
 card_info = CardInfo(name="test-data", team="opsml", user_email="@opsml.com")
 

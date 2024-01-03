@@ -1,4 +1,4 @@
-from opsml.registry import CardRegistry
+from opsml import CardRegistry
 
 model_registry = CardRegistry(registry_name="model")
 

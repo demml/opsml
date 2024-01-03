@@ -19,17 +19,13 @@ from opsml.app.routes.pydantic_models import (
 )
 from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500
+from opsml.cards.model import ModelCard
+from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.model import ModelCard
-from opsml.registry.cards.run import RunCard
-from opsml.registry.model.challenger import ModelChallenger
-from opsml.registry.model.registrar import (
-    ModelRegistrar,
-    RegistrationError,
-    RegistrationRequest,
-)
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.types import CardInfo, ModelMetadata
+from opsml.model.challenger import ModelChallenger
+from opsml.model.registrar import ModelRegistrar, RegistrationError, RegistrationRequest
+from opsml.registry.registry import CardRegistries, CardRegistry
+from opsml.types import CardInfo, ModelMetadata
 
 logger = ArtifactLogger.get_logger()
 

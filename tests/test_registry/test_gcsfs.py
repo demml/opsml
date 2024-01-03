@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from opsml.registry.storage.client import GCSFSStorageClient
+from opsml.storage.client import GCSFSStorageClient
 
 
 # gcs integration tests perform operation on test bucket that has a TTL of 1 day for all objects

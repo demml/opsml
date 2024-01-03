@@ -12,9 +12,9 @@ from fastapi.templating import Jinja2Templates
 from opsml.app.routes.pydantic_models import CardRequest, CompareCardRequest
 from opsml.app.routes.route_helpers import DataRouteHelper
 from opsml.app.routes.utils import error_to_500
+from opsml.cards.data import DataCard
 from opsml.profile.profile_data import DataProfiler
-from opsml.registry.cards.data import DataCard
-from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.registry import CardRegistry
 
 # Constants
 PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))

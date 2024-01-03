@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
-from opsml.registry import CardRegistries, DataCard, ModelCard
+from opsml import CardRegistries, DataCard, ModelCard
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")

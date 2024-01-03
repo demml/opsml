@@ -6,7 +6,7 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from opsml.helpers import utils
-from opsml.registry.storage.client import StorageClient
+from opsml.storage.client import StorageClient
 
 
 @pytest.mark.parametrize("storage_client", [lazy_fixture("local_storage_client")])

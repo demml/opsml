@@ -4,12 +4,12 @@ from typing import Tuple
 
 import pytest
 
-from opsml.registry import CardRegistries, CardRegistry
-from opsml.registry.cards import DataCard, ModelCard, RunCard
-from opsml.registry.data.interfaces import PandasData
-from opsml.registry.model.interfaces import SklearnModel
-from opsml.registry.storage import client
-from opsml.registry.types import SaveName
+from opsml import CardRegistries, CardRegistry
+from opsml.cards import DataCard, ModelCard, RunCard
+from opsml.data.interfaces import PandasData
+from opsml.model.interfaces import SklearnModel
+from opsml.storage import client
+from opsml.types import SaveName
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")

@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional, Union
 from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
 
-from opsml.registry.cards.audit import AuditSections
-from opsml.registry.model.challenger import BattleReport
-from opsml.registry.sql.semver import CardVersion, VersionType
-from opsml.registry.types import METRICS, Comment
+from opsml.cards.audit import AuditSections
+from opsml.model.challenger import BattleReport
+from opsml.registry.semver import CardVersion, VersionType
+from opsml.types import METRICS, Comment
 
 
 class HealthCheckResult(BaseModel):

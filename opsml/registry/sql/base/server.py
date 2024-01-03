@@ -5,25 +5,25 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
+from opsml.cards import ArtifactCard, ModelCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
-from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.sql.base.db_initializer import DBInitializer
-from opsml.registry.sql.base.query_engine import QueryEngine
-from opsml.registry.sql.base.registry_base import SQLRegistryBase
-from opsml.registry.sql.base.sql_schema import SQLTableGetter
-from opsml.registry.sql.base.utils import log_card_change
-from opsml.registry.sql.connectors.connector import DefaultConnector
-from opsml.registry.sql.semver import (
+from opsml.registry.semver import (
     CardVersion,
     SemVerRegistryValidator,
     SemVerSymbols,
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.storage.client import StorageClient
-from opsml.registry.types import RegistryTableNames, RegistryType
+from opsml.registry.sql.base.db_initializer import DBInitializer
+from opsml.registry.sql.base.query_engine import QueryEngine
+from opsml.registry.sql.base.registry_base import SQLRegistryBase
+from opsml.registry.sql.base.sql_schema import SQLTableGetter
+from opsml.registry.sql.base.utils import log_card_change
+from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
+from opsml.storage.client import StorageClient
+from opsml.types import RegistryTableNames, RegistryType
 
 logger = ArtifactLogger.get_logger()
 

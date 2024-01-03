@@ -7,11 +7,11 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
+from opsml import AuditCard, CardInfo, DataCard, ModelCard
+from opsml.image import ImageDataset
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects.active_run import ActiveRun
-from opsml.registry import AuditCard, CardInfo, DataCard, ModelCard
-from opsml.registry.image import ImageDataset
-from opsml.registry.sql.registry import CardRegistries
+from opsml.registry.registry import CardRegistries
 
 
 def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:

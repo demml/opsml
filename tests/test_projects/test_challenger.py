@@ -4,13 +4,13 @@ import pandas as pd
 import pytest
 from sklearn import pipeline
 
+from opsml import DataCard, ModelCard
+from opsml.cards.types import CardInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ChallengeInputs, ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects.active_run import ActiveRun
-from opsml.registry import DataCard, ModelCard
-from opsml.registry.cards.types import CardInfo
-from opsml.registry.sql.registry import CardRegistries
+from opsml.registry.registry import CardRegistries
 
 logger = ArtifactLogger.get_logger()
 

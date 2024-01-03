@@ -16,8 +16,8 @@ import numpy as np
 from opsml.projects import ProjectInfo
 from opsml.projects import OpsmlProject
 
-from opsml.registry.cards import ModelCardMetadata, Description, DataCardMetadata, DataSplit
-from opsml.registry import DataCard, ModelCard, CardRegistries
+from opsml.cards import ModelCardMetadata, Description, DataCardMetadata, DataSplit
+from opsml import DataCard, ModelCard, CardRegistries
 
 registries = CardRegistries()
 

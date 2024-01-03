@@ -4,7 +4,7 @@ from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_absolute_percentage_error
 
 from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import CardInfo, DataCard, ModelCard
+from opsml import CardInfo, DataCard, ModelCard
 
 card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
@@ -28,7 +28,6 @@ def create_fake_data():
 
 # start the run
 with project.run(run_name="optional_run_name") as run:
-
     X, y = create_fake_data()
 
     # train model

@@ -8,8 +8,8 @@ from uuid import UUID
 from fastapi import HTTPException, Request, status
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.types import RegistryTableNames
 from opsml.settings.config import config
+from opsml.types import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 

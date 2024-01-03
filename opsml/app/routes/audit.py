@@ -26,8 +26,8 @@ from opsml.app.routes.utils import (
     get_names_teams_versions,
     write_records_to_csv,
 )
+from opsml.cards.audit import AuditCard, AuditSections
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.audit import AuditCard, AuditSections
 
 logger = ArtifactLogger.get_logger()
 

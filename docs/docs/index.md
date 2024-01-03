@@ -108,7 +108,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
+from opsml import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
 
 # set up registries
 data_registry = CardRegistry(registry_name="data")

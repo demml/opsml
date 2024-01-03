@@ -7,7 +7,7 @@
 ## Code Example
 
 ```python
-from opsml.registry import AuditCard, CardRegistry
+from opsml import AuditCard, CardRegistry
 
 ... # create model and data cards
 

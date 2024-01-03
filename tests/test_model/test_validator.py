@@ -4,18 +4,15 @@ import numpy as np
 import pytest
 from torch import Tensor
 
-from opsml.registry.model.interfaces import (
+from opsml.model.interfaces import (
     SUPPORTED_MODELS,
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
     TensorFlowModel,
 )
-from opsml.registry.storage.artifact import (
-    load_artifact_from_storage,
-    save_artifact_to_storage,
-)
-from opsml.registry.types import (
+from opsml.storage.artifact import load_artifact_from_storage, save_artifact_to_storage
+from opsml.types import (
     HuggingFaceOnnxArgs,
     HuggingFaceStorageArtifact,
     ModelCardMetadata,
