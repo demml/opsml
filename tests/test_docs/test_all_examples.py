@@ -187,10 +187,7 @@ def test_datacard(db_registries: CardRegistries):
     # > 1.0.0
 
     # list cards
-    cards = data_registry.list_cards(
-        uid=data_card.uid,
-        as_dataframe=False,
-    )  # can also supply, name, team, version
+    cards = data_registry.list_cards(uid=data_card.uid)  # can also supply, name, team, version
     print(cards[0])
 
 
@@ -486,7 +483,9 @@ def test_overview_list(
     registry.list_cards(name="linear-reg", team="opsml", version="~2.3.4")
     # list card with name "linear-reg" with team "opsml" and latest version < 2.4.0
 
-    registry.list_cards(uid=uid, as_dataframe=True)
+    registry.list_cards(
+        uid=uid,
+    )
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping on macos")

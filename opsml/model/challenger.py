@@ -126,7 +126,6 @@ class ModelChallenger:
         champion_records = self._registries.model.list_cards(
             name=self._challenger.name,
             team=self._challenger.team,
-            as_dataframe=False,
         )
 
         if not bool(champion_records):
@@ -225,7 +224,9 @@ class ModelChallenger:
         """Loops through and creates a `BattleReport` for each champion"""
         battle_reports = []
         for champion in champions:
-            champion_record = self._registries.model.list_cards(info=champion, as_dataframe=False)
+            champion_record = self._registries.model.list_cards(
+                info=champion,
+            )
 
             if not bool(champion_record):
                 raise ValueError(f"Champion model does not exist. {champion}")

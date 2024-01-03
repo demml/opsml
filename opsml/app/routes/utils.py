@@ -47,7 +47,13 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
         A list of model versions
     """
 
-    return [card["version"] for card in registry.list_cards(name=model, team=team, as_dataframe=False)]
+    return [
+        card["version"]
+        for card in registry.list_cards(
+            name=model,
+            team=team,
+        )
+    ]
 
 
 def get_names_teams_versions(

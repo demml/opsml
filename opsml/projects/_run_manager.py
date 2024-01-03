@@ -6,10 +6,11 @@
 import uuid
 from typing import Dict, Optional, Union, cast
 
-from opsml import CardRegistries, CardRegistry, ProjectCard, RunCard
+from opsml.cards import ProjectCard, RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.base.types import ProjectInfo, Tags
+from opsml.registry import CardRegistries, CardRegistry
 from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
@@ -255,11 +256,7 @@ class _RunManager:
         )
 
     def _get_project_id_from_registry(self, project_registry: CardRegistry, info: ProjectInfo) -> str:
-        projects = project_registry.list_cards(
-            name=info.name,
-            team=info.team,
-            as_dataframe=False,
-        )
+        projects = project_registry.list_cards(name=info.name, team=info.team)
         if bool(projects):
             return f"{info.team}:{info.name}"
 
@@ -279,7 +276,9 @@ class _RunManager:
         run_id: str,
         runcard_registry: CardRegistry,
     ) -> None:
-        run = runcard_registry.list_cards(uid=run_id, as_dataframe=False)[0]
+        run = runcard_registry.list_cards(
+            uid=run_id,
+        )[0]
 
         if run.get("project_id") != project_id:
             raise ValueError(

@@ -337,7 +337,7 @@ class DataRouteHelper(RouteHelper):
         """
 
         registry: CardRegistry = request.app.state.registries.data
-        versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
+        versions = registry.list_cards(name=name, limit=50)
 
         datacard, version = self._check_version(registry, name, versions, version)
         datacard = cast(DataCard, datacard)
