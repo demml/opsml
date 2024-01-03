@@ -101,7 +101,6 @@ class RunSchema(Base, BaseMixin, RunMixin):
 @declarative_mixin
 class AuditMixin:
     approved = Column("approved", Boolean)
-    audit_uri = Column("audit_uri", String(2048))
     datacards = Column("datacard_uids", JSON)
     modelcards = Column("modelcard_uids", JSON)
     runcards = Column("runcard_uids", JSON)
