@@ -98,5 +98,10 @@ class DataCard(ArtifactCard):
         return self.interface.data_splits
 
     @property
+    def data(self) -> Any:
+        """Returns data"""
+        return self.interface.data
+
+    @property
     def card_type(self) -> str:
         return CardType.DATACARD.value

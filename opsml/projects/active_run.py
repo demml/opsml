@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
 from opsml.storage.client import StorageClient
-from opsml.types import METRICS, PARAMS, CardInfo, CardType, SaveName
+from opsml.types import METRICS, PARAMS, CardInfo, CardType, SaveName, ARTIFACT_URIS
 
 logger = ArtifactLogger.get_logger()
 
@@ -174,6 +174,7 @@ class ActiveRun:
 
     def log_artifact_from_file(
         self,
+        name: str,
         local_path: Union[str, Path],
         artifact_path: Optional[Union[str, Path]] = None,
     ) -> None:
@@ -181,6 +182,8 @@ class ActiveRun:
         Log a local file or directory to the opsml server and associate with the current run.
 
         Args:
+            name:
+                Name to assign to artifact(s)
             local_path:
                 Local path to file or directory. Can be string or pathlike object
             artifact_path:
@@ -192,8 +195,15 @@ class ActiveRun:
         lpath = Path(local_path)
         rpath = self.runcard.uri / (artifact_path or SaveName.ARTIFACTS.value)
 
+        if lpath.is_file():
+            rpath = rpath / lpath.name
+
         self._info.storage_client.put(lpath, rpath)
-        self.runcard._add_artifact_uri(name=lpath.as_posix(), uri=rpath.as_posix())
+        self.runcard._add_artifact_uri(
+            name=name,
+            local_path=lpath.as_posix(),
+            remote_path=rpath.as_posix(),
+        )
 
     def log_metric(
         self,
@@ -280,3 +290,7 @@ class ActiveRun:
     @property
     def tags(self) -> dict[str, str]:
         return self.runcard.tags
+
+    @property
+    def artifact_uris(self) -> ARTIFACT_URIS:
+        return self.runcard.artifact_uris

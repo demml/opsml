@@ -11,14 +11,7 @@ from typing import Any, Dict, Iterator, Optional, cast
 import joblib
 from pydantic import BaseModel
 
-from opsml.cards import (
-    ArtifactCard,
-    AuditCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    RunCard,
-)
+from opsml.cards import ArtifactCard, AuditCard, DataCard, ModelCard, PipelineCard, RunCard, ProjectCard
 from opsml.data.interfaces import get_data_interface
 from opsml.model.interfaces import HuggingFaceModel, get_model_interface
 from opsml.settings.config import config
@@ -32,6 +25,7 @@ table_name_card_map = {
     RegistryType.RUN.value: RunCard,
     RegistryType.PIPELINE.value: PipelineCard,
     RegistryType.AUDIT.value: AuditCard,
+    RegistryType.PROJECT.value: ProjectCard,
 }
 
 
