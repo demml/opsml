@@ -389,6 +389,7 @@ def test_model_registry_onnx(
     db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
+    
     # create data card
     data_registry = db_registries.data
     model, data = sklearn_pipeline

@@ -221,15 +221,14 @@ def local_storage_client():
 
 
 @pytest.fixture
-def gcsfs_integration_client() -> client.GCSFSStorageClient:
-    return client.get_storage_client(
-        OpsmlConfig(opsml_storage_uri=f"gs://{os.environ['OPSML_GCS_TEST_BUCKET']}"),
-    )
-
-
-@pytest.fixture
 def gcsfs_bucket() -> Path:
     return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
+
+@pytest.fixture
+def gcsfs_integration_client(gcsfs_bucket:Path) -> client.GCSFSStorageClient:
+    return client.get_storage_client(
+        OpsmlConfig(opsml_storage_uri=f"gs://{gcsfs_bucket.as_posix()}"),
+    )
 
 
 @pytest.fixture
