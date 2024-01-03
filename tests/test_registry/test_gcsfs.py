@@ -8,7 +8,7 @@ from opsml.registry.storage.client import GCSFSStorageClient
 def test_gcsfs_integration(gcsfs_integration_client: GCSFSStorageClient, gcsfs_bucket: Path):
     lpath = Path("tests/assets/cats.jpg")
     rpath = gcsfs_bucket / "cats.jpg"
- 
+
     # put file
     gcsfs_integration_client.put(lpath, rpath)
 
