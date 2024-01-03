@@ -78,7 +78,7 @@ def downgrade() -> None:
     with op.batch_alter_table(table_name) as batch_op:
         batch_op.add_column(sa.Column("data_uri", sa.String(1024)))
         batch_op.add_column(sa.Column("datacard_uri", sa.String(1024)))
-        
+
     table_name = RegistryTableNames.RUN.value
     with op.batch_alter_table(table_name) as batch_op:
         batch_op.add_column(sa.Column("runcard_uri", sa.String(512)))

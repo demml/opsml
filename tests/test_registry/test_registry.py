@@ -1,18 +1,13 @@
 import os
 import sys
 import uuid
-from os import path
 from pathlib import Path
 from typing import Tuple
 
 import joblib
-import numpy as np
-import pandas as pd
 import polars as pl
 import pytest
-from pydantic import ValidationError
 from pytest_lazyfixture import lazy_fixture
-from sklearn import linear_model
 from sklearn.pipeline import Pipeline
 from sqlalchemy import select
 
@@ -21,10 +16,8 @@ from opsml.registry import CardRegistries
 from opsml.registry.cards import (
     DataCard,
     DataCardMetadata,
-    DataSplit,
     Description,
     ModelCard,
-    ModelCardMetadata,
     PipelineCard,
     RunCard,
 )
@@ -332,10 +325,13 @@ def test_semver_registry_list(
 
 
 def test_runcard(
-    linear_regression: SklearnModel,
+    linear_regression: Tuple[SklearnModel, NumpyData],
     db_registries: CardRegistries,
 ):
+
     registry = db_registries.run
+    model, _ = linear_regression
+
     run = RunCard(
         name="test_run",
         team="mlops",
@@ -350,7 +346,7 @@ def test_runcard(
     # log artifact from file
     name = uuid.uuid4().hex
     save_path = f"tests/assets/{name}.joblib"
-    joblib.dump(linear_regression.model, save_path)
+    joblib.dump(model.model, save_path)
     run.log_artifact_from_file("linear_reg", save_path)
     assert run.artifact_uris.get("linear_reg") is not None
     os.remove(save_path)
@@ -378,7 +374,7 @@ def test_runcard(
 
     # params take floats, ints, str
     with pytest.raises(ValueError):
-        loaded_card.log_parameter("test_fail", linear_regression.model)
+        loaded_card.log_parameter("test_fail", model.model)
 
     # test updating
     loaded_card.log_metric("updated_metric", 20)
@@ -389,14 +385,14 @@ def test_runcard(
     assert loaded_card.get_metric("updated_metric").value == 20
 
 
-def _test_local_model_registry_to_onnx(
+def test_model_registry_onnx(
     db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
     # create data card
     data_registry = db_registries.data
     model, data = sklearn_pipeline
-    
+
     data_card = DataCard(
         interface=data,
         name="pipeline_data",
@@ -405,6 +401,7 @@ def _test_local_model_registry_to_onnx(
     )
     data_registry.register_card(card=data_card)
 
+    # test onnx
     model_card = ModelCard(
         interface=model,
         name="pipeline_model",
@@ -417,246 +414,76 @@ def _test_local_model_registry_to_onnx(
     model_registry = db_registries.model
     model_registry.register_card(card=model_card)
 
-    loaded_card = model_registry.load_card(uid=model_card.uid)
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
+    assert isinstance(loaded_card.interface, SklearnModel)
 
+    loaded_card: ModelCard = db_registries.model.load_card(uid=model_card.uid)
 
+    assert loaded_card != model_card
+    assert loaded_card.interface.model is None
+    assert loaded_card.interface.sample_data is None
+    assert loaded_card.interface.onnx_model is None
 
-def _test_local_model_registry_no_onnx(
-    db_registries: CardRegistries,
-    sklearn_pipeline: Pipeline,
-):
-    # create data card
-    data_registry = db_registries.data
-    model, data = sklearn_pipeline
-    data_card = DataCard(
-        data=data,
-        name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    data_registry.register_card(card=data_card)
+    loaded_card.load_model()
+    loaded_card.load_onnx_model()
 
+    assert loaded_card.interface.model is not None
+    assert loaded_card.interface.sample_data is not None
+    assert loaded_card.interface.onnx_model is not None
+
+    # test no onnx
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
+        interface=model,
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
         datacard_uid=data_card.uid,
-        to_onnx=False,
     )
 
     model_registry = db_registries.model
     model_registry.register_card(card=model_card)
 
-    loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.metadata.uris.model_metadata_uri is not None
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
+    assert isinstance(loaded_card.interface, SklearnModel)
 
 
-def _test_local_model_registry(
+def test_modelcard_register_fail(
     db_registries: CardRegistries,
     sklearn_pipeline: Pipeline,
 ):
-    # create data card
-    model, data = sklearn_pipeline
-    data_card = DataCard(
-        data=data,
-        name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    db_registries.data.register_card(card=data_card)
-
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uid=data_card.uid,
-        to_onnx=True,
-    )
-
-    with pytest.raises(ValueError):
-        model_card.model_data_schema
-
-    with pytest.raises(ValueError):
-        model_card.input_data_schema
-
-    with pytest.raises(ValueError):
-        model_card.load_onnx_modelinition()
-
-    with pytest.raises(ValueError):
-        model_card.load_trained_model()
-
-    db_registries.model.register_card(model_card)
-
-    assert path.exists(
-        db_registries.model._registry.storage_client.build_absolute_path(model_card.metadata.uris.model_metadata_uri)
-    )
-    assert path.exists(
-        db_registries.model._registry.storage_client.build_absolute_path(model_card.metadata.uris.trained_model_uri)
-    )
-    assert path.exists(
-        db_registries.model._registry.storage_client.build_absolute_path(model_card.metadata.uris.sample_data_uri)
-    )
-
-    loaded_card: ModelCard = db_registries.model.load_card(uid=model_card.uid)
-
-    assert loaded_card != model_card
-    assert loaded_card.metadata.onnx_model is None
-    assert loaded_card.trained_model is None
-    assert loaded_card.sample_input_data is None
-
-    loaded_card.load_onnx_modelinition()
-    loaded_card.load_trained_model()
-
-    assert loaded_card.trained_model is not None
-    assert loaded_card.sample_input_data is not None
-    assert loaded_card.metadata.onnx_model is not None
-
-
-def _test_register_model(
-    db_registries: CardRegistries,
-    sklearn_pipeline: Pipeline,
-):
-    model, data = sklearn_pipeline
-
-    # create data card
-    data_registry = db_registries.data
-
-    data_card = DataCard(
-        data=data,
-        name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    data_registry.register_card(card=data_card)
-
-    model_card1 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uid=data_card.uid,
-        metadata=ModelCardMetadata(
-            description=Description(summary="test description"),
-        ),
-        to_onnx=True,
-    )
 
     model_registry = db_registries.model
-    model_registry.register_card(model_card1)
+    model, _ = sklearn_pipeline
 
-    loaded_card = model_registry.load_card(uid=model_card1.uid)
-    loaded_card.load_trained_model()
-
-    loaded_card.trained_model = model
-    loaded_card.sample_input_data = data[0:1]
-
-    assert getattr(loaded_card, "trained_model") is not None
-    assert getattr(loaded_card, "sample_input_data") is not None
-    assert loaded_card.metadata.description.summary == "test description"
-
-    model_card_custom = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uid=data_card.uid,
-        to_onnx=True,
-    )
-
-    model_registry.register_card(card=model_card_custom)
-
-    model_card2 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
+    model_card = ModelCard(
+        interface=model,
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
         datacard_uid=None,
-        to_onnx=True,
     )
 
     with pytest.raises(ValueError):
-        model_registry.register_card(card=model_card2)
-
-    model_card3 = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uid="test_uid",
-        to_onnx=True,
-    )
-
-    with pytest.raises(ValueError):
-        model_registry.register_card(card=model_card3)
-
-    with pytest.raises(ValidationError):
-        model_card3 = ModelCard(
-            trained_model=model,
-            sample_input_data=None,
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            datacard_uid="test_uid",
-            to_onnx=True,
-        )
-
-    # test pre-release model
-    model_card_pre = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        datacard_uid=data_card.uid,
-        version="3.1.0-rc.1",
-        to_onnx=True,
-    )
-
-    model_registry.register_card(card=model_card_pre)
-    cards = model_registry.list_cards(uid=model_card_pre.uid, as_dataframe=False)
-
-    assert cards[0]["version"] == "3.1.0-rc.1"
-
-    model_card_pre.version = "3.1.0"
-    model_registry.update_card(card=model_card_pre)
-    cards = model_registry.list_cards(uid=model_card_pre.uid, as_dataframe=False)
-
-    assert cards[0]["version"] == "3.1.0"
+        model_registry.register_card(card=model_card)
 
 
-@pytest.mark.parametrize("test_data", [lazy_fixture("test_df")])
-def _test_load_data_card(db_registries: CardRegistries, test_data: pd.DataFrame):
+def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
 
     registry = db_registries.data
-
-    data_split = [
-        DataSplit(label="train", column_name="year", column_value=2020),
-        DataSplit(label="train", column_name="year", column_value=2021),
-    ]
+    data: PandasData = pandas_data
 
     data_card = DataCard(
-        data=test_data,
+        interface=data,
         name=data_name,
         team=team,
         user_email=user_email,
-        data_splits=data_split,
         metadata=DataCardMetadata(
             additional_info={"input_metadata": 20},
             description=Description(summary="test description"),
         ),
-        dependent_vars=[200, "test"],
-        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
     )
 
     data_card.add_info(info={"added_metadata": 10})
@@ -669,12 +496,11 @@ def _test_load_data_card(db_registries: CardRegistries, test_data: pd.DataFrame)
     assert int(loaded_data.metadata.additional_info["input_metadata"]) == 20
     assert int(loaded_data.metadata.additional_info["added_metadata"]) == 10
     assert loaded_data.metadata.description.summary == "test description"
-    assert isinstance(loaded_data.dependent_vars[0], int)
-    assert isinstance(loaded_data.dependent_vars[1], str)
-    assert bool(loaded_data)
-    assert loaded_data.sql_logic["test"] == "SELECT * FROM TEST_TABLE"
+    assert isinstance(loaded_data.interface.dependent_vars[0], int)
+    assert isinstance(loaded_data.interface.dependent_vars[1], str)
+    assert loaded_data.interface.sql_logic["test"] == "SELECT * FROM TEST_TABLE"
 
-    assert loaded_data.data_splits == data_split
+    assert loaded_data.interface.data_splits == data.data_splits
 
     # update
     loaded_data.version = "1.2.0"
@@ -684,30 +510,34 @@ def _test_load_data_card(db_registries: CardRegistries, test_data: pd.DataFrame)
     assert record["version"] == "1.2.0"
 
 
-def _test_datacard_failure():
+def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
 
-    data_split = [
-        DataSplit(label="train", column_name="year", column_value=2020),
-        DataSplit(label="train", column_name="year", column_value=2021),
-    ]
+    data_registry = db_registries.data
+    data: PandasData = pandas_data
+
+    # remove attr
+    data.data = None
+    data.sql_logic = {}
 
     # should fail: data nor sql are provided
     with pytest.raises(ValueError) as ve:
-        DataCard(
+        datacard = DataCard(
+            interface=data,
             name=data_name,
             team=team,
             user_email=user_email,
-            data_splits=data_split,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
             dependent_vars=[200, "test"],
         )
-    assert ve.match("Data or sql logic must be supplied when no data_uri")
+        data_registry.register_card(card=datacard)
+
+    assert ve.match("DataInterface must have data or sql logic")
 
 
-def _test_pipeline_registry(db_registries: CardRegistries):
+def test_pipeline_registry(db_registries: CardRegistries):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
@@ -735,9 +565,9 @@ def _test_pipeline_registry(db_registries: CardRegistries):
     assert ve.match("PipelineCardRegistry does not support delete_card")
 
 
-def _test_full_pipeline_with_loading(
+def test_full_pipeline_with_loading(
+    linear_regression: Tuple[SklearnModel, NumpyData],
     db_registries: CardRegistries,
-    linear_regression: linear_model.LinearRegression,
 ):
     team = "mlops"
     user_email = "mlops.com"
@@ -750,7 +580,7 @@ def _test_full_pipeline_with_loading(
 
     #### Create DataCard
     data_card = DataCard(
-        data=data,
+        interface=data,
         name="test_data",
         team=team,
         user_email=user_email,
@@ -759,8 +589,7 @@ def _test_full_pipeline_with_loading(
     data_registry.register_card(card=data_card)
     ###### ModelCard
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[:1],
+        interface=model,
         name="test_model",
         team=team,
         user_email=user_email,
@@ -795,15 +624,15 @@ def _test_full_pipeline_with_loading(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
-def _test_model_registry_with_polars(
+def test_model_registry_with_polars(
     db_registries: CardRegistries,
-    linear_regression_polars: Tuple[pl.DataFrame, linear_model.LinearRegression],
+    linear_regression_polars: Tuple[SklearnModel, PolarsData],
 ):
     # create data card
     data_registry = db_registries.data
     model, data = linear_regression_polars
     data_card = DataCard(
-        data=data,
+        interface=data,
         name="polars_data",
         team="mlops",
         user_email="mlops.com",
@@ -811,8 +640,7 @@ def _test_model_registry_with_polars(
     data_registry.register_card(card=data_card)
 
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
+        interface=model,
         name="polars_model",
         team="mlops",
         user_email="mlops.com",
@@ -824,131 +652,121 @@ def _test_model_registry_with_polars(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.metadata.uris.model_metadata_uri is not None
 
 
-def _test_pandas_dtypes(db_registries: CardRegistries, drift_dataframe):
+def test_pandas_dtypes(db_registries: CardRegistries, pandas_data: PandasData):
     registry = db_registries.data
-    data, y, _, _ = drift_dataframe
 
-    data["col_11"] = y
-    data["eval_flg"] = np.where(data["col_11"] <= 5, 1, 0)
-    data["col_11"] = data["col_11"].astype("category")
-
+    pandas_data.data["animals"] = pandas_data.data["animals"].astype("category")
     datacard = DataCard(
         name="pandas_dtype",
         team="mlops",
         user_email="mlops.com",
-        data=data,
-        data_splits=[
-            DataSplit(label="train", column_value=0, column_name="eval_flg"),
-            DataSplit(label="test", column_value=1, column_name="eval_flg"),
-        ],
+        interface=pandas_data,
     )
+
     registry.register_card(card=datacard, version_type="patch")
-    datacard = registry.load_card(uid=datacard.uid)
+    datacard: DataCard = registry.load_card(uid=datacard.uid)
     datacard.load_data()
 
-    splits = datacard.split_data()
-    assert splits.train.X.dtypes["col_11"] == "category"
-    assert splits.test.X.dtypes["col_11"] == "category"
+    splits = datacard.interface.split_data()
+    assert splits.train.X.dtypes["animals"] == "category"
+    assert splits.test.X.dtypes["animals"] == "category"
 
 
-def _test_polars_dtypes(db_registries: CardRegistries, iris_data_polars):
+def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsData):
     registry = db_registries.data
-    data = iris_data_polars
+    data = iris_data_polars.data
 
-    data = data.with_columns(
+    new_data = data.with_columns(
         [
             pl.when(pl.col("target") <= 1).then(pl.lit(1)).otherwise(pl.lit(0)).alias("eval_flg"),
             pl.when(pl.col("target") <= 1).then(pl.lit("a")).otherwise(pl.lit("b")).alias("test_cat"),
         ]
     )
-    data = data.with_columns(pl.col("test_cat").cast(pl.Categorical))
-    orig_schema = data.schema
+    new_data = new_data.with_columns(pl.col("test_cat").cast(pl.Categorical))
+    orig_schema = new_data.schema
+
+    iris_data_polars.data = new_data
 
     datacard = DataCard(
         name="pandas_dtype",
         team="mlops",
         user_email="mlops.com",
-        data=data,
-        data_splits=[
-            DataSplit(label="train", column_value=0, column_name="eval_flg"),
-            DataSplit(label="test", column_value=1, column_name="eval_flg"),
-        ],
+        interface=iris_data_polars,
     )
     registry.register_card(card=datacard, version_type="patch")
     datacard = registry.load_card(uid=datacard.uid)
     datacard.load_data()
 
-    splits = datacard.split_data()
+    splits = datacard.interface.split_data()
     assert splits.train.X.schema["test_cat"] == orig_schema["test_cat"]
     assert splits.test.X.schema["test_cat"] == orig_schema["test_cat"]
 
 
-def _test_datacard_major_minor_version(db_registries: CardRegistries):
+def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardRegistries):
     # create data card
     registry = db_registries.data
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
-        sql_logic={"test": "select * from test_table"},
         version="3.1.1",
     )
 
     registry.register_card(card=data_card)
 
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
         version="3.1",  # specifying major minor version
-        sql_logic={"test": "select * from test_table"},
     )
 
     registry.register_card(card=data_card, version_type="patch")
     assert data_card.version == "3.1.2"
 
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
         version="3",  # specifying major with minor bump
-        sql_logic={"test": "select * from test_table"},
     )
 
     registry.register_card(card=data_card, version_type="minor")
     assert data_card.version == "3.2.0"
 
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
         version="3",  # specifying major with patch bump
-        sql_logic={"test": "select * from test_table"},
     )
 
     registry.register_card(card=data_card, version_type="patch")
     assert data_card.version == "3.2.1"
 
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
         version="3.2",  # specifying major minor with minor bump.
-        sql_logic={"test": "select * from test_table"},
     )
 
     registry.register_card(card=data_card, version_type="minor")
     assert data_card.version == "3.3.0"
 
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
         version="3.2",  # specifying major minor with minor bump.
-        sql_logic={"test": "select * from test_table"},
     )
 
     # This should rarely happen, but should work (3.3.0 already exists, should increment to 3.4.0)
@@ -957,18 +775,18 @@ def _test_datacard_major_minor_version(db_registries: CardRegistries):
 
     # test initial partial registration
     data_card = DataCard(
+        interface=sql_data,
         name="major_minor",
         team="mlops",
         user_email="mlops.com",
         version="4.1",  # specifying major minor version
-        sql_logic={"test": "select * from test_table"},
     )
 
     registry.register_card(card=data_card, version_type="patch")
     assert data_card.version == "4.1.0"
 
 
-def _test_list_cards(db_registries: CardRegistries):
+def test_list_cards(db_registries: CardRegistries):
     data_reg = db_registries.data
 
     record = {
@@ -978,7 +796,6 @@ def _test_list_cards(db_registries: CardRegistries):
         "team": "test_team",
         "user_email": "test_email",
         "version": "1.0.0",
-        "data_uri": "test_uri",
         "data_type": "test_type",
     }
 
@@ -1008,7 +825,7 @@ def _test_list_cards(db_registries: CardRegistries):
     assert cards[4]["version"] == "1.20.100"
 
 
-def _test_sql_version_logic():
+def test_sql_version_logic():
     """This is more to ensure coverage. Postgres and Mysql have been tested offline"""
 
     select_query = select(DataSchema)

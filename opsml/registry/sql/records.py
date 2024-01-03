@@ -64,8 +64,8 @@ class ModelRegistryRecord(SaveRecord):
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         metadata: Dict[str, Any] = values["metadata"]
-        values["sample_data_type"] = metadata["sample_data_type"]
-        values["model_type"] = metadata["model_type"]
+        values["sample_data_type"] = metadata["data_schema"]["data_type"]
+        values["model_type"] = values["interface"]["model_type"]
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
         values["auditcard_uid"] = metadata["auditcard_uid"]

@@ -131,7 +131,7 @@ class DataCardSaver(CardSaver):
         if self.card.interface is None:
             raise ValueError("DataCard must have a data interface to save artifacts")
 
-        if self.card.interface.data is None and bool(self.card.interface.sql_logic) is None:
+        if self.card.interface.data is None and not bool(self.card.interface.sql_logic):
             raise ValueError("DataInterface must have data or sql logic")
 
         # set type needed for loading
@@ -281,16 +281,16 @@ class AuditCardSaver(CardSaver):
     def card(self) -> AuditCard:
         return cast(AuditCard, self._card)
 
-    def _save_audit(self) -> None:
+    def _save_auditcard(self) -> None:
         dumped_audit = self.card.model_dump()
-        save_path = Path(self.lpath, SaveName.AUDIT.value).with_suffix(Suffix.JOBLIB.value)
+        save_path = Path(self.lpath, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
-            self._save_audit()
+            self._save_auditcard()
             self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
@@ -327,6 +327,18 @@ class PipelineCardSaver(CardSaver):
     def card(self) -> PipelineCard:
         return cast(PipelineCard, self._card)
 
+    def _save_pipelinecard(self) -> None:
+        dumped_audit = self.card.model_dump()
+        save_path = Path(self.lpath, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
+        joblib.dump(dumped_audit, save_path)
+
+    def save_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.card_uris.lpath = Path(tmp_dir)
+            self.card_uris.rpath = self.card.uri
+            self._save_pipelinecard()
+            self.storage_client.put(self.lpath, self.rpath)
+
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.PIPELINECARD.value in card_type
@@ -336,6 +348,18 @@ class ProjectCardSaver(CardSaver):
     @cached_property
     def card(self) -> ProjectCard:
         return cast(ProjectCard, self._card)
+
+    def _save_projectcard(self) -> None:
+        dumped_audit = self.card.model_dump()
+        save_path = Path(self.lpath, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
+        joblib.dump(dumped_audit, save_path)
+
+    def save_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.card_uris.lpath = Path(tmp_dir)
+            self.card_uris.rpath = self.card.uri
+            self._save_projectcard()
+            self.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -356,7 +380,9 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 
