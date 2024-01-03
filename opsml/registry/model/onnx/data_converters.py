@@ -92,7 +92,7 @@ class NumpyOnnxConverter(DataConverter):
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
         if data_type == AllowedDataType.NUMPY:
-            if model_type in AVAILABLE_MODEL_TYPES and model_type not in [
+            if model_class in AVAILABLE_MODEL_TYPES and model_class not in [
                 TrainedModelType.TF_KERAS,
                 TrainedModelType.PYTORCH,
                 TrainedModelType.TRANSFORMERS,

@@ -123,7 +123,6 @@ class CardLoader:
         load_lpath = Path(lpath, object_path).with_suffix(suffix)
         load_rpath = Path(rpath, object_path).with_suffix(suffix)
 
-        print(load_rpath, load_lpath)
         self.storage_client.get(load_rpath, load_lpath)
         return load_lpath
 

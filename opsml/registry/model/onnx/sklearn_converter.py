@@ -39,7 +39,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_calibrated_classifier(self) -> bool:
-        return self.interface.model_type == TrainedModelType.CALIBRATED_CLASSIFIER
+        return self.model_type == TrainedModelType.CALIBRATED_CLASSIFIER
 
     @property
     def _is_pipeline(self) -> bool:
@@ -49,7 +49,7 @@ class _SklearnOnnxModel(_ModelConverter):
         updated = False
 
         for model_step in self.trained_model.steps:
-            estimator_name = model_step[1].__class__.__name__.lower()
+            estimator_name = model_step[1].__class__.__name__
 
             if estimator_name == TrainedModelType.CALIBRATED_CLASSIFIER:
                 updated = self._update_onnx_registries_calibrated_classifier(estimator=model_step[1].estimator)
@@ -142,6 +142,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
         """Converts data for sklearn onnx models"""
+
         self.prepare_registries_and_data()
         return super().get_data_types()
 

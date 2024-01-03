@@ -97,9 +97,10 @@ class _ModelConverter:
         Returns
             Encrypted model definition
         """
-        if self.model_type in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
+
+        if self.model_class in [*SKLEARN_SUPPORTED_MODEL_TYPES, *LIGHTGBM_SUPPORTED_MODEL_TYPES]:
             OpsmlImportExceptions.try_skl2onnx_imports()
-        elif self.model_type == TrainedModelType.TF_KERAS:
+        elif self.model_class == TrainedModelType.TF_KERAS:
             OpsmlImportExceptions.try_tf2onnx_imports()
         return OnnxDataConverter(model_interface=self.interface, data_helper=self.data_helper).get_data_types()
 

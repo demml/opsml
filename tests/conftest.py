@@ -1,7 +1,7 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator, Optional, Tuple
 
 warnings.filterwarnings("ignore")
 
@@ -525,7 +525,17 @@ def pandas_data() -> pd.DataFrame:
             ],
         }
     )
-    return PandasData(data=df)
+
+    data_split = [
+        DataSplit(label="train", column_name="year", column_value=2020),
+        DataSplit(label="test", column_name="year", column_value=2021),
+    ]
+    return PandasData(
+        data=df,
+        data_splits=data_split,
+        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
+        dependent_vars=[200, "test"],
+    )
 
 
 @pytest.fixture(scope="session")
@@ -786,13 +796,21 @@ def iris_data() -> pd.DataFrame:
 
 
 @pytest.fixture(scope="session")
-def iris_data_polars() -> pl.DataFrame:
+def iris_data_polars() -> PolarsData:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
     x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
     x["target"] = iris["target"]
 
-    return pl.from_pandas(data=x)
+    data_split = [
+        DataSplit(label="train", column_value=0, column_name="eval_flg"),
+        DataSplit(label="test", column_value=1, column_name="eval_flg"),
+    ]
+
+    return PolarsData(
+        data=pl.from_pandas(data=x),
+        data_splits=data_split,
+    )
 
 
 @pytest.fixture
@@ -987,7 +1005,7 @@ def lgb_booster_model(example_dataframe):
 
 
 @pytest.fixture(scope="module")
-def linear_regression_polars(regression_data_polars: pl.DataFrame):
+def linear_regression_polars(regression_data_polars: pl.DataFrame) -> Tuple[SklearnModel, PolarsData]:
     data: pl.DataFrame = regression_data_polars
 
     X = data.select(pl.col(["col_0", "col_1"]))
@@ -997,14 +1015,14 @@ def linear_regression_polars(regression_data_polars: pl.DataFrame):
         X.to_numpy(),
         y.to_numpy(),
     )
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X.to_numpy()), PolarsData(data=X)
 
 
 @pytest.fixture(scope="module")
-def linear_regression(regression_data) -> SklearnModel:
+def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
     X, y = regression_data
     reg = linear_model.LinearRegression().fit(X, y)
-    return SklearnModel(model=reg, sample_data=X)
+    return SklearnModel(model=reg, sample_data=X), NumpyData(data=X)
 
 
 @pytest.fixture
