@@ -86,5 +86,20 @@ class ModelCard(ArtifactCard):
         return dumped_model
 
     @property
+    def model(self) -> Any:
+        """Quick access to model from interface"""
+        return self.interface.model
+
+    @property
+    def sample_data(self) -> Any:
+        """Quick access to sample data from interface"""
+        return self.interface.sample_data
+
+    @property
+    def preprocessor(self) -> Any:
+        """Quick access to preprocessor from interface"""
+        return self.interface.preprocessor
+
+    @property
     def card_type(self) -> str:
         return CardType.MODELCARD.value

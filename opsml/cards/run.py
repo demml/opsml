@@ -285,7 +285,7 @@ class RunCard(ArtifactCard):
 
         raise ValueError(f"Param {param} is not defined")
 
-    def load_artifacts(self, name: str) -> None:
+    def load_artifacts(self, name: Optional[str] = None) -> None:
         """Loads artifacts from artifact_uris"""
         if bool(self.artifact_uris) is False:
             logger.info("No artifact uris associated with RunCard")
