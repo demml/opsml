@@ -11,7 +11,15 @@ from typing import Any, Dict, Iterator, Optional, cast
 import joblib
 from pydantic import BaseModel
 
-from opsml.cards import ArtifactCard, AuditCard, DataCard, ModelCard, PipelineCard, RunCard, ProjectCard
+from opsml.cards import (
+    ArtifactCard,
+    AuditCard,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    ProjectCard,
+    RunCard,
+)
 from opsml.data.interfaces import get_data_interface
 from opsml.model.interfaces import HuggingFaceModel, get_model_interface
 from opsml.settings.config import config
@@ -201,7 +209,7 @@ class DataCardLoader(CardLoader):
 
         # load data profile
         with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
-            self.card.interface.load_profile(lpath)
+            self.card.interface.load_data_profile(lpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:

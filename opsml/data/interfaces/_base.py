@@ -10,10 +10,14 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.data.splitter import DataHolder, DataSplit, DataSplitter
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
-from opsml.profile.profile_data import DataProfiler, ProfileReport
 from opsml.types import CommonKwargs, Feature, Suffix
 
 logger = ArtifactLogger.get_logger()
+
+try:
+    from ydata_profiling import ProfileReport
+except ModuleNotFoundError:
+    ProfileReport = Any
 
 
 class DataInterface(BaseModel):
@@ -140,15 +144,16 @@ class DataInterface(BaseModel):
 
         self.data = joblib.load(path)
 
-    def load_profile(self, path: Path) -> None:
+    def load_data_profile(self, path: Path) -> None:
         """Load data profile from pathlib object
 
         Args:
             path:
                 Pathlib object
         """
-
-        self.data_profile = joblib.load(path)
+        self.data_profile = ProfileReport().loads(
+            joblib.load(path),
+        )
 
     def save_data_profile(self, path: Path) -> NoneType:
         """Saves data profile to path. Data profiles are saved as joblib
@@ -176,6 +181,7 @@ class DataInterface(BaseModel):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
+        from opsml.profile.profile_data import DataProfiler
 
         if isinstance(self.data, (pl.DataFrame, pd.DataFrame)):
             if self.data_profile is None:
