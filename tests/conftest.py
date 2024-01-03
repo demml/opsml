@@ -813,7 +813,7 @@ def stacking_regressor(regression_data):
 
 
 @pytest.fixture(scope="session")
-def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
+def sklearn_pipeline() -> tuple[SklearnModel, PandasData]:
     data = pd.DataFrame(
         [
             dict(CAT1="a", CAT2="c", num1=0.5, num2=0.6, num3=0, y=0),
@@ -836,7 +836,7 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
     )
     pipe.fit(train_data, data["y"])
 
-    return SklearnModel(model=pipe, sample_data=train_data)
+    return SklearnModel(model=pipe, sample_data=train_data), PandasData(data=train_data)
 
 
 @pytest.fixture(scope="session")

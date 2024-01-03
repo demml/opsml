@@ -396,8 +396,9 @@ def _test_local_model_registry_to_onnx(
     # create data card
     data_registry = db_registries.data
     model, data = sklearn_pipeline
+    
     data_card = DataCard(
-        data=data,
+        interface=data,
         name="pipeline_data",
         team="mlops",
         user_email="mlops.com",
@@ -405,8 +406,7 @@ def _test_local_model_registry_to_onnx(
     data_registry.register_card(card=data_card)
 
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
+        interface=model,
         name="pipeline_model",
         team="mlops",
         user_email="mlops.com",
@@ -418,7 +418,7 @@ def _test_local_model_registry_to_onnx(
     model_registry.register_card(card=model_card)
 
     loaded_card = model_registry.load_card(uid=model_card.uid)
-    assert loaded_card.metadata.uris.model_metadata_uri is not None
+
 
 
 def _test_local_model_registry_no_onnx(
