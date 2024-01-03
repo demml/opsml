@@ -90,8 +90,8 @@ class StorageClientBase(StorageClientProtocol):
 
         self.client.get(rpath=abs_rpath, lpath=abs_lpath, recursive=recursive)
 
-    def get_mapper(self, root: str) -> StoreLike:
-        return self.client.get_mapper(root)
+    def get_mapper(self, root: Path) -> StoreLike:
+        return self.client.get_mapper(str(root))
 
     def ls(self, path: Path) -> List[str]:
         return self.client.ls(str(path))

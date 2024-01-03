@@ -221,6 +221,18 @@ def local_storage_client():
 
 
 @pytest.fixture
+def gcsfs_integration_client() -> client.GCSFSStorageClient:
+    return client.get_storage_client(
+        OpsmlConfig(opsml_storage_uri="gs://opsml-test"),
+    )
+
+
+@pytest.fixture
+def gcsfs_bucket() -> Path:
+    return Path("opsml-test")
+
+
+@pytest.fixture
 def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
