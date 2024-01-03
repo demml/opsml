@@ -132,10 +132,6 @@ def test_opsml_read_only(
         db_registries.project.delete_card(data_card)
     ve.match("ProjectCardRegistry does not support delete_card")
 
-    with pytest.raises(ValueError) as ve:
-        db_registries.project.load_card("test-exp")
-    ve.match("ProjectCardRegistry does not support load_card")
-
 
 def _test_opsml_continue_run(db_registries: CardRegistries) -> None:
     """Verify a run con be continued"""

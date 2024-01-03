@@ -150,9 +150,9 @@ class CardLoader:
         with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
             loaded_card: Dict[str, Any] = joblib.load(lpath)
 
-        # load interface
+        # load interface logic
         if self.registry_type == RegistryType.MODEL or self.registry_type == RegistryType.DATA:
-            # load interface
+            # get interface type
             interface_type: str = loaded_card["metadata"]["interface_type"]
 
             if self.registry_type == RegistryType.MODEL:
