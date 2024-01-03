@@ -1,12 +1,9 @@
-import os
-import sys
 from typing import Tuple, cast
 
 import pytest
 
 from opsml.cards import AuditCard, CardInfo, DataCard, ModelCard
 from opsml.data import PandasData
-from opsml.data.image import ImageDataset
 from opsml.model import SklearnModel
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects.active_run import ActiveRun
@@ -25,7 +22,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     proj.run_id = run_id
     runcard = proj.run_card
     runcard.load_artifacts()
-    
+
     assert run._info.storage_client.exists(runcard.artifact_uris["cats"].local_path)
 
 
@@ -38,7 +35,7 @@ def test_opsml_read_only(
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with OpsmlProject(info=info).run() as run:
-        
+
         # Create metrics / params / cards
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
@@ -50,7 +47,7 @@ def test_opsml_read_only(
             user_email="mlops.com",
         )
         run.register_card(card=data_card, version_type="major")
-        
+
         model_card = ModelCard(
             interface=model,
             name="pipeline_model",
@@ -218,9 +215,10 @@ def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
 
     assert len(OpsmlProject(info=info).list_runs()) > 0
 
-#TODO: (steven) - fix once ImageData interface is built
-#@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
-#def test_opsml_image_dataset(db_registries: CardRegistries, sql) -> None:
+
+# TODO: (steven) - fix once ImageData interface is built
+# @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+# def test_opsml_image_dataset(db_registries: CardRegistries, sql) -> None:
 #    """verify we can save image dataset"""
 #
 #    info = ProjectInfo(name="test_opsml_image_dataset", team="test", user_email="user@test.com")

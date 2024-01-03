@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
 from opsml.storage.client import StorageClient
-from opsml.types import METRICS, PARAMS, CardInfo, CardType, SaveName, ARTIFACT_URIS
+from opsml.types import ARTIFACT_URIS, METRICS, PARAMS, CardInfo, CardType, SaveName
 
 logger = ArtifactLogger.get_logger()
 

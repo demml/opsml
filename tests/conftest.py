@@ -676,7 +676,7 @@ def load_pytorch_resnet():
     return loaded_model, data
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def iris_data() -> PandasData:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
@@ -686,7 +686,7 @@ def iris_data() -> PandasData:
     return PandasData(data=x, dependent_vars=["target"])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def iris_data_polars() -> PolarsData:
     iris = load_iris()
     feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]

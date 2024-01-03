@@ -4,13 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, List, Union
+from typing import List, Union
 
 import pandas as pd
 import polars as pl
+from ydata_profiling import ProfileReport
 
 DIR_PATH = os.path.dirname(__file__)
-ProfileReport = Any  # custom runtime check in DataCard
 
 
 class DataProfiler:

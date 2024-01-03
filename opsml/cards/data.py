@@ -103,5 +103,10 @@ class DataCard(ArtifactCard):
         return self.interface.data
 
     @property
+    def data_profile(self) -> Any:
+        """Returns data profile"""
+        return self.interface.data_profile
+
+    @property
     def card_type(self) -> str:
         return CardType.DATACARD.value
