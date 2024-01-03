@@ -192,14 +192,19 @@ def delete_files(
     try:
         storage_client: StorageClientBase = request.app.state.storage_client
 
-        files = list_files(request=request, read_path=path)
+        # files = list_files(request=request, path=path)
+        #
+        ## no point of deleting when it's empty
+        # if len(files.files) == 0:
+        #    return DeleteFileResponse(deleted=False)
 
-        # no point of deleting when it's empty
-        if len(files.files) == 0:
-            return DeleteFileResponse(deleted=False)
+        try:
+            storage_client.rm(Path(path))
+            return DeleteFileResponse(deleted=True)
 
-        storage_client.rm(Path(path))
-        return DeleteFileResponse(deleted=True)
+        except FileNotFoundError as _:
+            logger.warning(f"File {path} not found. It may have already been deleted")
+            return DeleteFileResponse(deleted=True)
 
     except Exception as error:
         raise HTTPException(

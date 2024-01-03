@@ -103,7 +103,6 @@ class ProjectRegistryRecord(BaseModel):
 
 class AuditRegistryRecord(SaveRecord):
     approved: bool
-    audit_uri: str
     datacards: List[CardVersion]
     modelcards: List[CardVersion]
     runcards: List[CardVersion]
@@ -113,7 +112,6 @@ class AuditRegistryRecord(SaveRecord):
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         metadata: Dict[str, Any] = values["metadata"]
-        values["audit_uri"] = metadata["audit_uri"]
         values["datacards"] = metadata["datacards"]
         values["modelcards"] = metadata["modelcards"]
         values["runcards"] = metadata["runcards"]

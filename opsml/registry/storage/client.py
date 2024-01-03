@@ -248,8 +248,10 @@ class ApiStorageClient(StorageClientBase):
         raise NotImplementedError
 
     def rm(self, path: Path) -> None:
-        route = Path(ApiRoutes.DELETE_FILE, path)
-        response = self.api_client.get_request(route=route.as_posix())
+        response = self.api_client.get_request(
+            route=ApiRoutes.DELETE_FILE,
+            params={"path": path.as_posix()},
+        )
 
         if response.get("deleted") is False:
             raise ValueError("Failed to delete file")

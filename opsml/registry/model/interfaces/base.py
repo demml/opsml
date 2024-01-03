@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
 
 import joblib
@@ -124,11 +124,14 @@ class ModelInterface(BaseModel):
         # don't want to try and import onnx unless we need to
         import onnxruntime as rt
 
+        from opsml.registry.model.onnx import _get_onnx_metadata
         from opsml.registry.model.onnx import _OnnxModelConverter
 
         if self.onnx_model is None:
             metadata = _OnnxModelConverter(self).convert_model()
             self.onnx_model = metadata.onnx_model
+        else:
+            metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
 
         sess: rt.InferenceSession = self.onnx_model.sess
         path = path.with_suffix(Suffix.ONNX.value)

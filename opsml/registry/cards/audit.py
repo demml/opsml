@@ -120,10 +120,10 @@ class AuditCard(ArtifactCard):
             Whether the audit has been approved
     """
 
-    audit: SerializeAsAny[AuditSections] = AuditSections()
+    audit: AuditSections = AuditSections()
     approved: bool = False
     comments: List[SerializeAsAny[Comment]] = []
-    metadata: SerializeAsAny[AuditCardMetadata] = AuditCardMetadata()
+    metadata: AuditCardMetadata = AuditCardMetadata()
 
     def add_comment(self, name: str, comment: str) -> None:
         """Adds comment to AuditCard
