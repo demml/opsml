@@ -6,18 +6,10 @@
 from enum import Enum
 from typing import Dict, Optional, Union
 
-import numpy as np
-import pandas as pd
-import polars as pl
-import pyarrow as pa
 from pydantic import BaseModel
 
-from opsml.data.image.dataset import ImageDataset
-from opsml.helpers.utils import get_class_name
 from opsml.types.extra import Description
 from opsml.types.model import Feature
-
-ValidData = Union[np.ndarray, pd.DataFrame, pl.DataFrame, pa.Table, ImageDataset]  # type: ignore
 
 
 # need for old v1 compat
@@ -48,53 +40,6 @@ class AllowedDataType(str, Enum):
     STR = "str"
     ORDERED_DICT = "collections.OrderedDict"
     JOBLIB = "joblib"
-
-
-# class ArrowTable(BaseModel):
-#    model_config = ConfigDict(arbitrary_types_allowed=True)
-#
-#    table: Union[pa.Table, np.ndarray]
-#    feature_map: Optional[Dict[str, Any]] = None
-
-
-def check_data_type(data: ValidData) -> str:
-    """Checks that the data type is one of the allowed types
-
-    Args:
-        data:
-            data to check
-
-    Returns:
-        data type
-    """
-    class_name = get_class_name(data)
-
-    if isinstance(data, dict):
-        return AllowedDataType.DICT.value
-    if isinstance(data, ImageDataset):
-        return AllowedDataType.IMAGE.value
-    if isinstance(data, np.ndarray):
-        return AllowedDataType.NUMPY.value
-    if isinstance(data, pd.DataFrame):
-        return AllowedDataType.PANDAS.value
-    if isinstance(data, pl.DataFrame):
-        return AllowedDataType.POLARS.value
-    if isinstance(data, pa.Table):
-        return AllowedDataType.PYARROW.value
-    if isinstance(data, str):
-        return AllowedDataType.STRING.value
-    if class_name == AllowedDataType.TRANSFORMER_BATCH.value:
-        return AllowedDataType.TRANSFORMER_BATCH.value
-    if class_name == AllowedDataType.TORCH_TENSOR.value:
-        return AllowedDataType.TORCH_TENSOR.value
-    if class_name == AllowedDataType.TENSORFLOW_TENSOR.value:
-        return AllowedDataType.TENSORFLOW_TENSOR.value
-
-    raise ValueError(
-        f"""Data must be one of the following types: numpy array, pandas dataframe, 
-        polars dataframe, pyarrow table, or ImageDataset. Received {str(type(data))}
-        """
-    )
 
 
 class DataCardMetadata(BaseModel):

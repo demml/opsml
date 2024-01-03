@@ -1,16 +1,16 @@
-from typing import cast
+from typing import Tuple, cast
 
-import pandas as pd
 import pytest
-from sklearn import pipeline
 
 from opsml import DataCard, ModelCard
-from opsml.cards.types import CardInfo
+from opsml.data import PandasData
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model import SklearnModel
 from opsml.model.challenger import ChallengeInputs, ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects.active_run import ActiveRun
 from opsml.registry.registry import CardRegistries
+from opsml.types import CardInfo
 
 logger = ArtifactLogger.get_logger()
 
@@ -27,19 +27,20 @@ model_info = CardInfo(
 
 
 def test_challenger_no_previous_version(
-    db_registries: CardRegistries, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+    db_registries: CardRegistries,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
     """Test ModelChallenger using one registered model and no champions"""
     info = ProjectInfo(name="test", team="test", user_email="test")
+
     with OpsmlProject(info=info).run() as run:
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
         model, data = sklearn_pipeline
-        data_card = DataCard(data=data, info=data_info)
+        data_card = DataCard(interface=data, info=data_info)
         run.register_card(card=data_card)
         model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
+            interface=model,
             info=model_info,
             datacard_uid=data_card.uid,
             to_onnx=True,
@@ -54,17 +55,19 @@ def test_challenger_no_previous_version(
     assert battle_result["mape"][0].champion_name == "No model"
 
 
-def test_challenger(db_registries: CardRegistries, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]) -> None:
+def test_challenger(
+    db_registries: CardRegistries,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+) -> None:
     """Test ModelChallenger using challenger and previous champion"""
 
     info = ProjectInfo(name="test", team="test", user_email="test")
     with OpsmlProject(info=info).run() as run:
         model, data = sklearn_pipeline
-        data_card = DataCard(data=data, info=data_info)
+        data_card = DataCard(interface=data, info=data_info)
         run.register_card(card=data_card)
         model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
+            interface=model,
             info=model_info,
             datacard_uid=data_card.uid,
             to_onnx=True,
@@ -93,7 +96,8 @@ def test_challenger(db_registries: CardRegistries, sklearn_pipeline: tuple[pipel
 
 
 def test_challenger_champion_list(
-    db_registries: CardRegistries, sklearn_pipeline: tuple[pipeline.Pipeline, pd.DataFrame]
+    db_registries: CardRegistries,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
     """Test ModelChallenger using champion list"""
     info = ProjectInfo(name="test", team="test", user_email="test")
@@ -101,11 +105,10 @@ def test_challenger_champion_list(
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
         model, data = sklearn_pipeline
-        data_card = DataCard(data=data, info=data_info)
+        data_card = DataCard(interface=data, info=data_info)
         run.register_card(card=data_card)
         model_card = ModelCard(
-            trained_model=model,
-            sample_input_data=data[0:1],
+            interface=model,
             info=model_info,
             datacard_uid=data_card.uid,
             to_onnx=True,

@@ -68,7 +68,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
-from opsml import CardRegistries, DataSplit, ModelCard
+from opsml.cards import DataSplit, ModelCard
 
 # opsml
 from opsml.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData, SqlData
@@ -84,6 +84,7 @@ from opsml.model.interfaces import (
     TensorFlowModel,
 )
 from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config
 from opsml.storage import client
 from opsml.types import (
