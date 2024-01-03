@@ -223,13 +223,13 @@ def local_storage_client():
 @pytest.fixture
 def gcsfs_integration_client() -> client.GCSFSStorageClient:
     return client.get_storage_client(
-        OpsmlConfig(opsml_storage_uri="gs://opsml-test"),
+        OpsmlConfig(opsml_storage_uri=f"gs://{os.environ['OPSML_GCS_TEST_BUCKET']}"),
     )
 
 
 @pytest.fixture
 def gcsfs_bucket() -> Path:
-    return Path("opsml-test")
+    return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
 
 
 @pytest.fixture
@@ -844,7 +844,7 @@ def stacking_regressor(regression_data):
 
 
 @pytest.fixture(scope="session")
-def sklearn_pipeline() -> tuple[SklearnModel, PandasData]:
+def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = pd.DataFrame(
         [
             dict(CAT1="a", CAT2="c", num1=0.5, num2=0.6, num3=0, y=0),
