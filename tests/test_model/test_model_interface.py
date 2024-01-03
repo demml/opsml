@@ -1,5 +1,6 @@
 from sklearn.linear_model import LinearRegression
-
+from typing import Tuple
+from opsml.data import NumpyData
 from opsml.model.interfaces import (
     HuggingFaceModel,
     LightningModel,
@@ -9,21 +10,17 @@ from opsml.model.interfaces import (
 )
 
 
-def test_sklearn_interface(regression_data):
-    X, y = regression_data
-    reg = LinearRegression().fit(X, y)
+def test_sklearn_interface(linear_regression:Tuple[SklearnModel, NumpyData]):
+    model, _ = linear_regression
+    assert model.model_type == "LinearRegression"
 
-    sk_model = SklearnModel(model=reg, sample_data=X)
-
-    assert sk_model.model_type == "LinearRegression"
-
-    prediction = sk_model.get_sample_prediction()
+    prediction = model.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
 
 
-def test_tf_interface(load_transformer_example: TensorFlowModel):
-    assert load_transformer_example.model_type == "Functional"
-    prediction = load_transformer_example.get_sample_prediction()
+def test_tf_interface(tf_transformer_example: TensorFlowModel):
+    assert tf_transformer_example.model_type == "Functional"
+    prediction = tf_transformer_example.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
 
 
