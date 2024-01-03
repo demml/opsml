@@ -511,7 +511,7 @@ def numpy_data() -> np.ndarray[Any, np.float64]:
 def pandas_data() -> pd.DataFrame:
     df = pd.DataFrame(
         {
-            "year": [2020, 2022, 2019, 2020, 2020, 2022, 2019, 20211],
+            "year": [2020, 2022, 2019, 2020, 2020, 2022, 2019, 2021],
             "n_legs": [2, 4, 5, 100, 2, 4, 5, 100],
             "animals": [
                 "Flamingo",
@@ -538,7 +538,7 @@ def pandas_data() -> pd.DataFrame:
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def sql_data():
     return SqlData(
         sql_logic={"test": "select * from test_table"},
@@ -546,14 +546,14 @@ def sql_data():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def sql_file():
     return SqlData(
         sql_logic={"test": "test_sql.sql"},
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def arrow_data():
     n_legs = pa.array([2, 4, 5, 100])
     animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
@@ -562,7 +562,7 @@ def arrow_data():
     return ArrowData(data=table)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def polars_data():
     df = pl.DataFrame(
         {
@@ -580,6 +580,7 @@ def polars_data():
                 column_value=0,
             )
         ],
+        dependent_vars=["y"],
     )
 
 
