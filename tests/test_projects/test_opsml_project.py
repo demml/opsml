@@ -133,7 +133,7 @@ def test_opsml_read_only(
     ve.match("ProjectCardRegistry does not support delete_card")
 
 
-def _test_opsml_continue_run(db_registries: CardRegistries) -> None:
+def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     """Verify a run con be continued"""
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
@@ -171,7 +171,7 @@ def _test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert read_project.get_parameter("m2").value == "banana"
 
 
-def _test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
+def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
     """Verify starting another run inside another fails"""
 
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
@@ -185,7 +185,7 @@ def _test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
                 pass
 
 
-def _test_run_fail(db_registries: CardRegistries) -> None:
+def test_run_fail(db_registries: CardRegistries) -> None:
     info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
     with pytest.raises(AttributeError):
         with OpsmlProject(info).run(run_name="test") as run:
@@ -205,7 +205,7 @@ def _test_run_fail(db_registries: CardRegistries) -> None:
     assert len(cards) == 1
 
 
-def _test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
+def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
     info = ProjectInfo(name="test_opsml_project_list_runs", team="test", user_email="user@test.com")
@@ -218,34 +218,35 @@ def _test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
 
     assert len(OpsmlProject(info=info).list_runs()) > 0
 
-
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
-def _test_opsml_image_dataset(db_registries: CardRegistries) -> None:
-    """verify we can save image dataset"""
-
-    info = ProjectInfo(name="test_opsml_image_dataset", team="test", user_email="user@test.com")
-    with OpsmlProject(info=info).run() as run:
-        # Create metrics / params / cards
-        image_dataset = ImageDataset(
-            image_dir="tests/assets/image_dataset",
-            metadata="metadata.jsonl",
-        )
-
-        data_card = DataCard(
-            data=image_dataset,
-            name="image_test",
-            team="mlops",
-            user_email="mlops.com",
-        )
-
-        run.register_card(card=data_card)
-        loaded_card = run.load_card(registry_name="data", info=CardInfo(uid=data_card.uid))
-
-        loaded_card.data.image_dir = "test_image_dir"
-        loaded_card.load_data()
-        assert os.path.isdir(loaded_card.data.image_dir)
-        meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
-        assert os.path.exists(meta_path)
-
-    proj = OpsmlProject(info=info)
-    assert len(proj.list_runs()) > 0
+#TODO: (steven) - fix once ImageData interface is built
+#@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+#def test_opsml_image_dataset(db_registries: CardRegistries, sql) -> None:
+#    """verify we can save image dataset"""
+#
+#    info = ProjectInfo(name="test_opsml_image_dataset", team="test", user_email="user@test.com")
+#    with OpsmlProject(info=info).run() as run:
+#        # Create metrics / params / cards
+#        image_dataset = ImageDataset(
+#            image_dir="tests/assets/image_dataset",
+#            metadata="metadata.jsonl",
+#        )
+#
+#        data_card = DataCard(
+#            data=image_dataset,
+#            name="image_test",
+#            team="mlops",
+#            user_email="mlops.com",
+#        )
+#
+#        run.register_card(card=data_card)
+#        loaded_card = run.load_card(registry_name="data", info=CardInfo(uid=data_card.uid))
+#
+#        loaded_card.data.image_dir = "test_image_dir"
+#        loaded_card.load_data()
+#        assert os.path.isdir(loaded_card.data.image_dir)
+#        meta_path = os.path.join(loaded_card.data.image_dir, loaded_card.data.metadata)
+#        assert os.path.exists(meta_path)
+#
+#    proj = OpsmlProject(info=info)
+#    assert len(proj.list_runs()) > 0
+#
