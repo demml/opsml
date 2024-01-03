@@ -17,13 +17,7 @@ from opsml.types.card import (
     RegistryType,
     RunCardArgs,
 )
-from opsml.types.data import (
-    AllowedDataType,
-    AllowedTableTypes,
-    DataCardMetadata,
-    ValidData,
-    check_data_type,
-)
+from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (
     ArtifactClass,
     CommonKwargs,
