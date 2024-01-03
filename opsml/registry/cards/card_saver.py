@@ -306,7 +306,7 @@ class RunCardSaver(CardSaver):
     def _save_runcard(self) -> None:
         """Saves a runcard"""
 
-        dumped_audit = self.card.model_dump(exclude={"artifacts"})
+        dumped_audit = self.card.model_dump()
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
@@ -356,9 +356,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
