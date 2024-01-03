@@ -55,12 +55,22 @@ def upgrade() -> None:
             with op.batch_alter_table(table_name) as batch_op:
                 batch_op.drop_column(column["name"])
 
-    # data table cleanup
+    # run table cleanup
     table_name = RegistryTableNames.RUN.value
     columns = insp.get_columns(table_name)
 
     for column in columns:
         if column["name"] in ["runcard_uri"]:
+            logger.info("Dropping {} column from {} table", column["name"], table_name)
+            with op.batch_alter_table(table_name) as batch_op:
+                batch_op.drop_column(column["name"])
+                
+    # audit table cleanup
+    table_name = RegistryTableNames.AUDIT.value
+    columns = insp.get_columns(table_name)
+
+    for column in columns:
+        if column["name"] in ["audit_uri"]:
             logger.info("Dropping {} column from {} table", column["name"], table_name)
             with op.batch_alter_table(table_name) as batch_op:
                 batch_op.drop_column(column["name"])
@@ -82,3 +92,7 @@ def downgrade() -> None:
     table_name = RegistryTableNames.RUN.value
     with op.batch_alter_table(table_name) as batch_op:
         batch_op.add_column(sa.Column("runcard_uri", sa.String(512)))
+        
+    table_name = RegistryTableNames.AUDIT.value
+    with op.batch_alter_table(table_name) as batch_op:
+        batch_op.add_column(sa.Column("audit_uri", sa.String(512)))
