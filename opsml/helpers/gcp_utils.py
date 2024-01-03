@@ -55,8 +55,9 @@ class GcpCredsSetter:
         Returns
             Tuple of gcp credentials and project name
         """
+        scopes = {"scopes": ["https://www.googleapis.com/auth/devstorage.full_control"]}  # needed for gcsfs
         key = self.decode_base64(service_base64_creds=service_base64_creds)
-        service_creds: Credentials = service_account.Credentials.from_service_account_info(info=key)  # noqa
+        service_creds: Credentials = service_account.Credentials.from_service_account_info(info=key, **scopes)  # noqa
         project_name = cast(str, service_creds.project_id)
 
         return service_creds, project_name
