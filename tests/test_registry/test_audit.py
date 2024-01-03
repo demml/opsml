@@ -2,9 +2,9 @@ from typing import Tuple
 
 import pytest
 
-from opsml.registry import AuditCard, CardRegistries, DataCard, ModelCard
-from opsml.registry.data.interfaces import NumpyData
-from opsml.registry.model.interfaces import SklearnModel
+from opsml import AuditCard, CardRegistries, DataCard, ModelCard
+from opsml.data.interfaces import NumpyData
+from opsml.model.interfaces import SklearnModel
 
 
 def test_audit_card(db_registries: CardRegistries):

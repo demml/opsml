@@ -5,9 +5,9 @@ import tempfile
 import pytest
 from pydantic_core._pydantic_core import ValidationError
 
-from opsml.registry import CardRegistries
-from opsml.registry.cards import DataCard
-from opsml.registry.image import ImageDataset, ImageMetadata, ImageRecord
+from opsml import CardRegistries
+from opsml.cards import DataCard
+from opsml.image import ImageDataset, ImageMetadata, ImageRecord
 
 # these examples are pulled from huggingface
 # the aim is to have as much parity as possible

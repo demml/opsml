@@ -2,10 +2,10 @@ import uuid
 from pathlib import Path
 from typing import cast
 
-from opsml.registry.cards import Description, ModelCard, ModelCardMetadata
-from opsml.registry.cards.card_loader import CardLoader
-from opsml.registry.cards.card_saver import save_card_artifacts
-from opsml.registry.model.interfaces import (
+from opsml.cards import Description, ModelCard, ModelCardMetadata
+from opsml.cards.card_loader import CardLoader
+from opsml.cards.card_saver import save_card_artifacts
+from opsml.model.interfaces import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -13,7 +13,7 @@ from opsml.registry.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.types import CommonKwargs, RegistryType, SaveName
+from opsml.types import CommonKwargs, RegistryType, SaveName
 
 
 def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel):

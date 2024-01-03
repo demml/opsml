@@ -59,8 +59,8 @@ The `metadata.jsonl` file is a `jsonl` file containing line separated json entri
 If you'd like to build the `metadata.jsonl` file with python, you can use the `ImageMetadata` and `ImageRecord` classes.
 
 ```python
-from opsml.registry import DataCard
-from opsml.registry.image import ImageDataset, ImageMetadata, ImageRecord, BBox
+from opsml import DataCard
+from opsml.image import ImageDataset, ImageMetadata, ImageRecord, BBox
 
 # Create one metadata record
 record = ImageRecord(
@@ -95,7 +95,7 @@ DataCard(
 
 ## Docs
 
-::: opsml.registry.image.dataset
+::: opsml.image.dataset
     options:
         members:
             - ImageDataset

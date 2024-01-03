@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
+from opsml import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
 from opsml.projects import ProjectInfo, OpsmlProject
 from opsml.model.challenger import ModelChallenger
 

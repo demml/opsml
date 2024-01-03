@@ -1,9 +1,9 @@
 import pytest
 
+from opsml import CardRegistries, DataCard
+from opsml.data.interfaces import SqlData
 from opsml.helpers.exceptions import VersionError
-from opsml.registry import CardRegistries, DataCard
-from opsml.registry.data.interfaces import SqlData
-from opsml.registry.sql.registry import CardRegistry
+from opsml.registry.registry import CardRegistry
 
 
 def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):

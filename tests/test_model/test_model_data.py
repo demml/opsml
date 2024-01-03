@@ -2,12 +2,12 @@ import pandas as pd
 import pytest
 from numpy.typing import NDArray
 
-from opsml.registry.model.utils.data_helper import (
+from opsml.model.utils.data_helper import (
     FloatTypeConverter,
     ModelDataHelper,
     get_model_data,
 )
-from opsml.registry.types import AllowedDataType
+from opsml.types import AllowedDataType
 
 # most methods are tested as part of other unit tests
 

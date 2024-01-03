@@ -4,7 +4,7 @@ import warnings
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.registry.cards import ModelCard
+from opsml.cards import ModelCard
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 

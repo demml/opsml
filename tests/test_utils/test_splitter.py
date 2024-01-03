@@ -2,9 +2,9 @@ import numpy as np
 import pyarrow as pa
 import pytest
 
-from opsml.registry.data.interfaces import ArrowData
-from opsml.registry.data.splitter import DataSplit, DataSplitter, DataSplitterBase
-from opsml.registry.types import AllowedDataType
+from opsml.data.interfaces import ArrowData
+from opsml.data.splitter import DataSplit, DataSplitter, DataSplitterBase
+from opsml.types import AllowedDataType
 
 
 def test_pyarrow_splitter(arrow_data: ArrowData):

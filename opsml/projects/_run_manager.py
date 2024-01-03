@@ -6,11 +6,11 @@
 import uuid
 from typing import Dict, Optional, Union, cast
 
+from opsml import CardRegistries, CardRegistry, ProjectCard, RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.base.types import ProjectInfo, Tags
-from opsml.registry import CardRegistries, CardRegistry, ProjectCard, RunCard
-from opsml.registry.storage import client
+from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
 

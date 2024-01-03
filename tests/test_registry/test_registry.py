@@ -11,9 +11,8 @@ from pytest_lazyfixture import lazy_fixture
 from sklearn.pipeline import Pipeline
 from sqlalchemy import select
 
-from opsml.helpers.exceptions import VersionError
-from opsml.registry import CardRegistries
-from opsml.registry.cards import (
+from opsml import CardRegistries
+from opsml.cards import (
     DataCard,
     DataCardMetadata,
     Description,
@@ -21,14 +20,10 @@ from opsml.registry.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.data.interfaces import (
-    ArrowData,
-    NumpyData,
-    PandasData,
-    PolarsData,
-    SqlData,
-)
-from opsml.registry.model.interfaces import SklearnModel
+from opsml.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData, SqlData
+from opsml.helpers.exceptions import VersionError
+from opsml.model.interfaces import SklearnModel
+from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
 from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS
@@ -156,7 +151,7 @@ def test_datacard_sql_register_date(sql_data: SqlData, db_registries: CardRegist
     )
 
     registry.register_card(card=data_card)
-    record = data_card.create_registry_record()
+    record = registry_name_record_map[data_card.card_type](**data_card.create_registry_record())
 
     # add card with a timestamp from 14 days ago
     record.timestamp = FOURTEEN_DAYS_TS

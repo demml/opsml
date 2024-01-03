@@ -4,16 +4,16 @@ import pandas as pd
 import pytest
 from sklearn.base import BaseEstimator
 
-from opsml.registry.cards import ModelCard
-from opsml.registry.model.interfaces import (
+from opsml.cards import ModelCard
+from opsml.model.interfaces import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.registry.model.onnx.metadata_creator import ModelCreator, create_model
-from opsml.registry.types import AllowedDataType, ModelReturn
+from opsml.model.onnx.metadata_creator import ModelCreator, create_model
+from opsml.types import AllowedDataType, ModelReturn
 
 
 def test_model_create_sklearn_no_onnx(random_forest_classifier: SklearnModel):

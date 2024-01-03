@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 
 from opsml.projects import ProjectInfo, OpsmlProject
-from opsml.registry import DataCard, ModelCard
+from opsml import DataCard, ModelCard
 
 
 def fake_data():

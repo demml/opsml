@@ -14,11 +14,7 @@ from requests.auth import HTTPBasicAuth
 from sklearn import linear_model, pipeline
 from starlette.testclient import TestClient
 
-from opsml.app.routes.files import _verify_path
-from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
-from opsml.app.routes.utils import error_to_500, list_team_name_info
-from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import (
+from opsml import (
     AuditCard,
     CardInfo,
     CardRegistries,
@@ -30,9 +26,13 @@ from opsml.registry import (
     PipelineCard,
     RunCard,
 )
-from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.storage.api import ApiRoutes
+from opsml.app.routes.files import _verify_path
+from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
+from opsml.app.routes.utils import error_to_500, list_team_name_info
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
+from opsml.storage.api import ApiRoutes
 from tests.conftest import TODAY_YMD
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
@@ -556,7 +556,7 @@ def test_metadata_download_and_registration(
     # error. The model exists and is valid, but the internal copy failed.
     # Returning a 4xx (i.e., 404) is not the correct response.
     with patch(
-        "opsml.registry.model.registrar.ModelRegistrar.is_registered",
+        "opsml.model.registrar.ModelRegistrar.is_registered",
         new_callable=MagicMock,
     ) as mock_registrar:
         mock_registrar.return_value = False

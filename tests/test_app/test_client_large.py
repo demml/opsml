@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import torch
 
-from opsml.registry import CardRegistries, DataCard, ModelCard
+from opsml import CardRegistries, DataCard, ModelCard
 
 
 @pytest.mark.large
