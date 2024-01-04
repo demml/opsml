@@ -28,6 +28,7 @@
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
+- [Version 2](#version-2)
 - [What is it?](#what-is-it)
 - [Features:](#features)
 - [Installation:](#installation)
@@ -35,8 +36,25 @@
   - [Pip](#pip)
 - [Usage](#usage)
 - [Advanced Installation Scenarios](#advanced-installation-scenarios)
+- [Environment Variables](#environment-variables)
 - [QuickStart](#quickstart)
 - [Contributing](#contributing)
+
+
+:star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
+## Version 2
+The `opsml` team is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
+
+Core features of version 2 include:
+
+- Better decoupling and encapsulation of server, client and storage logic
+- Introduction of `model` and `data` interfaces for better type checking and library artifact saving and loading
+- Full support for `sklearn`, `xgboost`, `lightgbm`, `pytorch`, `torch lightning`, `tensorflow` and `huggingface` libraries.
+- Replace `mlflow` with homegrown ui
+- New cli ([link](https://github.com/shipt/opsml-cli))
+  
+:star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
+
 
 ## What is it?
 
