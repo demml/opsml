@@ -4,20 +4,19 @@ These tests should be ran manually when you want to verify large data and model
 registration works.
 """
 
-from typing import Any, Dict, Tuple
+from typing import Tuple
 
 import numpy as np
 import pytest
-import torch
 
 from opsml.cards import DataCard, ModelCard
-from opsml.data import NumpyData
+from opsml.data import NumpyData, TorchData
 from opsml.model import HuggingFaceModel
 from opsml.registry import CardRegistries
 
 
 @pytest.mark.large
-def _test_register_large_data(api_registries: CardRegistries):
+def test_register_large_data(api_registries: CardRegistries):
 
     data = NumpyData(data=np.random.rand(500000, 100))
 
@@ -68,20 +67,16 @@ def test_register_large_whisper_model(
         datacard_uid=data_card.uid,
     )
     api_registries.model.register_card(model_card)
-    print(model_card.metadata.data_schema)
-    a
+    assert model_card.metadata.data_schema.output_features["outputs"].shape == (1, 26)
 
 
 @pytest.mark.large
-def _test_register_large_gpt_model(
-    api_registries: CardRegistries,
-    huggingface_openai_gpt: Tuple[Any, Dict[str, torch.Tensor]],
-) -> None:
+def test_register_large_gpt_model(api_registries: CardRegistries, huggingface_openai_gpt: HuggingFaceModel) -> None:
     """An example of saving a large, pretrained gpt model to opsml"""
     model, data = huggingface_openai_gpt
 
     data_card = DataCard(
-        data=data["input_ids"].numpy(),
+        interface=data,
         name="dummy-data",
         team="mlops",
         user_email="test@mlops.com",
@@ -89,28 +84,29 @@ def _test_register_large_gpt_model(
     api_registries.data.register_card(data_card)
 
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data={"input_ids": data["input_ids"].numpy()},
+        interface=model,
         name="gpt",
         team="mlops",
         user_email="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
-        to_onnx=True,
     )
     api_registries.model.register_card(model_card)
+    assert model_card.metadata.data_schema.output_features["logits"].shape == (1, 6, 40478)
 
 
 @pytest.mark.large
-def _test_register_large_bart_model(
+def test_register_large_bart_model(
     api_registries: CardRegistries,
-    huggingface_bart: Tuple[Any, Dict[str, torch.Tensor]],
+    huggingface_bart: HuggingFaceModel,
 ) -> None:
     """An example of saving a large, pretrained  bart model to opsml"""
-    model, data = huggingface_bart
+
+    data = TorchData(data=huggingface_bart.sample_data["input_ids"])
+    model = huggingface_bart
 
     data_card = DataCard(
-        data=data["input_ids"].numpy(),
+        interface=data,
         name="dummy-data",
         team="mlops",
         user_email="test@mlops.com",
@@ -118,8 +114,7 @@ def _test_register_large_bart_model(
     api_registries.data.register_card(data_card)
 
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data={"input_ids": data["input_ids"].numpy()},
+        interface=model,
         name="bart",
         team="mlops",
         user_email="test@mlops.com",
@@ -129,18 +124,19 @@ def _test_register_large_bart_model(
     )
 
     api_registries.model.register_card(model_card)
+    assert model_card.metadata.data_schema.output_features["last_hidden_state"].shape == (1, 7, 768)
 
 
 @pytest.mark.large
-def _test_register_large_vit_model(
+def test_register_large_vit_model(
     api_registries: CardRegistries,
-    huggingface_vit: Tuple[Any, Dict[str, torch.Tensor]],
+    huggingface_vit: Tuple[HuggingFaceModel, TorchData],
 ) -> None:
     """An example of saving a large, pretrained image model to opsml"""
     model, data = huggingface_vit
 
     data_card = DataCard(
-        data=data["pixel_values"].numpy(),
+        interface=data,
         name="dummy-data",
         team="mlops",
         user_email="test@mlops.com",
@@ -148,8 +144,7 @@ def _test_register_large_vit_model(
     api_registries.data.register_card(data_card)
 
     model_card = ModelCard(
-        trained_model=model,
-        sample_input_data={"pixel_values": data["pixel_values"].numpy()},
+        interface=model,
         name="vit",
         team="mlops",
         user_email="test@mlops.com",
@@ -159,3 +154,4 @@ def _test_register_large_vit_model(
     )
 
     api_registries.model.register_card(model_card)
+    assert model_card.metadata.data_schema.output_features["last_hidden_state"].shape == (1, 197, 768)
