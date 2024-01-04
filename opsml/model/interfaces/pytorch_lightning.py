@@ -128,7 +128,7 @@ try:
 
             path: Optional[Path] = kwargs.get("path")
             if path is None:
-                self._convert_to_onnx_inplace()
+                return self._convert_to_onnx_inplace()
 
             self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(path=path)
 
@@ -147,9 +147,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
         @staticmethod
         def name() -> str:

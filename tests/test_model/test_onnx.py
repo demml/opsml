@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.model.interfaces import ModelInterface
-from opsml.types import SaveName, Suffix
+from opsml.model.interfaces import ModelInterface, PyTorchModel, HuggingFaceModel, TensorFlowModel
+from opsml.types import SaveName
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
@@ -107,12 +107,9 @@ warnings.warn = warn
         lazy_fixture("lgb_classifier_calibrated_pipeline"),
     ],
 )
-def test_sklearn_models(interface: ModelInterface):
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        lpath = Path(tmpdirname)
-        lpath = (lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
-        interface.convert_to_onnx(lpath)
-        assert interface.onnx_model.sess is not None
+def _test_sklearn_models(interface: ModelInterface):
+    interface.convert_to_onnx()
+    assert interface.onnx_model.sess is not None
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
@@ -123,12 +120,9 @@ def test_sklearn_models(interface: ModelInterface):
         lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
-def test_model_pytorch_predict(interface):
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        lpath = Path(tmpdirname)
-        lpath = (lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
-        interface.convert_to_onnx(lpath)
-        assert interface.onnx_model.sess is not None
+def _test_model_pytorch_predict(interface: PyTorchModel):
+    interface.convert_to_onnx()
+    assert interface.onnx_model.sess is not None
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
@@ -139,31 +133,22 @@ def test_model_pytorch_predict(interface):
         lazy_fixture("huggingface_text_classification_pipeline"),
     ],
 )
-def test_huggingface_model(interface):
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        lpath = Path(tmpdirname)
-        model_lpath = lpath / SaveName.TRAINED_MODEL.value
-        preprocessor_lpath = lpath / SaveName.PREPROCESSOR.value
-        onnx_lpath = lpath / SaveName.ONNX_MODEL.value
-
-        interface.save_model(model_lpath)
-        interface.save_preprocessor(preprocessor_lpath)
-        interface.convert_to_onnx(onnx_lpath)
-        assert interface.onnx_model.sess is not None
+def _test_huggingface_model(interface: HuggingFaceModel):
+    interface.convert_to_onnx()
+    assert interface.onnx_model.sess is not None
 
 
-# huggingface_language_model
-# @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-# @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
-# @pytest.mark.parametrize(
-#    "model_and_data",
-#    [
-#        lazy_fixture("load_transformer_example"),  # keras transformer example
-#        lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
-#    ],
-# )
-# def test_tensorflow_predict(model_and_data):
-#    model_predict(model_and_data)
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
+@pytest.mark.parametrize(
+   "model_and_data",
+   [
+       lazy_fixture("load_transformer_example"),  # keras transformer example
+       lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
+   ],
+)
+def test_tensorflow_predict(interface: ):
+   model_predict(model_and_data)
 #
 #
 # @pytest.mark.parametrize(

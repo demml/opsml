@@ -121,6 +121,15 @@ class ModelInterface(BaseModel):
         self.preprocessor = joblib.load(path)
 
     def save_onnx(self, path: Path) -> ModelReturn:
+        """Saves the onnx model
+
+        Args:
+            path:
+                Path to save
+
+        Returns:
+            ModelReturn
+        """
         import onnxruntime as rt
 
         from opsml.model.onnx import _get_onnx_metadata
@@ -137,6 +146,7 @@ class ModelInterface(BaseModel):
         return metadata
 
     def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+        """Converts model to onnx format"""
         from opsml.model.onnx import _OnnxModelConverter
 
         if self.onnx_model is not None:
