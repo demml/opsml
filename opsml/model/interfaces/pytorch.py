@@ -176,22 +176,22 @@ try:
         def _convert_to_onnx_inplace(self) -> None:
             """Convert to onnx model using temp dir"""
             with tempfile.TemporaryDirectory() as tmpdir:
-                lpath = Path(tmpdir) / SaveName.ONNX.value
+                lpath = Path(tmpdir) / SaveName.ONNX_MODEL.value
                 onnx_path = lpath.with_suffix(Suffix.ONNX.value)
                 self.convert_to_onnx(path=onnx_path)
 
         def convert_to_onnx(self, **kwargs: Dict[str, str]) -> ModelReturn:
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
-
             if self.onnx_model is not None:
                 return None
 
             from opsml.model.onnx.torch_converter import _PyTorchOnnxModel
 
             path: Optional[Path] = kwargs.get("path")
+
             if path is None:
-                self._convert_to_onnx_inplace()
+                return self._convert_to_onnx_inplace()
 
             self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=path)
 

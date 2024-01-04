@@ -261,7 +261,7 @@ try:
                 lpath = Path(tmpdirname)
                 self.save_model((lpath / SaveName.TRAINED_MODEL.value))
                 self.save_preprocessor((lpath / SaveName.PREPROCESSOR.value))
-                return self.convert_to_onnx((lpath / SaveName.ONNX_MODEL.value))
+                return self.convert_to_onnx(path=(lpath / SaveName.ONNX_MODEL.value))
 
         def save_onnx(self, path: Path) -> ModelReturn:
             import onnxruntime as rt
@@ -281,11 +281,6 @@ try:
         def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
-
-
-            Args:
-                path:
-                    Path to save onnx model. This path will be path to onnx file
             """
 
             assert (
@@ -300,7 +295,7 @@ try:
 
             path: Optional[Path] = kwargs.get("path")
             if path is None:
-                self._convert_to_onnx_inplace()
+                return self._convert_to_onnx_inplace()
 
             # ensure no suffix (this is an exception to the rule to all model interfaces)
             # hunggingface prefers to save onnx models in dirs instead of single model.onnx file
@@ -389,9 +384,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:
