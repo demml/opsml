@@ -32,10 +32,7 @@ class _SklearnOnnxModel(_ModelConverter):
 
     @property
     def _is_stacking_estimator(self) -> bool:
-        return (
-            self.model_type == TrainedModelType.STACKING_REGRESSOR
-            or self.model_type == TrainedModelType.STACKING_CLASSIFIER
-        )
+        return self.model_type == TrainedModelType.STACKING_REGRESSOR or self.model_type == TrainedModelType.STACKING_CLASSIFIER
 
     @property
     def _is_calibrated_classifier(self) -> bool:
@@ -68,7 +65,7 @@ class _SklearnOnnxModel(_ModelConverter):
             *self.trained_model.estimators_,
             self.trained_model.final_estimator,
         ]:
-            estimator_name = estimator.__class__.__name__.lower()
+            estimator_name = estimator.__class__.__name__
             if estimator_name in UPDATE_REGISTRY_MODELS:
                 OnnxRegistryUpdater.update_onnx_registry(
                     model_estimator_name=estimator_name,

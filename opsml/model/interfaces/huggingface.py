@@ -98,6 +98,9 @@ try:
                     sample_dict[key] = value[0:1]
                 return sample_dict
 
+            if isinstance(sample_data, str):
+                return sample_data
+
             return sample_data[0:1]
 
         @classmethod
@@ -132,20 +135,24 @@ try:
             if isinstance(hf_model, Pipeline):
                 model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model.model)
                 model_args[CommonKwargs.IS_PIPELINE.value] = True
+                model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.model.__class__.__name__
+                model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+                    preprocessor=hf_model.tokenizer,
+                )
 
             else:
                 model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model)
                 model_args[CommonKwargs.IS_PIPELINE.value] = False
+                model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.__class__.__name__
+                model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
+                    preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+                )
 
             sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
 
             # set args
-            model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.__class__.__name__
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
-            model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
-                preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
-            )
 
             return model_args
 
@@ -216,10 +223,13 @@ try:
 
         def save_model(self, path: Path) -> None:
             assert self.model is not None, "No model detected in interface"
+
             self.model.save_pretrained(path)
 
         def save_preprocessor(self, path: Path) -> None:
-            assert self.preprocessor is not None, "No preprocessor detected in interface"
+            if self.preprocessor is None:
+                return None
+
             self.preprocessor.save_pretrained(path)
 
         def _quantize_model(self, path: Path, onnx_model: Any) -> None:
@@ -280,7 +290,7 @@ try:
                     sess=pipeline(
                         self.task_type,
                         model=onnx_model,
-                        tokenizer=self.preprocessor,
+                        tokenizer=self.preprocessor or self.model.tokenizer,
                     ),
                 )
             else:
@@ -294,7 +304,7 @@ try:
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
-        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+        def load_model(self, path: Path) -> None:
             """Load huggingface model from path"""
 
             if self.is_pipeline:
@@ -320,7 +330,7 @@ try:
                     sess=pipeline(
                         self.task_type,
                         model=onnx_model,
-                        tokenizer=self.preprocessor,
+                        tokenizer=self.preprocessor or self.model.tokenizer,
                     ),
                 )
             else:
@@ -353,9 +363,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:
