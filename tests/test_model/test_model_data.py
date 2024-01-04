@@ -1,7 +1,6 @@
-import pandas as pd
 import pytest
-from numpy.typing import NDArray
-from opsml.data import PandasData, NumpyData
+
+from opsml.data import NumpyData, PandasData
 from opsml.model.utils.data_helper import (
     FloatTypeConverter,
     ModelDataHelper,

@@ -1,5 +1,6 @@
-from sklearn.linear_model import LinearRegression
 from typing import Tuple
+
+
 from opsml.data import NumpyData
 from opsml.model.interfaces import (
     HuggingFaceModel,
@@ -10,7 +11,7 @@ from opsml.model.interfaces import (
 )
 
 
-def test_sklearn_interface(linear_regression:Tuple[SklearnModel, NumpyData]):
+def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
     model, _ = linear_regression
     assert model.model_type == "LinearRegression"
 
