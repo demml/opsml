@@ -182,7 +182,7 @@ class ModelCardSaver(CardSaver):
     def _save_onnx_model(self) -> None:
         if self.card.to_onnx:
             save_path = (self.lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
-            metadata = self.card.interface.convert_to_onnx(save_path)
+            metadata = self.card.interface.save_onnx(save_path)
 
             if isinstance(self.card.interface, HuggingFaceModel):
                 assert self.card.interface.onnx_args is not None, "onnx_args must be set for HuggingFaceModel"

@@ -34,6 +34,7 @@ class AllowedDataType(str, Enum):
     TRANSFORMER_BATCH = "transformers.tokenization_utils_base.BatchEncoding"
     STRING = "str"
     TORCH_TENSOR = "torch.Tensor"
+    TORCH_DATASET = "torch.utils.data.Dataset"
     TENSORFLOW_TENSOR = "tensorflow.python.framework.ops.EagerTensor"
     TUPLE = "tuple"
     LIST = "list"
