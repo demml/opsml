@@ -11,6 +11,7 @@ from opsml.model.interfaces import (
     PyTorchModel,
     TensorFlowModel,
 )
+from tests import conftest
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
@@ -166,3 +167,6 @@ def test_torch_lightning_predict(interface: LightningModel):
     interface, _ = interface
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
+    
+    # clean up lightning logs
+    conftest.cleanup()
