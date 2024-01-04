@@ -80,7 +80,7 @@ class DataConverter:
 class NumpyOnnxConverter(DataConverter):
     def get_onnx_data_types(self) -> List[Any]:
         """Infers data types from training data"""
-        
+
         dtype = self.data_helper.dtypes[0]
         shape = cast(Tuple[int, ...], self.data_helper.shape[1:])
         spec = get_skl2onnx_onnx_tensor_spec(dtype=dtype, input_shape=shape)
@@ -147,7 +147,9 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        model_match = (
+            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        )
         return data_type == AllowedDataType.PANDAS and model_match
 
 

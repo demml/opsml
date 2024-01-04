@@ -749,10 +749,12 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
 
     return SklearnModel(model=pipe, sample_data=train_data), PandasData(data=train_data)
 
+
 @pytest.fixture
 def sklearn_pipeline_model(sklearn_pipeline) -> SklearnModel:
     model, _ = sklearn_pipeline
     return model
+
 
 @pytest.fixture(scope="session")
 def sklearn_pipeline_advanced() -> SklearnModel:
@@ -784,7 +786,7 @@ def sklearn_pipeline_advanced() -> SklearnModel:
     y_train = y_train.to_numpy().astype(np.int32)
 
     clf.fit(X_train, y_train)
-    
+
     return SklearnModel(model=clf, sample_data=X_train[:100])
 
 
@@ -793,9 +795,8 @@ def xgb_df_regressor(example_dataframe):
     X_train, y_train, X_test, y_test = example_dataframe
     reg = XGBRegressor(n_estimators=5, max_depth=3)
     reg.fit(X_train.to_numpy(), y_train)
-    
-    return XGBoostModel(model=reg, sample_data=X_train[:100])
 
+    return XGBoostModel(model=reg, sample_data=X_train[:100])
 
 
 @pytest.fixture
@@ -821,7 +822,7 @@ def lgb_classifier(example_dataframe):
         num_leaves=5,
     )
     reg.fit(X_train.to_numpy(), y_train)
-    
+
     return LightGBMModel(model=reg, sample_data=X_train[:100])
 
 
@@ -839,8 +840,6 @@ def lgb_classifier_calibrated(example_dataframe):
     calibrated_model.fit(X_test, y_test)
 
     return SklearnModel(model=calibrated_model, sample_data=X_test[:10])
-
-
 
 
 @pytest.fixture
@@ -926,6 +925,7 @@ def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
     X, y = regression_data
     reg = linear_model.LinearRegression().fit(X, y)
     return SklearnModel(model=reg, sample_data=X), NumpyData(data=X)
+
 
 @pytest.fixture
 def linear_regression_model(linear_regression) -> Tuple[SklearnModel, NumpyData]:
@@ -1022,7 +1022,6 @@ def huggingface_bart() -> HuggingFaceModel:
 
 @pytest.fixture(scope="module")
 def huggingface_text_classification_pipeline():
-    from optimum.onnxruntime.configuration import AutoQuantizationConfig
     from transformers import pipeline
 
     pipe = pipeline("text-classification")
@@ -1088,12 +1087,14 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
 
     return model
 
+
 @pytest.fixture(scope="module")
 def huggingface_pipeline() -> HuggingFaceModel:
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
     from transformers import pipeline
+
     pipe = pipeline("text-classification", model="distilbert-base-uncased")
-    
+
     model = HuggingFaceModel(
         model=pipe,
         sample_data="test example",
@@ -1104,8 +1105,8 @@ def huggingface_pipeline() -> HuggingFaceModel:
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
     )
-    
-    return model 
+
+    return model
 
 
 @pytest.fixture(scope="module")

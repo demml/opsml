@@ -1,5 +1,6 @@
+import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 from pydantic import field_validator, model_validator
 
@@ -10,7 +11,6 @@ from opsml.types import (
     CommonKwargs,
     HuggingFaceOnnxArgs,
     HuggingFaceTask,
-    ModelReturn,
     OnnxModel,
     SaveName,
     TrainedModelType,
@@ -253,7 +253,25 @@ try:
 
             quantizer.quantize(save_dir=save_path, quantization_config=self.onnx_args.config)
 
-        def convert_to_onnx(self, path: Path) -> Tuple[ModelReturn, Path]:
+        def _convert_to_onnx_inplace(self) -> None:
+            """Converts model to onnx in place"""
+
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                lpath = Path(tmpdirname)
+                self.save_model((lpath / SaveName.TRAINED_MODEL.value))
+                self.save_preprocessor((lpath / SaveName.PREPROCESSOR.value))
+                return self.convert_to_onnx((lpath / SaveName.ONNX_MODEL.value))
+
+        def save_onnx(self, path: Path) -> None:
+            if self.onnx_model is None:
+                self.convert_to_onnx(path)
+
+            if self.is_pipeline:
+                self.onnx_model.sess.model.save_pretrained(path)
+            else:
+                self.onnx_model.sess.save_pretrained(path)
+
+        def convert_to_onnx(self, path: Optional[Path] = None) -> None:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
 
@@ -266,6 +284,12 @@ try:
             assert (
                 self.onnx_args is not None
             ), "No onnx args provided. If converting to onnx, provide a HuggingFaceOnnxArgs instance"
+
+            if self.onnx_model is not None:
+                return None
+
+            if path is None:
+                self._convert_to_onnx_inplace()
 
             # ensure no suffix (this is an exception to the rule to all model interfaces)
             # hunggingface prefers to save onnx models in dirs instead of single model.onnx file
@@ -363,7 +387,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
 
         @staticmethod
         def name() -> str:

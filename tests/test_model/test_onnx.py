@@ -1,15 +1,11 @@
 import sys
-import warnings
-
-import numpy as np
-import pandas as pd
-import pytest
-from pytest_lazyfixture import lazy_fixture
 import tempfile
+import warnings
 from pathlib import Path
 
+import pytest
+from pytest_lazyfixture import lazy_fixture
 
-from opsml.cards import ModelCard, ModelCardMetadata
 from opsml.model.interfaces import ModelInterface
 from opsml.types import SaveName, Suffix
 
@@ -140,42 +136,43 @@ def test_model_pytorch_predict(interface):
     "interface",
     [
         lazy_fixture("huggingface_torch_distilbert"),  # huggingface sequence classifier
-        lazy_fixture("huggingface_text_classification_pipeline"), 
+        lazy_fixture("huggingface_text_classification_pipeline"),
     ],
 )
 def test_huggingface_model(interface):
     with tempfile.TemporaryDirectory() as tmpdirname:
         lpath = Path(tmpdirname)
-        model_lpath = (lpath / SaveName.TRAINED_MODEL.value)
-        preprocessor_lpath = (lpath / SaveName.PREPROCESSOR.value)
-        onnx_lpath = (lpath / SaveName.ONNX_MODEL.value)
+        model_lpath = lpath / SaveName.TRAINED_MODEL.value
+        preprocessor_lpath = lpath / SaveName.PREPROCESSOR.value
+        onnx_lpath = lpath / SaveName.ONNX_MODEL.value
 
         interface.save_model(model_lpath)
         interface.save_preprocessor(preprocessor_lpath)
         interface.convert_to_onnx(onnx_lpath)
         assert interface.onnx_model.sess is not None
-        
-#huggingface_language_model
-#@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-#@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
-#@pytest.mark.parametrize(
+
+
+# huggingface_language_model
+# @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+# @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
+# @pytest.mark.parametrize(
 #    "model_and_data",
 #    [
 #        lazy_fixture("load_transformer_example"),  # keras transformer example
 #        lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
 #    ],
-#)
-#def test_tensorflow_predict(model_and_data):
+# )
+# def test_tensorflow_predict(model_and_data):
 #    model_predict(model_and_data)
 #
 #
-#@pytest.mark.parametrize(
+# @pytest.mark.parametrize(
 #    "model_and_data",
 #    [
 #        lazy_fixture("linear_regression"),  # linear regress with numpy
 #    ],
-#)
-#def test_byo_onnx(model_and_data):
+# )
+# def test_byo_onnx(model_and_data):
 #    model, data = model_and_data
 #
 #    if isinstance(data, dict):
@@ -229,14 +226,14 @@ def test_huggingface_model(interface):
 #    predictor.predict_with_model(model, record)
 #
 #
-#@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-#@pytest.mark.parametrize(
+# @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+# @pytest.mark.parametrize(
 #    "model_and_data",
 #    [
 #        lazy_fixture("pytorch_onnx_byo"),  # linear regress with numpy
 #    ],
-#)
-#def test_byo_pytorch_onnx(model_and_data):
+# )
+# def test_byo_pytorch_onnx(model_and_data):
 #    model_def, model, sample_data = model_and_data
 #
 #    # create model def first
