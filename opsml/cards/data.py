@@ -22,6 +22,11 @@ from opsml.data.splitter import DataHolder, DataSplit
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CardType, DataCardMetadata
 
+try:
+    from ydata_profiling import ProfileReport
+except ModuleNotFoundError:
+    ProfileReport = Any
+
 logger = ArtifactLogger.get_logger()
 
 
@@ -87,6 +92,18 @@ class DataCard(ArtifactCard):
         """
 
         self.metadata.additional_info = {**info, **self.metadata.additional_info}
+
+    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
+        """Creates a data profile report
+
+        Args:
+            sample_perc:
+                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
+                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
+
+        """
+
+        self.interface.create_data_profile()
 
     def split_data(self) -> DataHolder:
         """Splits data interface according to data split logic"""
