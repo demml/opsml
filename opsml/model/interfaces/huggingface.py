@@ -21,6 +21,7 @@ try:
     import transformers
     from transformers import (
         BatchEncoding,
+        BatchFeature,
         Pipeline,
         PreTrainedModel,
         TFPreTrainedModel,
@@ -93,7 +94,7 @@ try:
             if isinstance(sample_data, tuple):
                 return (data[0:1] for data in sample_data)
 
-            if isinstance(sample_data, (BatchEncoding, dict)):
+            if isinstance(sample_data, (BatchEncoding, BatchFeature, dict)):
                 sample_dict = {}
                 for key, value in sample_data.items():
                     sample_dict[key] = value[0:1]
@@ -273,7 +274,7 @@ try:
             from opsml.model.onnx import _get_onnx_metadata
 
             if self.onnx_model is None:
-                self.convert_to_onnx(path)
+                self.convert_to_onnx(path=path)
 
             if self.is_pipeline:
                 self.onnx_model.sess.model.save_pretrained(path)

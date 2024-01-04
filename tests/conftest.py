@@ -73,7 +73,14 @@ from xgboost import XGBRegressor
 from opsml.cards import DataSplit, ModelCard
 
 # opsml
-from opsml.data.interfaces import ArrowData, NumpyData, PandasData, PolarsData, SqlData
+from opsml.data.interfaces import (
+    ArrowData,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    SqlData,
+    TorchData,
+)
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model.challenger import ModelChallenger
@@ -979,7 +986,7 @@ def random_forest_api_example():
 
 
 @pytest.fixture(scope="module")
-def huggingface_whisper() -> Tuple[HuggingFaceModel, NumpyData]:
+def huggingface_whisper() -> Tuple[HuggingFaceModel, TorchData]:
     import transformers
 
     model = transformers.WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny")
@@ -992,18 +999,22 @@ def huggingface_whisper() -> Tuple[HuggingFaceModel, NumpyData]:
         model=model,
         sample_data=data,
         task_type=HuggingFaceTask.TEXT_GENERATION.value,
-    ), NumpyData(data=data)
+    ), TorchData(data=data)
 
 
 @pytest.fixture(scope="module")
-def huggingface_openai_gpt():
+def huggingface_openai_gpt() -> Tuple[HuggingFaceModel, TorchData]:
     from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer
 
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
     model = OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
     inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
 
-    return model, inputs
+    return HuggingFaceModel(
+        model=model,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+    ), TorchData(data=inputs["input_ids"])
 
 
 @pytest.fixture(scope="module")
@@ -1018,7 +1029,10 @@ def huggingface_bart() -> HuggingFaceModel:
         model=model,
         preprocessor=tokenizer,
         sample_data=inputs,
-        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        task_type=HuggingFaceTask.FEATURE_EXTRACTION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_FEATURE_EXTRACTION.value,
+        ),
     )
 
     return model
@@ -1114,7 +1128,7 @@ def huggingface_pipeline() -> HuggingFaceModel:
 
 
 @pytest.fixture(scope="module")
-def huggingface_vit():
+def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
     from PIL import Image
     from transformers import ViTFeatureExtractor, ViTModel
 
@@ -1124,15 +1138,19 @@ def huggingface_vit():
     model = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
 
     inputs = feature_extractor(images=image, return_tensors="pt")
-
     model = HuggingFaceModel(
         model=model,
         preprocessor=feature_extractor,
         sample_data=inputs,
         task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+        ),
     )
 
-    return model
+    data = TorchData(data=inputs["pixel_values"])
+
+    return model, data
 
 
 @pytest.fixture
