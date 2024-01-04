@@ -167,18 +167,22 @@ try:
                 raise ValueError(f"Task type {task} is not supported")
             return task
 
-        def _generate_predictions(self):
+        def _generate_predictions(self) -> Any:
             """Use model in generate mode if generate task"""
 
             assert self.sample_data is not None, "Sample data must be provided"
             assert self.model is not None, "Model must be provided"
 
-            if isinstance(self.sample_data, (BatchEncoding, dict)):
-                return self.model.generate(**self.sample_data)
+            try:  # try generation first , then functional
+                if isinstance(self.sample_data, (BatchEncoding, dict)):
+                    return self.model.generate(**self.sample_data)
 
-            return self.generate(self.sample_data)
+                return self.model.generate(self.sample_data)
 
-        def _functional_predictions(self):
+            except Exception:
+                return self._functional_predictions()
+
+        def _functional_predictions(self) -> Any:
             """Use model in functional mode if functional task"""
 
             assert self.sample_data is not None, "Sample data must be provided"

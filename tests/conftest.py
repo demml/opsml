@@ -979,16 +979,20 @@ def random_forest_api_example():
 
 
 @pytest.fixture(scope="module")
-def huggingface_whisper():
+def huggingface_whisper() -> Tuple[HuggingFaceModel, NumpyData]:
     import transformers
 
     model = transformers.WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny")
     model.config.forced_decoder_ids = None
 
     # come up with some dummy test data to fake out training.
-    data = joblib.load("tests/assets/whisper-data.joblib")
+    data = torch.Tensor(joblib.load("tests/assets/whisper-data.joblib"))
 
-    return model, data
+    return HuggingFaceModel(
+        model=model,
+        sample_data=data,
+        task_type=HuggingFaceTask.TEXT_GENERATION.value,
+    ), NumpyData(data=data)
 
 
 @pytest.fixture(scope="module")

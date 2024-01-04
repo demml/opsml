@@ -167,6 +167,6 @@ def test_torch_lightning_predict(interface: LightningModel):
     interface, _ = interface
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
-    
+
     # clean up lightning logs
     conftest.cleanup()
