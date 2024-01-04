@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -8,6 +9,7 @@ from opsml.model.interfaces.base import ModelInterface, SamplePrediction, get_mo
 from opsml.types import (
     CommonKwargs,
     ModelReturn,
+    SaveName,
     Suffix,
     TorchOnnxArgs,
     TorchSaveArgs,
@@ -149,22 +151,49 @@ try:
             """
             self.model = torch.load(path)
 
-        def convert_to_onnx(self, path: Path) -> ModelReturn:
-            # import packages for onnx conversion
-            OpsmlImportExceptions.try_torchonnx_imports()
+        def save_onnx(self, path: Path) -> ModelReturn:
+            """Saves an onnx model
 
+            Args:
+                path:
+                    Path to save model to
+
+            Returns:
+                ModelReturn
+            """
             import onnxruntime as rt
 
             from opsml.model.onnx import _get_onnx_metadata
-            from opsml.model.onnx.torch_converter import _PyTorchOnnxModel
 
             if self.onnx_model is None:
-                self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=path)
-            else:
-                sess: rt.InferenceSession = self.onnx_model.sess
-                path.write_bytes(sess._model_bytes)
+                return self.convert_to_onnx(path=path)
+
+            sess: rt.InferenceSession = self.onnx_model.sess
+            path.write_bytes(sess._model_bytes)
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+
+        def _convert_to_onnx_inplace(self) -> None:
+            """Convert to onnx model using temp dir"""
+            with tempfile.TemporaryDirectory() as tmpdir:
+                lpath = Path(tmpdir) / SaveName.ONNX.value
+                onnx_path = lpath.with_suffix(Suffix.ONNX.value)
+                self.convert_to_onnx(path=onnx_path)
+
+        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> ModelReturn:
+            # import packages for onnx conversion
+            OpsmlImportExceptions.try_torchonnx_imports()
+
+            if self.onnx_model is not None:
+                return None
+
+            from opsml.model.onnx.torch_converter import _PyTorchOnnxModel
+
+            path: Optional[Path] = kwargs.get("path")
+            if path is None:
+                self._convert_to_onnx_inplace()
+
+            self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=path)
 
         @property
         def model_suffix(self) -> str:

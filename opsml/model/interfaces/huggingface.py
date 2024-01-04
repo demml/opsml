@@ -11,6 +11,7 @@ from opsml.types import (
     CommonKwargs,
     HuggingFaceOnnxArgs,
     HuggingFaceTask,
+    ModelReturn,
     OnnxModel,
     SaveName,
     TrainedModelType,
@@ -262,16 +263,22 @@ try:
                 self.save_preprocessor((lpath / SaveName.PREPROCESSOR.value))
                 return self.convert_to_onnx((lpath / SaveName.ONNX_MODEL.value))
 
-        def save_onnx(self, path: Path) -> None:
+        def save_onnx(self, path: Path) -> ModelReturn:
+            import onnxruntime as rt
+
+            from opsml.model.onnx import _get_onnx_metadata
+
             if self.onnx_model is None:
                 self.convert_to_onnx(path)
 
             if self.is_pipeline:
                 self.onnx_model.sess.model.save_pretrained(path)
-            else:
-                self.onnx_model.sess.save_pretrained(path)
+                return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model.model))
 
-        def convert_to_onnx(self, path: Optional[Path] = None) -> None:
+            self.onnx_model.sess.save_pretrained(path)
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model))
+
+        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
 
@@ -288,19 +295,16 @@ try:
             if self.onnx_model is not None:
                 return None
 
+            import onnx
+            import optimum.onnxruntime as ort
+
+            path: Optional[Path] = kwargs.get("path")
             if path is None:
                 self._convert_to_onnx_inplace()
 
             # ensure no suffix (this is an exception to the rule to all model interfaces)
             # hunggingface prefers to save onnx models in dirs instead of single model.onnx file
             path = path.with_suffix("")
-
-            import onnx
-            import onnxruntime as rt
-            import optimum.onnxruntime as ort
-
-            from opsml.model.onnx import _get_onnx_metadata
-
             ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
             model_path = path.parent / SaveName.TRAINED_MODEL.value
             onnx_model = ort_model.from_pretrained(model_path, export=True, provider=self.onnx_args.provider)
@@ -322,8 +326,6 @@ try:
 
             if self.onnx_args.quantize:
                 self._quantize_model(path.parent, onnx_model)
-
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, onnx_model.model))
 
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)

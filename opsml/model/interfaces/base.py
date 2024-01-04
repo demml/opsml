@@ -120,23 +120,30 @@ class ModelInterface(BaseModel):
         """
         self.preprocessor = joblib.load(path)
 
-    def convert_to_onnx(self, path: Path) -> ModelReturn:
-        # don't want to try and import onnx unless we need to
+    def save_onnx(self, path: Path) -> ModelReturn:
         import onnxruntime as rt
 
-        from opsml.model.onnx import _get_onnx_metadata, _OnnxModelConverter
+        from opsml.model.onnx import _get_onnx_metadata
 
         if self.onnx_model is None:
-            metadata = _OnnxModelConverter(self).convert_model()
-            self.onnx_model = metadata.onnx_model
-        else:
-            metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+            self.convert_to_onnx()
+
+        metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
 
         sess: rt.InferenceSession = self.onnx_model.sess
         path = path.with_suffix(Suffix.ONNX.value)
         path.write_bytes(sess._model_bytes)
 
         return metadata
+
+    def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+        from opsml.model.onnx import _OnnxModelConverter
+
+        if self.onnx_model is not None:
+            return None
+
+        metadata = _OnnxModelConverter(self).convert_model()
+        self.onnx_model = metadata.onnx_model
 
     def load_onnx_model(self, path: Path) -> None:
         """Load onnx model from pathlib object
