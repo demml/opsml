@@ -26,6 +26,20 @@
 
 **Source Code**: [Code](https://github.com/shipt/opsml)
 
+:star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
+## Version 2
+The `opsml` team is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
+
+Core features of version 2 include:
+
+- Better decoupling and encapsulation of server, client and storage logic
+- Introduction of `model` and `data` interfaces for better type checking and library artifact saving and loading
+- Full support for `sklearn`, `xgboost`, `lightgbm`, `pytorch`, `torch lightning`, `tensorflow` and `huggingface` libraries.
+- Replace `mlflow` with homegrown ui
+- New cli ([link](https://github.com/shipt/opsml-cli))
+  
+:star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
+
 ## What is it?
 
 `OpsML` is an ML tooling library that simplifies the machine learning project lifecycle and provides process consistency.
