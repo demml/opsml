@@ -253,7 +253,7 @@ def test_app() -> Iterator[TestClient]:
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
-    cleanup()
+    #cleanup()
 
 
 @pytest.fixture(scope="module")

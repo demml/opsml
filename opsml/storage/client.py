@@ -226,20 +226,21 @@ class ApiStorageClient(StorageClientBase):
         return files
 
     def put(self, lpath: Path, rpath: Path) -> None:
-        # this will iterate through all dirs and files
-        for curr_lpath in lpath.rglob("*"):
-            if curr_lpath.is_file():
-                curr_rpath = rpath / curr_lpath.relative_to(lpath)
+        if not lpath.is_file():
+            for curr_lpath in lpath.rglob("*"):
+                if curr_lpath.is_file():
+                    curr_rpath = rpath / curr_lpath.relative_to(lpath)
+                    return self.put(curr_lpath, curr_rpath)
 
-                response = self.api_client.stream_post_request(
-                    route=ApiRoutes.UPLOAD_FILE,
-                    files={"file": open(curr_lpath.as_posix(), "rb")},
-                    headers={"write_path": curr_rpath.as_posix()},
-                )
-                storage_uri: Optional[str] = response.get("storage_uri")
+        response = self.api_client.stream_post_request(
+            route=ApiRoutes.UPLOAD_FILE,
+            files={"file": open(lpath.as_posix(), "rb")},
+            headers={"write_path": rpath.as_posix()},
+        )
+        storage_uri: Optional[str] = response.get("storage_uri")
 
-                if storage_uri is None:
-                    raise ValueError("Failed to write file to storage")
+        if storage_uri is None:
+            raise ValueError("Failed to write file to storage")
 
     def copy(self, src: str, dest: str, recursive: bool = True) -> None:
         raise NotImplementedError
