@@ -646,7 +646,7 @@ def test_model_registry_with_polars(
     model_registry = db_registries.model
     model_registry.register_card(card=model_card)
 
-    loaded_card = model_registry.load_card(uid=model_card.uid)
+    model_registry.load_card(uid=model_card.uid)
 
 
 def test_pandas_dtypes(db_registries: CardRegistries, pandas_data: PandasData):

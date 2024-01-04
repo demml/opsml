@@ -202,7 +202,7 @@ def delete_files(
             storage_client.rm(Path(path))
             return DeleteFileResponse(deleted=True)
 
-        except FileNotFoundError as _:
+        except FileNotFoundError:
             logger.warning(f"File {path} not found. It may have already been deleted")
             return DeleteFileResponse(deleted=True)
 
