@@ -3,6 +3,8 @@ import warnings
 from pathlib import Path
 from typing import Any, Iterator, Optional, Tuple
 
+from opsml.model.interfaces.xgb import XGBoostModel
+
 warnings.filterwarnings("ignore")
 
 
@@ -483,7 +485,7 @@ def pandas_timestamp_df():
 
 @pytest.fixture(scope="session")
 def example_dataframe():
-    X, y = create_fake_data(n_samples=1000)
+    X, y = create_fake_data(n_samples=1200)
 
     return X, y, X, y
 
@@ -667,13 +669,13 @@ def multi_input_tf_example():
 
 
 @pytest.fixture(scope="session")
-def load_pytorch_resnet():
+def pytorch_resnet() -> PyTorchModel:
     import torch
 
     loaded_model = torch.load("tests/assets/resnet.pt")
-    data = torch.randn(1, 3, 224, 224).numpy()
+    data = torch.randn(1, 3, 224, 224)
 
-    return loaded_model, data
+    return PyTorchModel(model=loaded_model, sample_data=data)
 
 
 @pytest.fixture
@@ -705,7 +707,7 @@ def iris_data_polars() -> PolarsData:
 
 
 @pytest.fixture
-def stacking_regressor(regression_data):
+def stacking_regressor(regression_data) -> SklearnModel:
     X, y = regression_data
     estimators = [
         ("lr", ensemble.RandomForestRegressor(n_estimators=5)),
@@ -718,10 +720,10 @@ def stacking_regressor(regression_data):
         cv=2,
     )
     reg.fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = pd.DataFrame(
         [
@@ -747,9 +749,13 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
 
     return SklearnModel(model=pipe, sample_data=train_data), PandasData(data=train_data)
 
+@pytest.fixture
+def sklearn_pipeline_model(sklearn_pipeline) -> SklearnModel:
+    model, _ = sklearn_pipeline
+    return model
 
 @pytest.fixture(scope="session")
-def sklearn_pipeline_advanced() -> tuple[Pipeline, pd.DataFrame]:
+def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
@@ -778,7 +784,8 @@ def sklearn_pipeline_advanced() -> tuple[Pipeline, pd.DataFrame]:
     y_train = y_train.to_numpy().astype(np.int32)
 
     clf.fit(X_train, y_train)
-    return clf, X_train[:100]
+    
+    return SklearnModel(model=clf, sample_data=X_train[:100])
 
 
 @pytest.fixture
@@ -786,7 +793,9 @@ def xgb_df_regressor(example_dataframe):
     X_train, y_train, X_test, y_test = example_dataframe
     reg = XGBRegressor(n_estimators=5, max_depth=3)
     reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
+    
+    return XGBoostModel(model=reg, sample_data=X_train[:100])
+
 
 
 @pytest.fixture
@@ -812,7 +821,8 @@ def lgb_classifier(example_dataframe):
         num_leaves=5,
     )
     reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
+    
+    return LightGBMModel(model=reg, sample_data=X_train[:100])
 
 
 @pytest.fixture
@@ -828,7 +838,9 @@ def lgb_classifier_calibrated(example_dataframe):
     calibrated_model = CalibratedClassifierCV(reg, method="isotonic", cv="prefit")
     calibrated_model.fit(X_test, y_test)
 
-    return calibrated_model, X_test[:10]
+    return SklearnModel(model=calibrated_model, sample_data=X_test[:10])
+
+
 
 
 @pytest.fixture
@@ -843,7 +855,7 @@ def lgb_classifier_calibrated_pipeline(example_dataframe):
     pipe = Pipeline([("preprocess", StandardScaler()), ("clf", CalibratedClassifierCV(reg, method="isotonic", cv=3))])
     pipe.fit(X_train, y_train)
 
-    return pipe, X_test[:10]
+    return SklearnModel(model=pipe, sample_data=X_test[:10])
 
 
 @pytest.fixture
@@ -909,11 +921,16 @@ def linear_regression_polars(regression_data_polars: pl.DataFrame) -> Tuple[Skle
     return SklearnModel(model=reg, sample_data=X.to_numpy()), PolarsData(data=X)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
     X, y = regression_data
     reg = linear_model.LinearRegression().fit(X, y)
     return SklearnModel(model=reg, sample_data=X), NumpyData(data=X)
+
+@pytest.fixture
+def linear_regression_model(linear_regression) -> Tuple[SklearnModel, NumpyData]:
+    model, data = linear_regression
+    return model
 
 
 @pytest.fixture
@@ -1005,6 +1022,7 @@ def huggingface_bart() -> HuggingFaceModel:
 
 @pytest.fixture(scope="module")
 def huggingface_text_classification_pipeline():
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
     from transformers import pipeline
 
     pipe = pipeline("text-classification")
@@ -1015,6 +1033,9 @@ def huggingface_text_classification_pipeline():
         sample_data=data,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         is_pipeline=True,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+        ),
     )
 
     return model
@@ -1066,6 +1087,25 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
     )
 
     return model
+
+@pytest.fixture(scope="module")
+def huggingface_pipeline() -> HuggingFaceModel:
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
+    from transformers import pipeline
+    pipe = pipeline("text-classification", model="distilbert-base-uncased")
+    
+    model = HuggingFaceModel(
+        model=pipe,
+        sample_data="test example",
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            quantize=True,
+            config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
+        ),
+    )
+    
+    return model 
 
 
 @pytest.fixture(scope="module")
@@ -1220,10 +1260,10 @@ def test_fastapi_client(fastapi_model_app):
 
 ##### Sklearn estimators for onnx
 @pytest.fixture(scope="module")
-def ard_regression(regression_data):
+def ard_regression(regression_data) -> SklearnModel:
     X, y = regression_data
     reg = linear_model.ARDRegression().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="session")
@@ -1246,14 +1286,14 @@ def ada_boost_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.AdaBoostClassifier(n_estimators=5, random_state=0)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def ada_regression(regression_data):
     X, y = regression_data
     reg = ensemble.AdaBoostRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1261,49 +1301,49 @@ def bagging_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.BaggingClassifier(n_estimators=5)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def bagging_regression(regression_data):
     X, y = regression_data
     reg = ensemble.BaggingRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def bayesian_ridge_regression(regression_data):
     X, y = regression_data
     reg = linear_model.BayesianRidge(n_iter=10).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def bernoulli_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.BernoulliNB(force_alpha=True).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def categorical_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.CategoricalNB(force_alpha=True).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def complement_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.ComplementNB(force_alpha=True).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def decision_tree_regressor(regression_data):
     X, y = regression_data
     reg = tree.DecisionTreeRegressor(max_depth=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1316,35 +1356,35 @@ def decision_tree_classifier():
 
     clf = tree.DecisionTreeClassifier(max_depth=5).fit(X, y)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def elastic_net(regression_data):
     X, y = regression_data
     reg = linear_model.ElasticNet(max_iter=10).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def elastic_net_cv(regression_data):
     X, y = regression_data
     reg = linear_model.ElasticNetCV(max_iter=10, cv=2).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def extra_tree_regressor(regression_data):
     X, y = regression_data
     reg = tree.ExtraTreeRegressor(max_depth=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def extra_trees_regressor(regression_data):
     X, y = regression_data
     reg = ensemble.ExtraTreesRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1352,7 +1392,7 @@ def extra_tree_classifier(classification_data):
     X, y = classification_data
     clf = tree.ExtraTreeClassifier(max_depth=5).fit(X, y)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1360,28 +1400,28 @@ def extra_trees_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.ExtraTreesClassifier(n_estimators=5).fit(X, y)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gamma_regressor(regression_data):
     X, y = regression_data
     reg = linear_model.GammaRegressor(max_iter=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gaussian_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.GaussianNB().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gaussian_process_regressor(regression_data):
     X, y = regression_data
     reg = gaussian_process.GaussianProcessRegressor().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1389,14 +1429,14 @@ def gradient_booster_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.GradientBoostingClassifier(n_estimators=5)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gradient_booster_regressor(regression_data):
     X, y = regression_data
-    reg = clf = ensemble.GradientBoostingRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    reg = ensemble.GradientBoostingRegressor(n_estimators=5).fit(X, y)
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1404,119 +1444,119 @@ def hist_booster_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.HistGradientBoostingClassifier(max_iter=5)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def hist_booster_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = ensemble.HistGradientBoostingRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def huber_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.HuberRegressor(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def knn_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = neighbors.KNeighborsRegressor(n_neighbors=2).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def knn_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     clf = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X_train, y_train)
-    return clf, X_train
+    return SklearnModel(model=clf, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lars_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Lars().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lars_cv_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LarsCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lasso_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Lasso().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lasso_cv_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lasso_lars_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLars().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lasso_lars_cv_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLarsCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def lasso_lars_ic_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLarsIC().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def linear_svc(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = svm.LinearSVC(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def linear_svr(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = svm.LinearSVR(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def logistic_regression_cv(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LogisticRegressionCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def mlp_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = neural_network.MLPClassifier(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def mlp_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = neural_network.MLPRegressor(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1525,7 +1565,7 @@ def multioutput_classification():
 
     X, y = make_multilabel_classification(n_classes=3, random_state=0)
     reg = multioutput.MultiOutputClassifier(linear_model.LogisticRegression()).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1534,7 +1574,7 @@ def multioutput_regression():
 
     X, y = load_linnerud(return_X_y=True)
     reg = multioutput.MultiOutputRegressor(linear_model.Ridge(random_state=123)).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1542,7 +1582,7 @@ def multitask_elasticnet():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskElasticNet(alpha=0.1).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1550,7 +1590,7 @@ def multitask_elasticnet_cv():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskElasticNetCV(max_iter=5, cv=2).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1558,7 +1598,7 @@ def multitask_lasso():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskLasso(alpha=0.1).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1566,7 +1606,7 @@ def multitask_lasso_cv():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskLassoCV(max_iter=5, cv=2).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1574,140 +1614,140 @@ def multinomial_nb():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([1, 2, 3])
     reg = naive_bayes.MultinomialNB().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def nu_svc(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = svm.NuSVC(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def nu_svr(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = svm.NuSVR(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def pls_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = cross_decomposition.PLSRegression(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def passive_aggressive_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PassiveAggressiveClassifier(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def passive_aggressive_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PassiveAggressiveRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def perceptron(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Perceptron(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def poisson_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PoissonRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def quantile_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.QuantileRegressor(solver="highs").fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def ransac_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RANSACRegressor(max_trials=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def radius_neighbors_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = neighbors.RadiusNeighborsRegressor().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def radius_neighbors_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     clf = neighbors.RadiusNeighborsClassifier().fit(X_train, y_train)
-    return clf, X_train
+    return SklearnModel(model=clf, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def ridge_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Ridge().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def ridge_cv_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RidgeCV(cv=2).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def ridge_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RidgeClassifier(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def ridge_cv_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
-    reg = reg = linear_model.RidgeClassifierCV(cv=2).fit(X_train, y_train)
-    return reg, X_train
+    reg = linear_model.RidgeClassifierCV(cv=2).fit(X_train, y_train)
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def sgd_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.SGDClassifier(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def sgd_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.SGDRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def svc(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = svm.SVC(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def svr(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = svm.SVR(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1724,21 +1764,21 @@ def stacking_classifier():
         estimators=estimators, final_estimator=linear_model.LogisticRegression(max_iter=5)
     )
     reg.fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def theilsen_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.TheilSenRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
 def tweedie_regressor(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.TweedieRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1750,8 +1790,8 @@ def voting_classifier(example_dataframe):
     eclf1 = ensemble.VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard", flatten_transform=False
     )
-    eclf1 = eclf1.fit(X_train, y_train)
-    return eclf1, X_train
+    reg = eclf1.fit(X_train, y_train)
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1761,8 +1801,8 @@ def voting_regressor(example_dataframe):
     clf2 = ensemble.RandomForestRegressor(n_estimators=5, random_state=1)
     clf3 = linear_model.Lasso()
     eclf1 = ensemble.VotingRegressor(estimators=[("lr", clf1), ("rf", clf2), ("lso", clf3)])
-    eclf1 = eclf1.fit(X_train, y_train)
-    return eclf1, X_train
+    reg = eclf1.fit(X_train, y_train)
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")

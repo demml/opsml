@@ -141,19 +141,17 @@ class ArrayData(ModelDataHelper):
     def __init__(self, input_data: Any, data_type: str):
         super().__init__(input_data=input_data, data_type=data_type)
 
-        self._dtype, self._shape = ArrayHelper.get_array_stats(self._data)
-
     @property
     def dtypes(self) -> List[str]:
-        return [self._dtype]
+        return [ArrayHelper.get_array_stats(self._data)[0]]
 
     @property
     def num_dtypes(self) -> int:
-        return len(self._dtype)
+        return len(self.dtypes)
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return self._shape
+        return ArrayHelper.get_array_stats(self._data)[1]
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -227,7 +225,6 @@ class DataDictionary(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Dict[str, Any], self.data)
-        self._dtypes, self._shape = self.get_dtypes_shapes
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -240,9 +237,9 @@ class DataDictionary(ModelDataHelper):
 
     @property
     def shape(self) -> List[Tuple[int, ...]]:
-        return self._shape
+        return self.get_dtypes_shapes[1]
 
-    @cached_property
+    @property
     def get_dtypes_shapes(
         self,
     ) -> Tuple[List[str], List[Tuple[int, ...]]]:
@@ -266,11 +263,11 @@ class DataDictionary(ModelDataHelper):
 
     @property
     def dtypes(self) -> List[str]:
-        return self._dtypes
+        return self.get_dtypes_shapes[0]
 
     @property
     def num_dtypes(self) -> int:
-        return len(set(self._dtypes))
+        return len(set(self.dtypes))
 
     @property
     def features(self) -> List[str]:
@@ -290,7 +287,6 @@ class IterData(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(Union[List[Any], Tuple[Any]], self.data)
-        self._dtypes, self._shape = self.get_dtypes_shapes
         self._features = [f"input_{i}" for i in range(len(self.data))]
 
     @cached_property
@@ -316,15 +312,15 @@ class IterData(ModelDataHelper):
 
     @property
     def dtypes(self) -> List[str]:
-        return self._dtypes
+        return self.get_dtypes_shapes[0]
 
     @property
     def shape(self) -> List[Tuple[int, ...]]:
-        return self._shape
+        return self.get_dtypes_shapes[1]
 
     @property
     def num_dtypes(self) -> int:
-        return len(set(self._dtypes))
+        return len(set(self.dtypes))
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -423,8 +419,7 @@ class FloatTypeConverter:
     def _convert_array(self, data: NDArray[Any]) -> NDArray[Any]:
         dtype = str(data.dtype)
         if dtype != DataDtypes.STRING:
-            data.astype(np.float32, copy=False)
-
+            data = data.astype(np.float32, copy=False)
         return data
 
     def _convert_dict(self, data: Dict[str, NDArray[Any]]) -> Dict[str, NDArray[Any]]:
