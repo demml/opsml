@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Tuple, Any, Dict
 
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, Feature, Suffix
+from opsml.types import AllowedDataType, Feature, Suffix, CommonKwargs
 
 try:
     import torch
@@ -28,6 +28,9 @@ try:
 
         data: Optional[Union[Dataset, torch.Tensor]] = None
 
+        def _add_feature(self, name: str, shape: Tuple[Any, ...], dtype: str) -> None:
+            self.feature_map[name] = Feature(feature_type=dtype, shape=shape)
+
         def save_data(self, path: Path) -> None:
             """Saves torch dataset or tensor(s)"""
 
@@ -36,15 +39,24 @@ try:
             torch.save(self.data, path)
 
             if isinstance(self.data, Dataset):
-                assert hasattr(self.data, "data"), "Dataset must have attribute data"
-                shape = self.data.data.shape
-                dtype = str(self.data.data.dtype)
+                sample = self.data.__getitem__(0)
+
+                if isinstance(sample, (tuple, list)):
+                    for nbr, _sample in enumerate(sample):
+                        self._add_feature(name=f"features_{nbr}", shape=_sample.shape, dtype=str(_sample.dtype))
+
+                elif isinstance(sample, dict):
+                    for key, _sample in sample.items():
+                        self._add_feature(name=str(key), shape=_sample.shape, dtype=str(_sample.dtype))
+
+                else:
+                    try:
+                        self._add_feature("features", sample.shape, str(sample.dtype))
+                    except Exception:
+                        self._add_feature("features", (CommonKwargs.UNDEFINED.value), CommonKwargs.UNDEFINED.value)
 
             else:
-                shape = self.data.shape
-                dtype = str(self.data.dtype)
-
-            self.feature_map = {"features": Feature(feature_type=dtype, shape=shape)}
+                self._add_feature("features", self.data.shape, str(self.data.dtype))
 
         def load_data(self, path: Path) -> None:
             """Load numpy array from zarr file"""
@@ -66,8 +78,6 @@ try:
             return TorchData.__name__
 
 except ModuleNotFoundError:
-    from typing import Any, Dict
-
     from pydantic import model_validator
 
     class TorchData(DataInterface):
