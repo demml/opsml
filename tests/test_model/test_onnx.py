@@ -1,13 +1,16 @@
 import sys
-import tempfile
 import warnings
-from pathlib import Path
 
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.model.interfaces import ModelInterface, PyTorchModel, HuggingFaceModel, TensorFlowModel
-from opsml.types import SaveName
+from opsml.model.interfaces import (
+    HuggingFaceModel,
+    LightningModel,
+    ModelInterface,
+    PyTorchModel,
+    TensorFlowModel,
+)
 
 EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
@@ -107,7 +110,7 @@ warnings.warn = warn
         lazy_fixture("lgb_classifier_calibrated_pipeline"),
     ],
 )
-def _test_sklearn_models(interface: ModelInterface):
+def test_sklearn_models(interface: ModelInterface):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
@@ -120,7 +123,7 @@ def _test_sklearn_models(interface: ModelInterface):
         lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
-def _test_model_pytorch_predict(interface: PyTorchModel):
+def test_model_pytorch_predict(interface: PyTorchModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
@@ -133,7 +136,7 @@ def _test_model_pytorch_predict(interface: PyTorchModel):
         lazy_fixture("huggingface_text_classification_pipeline"),
     ],
 )
-def _test_huggingface_model(interface: HuggingFaceModel):
+def test_huggingface_model(interface: HuggingFaceModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
@@ -141,102 +144,25 @@ def _test_huggingface_model(interface: HuggingFaceModel):
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 @pytest.mark.parametrize(
-   "model_and_data",
-   [
-       lazy_fixture("tf_transformer_example"),  # keras transformer example
-       lazy_fixture("multi_input_tf_example"),  # keras multi input model
-   ],
+    "interface",
+    [
+        lazy_fixture("tf_transformer_example"),  # keras transformer example
+        lazy_fixture("multi_input_tf_example"),  # keras multi input model
+    ],
 )
 def test_tensorflow_predict(interface: TensorFlowModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
-#
-#
-# @pytest.mark.parametrize(
-#    "model_and_data",
-#    [
-#        lazy_fixture("linear_regression"),  # linear regress with numpy
-#    ],
-# )
-# def test_byo_onnx(model_and_data):
-#    model, data = model_and_data
-#
-#    if isinstance(data, dict):
-#        sample_data = data
-#    else:
-#        sample_data = data[0:1]
-#
-#    # create model def first
-#    modelcard = ModelCard(
-#        trained_model=model,
-#        sample_input_data=sample_data,
-#        name="test_model",
-#        team="mlops",
-#        user_email="test_email",
-#        datacard_uid="test_uid",
-#        to_onnx=True,
-#    )
-#    predictor = modelcard.onnx_model()
-#    model_def = modelcard.metadata.onnx_model
-#
-#    # byo onnx model def
-#    new_modelcard = ModelCard(
-#        trained_model=model,
-#        sample_input_data=sample_data,
-#        name="test_model",
-#        team="mlops",
-#        user_email="test_email",
-#        datacard_uid="test_uid",
-#        metadata=ModelCardMetadata(onnx_model=model_def),
-#        to_onnx=True,
-#    )
-#    predictor = new_modelcard.onnx_model()
-#    assert new_modelcard.metadata.data_schema is not None
-#
-#    if isinstance(data, np.ndarray):
-#        input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
-#
-#        record = {input_name: data[0, :].tolist()}
-#
-#    elif isinstance(data, pd.DataFrame):
-#        record = list(sample_data[0:1].T.to_dict().values())[0]
-#
-#    else:
-#        record = {}
-#        for feat, val in sample_data.items():
-#            record[feat] = np.ravel(val).tolist()
-#
-#    pred_onnx = predictor.predict(record)
-#
-#    predictor.output_sig(**pred_onnx)
-#    predictor.predict_with_model(model, record)
-#
-#
-# @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-# @pytest.mark.parametrize(
-#    "model_and_data",
-#    [
-#        lazy_fixture("pytorch_onnx_byo"),  # linear regress with numpy
-#    ],
-# )
-# def test_byo_pytorch_onnx(model_and_data):
-#    model_def, model, sample_data = model_and_data
-#
-#    # create model def first
-#    modelcard = ModelCard(
-#        trained_model=model,
-#        sample_input_data=sample_data,
-#        name="test_model",
-#        team="mlops",
-#        user_email="test_email",
-#        datacard_uid="test_uid",
-#        metadata=ModelCardMetadata(onnx_model=model_def),
-#        to_onnx=True,
-#    )
-#
-#    predictor = modelcard.onnx_model()
-#    input_name = next(iter(predictor.data_schema.model_data_schema.input_features.keys()))
-#    record = {input_name: sample_data[0, :].tolist()}
-#    predictor.predict(record)
-#    predictor.predict_with_model(model, record)
-#
+
+
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.parametrize(
+    "interface",
+    [
+        lazy_fixture("lightning_regression"),  # pytorch lightning
+    ],
+)
+def test_torch_lightning_predict(interface: LightningModel):
+    interface, _ = interface
+    interface.convert_to_onnx()
+    assert interface.onnx_model.sess is not None
