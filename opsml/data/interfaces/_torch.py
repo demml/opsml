@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Optional, Union, Tuple, Any, Dict
+from typing import Any, Dict, Optional, Tuple, Union
 
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, Feature, Suffix, CommonKwargs
+from opsml.types import AllowedDataType, CommonKwargs, Feature, Suffix
 
 try:
     import torch
