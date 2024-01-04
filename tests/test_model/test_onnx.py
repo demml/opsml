@@ -143,12 +143,13 @@ def _test_huggingface_model(interface: HuggingFaceModel):
 @pytest.mark.parametrize(
    "model_and_data",
    [
-       lazy_fixture("load_transformer_example"),  # keras transformer example
-       lazy_fixture("load_multi_input_keras_example"),  # keras multi input model
+       lazy_fixture("tf_transformer_example"),  # keras transformer example
+       lazy_fixture("multi_input_tf_example"),  # keras multi input model
    ],
 )
-def test_tensorflow_predict(interface: ):
-   model_predict(model_and_data)
+def test_tensorflow_predict(interface: TensorFlowModel):
+    interface.convert_to_onnx()
+    assert interface.onnx_model.sess is not None
 #
 #
 # @pytest.mark.parametrize(
