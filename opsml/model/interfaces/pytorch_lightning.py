@@ -1,18 +1,12 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 from pydantic import model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.model.interfaces.base import SamplePrediction, get_model_args
 from opsml.model.interfaces.pytorch import PyTorchModel
-from opsml.types import (
-    CommonKwargs,
-    ModelReturn,
-    Suffix,
-    TorchOnnxArgs,
-    TrainedModelType,
-)
+from opsml.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
     from lightning import Trainer
@@ -122,22 +116,21 @@ try:
             except Exception as e:
                 raise ValueError(f"Unable to load pytorch lightning model: {e}")
 
-        def convert_to_onnx(self, path: Path) -> ModelReturn:
+        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+            """Converts model to onnx"""
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
 
-            import onnxruntime as rt
+            if self.onnx_model is not None:
+                return None
 
-            from opsml.model.onnx import _get_onnx_metadata
             from opsml.model.onnx.torch_converter import _PyTorchLightningOnnxModel
 
-            if self.onnx_model is None:
-                self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(path=path)
-            else:
-                sess: rt.InferenceSession = self.onnx_model.sess
-                path.write_bytes(sess._model_bytes)
+            path: Optional[Path] = kwargs.get("path")
+            if path is None:
+                self._convert_to_onnx_inplace()
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+            self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(path=path)
 
         @property
         def model_suffix(self) -> str:
