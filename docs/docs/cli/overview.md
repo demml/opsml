@@ -63,18 +63,3 @@ Runs a comparison between a model challenger and *n* model champions
 - **metric_name**: Metrics to compare
 - **lower_is_better**: Whether a lower metric is better
 
-#### Docs
-
-::: opsml.cli.api_cli
-    options:
-        members:
-            - download_model
-            - download_model_metadata
-            - list_cards
-            - get_model_metrics
-            - download_data_profile
-            - compare_data_profiles
-            - compare_model_metrics
-        show_root_heading: true
-        show_source: true
-        heading_level: 3
