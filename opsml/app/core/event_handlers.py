@@ -13,6 +13,7 @@ from opsml.model.registrar import ModelRegistrar
 from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
 from opsml.storage import client
+from contextlib import asynccontextmanager
 
 logger = ArtifactLogger.get_logger()
 
@@ -60,3 +61,10 @@ def stop_app_handler(app: FastAPI) -> Callable[[], None]:
         _shutdown_registries(app=app)
 
     return shutdown
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_app_handler(app)
+    yield
+    stop_app_handler(app)
