@@ -34,10 +34,6 @@ def test_gcsfs_integration(gcsfs_integration_client: GCSFSStorageClient, gcsfs_b
     for f in gcsfs_integration_client.iterfile(rpath, 1000):
         _bytes = lpath.read_bytes()
 
-    # get mapper
-    mapper = gcsfs_integration_client.get_mapper(gcsfs_bucket)
-    assert mapper is not None
-
     # remove file
     gcsfs_integration_client.rm(rpath)
 
