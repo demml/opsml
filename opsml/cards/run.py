@@ -194,7 +194,6 @@ class RunCard(ArtifactCard):
         if lpath.is_file():
             rpath = rpath / lpath.name
 
-        print(lpath, rpath)
         client.storage_client.put(lpath, rpath)
         self._add_artifact_uri(
             name=name,

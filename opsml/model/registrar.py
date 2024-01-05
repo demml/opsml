@@ -6,6 +6,7 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Dict, Optional, Union
+from opsml.app.core.dependencies import swap_opsml_root
 
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
@@ -13,6 +14,7 @@ from tenacity import retry, stop_after_attempt
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClient
 from opsml.types import ModelMetadata
+from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
 
@@ -51,9 +53,9 @@ class ModelRegistrar:
             raise ValueError("storage_client is required")
         self.storage_client = storage_client
 
-    def _registry_path(self, request: RegistrationRequest) -> str:
+    def _registry_path(self, request: RegistrationRequest) -> Path:
         """Returns hardcoded uri"""
-        return f"model_registry/{request.name}/v{request.version}"
+        return Path(f"model_registry/{request.name}/v{request.version}")
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.
@@ -65,20 +67,11 @@ class ModelRegistrar:
         Args:
             request: The model registration request.
         """
+        path = self._registry_path(request)
+        files = self.storage_client.find(path)
+        return bool(files)
 
-        try:
-            path = self._registry_path(request)
-            files = self.storage_client.find(path)
-
-            if len(files) == 0 or files[0] == path:
-                # no files or only an empty directory exists
-                return False
-
-            return True
-        except FileNotFoundError:
-            return False
-
-    def _get_correct_model_uri(self, request: RegistrationRequest, metadata: ModelMetadata) -> Optional[str]:
+    def _get_correct_model_uri(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
         """Gets correct model uri based on the request's onnx flag.
 
         Args:
@@ -86,6 +79,8 @@ class ModelRegistrar:
             metadata: The model metadata.
         """
         if request.onnx:
+            if metadata.onnx_uri is None:
+                raise RegistrationError("the onnx model uri does not exist")
             return metadata.onnx_uri
         return metadata.model_uri
 
@@ -93,9 +88,9 @@ class ModelRegistrar:
     def _copy_model_to_registry(
         self,
         request: RegistrationRequest,
-        model_uri: str,
+        model_uri: Path,
         metadata: ModelMetadata,
-    ) -> str:
+    ) -> Path:
         """Copies a model from it's original storage path to a hardcoded model registry path
 
         Args:
@@ -106,7 +101,8 @@ class ModelRegistrar:
             The URI to the directory containing the registered model.
 
         """
-        read_path = os.path.dirname(model_uri)
+
+        read_path = model_uri.parent
         registry_path = self._registry_path(request)
 
         # delete existing model if it exists
@@ -168,13 +164,13 @@ class ModelRegistrar:
         model_settings = self._model_settings(metadata, model_uri)
         logger.info("ModelRegistrar: registering model settings: {}", model_settings)
         with tempfile.TemporaryDirectory() as tmpdirname:
-            local_path = f"{tmpdirname}/model-settings.json"
-            with open(local_path, "w", encoding="utf-8") as outfile:
-                json.dump(model_settings, outfile)
-            self.storage_client.put(local_path, registry_path)
+            lpath = Path(tmpdirname) / "model-settings.json"
+            lpath.write_text(json.dumps(model_settings))
+            self.storage_client.put(lpath, Path(registry_path))
+
         logger.info("ModelRegistrar: registered model settings: {} path={}", model_settings, registry_path)
 
-    def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
+    def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> Path:
         """Registers a model to a hardcoded storage path.
 
         Args:
@@ -184,13 +180,10 @@ class ModelRegistrar:
         Returns:
             The URI to the directory containing the registered model.
         """
-        model_uri = self._get_correct_model_uri(request, metadata)
-
-        if model_uri is None:
-            raise RegistrationError("the model_uri does not exist")
+        model_uri = swap_opsml_root(self._get_correct_model_uri(request, metadata))
 
         logger.info("ModelRegistrar: registering model: {}", request.model_dump())
-        registry_path = self._copy_model_to_registry(request, model_uri, metadata)
+        registry_path = self._copy_model_to_registry(request, Path(model_uri), metadata)
         logger.info("ModelRegistrar: registered model: {} path={}", request.model_dump(), registry_path)
 
         return registry_path

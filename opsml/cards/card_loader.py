@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterator, Optional, cast
 
 import joblib
 from pydantic import BaseModel
-
+import json
 from opsml.cards import (
     ArtifactCard,
     AuditCard,
@@ -25,7 +25,7 @@ from opsml.model.interfaces import HuggingFaceModel, get_model_interface
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import CardType, RegistryTableNames, RegistryType, SaveName, Suffix
-from opsml.types.model import OnnxModel
+from opsml.types.model import ModelMetadata, OnnxModel
 
 table_name_card_map = {
     RegistryType.DATA.value: DataCard,
@@ -311,6 +311,19 @@ class ModelCardLoader(CardLoader):
         with self._load_object(save_name, self.onnx_suffix) as lpath:
             self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(lpath)
+
+    def load_model_metadata(self) -> ModelMetadata:
+        """Load model metadata to interface"""
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lpath = Path(tmp_dir)
+            rpath = self.card.uri
+            load_path = self.download(lpath, rpath, SaveName.MODEL_METADATA.value, Suffix.JSON.value)
+
+            with load_path.open() as json_file:
+                metadata = json.load(json_file)
+
+        return ModelMetadata(**metadata)
 
     def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Load model, preprocessor and sample data"""

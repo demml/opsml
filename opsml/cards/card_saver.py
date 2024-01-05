@@ -122,6 +122,7 @@ class DataCardSaver(CardSaver):
         dumped_datacard = self.card.model_dump(exclude=exclude_attr)
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
+
         joblib.dump(dumped_datacard, save_path)
 
     def save_artifacts(self) -> None:
@@ -380,9 +381,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
