@@ -394,20 +394,6 @@ class ModelRouteHelper(RouteHelper):
 
         return None, None
 
-    def _check_data_dim(self, metadata: ModelMetadata) -> str:
-        """Checks if the data dimension is too large to load in the UI
-
-        Args:
-            metadata:
-                The model metadata.
-
-        Returns:
-            `Tuple[str, str]`
-        """
-        metadata_json = json.dumps(metadata.model_dump(), indent=4)
-
-        return metadata_json
-
     def get_versions_page(
         self,
         request: Request,
@@ -439,7 +425,7 @@ class ModelRouteHelper(RouteHelper):
             modelcard=cast(ModelCard, modelcard),
         )
 
-        metadata_json, sample_data = self._check_data_dim(metadata)
+        metadata_json = json.dumps(metadata.model_dump(), indent=4)
 
         return templates.TemplateResponse(
             "include/model/model_version.html",
@@ -450,7 +436,6 @@ class ModelRouteHelper(RouteHelper):
                 "selected_version": version,
                 "project_num": project_num,
                 "metadata": metadata,
-                "sample_data": sample_data,
                 "runcard": runcard,
                 "metadata_json": metadata_json,
             },
