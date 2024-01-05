@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
 
 from fsspec.implementations.local import LocalFileSystem
-from torch import NoneType
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import OpsmlConfig, config
@@ -91,7 +90,7 @@ class StorageClientBase(StorageClientProtocol):
             self.client = client
         self.settings = settings
 
-    def get(self, rpath: Path, lpath: Path) -> NoneType:
+    def get(self, rpath: Path, lpath: Path) -> None:
         # handle rpath
         if rpath.suffix:
             recursive = False
