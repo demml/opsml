@@ -80,22 +80,6 @@ async def data_versions_uid_page(
     )
 
 
-@router.get("/data/profile/view/", response_class=HTMLResponse)
-@error_to_500
-async def data_versions_profile_page(
-    request: Request,
-    name: str,
-    version: str,
-    profile_uri: Optional[str] = None,
-) -> HTMLResponse:
-    return data_route_helper.get_data_profile_page(  # type: ignore[return-value]
-        request=request,
-        name=name,
-        version=version,
-        profile_uri=profile_uri,
-    )
-
-
 @router.post("/data/profile", name="download_data_profile")
 def download_data_profile(
     request: Request,
