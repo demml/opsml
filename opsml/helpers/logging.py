@@ -11,6 +11,7 @@ class ArtifactLogger(Logger):  # type: ignore
         return super().get_logger(
             config=LogConfig(
                 stdout=True,
+                level="DEBUG",
                 time_format="[year]-[month]-[day]T[hour repr:24]:[minute]:[second]",
                 json_config=JsonConfig(),
             ),
