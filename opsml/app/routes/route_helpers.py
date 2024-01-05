@@ -285,7 +285,9 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool]:
+    def _load_profile(
+        self, request: Request, load_profile: bool, datacard: DataCard
+    ) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -311,12 +313,12 @@ class DataRouteHelper(RouteHelper):
                 file_size = lpath.stat().st_size
                 if file_size / (1024 * 1024) <= 50:
                     with lpath.open("r", encoding="utf-8") as html_file:
-                        return html_file.read(), True
+                        return html_file.read(), True, html_exists
 
                 else:
-                    return "Data profile too large to display. Please download to view.", False
+                    return "Data profile too large to display. Please download to view.", False, html_exists
 
-        return None, False
+        return None, False, html_exists
 
     def get_versions_page(
         self,
@@ -345,8 +347,9 @@ class DataRouteHelper(RouteHelper):
         datacard = cast(DataCard, datacard)
 
         data_splits = self._check_splits(card=datacard)
-        data_profile, render_profile = self._load_profile(request, load_profile, datacard)
+        data_profile, render_profile, html_exists = self._load_profile(request, load_profile, datacard)
 
+        # metadata uris (needed for )
         return templates.TemplateResponse(
             "include/data/data_version.html",
             {

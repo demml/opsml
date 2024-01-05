@@ -6,11 +6,13 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.settings import config
 from opsml.types.model import ModelCardMetadata
 
 logger = ArtifactLogger.get_logger()
@@ -103,6 +105,17 @@ class CardInfo:
     uid: Optional[str] = None
     version: Optional[str] = None
     tags: Optional[Dict[str, str]] = None
+
+
+class CardArgs(BaseModel):
+    name: str
+    team: str
+    version: str
+    table_name: str
+
+    @property
+    def uri(self) -> Path:
+        return Path(config.storage_root, self.table_name, self.team, self.name, f"v{self.version}")
 
 
 class CardType(str, Enum):

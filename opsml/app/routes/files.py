@@ -104,7 +104,7 @@ def download_file(
     Args:
         request:
             request object
-        read_path:
+        path:
             path to file
 
     Returns:

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, cast
 
 import joblib
-from pydantic import BaseModel
 
 from opsml.cards import (
     ArtifactCard,
@@ -23,10 +22,17 @@ from opsml.cards import (
 )
 from opsml.data.interfaces import get_data_interface
 from opsml.model.interfaces import HuggingFaceModel, get_model_interface
-from opsml.settings.config import config
 from opsml.storage import client
-from opsml.types import CardType, RegistryTableNames, RegistryType, SaveName, Suffix
-from opsml.types.model import ModelMetadata, OnnxModel
+from opsml.types import (
+    CardArgs,
+    CardType,
+    ModelMetadata,
+    OnnxModel,
+    RegistryTableNames,
+    RegistryType,
+    SaveName,
+    Suffix,
+)
 
 table_name_card_map = {
     RegistryType.DATA.value: DataCard,
@@ -36,17 +42,6 @@ table_name_card_map = {
     RegistryType.AUDIT.value: AuditCard,
     RegistryType.PROJECT.value: ProjectCard,
 }
-
-
-class CardArgs(BaseModel):
-    name: str
-    team: str
-    version: str
-    table_name: str
-
-    @property
-    def uri(self) -> Path:
-        return Path(config.storage_root, self.table_name, self.team, self.name, f"v{self.version}")
 
 
 class CardLoader:

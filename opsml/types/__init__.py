@@ -6,6 +6,7 @@ from opsml.types.card import (
     Artifact,
     AuditCardMetadata,
     AuditSectionType,
+    CardArgs,
     CardInfo,
     CardType,
     CardVersion,

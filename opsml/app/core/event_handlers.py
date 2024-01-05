@@ -65,6 +65,6 @@ def stop_app_handler(app: FastAPI) -> Callable[[], None]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    start_app_handler(app)
+    start_app_handler(app)()
     yield
-    stop_app_handler(app)
+    stop_app_handler(app)()
