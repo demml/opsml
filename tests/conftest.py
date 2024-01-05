@@ -235,7 +235,6 @@ def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
         get=MagicMock(return_value="test"),
-        get_mapper=MagicMock(return_value="test"),
         ls=MagicMock(return_value=["test"]),
         put=MagicMock(return_value="test"),
         copy=MagicMock(return_value=None),

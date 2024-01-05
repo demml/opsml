@@ -70,5 +70,4 @@ from opsml.types.storage import (
     StorageClientSettings,
     StorageSettings,
     StorageSystem,
-    StoreLike,
 )

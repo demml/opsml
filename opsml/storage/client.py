@@ -21,7 +21,6 @@ from opsml.types import (
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
-    StoreLike,
 )
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
@@ -30,16 +29,34 @@ warnings.filterwarnings("ignore", message="Hint: Inferred schema contains intege
 logger = ArtifactLogger.get_logger()
 
 
-class FileSystemProtocol(Protocol):
-    def get(self, lpath: str, rpath: str, recursive: bool = True) -> str:
-        """Copies file(s) from remote path (rpath) to local path (lpath)"""
+class _FileSystemProtocol(Protocol):
+    """
+    The *low level* file system interface which the storage client uses to write
+    to it's underlying file system.
 
-    def get_mapper(self, root: str) -> StoreLike:
-        """Creates a key/value store based on the file system"""
+    This interface is based on the fsspec AbstractFileSystem interface, however
+    simplified to only the functions needed by opsml to reduce the API surface.
+
+    While this API is *very* similar to StorageClientProtocol, they are
+    different.
+
+    1. StorageClientProtocol is a smaller API than what fsspec exposes. In
+       particular, StorageClientProtocol does not expose "recursive" flags as
+       each storage client will determine if recursive is required based on the
+       path. Operations on directories are recursive, operations on files are
+       not recursive.
+
+    2. pathlib.Path is exposed on StorageClientProtocol, where fsspec APIs use
+       str for paths.
+    """
+
+    def get(self, lpath: Path, rpath: Path, recursive: bool) -> None:
+        """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
     def ls(self, path: str) -> List[str]:  # pylint:  disable=invalid-name
         """Lists files"""
 
+    # TODO(@damon): Do we need 'find' or can we get by w/ ls() only?
     def find(self, path: str) -> List[str]:
         """Recursively list all files excluding directories"""
 
@@ -52,7 +69,7 @@ class FileSystemProtocol(Protocol):
     def put(self, lpath: str, rpath: str, recursive: bool) -> str:
         """Copies file(s) from local path (lpath) to remote path (rpath)"""
 
-    def copy(self, src: str, dest: str, recursive: bool = True) -> None:
+    def copy(self, src: str, dest: str, recursive: bool) -> None:
         """Copies files from src to dest within the file system"""
 
     def rm(self, path: str, recursive: bool) -> None:  # pylint: disable=invalid-name
@@ -66,20 +83,21 @@ class StorageClientBase(StorageClientProtocol):
     def __init__(
         self,
         settings: StorageSettings,
-        client: Optional[FileSystemProtocol] = None,
+        client: Optional[_FileSystemProtocol] = None,
     ):
         if client is None:
-            self.client = cast(FileSystemProtocol, LocalFileSystem())
+            self.client = cast(_FileSystemProtocol, LocalFileSystem())
         else:
             self.client = client
         self.settings = settings
 
-    def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> NoneType:
+    def get(self, rpath: Path, lpath: Path) -> NoneType:
         # handle rpath
         if rpath.suffix:
             recursive = False
             abs_rpath = str(rpath)
         else:
+            recursive = True
             abs_rpath = f"{str(rpath)}/"
 
         # handle lpath
@@ -89,9 +107,6 @@ class StorageClientBase(StorageClientProtocol):
             abs_lpath = f"{str(lpath)}/"
 
         self.client.get(rpath=abs_rpath, lpath=abs_lpath, recursive=recursive)
-
-    def get_mapper(self, root: Path) -> StoreLike:
-        return self.client.get_mapper(str(root))
 
     def ls(self, path: Path) -> List[str]:
         return self.client.ls(str(path))
@@ -108,19 +123,14 @@ class StorageClientBase(StorageClientProtocol):
                 yield chunk
 
     def put(self, lpath: Path, rpath: Path) -> None:
-        # mocking clients will *not* persist the path to the FS
-        # assert os.path.exists(lpath)
         if lpath.is_dir():
             abs_lpath = f"{str(lpath)}/"  # pathlib strips trailing slashes
             abs_rpath = f"{str(rpath)}/"
-            # logger.info("Putting directory: {} rpath: {}", abs_lpath, abs_rpath)
             self.client.put(abs_lpath, abs_rpath, True)
         else:
-            # logger.info("Putting file: {} rpath: {}", lpath, rpath)
             self.client.put(str(lpath), str(rpath), False)
 
     def copy(self, src: Path, dest: Path, recursive: bool = True) -> None:
-        print(src, dest)
         self.client.copy(str(src), str(dest), recursive)
 
     def rm(self, path: Path) -> None:
