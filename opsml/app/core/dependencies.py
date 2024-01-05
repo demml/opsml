@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from uuid import UUID
 
 from fastapi import HTTPException, Request, status
 

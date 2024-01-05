@@ -324,7 +324,7 @@ def test_load_data_card(
 
     # test assertion error
     with pytest.raises(ValueError):
-        data_card = DataCard(
+        DataCard(
             name=data_name,
             team=team,
             user_email=user_email,
@@ -668,7 +668,7 @@ def test_delete_fail(test_app: TestClient):
     response = test_app.get("/opsml/files/delete", params={"path": "opsml-root:/OPSML_DATA_REGISTRY/notthere"})
 
     assert response.status_code == 200
-    resp_dict = cast(Dict[str, Any], response.json())
+    cast(Dict[str, Any], response.json())
 
     # Invaild path: does not include a registry table
     response = test_app.get("/opsml/files/delete", params={"read_path": "notthere"})
