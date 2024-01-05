@@ -7,7 +7,7 @@
 import codecs
 import csv
 import datetime
-import os
+from pathlib import Path
 from typing import Any, BinaryIO, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
@@ -32,8 +32,9 @@ from opsml.helpers.logging import ArtifactLogger
 logger = ArtifactLogger.get_logger()
 
 # Constants
-PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
+
 AUDIT_FILE = "audit_file.csv"
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)

@@ -3,12 +3,13 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
+
 from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,

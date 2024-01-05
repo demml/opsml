@@ -4,14 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-import os
 import tempfile
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
-from pathlib import Path
+
 from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
 from opsml.cards.audit import AuditCard, AuditSections
@@ -23,8 +23,8 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.base.types import ProjectInfo
 from opsml.projects.project import OpsmlProject
 from opsml.registry import CardRegistry
-from opsml.types import AllowedDataType, ModelMetadata, SaveName, Suffix
 from opsml.storage import client
+from opsml.types import ModelMetadata, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
 
