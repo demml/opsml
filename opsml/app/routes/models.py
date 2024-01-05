@@ -2,13 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
+
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-
+from pathlib import Path
 from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
@@ -30,10 +30,8 @@ from opsml.types import CardInfo, ModelMetadata
 logger = ArtifactLogger.get_logger()
 
 # Constants
-PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
-
 
 model_route_helper = ModelRouteHelper()
 router = APIRouter()
