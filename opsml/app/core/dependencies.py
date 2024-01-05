@@ -39,7 +39,7 @@ def _verify_path(path: str) -> None:
         HTTPException: Invalid path
     """
     # all artifacts belong to a registry
-    if any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
+    if any(table_name in path for table_name in RegistryTableNames):
         return
 
     raise HTTPException(
@@ -59,7 +59,10 @@ def swap_opsml_root(path: str) -> str:
     Returns:
         new path
     """
+
+    print(path)
     _verify_path(path)
+    print(path)
 
     if path.startswith(config.opsml_proxy_root):
         curr_path = Path(path)

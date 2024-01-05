@@ -15,6 +15,7 @@ from opsml.app.routes.utils import error_to_500
 from opsml.cards.data import DataCard
 from opsml.registry.registry import CardRegistry
 from opsml.types import SaveName
+from opsml.types.extra import Suffix
 
 # Constants
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
@@ -81,16 +82,13 @@ async def data_versions_uid_page(
 
 
 @router.get("/data/download", name="download_data")
-def download_data(
-    request: Request,
-    uid: str,
-) -> StreamingResponse:
+def download_data(request: Request, uid: str) -> StreamingResponse:
     """Downloads data associated with a datacard"""
 
     registry: CardRegistry = request.app.state.registries.data
     datacard: DataCard = registry.load_card(uid=uid)
     load_path = Path(datacard.uri / SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    return download_file(load_path)
+    return download_file(request, load_path)
 
 
 @router.get("/data/download/profile", name="download_data_profile")
@@ -102,5 +100,5 @@ def download_data_profile(
 
     registry: CardRegistry = request.app.state.registries.data
     datacard: DataCard = registry.load_card(uid=uid)
-    load_path = Path(datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(datacard.interface.data_suffix)
-    return download_file(load_path)
+    load_path = Path(datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
+    return download_file(request, load_path)

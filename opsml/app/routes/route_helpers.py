@@ -285,9 +285,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -349,7 +347,11 @@ class DataRouteHelper(RouteHelper):
         data_splits = self._check_splits(card=datacard)
         data_profile, render_profile, html_exists = self._load_profile(request, load_profile, datacard)
 
+        data_filename = Path(SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
+        data_profile_filename = Path(SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
+
         # metadata uris (needed for )
+
         return templates.TemplateResponse(
             "include/data/data_version.html",
             {
@@ -361,6 +363,9 @@ class DataRouteHelper(RouteHelper):
                 "data_profile": data_profile,
                 "render_profile": render_profile,
                 "load_profile": load_profile,
+                "html_exists": html_exists,
+                "data_filename": data_filename,
+                "data_profile_filename": data_profile_filename,
             },
         )
 
