@@ -7,4 +7,4 @@ from opsml.data.interfaces import (
     TorchData,
 )
 
-__all__ = ["PandasData", "ArrowData", "NumpyData", "PolarsData", "SqlData", "TorchData"]
+__all__ = ["ArrowData", "NumpyData", "PandasData", "PolarsData", "SqlData", "TorchData"]

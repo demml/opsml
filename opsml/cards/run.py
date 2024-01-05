@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -42,8 +41,8 @@ class RunCard(ArtifactCard):
             Team that this card is associated with
         user_email:
             Email to associate with card
-        datacard_uid:
-            Optional DataCard uid associated with pipeline
+        datacard_uids:
+            Optional DataCard uids associated with this run
         modelcard_uids:
             Optional List of ModelCard uids to associate with this run
         pipelinecard_uid:
