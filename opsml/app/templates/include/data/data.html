@@ -25,33 +25,21 @@
       <h5 class="display-8">Select a team to view available data</h5>
 </div>
 
+  <div>
+    <select class="dropdown" id="MetadataTeamSelect" style="visibility:hidden;">
 
-<div class="btn-group">
-  <div class="dropdown" id="MetadataTeamSelect">
-    <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
-      
-      {% if selected_team is not none %}
-        {{selected_team}}
-      {% else %}
-        Select Team
-      {% endif %}
-
-    </a>
-  
-    <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
       {% if all_teams is not none %}
 
         {% for team in all_teams %}
-          <a class="dropdown-item" href="/opsml/data/list/?team={{team}}">{{team}}</a>
+        <option value="/opsml/data/list/?team={{team}}" {% if team == selected_team %} selected="selected" {% endif %}>{{ team }}</option>
         {% endfor %}
-        
+
       {% else %}
-      <a class="dropdown-item" href="#">No Team Found</a>
+      <option value="None">No team found</option>
       {% endif %}
 
-    </div>
+    </select>
   </div>
-</div>
 
 
 
@@ -77,4 +65,17 @@
 </body>
 
 
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function() {
+    $('#MetadataTeamSelect').select2();
+  
+    $("#MetadataTeamSelect").on('select2:select', function(e){
+      window.location.href = e.params.data.id;
+    });
+  });
+</script>
 {% endblock %}
