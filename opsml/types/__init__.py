@@ -63,7 +63,6 @@ from opsml.types.model import (
 from opsml.types.sql import RegistryTableNames
 from opsml.types.storage import (
     ApiStorageClientSettings,
-    ArtifactStorageType,
     FilePath,
     GcsStorageClientSettings,
     S3StorageClientSettings,
