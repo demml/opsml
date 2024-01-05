@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from opsml import CardRegistries, DataCard
-from opsml.image import ImageDataset
+from opsml.data.image import ImageDataset
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
