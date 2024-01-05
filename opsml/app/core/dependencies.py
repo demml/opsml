@@ -39,25 +39,8 @@ def _verify_path(path: str) -> None:
     Raises:
         HTTPException: Invalid path
     """
-    # For v1 and v2 all artifacts belong to a registry (exception being mlflow artifacts)
+    # all artifacts belong to a registry
     if any(table_name in path for table_name in [*RegistryTableNames, "model_registry"]):
-        return
-
-    # Determine if this an mlflow URI. opsml allowed mlflow links in early versions
-    #
-    # for v1 mlflow, all artifacts follow a path mlflow:/<run_id>/<artifact_path>/artifacts with artifact_path being a uid
-    has_artifacts, has_uuid = False, False
-    for split in path.split("/"):
-        if split == "artifacts":
-            has_artifacts = True
-            continue
-        try:
-            UUID(split, version=4)  # we use uuid4
-            has_uuid = True
-        except ValueError:
-            pass
-
-    if has_uuid and has_artifacts:
         return
 
     raise HTTPException(

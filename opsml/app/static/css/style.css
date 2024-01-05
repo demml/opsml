@@ -34,19 +34,6 @@ body {
   box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.24);
 }
 
-#mlflow-card {
-    display: flex;
-    justify-content: center;
-    position: relative;
-
-  }
-
-#mlflow-card:hover{
-    transform: scale(1.05);
-    box-shadow: 0px 10px 20px rgba(150, 79, 201, 0.469);
-}
-
-
 
 #opsml-card {
   background-color: #241239;
