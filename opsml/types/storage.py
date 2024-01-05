@@ -22,30 +22,6 @@ class StorageSystem(Enum):
     API = "api"
 
 
-@unique
-class ArtifactStorageType(str, Enum):
-    BOOSTER = "booster"
-    HTML = "html"
-    IMAGE = "ImageDataset"
-    JSON = "json"
-    NUMPY = "numpy.ndarray"
-    ONNX = "onnx"
-    PANDAS = "pandas.core.frame.DataFrame"
-    POLARS = "polars.dataframe.frame.DataFrame"
-    PYARROW = "pyarrow"
-    PYTORCH = "pytorch"
-    TF_MODEL = "keras"
-    TRANSFORMER = "transformer"
-    JOBLIB = "joblib"
-
-    @staticmethod
-    def from_str(value: str) -> Optional[ArtifactStorageType]:
-        for elt in ArtifactStorageType:
-            if value in elt.value:
-                return elt
-        return None
-
-
 class StorageClientSettings(BaseModel):
     storage_system: StorageSystem = StorageSystem.LOCAL
     storage_uri: str = os.getcwd()
