@@ -55,10 +55,6 @@ StorageSettings = Union[
 
 
 class StorageClientProtocol(Protocol):
-    @property
-    def base_path_prefix(self) -> str:
-        """The root storage prefix. Used when absolute storage paths are required."""
-
     def get(self, rpath: Path, lpath: Path) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
