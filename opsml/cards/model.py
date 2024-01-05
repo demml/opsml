@@ -10,7 +10,7 @@ from pydantic import ConfigDict, SerializeAsAny, field_validator
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces import ModelInterface
-from opsml.types import CardType, ModelCardMetadata
+from opsml.types import CardType, ModelCardMetadata, ModelMetadata
 
 logger = ArtifactLogger.get_logger()
 
@@ -99,6 +99,14 @@ class ModelCard(ArtifactCard):
     def preprocessor(self) -> Any:
         """Quick access to preprocessor from interface"""
         return self.interface.preprocessor
+
+    @property
+    def model_metadata(self) -> ModelMetadata:
+        """Loads `ModelMetadata` class"""
+
+        from opsml.cards.card_loader import ModelCardLoader
+
+        return ModelCardLoader(self).load_model_metadata()
 
     @property
     def card_type(self) -> str:

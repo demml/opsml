@@ -120,6 +120,7 @@ class StorageClientBase(StorageClientProtocol):
             self.client.put(str(lpath), str(rpath), False)
 
     def copy(self, src: Path, dest: Path, recursive: bool = True) -> None:
+        print(src, dest)
         self.client.copy(str(src), str(dest), recursive)
 
     def rm(self, path: Path) -> None:
@@ -194,7 +195,6 @@ class ApiStorageClient(StorageClientBase):
     def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-        # print(self.find(rpath))
         for file in self.find(rpath):
             _rpath = Path(file)
 
@@ -230,7 +230,8 @@ class ApiStorageClient(StorageClientBase):
             for curr_lpath in lpath.rglob("*"):
                 if curr_lpath.is_file():
                     curr_rpath = rpath / curr_lpath.relative_to(lpath)
-                    return self.put(curr_lpath, curr_rpath)
+                    self.put(curr_lpath, curr_rpath)
+            return None
 
         response = self.api_client.stream_post_request(
             route=ApiRoutes.UPLOAD_FILE,

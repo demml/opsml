@@ -113,11 +113,7 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     # get model metadata
     metadata = post_model_metadata(
         request,
-        CardRequest(
-            name=payload.name,
-            version=payload.version,
-            ignore_release_candidate=True,
-        ),
+        CardRequest(name=payload.name, version=payload.version, ignore_release_candidate=True),
     )
 
     try:
@@ -125,7 +121,7 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
         return registrar.register_model(
             RegistrationRequest(name=payload.name, version=payload.version, onnx=payload.onnx),
             metadata,
-        )
+        ).as_posix()
     except RegistrationError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -134,10 +130,7 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
 
 
 @router.post("/models/metadata", name="model_metadata")
-def post_model_metadata(
-    request: Request,
-    payload: CardRequest,
-) -> ModelMetadata:
+def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata:
     """
     Downloads a Model API definition
 
