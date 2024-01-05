@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import tempfile
 from contextlib import contextmanager
 from functools import cached_property
@@ -10,7 +11,7 @@ from typing import Any, Dict, Iterator, Optional, cast
 
 import joblib
 from pydantic import BaseModel
-import json
+
 from opsml.cards import (
     ArtifactCard,
     AuditCard,

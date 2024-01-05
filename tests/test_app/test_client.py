@@ -9,9 +9,8 @@ import pandas as pd
 import pytest
 from fastapi.exceptions import HTTPException
 from numpy.typing import NDArray
-from pytest_lazyfixture import lazy_fixture
 from requests.auth import HTTPBasicAuth
-from sklearn import linear_model, pipeline
+from sklearn import pipeline
 from starlette.testclient import TestClient
 
 from opsml.app.core.dependencies import swap_opsml_root
@@ -244,13 +243,12 @@ def test_register_model(
         datacard_uid=datacard.uid,
         to_onnx=True,
     )
-    
+
     model_registry = api_registries.model
     model_registry.register_card(modelcard)
-    
+
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
-
 
     loaded_card: ModelCard = model_registry.load_card(uid=modelcard.uid)
     loaded_card.load_model()
@@ -287,7 +285,11 @@ def test_register_model(
     assert ve.match("different team")
 
 
-def test_load_data_card(api_registries: CardRegistries, pandas_data:PandasData, api_storage_client: client.StorageClient,):
+def test_load_data_card(
+    api_registries: CardRegistries,
+    pandas_data: PandasData,
+    api_storage_client: client.StorageClient,
+):
     data_name = "test_df"
     team = "mlops"
     user_email = "mlops.com"
@@ -304,9 +306,9 @@ def test_load_data_card(api_registries: CardRegistries, pandas_data:PandasData, 
 
     datacard.add_info(info={"added_metadata": 10})
     registry.register_card(card=datacard)
-    
+
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-    
+
     loaded_data: DataCard = registry.load_card(name=data_name, version=datacard.version)
     loaded_data.load_data()
 
@@ -328,6 +330,7 @@ def test_load_data_card(api_registries: CardRegistries, pandas_data:PandasData, 
             user_email=user_email,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
         )
+
 
 def test_pipeline_registry(api_registries: CardRegistry):
     pipeline_card = PipelineCard(
@@ -781,7 +784,6 @@ def _test_data_model_version(
 
     response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
     assert response.status_code == 200
-
 
     response = test_app.get("/opsml/models/versions/")
     assert response.status_code == 200

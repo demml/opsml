@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+from pathlib import Path
 from typing import Iterator, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
@@ -17,8 +18,8 @@ from opsml.profile.profile_data import DataProfiler
 from opsml.registry.registry import CardRegistry
 
 # Constants
-PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)

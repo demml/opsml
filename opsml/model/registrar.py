@@ -2,19 +2,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json
-import os
 import tempfile
 from pathlib import Path
-from typing import Dict, Optional, Union
-from opsml.app.core.dependencies import swap_opsml_root
+from typing import Dict, Union
 
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
 
+from opsml.app.core.dependencies import swap_opsml_root
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClient
 from opsml.types import ModelMetadata
-from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
 

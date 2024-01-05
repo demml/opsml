@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+from contextlib import asynccontextmanager
 from typing import Any, Awaitable, Callable, Union
 
 import rollbar
@@ -13,7 +14,6 @@ from opsml.model.registrar import ModelRegistrar
 from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
 from opsml.storage import client
-from contextlib import asynccontextmanager
 
 logger = ArtifactLogger.get_logger()
 
