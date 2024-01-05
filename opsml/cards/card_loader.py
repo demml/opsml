@@ -74,16 +74,7 @@ class CardLoader:
         return self._card
 
     def get_rpath_from_args(self) -> Path:
-        """Get remote path from card args
-
-        Args:
-            card_args:
-                Card args to use to get remote path
-            registry_type:
-                Registry type to use to get remote path
-        Returns:
-            Remote path
-        """
+        """Get remote path from card args"""
 
         table_name = RegistryTableNames.from_str(self.registry_type.value).value
         args = CardArgs(**self.card_args, table_name=table_name)
@@ -105,7 +96,7 @@ class CardLoader:
             rpath:
                 Remote path to load file
             object_path:
-                Path to object to load
+                Path of object to load
             suffix:
                 Suffix to add to object_path
             storage_client:
