@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
+from opsml.app.routes.files import download_dir, download_file
 from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
@@ -24,9 +25,11 @@ from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
+from opsml.model.interfaces.huggingface import HuggingFaceModel
+from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.registrar import ModelRegistrar, RegistrationError, RegistrationRequest
 from opsml.registry.registry import CardRegistries, CardRegistry
-from opsml.types import CardInfo, ModelMetadata
+from opsml.types import CardInfo, ModelMetadata, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -84,6 +87,26 @@ async def model_versions_page(
         versions=versions,
         metadata=metadata,
     )
+
+
+@router.get("/models/download", name="download_model")
+def download_model(request: Request, uid: str, onnx: bool = False) -> StreamingResponse:
+    """Downloads model associated with a modelcard. Result will either be a single file
+    or a zipped file (if the model is a directory).
+    """
+
+    registry: CardRegistry = request.app.state.registries.model
+    card: ModelCard = registry.load_card(uid=uid)
+    model_name = SaveName.TRAINED_MODEL.value if not onnx else SaveName.ONNX_MODEL.value
+    load_path = Path(card.uri / model_name).with_suffix(card.interface.model_suffix)
+
+    if isinstance(card.interface, HuggingFaceModel):
+        return download_dir(load_path)
+
+    if isinstance(card.interface, TensorFlowModel) and not onnx:
+        return download_dir(load_path)
+
+    return download_file(request, load_path)
 
 
 @router.post("/models/register", name="model_register")

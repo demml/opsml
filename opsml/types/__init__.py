@@ -11,7 +11,6 @@ from opsml.types.card import (
     CardType,
     CardVersion,
     Comment,
-    HuggingFaceStorageArtifact,
     Metric,
     Param,
     PipelineCardArgs,

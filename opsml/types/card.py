@@ -7,13 +7,12 @@ import datetime
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, SerializeAsAny
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings import config
-from opsml.types.model import ModelCardMetadata
 
 logger = ArtifactLogger.get_logger()
 
@@ -154,11 +153,3 @@ class AuditCardMetadata(BaseModel):
 NON_PIPELINE_CARDS = [card.value for card in CardType if card.value not in ["pipeline", "project", "audit"]]
 
 AuditSectionType = Dict[str, Dict[int, Dict[str, str]]]
-
-
-@dataclass
-class HuggingFaceStorageArtifact:
-    model_interface: Any
-    metadata: ModelCardMetadata
-    uris: Dict[str, str]
-    to_onnx: bool = False
