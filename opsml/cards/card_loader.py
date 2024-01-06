@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, cast
+from venv import logger
 
 import joblib
 from pydantic import BaseModel
@@ -186,6 +187,7 @@ class DataCardLoader(CardLoader):
         """Saves a data via data interface"""
 
         if self.card.interface.data is not None:
+            logger.info("Data already loaded")
             return None
 
         with self._load_object(SaveName.DATA.value, self.data_suffix) as lpath:
@@ -193,6 +195,10 @@ class DataCardLoader(CardLoader):
 
     def load_data_profile(self) -> None:
         """Saves a data profile"""
+
+        if self.card.interface.data_profile is not None:
+            logger.info("Data profile already loaded")
+            return None
 
         # check exists
         rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
@@ -240,6 +246,9 @@ class ModelCardLoader(CardLoader):
             rpath:
                 Remote path to load file
         """
+        if self.card.interface.sample_data is not None:
+            logger.info("Sample data already loaded")
+            return None
 
         load_rpath = Path(self.card.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
         if not self.storage_client.exists(load_rpath):
@@ -259,8 +268,13 @@ class ModelCardLoader(CardLoader):
                 Remote path to load file
         """
 
+        if self.card.interface.preprocessor is not None:
+            logger.info("Preprocessor already loaded")
+            return None
+
         load_rpath = Path(self.card.uri, SaveName.PREPROCESSOR.value).with_suffix(self.preprocessor_suffix)
         if not self.storage_client.exists(load_rpath):
+            logger.info("Onnx model already loaded")
             return None
 
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
@@ -275,9 +289,6 @@ class ModelCardLoader(CardLoader):
             rpath:
                 Remote path to load file
         """
-
-        if self.card.interface.model is not None:
-            return None
 
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
         self.card.interface.load_model(lpath, **kwargs)
@@ -294,10 +305,12 @@ class ModelCardLoader(CardLoader):
 
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
         if self.card.interface.onnx_model is not None:
+            logger.info("Onnx model already loaded")
             return None
 
         load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
         if not self.storage_client.exists(load_rpath):
+            logger.info("No onnx model exists for {}", save_name)
             return None
 
         with self._load_object(save_name, self.onnx_suffix) as lpath:
@@ -319,6 +332,10 @@ class ModelCardLoader(CardLoader):
 
     def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Load model, preprocessor and sample data"""
+
+        if self.card.interface.model is not None:
+            logger.info("Model already loaded")
+            return None
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)

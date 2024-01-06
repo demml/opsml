@@ -66,6 +66,7 @@ class ModelCard(ArtifactCard):
 
     def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Loads model, preprocessor and sample data to interface"""
+
         from opsml.cards.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_model(**kwargs)
