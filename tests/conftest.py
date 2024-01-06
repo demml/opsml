@@ -1,3 +1,4 @@
+from calendar import c
 import os
 import warnings
 from pathlib import Path
@@ -92,6 +93,7 @@ from opsml.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
+from opsml.cards.card_loader import CardLoader
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config
@@ -347,7 +349,6 @@ def mock_opsml_app_run():
 
 
 ######## local clients
-
 
 @pytest.fixture
 def mock_aws_storage_response():

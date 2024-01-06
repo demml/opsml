@@ -47,6 +47,12 @@ class OpsmlConfig(BaseSettings):
         """
         return not self.opsml_tracking_uri.lower().strip().startswith("http")
 
+    def get_storage_root(self, storage_system: str) -> str:
+        """Helper method to get storage root"""
+        if storage_system == StorageSystem.API:
+            return self.opsml_proxy_root
+        return self.opsml_storage_uri
+
     @cached_property
     def storage_system(self) -> StorageSystem:
         """Returns the storage system used for the current tracking URI"""

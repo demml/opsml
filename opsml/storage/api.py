@@ -117,9 +117,7 @@ class ApiClient:
     ) -> Dict[str, Any]:
         result = ""
 
-        with self.client.stream(
-            method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
-        ) as response:
+        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
             for data in response.iter_bytes():
                 result += data.decode("utf-8")
 
@@ -149,9 +147,7 @@ class ApiClient:
 
         with open(local_path.as_posix(), "wb") as local_file:
             with self.client.stream(
-                method="GET",
-                url=f"{self._base_url}/{route}",
-                params={"path": read_path.as_posix()},
+                method="GET", url=f"{self._base_url}/{route}", params={"path": read_path.as_posix()}
             ) as response:
                 for data in response.iter_bytes():
                     local_file.write(data)

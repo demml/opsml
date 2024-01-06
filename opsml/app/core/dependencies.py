@@ -59,11 +59,31 @@ def swap_opsml_root(path: str) -> str:
     Returns:
         new path
     """
-
     _verify_path(path)
 
     if path.startswith(config.opsml_proxy_root):
         curr_path = Path(path)
         new_path = Path(config.opsml_storage_uri) / curr_path.relative_to(config.opsml_proxy_root)
+        return str(new_path)
+    return path
+
+
+def reverse_swap_opsml_root(path: str) -> str:
+    """When running in client model, client will specify path to use with opsml_proxy_root.
+    Server needs to swap this out with opsml_storage_uri to access the correct path.
+
+    Args:
+        path:
+            path to swap
+
+    Returns:
+        new path
+    """
+
+    _verify_path(path)
+
+    if path.startswith(config.opsml_storage_uri):
+        curr_path = Path(path)
+        new_path = Path(config.opsml_proxy_root) / curr_path.relative_to(config.opsml_storage_uri)
         return str(new_path)
     return path

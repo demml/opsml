@@ -24,10 +24,8 @@ project_route_helper = ProjectRouteHelper()
 
 
 @router.get("/projects/list/", response_class=HTMLResponse)
-@error_to_500
-async def project_list_page(
-    request: Request, project: Optional[str] = None, run_uid: Optional[str] = None
-) -> HTMLResponse:
+# @error_to_500
+async def project_list_page(request: Request, project: Optional[str] = None, run_uid: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:
@@ -46,7 +44,7 @@ async def project_list_page(
 
 
 @router.get("/projects/runs/plot/", response_class=HTMLResponse)
-@error_to_500
+# @error_to_500
 async def project_metric_page(
     request: Request,
     run_uid: str,

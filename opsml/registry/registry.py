@@ -212,6 +212,7 @@ class CardRegistry:
         return CardLoader(
             card_args=records[0],
             registry_type=self.registry_type,
+            storage_client=self._registry.storage_client,
         ).load_card()
 
     def register_card(

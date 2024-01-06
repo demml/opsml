@@ -44,7 +44,7 @@ router = APIRouter()
 
 
 @router.get("/audit/", response_class=HTMLResponse)
-@error_to_500
+# @error_to_500
 async def audit_list_homepage(
     request: Request,
     team: Optional[str] = None,
@@ -96,7 +96,7 @@ async def audit_list_homepage(
 
 
 @router.post("/audit/save", response_class=HTMLResponse)
-@error_to_500
+# @error_to_500
 async def save_audit_form(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
@@ -145,8 +145,8 @@ async def save_audit_form(
 
 
 @router.post("/audit/comment/save", response_class=HTMLResponse)
-@error_to_500
-async def save_audit_comment(
+# @error_to_500
+def save_audit_comment(
     request: Request,
     comment: CommentSaveRequest = Depends(CommentSaveRequest),
 ) -> HTMLResponse:
@@ -158,7 +158,6 @@ async def save_audit_comment(
         comment:
             `CommentSaveRequest`
     """
-
     audit_card: AuditCard = request.app.state.registries.audit.load_card(uid=comment.uid)
 
     # most recent first
@@ -166,6 +165,7 @@ async def save_audit_comment(
         name=comment.comment_name,
         comment=comment.comment_text,
     )
+
     model_names, teams, versions = get_names_teams_versions(
         registry=request.app.state.registries.model,
         name=comment.selected_model_name,
@@ -233,7 +233,7 @@ class AuditFormUploader:
 
 
 @router.post("/audit/upload", response_class=HTMLResponse)
-@error_to_500
+# @error_to_500
 async def upload_audit_data(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -297,7 +297,7 @@ async def upload_audit_data(
 
 
 @router.post("/audit/download", response_class=StreamingResponse)
-@error_to_500
+# @error_to_500
 async def download_audit_data(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
