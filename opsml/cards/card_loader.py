@@ -38,7 +38,7 @@ table_name_card_map = {
 }
 
 
-class CardArgs(BaseModel):
+class CardLoadArgs(BaseModel):
     name: str
     team: str
     version: str
@@ -82,7 +82,7 @@ class CardLoader:
         """Get remote path from card args"""
 
         table_name = RegistryTableNames.from_str(self.registry_type.value).value
-        args = CardArgs(**self.card_args, table_name=table_name)
+        args = CardLoadArgs(**self.card_args, table_name=table_name)
 
         return args.uri
 
