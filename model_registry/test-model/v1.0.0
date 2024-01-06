@@ -1,1 +1,0 @@
-{"name": "test_model", "implementation": "models.OnnxModel", "parameters": {"uri": "./onnx-model.onnx", "extra": {"model_version": "1.0.0", "opsml_name": "test_model"}}}
