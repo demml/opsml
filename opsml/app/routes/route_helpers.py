@@ -285,9 +285,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -301,14 +299,15 @@ class DataRouteHelper(RouteHelper):
         Returns:
             `Tuple[str, bool]`
         """
+        storage_client = request.app.state.storage_client
 
         data_html_path = (datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
-        html_exists = client.storage_client.exists(data_html_path)
+        html_exists = storage_client.exists(data_html_path)
 
         if load_profile and html_exists:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 lpath = Path(tmp_dir) / data_html_path.name
-                client.storage_client.get(data_html_path, lpath)
+                storage_client.get(data_html_path, lpath)
 
                 file_size = lpath.stat().st_size
                 if file_size / (1024 * 1024) <= 50:
@@ -351,8 +350,6 @@ class DataRouteHelper(RouteHelper):
 
         data_filename = Path(SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
         data_profile_filename = Path(SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
-
-        # metadata uris (needed for )
 
         return templates.TemplateResponse(
             "include/data/data_version.html",

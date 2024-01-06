@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Tuple, cast
 from unittest.mock import MagicMock, patch
-
+import pdb
 import pandas as pd
 import pytest
 from fastapi.exceptions import HTTPException
@@ -730,13 +730,12 @@ def test_model_list(test_app: TestClient):
 ##### Test list models
 def test_data_list(test_app: TestClient):
     """Test settings"""
-
     response = test_app.get("/opsml/data/list/")
     assert response.status_code == 200
 
 
 ##### Test list data
-def _test_data_model_version(
+def test_data_model_version(
     test_app: TestClient,
     api_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
@@ -773,35 +772,45 @@ def _test_data_model_version(
             )
             run.register_card(modelcard)
 
+
+   
     response = test_app.get("/opsml/data/versions/")
     assert response.status_code == 200
+
 
     response = test_app.get("/opsml/data/versions/?name=test_data")
     assert response.status_code == 200
 
     response = test_app.get("/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
     assert response.status_code == 200
+  
 
     response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
     assert response.status_code == 200
 
+
     response = test_app.get("/opsml/models/versions/")
     assert response.status_code == 200
-
+    
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
     assert response.status_code == 200
+
 
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
     assert response.status_code == 200
 
+
     response = test_app.get("/opsml/projects/list/?project=test:test-exp")
     assert response.status_code == 200
+ 
 
     response = test_app.get(f"/opsml/projects/list/?project=test:test-exp&run_uid={run.runcard.uid}")
     assert response.status_code == 200
 
+
     response = test_app.get(f"/opsml/projects/runs/plot/?run_uid={run.runcard.uid}")
     assert response.status_code == 200
+ 
 
 
 ##### Test audit
@@ -839,7 +848,7 @@ def _test_audit(test_app: TestClient):
 
 
 def _test_error_wrapper():
-    @error_to_500
+    #@error_to_500
     async def fail(request):
         raise ValueError("Fail")
 
