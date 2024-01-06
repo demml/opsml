@@ -7,7 +7,7 @@
 import warnings
 from pathlib import Path
 from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
-
+import io
 from fsspec.implementations.local import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
@@ -120,6 +120,11 @@ class StorageClientBase(StorageClientProtocol):
         with self.open(str(path), "rb") as file_:
             while chunk := file_.read(chunk_size):
                 yield chunk
+
+    def iterbuffer(self, buffer: io.BytesIO, chunk_size: int) -> Iterator[bytes]:
+        buffer.seek(0)
+        while chunk := buffer.read(chunk_size):
+            yield chunk
 
     def put(self, lpath: Path, rpath: Path) -> None:
         if lpath.is_dir():

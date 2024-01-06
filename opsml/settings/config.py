@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field
@@ -12,7 +13,7 @@ class OpsmlConfig(BaseSettings):
     app_name: str = "opsml"
     app_env: str = Field(default="development")
 
-    opsml_storage_uri: str = "./mlruns"
+    opsml_storage_uri: str = Path("./mlruns").absolute().as_posix()  # Only a Local FS deals in absolutes!!!
     opsml_tracking_uri: str = "sqlite:///tmp.db"
     opsml_prod_token: str = "staging"
     opsml_proxy_root: str = "opsml-root:/"

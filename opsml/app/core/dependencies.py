@@ -60,9 +60,7 @@ def swap_opsml_root(path: str) -> str:
         new path
     """
 
-    print(path)
     _verify_path(path)
-    print(path)
 
     if path.startswith(config.opsml_proxy_root):
         curr_path = Path(path)

@@ -2,8 +2,11 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import io
+import tempfile
+
 from pathlib import Path
-from typing import Annotated, Dict, cast
+from typing import Annotated, Dict
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -24,7 +27,8 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.storage.client import StorageClientBase
+from opsml.storage import client
+import zipfile as zp
 
 logger = ArtifactLogger.get_logger()
 CHUNK_SIZE = 31457280
@@ -95,10 +99,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
 
 
 @router.get("/files/download", name="download_file")
-def download_file(
-    request: Request,
-    path: Annotated[str, Depends(swap_opsml_root)],
-) -> StreamingResponse:
+def download_file(path: Annotated[str, Depends(swap_opsml_root)]) -> StreamingResponse:
     """Downloads a file
 
     Args:
@@ -110,11 +111,13 @@ def download_file(
     Returns:
         Streaming file response
     """
-    storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
 
     try:
+        if Path(path).suffix == "":
+            return download_dir(path)
+
         return StreamingResponse(
-            storage_client.iterfile(Path(path), CHUNK_SIZE),
+            client.storage_client.iterfile(Path(path), CHUNK_SIZE),
             media_type="application/octet-stream",
         )
 
@@ -125,8 +128,54 @@ def download_file(
         ) from error
 
 
+def download_dir(path: Annotated[str, Depends(swap_opsml_root)]) -> StreamingResponse:
+    """Downloads a file
+
+    Args:
+        request:
+            request object
+        path:
+            path to file
+
+    Returns:
+        Streaming file response
+    """
+    client.storage_client
+
+    try:
+        logger.info("Server: Creating zip file for {}", path)
+        zip_io = io.BytesIO()
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            with zp.ZipFile(zip_io, mode="w", compression=zp.ZIP_DEFLATED) as temp_zip:
+                lpath = Path(tmpdirname)
+                zipfile = lpath / "artifacts"
+                rpath = Path(path)
+                files = client.storage_client.find(rpath)
+
+                for file_ in files:
+                    curr_rpath = Path(file_)
+                    curr_lpath = lpath / curr_rpath.relative_to(rpath)
+                    logger.info("Server: Downloading {} to {}", curr_rpath, curr_lpath)
+                    client.storage_client.get(curr_rpath, curr_lpath)
+                    zip_filepath = zipfile / curr_rpath.relative_to(rpath)
+                    temp_zip.write(curr_lpath, zip_filepath)
+
+            logger.info("Server: Sending zip file for {}", path)
+            return StreamingResponse(
+                client.storage_client.iterbuffer(zip_io, CHUNK_SIZE),
+                media_type="application/x-zip-compressed",
+            )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error downloading the file. {error}",
+        ) from error
+
+
 @router.get("/files/list", name="list_files")
-def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)]) -> ListFileResponse:
+def list_files(path: Annotated[str, Depends(swap_opsml_root)]) -> ListFileResponse:
     """Lists files
 
     Args:
@@ -139,8 +188,7 @@ def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)])
         `ListFileResponse`
     """
     try:
-        storage_client: StorageClientBase = request.app.state.storage_client
-        return ListFileResponse(files=storage_client.find(Path(path)))
+        return ListFileResponse(files=client.storage_client.find(Path(path)))
 
     except Exception as error:
         raise HTTPException(
@@ -150,10 +198,7 @@ def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)])
 
 
 @router.get("/files/exists", name="file_exists")
-def file_exists(
-    request: Request,
-    path: Annotated[str, Depends(swap_opsml_root)],
-) -> FileExistsResponse:
+def file_exists(path: Annotated[str, Depends(swap_opsml_root)]) -> FileExistsResponse:
     """Checks if path exists
 
     Args:
@@ -166,17 +211,13 @@ def file_exists(
         FileExistsResponse
     """
 
-    storage_client: StorageClientBase = cast(StorageClientBase, request.app.state.storage_client)
-    exists = storage_client.exists(Path(path))
-
-    return FileExistsResponse(exists=exists)
+    return FileExistsResponse(
+        exists=client.storage_client.exists(Path(path)),
+    )
 
 
 @router.get("/files/delete", name="delete_files", dependencies=[Depends(verify_token)])
-def delete_files(
-    request: Request,
-    path: Annotated[str, Depends(swap_opsml_root)],
-) -> DeleteFileResponse:
+def delete_files(path: Annotated[str, Depends(swap_opsml_root)]) -> DeleteFileResponse:
     """Deletes a file
 
     Args:
@@ -190,10 +231,8 @@ def delete_files(
     """
 
     try:
-        storage_client: StorageClientBase = request.app.state.storage_client
-
         try:
-            storage_client.rm(Path(path))
+            client.storage_client.rm(Path(path))
             return DeleteFileResponse(deleted=True)
 
         except FileNotFoundError:

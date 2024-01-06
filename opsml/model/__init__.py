@@ -7,6 +7,12 @@ from opsml.model.interfaces import (
     TensorFlowModel,
     XGBoostModel,
 )
+from opsml.types import (
+    HuggingFaceModuleType,
+    HuggingFaceOnnxArgs,
+    HuggingFaceORTModel,
+    HuggingFaceTask,
+)
 
 __all__ = [
     "TensorFlowModel",
@@ -16,4 +22,8 @@ __all__ = [
     "LightGBMModel",
     "HuggingFaceModel",
     "LightningModel",
+    "HuggingFaceTask",
+    "HuggingFaceModuleType",
+    "HuggingFaceORTModel",
+    "HuggingFaceOnnxArgs",
 ]
