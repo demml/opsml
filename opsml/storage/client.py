@@ -20,6 +20,7 @@ from opsml.types import (
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
+    StorageSystem,
 )
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
@@ -311,11 +312,10 @@ def get_storage_client(cfg: OpsmlConfig) -> StorageClientBase:
                 opsml_prod_token=cfg.opsml_prod_token,
             )
         )
-    if cfg.opsml_storage_uri.startswith("gs://"):
+    if cfg.storage_system == StorageSystem.GCS:
         return GCSFSStorageClient(_get_gcs_settings(storage_uri=cfg.opsml_storage_uri))
-    if cfg.opsml_storage_uri.startswith("s3://"):
+    if cfg.storage_system == StorageSystem.S3:
         return S3StorageClient(S3StorageClientSettings(storage_uri=cfg.opsml_storage_uri))
-
     return LocalStorageClient(StorageClientSettings(storage_uri=cfg.opsml_storage_uri))
 
 
