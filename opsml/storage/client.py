@@ -4,10 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import io
 import warnings
 from pathlib import Path
 from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
-import io
+
 from fsspec.implementations.local import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger

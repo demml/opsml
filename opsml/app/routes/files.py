@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import io
 import tempfile
-
+import zipfile as zp
 from pathlib import Path
 from typing import Annotated, Dict
 
@@ -28,7 +28,6 @@ from opsml.app.routes.utils import (
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage import client
-import zipfile as zp
 
 logger = ArtifactLogger.get_logger()
 CHUNK_SIZE = 31457280
