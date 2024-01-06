@@ -273,14 +273,20 @@ try:
 
             from opsml.model.onnx import _get_onnx_metadata
 
+            model_saved = False
             if self.onnx_model is None:
+                # HF saves model during conversion
                 self.convert_to_onnx(path=path)
+                model_saved = True
 
             if self.is_pipeline:
-                self.onnx_model.sess.model.save_pretrained(path)
+                if not model_saved:
+                    self.onnx_model.sess.model.save_pretrained(path.with_suffix(""))
                 return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model.model))
 
-            self.onnx_model.sess.save_pretrained(path)
+            if not model_saved:
+                self.onnx_model.sess.save_pretrained(path.with_suffix(""))
+
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model))
 
         def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
@@ -389,9 +395,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:
