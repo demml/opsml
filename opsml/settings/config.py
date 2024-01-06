@@ -2,11 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
-from functools import cached_property
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+
 from opsml.types import StorageSystem
 
 
