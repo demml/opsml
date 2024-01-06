@@ -211,7 +211,7 @@ class ModelCardSaver(CardSaver):
             model_name=self.card.name,
             model_class=self.card.interface.model_class,
             model_type=self.card.interface.model_type,
-            model_interface=self.card.interface.__class__.__name__,
+            model_interface=self.card.interface.name,
             onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
             onnx_version=onnx_version,
             model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
@@ -382,9 +382,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

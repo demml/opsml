@@ -7,12 +7,7 @@ import datetime
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
-
 from pydantic import BaseModel, SerializeAsAny
-
-from opsml.helpers.logging import ArtifactLogger
-
-logger = ArtifactLogger.get_logger()
 
 
 class RegistryType(str, Enum):
