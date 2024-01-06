@@ -211,7 +211,7 @@ class ModelCardSaver(CardSaver):
             model_name=self.card.name,
             model_class=self.card.interface.model_class,
             model_type=self.card.interface.model_type,
-            model_interface=self.card.interface.name,
+            model_interface=self.card.interface.name(),
             onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
             onnx_version=onnx_version,
             model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
