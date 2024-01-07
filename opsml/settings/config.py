@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
@@ -20,6 +19,8 @@ class OpsmlConfig(BaseSettings):
     opsml_tracking_uri: str = "sqlite:///tmp.db"
     opsml_prod_token: str = "staging"
     opsml_proxy_root: str = "opsml-root:/"
+    opsml_registry_path: str = "model_registry"
+    opsml_testing: bool = bool(0)
 
     # API client username / password
     opsml_username: Optional[str] = None
@@ -47,13 +48,7 @@ class OpsmlConfig(BaseSettings):
         """
         return not self.opsml_tracking_uri.lower().strip().startswith("http")
 
-    def get_storage_root(self, storage_system: str) -> str:
-        """Helper method to get storage root"""
-        if storage_system == StorageSystem.API:
-            return self.opsml_proxy_root
-        return self.opsml_storage_uri
-
-    @cached_property
+    @property
     def storage_system(self) -> StorageSystem:
         """Returns the storage system used for the current tracking URI"""
         if self.is_tracking_local:
@@ -64,7 +59,7 @@ class OpsmlConfig(BaseSettings):
             return StorageSystem.LOCAL
         return StorageSystem.API
 
-    @cached_property
+    @property
     def storage_root(self) -> str:
         """Returns the root of the storage URI"""
         if self.is_tracking_local:

@@ -44,12 +44,11 @@ class CardLoadArgs(BaseModel):
     team: str
     version: str
     table_name: str
-    storage_root: str
 
     @property
     def uri(self) -> Path:
         return Path(
-            self.storage_root,
+            config.storage_root,
             self.table_name,
             self.team,
             self.name,
@@ -63,7 +62,6 @@ class CardLoader:
         card: Optional[ArtifactCard] = None,
         card_args: Optional[Dict[str, Any]] = None,
         registry_type: Optional[RegistryType] = None,
-        storage_client: Optional[client.StorageClient] = None,
     ):
         """
         Parent class for saving artifacts belonging to cards or loading cards.
@@ -80,7 +78,7 @@ class CardLoader:
         self._card = card
         self.card_args = card_args
         self.registry_type = registry_type
-        self.storage_client = storage_client or client.storage_client
+        self.storage_client = client.storage_client
 
     @cached_property
     def card(self) -> ArtifactCard:
@@ -91,11 +89,7 @@ class CardLoader:
         """Get remote path from card args"""
 
         table_name = RegistryTableNames.from_str(self.registry_type.value).value
-        args = CardLoadArgs(
-            **self.card_args,
-            table_name=table_name,
-            storage_root=config.get_storage_root(self.storage_client.settings.storage_system.value),
-        )
+        args = CardLoadArgs(**self.card_args, table_name=table_name)
 
         return args.uri
 

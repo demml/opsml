@@ -11,6 +11,7 @@ from tenacity import retry, stop_after_attempt
 
 from opsml.app.core.dependencies import swap_opsml_root
 from opsml.helpers.logging import ArtifactLogger
+from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import ModelMetadata
 
@@ -53,7 +54,7 @@ class ModelRegistrar:
 
     def _registry_path(self, request: RegistrationRequest) -> Path:
         """Returns hardcoded uri"""
-        return Path(f"model_registry/{request.name}/v{request.version}")
+        return Path(f"{config.opsml_registry_path}/{request.name}/v{request.version}")
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.

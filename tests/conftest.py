@@ -1,4 +1,3 @@
-from calendar import c
 import os
 import warnings
 from pathlib import Path
@@ -71,7 +70,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
-from opsml.cards import DataSplit, ModelCard
+from opsml.cards import AuditCard, DataCard, DataSplit, ModelCard
 
 # opsml
 from opsml.data.interfaces import (
@@ -93,7 +92,6 @@ from opsml.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
-from opsml.cards.card_loader import CardLoader
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config
@@ -253,6 +251,7 @@ def test_app() -> Iterator[TestClient]:
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
+
         yield tc
     cleanup()
 
@@ -349,6 +348,7 @@ def mock_opsml_app_run():
 
 
 ######## local clients
+
 
 @pytest.fixture
 def mock_aws_storage_response():
@@ -952,6 +952,102 @@ def test_model_card(sklearn_pipeline):
         version="1.0.0",
     )
     return model_card
+
+
+@pytest.fixture
+def populate_model(
+    api_registries: CardRegistries,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+) -> None:
+
+    config.opsml_registry_path = uuid.uuid4().hex
+    team = "mlops"
+    user_email = "test@mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+    audit_registry = api_registries.audit
+
+    datacard = DataCard(
+        interface=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+    )
+
+    data_registry.register_card(card=datacard)
+
+    modelcard = ModelCard(
+        interface=model,
+        name=uuid.uuid4().hex,
+        team=team,
+        user_email=user_email,
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+    )
+
+    model_registry.register_card(modelcard)
+
+    # create auditcard
+
+    auditcard = AuditCard(name="audit_card", team="team", user_email="test")
+    auditcard.add_card(card=modelcard)
+    audit_registry.register_card(auditcard)
+
+    # now switch config back to local for testing routes
+    client.storage_client = client.get_storage_client((OpsmlConfig()))
+    config.opsml_tracking_uri = OPSML_STORAGE_URI
+
+    return modelcard, datacard, auditcard
+
+
+@pytest.fixture
+def populate_run(
+    test_app: TestClient,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+) -> None:
+
+    model, data = sklearn_pipeline
+
+    def callable_api():
+        return test_app
+
+    with patch("httpx.Client", callable_api):
+        info = ProjectInfo(name="test", team="test-exp", user_email="test")
+        project = OpsmlProject(info=info)
+
+        assert project.project_id == "test-exp:test"
+
+        with project.run() as run:
+            datacard = DataCard(
+                interface=data,
+                name="test_data",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            datacard.create_data_profile()
+            run.register_card(card=datacard)
+            run.log_metric("test_metric", 10)
+            run.log_metrics({"test_metric2": 20})
+
+            modelcard = ModelCard(
+                interface=model,
+                name="pipeline_model",
+                team="mlops",
+                user_email="mlops.com",
+                tags={"id": "model1"},
+                datacard_uid=datacard.uid,
+                to_onnx=True,
+            )
+            run.register_card(modelcard)
+
+    # now switch config back to local for testing routes
+    client.storage_client = client.get_storage_client((OpsmlConfig()))
+    config.opsml_tracking_uri = OPSML_STORAGE_URI
+
+    return datacard, modelcard, run
 
 
 ################################################################

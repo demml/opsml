@@ -5,7 +5,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
-import tempfile
+
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
@@ -23,18 +23,13 @@ from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
-from opsml.cards.card_loader import CardLoadArgs
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.registrar import ModelRegistrar, RegistrationError, RegistrationRequest
 from opsml.registry.registry import CardRegistries, CardRegistry
-from opsml.types import CardInfo, ModelMetadata, SaveName, Suffix
-from opsml.settings.config import config
-from opsml.storage import client
-import json
-import tempfile
+from opsml.types import CardInfo, ModelMetadata, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -47,7 +42,7 @@ router = APIRouter()
 
 
 @router.get("/models/list/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def model_list_homepage(request: Request, team: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
     Args:
@@ -63,7 +58,7 @@ async def model_list_homepage(request: Request, team: Optional[str] = None) -> H
 
 
 @router.get("/models/versions/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def model_versions_page(
     request: Request,
     model: Optional[str] = None,
@@ -175,53 +170,48 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     """
 
     registry: CardRegistry = request.app.state.registries.model
-    storage_client: client.StorageClientBase = request.app.state.storage_client
-    storage_system = storage_client.settings.storage_system.value
+    # torage_client: client.StorageClientBase = request.app.state.storage_client
+    # storage_system = storage_client.settings.storage_system.value
 
     try:
-        card_record = registry.list_cards(
+        card: ModelCard = registry.load_card(
             uid=payload.uid,
             name=payload.name,
             version=payload.version,
             ignore_release_candidates=payload.ignore_release_candidate,
-            limit=1,
-        )[0]
-
-    except IndexError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found",
-        ) from exc
-
-    logger.info(
-        "Loading model metadata for {}:{}",
-        card_record["name"],
-        card_record["version"],
-    )
-
-    try:
-        card_args = CardLoadArgs(
-            **card_record,
-            table_name=registry.table_name,
-            storage_root=config.get_storage_root(storage_system),
         )
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            lpath = Path(tmp_dir, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
-            rpath = (card_args.uri / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
-            storage_client.get(rpath, lpath)
-
-            with lpath.open() as json_file:
-                metadata = json.load(json_file)
+        return card.model_metadata
 
     except Exception as exc:
         logger.error("Error loading model metadata: {}", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing request",
+            detail="Model not found",
         ) from exc
 
-    return ModelMetadata(**metadata)
+    # try:
+    #    card_args = CardLoadArgs(**card_record, table_name=registry.table_name)
+    #
+
+
+#
+#    with tempfile.TemporaryDirectory() as tmp_dir:
+#        lpath = Path(tmp_dir, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+#        rpath = (card_args.uri / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+#        storage_client.get(rpath, lpath)
+#
+#        with lpath.open() as json_file:
+#            metadata = json.load(json_file)
+#
+# except Exception as exc:
+#    logger.error("Error loading model metadata: {}", exc)
+#    raise HTTPException(
+#        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#        detail="Error processing request",
+#    ) from exc
+#
+# return ModelMetadata(**metadata)
 
 
 @router.post("/models/metrics", response_model=MetricResponse, name="model_metrics")

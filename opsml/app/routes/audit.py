@@ -28,6 +28,7 @@ from opsml.app.routes.utils import (
 )
 from opsml.cards.audit import AuditCard, AuditSections
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
@@ -44,7 +45,7 @@ router = APIRouter()
 
 
 @router.get("/audit/", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def audit_list_homepage(
     request: Request,
     team: Optional[str] = None,
@@ -96,7 +97,7 @@ async def audit_list_homepage(
 
 
 @router.post("/audit/save", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def save_audit_form(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
@@ -114,6 +115,9 @@ async def save_audit_form(
         audit_form_dict=form.model_dump(),
         registries=request.app.state.registries,
     )
+
+    print()
+    print("audit")
     audit_card = parser.parse_form()
 
     audit_report = AuditReport(
@@ -145,8 +149,8 @@ async def save_audit_form(
 
 
 @router.post("/audit/comment/save", response_class=HTMLResponse)
-# @error_to_500
-def save_audit_comment(
+@error_to_500
+async def save_audit_comment(
     request: Request,
     comment: CommentSaveRequest = Depends(CommentSaveRequest),
 ) -> HTMLResponse:
@@ -158,7 +162,8 @@ def save_audit_comment(
         comment:
             `CommentSaveRequest`
     """
-    audit_card: AuditCard = request.app.state.registries.audit.load_card(uid=comment.uid)
+    registry: CardRegistry = request.app.state.registries.audit
+    audit_card: AuditCard = registry.load_card(uid=comment.uid)
 
     # most recent first
     audit_card.add_comment(
@@ -172,7 +177,7 @@ def save_audit_comment(
         team=comment.selected_model_team,
     )
 
-    request.app.state.registries.audit.update_card(card=audit_card)
+    registry.update_card(card=audit_card)
 
     audit_report = AuditReport(
         name=audit_card.name,
@@ -233,7 +238,7 @@ class AuditFormUploader:
 
 
 @router.post("/audit/upload", response_class=HTMLResponse)
-# @error_to_500
+@error_to_500
 async def upload_audit_data(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -297,7 +302,7 @@ async def upload_audit_data(
 
 
 @router.post("/audit/download", response_class=StreamingResponse)
-# @error_to_500
+@error_to_500
 async def download_audit_data(
     request: Request,
     form: AuditFormRequest = Depends(AuditFormRequest),
