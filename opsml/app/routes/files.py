@@ -15,7 +15,11 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
-from opsml.app.core.dependencies import swap_opsml_root, verify_token, reverse_swap_opsml_root
+from opsml.app.core.dependencies import (
+    reverse_swap_opsml_root,
+    swap_opsml_root,
+    verify_token,
+)
 from opsml.app.routes.pydantic_models import (
     DeleteFileResponse,
     FileExistsResponse,
@@ -128,7 +132,9 @@ def download_file(request: Request, path: Annotated[str, Depends(swap_opsml_root
         ) from error
 
 
-def download_dir(storage_client: StorageClientBase, path: Annotated[str, Depends(swap_opsml_root)]) -> StreamingResponse:
+def download_dir(
+    storage_client: StorageClientBase, path: Annotated[str, Depends(swap_opsml_root)]
+) -> StreamingResponse:
     """Downloads a file
 
     Args:

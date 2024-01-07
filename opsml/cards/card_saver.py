@@ -61,7 +61,6 @@ class CardSaver:
 
         self._card = card
         self.card_uris = CardUris()
-        self.storage_client = client.storage_client
 
     @cached_property
     def lpath(self) -> Path:
@@ -145,7 +144,7 @@ class DataCardSaver(CardSaver):
             self._save_data()
             self._save_data_profile()
             self._save_datacard()
-            self.storage_client.put(self.lpath, self.rpath)
+            client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -271,7 +270,7 @@ class ModelCardSaver(CardSaver):
             self._save_sample_data()
             self._save_modelcard()
             self._save_metadata()
-            self.storage_client.put(self.lpath, self.rpath)
+            client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -293,7 +292,7 @@ class AuditCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
             self._save_auditcard()
-            self.storage_client.put(self.lpath, self.rpath)
+            client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -317,7 +316,7 @@ class RunCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
             self._save_runcard()
-            self.storage_client.put(self.lpath, self.rpath)
+            client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -339,7 +338,7 @@ class PipelineCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
             self._save_pipelinecard()
-            self.storage_client.put(self.lpath, self.rpath)
+            client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -361,7 +360,7 @@ class ProjectCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
             self._save_projectcard()
-            self.storage_client.put(self.lpath, self.rpath)
+            client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -375,7 +374,9 @@ def save_card_artifacts(card: ArtifactCard) -> None:
         card:
             ArtifactCard to save
         storage_client:
-            StorageClient to use to save artifacts
+            StorageClient to use to save artifacts. If None, will use default storage client.
+            Ideally, storage client will be provided by the registry when saving or updating
+            artifacts.
 
     Returns:
         ArtifactCard with updated artifact uris

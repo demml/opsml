@@ -21,6 +21,7 @@ from opsml.cards.audit import AuditCard, AuditSections
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
+from opsml.settings.config import config
 from opsml.storage.client import LocalStorageClient, StorageClient
 from opsml.types import RegistryType
 
@@ -119,9 +120,14 @@ def error_to_500(func: Callable[..., Any]) -> Any:
     async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         try:
             return await func(request, *args, **kwargs)
+
         except Exception as exc:  # pylint: disable=broad-exception-caught
             trace_back = traceback.format_exc()
             logger.error("exceptions: {} {}", exc, trace_back)
+
+            if config.opsml_testing:
+                raise ValueError(f"Exception: {exc}, {trace_back}")
+
             return templates.TemplateResponse(
                 "include/500.html",
                 {
@@ -252,8 +258,11 @@ class AuditFormParser:
         # register/update audit
         if audit_card.uid is not None:
             return self.registries.audit.update_card(card=audit_card)
+
         self.registries.audit.register_card(card=audit_card)
+
         self._add_auditcard_to_modelcard(auditcard_uid=audit_card.uid)
+
         return None
 
     def get_audit_card(self) -> AuditCard:

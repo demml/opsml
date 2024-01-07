@@ -20,10 +20,7 @@ from opsml.cards.data import DataCard
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects.base.types import ProjectInfo
-from opsml.projects.project import OpsmlProject
 from opsml.registry import CardRegistry
-from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
@@ -285,7 +282,9 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(
+        self, request: Request, load_profile: bool, datacard: DataCard
+    ) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -505,22 +504,23 @@ class ProjectRouteHelper(RouteHelper):
         """
 
         projects = project_registry.list_cards()
-        return list(set(f"{project['team']}:{project['name']}" for project in projects))
+        return [project["project_id"] for project in projects]
 
-    def get_project_runs(self, selected_project: str) -> List[Dict[str, Any]]:
+    def get_project_runs(self, selected_project: str, run_registry: CardRegistry) -> List[Dict[str, Any]]:
         """Get runs for a project
 
         Args:
             selected_project:
                 The selected project.
         """
-        # get projects
-        project_info = ProjectInfo(
-            name=selected_project.split(":")[1],
-            team=selected_project.split(":")[0],
+
+        project_runs = run_registry._registry.list_cards(
+            limit=100,
+            query_terms={"project_id": selected_project},
         )
-        project = OpsmlProject(project_info)
-        return project.list_runs()
+        sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
+
+        return project_runs
 
     def get_project_run(
         self,
@@ -543,7 +543,7 @@ class ProjectRouteHelper(RouteHelper):
 
         unique_projects = self.get_unique_projects(project_registry)
 
-        logger.info(f"unique_projects: {unique_projects}")
+        logger.debug(f"unique_projects: {unique_projects}")
 
         if len(unique_projects) == 0:
             return templates.TemplateResponse(
@@ -557,7 +557,9 @@ class ProjectRouteHelper(RouteHelper):
             selected_project = project
 
         # get projects
-        project_runs = self.get_project_runs(selected_project)
+        project_runs = self.get_project_runs(selected_project, run_registry)
+
+        logger.debug("Found {} runs", len(project_runs))
 
         if run_uid is not None:
             runcard = run_registry.load_card(uid=run_uid)

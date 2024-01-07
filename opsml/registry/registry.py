@@ -209,11 +209,7 @@ class CardRegistry:
             limit=1,
         )
 
-        return CardLoader(
-            card_args=records[0],
-            registry_type=self.registry_type,
-            storage_client=self._registry.storage_client,
-        ).load_card()
+        return CardLoader(card_args=records[0], registry_type=self.registry_type).load_card()
 
     def register_card(
         self,
@@ -249,6 +245,9 @@ class CardRegistry:
             )
 
         else:
+            print()
+            print("blah")
+            print()
             self._registry.register_card(
                 card=card,
                 version_type=version_type,
