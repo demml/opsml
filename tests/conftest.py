@@ -12,7 +12,8 @@ warnings.filterwarnings("ignore")
 # these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = "tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
-OPSML_STORAGE_URI = f"{os.getcwd()}/mlruns"
+OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
+# OPSML_STORAGE_URI = f"{os.getcwd()}/mlruns"
 # OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
 
 os.environ["APP_ENV"] = "development"
@@ -265,6 +266,23 @@ def test_app() -> Iterator[TestClient]:
     cleanup()
 
 
+@pytest.fixture
+def test_gcs_app(gcsfs_integration_client) -> Iterator[TestClient]:
+    cleanup()
+
+    # config.opsml_storage_uri = f"gs://{gcsfs_bucket}"
+    # monkeypatch.setenv("OPSML_STORAGE_URI", gcsfs_bucket)
+    client.storage_client = gcsfs_integration_client
+
+    from opsml.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp()
+    with TestClient(opsml_app.get_app()) as tc:
+
+        yield tc
+    cleanup()
+
+
 @pytest.fixture(scope="module")
 def test_app_login() -> Iterator[TestClient]:
     cleanup()
@@ -296,6 +314,14 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
     """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
     previous_client = client.storage_client
     yield mock_registries(monkeypatch, test_app)
+    client.storage_client = previous_client
+
+
+@pytest.fixture
+def gcs_api_registries(monkeypatch: pytest.MonkeyPatch, test_gcs_app: TestClient) -> Iterator[CardRegistries]:
+    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
+    previous_client = client.storage_client
+    yield mock_registries(monkeypatch, test_gcs_app)
     client.storage_client = previous_client
 
 
@@ -762,8 +788,11 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
         [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
     )
     pipe.fit(train_data, data["y"])
+    sql_logic = {"test": "SELECT * FROM TEST_TABLE"}
 
-    return SklearnModel(model=pipe, sample_data=train_data), PandasData(data=train_data)
+    model = SklearnModel(model=pipe, sample_data=train_data, preprocessor=pipe.named_steps["preprocess"])
+    data = PandasData(data=train_data, sql_logic=sql_logic, dependent_vars=["y"])
+    return model, data
 
 
 @pytest.fixture

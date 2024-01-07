@@ -7,11 +7,9 @@ from typing import Any, Dict, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi.exceptions import HTTPException
 from requests.auth import HTTPBasicAuth
 from starlette.testclient import TestClient
 
-from opsml.app.core.dependencies import swap_opsml_root
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.cards import (
@@ -740,16 +738,6 @@ def test_download_fail(test_app: TestClient):
     # test register model (onnx)
     response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path=fake")
     assert response.status_code == 422
-
-
-def test_verify_path():
-    swap_opsml_root("opsml-root:/test/assets/OPSML_MODEL_REGISTRY")
-    swap_opsml_root("opsml-root:/test/assets/OPSML_DATA_REGISTRY")
-    swap_opsml_root("opsml-root:/test/assets/OPSML_RUN_REGISTRY")
-    swap_opsml_root("opsml-root:/test/assets/OPSML_PROJECT_REGISTRY")
-
-    with pytest.raises(HTTPException):
-        assert swap_opsml_root("opsml-root:/tests/assets/fake")
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")

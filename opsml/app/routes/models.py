@@ -170,8 +170,6 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     """
 
     registry: CardRegistry = request.app.state.registries.model
-    # torage_client: client.StorageClientBase = request.app.state.storage_client
-    # storage_system = storage_client.settings.storage_system.value
 
     try:
         card: ModelCard = registry.load_card(

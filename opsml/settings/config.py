@@ -29,16 +29,16 @@ class OpsmlConfig(BaseSettings):
     # The current RUN_ID to load when creating a new project
     opsml_run_id: Optional[str] = None
 
-    @field_validator("opsml_storage_uri", mode="after")
+    @field_validator("opsml_storage_uri", mode="before")
     @classmethod
     def set_opsml_storage_uri(cls, opsml_storage_uri: str) -> str:
         """Opsml uses storage cients that follow fsspec guidelines. LocalFileSytem only deals
         in absolutes, so we need to convert relative paths to absolute paths.
         """
-        if not opsml_storage_uri.startswith("gs://") or not opsml_storage_uri.startswith("s3://"):
-            return Path(opsml_storage_uri).absolute().as_posix()
+        if opsml_storage_uri.startswith("gs://") or opsml_storage_uri.startswith("s3://"):
+            return opsml_storage_uri
 
-        return opsml_storage_uri
+        return Path(opsml_storage_uri).absolute().as_posix()
 
     @property
     def is_tracking_local(self) -> bool:
@@ -63,7 +63,11 @@ class OpsmlConfig(BaseSettings):
     def storage_root(self) -> str:
         """Returns the root of the storage URI"""
         if self.is_tracking_local:
-            return self.opsml_storage_uri
+            if self.opsml_storage_uri.lower().startswith("gs://"):
+                return self.opsml_storage_uri.lower().lstrip("gs://")
+            if self.opsml_storage_uri.lower().startswith("s3://"):
+                return self.opsml_storage_uri.lower().lstrip("s3://")
+            return self.opsml_storage_uri.lower()
         return self.opsml_proxy_root
 
 

@@ -179,7 +179,7 @@ class ModelRegistrar:
         Returns:
             The URI to the directory containing the registered model.
         """
-        model_uri = swap_opsml_root(self._get_correct_model_uri(request, metadata))
+        model_uri = swap_opsml_root(request, self._get_correct_model_uri(request, metadata))
 
         logger.info("ModelRegistrar: registering model: {}", request.model_dump())
         registry_path = self._copy_model_to_registry(request, Path(model_uri), metadata)
