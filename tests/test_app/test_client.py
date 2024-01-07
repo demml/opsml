@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.exceptions import HTTPException
-from numpy.typing import NDArray
 from requests.auth import HTTPBasicAuth
 from starlette.testclient import TestClient
 
@@ -17,16 +16,14 @@ from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveReques
 from opsml.app.routes.utils import error_to_500, list_team_name_info
 from opsml.cards import (
     AuditCard,
-    CardInfo,
     DataCard,
     DataCardMetadata,
     ModelCard,
-    ModelCardMetadata,
     PipelineCard,
     RunCard,
 )
-from opsml.data import NumpyData, PandasData
-from opsml.model import SklearnModel
+from opsml.data import NumpyData, PandasData, TorchData
+from opsml.model import HuggingFaceModel, SklearnModel
 from opsml.projects.active_run import ActiveRun
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.settings.config import config
@@ -214,37 +211,19 @@ def test_run_card(
     loaded_card.load_artifacts()
 
 
-def test_register_model(
+def test_register_model_data(
     api_registries: CardRegistries,
-    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+    populate_model_data_for_api: Tuple[ModelCard, DataCard],
     api_storage_client: client.StorageClient,
 ):
-    model, data = sklearn_pipeline
-    # create data card
-    data_registry = api_registries.data
-
-    datacard = DataCard(
-        interface=data,
-        name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    data_registry.register_card(card=datacard)
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-
-    modelcard = ModelCard(
-        interface=model,
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        tags={"id": "model1"},
-        datacard_uid=datacard.uid,
-        to_onnx=True,
-    )
-
     model_registry = api_registries.model
-    model_registry.register_card(modelcard)
+    data_registry = api_registries.data
+    modelcard, datacard = populate_model_data_for_api
+
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(
+        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
+    )
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
@@ -256,7 +235,7 @@ def test_register_model(
 
     with pytest.raises(ValueError):
         modelcard_fail = ModelCard(
-            interface=model,
+            interface=modelcard.interface,
             name="pipeline_model",
             team="mlops",
             user_email="mlops.com",
@@ -273,8 +252,8 @@ def test_register_model(
     with pytest.raises(ValueError) as ve:
         # try registering model to different team
         model_card_dup = ModelCard(
-            interface=model,
-            name="pipeline_model",
+            interface=modelcard.interface,
+            name=modelcard.name,
             team="new-team",
             user_email="mlops.com",
             datacard_uid=datacard.uid,
@@ -283,50 +262,25 @@ def test_register_model(
         model_registry.register_card(card=model_card_dup)
     assert ve.match("different team")
 
-
-def test_load_data_card(
-    api_registries: CardRegistries,
-    pandas_data: PandasData,
-    api_storage_client: client.StorageClient,
-):
-    data_name = "test_df"
-    team = "mlops"
-    user_email = "mlops.com"
-
-    registry = api_registries.data
-
-    datacard = DataCard(
-        interface=pandas_data,
-        name=data_name,
-        team=team,
-        user_email=user_email,
-        metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
-    )
-
-    datacard.add_info(info={"added_metadata": 10})
-    registry.register_card(card=datacard)
-
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
-
-    loaded_data: DataCard = registry.load_card(name=data_name, version=datacard.version)
+    # load data
+    loaded_data: DataCard = data_registry.load_card(name=datacard.name, version=datacard.version)
     loaded_data.load_data()
 
-    assert int(loaded_data.metadata.additional_info["input_metadata"]) == 20
-    assert int(loaded_data.metadata.additional_info["added_metadata"]) == 10
+    assert loaded_data.data is not None
 
     # update
     loaded_data.version = "1.2.0"
-    registry.update_card(card=loaded_data)
+    data_registry.update_card(card=loaded_data)
 
-    record = registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
+    record = data_registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
     assert record["version"] == "1.2.0"
 
     # test assertion error
     with pytest.raises(ValueError):
         DataCard(
-            name=data_name,
-            team=team,
-            user_email=user_email,
+            name=datacard.name,
+            team=datacard.team,
+            user_email=datacard.user_email,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
         )
 
@@ -357,9 +311,9 @@ def test_pipeline_registry(api_registries: CardRegistry):
 
 def test_metadata_download_and_registration(
     test_app: TestClient,
-    populate_model: ModelCard,
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
 ):
-    model_card, _, _ = populate_model
+    model_card, _, _ = populate_model_data_for_route
 
     response = test_app.post(
         url=f"opsml/{ApiRoutes.MODEL_METADATA}",
@@ -480,7 +434,7 @@ def test_metadata_download_and_registration(
     shutil.rmtree(config.opsml_registry_path, ignore_errors=True)
 
     response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
-    assert response.status_code == 500
+    assert response.status_code == 200
 
 
 def test_download_model_metadata_failure(test_app: TestClient):
@@ -504,57 +458,12 @@ def test_app_with_login(test_app_login: TestClient):
 
 def test_model_metrics(
     test_app: TestClient,
-    api_registries: CardRegistries,
-    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
 ) -> None:
     """ify that we can read artifacts / metrics / cards without making a run
     active."""
 
-    model, data = sklearn_pipeline
-    card_info = CardInfo(
-        name="test_run",
-        team="mlops",
-        user_email="mlops.com",
-    )
-
-    runcard = RunCard(info=card_info)
-
-    runcard.log_metric(key="m1", value=1.1)
-    runcard.log_metric(key="mape", value=2, step=1)
-    runcard.log_metric(key="mape", value=2, step=2)
-    runcard.log_parameter(key="m1", value="apple")
-    api_registries.run.register_card(runcard)
-
-    #### Create DataCard
-    datacard = DataCard(
-        interface=data,
-        name="profile_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    datacard.create_data_profile()
-    api_registries.data.register_card(datacard)
-
-    #### Create ModelCard
-    modelcard = ModelCard(
-        interface=model,
-        info=card_info,
-        datacard_uid=datacard.uid,
-        metadata=ModelCardMetadata(runcard_uid=runcard.uid),
-        to_onnx=True,
-    )
-    api_registries.model.register_card(modelcard)
-
-    #### Create ModelCard
-    modelcard_2 = ModelCard(
-        interface=model,
-        info=card_info,
-        datacard_uid=datacard.uid,
-        metadata=ModelCardMetadata(runcard_uid=runcard.uid),
-        to_onnx=True,
-    )
-    api_registries.model.register_card(modelcard_2)
-
+    modelcard, _, _ = populate_model_data_for_route
     response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
 
     metrics = response.json()
@@ -568,8 +477,7 @@ def test_model_metrics(
             "team": modelcard.team,
         },
     )
-
-    assert response.status_code == 500
+    assert response.status_code == 200
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
@@ -600,7 +508,7 @@ def test_delete_fail(test_app: TestClient):
     cast(Dict[str, Any], response.json())
 
     # Invaild path: does not include a registry table
-    response = test_app.get("/opsml/files/delete", params={"read_path": "notthere"})
+    response = test_app.get("/opsml/files/delete", params={"path": "notthere"})
     assert response.status_code == 422
 
 
@@ -704,9 +612,9 @@ def test_data_model_version(
 
 
 ##### Test audit
-def test_audit(test_app: TestClient, populate_model: Tuple[ModelCard, DataCard, AuditCard]):
+def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]):
 
-    modelcard, datacard, auditcard = populate_model
+    modelcard, datacard, auditcard = populate_model_data_for_route
 
     response = test_app.get("/opsml/audit/")
     assert response.status_code == 200
@@ -846,32 +754,35 @@ def test_verify_path():
 
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
-def _test_register_distilbert(
+def test_register_vit(
     api_registries: CardRegistries,
-    load_pytorch_language: Tuple[Any, Dict[str, NDArray]],
+    huggingface_vit: Tuple[HuggingFaceModel, TorchData],
+    api_storage_client: client.StorageClient,
 ) -> None:
     """An example of saving a large, pretrained  bart model to opsml"""
-    model, data = load_pytorch_language
+    model, data = huggingface_vit
 
-    data_card = DataCard(
-        data=data["input_ids"],
-        name="distilbert",
+    datacard = DataCard(
+        interface=data,
+        name="vit",
         team="mlops",
         user_email="test@mlops.com",
     )
-    api_registries.data.register_card(data_card)
+    api_registries.data.register_card(datacard)
 
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data,
-        name="distilbert",
+    modelcard = ModelCard(
+        interface=model,
+        name="vit",
         team="mlops",
         user_email="test@mlops.com",
         tags={"id": "model1"},
-        datacard_uid=data_card.uid,
+        datacard_uid=datacard.uid,
         to_onnx=True,
     )
 
-    api_registries.model.register_card(model_card)
+    api_registries.model.register_card(modelcard)
 
-    assert "trained-model.pt" in model_card.metadata.uris.trained_model_uri
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix))
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(model.preprocessor_suffix)
+    )

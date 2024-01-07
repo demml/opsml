@@ -117,7 +117,6 @@ class CardLoader:
 
         load_lpath = Path(lpath, object_path).with_suffix(suffix)
         load_rpath = Path(rpath, object_path).with_suffix(suffix)
-
         self.storage_client.get(load_rpath, load_lpath)
         return load_lpath
 
@@ -144,7 +143,6 @@ class CardLoader:
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = rpath or self.card.uri
-
             yield self.download(lpath, rpath, object_path, suffix)
 
     def load_card(self) -> ArtifactCard:
@@ -281,7 +279,6 @@ class ModelCardLoader(CardLoader):
 
         load_rpath = Path(self.card.uri, SaveName.PREPROCESSOR.value).with_suffix(self.preprocessor_suffix)
         if not self.storage_client.exists(load_rpath):
-            logger.info("Onnx model already loaded")
             return None
 
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)

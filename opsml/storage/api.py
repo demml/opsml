@@ -137,11 +137,7 @@ class ApiClient:
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_download_file_request(
-        self,
-        route: str,
-        local_dir: Path,
-        filename: str,
-        read_dir: Path,
+        self, route: str, local_dir: Path, filename: str, read_dir: Path
     ) -> Dict[str, Any]:
         local_dir.mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
         read_path = read_dir / filename

@@ -1,5 +1,5 @@
 from opsml.app.routes.utils import get_registry_type_from_table
-from opsml.cards.types import RegistryType
+from opsml.types import RegistryType
 
 
 def test_get_registry_type_from_table():

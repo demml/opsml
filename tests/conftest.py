@@ -70,7 +70,16 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
-from opsml.cards import AuditCard, DataCard, DataSplit, ModelCard
+from opsml.cards import (
+    AuditCard,
+    CardInfo,
+    DataCard,
+    DataCardMetadata,
+    DataSplit,
+    ModelCard,
+    ModelCardMetadata,
+    RunCard,
+)
 
 # opsml
 from opsml.data.interfaces import (
@@ -955,7 +964,48 @@ def test_model_card(sklearn_pipeline):
 
 
 @pytest.fixture
-def populate_model(
+def populate_model_data_for_api(
+    api_registries: CardRegistries,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+) -> Tuple[ModelCard, DataCard]:
+
+    config.opsml_registry_path = uuid.uuid4().hex
+    team = "mlops"
+    user_email = "test@mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    datacard = DataCard(
+        interface=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+        metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
+    )
+    datacard.add_info(info={"added_metadata": 10})
+
+    data_registry.register_card(card=datacard)
+
+    modelcard = ModelCard(
+        interface=model,
+        name=uuid.uuid4().hex,
+        team=team,
+        user_email=user_email,
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+        tags={"id": "model1"},
+    )
+
+    model_registry.register_card(modelcard)
+
+    return modelcard, datacard
+
+
+@pytest.fixture
+def populate_model_data_for_route(
     api_registries: CardRegistries,
     linear_regression: Tuple[SklearnModel, NumpyData],
 ) -> None:
@@ -970,12 +1020,32 @@ def populate_model(
     model_registry = api_registries.model
     audit_registry = api_registries.audit
 
+    # create run
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    runcard = RunCard(info=card_info)
+
+    runcard.log_metric(key="m1", value=1.1)
+    runcard.log_metric(key="mape", value=2, step=1)
+    runcard.log_metric(key="mape", value=2, step=2)
+    runcard.log_parameter(key="m1", value="apple")
+    api_registries.run.register_card(runcard)
+
     datacard = DataCard(
         interface=data,
         name="test_data",
         team=team,
         user_email=user_email,
+        metadata=DataCardMetadata(
+            additional_info={"input_metadata": 20},
+            runcard_uid=runcard.uid,
+        ),
     )
+    datacard.add_info(info={"added_metadata": 10})
 
     data_registry.register_card(card=datacard)
 
@@ -986,6 +1056,8 @@ def populate_model(
         user_email=user_email,
         datacard_uid=datacard.uid,
         to_onnx=True,
+        metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        tags={"id": "model1"},
     )
 
     model_registry.register_card(modelcard)

@@ -46,6 +46,7 @@ class NumpyData(DataInterface):
 
     def load_data(self, path: Path) -> None:
         """Load numpy array from zarr file"""
+
         self.data = zarr.load(path)
 
     @property
