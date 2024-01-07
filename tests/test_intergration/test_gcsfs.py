@@ -1,11 +1,15 @@
 import os
 from pathlib import Path
 
+import pytest
+
 from opsml.storage.client import GCSFSStorageClient
 
 
 # gcs integration tests perform operation on test bucket that has a TTL of 1 day for all objects
+@pytest.mark.integration
 def test_gcsfs_integration(gcsfs_integration_client: GCSFSStorageClient, gcsfs_bucket: Path):
+
     lpath = Path("tests/assets/cats.jpg")
     rpath = gcsfs_bucket / "cats.jpg"
 
