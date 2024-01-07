@@ -48,6 +48,9 @@ jobs:
         os: [ubuntu, macos]
 
     runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -92,6 +95,9 @@ jobs:
   Postgres-Unit:
     needs: Unit-Test
     runs-on: ubuntu-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
 
     strategy:
       matrix:
@@ -133,6 +139,9 @@ jobs:
   MySql-Unit:
     needs: Unit-Test
     runs-on: ubuntu-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
 
     strategy:
       matrix:
