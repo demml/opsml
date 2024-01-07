@@ -115,11 +115,7 @@ def download_file(request: Request, path: Annotated[str, Depends(swap_opsml_root
         Streaming file response
     """
     storage_client: StorageClientBase = request.app.state.storage_client
-
     try:
-        if Path(path).suffix == "":
-            return download_dir(storage_client, path)
-
         return StreamingResponse(
             storage_client.iterfile(Path(path), CHUNK_SIZE),
             media_type="application/octet-stream",
@@ -179,6 +175,25 @@ def download_dir(
         ) from error
 
 
+@router.get("/files/download/ui", name="download_artifacts")
+def download_artifacts_ui(request: Request, path: Annotated[str, Depends(swap_opsml_root)]) -> StreamingResponse:
+    """Downloads a file
+
+    Args:
+        request:
+            request object
+        path:
+            path to file
+
+    Returns:
+        Streaming file response
+    """
+    storage_client: StorageClientBase = request.app.state.storage_client
+    if Path(path).suffix == "":
+        return download_dir(storage_client, path)
+    return download_file(request, path)
+
+
 @router.get("/files/list", name="list_files")
 def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)]) -> ListFileResponse:
     """Lists files
@@ -186,7 +201,7 @@ def list_files(request: Request, path: Annotated[str, Depends(swap_opsml_root)])
     Args:
         request:
             request object
-        read_path:
+        path:
             path to read
 
     Returns:
@@ -213,7 +228,7 @@ def file_exists(request: Request, path: Annotated[str, Depends(swap_opsml_root)]
     Args:
         request:
             request object
-        read_path:
+        path:
             path to files
 
     Returns:

@@ -245,9 +245,6 @@ class CardRegistry:
             )
 
         else:
-            print()
-            print("blah")
-            print()
             self._registry.register_card(
                 card=card,
                 version_type=version_type,

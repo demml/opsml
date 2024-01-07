@@ -9,7 +9,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml.app.routes.files import download_file
+from opsml.app.routes.files import download_artifacts_ui, download_file
 from opsml.app.routes.route_helpers import DataRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.cards.data import DataCard
@@ -85,7 +85,7 @@ def download_data(request: Request, uid: str) -> StreamingResponse:
     registry: CardRegistry = request.app.state.registries.data
     datacard: DataCard = registry.load_card(uid=uid)
     load_path = Path(datacard.uri / SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    return download_file(request, load_path)
+    return download_artifacts_ui(request, load_path)
 
 
 @router.get("/data/download/profile", name="download_data_profile")
