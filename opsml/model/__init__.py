@@ -1,4 +1,3 @@
-from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.interfaces.lgbm import LightGBMModel
 from opsml.model.interfaces.pytorch import PyTorchModel
@@ -14,7 +13,6 @@ from opsml.types import (
 )
 
 __all__ = [
-    "ModelInterface",
     "TensorFlowModel",
     "SklearnModel",
     "PyTorchModel",

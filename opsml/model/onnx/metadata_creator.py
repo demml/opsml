@@ -26,7 +26,7 @@ class _ModelMetadataCreator:
     @property
     def model(self) -> Any:
         """Return model from model interface"""
-        if self.interface.model.model_class == TrainedModelType.PYTORCH_LIGHTNING:
+        if self.interface.model_class == TrainedModelType.PYTORCH_LIGHTNING:
             return self.interface.model.model
         return self.interface.model
 

@@ -3,9 +3,7 @@ from pathlib import Path
 from typing import cast
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
-from opsml.cards.card_loader import CardLoader
-from opsml.cards.card_saver import save_card_artifacts
-from opsml.model.interfaces import (
+from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -14,6 +12,8 @@ from opsml.model.interfaces import (
     TensorFlowModel,
 )
 from opsml.storage import client
+from opsml.storage.card_loader import CardLoader
+from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName
 
 

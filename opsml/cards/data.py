@@ -58,7 +58,7 @@ class DataCard(ArtifactCard):
         """
         Load data to interface
         """
-        from opsml.cards.card_loader import DataCardLoader
+        from opsml.storage.card_loader import DataCardLoader
 
         DataCardLoader(self).load_data()
 
@@ -66,7 +66,7 @@ class DataCard(ArtifactCard):
         """
         Load data to interface
         """
-        from opsml.cards.card_loader import DataCardLoader
+        from opsml.storage.card_loader import DataCardLoader
 
         DataCardLoader(self).load_data_profile()
 

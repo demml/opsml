@@ -10,7 +10,10 @@ try:
     import onnxruntime as rt
 
     from opsml.model.onnx.base_converter import _ModelConverter
+    from opsml.model.onnx.lightgbm_converter import _LightGBMBoosterOnnxModel
     from opsml.model.onnx.metadata_creator import _TrainedModelMetadataCreator
+    from opsml.model.onnx.sklearn_converter import _SklearnOnnxModel
+    from opsml.model.onnx.tensorflow_converter import _TensorflowKerasOnnxModel
 
 except ModuleNotFoundError as import_error:
     logger.error(
