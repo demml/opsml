@@ -314,12 +314,13 @@ class ModelCardLoader(CardLoader):
 
         load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
         if not self.storage_client.exists(load_rpath):
-            logger.info("No onnx model exists for {}", save_name)
+            logger.info("No onnx model exists for {}", str(save_name))
             return None
 
         with self._load_object(save_name, self.onnx_suffix) as lpath:
             self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(lpath)
+        return None
 
     def load_model_metadata(self) -> ModelMetadata:
         """Load model metadata to interface"""
@@ -329,7 +330,7 @@ class ModelCardLoader(CardLoader):
             rpath = self.card.uri
             load_path = self.download(lpath, rpath, SaveName.MODEL_METADATA.value, Suffix.JSON.value)
 
-            with load_path.open() as json_file:
+            with load_path.open(encoding="utf-8") as json_file:
                 metadata = json.load(json_file)
 
         return ModelMetadata(**metadata)

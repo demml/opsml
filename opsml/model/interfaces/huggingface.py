@@ -333,6 +333,8 @@ try:
             if self.onnx_args.quantize:
                 self._quantize_model(path.parent, onnx_model)
 
+            return None
+
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
@@ -402,9 +404,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:

@@ -195,6 +195,7 @@ try:
                 return self._convert_to_onnx_inplace()
 
             self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=path)
+            return None
 
         @property
         def model_suffix(self) -> str:
