@@ -139,13 +139,11 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
         request,
         CardRequest(name=payload.name, version=payload.version, ignore_release_candidate=True),
     )
+    model_request = RegistrationRequest(name=payload.name, version=payload.version, onnx=payload.onnx)
 
     try:
         registrar: ModelRegistrar = request.app.state.model_registrar
-        return registrar.register_model(
-            RegistrationRequest(name=payload.name, version=payload.version, onnx=payload.onnx),
-            metadata,
-        ).as_posix()
+        return registrar.register_model(request=request, model_request=model_request, metadata=metadata).as_posix()
     except RegistrationError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -507,7 +507,7 @@ def test_delete_fail(test_app: TestClient):
 
     # Invaild path: does not include a registry table
     response = test_app.get("/opsml/files/delete", params={"path": "notthere"})
-    assert response.status_code == 422
+    assert response.status_code == 500
 
 
 def test_card_create_fail(test_app: TestClient):

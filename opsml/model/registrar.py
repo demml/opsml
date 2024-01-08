@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Union
 
+from fastapi import Request
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt
 
@@ -86,15 +87,19 @@ class ModelRegistrar:
     @retry(reraise=True, stop=stop_after_attempt(3))
     def _copy_model_to_registry(
         self,
-        request: RegistrationRequest,
+        model_request: RegistrationRequest,
         model_uri: Path,
         metadata: ModelMetadata,
     ) -> Path:
         """Copies a model from it's original storage path to a hardcoded model registry path
 
         Args:
-            request: The registration request
-            model_uri: The model URI to register for the request.
+            model_request:
+                The registration request
+            model_uri:
+                The model URI to register for the request.
+            metadata:
+                ModelMetadata
 
         Returns:
             The URI to the directory containing the registered model.
@@ -102,13 +107,13 @@ class ModelRegistrar:
         """
 
         read_path = model_uri.parent
-        registry_path = self._registry_path(request)
+        registry_path = self._registry_path(model_request)
 
         # delete existing model if it exists
-        if self.is_registered(request):
+        if self.is_registered(model_request):
             logger.info("Model detected in registry path. Deleting: {}", registry_path)
             self.storage_client.rm(registry_path)
-            assert not self.is_registered(request)
+            assert not self.is_registered(model_request)
 
         # register the model
         self.storage_client.copy(read_path, registry_path, False)
@@ -116,7 +121,7 @@ class ModelRegistrar:
         # register model settings
         self.register_model_settings(metadata, registry_path, model_uri)
 
-        if not self.is_registered(request):
+        if not self.is_registered(model_request):
             raise RegistrationError("Failed to copy model to registered URL")
 
         return registry_path
@@ -169,20 +174,26 @@ class ModelRegistrar:
 
         logger.info("ModelRegistrar: registered model settings: {} path={}", model_settings, registry_path)
 
-    def register_model(self, request: RegistrationRequest, metadata: ModelMetadata) -> Path:
+    def register_model(self, request: Request, model_request: RegistrationRequest, metadata: ModelMetadata) -> Path:
         """Registers a model to a hardcoded storage path.
 
         Args:
-            request: Registration request
-            metadata: Associated model metadata
+            request:
+                Api request object
+            model_request:
+                Registration request
+            metadata:
+                Associated model metadata
 
         Returns:
             The URI to the directory containing the registered model.
         """
-        model_uri = swap_opsml_root(request, self._get_correct_model_uri(request, metadata))
 
-        logger.info("ModelRegistrar: registering model: {}", request.model_dump())
-        registry_path = self._copy_model_to_registry(request, Path(model_uri), metadata)
-        logger.info("ModelRegistrar: registered model: {} path={}", request.model_dump(), registry_path)
+        model_uri = self._get_correct_model_uri(model_request, metadata)
+        swapped_uri = swap_opsml_root(request, model_uri)
+
+        logger.info("ModelRegistrar: registering model: {}", model_request.model_dump())
+        registry_path = self._copy_model_to_registry(model_request, Path(swapped_uri), metadata)
+        logger.info("ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path)
 
         return registry_path
