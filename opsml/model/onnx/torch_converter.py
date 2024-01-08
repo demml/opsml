@@ -86,7 +86,7 @@ class _PyTorchOnnxModel:
 
         # load
         return OnnxModel(
-            onnx_version=onnx.__version__,
+            onnx_version=onnx.__version__,  # type: ignore[attr-defined]
             sess=self._load_onnx_model(path=path),
         )
 
@@ -101,6 +101,7 @@ class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
         """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
 
         if self.interface.onnx_args is None:
+            assert self.interface.sample_data is not None, "No sample data provided"
             return _PytorchArgBuilder(input_data=self.interface.sample_data).get_args()
         return self.interface.onnx_args
 
@@ -125,6 +126,6 @@ class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
 
         # load
         return OnnxModel(
-            onnx_version=onnx.__version__,
+            onnx_version=onnx.__version__,  # type: ignore[attr-defined]
             sess=self._load_onnx_model(path=path),
         )

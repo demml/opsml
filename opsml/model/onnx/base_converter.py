@@ -5,11 +5,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple
 
 import onnx
 import onnxruntime as rt
-from onnx import ModelProto
+from onnx import ModelProto  # type: ignore[attr-defined]
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
@@ -38,7 +38,7 @@ class _ModelConverter:
 
     @property
     def interface(self) -> ModelInterface:
-        return cast(ModelInterface, self._interface)
+        return self._interface
 
     @property
     def sess(self) -> rt.InferenceSession:
@@ -82,7 +82,7 @@ class _ModelConverter:
         """
         raise NotImplementedError
 
-    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+    def get_data_types(self) -> List[Any]:
         """Converts data for onnx
 
         Returns
@@ -99,7 +99,7 @@ class _ModelConverter:
         return int(sig.type.tensor_type.elem_type)
 
     @classmethod
-    def _parse_onnx_signature(cls, sess: rt.InferenceSession, sig_type: str) -> Dict[str, Feature]:  # type: ignore[type-arg]
+    def _parse_onnx_signature(cls, sess: rt.InferenceSession, sig_type: str) -> Dict[str, Feature]:
         feature_dict = {}
         assert sess is not None
 
@@ -184,7 +184,7 @@ class _ModelConverter:
         schema = DataSchema(
             onnx_input_features=onnx_input_features,
             onnx_output_features=onnx_output_features,
-            onnx_version=onnx.__version__,
+            onnx_version=onnx.__version__,  # type: ignore[attr-defined]
         )
 
         return ModelReturn(onnx_model=onnx_model, data_schema=schema)

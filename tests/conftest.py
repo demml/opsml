@@ -83,14 +83,7 @@ from opsml.cards import (
 )
 
 # opsml
-from opsml.data import (
-    ArrowData,
-    NumpyData,
-    PandasData,
-    PolarsData,
-    SqlData,
-    TorchData,
-)
+from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, TorchData
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model import (

@@ -53,7 +53,7 @@ class ModelCard(ArtifactCard):
 
     @field_validator("datacard_uid", mode="before")
     @classmethod
-    def check_uid(cls, datacard_uid: Optional[str] = None):
+    def check_uid(cls, datacard_uid: Optional[str] = None) -> Optional[str]:
         if datacard_uid is None:
             return datacard_uid
 

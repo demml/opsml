@@ -9,7 +9,7 @@ from semver import VersionInfo
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.records import registry_name_record_map
+from opsml.registry.records import SaveRecord, registry_name_record_map
 from opsml.registry.semver import CardVersion, SemVerUtils, VersionType
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.storage.client import StorageClient
@@ -238,7 +238,8 @@ class SQLRegistryBase:
         self._set_card_uid(card=card)
 
         save_card_artifacts(card=card)
-        record = registry_name_record_map[card.card_type](**card.create_registry_record())
+        registry_record: SaveRecord = registry_name_record_map[card.card_type]
+        record = registry_record.model_validate(card.create_registry_record())
 
         self.add_and_commit(card=record.model_dump())
 
@@ -250,10 +251,13 @@ class SQLRegistryBase:
             card:
                 Card to update
         """
-        record = self.list_cards(uid=card.uid, limit=1)[0]
+        # checking card exists
+        record = self.list_cards(uid=card.uid, limit=1)
+        assert bool(record), "Card does not exist in registry. Please use register card first"
         save_card_artifacts(card=card)
-        record = registry_name_record_map[card.card_type](**card.create_registry_record())
-        self.update_card_record(card=record.model_dump())
+        save_record: SaveRecord = registry_name_record_map[card.card_type](**card.create_registry_record())
+
+        self.update_card_record(card=save_record.model_dump())
 
     def list_cards(
         self,

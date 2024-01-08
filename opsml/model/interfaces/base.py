@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
-from opsml.helpers.utils import all_subclasses, get_class_name
+from opsml.helpers.utils import get_class_name
 from opsml.types import CommonKwargs, ModelReturn, OnnxModel
 from opsml.types.extra import Suffix
 
@@ -70,7 +70,7 @@ class ModelInterface(BaseModel):
 
     @field_validator("modelcard_uid", mode="before")
     @classmethod
-    def check_modelcard_uid(cls, modelcard_uid: str) -> Dict[str, Any]:
+    def check_modelcard_uid(cls, modelcard_uid: str) -> str:
         # empty strings are falsey
         if not modelcard_uid:
             return modelcard_uid
@@ -175,7 +175,7 @@ class ModelInterface(BaseModel):
     @classmethod
     def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:
         if preprocessor is not None:
-            return preprocessor.__class__.__name__
+            return str(preprocessor.__class__.__name__)
 
         return CommonKwargs.UNDEFINED.value
 
@@ -206,6 +206,9 @@ class ModelInterface(BaseModel):
         Returns:
             Sample data with only one record
         """
+        if sample_data is None:
+            return None
+
         if isinstance(sample_data, list):
             return [data[0:1] for data in sample_data]
 
@@ -259,16 +262,3 @@ class ModelInterface(BaseModel):
     @staticmethod
     def name() -> str:
         return ModelInterface.__name__
-
-
-def get_model_interface(interface_type: str) -> ModelInterface:
-    """Load model interface from pathlib object
-
-    Args:
-        interface_type:
-            Name of interface
-    """
-    return next(
-        (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),
-        ModelInterface,
-    )

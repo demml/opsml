@@ -54,7 +54,7 @@ class DataCard(ArtifactCard):
     interface: SerializeAsAny[DataInterface]
     metadata: DataCardMetadata = DataCardMetadata()
 
-    def load_data(self):
+    def load_data(self) -> None:
         """
         Load data to interface
         """
@@ -62,7 +62,7 @@ class DataCard(ArtifactCard):
 
         DataCardLoader(self).load_data()
 
-    def load_data_profile(self):
+    def load_data_profile(self) -> None:
         """
         Load data to interface
         """

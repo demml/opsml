@@ -7,7 +7,7 @@
 
 from typing import Any, List, cast
 
-from onnx import ModelProto
+from onnx import ModelProto  # type: ignore[attr-defined]
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.tf import TensorFlowModel

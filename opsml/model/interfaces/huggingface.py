@@ -196,6 +196,7 @@ try:
 
         def _get_pipeline_prediction(self) -> Dict[str, Any]:
             """Use model in pipeline mode if pipeline task"""
+            assert isinstance(self.model, Pipeline), "Model must be a pipeline"
 
             if isinstance(self.sample_data, dict):
                 prediction = self.model(**self.sample_data)
@@ -251,6 +252,7 @@ try:
             Returns:
                 Path to quantized model
             """
+            assert self.onnx_args is not None, "No onnx args provided"
             assert self.onnx_args.config is not None, "No quantization config provided"
 
             from optimum.onnxruntime import ORTQuantizer
@@ -358,6 +360,7 @@ try:
             import onnx
             import optimum.onnxruntime as ort
 
+            assert self.onnx_args is not None, "No onnx args provided"
             ort_model = getattr(ort, self.onnx_args.ort_type)
             onnx_model = ort_model.from_pretrained(
                 path,
@@ -367,7 +370,7 @@ try:
 
             if self.is_pipeline:
                 self.onnx_model = OnnxModel(
-                    onnx_version=onnx.__version__,
+                    onnx_version=onnx.__version__,  # type: ignore[attr-defined]
                     sess=pipeline(
                         self.task_type,
                         model=onnx_model,
@@ -376,7 +379,7 @@ try:
                 )
             else:
                 self.onnx_model = OnnxModel(
-                    onnx_version=onnx.__version__,
+                    onnx_version=onnx.__version__,  # type: ignore[attr-defined]
                     sess=onnx_model,
                 )
 
@@ -404,7 +407,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
 
         @staticmethod
         def name() -> str:

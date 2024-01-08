@@ -8,8 +8,13 @@ from typing import Any, Dict
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.utils.data_helper import get_model_data
-from opsml.types import DataSchema, Feature, ModelReturn, TrainedModelType, AllowedDataType
-
+from opsml.types import (
+    AllowedDataType,
+    DataSchema,
+    Feature,
+    ModelReturn,
+    TrainedModelType,
+)
 
 logger = ArtifactLogger.get_logger()
 
@@ -27,6 +32,8 @@ class _ModelMetadataCreator:
     def model(self) -> Any:
         """Return model from model interface"""
         if self.interface.model_class == TrainedModelType.PYTORCH_LIGHTNING:
+            assert self.interface.model is not None, "No Trainer provided"
+            assert self.interface.model.model is not None, "No model found in Trainer"
             return self.interface.model.model
         return self.interface.model
 

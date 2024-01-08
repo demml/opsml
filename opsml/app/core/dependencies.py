@@ -71,7 +71,7 @@ def swap_opsml_root(request: Request, path: Path) -> Path:
     return path
 
 
-def reverse_swap_opsml_root(request: Request, path: str) -> str:
+def reverse_swap_opsml_root(request: Request, path: Path) -> Path:
     """When running in client model, client will specify path to use with opsml_proxy_root.
     Server needs to swap this out with opsml_storage_uri to access the correct path.
 
@@ -87,8 +87,8 @@ def reverse_swap_opsml_root(request: Request, path: str) -> str:
 
     _verify_path(path)
 
-    if not path.startswith(config.opsml_proxy_root):
-        curr_path = Path(path)
+    if not path.as_posix().startswith(config.opsml_proxy_root):
+        curr_path = path
         new_path = Path(config.opsml_proxy_root) / curr_path.relative_to(request.app.state.storage_root)
-        return str(new_path)
+        return new_path
     return path

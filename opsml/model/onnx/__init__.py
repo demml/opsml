@@ -113,6 +113,6 @@ def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.Inference
 
     metadata.data_schema.onnx_input_features = onnx_input_features
     metadata.data_schema.onnx_output_features = onnx_output_features
-    metadata.data_schema.onnx_version = onnx.__version__
+    metadata.data_schema.onnx_version = onnx.__version__  # type: ignore[attr-defined]
 
     return metadata
