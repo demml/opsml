@@ -85,7 +85,7 @@ def download_data(request: Request, uid: str) -> StreamingResponse:
     registry: CardRegistry = request.app.state.registries.data
     datacard: DataCard = registry.load_card(uid=uid)
     load_path = Path(datacard.uri / SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    return download_artifacts_ui(request, load_path)
+    return download_artifacts_ui(request, str(load_path))
 
 
 @router.get("/data/download/profile", name="download_data_profile")
@@ -98,4 +98,4 @@ def download_data_profile(
     registry: CardRegistry = request.app.state.registries.data
     datacard: DataCard = registry.load_card(uid=uid)
     load_path = Path(datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
-    return download_file(request, load_path)
+    return download_file(request, str(load_path))

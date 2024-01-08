@@ -103,12 +103,12 @@ def download_model(request: Request, uid: str, onnx: bool = False) -> StreamingR
     load_path = Path(card.uri / model_name).with_suffix(card.interface.model_suffix)
 
     if isinstance(card.interface, HuggingFaceModel):
-        return download_dir(request, load_path)
+        return download_dir(request, str(load_path))
 
     if isinstance(card.interface, TensorFlowModel) and not onnx:
-        return download_dir(request, load_path)
+        return download_dir(request, str(load_path))
 
-    return download_file(request, load_path)
+    return download_file(request, str(load_path))
 
 
 @router.post("/models/register", name="model_register")
@@ -170,11 +170,14 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     registry: CardRegistry = request.app.state.registries.model
 
     try:
-        card: ModelCard = registry.load_card(
-            uid=payload.uid,
-            name=payload.name,
-            version=payload.version,
-            ignore_release_candidates=payload.ignore_release_candidate,
+        card = cast(
+            ModelCard,
+            registry.load_card(
+                uid=payload.uid,
+                name=payload.name,
+                version=payload.version,
+                ignore_release_candidates=payload.ignore_release_candidate,
+            ),
         )
 
         return card.model_metadata
