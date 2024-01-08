@@ -131,19 +131,19 @@ def download_file(request: Request, path: str) -> StreamingResponse:
         ) from error
 
 
-def download_dir(request: Request, storage_client: StorageClientBase, path: str) -> StreamingResponse:
+def download_dir(request: Request, path: str) -> StreamingResponse:
     """Downloads a file
 
     Args:
         request:
             request object
         path:
-            path to file
+            str
 
     Returns:
         Streaming file response
     """
-
+    storage_client: StorageClientBase = request.app.state.storage_client
     path = swap_opsml_root(request, path)
     try:
         logger.info("Server: Creating zip file for {}", path)
@@ -190,9 +190,8 @@ def download_artifacts_ui(request: Request, path: str) -> StreamingResponse:
     Returns:
         Streaming file response
     """
-    storage_client: StorageClientBase = request.app.state.storage_client
     if Path(path).suffix == "":
-        return download_dir(request, storage_client, path)
+        return download_dir(request, path)
     return download_file(request, path)
 
 
@@ -254,8 +253,8 @@ def delete_files(request: Request, path: str) -> DeleteFileResponse:
     Args:
         request:
             request object
-        payload:
-            `DeleteFileRequest`
+        path:
+            path to file
 
     Returns:
         `DeleteFileResponse`

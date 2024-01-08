@@ -27,13 +27,13 @@ def create_fake_data(
         Tuple of pd.DataFrame
     """
     np.random.seed(random_state)
-    X = np.random.randn(n_samples, n_features)
-    y = np.random.randint(0, n_classes, n_samples)
+    X = np.random.randn(n_samples, n_features)  # pylint: disable=invalid-name
+    y = np.random.randint(0, n_classes, n_samples)  # pylint: disable=invalid-name
     if task_type == "regression":
-        y = np.random.randn(n_samples)
+        y = np.random.randn(n_samples)  # pylint: disable=invalid-name
 
     # rename columns
-    X = pd.DataFrame(X, columns=[f"col_{i}" for i in range(n_features)])
-    y = pd.DataFrame(y, columns=["target"])
+    X = pd.DataFrame(X, columns=[f"col_{i}" for i in range(n_features)])  # pylint: disable=invalid-name
+    y = pd.DataFrame(y, columns=["target"])  # pylint: disable=invalid-name
 
     return pd.DataFrame(X), pd.DataFrame(y)

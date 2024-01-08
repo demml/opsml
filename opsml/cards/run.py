@@ -12,13 +12,13 @@ from opsml.helpers.utils import TypeChecker
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import (
-    ARTIFACT_URIS,
-    METRICS,
-    PARAMS,
     Artifact,
+    ArtifactUris,
     CardType,
     Metric,
+    Metrics,
     Param,
+    Params,
     RegistryTableNames,
     SaveName,
 )
@@ -64,9 +64,9 @@ class RunCard(ArtifactCard):
     datacard_uids: List[str] = []
     modelcard_uids: List[str] = []
     pipelinecard_uid: Optional[str] = None
-    metrics: METRICS = {}
-    parameters: PARAMS = {}
-    artifact_uris: ARTIFACT_URIS = {}
+    metrics: Metrics = {}
+    parameters: Params = {}
+    artifact_uris: ArtifactUris = {}
     tags: Dict[str, str] = {}
     project_id: Optional[str] = None
 
@@ -303,6 +303,7 @@ class RunCard(ArtifactCard):
                     Path(artifact.remote_path),
                     Path(artifact.local_path),
                 )
+        return None
 
     @property
     def uri(self) -> Path:

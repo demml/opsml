@@ -201,7 +201,7 @@ class TensorflowNumpyOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        data_match = (data_type == AllowedDataType.NUMPY) or (data_type == AllowedDataType.TENSORFLOW_TENSOR)
+        data_match = data_type in (AllowedDataType.TENSORFLOW_TENSOR, AllowedDataType.NUMPY)
 
         return data_match and model_class == TrainedModelType.TF_KERAS
 

@@ -55,9 +55,9 @@ class Artifact(BaseModel):
     name: str
 
 
-METRICS = Dict[str, List[Metric]]
-PARAMS = Dict[str, List[Param]]
-ARTIFACT_URIS = Dict[str, Artifact]
+Metrics = Dict[str, List[Metric]]
+Params = Dict[str, List[Param]]
+ArtifactUris = Dict[str, Artifact]
 
 
 class Comment(BaseModel):

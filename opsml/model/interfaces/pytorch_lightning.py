@@ -75,14 +75,14 @@ try:
             if isinstance(self.sample_data, dict):
                 try:
                     prediction = self.model.model(**self.sample_data)
-                except Exception:
+                except Exception as _:  # pylint: disable=broad-except
                     prediction = self.model.model(self.sample_data)
 
             # test list and tuple inputs
             elif isinstance(self.sample_data, (list, tuple)):
                 try:
                     prediction = self.model.model(*self.sample_data)
-                except Exception:
+                except Exception as _:  # pylint: disable=broad-except
                     prediction = self.model.model(self.sample_data)
 
             # all others
@@ -113,8 +113,8 @@ try:
 
                     self.model = torch.load(path)
 
-            except Exception as e:
-                raise ValueError(f"Unable to load pytorch lightning model: {e}")
+            except Exception as exc:
+                raise ValueError(f"Unable to load pytorch lightning model: {exc}") from exc
 
         def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
             """Converts model to onnx"""
@@ -131,6 +131,7 @@ try:
                 return self._convert_to_onnx_inplace()
 
             self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(path=path)
+            return None
 
         @property
         def model_suffix(self) -> str:
@@ -154,3 +155,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return LightningModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.PYTORCH_LIGHTNING.value

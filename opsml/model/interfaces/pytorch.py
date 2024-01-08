@@ -19,7 +19,7 @@ from opsml.types import (
 try:
     import torch
 
-    VALID_DATA = Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
+    ValidData = Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
 
     class PyTorchModel(ModelInterface):
         """Model interface for Pytorch models.
@@ -47,7 +47,7 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[VALID_DATA] = None
+        sample_data: Optional[ValidData] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
 
@@ -111,14 +111,14 @@ try:
             if isinstance(self.sample_data, dict):
                 try:
                     prediction = self.model(**self.sample_data)
-                except Exception:
+                except Exception as _:  # pylint: disable=broad-except
                     prediction = self.model(self.sample_data)
 
             # test list and tuple inputs
             elif isinstance(self.sample_data, (list, tuple)):
                 try:
                     prediction = self.model(*self.sample_data)
-                except Exception:
+                except Exception as _:  # pylint: disable=broad-except
                     prediction = self.model(self.sample_data)
 
             # all others
@@ -148,6 +148,8 @@ try:
             Args:
                 path:
                     pathlib object
+                kwargs:
+                    Additional arguments to be passed to torch.load
             """
             self.model = torch.load(path)
 
@@ -204,7 +206,7 @@ try:
             return PyTorchModel.__name__
 
 except ModuleNotFoundError:
-    VALID_DATA = Any
+    ValidData = Any
 
     class PyTorchModel(ModelInterface):
         @model_validator(mode="before")
@@ -215,3 +217,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return PyTorchModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.PYTORCH.value

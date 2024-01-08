@@ -124,8 +124,8 @@ class _ModelConverter:
         """Creates feature dictionary from onnx model
 
         Args:
-            onnx_model:
-                Onnx model
+            sess:
+                Onnx inference session
         Returns:
             Tuple of input and output feature dictionaries
         """
@@ -136,12 +136,7 @@ class _ModelConverter:
         return input_dict, output_dict
 
     def create_onnx_model_def(self) -> OnnxModel:
-        """Creates Model definition
-
-        Args:
-            onnx_model:
-                Onnx model
-        """
+        """Creates Model definition"""
 
         return OnnxModel(
             onnx_version=onnx.__version__,  # type: ignore
@@ -176,8 +171,7 @@ class _ModelConverter:
             Tuple containing onnx model definition, input features, and output features
         """
         assert isinstance(self.onnx_model, OnnxModel)
-        onnx_model = onnx.load_from_string(self.onnx_model.model_bytes)
-        input_onnx_features, output_onnx_features = self.create_feature_dict(onnx_model=onnx_model)
+        input_onnx_features, output_onnx_features = self.create_feature_dict(sess=self.onnx_model.sess)
 
         return self.onnx_model, input_onnx_features, output_onnx_features
 

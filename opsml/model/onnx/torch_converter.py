@@ -59,7 +59,7 @@ class _PyTorchOnnxModel:
 
         if isinstance(self.interface.sample_data, dict):
             return tuple(self.interface.sample_data.values())
-        elif isinstance(self.interface.sample_data, torch.Tensor):
+        if isinstance(self.interface.sample_data, torch.Tensor):
             return self.interface.sample_data
         return tuple(self.interface.sample_data)
 
@@ -93,6 +93,8 @@ class _PyTorchOnnxModel:
 
 class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
     def __init__(self, model_interface: LightningModel):
+        super().__init__(model_interface=model_interface)
+
         self.interface = model_interface
 
     def _get_additional_model_args(self) -> TorchOnnxArgs:

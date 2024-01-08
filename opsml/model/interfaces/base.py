@@ -79,8 +79,8 @@ class ModelInterface(BaseModel):
             UUID(modelcard_uid, version=4)  # we use uuid4
             return modelcard_uid
 
-        except ValueError:
-            raise ValueError("Datacard uid is not a valid uuid")
+        except ValueError as exc:
+            raise ValueError("Datacard uid is not a valid uuid") from exc
 
     def save_model(self, path: Path) -> None:
         """Saves model to path. Base implementation use Joblib
@@ -108,6 +108,8 @@ class ModelInterface(BaseModel):
         Args:
             path:
                 Pathlib object
+            kwargs:
+                Additional kwargs
         """
         self.model = joblib.load(path)
 
@@ -141,7 +143,7 @@ class ModelInterface(BaseModel):
 
         sess: rt.InferenceSession = self.onnx_model.sess
         path = path.with_suffix(Suffix.ONNX.value)
-        path.write_bytes(sess._model_bytes)
+        path.write_bytes(sess._model_bytes)  # pylint: disable=protected-access
 
         return metadata
 
@@ -155,6 +157,8 @@ class ModelInterface(BaseModel):
         metadata = _OnnxModelConverter(self).convert_model()
         self.onnx_model = metadata.onnx_model
 
+        return None
+
     def load_onnx_model(self, path: Path) -> None:
         """Load onnx model from pathlib object
 
@@ -165,9 +169,6 @@ class ModelInterface(BaseModel):
         from onnxruntime import InferenceSession
 
         self.onnx_model.sess = InferenceSession(path)
-
-    def download_artifacts(self) -> Any:
-        raise NotImplementedError
 
     @classmethod
     def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:
@@ -224,13 +225,13 @@ class ModelInterface(BaseModel):
         elif isinstance(self.sample_data, dict):
             try:
                 prediction = self.model.predict(**self.sample_data)
-            except Exception:
+            except Exception as _:  # pylint: disable=broad-except
                 prediction = self.model.predict(self.sample_data)
 
         elif isinstance(self.sample_data, (list, tuple)):
             try:
                 prediction = self.model.predict(*self.sample_data)
-            except Exception:
+            except Exception as _:  # pylint: disable=broad-except
                 prediction = self.model.predict(self.sample_data)
 
         else:

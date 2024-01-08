@@ -8,7 +8,7 @@ from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import ModelInterface, get_model_args
 from opsml.types import CommonKwargs, TrainedModelType
 
-VALID_DATA = Union[pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
+ValidData = Union[pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 try:
     from sklearn.base import BaseEstimator
 
@@ -36,7 +36,7 @@ try:
         """
 
         model: Optional[BaseEstimator] = None
-        sample_data: Optional[VALID_DATA] = None
+        sample_data: Optional[ValidData] = None
 
         @property
         def model_class(self) -> str:
@@ -86,3 +86,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return SklearnModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.SKLEARN_ESTIMATOR.value

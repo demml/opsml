@@ -12,8 +12,8 @@ from opsml.types import CommonKwargs, TrainedModelType
 try:
     import tensorflow as tf
 
-    ARRAY = Union[NDArray, tf.Tensor]
-    VALID_DATA = Union[ARRAY, Dict[str, ARRAY], List[ARRAY], Tuple[ARRAY]]
+    ArrayType = Union[NDArray, tf.Tensor]
+    ValidData = Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]
 
     class TensorFlowModel(ModelInterface):
         """Model interface for Tensorflow models.
@@ -39,7 +39,7 @@ try:
         """
 
         model: Optional[tf.keras.Model] = None
-        sample_data: Optional[VALID_DATA] = None
+        sample_data: Optional[ValidData] = None
 
         @property
         def model_class(self) -> str:
@@ -116,6 +116,8 @@ try:
             Args:
                 path:
                     pathlib object
+                kwargs:
+                    Additional arguments to be passed to load_model
             """
             self.model = tf.keras.models.load_model(path, **kwargs)
 
@@ -139,3 +141,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return TensorFlowModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.TF_KERAS.value

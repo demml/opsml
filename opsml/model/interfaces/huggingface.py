@@ -120,7 +120,7 @@ try:
             if isinstance(model, PreTrainedModel):
                 return CommonKwargs.PYTORCH.value
 
-            elif isinstance(model, TFPreTrainedModel):
+            if isinstance(model, TFPreTrainedModel):
                 return CommonKwargs.TENSORFLOW.value
 
             raise ValueError("Model must be a huggingface model")
@@ -180,7 +180,7 @@ try:
 
                 return self.model.generate(self.sample_data)
 
-            except Exception:
+            except Exception as _:  # pylint: disable=broad-except
                 return self._functional_predictions()
 
         def _functional_predictions(self) -> Any:
@@ -206,7 +206,7 @@ try:
             if isinstance(prediction, dict):
                 return prediction
 
-            elif isinstance(prediction, list):
+            if isinstance(prediction, list):
                 assert len(prediction) >= 1, "Pipeline model must return a prediction"
                 return prediction[0]
 
@@ -237,6 +237,7 @@ try:
                 return None
 
             self.preprocessor.save_pretrained(path)
+            return None
 
         def _quantize_model(self, path: Path, onnx_model: Any) -> None:
             """Quantizes an huggingface model
@@ -336,8 +337,15 @@ try:
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
-        def load_model(self, path: Path) -> None:
-            """Load huggingface model from path"""
+        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+            """Load huggingface model from path
+
+            Args:
+                path:
+                    Path to model
+                kwargs:
+                    Additional kwargs to pass to transformers.load_pretrained
+            """
 
             if self.is_pipeline:
                 self.model = transformers.pipeline(self.task_type, path)

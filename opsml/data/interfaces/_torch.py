@@ -39,7 +39,7 @@ try:
             torch.save(self.data, path)
 
             if isinstance(self.data, Dataset):
-                sample = self.data.__getitem__(0)
+                sample = self.data.__getitem__(0)  # pylint: disable=unnecessary-dunder-call
 
                 if isinstance(sample, (tuple, list)):
                     for nbr, _sample in enumerate(sample):
