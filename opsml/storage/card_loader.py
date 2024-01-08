@@ -60,9 +60,9 @@ class CardLoadArgs(BaseModel):
 class CardLoader:
     def __init__(
         self,
+        registry_type: RegistryType,
         card: Optional[ArtifactCard] = None,
         card_args: Optional[Dict[str, Any]] = None,
-        registry_type: Optional[RegistryType] = None,
     ):
         """
         Parent class for saving artifacts belonging to cards or loading cards.
@@ -165,7 +165,7 @@ class CardLoader:
             else:
                 interface = get_data_interface(interface_type)
 
-            loaded_interface = interface(**loaded_card["interface"])
+            loaded_interface = interface.model_validate(loaded_card["interface"])
             loaded_card["interface"] = loaded_interface
 
         return cast(ArtifactCard, table_name_card_map[self.registry_type](**loaded_card))
@@ -177,6 +177,14 @@ class CardLoader:
 
 class DataCardLoader(CardLoader):
     """DataCard loader. Methods are meant to be called individually"""
+
+    def __init__(
+        self,
+        card: Optional[DataCard] = None,
+        card_args: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(RegistryType.DATA.value, card, card_args)
+        self._card = card
 
     @cached_property
     def card(self) -> DataCard:
@@ -224,6 +232,14 @@ class DataCardLoader(CardLoader):
 
 class ModelCardLoader(CardLoader):
     """ModelCard loader. Methods are meant to be called individually"""
+
+    def __init__(
+        self,
+        card: Optional[DataCard] = None,
+        card_args: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(RegistryType.MODEL.value, card, card_args)
+        self._card = card
 
     @cached_property
     def card(self) -> ModelCard:

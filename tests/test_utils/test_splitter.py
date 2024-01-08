@@ -2,7 +2,7 @@ import numpy as np
 import pyarrow as pa
 import pytest
 
-from opsml.data.interfaces import ArrowData
+from opsml.data import ArrowData
 from opsml.data.splitter import DataSplit, DataSplitter, DataSplitterBase
 from opsml.types import AllowedDataType
 

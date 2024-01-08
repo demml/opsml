@@ -115,13 +115,11 @@ try:
 
 except ModuleNotFoundError:
 
-    class LightGBMBoosterModel(ModelInterface):
+    class LightGBMBoosterModel(ModelInterface):  # type: ignore[no-redef]
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
 
         @staticmethod
         def name() -> str:

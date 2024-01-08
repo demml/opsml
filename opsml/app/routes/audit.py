@@ -8,7 +8,7 @@ import codecs
 import csv
 import datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional
+from typing import Any, BinaryIO, Dict, List, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -161,7 +161,7 @@ async def save_audit_comment(
             `CommentSaveRequest`
     """
     registry: CardRegistry = request.app.state.registries.audit
-    audit_card: AuditCard = registry.load_card(uid=comment.uid)
+    audit_card = cast(AuditCard, registry.load_card(uid=comment.uid))
 
     # most recent first
     audit_card.add_comment(

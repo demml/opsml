@@ -260,10 +260,10 @@ class ApiStorageClient(StorageClientBase):
             raise ValueError("Failed to write file to storage")
         return None
 
-    def copy(self, src: str, dest: str, recursive: bool = True) -> None:
+    def copy(self, src: Path, dest: Path, recursive: bool = True) -> None:
         raise NotImplementedError
 
-    def open(self, path: str, mode: str, encoding: Optional[str] = None) -> BinaryIO:
+    def open(self, path: Path, mode: Path, encoding: Optional[str] = None) -> BinaryIO:
         raise NotImplementedError
 
     def rm(self, path: Path) -> None:

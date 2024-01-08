@@ -54,12 +54,12 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
             detail="No write path provided",
         )
 
-    write_path = Path(swap_opsml_root(request, write_path))
+    _write_path = Path(swap_opsml_root(request, write_path))
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
     try:
         file_ = ExternalFileTarget(
-            write_path=write_path,
+            write_path=_write_path,
             storage_client=request.app.state.storage_client,
             validator=MaxSizeValidator(MAX_FILE_SIZE),
         )
@@ -154,7 +154,7 @@ def download_dir(request: Request, path: str) -> StreamingResponse:
                 lpath = Path(tmpdirname)
                 zipfile = lpath / "artifacts"
                 rpath = Path(path)
-                files = storage_client.storage_client.find(rpath)
+                files = storage_client.find(rpath)
 
                 for file_ in files:
                     curr_rpath = Path(file_)
