@@ -180,7 +180,11 @@ class HuggingFaceOnnxArgs(BaseModel):
         if config is None:
             return config
 
-        from optimum.onnxruntime import ORTConfig, QuantizationConfig, AutoQuantizationConfig
+        from optimum.onnxruntime import (
+            AutoQuantizationConfig,
+            ORTConfig,
+            QuantizationConfig,
+        )
 
         assert isinstance(
             config,
