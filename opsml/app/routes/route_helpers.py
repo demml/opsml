@@ -512,6 +512,8 @@ class ProjectRouteHelper(RouteHelper):
         Args:
             selected_project:
                 The selected project.
+            run_registry:
+                The run registry.
         """
 
         project_runs = run_registry._registry.list_cards(

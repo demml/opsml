@@ -126,7 +126,7 @@ def error_to_500(func: Callable[..., Any]) -> Any:
             logger.error("exceptions: {} {}", exc, trace_back)
 
             if config.opsml_testing:
-                raise ValueError(f"Exception: {exc}, {trace_back}")
+                raise ValueError(f"Exception: {exc}, {trace_back}") from exc
 
             return templates.TemplateResponse(
                 "include/500.html",

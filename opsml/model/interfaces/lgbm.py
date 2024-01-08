@@ -9,7 +9,7 @@ from opsml.model.interfaces.base import ModelInterface, get_model_args
 from opsml.types import CommonKwargs, TrainedModelType
 from opsml.types.extra import Suffix
 
-VALID_DATA = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
+ValidData = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 
 try:
     import lightgbm as lgb
@@ -41,7 +41,7 @@ try:
         """
 
         model: Optional[Union[Booster, LGBMModel]] = None
-        sample_data: Optional[VALID_DATA] = None
+        sample_data: Optional[ValidData] = None
 
         @property
         def model_class(self) -> str:
@@ -93,6 +93,8 @@ try:
             Args:
                 path:
                     base path to load from
+                **kwargs:
+                    Additional keyword arguments
             """
 
             if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
@@ -124,3 +126,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return LightGBMBoosterModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.LGBM_BOOSTER.value

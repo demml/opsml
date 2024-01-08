@@ -14,7 +14,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
 from opsml.storage.client import StorageClient
-from opsml.types import ARTIFACT_URIS, METRICS, PARAMS, CardInfo, CardType, SaveName
+from opsml.types import ArtifactUris, CardInfo, CardType, Metrics, Params, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -280,11 +280,11 @@ class ActiveRun:
         raise NotImplementedError
 
     @property
-    def metrics(self) -> METRICS:
+    def metrics(self) -> Metrics:
         return self.runcard.metrics
 
     @property
-    def parameters(self) -> PARAMS:
+    def parameters(self) -> Params:
         return self.runcard.parameters
 
     @property
@@ -292,5 +292,5 @@ class ActiveRun:
         return self.runcard.tags
 
     @property
-    def artifact_uris(self) -> ARTIFACT_URIS:
+    def artifact_uris(self) -> ArtifactUris:
         return self.runcard.artifact_uris

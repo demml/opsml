@@ -32,7 +32,7 @@ ARRAY_TYPES = [
 class ArrayHelper:
     @classmethod
     def get_tensor_stats(cls, data: Any) -> Tuple[str, Tuple[int, ...]]:
-        dtype = str(data.dtype.__repr__()).lower()
+        dtype = str(data.dtype.__repr__()).lower()  # pylint: disable=unnecessary-dunder-call
         shape = tuple(data.shape)
 
         return dtype, shape

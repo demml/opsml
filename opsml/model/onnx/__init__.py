@@ -1,10 +1,7 @@
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces import ModelInterface
 from opsml.model.onnx.base_converter import _ModelConverter
-from opsml.model.onnx.lightgbm_converter import _LightGBMBoosterOnnxModel
 from opsml.model.onnx.metadata_creator import _TrainedModelMetadataCreator
-from opsml.model.onnx.sklearn_converter import _SklearnOnnxModel
-from opsml.model.onnx.tensorflow_converter import _TensorflowKerasOnnxModel
 from opsml.model.utils.data_helper import ModelDataHelper, get_model_data
 from opsml.types import ModelReturn
 
@@ -113,9 +110,5 @@ def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.Inference
     metadata.data_schema.onnx_input_features = onnx_input_features
     metadata.data_schema.onnx_output_features = onnx_output_features
     metadata.data_schema.onnx_version = onnx.__version__
-
-    print()
-    print(metadata)
-    print()
 
     return metadata

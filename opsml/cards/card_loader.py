@@ -198,6 +198,8 @@ class DataCardLoader(CardLoader):
         with self._load_object(SaveName.DATA.value, self.data_suffix) as lpath:
             self.card.interface.load_data(lpath)
 
+        return None
+
     def load_data_profile(self) -> None:
         """Saves a data profile"""
 
@@ -262,6 +264,7 @@ class ModelCardLoader(CardLoader):
         lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value)
 
         self.card.interface.load_sample_data(lpath)
+        return None
 
     def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
         """Load Preprocessor for model interface

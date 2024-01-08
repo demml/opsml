@@ -4,7 +4,7 @@ from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import ModelInterface, get_model_args
-from opsml.types import CommonKwargs
+from opsml.types import CommonKwargs, TrainedModelType
 
 try:
     from xgboost import XGBModel
@@ -77,3 +77,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return XGBoostModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.SKLEARN_ESTIMATOR.value

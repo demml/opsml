@@ -103,10 +103,10 @@ def download_model(request: Request, uid: str, onnx: bool = False) -> StreamingR
     load_path = Path(card.uri / model_name).with_suffix(card.interface.model_suffix)
 
     if isinstance(card.interface, HuggingFaceModel):
-        return download_dir(load_path)
+        return download_dir(request, load_path)
 
     if isinstance(card.interface, TensorFlowModel) and not onnx:
-        return download_dir(load_path)
+        return download_dir(request, load_path)
 
     return download_file(request, load_path)
 
