@@ -1099,7 +1099,7 @@ def populate_model_data_for_route(
 
     # now switch config back to local for testing routes
     client.storage_client = client.get_storage_client((OpsmlConfig()))
-    config.opsml_tracking_uri = OPSML_STORAGE_URI
+    config.opsml_tracking_uri = SQL_PATH
 
     return modelcard, datacard, auditcard
 
@@ -1146,7 +1146,7 @@ def populate_run(
 
     # now switch config back to local for testing routes
     client.storage_client = client.get_storage_client((OpsmlConfig()))
-    config.opsml_tracking_uri = OPSML_STORAGE_URI
+    config.opsml_tracking_uri = SQL_PATH
 
     return datacard, modelcard, run
 

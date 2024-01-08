@@ -114,4 +114,8 @@ def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.Inference
     metadata.data_schema.onnx_output_features = onnx_output_features
     metadata.data_schema.onnx_version = onnx.__version__
 
+    print()
+    print(metadata)
+    print()
+
     return metadata

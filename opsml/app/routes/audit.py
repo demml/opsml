@@ -116,8 +116,6 @@ async def save_audit_form(
         registries=request.app.state.registries,
     )
 
-    print()
-    print("audit")
     audit_card = parser.parse_form()
 
     audit_report = AuditReport(
