@@ -11,7 +11,6 @@ from pytest_lazyfixture import lazy_fixture
 from sklearn.pipeline import Pipeline
 from sqlalchemy import select
 
-from opsml.registry import CardRegistries
 from opsml.cards import (
     DataCard,
     DataCardMetadata,
@@ -23,6 +22,7 @@ from opsml.cards import (
 from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData
 from opsml.helpers.exceptions import VersionError
 from opsml.model import SklearnModel
+from opsml.registry import CardRegistries
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
