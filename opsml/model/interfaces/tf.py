@@ -46,7 +46,7 @@ try:
             return TrainedModelType.TF_KERAS.value
 
         @classmethod
-        def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
+        def get_sample_data(cls, sample_data: Any) -> Any:
             """Check sample data and returns one record to be used
             during type inference and ONNX conversion/validation.
 
@@ -91,7 +91,7 @@ try:
                     if "keras" in base:
                         model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-            sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+            sample_data = cls.get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
@@ -110,7 +110,7 @@ try:
             assert self.model is not None, "Model is not initialized"
             self.model.save(path)
 
-        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+        def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load tensorflow model from path
 
             Args:

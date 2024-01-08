@@ -6,7 +6,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, cast
 
 import onnx
 import onnxruntime as rt
@@ -51,6 +51,7 @@ class _PyTorchOnnxModel:
         """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
 
         if self.interface.onnx_args is None:
+            assert self.interface.sample_data is not None, "Sample data must be provided"
             return _PytorchArgBuilder(input_data=self.interface.sample_data).get_args()
         return self.interface.onnx_args
 
@@ -102,7 +103,7 @@ class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
 
         if self.interface.onnx_args is None:
             assert self.interface.sample_data is not None, "No sample data provided"
-            return _PytorchArgBuilder(input_data=self.interface.sample_data).get_args()
+            return _PytorchArgBuilder(input_data=cast(ValidData, self.interface.sample_data)).get_args()
         return self.interface.onnx_args
 
     def _load_onnx_model(self, path: Path) -> rt.InferenceSession:

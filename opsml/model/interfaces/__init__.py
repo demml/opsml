@@ -24,6 +24,6 @@ def get_model_interface(interface_type: str) -> ModelInterface:
             Name of interface
     """
     return next(
-        (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),
+        (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),  # type: ignore
         ModelInterface,  # type: ignore[arg-type]
     )

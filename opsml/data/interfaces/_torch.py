@@ -26,7 +26,7 @@ try:
                 Sql logic used to generate data
         """
 
-        data: Optional[Union[Dataset, torch.Tensor]] = None
+        data: Optional[Union[Dataset, torch.Tensor]] = None  # type: ignore[type-arg]
 
         def _add_feature(self, name: str, shape: Tuple[Any, ...], dtype: str) -> None:
             self.feature_map[name] = Feature(feature_type=dtype, shape=shape)
@@ -53,7 +53,7 @@ try:
                     try:
                         self._add_feature("features", sample.shape, str(sample.dtype))
                     except Exception as _:  # pylint: disable=broad-except
-                        self._add_feature("features", (CommonKwargs.UNDEFINED.value), CommonKwargs.UNDEFINED.value)
+                        self._add_feature("features", (CommonKwargs.UNDEFINED.value,), CommonKwargs.UNDEFINED.value)
 
             else:
                 self._add_feature("features", self.data.shape, str(self.data.dtype))
@@ -80,7 +80,7 @@ try:
 except ModuleNotFoundError:
     from pydantic import model_validator
 
-    class TorchData(DataInterface):
+    class TorchData(DataInterface):  # type: ignore[no-redef]
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

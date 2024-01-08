@@ -102,7 +102,7 @@ class ModelInterface(BaseModel):
         assert self.preprocessor is not None, "No preprocessor detected in interface"
         joblib.dump(self.preprocessor, path)
 
-    def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+    def load_model(self, path: Path, **kwargs: Any) -> None:
         """Load model from pathlib object
 
         Args:
@@ -148,7 +148,7 @@ class ModelInterface(BaseModel):
 
         return metadata
 
-    def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+    def convert_to_onnx(self, **kwargs: Path) -> None:
         """Converts model to onnx format"""
         from opsml.model.onnx import _OnnxModelConverter
 
@@ -199,15 +199,13 @@ class ModelInterface(BaseModel):
         self.sample_data = joblib.load(path)
 
     @classmethod
-    def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
+    def get_sample_data(cls, sample_data: Any) -> Any:
         """Check sample data and returns one record to be used
         during type inference and ONNX conversion/validation.
 
         Returns:
             Sample data with only one record
         """
-        if sample_data is None:
-            return None
 
         if isinstance(sample_data, list):
             return [data[0:1] for data in sample_data]

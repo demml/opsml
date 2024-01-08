@@ -62,7 +62,7 @@ try:
             if "lightgbm" in module or isinstance(model, LGBMModel):
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-            sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+            sample_data = cls.get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
@@ -86,7 +86,7 @@ try:
             else:
                 super().save_model(path)
 
-        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+        def load_model(self, path: Path, **kwargs: Any) -> None:
             """Loads lightgbm booster or sklearn model
 
 
@@ -119,7 +119,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
+            raise ModuleNotFoundError(
+                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
+            )
 
         @staticmethod
         def name() -> str:
