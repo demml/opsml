@@ -203,6 +203,7 @@ disable = [
     "unused-argument",
     "fixme",
     "import-outside-toplevel",
+    "no-name-in-module",
 ]
 extension-pkg-whitelist = ["pydantic"]
 

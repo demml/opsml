@@ -52,7 +52,7 @@ try:
                 else:
                     try:
                         self._add_feature("features", sample.shape, str(sample.dtype))
-                    except Exception:
+                    except Exception as _:  # pylint: disable=broad-except
                         self._add_feature("features", (CommonKwargs.UNDEFINED.value), CommonKwargs.UNDEFINED.value)
 
             else:
@@ -89,3 +89,7 @@ except ModuleNotFoundError:
         @staticmethod
         def name() -> str:
             return TorchData.__name__
+
+        @property
+        def data_type(self) -> str:
+            return AllowedDataType.TORCH_TENSOR.value
