@@ -178,6 +178,8 @@ class DataInterface(BaseModel):
             sample_perc:
                 Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
+            name:
+                Name of data profile
 
         """
         from opsml.profile.profile_data import DataProfiler

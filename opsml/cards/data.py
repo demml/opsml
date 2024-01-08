@@ -102,7 +102,7 @@ class DataCard(ArtifactCard):
 
         """
 
-        self.interface.create_data_profile()
+        self.interface.create_data_profile(sample_perc, self.name)
 
     def split_data(self) -> DataHolder:
         """Splits data interface according to data split logic"""
