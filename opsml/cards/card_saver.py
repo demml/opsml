@@ -100,6 +100,7 @@ class DataCardSaver(CardSaver):
 
         # set feature map on metadata
         self.card.metadata.feature_map = self.card.interface.feature_map
+        return None
 
     def _save_data_profile(self) -> None:
         """Saves a data profile"""

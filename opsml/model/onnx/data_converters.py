@@ -6,7 +6,7 @@
 
 from typing import Any, Dict, List, Optional, Tuple, cast
 
-from opsml.model.interfaces import ModelInterface
+from opsml.model.interfaces.base import ModelInterface
 from opsml.model.utils.data_helper import FloatTypeConverter, ModelDataHelper
 from opsml.types import (
     AVAILABLE_MODEL_TYPES,

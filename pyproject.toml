@@ -204,6 +204,7 @@ disable = [
     "fixme",
     "import-outside-toplevel",
     "no-name-in-module",
+    "ungrouped-imports",
 ]
 extension-pkg-whitelist = ["pydantic"]
 

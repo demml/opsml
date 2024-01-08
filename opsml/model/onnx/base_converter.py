@@ -7,9 +7,13 @@
 
 from typing import Any, Dict, List, Optional, Tuple, cast
 
+import onnx
+import onnxruntime as rt
+from onnx import ModelProto
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions
-from opsml.model.interfaces import ModelInterface
+from opsml.model.interfaces.base import ModelInterface
 from opsml.model.onnx.data_converters import OnnxDataConverter
 from opsml.model.onnx.registry_updaters import OnnxRegistryUpdater
 from opsml.model.utils.data_helper import ModelDataHelper
@@ -24,19 +28,6 @@ from opsml.types import (
 )
 
 logger = ArtifactLogger.get_logger()
-
-
-try:
-    import onnx
-    import onnxruntime as rt
-    from onnx import ModelProto
-
-except ModuleNotFoundError as import_error:
-    logger.error(
-        """Failed to import onnx and onnxruntime. Please install onnx and onnxruntime via opsml extras
-        If you wish to convert your model to onnx"""
-    )
-    raise import_error
 
 
 class _ModelConverter:
