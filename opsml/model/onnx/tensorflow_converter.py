@@ -10,7 +10,7 @@ from typing import Any, List, cast
 from onnx import ModelProto
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.interfaces import TensorFlowModel
+from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.onnx.base_converter import _ModelConverter
 from opsml.types import TrainedModelType
 

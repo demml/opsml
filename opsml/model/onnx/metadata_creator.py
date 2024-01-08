@@ -6,7 +6,7 @@
 from typing import Any, Dict
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.interfaces import ModelInterface
+from opsml.model.interfaces.base import ModelInterface
 from opsml.model.utils.data_helper import get_model_data
 from opsml.types import DataSchema, Feature, ModelReturn, TrainedModelType
 from opsml.types.data import AllowedDataType

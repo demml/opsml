@@ -314,7 +314,7 @@ class ModelCardLoader(CardLoader):
 
         load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
         if not self.storage_client.exists(load_rpath):
-            logger.info("No onnx model exists for {}", str(save_name))
+            logger.info("No onnx model exists for {}", save_name)  # pylint: disable=logging-too-many-args
             return None
 
         with self._load_object(save_name, self.onnx_suffix) as lpath:

@@ -1,7 +1,5 @@
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.interfaces import ModelInterface
-from opsml.model.onnx.base_converter import _ModelConverter
-from opsml.model.onnx.metadata_creator import _TrainedModelMetadataCreator
+from opsml.model.interfaces.base import ModelInterface
 from opsml.model.utils.data_helper import ModelDataHelper, get_model_data
 from opsml.types import ModelReturn
 
@@ -10,6 +8,9 @@ logger = ArtifactLogger.get_logger()
 try:
     import onnx
     import onnxruntime as rt
+
+    from opsml.model.onnx.base_converter import _ModelConverter
+    from opsml.model.onnx.metadata_creator import _TrainedModelMetadataCreator
 
 except ModuleNotFoundError as import_error:
     logger.error(
