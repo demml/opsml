@@ -75,7 +75,6 @@ class _PyTorchOnnxModel:
 
         arg_data = self._coerce_data_for_onnx()
         onnx_args = self._get_additional_model_args()
-
         # export
         self.interface.model.eval()  # force model into evaluation mode
         torch.onnx.export(

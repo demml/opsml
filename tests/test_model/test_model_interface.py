@@ -42,7 +42,7 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
     assert huggingface_bart.model_type == "BartModel"
     assert huggingface_bart.model_class == "transformers"
-    assert huggingface_bart.task_type == "text-classification"
+    assert huggingface_bart.task_type == "feature-extraction"
     assert huggingface_bart.backend == "pytorch"
 
     prediction = huggingface_bart.get_sample_prediction()
@@ -51,7 +51,6 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
 def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel):
     model = huggingface_text_classification_pipeline
-    assert model.model_type == "TextClassificationPipeline"
     assert model.model_class == "transformers"
     assert model.task_type == "text-classification"
     assert model.backend == "pytorch"

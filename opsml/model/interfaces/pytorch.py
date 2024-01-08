@@ -166,10 +166,9 @@ try:
             from opsml.model.onnx import _get_onnx_metadata
 
             if self.onnx_model is None:
-                return self.convert_to_onnx(path=path)
+                self.convert_to_onnx(path=path)
 
-            sess: rt.InferenceSession = self.onnx_model.sess
-            path.write_bytes(sess._model_bytes)
+            # no need to save onnx to bytes since its done during onnx conversion
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
 

@@ -129,7 +129,7 @@ class OpsmlProject:
         """
         logger.info("Listing runs for project {}", self.project_id)
 
-        project_runs = self._run_mgr.registries.run.list_cards(
+        project_runs = self._run_mgr.registries.run._registry.list_cards(
             limit=limit,
             query_terms={"project_id": self.project_id},
         )

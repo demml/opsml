@@ -7,8 +7,9 @@ from opsml.model import SklearnModel
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.types import SaveName, Suffix
+import pytest
 
-
+@pytest.mark.integration
 def test_gcs_full_run(
     api_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
