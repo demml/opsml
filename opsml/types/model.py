@@ -279,14 +279,14 @@ class ModelMetadata(BaseModel):
     model_class: str
     model_type: str
     model_interface: str
-    onnx_uri: Optional[Union[str, List[str]]] = None
+    onnx_uri: Optional[str] = None
     onnx_version: Optional[str] = None
-    model_uri: Union[str, Dict[str, str]]
+    model_uri: str
     model_version: str
     model_team: str
     sample_data_uri: str
     preprocessor_name: Optional[str] = None
-    preprocessor_uri: Optional[Union[str, List[str]]] = None
+    preprocessor_uri: Optional[str] = None
     opsml_version: str = __version__
     data_schema: DataSchema
 
