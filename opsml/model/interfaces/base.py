@@ -139,6 +139,7 @@ class ModelInterface(BaseModel):
         if self.onnx_model is None:
             self.convert_to_onnx()
 
+        assert self.onnx_model is not None, "No onnx model detected in interface"
         metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
 
         sess: rt.InferenceSession = self.onnx_model.sess
@@ -168,6 +169,7 @@ class ModelInterface(BaseModel):
         """
         from onnxruntime import InferenceSession
 
+        assert self.onnx_model is not None, "No onnx model detected in interface"
         self.onnx_model.sess = InferenceSession(path)
 
     @classmethod
