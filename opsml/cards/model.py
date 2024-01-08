@@ -8,7 +8,7 @@ from pydantic import ConfigDict, SerializeAsAny, field_validator
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.interfaces import ModelInterface
+from opsml.model.interfaces.base import ModelInterface
 from opsml.types import CardType, ModelCardMetadata, ModelMetadata
 
 logger = ArtifactLogger.get_logger()
@@ -67,13 +67,13 @@ class ModelCard(ArtifactCard):
     def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Loads model, preprocessor and sample data to interface"""
 
-        from opsml.cards.card_loader import ModelCardLoader
+        from opsml.storage.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_model(**kwargs)
 
     def load_onnx_model(self, **kwargs: Dict[str, Any]) -> None:
         """Loads onnx model to interface"""
-        from opsml.cards.card_loader import ModelCardLoader
+        from opsml.storage.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_onnx_model(**kwargs)
 
@@ -104,7 +104,7 @@ class ModelCard(ArtifactCard):
     def model_metadata(self) -> ModelMetadata:
         """Loads `ModelMetadata` class"""
 
-        from opsml.cards.card_loader import ModelCardLoader
+        from opsml.storage.card_loader import ModelCardLoader
 
         return ModelCardLoader(self).load_model_metadata()
 

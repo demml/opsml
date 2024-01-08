@@ -5,33 +5,17 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Type
 
-from opsml.cards import (
-    ArtifactCard,
-    AuditCard,
-    CardInfo,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    RunCard,
-)
-from opsml.cards.card_loader import CardLoader
+from opsml.cards import ArtifactCard, CardInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
 from opsml.registry.semver import VersionType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.settings.config import config
 from opsml.storage import client
+from opsml.storage.card_loader import CardLoader
 from opsml.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
-
-table_name_card_map = {
-    RegistryType.DATA.value: DataCard,
-    RegistryType.MODEL.value: ModelCard,
-    RegistryType.RUN.value: RunCard,
-    RegistryType.PIPELINE.value: PipelineCard,
-    RegistryType.AUDIT.value: AuditCard,
-}
 
 
 class CardRegistry:

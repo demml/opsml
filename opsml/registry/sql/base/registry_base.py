@@ -7,11 +7,11 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from semver import VersionInfo
 
 from opsml.cards.base import ArtifactCard
-from opsml.cards.card_saver import save_card_artifacts
 from opsml.helpers.exceptions import VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.semver import CardVersion, SemVerUtils, VersionType
+from opsml.storage.card_saver import save_card_artifacts
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
 

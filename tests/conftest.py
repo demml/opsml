@@ -93,8 +93,7 @@ from opsml.data.interfaces import (
 )
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
-from opsml.model.challenger import ModelChallenger
-from opsml.model.interfaces import (
+from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -102,6 +101,7 @@ from opsml.model.interfaces import (
     SklearnModel,
     TensorFlowModel,
 )
+from opsml.model.challenger import ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config

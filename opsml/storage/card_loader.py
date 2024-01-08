@@ -23,7 +23,8 @@ from opsml.cards import (
     RunCard,
 )
 from opsml.data.interfaces import get_data_interface
-from opsml.model.interfaces import HuggingFaceModel, get_model_interface
+from opsml.model.interfaces.base import get_model_interface
+from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import CardType, RegistryTableNames, RegistryType, SaveName, Suffix
@@ -167,7 +168,7 @@ class CardLoader:
             loaded_interface = interface(**loaded_card["interface"])
             loaded_card["interface"] = loaded_interface
 
-        return cast(ArtifactCard, table_name_card_map[self.registry_type.value](**loaded_card))
+        return cast(ArtifactCard, table_name_card_map[self.registry_type](**loaded_card))
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -179,8 +180,8 @@ class DataCardLoader(CardLoader):
 
     @cached_property
     def card(self) -> DataCard:
-        assert isinstance(self._card, DataCard)
-        return self._card
+        # assert isinstance(self._card, DataCard)
+        return cast(DataCard, self._card)
 
     @cached_property
     def data_suffix(self) -> str:
@@ -226,8 +227,8 @@ class ModelCardLoader(CardLoader):
 
     @cached_property
     def card(self) -> ModelCard:
-        assert isinstance(self._card, ModelCard)
-        return self._card
+        # assert isinstance(self._card, ModelCard)
+        return cast(ModelCard, self._card)
 
     @cached_property
     def model_suffix(self) -> str:

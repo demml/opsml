@@ -13,7 +13,7 @@ import onnxruntime as rt
 import torch
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.interfaces.pytorch import VALID_DATA, PyTorchModel
+from opsml.model.interfaces.pytorch import PyTorchModel, ValidData
 from opsml.model.interfaces.pytorch_lightning import LightningModel
 from opsml.types import OnnxModel, TorchOnnxArgs
 
@@ -21,7 +21,7 @@ logger = ArtifactLogger.get_logger()
 
 
 class _PytorchArgBuilder:
-    def __init__(self, input_data: VALID_DATA):
+    def __init__(self, input_data: ValidData):
         self.input_data = input_data
 
     def _get_input_names(self) -> List[str]:

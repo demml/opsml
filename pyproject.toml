@@ -205,6 +205,7 @@ disable = [
     "import-outside-toplevel",
     "no-name-in-module",
     "ungrouped-imports",
+    "cyclic-import", 
 ]
 extension-pkg-whitelist = ["pydantic"]
 
