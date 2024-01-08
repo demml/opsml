@@ -4,11 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import List, Union, Any
+from typing import Any, List, Union
 
 import pandas as pd
 import polars as pl
-
 
 DIR_PATH = os.path.dirname(__file__)
 ProfileReport = Any
