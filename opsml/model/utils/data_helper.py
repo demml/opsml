@@ -254,7 +254,7 @@ class DataDictionary(ModelDataHelper):
             else:
                 type_ = type(value)
                 dtype = getattr(type_, "__name__", str(type_).lower())
-                shape = getattr(value, "shape", (CommonKwargs.UNDEFINED.value,))
+                shape = getattr(value, "shape", (CommonKwargs.UNDEFINED.value,))  # type: ignore[arg-type]
 
             types.append(dtype)
             shapes.append(shape)
@@ -303,7 +303,7 @@ class IterData(ModelDataHelper):
             else:
                 type_ = type(value)
                 dtype = getattr(type_, "__name__", str(type_).lower())
-                shape = getattr(value, "shape", (CommonKwargs.UNDEFINED.value,))
+                shape = getattr(value, "shape", (CommonKwargs.UNDEFINED.value,))  # type: ignore[arg-type]
 
             types.append(dtype)
             shapes.append(shape)
@@ -349,14 +349,16 @@ class StrData(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
         self.data = cast(str, self.data)
+        self._features = ["input"]
 
     @property
     def dtypes(self) -> List[str]:
         return ["str"]
 
     @property
-    def shape(self) -> List[Tuple[int, ...]]:
-        return [(0)]
+    def shape(self) -> List[Tuple[int]]:
+        shape = [(0,)]
+        return shape
 
     @property
     def num_dtypes(self) -> int:
@@ -368,10 +370,6 @@ class StrData(ModelDataHelper):
         for feature, type_ in zip(self.features, self.dtypes):
             feature_dict[feature] = Feature(feature_type=type_, shape=self.shape)
         return feature_dict
-
-    @property
-    def features(self) -> List[str]:
-        return ["input"]
 
     @staticmethod
     def validate(data_type: str) -> bool:

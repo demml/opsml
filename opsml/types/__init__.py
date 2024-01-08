@@ -70,7 +70,6 @@ from opsml.types.storage import (
     StorageSystem,
 )
 
-
 __all__ = [
     "NON_PIPELINE_CARDS",
     "Artifact",

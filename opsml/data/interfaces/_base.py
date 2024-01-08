@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Union
 import joblib
 import pandas as pd
 import polars as pl
-from fastapi.types import NoneType
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from opsml.data.splitter import DataHolder, DataSplit, DataSplitter
@@ -155,7 +154,7 @@ class DataInterface(BaseModel):
             joblib.load(path),
         )
 
-    def save_data_profile(self, path: Path) -> NoneType:
+    def save_data_profile(self, path: Path) -> None:
         """Saves data profile to path. Data profiles are saved as joblib
         joblib
 
@@ -172,7 +171,7 @@ class DataInterface(BaseModel):
             profile_artifact = self.data_profile.dumps()
             joblib.dump(profile_artifact, path)
 
-    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
+    def create_data_profile(self, sample_perc: float = 1, name: str = "data_profile") -> ProfileReport:
         """Creates a data profile report
 
         Args:
@@ -187,7 +186,7 @@ class DataInterface(BaseModel):
             if self.data_profile is None:
                 self.data_profile = DataProfiler.create_profile_report(
                     data=self.data,
-                    name=self.name,
+                    name=name,
                     sample_perc=min(sample_perc, 1),  # max of 1
                 )
                 return self.data_profile
@@ -253,7 +252,3 @@ class DataInterface(BaseModel):
     def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value
-
-    @staticmethod
-    def name() -> str:
-        return DataInterface.__name__

@@ -115,7 +115,7 @@ class AuditRegistryRecord(SaveRecord):
         return values
 
 
-registry_name_record_map = {
+registry_name_record_map: Dict[str, Any] = {
     RegistryType.DATA.value: DataRegistryRecord,
     RegistryType.MODEL.value: ModelRegistryRecord,
     RegistryType.RUN.value: RunRegistryRecord,

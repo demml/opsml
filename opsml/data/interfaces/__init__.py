@@ -5,7 +5,7 @@ from opsml.data.interfaces._pandas import PandasData
 from opsml.data.interfaces._polars import PolarsData
 from opsml.data.interfaces._sql import SqlData
 from opsml.data.interfaces._torch import TorchData
-from opsml.helpers.utils import FileUtils, all_subclasses
+from opsml.helpers.utils import all_subclasses
 
 
 def get_data_interface(interface_type: str) -> DataInterface:

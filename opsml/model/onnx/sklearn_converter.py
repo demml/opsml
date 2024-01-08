@@ -7,9 +7,9 @@
 
 import re
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, cast
 
-from onnx import ModelProto
+from onnx import ModelProto  # type: ignore[attr-defined]
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.onnx.base_converter import _ModelConverter
@@ -19,7 +19,6 @@ from opsml.types import (
     SKLEARN_SUPPORTED_MODEL_TYPES,
     UPDATE_REGISTRY_MODELS,
     BaseEstimator,
-    Feature,
     ModelType,
     TrainedModelType,
 )
@@ -137,7 +136,7 @@ class _SklearnOnnxModel(_ModelConverter):
         self.update_sklearn_onnx_registries()
         self._convert_data_for_onnx()
 
-    def get_data_types(self) -> Tuple[List[Any], Optional[Dict[str, Feature]]]:
+    def get_data_types(self) -> List[Any]:
         """Converts data for sklearn onnx models"""
 
         self.prepare_registries_and_data()

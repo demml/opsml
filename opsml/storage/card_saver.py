@@ -34,7 +34,7 @@ class CardUris(BaseModel):
     lpath: Optional[Path] = None
     rpath: Optional[Path] = None
 
-    def resolve_path(self, name: str) -> str:
+    def resolve_path(self, name: str) -> Optional[str]:
         curr_path: Optional[Path] = getattr(self, name)
 
         if curr_path is None:
@@ -386,4 +386,4 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     saver = card_saver(card=card)
 
-    return saver.save_artifacts()  # type: ignore
+    return saver.save_artifacts()

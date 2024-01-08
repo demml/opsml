@@ -40,6 +40,7 @@ class TrainedModelType(str, Enum):
     SKLEARN_ESTIMATOR = "SklearnEstimator"
     STACKING_REGRESSOR = "StackingRegressor"
     STACKING_CLASSIFIER = "StackingClassifier"
+    STACKING_ESTIMATOR = "StackingEstimator"
     CALIBRATED_CLASSIFIER = "CalibratedClassifierCV"
     LGBM_REGRESSOR = "LGBMRegressor"
     LGBM_CLASSIFIER = "LGBMClassifier"
@@ -174,7 +175,7 @@ class HuggingFaceOnnxArgs(BaseModel):
 
     @field_validator("config", mode="before")
     @classmethod
-    def check_config(cls, config: Optional[Any] = None) -> None:
+    def check_config(cls, config: Optional[Any] = None) -> Optional[Any]:
         """Check that optimum config is valid"""
 
         if config is None:

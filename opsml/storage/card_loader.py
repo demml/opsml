@@ -7,7 +7,7 @@ import tempfile
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, cast
+from typing import Any, Dict, Iterator, Optional, cast, Union
 from venv import logger
 
 import joblib
@@ -22,8 +22,10 @@ from opsml.cards import (
     ProjectCard,
     RunCard,
 )
+from opsml.data.interfaces._base import DataInterface
+from opsml.model.interfaces.base import ModelInterface
 from opsml.data.interfaces import get_data_interface
-from opsml.model.interfaces.base import get_model_interface
+from opsml.model.interfaces import get_model_interface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
 from opsml.storage import client
@@ -55,6 +57,24 @@ class CardLoadArgs(BaseModel):
             self.name,
             f"v{self.version}",
         )
+
+
+def get_interface(registry_type: RegistryType, interface_type: str) -> Union[ModelInterface, DataInterface]:
+    """Gets model or data interfaces
+
+    Args:
+        registry_type:
+            Registry type
+        interface_type:
+            Interface type
+
+    Returns:
+        Either ModelInterface or DataInterface
+    """
+
+    if registry_type == RegistryType.MODEL:
+        return get_model_interface(interface_type)
+    return get_data_interface(interface_type)
 
 
 class CardLoader:
@@ -90,6 +110,7 @@ class CardLoader:
         """Get remote path from card args"""
 
         table_name = RegistryTableNames.from_str(self.registry_type.value).value
+        assert self.card_args is not None
         args = CardLoadArgs(**self.card_args, table_name=table_name)
 
         return args.uri
@@ -159,11 +180,7 @@ class CardLoader:
         if self.registry_type in (RegistryType.MODEL, RegistryType.DATA):
             # get interface type
             interface_type: str = loaded_card["metadata"]["interface_type"]
-
-            if self.registry_type == RegistryType.MODEL:
-                interface = get_model_interface(interface_type)
-            else:
-                interface = get_data_interface(interface_type)
+            interface = get_interface(self.registry_type, interface_type)
 
             loaded_interface = interface.model_validate(loaded_card["interface"])
             loaded_card["interface"] = loaded_interface
@@ -183,7 +200,7 @@ class DataCardLoader(CardLoader):
         card: Optional[DataCard] = None,
         card_args: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(RegistryType.DATA.value, card, card_args)
+        super().__init__(RegistryType.DATA, card, card_args)
         self._card = card
 
     @cached_property
@@ -235,10 +252,10 @@ class ModelCardLoader(CardLoader):
 
     def __init__(
         self,
-        card: Optional[DataCard] = None,
+        card: Optional[ModelCard] = None,
         card_args: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(RegistryType.MODEL.value, card, card_args)
+        super().__init__(RegistryType.MODEL, card, card_args)
         self._card = card
 
     @cached_property
@@ -316,13 +333,15 @@ class ModelCardLoader(CardLoader):
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
         self.card.interface.load_model(lpath, **kwargs)
 
-    def load_onnx_model(self, load_quantized: bool = False) -> None:
+    def load_onnx_model(self, **kwargs: Dict[str, Any]) -> None:
         """Load onnx model to interface
 
         Args:
             load_quantized:
                 Load quantized model (Only applies to huggingface models)
         """
+
+        load_quantized = kwargs.get("load_quantized", False)
 
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
         if self.card.interface.onnx_model is not None:

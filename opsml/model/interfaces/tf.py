@@ -12,7 +12,7 @@ from opsml.types import CommonKwargs, TrainedModelType
 try:
     import tensorflow as tf
 
-    ArrayType = Union[NDArray, tf.Tensor]
+    ArrayType = Union[NDArray[Any], tf.Tensor]
     ValidData = Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]
 
     class TensorFlowModel(ModelInterface):

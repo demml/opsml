@@ -98,15 +98,15 @@ def download_model(request: Request, uid: str, onnx: bool = False) -> StreamingR
     """
 
     registry: CardRegistry = request.app.state.registries.model
-    card: ModelCard = registry.load_card(uid=uid)
+    card = cast(ModelCard, registry.load_card(uid=uid))
     model_name = SaveName.TRAINED_MODEL.value if not onnx else SaveName.ONNX_MODEL.value
     load_path = Path(card.uri / model_name).with_suffix(card.interface.model_suffix)
 
     if isinstance(card.interface, HuggingFaceModel):
-        return download_dir(request, str(load_path))
+        return download_dir(request, load_path)
 
     if isinstance(card.interface, TensorFlowModel) and not onnx:
-        return download_dir(request, str(load_path))
+        return download_dir(request, load_path)
 
     return download_file(request, str(load_path))
 

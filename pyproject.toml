@@ -236,6 +236,9 @@ python_version = "3.9"
 platform = "linux"
 ignore_missing_imports = true
 strict = true
+disable_error_code = [
+    "attr-defined",
+]
 
 plugins = [
     "numpy.typing.mypy_plugin",

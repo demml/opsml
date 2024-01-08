@@ -4,9 +4,8 @@
 
 import os
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable, Union
+from typing import Any, AsyncGenerator, Awaitable, Callable, Union
 
-import rollbar
 from fastapi import FastAPI, Response
 
 from opsml.helpers.logging import ArtifactLogger
@@ -22,10 +21,15 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 def _init_rollbar() -> None:
     logger.info("Initializing rollbar")
-    rollbar.init(
-        os.getenv("ROLLBAR_TOKEN"),
-        config.app_env,
-    )
+
+    rollbar_token = os.getenv("ROLLBAR_TOKEN")
+
+    if rollbar_token is None:
+        return None
+
+    import rollbar
+
+    rollbar.init(rollbar_token, config.app_env)
 
 
 def _init_registries(app: FastAPI) -> None:
@@ -65,7 +69,7 @@ def stop_app_handler(app: FastAPI) -> Callable[[], None]:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[Any, Any]:
     start_app_handler(app)()
     yield
     stop_app_handler(app)()

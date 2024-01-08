@@ -54,7 +54,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
             detail="No write path provided",
         )
 
-    _write_path = Path(swap_opsml_root(request, write_path))
+    _write_path = Path(swap_opsml_root(request, Path(write_path)))
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
     try:
@@ -98,7 +98,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File is missing",
         )
-    return {"storage_uri": write_path.as_posix()}
+    return {"storage_uri": _write_path.as_posix()}
 
 
 @router.get("/files/download", name="download_file")
@@ -118,7 +118,7 @@ def download_file(request: Request, path: str) -> StreamingResponse:
     try:
         return StreamingResponse(
             storage_client.iterfile(
-                Path(swap_opsml_root(request, path)),
+                Path(swap_opsml_root(request, Path(path))),
                 CHUNK_SIZE,
             ),
             media_type="application/octet-stream",
@@ -131,7 +131,7 @@ def download_file(request: Request, path: str) -> StreamingResponse:
         ) from error
 
 
-def download_dir(request: Request, path: str) -> StreamingResponse:
+def download_dir(request: Request, path: Path) -> StreamingResponse:
     """Downloads a file
 
     Args:
@@ -191,7 +191,7 @@ def download_artifacts_ui(request: Request, path: str) -> StreamingResponse:
         Streaming file response
     """
     if Path(path).suffix == "":
-        return download_dir(request, path)
+        return download_dir(request, Path(path))
     return download_file(request, path)
 
 
@@ -209,12 +209,12 @@ def list_files(request: Request, path: str) -> ListFileResponse:
         `ListFileResponse`
     """
 
-    swapped_path = swap_opsml_root(request, path)
+    swapped_path = swap_opsml_root(request, Path(path))
     storage_client: StorageClientBase = request.app.state.storage_client
     files = storage_client.find(Path(swapped_path))
 
     try:
-        return ListFileResponse(files=[reverse_swap_opsml_root(request, file_) for file_ in files])
+        return ListFileResponse(files=[str(reverse_swap_opsml_root(request, Path(file_))) for file_ in files])
 
     except Exception as error:
         raise HTTPException(
@@ -240,7 +240,7 @@ def file_exists(request: Request, path: str) -> FileExistsResponse:
     return FileExistsResponse(
         exists=storage_client.exists(
             Path(
-                swap_opsml_root(request, path),
+                swap_opsml_root(request, Path(path)),
             )
         ),
     )
@@ -263,7 +263,7 @@ def delete_files(request: Request, path: str) -> DeleteFileResponse:
     storage_client: StorageClientBase = request.app.state.storage_client
     try:
         try:
-            storage_client.rm(Path(swap_opsml_root(request, path)))
+            storage_client.rm(Path(swap_opsml_root(request, Path(path))))
             return DeleteFileResponse(deleted=True)
 
         except FileNotFoundError:

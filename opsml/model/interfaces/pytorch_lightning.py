@@ -9,7 +9,7 @@ from opsml.model.interfaces.pytorch import PyTorchModel
 from opsml.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
-    from lightning import Trainer
+    from lightning import LightningModule, Trainer
 
     class LightningModel(PyTorchModel):
         """Model interface for Pytorch Lightning models.
@@ -69,26 +69,28 @@ try:
 
         def get_sample_prediction(self) -> SamplePrediction:
             assert self.model is not None, "Trainer is not defined"
-            assert self.mode.model is not None, "No model found for trainer"
             assert self.sample_data is not None, "Sample data must be provided"
+
+            trainer_model = self.model.model
+            assert trainer_model is not None, "No model provided to trainer"
 
             # test dict input
             if isinstance(self.sample_data, dict):
                 try:
-                    prediction = self.model.model(**self.sample_data)
+                    prediction = trainer_model(**self.sample_data)
                 except Exception as _:  # pylint: disable=broad-except
-                    prediction = self.model.model(self.sample_data)
+                    prediction = trainer_model(self.sample_data)
 
             # test list and tuple inputs
             elif isinstance(self.sample_data, (list, tuple)):
                 try:
-                    prediction = self.model.model(*self.sample_data)
+                    prediction = trainer_model(*self.sample_data)
                 except Exception as _:  # pylint: disable=broad-except
-                    prediction = self.model.model(self.sample_data)
+                    prediction = trainer_model(self.sample_data)
 
             # all others
             else:
-                prediction = self.model.model(self.sample_data)
+                prediction = trainer_model(self.sample_data)
 
             prediction_type = get_class_name(prediction)
 
@@ -106,6 +108,9 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
+                    assert issubclass(
+                        model_arch, LightningModule
+                    ), "Model architecture must be a subclass of LightningModule"
                     self.model = model_arch.load_from_checkpoint(checkpoint_path=path, **kwargs)
 
                 else:
@@ -149,7 +154,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
+            raise ModuleNotFoundError(
+                "LightningModel requires pytorch lightning to be installed. Please install lightning."
+            )
 
         @staticmethod
         def name() -> str:
