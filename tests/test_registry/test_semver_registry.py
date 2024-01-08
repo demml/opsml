@@ -1,9 +1,9 @@
 import pytest
 
-from opsml.registry import CardRegistries
 from opsml.cards import DataCard
 from opsml.data import SqlData
 from opsml.helpers.exceptions import VersionError
+from opsml.registry import CardRegistries
 from opsml.registry.registry import CardRegistry
 
 

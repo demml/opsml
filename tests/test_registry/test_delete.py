@@ -4,10 +4,10 @@ from typing import Tuple
 
 import pytest
 
-from opsml.registry import CardRegistries, CardRegistry
 from opsml.cards import DataCard, ModelCard, RunCard
 from opsml.data import PandasData
 from opsml.model import SklearnModel
+from opsml.registry import CardRegistries, CardRegistry
 from opsml.storage import client
 from opsml.types import SaveName
 
