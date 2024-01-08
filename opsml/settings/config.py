@@ -63,10 +63,10 @@ class OpsmlConfig(BaseSettings):
     def storage_root(self) -> str:
         """Returns the root of the storage URI"""
         if self.is_tracking_local:
-            if self.opsml_storage_uri.lower().startswith("gs://"):
-                return self.opsml_storage_uri.lower().lstrip("gs://")
-            if self.opsml_storage_uri.lower().startswith("s3://"):
-                return self.opsml_storage_uri.lower().lstrip("s3://")
+            if self.opsml_storage_uri.lower().startswith("gs:/"):
+                return self.opsml_storage_uri.lower().lstrip("gs:/")
+            if self.opsml_storage_uri.lower().startswith("s3:/"):
+                return self.opsml_storage_uri.lower().lstrip("s3:/")
             return self.opsml_storage_uri.lower()
         return self.opsml_proxy_root
 

@@ -111,8 +111,6 @@ class CardLoader:
                 Path of object to load
             suffix:
                 Suffix to add to object_path
-            storage_client:
-                Storage client to use
         """
 
         load_lpath = Path(lpath, object_path).with_suffix(suffix)
@@ -157,7 +155,7 @@ class CardLoader:
             loaded_card: Dict[str, Any] = joblib.load(lpath)
 
         # load interface logic
-        if self.registry_type == RegistryType.MODEL or self.registry_type == RegistryType.DATA:
+        if self.registry_type in (RegistryType.MODEL, RegistryType.DATA):
             # get interface type
             interface_type: str = loaded_card["metadata"]["interface_type"]
 
@@ -216,6 +214,8 @@ class DataCardLoader(CardLoader):
         with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
             self.card.interface.load_data_profile(lpath)
 
+        return None
+
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.DATACARD.value in card_type
@@ -263,8 +263,7 @@ class ModelCardLoader(CardLoader):
 
         lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value)
 
-        self.card.interface.load_sample_data(lpath)
-        return None
+        return self.card.interface.load_sample_data(lpath)
 
     def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
         """Load Preprocessor for model interface
@@ -285,7 +284,7 @@ class ModelCardLoader(CardLoader):
             return None
 
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
-        self.card.interface.load_preprocessor(lpath)
+        return self.card.interface.load_preprocessor(lpath)
 
     def _load_model(self, lpath: Path, rpath: Path, **kwargs: Dict[str, Any]) -> None:
         """Load model to interface
@@ -304,10 +303,8 @@ class ModelCardLoader(CardLoader):
         """Load onnx model to interface
 
         Args:
-            lpath:
-                Local path to save file
-            rpath:
-                Remote path to load file
+            load_quantized:
+                Load quantized model (Only applies to huggingface models)
         """
 
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
@@ -350,6 +347,8 @@ class ModelCardLoader(CardLoader):
             self._load_model(lpath, rpath, **kwargs)
             self._load_preprocessor(lpath, rpath)
             self._load_sample_data(lpath, rpath)
+
+        return None
 
     @staticmethod
     def validate(card_type: str) -> bool:

@@ -12,13 +12,3 @@ from opsml.model.interfaces.pytorch_lightning import LightningModel
 from opsml.model.interfaces.sklearn import SklearnModel
 from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.interfaces.xgb import XGBoostModel
-
-SUPPORTED_MODELS = Union[
-    SklearnModel,
-    TensorFlowModel,
-    PyTorchModel,
-    LightningModel,
-    XGBoostModel,
-    LightGBMModel,
-    HuggingFaceModel,
-]

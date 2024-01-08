@@ -181,7 +181,7 @@ try:
                 onnx_path = lpath.with_suffix(Suffix.ONNX.value)
                 self.convert_to_onnx(path=onnx_path)
 
-        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> ModelReturn:
+        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
             if self.onnx_model is not None:
