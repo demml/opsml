@@ -30,7 +30,7 @@ def create_fake_data(
     X = np.random.randn(n_samples, n_features)  # pylint: disable=invalid-name
     y = np.random.randint(0, n_classes, n_samples)  # pylint: disable=invalid-name
     if task_type == "regression":
-        y = np.random.randn(n_samples)  # pylint: disable=invalid-name
+        y = np.random.randn(n_samples)  # pylint: disable=invalid-name type: ignore
 
     # rename columns
     X = pd.DataFrame(X, columns=[f"col_{i}" for i in range(n_features)])  # pylint: disable=invalid-name
