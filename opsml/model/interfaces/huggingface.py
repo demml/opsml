@@ -267,7 +267,8 @@ try:
                 lpath = Path(tmpdirname)
                 self.save_model((lpath / SaveName.TRAINED_MODEL.value))
                 self.save_preprocessor((lpath / SaveName.PREPROCESSOR.value))
-                return self.convert_to_onnx(path=(lpath / SaveName.ONNX_MODEL.value))
+                onnx_path = lpath / SaveName.ONNX_MODEL.value
+                return self.convert_to_onnx(path=onnx_path)
 
         def save_onnx(self, path: Path) -> ModelReturn:
             import onnxruntime as rt
@@ -318,8 +319,6 @@ try:
             onnx_model.save_pretrained(path)
 
             if self.is_pipeline:
-                from transformers import pipeline
-
                 self.onnx_model = OnnxModel(
                     onnx_version=onnx.__version__,
                     sess=pipeline(
@@ -403,10 +402,12 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:
             return HuggingFaceModel.__name__
+
+        @property
+        def model_class(self) -> str:
+            return TrainedModelType.TRANSFORMERS.value

@@ -120,8 +120,6 @@ class CardRegistry:
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
                 Places a limit on result list. Results are sorted by SemVer
-            as_dataframe:
-                If True, returns a pandas dataframe. If False, returns a list of records
             info:
                 CardInfo object. If present, the info object takes precedence
             ignore_release_candidates:

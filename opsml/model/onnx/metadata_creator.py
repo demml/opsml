@@ -36,15 +36,6 @@ class _ModelMetadataCreator:
 
 
 class _TrainedModelMetadataCreator(_ModelMetadataCreator):
-    def __init__(self, model_interface: ModelInterface):
-        """Creates metadata to deploy a trained model
-
-        Args:
-            model_interface:
-                Interface to model
-        """
-        super().__init__(model_interface)
-
     def _get_input_schema(self) -> Dict[str, Feature]:
         model_data = get_model_data(
             data_type=self.interface.data_type,

@@ -9,7 +9,7 @@ from opsml.types import CommonKwargs, TrainedModelType
 try:
     from xgboost import XGBModel
 
-    from opsml.model.interfaces.sklearn import SklearnModel
+    from opsml.model import SklearnModel  # pylint disable=ungrouped-imports
 
     class XGBoostModel(SklearnModel):
         """Model interface for XGBoost model class. Currently, only Sklearn flavor of XGBoost

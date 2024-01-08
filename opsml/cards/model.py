@@ -61,8 +61,8 @@ class ModelCard(ArtifactCard):
             UUID(datacard_uid, version=4)  # we use uuid4
             return datacard_uid
 
-        except ValueError:
-            raise ValueError("Datacard uid is not a valid uuid")
+        except ValueError as exc:
+            raise ValueError("Datacard uid is not a valid uuid") from exc
 
     def load_model(self, **kwargs: Dict[str, Any]) -> None:
         """Loads model, preprocessor and sample data to interface"""

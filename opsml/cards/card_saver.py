@@ -231,7 +231,7 @@ class ModelCardSaver(CardSaver):
 
         # save model metadata to json
         save_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
-        save_path.write_text(model_metadata.model_dump_json())
+        save_path.write_text(model_metadata.model_dump_json(), "utf-8")
 
     def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""
@@ -373,19 +373,13 @@ def save_card_artifacts(card: ArtifactCard) -> None:
     Args:
         card:
             ArtifactCard to save
-        storage_client:
-            StorageClient to use to save artifacts. If None, will use default storage client.
-            Ideally, storage client will be provided by the registry when saving or updating
-            artifacts.
 
     Returns:
         ArtifactCard with updated artifact uris
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

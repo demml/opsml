@@ -199,7 +199,7 @@ class ActiveRun:
             rpath = rpath / lpath.name
 
         self._info.storage_client.put(lpath, rpath)
-        self.runcard._add_artifact_uri(
+        self.runcard._add_artifact_uri(  # pylint: disable=protected-access
             name=name,
             local_path=lpath.as_posix(),
             remote_path=rpath.as_posix(),

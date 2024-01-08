@@ -181,7 +181,7 @@ class HuggingFaceOnnxArgs(BaseModel):
             return config
 
         from optimum.onnxruntime import (
-            AutoQuantizationConfig,
+            AutoQuantizationConfig,  # pylint: disable=no-name-in-module
             ORTConfig,
             QuantizationConfig,
         )
