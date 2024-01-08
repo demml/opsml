@@ -71,7 +71,7 @@ try:
 
             return model_args
 
-        def save_model(self, path: Path) -> Path:
+        def save_model(self, path: Path) -> None:
             """Saves lgb model according to model format. Booster models are saved to text.
             Sklearn models are saved via joblib.
 
@@ -79,8 +79,8 @@ try:
                 path:
                     base path to save model to
             """
-
-            if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
+            assert self.model is not None, "No model found"
+            if isinstance(self.model, Booster):
                 self.model.save_model(filename=path)
 
             else:
@@ -115,13 +115,11 @@ try:
 
 except ModuleNotFoundError:
 
-    class LightGBMBoosterModel(ModelInterface):  # type: ignore[no-redef]
+    class LightGBMBoosterModel(ModelInterface):
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm."
-            )
+            raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
 
         @staticmethod
         def name() -> str:
