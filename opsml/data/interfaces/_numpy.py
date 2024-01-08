@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import zarr
@@ -28,7 +28,7 @@ class NumpyData(DataInterface):
             Sql logic used to generate data
     """
 
-    data: Optional[np.ndarray] = None
+    data: Optional[np.ndarray[Any, Any]] = None
 
     def save_data(self, path: Path) -> None:
         """Saves numpy array as a zarr file"""

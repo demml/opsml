@@ -80,7 +80,7 @@ try:
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
 
         @classmethod
-        def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
+        def get_sample_data(cls, sample_data: Any) -> Any:
             """Check sample data and returns one record to be used
             during type inference and ONNX conversion/validation.
 
@@ -128,7 +128,7 @@ try:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            if model_args.get("modelcard_uid", False):
+            if bool(model_args.get("modelcard_uid", False)):
                 return model_args
 
             hf_model = model_args.get("model")
@@ -150,7 +150,7 @@ try:
                     preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
                 )
 
-            sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+            sample_data = cls.get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
 
             # set args
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
@@ -194,7 +194,7 @@ try:
 
             return self.model(self.sample_data)
 
-        def _get_pipeline_prediction(self) -> Dict[str, Any]:
+        def _get_pipeline_prediction(self) -> Any:
             """Use model in pipeline mode if pipeline task"""
             assert isinstance(self.model, Pipeline), "Model must be a pipeline"
 
@@ -270,7 +270,7 @@ try:
                 self.save_model((lpath / SaveName.TRAINED_MODEL.value))
                 self.save_preprocessor((lpath / SaveName.PREPROCESSOR.value))
                 onnx_path = lpath / SaveName.ONNX_MODEL.value
-                return self.convert_to_onnx(path=onnx_path)
+                return self.convert_to_onnx(**{"path": onnx_path})
 
         def save_onnx(self, path: Path) -> ModelReturn:
             import onnxruntime as rt
@@ -280,7 +280,7 @@ try:
             model_saved = False
             if self.onnx_model is None:
                 # HF saves model during conversion
-                self.convert_to_onnx(path=path)
+                self.convert_to_onnx(**{"path": path})
                 model_saved = True
 
             if self.is_pipeline:
@@ -293,7 +293,7 @@ try:
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model))
 
-        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+        def convert_to_onnx(self, **kwargs: Path) -> None:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
             """
@@ -340,7 +340,7 @@ try:
         def load_preprocessor(self, path: Path) -> None:
             self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
 
-        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+        def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load huggingface model from path
 
             Args:
@@ -369,6 +369,8 @@ try:
             )
 
             if self.is_pipeline:
+                assert isinstance(self.model, Pipeline), "Model is not a pipeline"
+
                 self.onnx_model = OnnxModel(
                     onnx_version=onnx.__version__,  # type: ignore[attr-defined]
                     sess=pipeline(

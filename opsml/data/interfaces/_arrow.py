@@ -32,7 +32,7 @@ class ArrowData(DataInterface):
 
     data: Optional[pa.Table] = None
 
-    def save_data(self, path: Path) -> Path:
+    def save_data(self, path: Path) -> None:
         """Saves pandas dataframe to parquet"""
 
         assert self.data is not None, "No data detected in interface"
@@ -44,10 +44,8 @@ class ArrowData(DataInterface):
             )
             for feature, type_ in zip(schema.names, schema.types)
         }
-        save_path = path.with_suffix(self.data_suffix)
-        pq.write_table(self.data, path)
 
-        return save_path
+        pq.write_table(self.data, path)
 
     def load_data(self, path: Path) -> None:
         """Load parquet dataset to pandas dataframe"""

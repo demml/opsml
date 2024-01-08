@@ -56,7 +56,7 @@ try:
             return TrainedModelType.PYTORCH.value
 
         @classmethod
-        def get_sample_data(cls, sample_data: Optional[Any] = None) -> Any:
+        def get_sample_data(cls, sample_data: Any) -> Any:
             """Check sample data and returns one record to be used
             during type inference and ONNX conversion/validation.
 
@@ -94,7 +94,7 @@ try:
                 if "torch" in base:
                     model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-            sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+            sample_data = cls.get_sample_data(model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
@@ -136,13 +136,14 @@ try:
                 path:
                     pathlib object
             """
+            assert self.model is not None, "No model found"
 
             if self.save_args.as_state_dict:
                 torch.save(self.model.state_dict(), path)
             else:
                 torch.save(self.model, path)
 
-        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+        def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load pytorch model from path
 
             Args:
@@ -168,10 +169,9 @@ try:
             from opsml.model.onnx import _get_onnx_metadata
 
             if self.onnx_model is None:
-                self.convert_to_onnx(path=path)
+                self.convert_to_onnx(**{"path": path})
 
             # no need to save onnx to bytes since its done during onnx conversion
-
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
 
         def _convert_to_onnx_inplace(self) -> None:
@@ -179,9 +179,9 @@ try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 lpath = Path(tmpdir) / SaveName.ONNX_MODEL.value
                 onnx_path = lpath.with_suffix(Suffix.ONNX.value)
-                self.convert_to_onnx(path=onnx_path)
+                self.convert_to_onnx(**{"path": onnx_path})
 
-        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+        def convert_to_onnx(self, **kwargs: Path) -> None:
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
             if self.onnx_model is not None:
@@ -207,7 +207,7 @@ try:
             return PyTorchModel.__name__
 
 except ModuleNotFoundError:
-    ValidData = Any
+    ValidData = Any  # type: ignore[misc]
 
     class PyTorchModel(ModelInterface):  # type: ignore[no-redef]
         @model_validator(mode="before")

@@ -34,7 +34,7 @@ try:
         LightningModel
         """
 
-        model: Optional[Trainer] = None
+        model: Optional[Trainer] = None  # type: ignore[assignment]
         onnx_args: Optional[TorchOnnxArgs] = None
 
         @property
@@ -58,7 +58,7 @@ try:
                 if "lightning.pytorch" in base:
                     model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-            sample_data = cls.get_sample_data(sample_data=model_args.get(CommonKwargs.SAMPLE_DATA.value))
+            sample_data = cls.get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
@@ -100,7 +100,7 @@ try:
             assert self.model is not None, "No model detected in interface"
             self.model.save_checkpoint(path)
 
-        def load_model(self, path: Path, **kwargs: Dict[str, Any]) -> None:
+        def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load lightning model from path"""
 
             model_arch = kwargs[CommonKwargs.MODEL_ARCH.value]
@@ -122,7 +122,7 @@ try:
             except Exception as exc:
                 raise ValueError(f"Unable to load pytorch lightning model: {exc}") from exc
 
-        def convert_to_onnx(self, **kwargs: Dict[str, str]) -> None:
+        def convert_to_onnx(self, **kwargs: Path) -> None:
             """Converts model to onnx"""
             # import packages for onnx conversion
             OpsmlImportExceptions.try_torchonnx_imports()
@@ -136,7 +136,7 @@ try:
             if path is None:
                 return self._convert_to_onnx_inplace()
 
-            self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(path=path)
+            self.onnx_model = _PyTorchLightningOnnxModel(self).convert_to_onnx(**{"path": path})
             return None
 
         @property

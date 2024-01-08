@@ -16,6 +16,6 @@ def get_data_interface(interface_type: str) -> DataInterface:
             Name of interface
     """
     return next(
-        (cls for cls in all_subclasses(DataInterface) if cls.name() == interface_type),
-        DataInterface,
+        (cls for cls in all_subclasses(DataInterface) if cls.name() == interface_type),  # type: ignore
+        DataInterface,  # type: ignore
     )

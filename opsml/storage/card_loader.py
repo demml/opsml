@@ -7,7 +7,7 @@ import tempfile
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, cast, Union
+from typing import Any, Dict, Iterator, Optional, Union, cast
 from venv import logger
 
 import joblib
@@ -22,10 +22,10 @@ from opsml.cards import (
     ProjectCard,
     RunCard,
 )
-from opsml.data.interfaces._base import DataInterface
-from opsml.model.interfaces.base import ModelInterface
 from opsml.data.interfaces import get_data_interface
+from opsml.data.interfaces._base import DataInterface
 from opsml.model.interfaces import get_model_interface
+from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
 from opsml.storage import client
@@ -371,7 +371,7 @@ class ModelCardLoader(CardLoader):
 
         return ModelMetadata(**metadata)
 
-    def load_model(self, **kwargs: Dict[str, Any]) -> None:
+    def load_model(self, **kwargs: Any) -> None:
         """Load model, preprocessor and sample data"""
 
         if self.card.interface.model is not None:

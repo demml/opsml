@@ -287,7 +287,7 @@ class ApiStorageClient(StorageClientBase):
             params={"path": path.as_posix()},
         )
 
-        return response.get("exists", False)
+        return bool(response.get("exists", False))
 
 
 def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
