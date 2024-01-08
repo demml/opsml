@@ -30,6 +30,7 @@ def _init_rollbar() -> None:
     import rollbar
 
     rollbar.init(rollbar_token, config.app_env)
+    return None
 
 
 def _init_registries(app: FastAPI) -> None:

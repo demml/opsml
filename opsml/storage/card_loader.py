@@ -337,8 +337,8 @@ class ModelCardLoader(CardLoader):
         """Load onnx model to interface
 
         Args:
-            load_quantized:
-                Load quantized model (Only applies to huggingface models)
+            kwargs:
+                Kwargs to pass for onnx loading
         """
 
         load_quantized = kwargs.get("load_quantized", False)
