@@ -3,7 +3,6 @@ import warnings
 from pathlib import Path
 from typing import Any, Iterator, Optional, Tuple
 
-from opsml.model.interfaces.xgb import XGBoostModel
 
 warnings.filterwarnings("ignore")
 
@@ -93,6 +92,7 @@ from opsml.model import (
     PyTorchModel,
     SklearnModel,
     TensorFlowModel,
+    XGBoostModel
 )
 from opsml.model.challenger import ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo

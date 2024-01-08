@@ -22,9 +22,8 @@ from opsml.cards import (
     ProjectCard,
     RunCard,
 )
-from opsml.data.interfaces import get_data_interface
+from opsml.helpers.utils import all_subclasses
 from opsml.data.interfaces._base import DataInterface
-from opsml.model.interfaces import get_model_interface
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
@@ -59,6 +58,32 @@ class CardLoadArgs(BaseModel):
         )
 
 
+def _get_data_interface(interface_type: str) -> DataInterface:
+    """Load model interface from pathlib object
+
+    Args:
+        interface_type:
+            Name of interface
+    """
+    return next(
+        (cls for cls in all_subclasses(DataInterface) if cls.name() == interface_type),  # type: ignore
+        DataInterface,  # type: ignore
+    )
+
+
+def _get_model_interface(interface_type: str) -> ModelInterface:
+    """Load model interface from pathlib object
+
+    Args:
+        interface_type:
+            Name of interface
+    """
+    return next(
+        (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),  # type: ignore
+        ModelInterface,  # type: ignore[arg-type]
+    )
+
+
 def get_interface(registry_type: RegistryType, interface_type: str) -> Union[ModelInterface, DataInterface]:
     """Gets model or data interfaces
 
@@ -73,8 +98,8 @@ def get_interface(registry_type: RegistryType, interface_type: str) -> Union[Mod
     """
 
     if registry_type == RegistryType.MODEL:
-        return get_model_interface(interface_type)
-    return get_data_interface(interface_type)
+        return _get_model_interface(interface_type)
+    return _get_data_interface(interface_type)
 
 
 class CardLoader:

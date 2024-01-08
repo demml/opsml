@@ -76,7 +76,7 @@ class _FileSystemProtocol(Protocol):
     def rm(self, path: str, recursive: bool) -> None:  # pylint: disable=invalid-name
         """Deletes file(s)"""
 
-    def exists(self, rpath: str) -> bool:
+    def exists(self, path: str) -> bool:
         """Determines if a file or directory exists"""
 
 
@@ -143,7 +143,7 @@ class StorageClientBase(StorageClientProtocol):
         self.client.rm(str(path), True)
 
     def exists(self, path: Path) -> bool:
-        return self.client.exists(rpath=str(path))
+        return self.client.exists(path=str(path))
 
 
 class GCSFSStorageClient(StorageClientBase):
