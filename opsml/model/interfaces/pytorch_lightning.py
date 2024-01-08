@@ -68,7 +68,8 @@ try:
             return model_args
 
         def get_sample_prediction(self) -> SamplePrediction:
-            assert self.model is not None, "Model is not defined"
+            assert self.model is not None, "Trainer is not defined"
+            assert self.mode.model is not None, "No model found for trainer"
             assert self.sample_data is not None, "Sample data must be provided"
 
             # test dict input
@@ -144,13 +145,11 @@ try:
 
 except ModuleNotFoundError:
 
-    class LightningModel(PyTorchModel):
+    class LightningModel(PyTorchModel):  # type: ignore[no-redef]
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
+            raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
         @staticmethod
         def name() -> str:

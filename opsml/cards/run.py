@@ -292,6 +292,7 @@ class RunCard(ArtifactCard):
 
         if name is not None:
             artifact = self.artifact_uris.get(name)
+            assert artifact is not None, f"Artifact {name} not found"
             client.storage_client.get(
                 Path(artifact.remote_path),
                 Path(artifact.local_path),

@@ -83,7 +83,7 @@ from opsml.cards import (
 )
 
 # opsml
-from opsml.data.interfaces import (
+from opsml.data import (
     ArrowData,
     NumpyData,
     PandasData,

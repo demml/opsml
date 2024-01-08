@@ -282,9 +282,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -436,23 +434,23 @@ class ModelRouteHelper(RouteHelper):
         model_filename = Path(metadata.model_uri)
 
         if model_filename.suffix == "":
-            model_filename = "model.zip"
+            model_save_filename = "model.zip"
         else:
-            model_filename = model_filename.name
+            model_save_filename = model_filename.name
 
         onnx_filename = Path(metadata.onnx_uri) if metadata.onnx_uri is not None else None
 
         if onnx_filename is not None and onnx_filename.suffix == "":
-            onnx_filename = "onnx.zip"
+            onnx_save_filename = "onnx.zip"
         elif onnx_filename is not None:
-            onnx_filename = onnx_filename.name
+            onnx_save_filename = onnx_filename.name
 
         preprocessor_filename = Path(metadata.preprocessor_uri) if metadata.preprocessor_uri is not None else None
 
         if preprocessor_filename is not None and preprocessor_filename.suffix == "":
-            preprocessor_filename = "preprocessor.zip"
+            preprocessor_save_filename = "preprocessor.zip"
         elif preprocessor_filename is not None:
-            preprocessor_filename = preprocessor_filename.name
+            preprocessor_save_filename = preprocessor_filename.name
 
         return templates.TemplateResponse(
             "include/model/model_version.html",
@@ -465,9 +463,9 @@ class ModelRouteHelper(RouteHelper):
                 "metadata": metadata,
                 "runcard": runcard,
                 "metadata_json": metadata_json,
-                "model_filename": model_filename,
-                "preprocessor_filename": preprocessor_filename,
-                "onnx_filename": onnx_filename,
+                "model_filename": model_save_filename,
+                "preprocessor_filename": preprocessor_save_filename,
+                "onnx_filename": onnx_save_filename,
             },
         )
 

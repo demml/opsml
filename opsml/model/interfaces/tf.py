@@ -132,7 +132,7 @@ try:
 
 except ModuleNotFoundError:
 
-    class TensorFlowModel(ModelInterface):
+    class TensorFlowModel(ModelInterface):  # type: ignore[no-redef]
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

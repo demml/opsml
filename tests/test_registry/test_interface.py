@@ -1,6 +1,6 @@
 import pytest
 
-from opsml.data.interfaces import SqlData
+from opsml.data import SqlData
 
 
 def test_sql_interface():

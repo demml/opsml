@@ -26,7 +26,7 @@ def verify_token(request: Request) -> None:
             )
 
 
-def _verify_path(path: str) -> None:
+def _verify_path(path: Path) -> None:
     """Verifies path contains one of our card table names.
 
     All files being read from or written to opsml should be written to one of
@@ -39,7 +39,7 @@ def _verify_path(path: str) -> None:
         HTTPException: Invalid path
     """
     # all artifacts belong to a registry
-    if any(table_name in path for table_name in RegistryTableNames):
+    if any(table_name in path.as_posix() for table_name in RegistryTableNames):
         return
 
     raise HTTPException(
@@ -48,7 +48,7 @@ def _verify_path(path: str) -> None:
     )
 
 
-def swap_opsml_root(request: Request, path: str) -> str:
+def swap_opsml_root(request: Request, path: Path) -> Path:
     """When running in client model, client will specify path to use with opsml_proxy_root.
     Server needs to swap this out with opsml_storage_uri to access the correct path.
 
@@ -64,10 +64,10 @@ def swap_opsml_root(request: Request, path: str) -> str:
 
     _verify_path(path)
 
-    if path.startswith(config.opsml_proxy_root):
-        curr_path = Path(path)
+    if path.as_posix().startswith(config.opsml_proxy_root):
+        curr_path = path
         new_path = Path(request.app.state.storage_root) / curr_path.relative_to(config.opsml_proxy_root)
-        return str(new_path)
+        return new_path
     return path
 
 

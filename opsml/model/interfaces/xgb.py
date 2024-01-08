@@ -68,7 +68,7 @@ try:
 
 except ModuleNotFoundError:
 
-    class XGBoostModel(ModelInterface):
+    class XGBoostModel(ModelInterface):  # type: ignore[no-redef]
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:

@@ -40,10 +40,7 @@ class ModelRegistrar:
     moved or deleted from the registered URI.
     """
 
-    def __init__(
-        self,
-        storage_client: StorageClient,
-    ):
+    def __init__(self, storage_client: StorageClient):
         """Instantiates Registrar class
 
         Args:
@@ -71,7 +68,7 @@ class ModelRegistrar:
         files = self.storage_client.find(path)
         return bool(files)
 
-    def _get_correct_model_uri(self, request: RegistrationRequest, metadata: ModelMetadata) -> str:
+    def _get_correct_model_uri(self, request: RegistrationRequest, metadata: ModelMetadata) -> Path:
         """Gets correct model uri based on the request's onnx flag.
 
         Args:
@@ -81,8 +78,8 @@ class ModelRegistrar:
         if request.onnx:
             if metadata.onnx_uri is None:
                 raise RegistrationError("the onnx model uri does not exist")
-            return metadata.onnx_uri
-        return metadata.model_uri
+            return Path(metadata.onnx_uri)
+        return Path(metadata.model_uri)
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def _copy_model_to_registry(
@@ -126,7 +123,7 @@ class ModelRegistrar:
 
         return registry_path
 
-    def _model_settings(self, metadata: ModelMetadata, model_uri: str) -> ModelSettingsType:
+    def _model_settings(self, metadata: ModelMetadata, model_uri: Path) -> ModelSettingsType:
         """Create standard dictionary for model-settings.json file
 
         Args:
@@ -145,7 +142,7 @@ class ModelRegistrar:
             "name": metadata.model_name.replace("-", "_"),
             "implementation": "models.OnnxModel",
             "parameters": {
-                "uri": f"./{Path(model_uri).name}",
+                "uri": f"./{model_uri.name}",
                 "extra": {
                     "model_version": metadata.model_version,
                     "opsml_name": metadata.model_name.replace("-", "_"),
@@ -153,7 +150,7 @@ class ModelRegistrar:
             },
         }
 
-    def register_model_settings(self, metadata: ModelMetadata, registry_path: str, model_uri: str) -> None:
+    def register_model_settings(self, metadata: ModelMetadata, registry_path: Path, model_uri: Path) -> None:
         """Generate a model-settings.json file for Seldon custom server
 
         Args:
@@ -170,7 +167,7 @@ class ModelRegistrar:
         with tempfile.TemporaryDirectory() as tmpdirname:
             lpath = Path(tmpdirname) / "model-settings.json"
             lpath.write_text(json.dumps(model_settings))
-            self.storage_client.put(lpath, Path(registry_path))
+            self.storage_client.put(lpath, registry_path)
 
         logger.info("ModelRegistrar: registered model settings: {} path={}", model_settings, registry_path)
 
@@ -193,7 +190,7 @@ class ModelRegistrar:
         swapped_uri = swap_opsml_root(request, model_uri)
 
         logger.info("ModelRegistrar: registering model: {}", model_request.model_dump())
-        registry_path = self._copy_model_to_registry(model_request, Path(swapped_uri), metadata)
-        logger.info("ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path)
+        registry_path = self._copy_model_to_registry(model_request, swapped_uri, metadata)
+        logger.info("ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix())
 
         return registry_path

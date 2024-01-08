@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -83,7 +83,7 @@ def download_data(request: Request, uid: str) -> StreamingResponse:
     """Downloads data associated with a datacard"""
 
     registry: CardRegistry = request.app.state.registries.data
-    datacard: DataCard = registry.load_card(uid=uid)
+    datacard = cast(DataCard, registry.load_card(uid=uid))
     load_path = Path(datacard.uri / SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
     return download_artifacts_ui(request, str(load_path))
 
@@ -96,6 +96,6 @@ def download_data_profile(
     """Downloads a datacard profile"""
 
     registry: CardRegistry = request.app.state.registries.data
-    datacard: DataCard = registry.load_card(uid=uid)
+    datacard = cast(DataCard, registry.load_card(uid=uid))
     load_path = Path(datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
     return download_file(request, str(load_path))
