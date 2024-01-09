@@ -5,7 +5,11 @@ from typing import Any, Dict, Optional, Union, cast
 from pydantic import field_validator, model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.model.interfaces.base import ModelInterface, SamplePrediction
+from opsml.model.interfaces.base import (
+    ModelInterface,
+    SamplePrediction,
+    get_processor_name,
+)
 from opsml.types import (
     GENERATION_TYPES,
     CommonKwargs,
@@ -22,21 +26,28 @@ try:
     from transformers import (
         BatchEncoding,
         BatchFeature,
+        FeatureExtractionMixin,
         Pipeline,
         PreTrainedModel,
+        PreTrainedTokenizer,
+        PreTrainedTokenizerFast,
         TFPreTrainedModel,
         pipeline,
+        ImageProcessingMixin,
     )
     from transformers.utils import ModelOutput
+    from PIL import ImageFile
 
     class HuggingFaceModel(ModelInterface):
         """Model interface for HuggingFace models
 
         Args:
             model:
-                HuggingFace model
-            preprocessor:
-                HuggingFace preprocessor
+                HuggingFace model or pipeline
+            tokenizer:
+                HuggingFace tokenizer. If passing pipeline, tokenizer will be extracted
+            feature_extractor:
+                HuggingFace feature extractor or image processor. If passing pipeline, feature extractor will be extracted
             sample_data:
                 Sample data to be used for type inference.
                 This should match exactly what the model expects as input. See example below.
@@ -44,15 +55,16 @@ try:
                 Task type for HuggingFace model. See `HuggingFaceTask` for supported tasks.
             model_type:
                 Optional model type for HuggingFace model. This is inferred automatically.
-            preprocessor_name:
-                Optional preprocessor name for HuggingFace model. This is inferred automatically if a
-                preprocessor is provided.
             is_pipeline:
                 If model is a pipeline. Defaults to False.
             backend:
                 Backend for HuggingFace model. This is inferred from model
             onnx_args:
                 Optional arguments for ONNX conversion. See `HuggingFaceOnnxArgs` for supported arguments.
+            tokenizer_name:
+                Optional tokenizer name for HuggingFace model. This is inferred automatically.
+            feature_extractor_name:
+                Optional feature_extractor name for HuggingFace model. This is inferred automatically.
 
         Returns:
             HuggingFaceModel
@@ -68,19 +80,23 @@ try:
             # this is fed to the ModelCard
             model = HuggingFaceModel(
                 model=model,
-                preprocessor=tokenizer,
+                tokenizer=tokenizer,
                 sample_data=inputs,
                 task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
             )
         """
 
         model: Optional[Union[Pipeline, PreTrainedModel, TFPreTrainedModel]] = None
+        tokenizer: Optional[Union[PreTrainedTokenizer, PreTrainedTokenizerFast]] = None
+        feature_extractor: Optional[Union[FeatureExtractionMixin, ImageProcessingMixin]] = None
         is_pipeline: bool = False
         backend: str
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
+        tokenizer_name: str = CommonKwargs.UNDEFINED.value
+        feature_extractor_name: str = CommonKwargs.UNDEFINED.value
 
         @classmethod
-        def get_sample_data(cls, sample_data: Any) -> Any:
+        def _get_sample_data(cls, sample_data: Any) -> Any:
             """Check sample data and returns one record to be used
             during type inference and ONNX conversion/validation.
 
@@ -101,6 +117,9 @@ try:
                 return sample_dict
 
             if isinstance(sample_data, str):
+                return sample_data
+
+            if isinstance(sample_data, ImageFile.ImageFile):
                 return sample_data
 
             return sample_data[0:1]
@@ -138,19 +157,24 @@ try:
                 model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model.model)
                 model_args[CommonKwargs.IS_PIPELINE.value] = True
                 model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.model.__class__.__name__
-                model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
-                    preprocessor=hf_model.tokenizer,
-                )
+                model_args[CommonKwargs.TOKENIZER.value] = hf_model.tokenizer
+                model_args[CommonKwargs.TOKENIZER_NAME.value] = get_processor_name(hf_model.tokenizer)
+                model_args[CommonKwargs.FEATURE_EXTRACTOR.value] = hf_model.feature_extractor
+                model_args[CommonKwargs.FEATURE_EXTRACTOR_NAME.value] = get_processor_name(hf_model.feature_extractor)
 
             else:
                 model_args[CommonKwargs.BACKEND.value] = cls._check_model_backend(hf_model)
                 model_args[CommonKwargs.IS_PIPELINE.value] = False
                 model_args[CommonKwargs.MODEL_TYPE.value] = hf_model.__class__.__name__
-                model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
-                    preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+                model_args[CommonKwargs.TOKENIZER_NAME.value] = get_processor_name(
+                    model_args.get(CommonKwargs.TOKENIZER.value),
                 )
 
-            sample_data = cls.get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
+                model_args[CommonKwargs.FEATURE_EXTRACTOR_NAME.value] = get_processor_name(
+                    model_args.get(CommonKwargs.FEATURE_EXTRACTOR.value)
+                )
+
+            sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
 
             # set args
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
@@ -167,6 +191,8 @@ try:
             if task not in list(HuggingFaceTask):
                 raise ValueError(f"Task type {task} is not supported")
             return task
+
+        # ------------ Model Interface Helper Methods ------------#
 
         def _generate_predictions(self) -> Any:
             """Use model in generate mode if generate task"""
@@ -214,6 +240,8 @@ try:
             raise ValueError("Pipeline model must return a prediction")
 
         def get_sample_prediction(self) -> SamplePrediction:
+            """Generates prediction from model and provided sample data"""
+
             if self.is_pipeline:
                 prediction = self._get_pipeline_prediction()
             elif self.task_type in GENERATION_TYPES:
@@ -228,17 +256,7 @@ try:
 
             return SamplePrediction(prediction_type, prediction)
 
-        def save_model(self, path: Path) -> None:
-            assert self.model is not None, "No model detected in interface"
-
-            self.model.save_pretrained(path)
-
-        def save_preprocessor(self, path: Path) -> None:
-            if self.preprocessor is None:
-                return None
-
-            self.preprocessor.save_pretrained(path)
-            return None
+        # ------------ Model Interface Onnx Methods ------------#
 
         def _quantize_model(self, path: Path, onnx_model: Any) -> None:
             """Quantizes an huggingface model
@@ -272,6 +290,81 @@ try:
                 onnx_path = lpath / SaveName.ONNX_MODEL.value
                 return self.convert_to_onnx(**{"path": onnx_path})
 
+        def convert_to_onnx(self, **kwargs: Path) -> None:
+            """Converts a huggingface model or pipeline to onnx via optimum library.
+            Converted model or pipeline is accessible via the `onnx_model` attribute.
+            """
+
+            assert (
+                self.onnx_args is not None
+            ), "No onnx args provided. If converting to onnx, provide a HuggingFaceOnnxArgs instance"
+
+            if self.onnx_model is not None:
+                return None
+
+            import onnx
+            import optimum.onnxruntime as ort
+
+            path: Optional[Path] = kwargs.get("path")
+            if path is None:
+                return self._convert_to_onnx_inplace()
+
+            # ensure no suffix (this is an exception to the rule to all model interfaces)
+            # huggingface prefers to save onnx models in dirs instead of single model.onnx file
+            path = path.with_suffix("")
+            ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
+            model_path = path.parent / SaveName.TRAINED_MODEL.value
+            onnx_model = ort_model.from_pretrained(model_path, export=True, provider=self.onnx_args.provider)
+            onnx_model.save_pretrained(path)
+
+            if self.is_pipeline:
+                self.onnx_model = OnnxModel(
+                    onnx_version=onnx.__version__,
+                    sess=pipeline(
+                        self.task_type,
+                        model=onnx_model,
+                        tokenizer=self.tokenizer,
+                        feature_extractor=self.feature_extractor,
+                    ),
+                )
+            else:
+                self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
+
+            if self.onnx_args.quantize:
+                self._quantize_model(path.parent, onnx_model)
+
+            return None
+
+        # ------------ Model Interface Save Methods ------------#
+
+        def save_model(self, path: Path) -> None:
+            assert self.model is not None, "No model detected in interface"
+
+            if isinstance(self.model, Pipeline):
+                return self.model.model.save_pretrained(path)
+
+            return self.model.save_pretrained(path)
+
+        def save_tokenizer(self, path: Path) -> None:
+            if self.tokenizer is None:
+                return None
+
+            if isinstance(self.model, Pipeline):
+                assert self.model.tokenizer is not None, "Tokenizer is missing"
+                return self.model.tokenizer.save_pretrained(path)
+
+            return self.tokenizer.save_pretrained(path)
+
+        def save_feature_extractor(self, path: Path) -> None:
+            if self.feature_extractor is None:
+                return None
+
+            if isinstance(self.model, Pipeline):
+                assert self.model.feature_extractor is not None, "Feature extractor is missing"
+                return self.model.feature_extractor.save_pretrained(path)
+
+            return self.feature_extractor.save_pretrained(path)
+
         def save_onnx(self, path: Path) -> ModelReturn:
             import onnxruntime as rt
 
@@ -293,52 +386,13 @@ try:
 
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model))
 
-        def convert_to_onnx(self, **kwargs: Path) -> None:
-            """Converts a huggingface model or pipeline to onnx via optimum library.
-            Converted model or pipeline is accessible via the `onnx_model` attribute.
-            """
+        # ------------ Model Interface Load Methods ------------#
 
-            assert (
-                self.onnx_args is not None
-            ), "No onnx args provided. If converting to onnx, provide a HuggingFaceOnnxArgs instance"
+        def load_tokenizer(self, path: Path) -> None:
+            self.tokenizer = getattr(transformers, self.tokenizer_name).from_pretrained(path)
 
-            if self.onnx_model is not None:
-                return None
-
-            import onnx
-            import optimum.onnxruntime as ort
-
-            path: Optional[Path] = kwargs.get("path")
-            if path is None:
-                return self._convert_to_onnx_inplace()
-
-            # ensure no suffix (this is an exception to the rule to all model interfaces)
-            # hunggingface prefers to save onnx models in dirs instead of single model.onnx file
-            path = path.with_suffix("")
-            ort_model: ort.ORTModel = getattr(ort, self.onnx_args.ort_type)
-            model_path = path.parent / SaveName.TRAINED_MODEL.value
-            onnx_model = ort_model.from_pretrained(model_path, export=True, provider=self.onnx_args.provider)
-            onnx_model.save_pretrained(path)
-
-            if self.is_pipeline:
-                self.onnx_model = OnnxModel(
-                    onnx_version=onnx.__version__,
-                    sess=pipeline(
-                        self.task_type,
-                        model=onnx_model,
-                        tokenizer=self.preprocessor or self.model.tokenizer,
-                    ),
-                )
-            else:
-                self.onnx_model = OnnxModel(onnx_version=onnx.__version__, sess=onnx_model)
-
-            if self.onnx_args.quantize:
-                self._quantize_model(path.parent, onnx_model)
-
-            return None
-
-        def load_preprocessor(self, path: Path) -> None:
-            self.preprocessor = getattr(transformers, self.preprocessor_name).from_pretrained(path)
+        def load_feature_extractor(self, path: Path) -> None:
+            self.feature_extractor = getattr(transformers, self.feature_extractor_name).from_pretrained(path)
 
         def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load huggingface model from path
@@ -349,11 +403,33 @@ try:
                 kwargs:
                     Additional kwargs to pass to transformers.load_pretrained
             """
+            custom_arch = kwargs.get("custom_architecture")
+            if custom_arch is not None:
+                assert isinstance(
+                    custom_arch, (PreTrainedModel, TFPreTrainedModel)
+                ), "Custom architecture must be a huggingface model"
+                self.model = custom_arch.from_pretrained(path)
 
-            if self.is_pipeline:
-                self.model = transformers.pipeline(self.task_type, path)
             else:
                 self.model = getattr(transformers, self.model_type).from_pretrained(path)
+
+        def to_pipeline(self) -> None:
+            """Converts model to pipeline"""
+
+            from transformers import pipeline
+
+            if isinstance(self.model, Pipeline):
+                return None
+
+            pipe = pipeline(
+                task=self.task_type,
+                model=self.model,
+                tokenizer=self.tokenizer,
+                feature_extractor=self.feature_extractor,
+            )
+
+            self.model = pipe
+            self.is_pipeline = True
 
         def load_onnx_model(self, path: Path) -> None:
             """Load onnx model from path"""
@@ -369,14 +445,13 @@ try:
             )
 
             if self.is_pipeline:
-                assert isinstance(self.model, Pipeline), "Model is not a pipeline"
-
                 self.onnx_model = OnnxModel(
                     onnx_version=onnx.__version__,  # type: ignore[attr-defined]
                     sess=pipeline(
                         self.task_type,
                         model=onnx_model,
-                        tokenizer=self.preprocessor or self.model.tokenizer,
+                        tokenizer=self.tokenizer,
+                        feature_extractor=self.feature_extractor,
                     ),
                 )
             else:
@@ -394,11 +469,6 @@ try:
             """Returns suffix for storage"""
             return ""
 
-        @property
-        def preprocessor_suffix(self) -> str:
-            """Returns suffix for preprocessor"""
-            return ""
-
         @staticmethod
         def name() -> str:
             return HuggingFaceModel.__name__
@@ -409,9 +479,7 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "HuggingFaceModel requires transformers to be installed. Please install transformers."
-            )
+            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
         @staticmethod
         def name() -> str:

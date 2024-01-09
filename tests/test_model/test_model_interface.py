@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from opsml.data import NumpyData
-from opsml.model.interfaces import (
+from opsml.model import (
     HuggingFaceModel,
     LightningModel,
     PyTorchModel,

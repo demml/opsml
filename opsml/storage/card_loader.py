@@ -22,8 +22,8 @@ from opsml.cards import (
     ProjectCard,
     RunCard,
 )
-from opsml.helpers.utils import all_subclasses
 from opsml.data.interfaces._base import DataInterface
+from opsml.helpers.utils import all_subclasses
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
@@ -324,6 +324,30 @@ class ModelCardLoader(CardLoader):
 
         return self.card.interface.load_sample_data(lpath)
 
+    def _load_huggingface_preprocessors(self, lpath: Path, rpath: Path) -> None:
+        """Loads huggingface tokenizer and feature extractors. Skips if already loaded or not found
+
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+        """
+        assert isinstance(self.card.interface, HuggingFaceModel), "Expected HuggingFaceModel"
+
+        if self.card.interface.tokenizer is None:
+            load_rpath = Path(self.card.uri, SaveName.TOKENIZER.value)
+
+            if self.storage_client.exists(load_rpath):
+                lpath = self.download(lpath, rpath, SaveName.TOKENIZER.value, "")
+                self.card.interface.load_tokenizer(lpath)
+
+        if self.card.interface.feature_extractor is None:
+            load_rpath = Path(self.card.uri, SaveName.FEATURE_EXTRACTOR.value)
+            if self.storage_client.exists(load_rpath):
+                lpath = self.download(lpath, rpath, SaveName.FEATURE_EXTRACTOR.value, "")
+                self.card.interface.load_feature_extractor(lpath)
+
     def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
         """Load Preprocessor for model interface
 
@@ -333,6 +357,9 @@ class ModelCardLoader(CardLoader):
             rpath:
                 Remote path to load file
         """
+
+        if isinstance(self.card.interface, HuggingFaceModel):
+            return self._load_huggingface_preprocessors(lpath, rpath)
 
         if self.card.interface.preprocessor is not None:
             logger.info("Preprocessor already loaded")
@@ -358,7 +385,11 @@ class ModelCardLoader(CardLoader):
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
         self.card.interface.load_model(lpath, **kwargs)
 
-    def load_onnx_model(self, **kwargs: Dict[str, Any]) -> None:
+        if isinstance(self.card.interface, HuggingFaceModel):
+            if self.card.interface.is_pipeline:
+                self.card.interface.to_pipeline()
+
+    def _load_hugginface_onnx_model(self, **kwargs: Any) -> None:
         """Load onnx model to interface
 
         Args:
@@ -366,13 +397,47 @@ class ModelCardLoader(CardLoader):
                 Kwargs to pass for onnx loading
         """
 
+        # check for hf model and what type of onnx to load
+        assert isinstance(self.card.interface, HuggingFaceModel), "Expected HuggingFaceModel"
         load_quantized = kwargs.get("load_quantized", False)
-
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
+
+        # check that onnx file exists
+        load_rpath = Path(self.card.uri, SaveName.ONNX_MODEL.value)
+        if not self.storage_client.exists(load_rpath):
+            logger.info("No onnx model exists for {}", load_rpath)
+            return None
+
+        # load onnx model
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lpath = Path(tmp_dir)
+            rpath = self.card.uri
+
+            # if assembling onnx pipeline, need to download preprocessors first
+            if self.card.interface.is_pipeline:
+                self._load_huggingface_preprocessors(lpath, rpath)
+
+            # download and load onnx model
+            load_path = self.download(lpath, rpath, save_name, "")
+            self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
+            self.card.interface.load_onnx_model(load_path)
+
+    def load_onnx_model(self, **kwargs: Any) -> None:
+        """Load onnx model to interface
+
+        Args:
+            kwargs:
+                Kwargs to pass for onnx loading
+        """
+
         if self.card.interface.onnx_model is not None:
             logger.info("Onnx model already loaded")
             return None
 
+        if isinstance(self.card.interface, HuggingFaceModel):
+            return self._load_hugginface_onnx_model(**kwargs)
+
+        save_name = SaveName.ONNX_MODEL.value
         load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
         if not self.storage_client.exists(load_rpath):
             logger.info("No onnx model exists for {}", save_name)  # pylint: disable=logging-too-many-args
@@ -406,9 +471,9 @@ class ModelCardLoader(CardLoader):
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
-            self._load_model(lpath, rpath, **kwargs)
             self._load_preprocessor(lpath, rpath)
             self._load_sample_data(lpath, rpath)
+            self._load_model(lpath, rpath, **kwargs)
 
         return None
 

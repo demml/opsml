@@ -30,6 +30,8 @@ class CardUris(BaseModel):
     sample_data_uri: Optional[Path] = None
     onnx_model_uri: Optional[Path] = None
     quantized_model_uri: Optional[Path] = None
+    tokenizer_uri: Optional[Path] = None
+    feature_extractor_uri: Optional[Path] = None
 
     lpath: Optional[Path] = None
     rpath: Optional[Path] = None
@@ -165,13 +167,31 @@ class ModelCardSaver(CardSaver):
         self.card.interface.save_model(save_path)
         self.card_uris.trained_model_uri = save_path
 
+    def _save_huggingface_preprocessor(self) -> None:
+        """Saves huggingface tokenizers and feature extractors"""
+        assert isinstance(self.card.interface, HuggingFaceModel), "Expected HuggingFaceModel interface"
+
+        if self.card.interface.tokenizer is not None:
+            save_path = (self.lpath / SaveName.TOKENIZER.value).with_suffix("")
+            self.card.interface.save_tokenizer(save_path)
+            self.card_uris.tokenizer_uri = save_path
+
+        if self.card.interface.feature_extractor is not None:
+            save_path = (self.lpath / SaveName.FEATURE_EXTRACTOR.value).with_suffix("")
+            self.card.interface.save_feature_extractor(save_path)
+            self.card_uris.feature_extractor_uri = save_path
+
     def _save_preprocessor(self) -> None:
         """Save preprocessor via model interface"""
+
+        if isinstance(self.card.interface, HuggingFaceModel):
+            return self._save_huggingface_preprocessor()
 
         if self.card.interface.preprocessor is not None:
             save_path = (self.lpath / SaveName.PREPROCESSOR.value).with_suffix(self.card.interface.preprocessor_suffix)
             self.card.interface.save_preprocessor(save_path)
             self.card_uris.preprocessor_uri = save_path
+        return None
 
     def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
@@ -207,6 +227,7 @@ class ModelCardSaver(CardSaver):
         else:
             onnx_version = None
 
+        # base metadata
         metadata = ModelMetadata(
             model_name=self.card.name,
             model_class=self.card.interface.model_class,
@@ -221,9 +242,23 @@ class ModelCardSaver(CardSaver):
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
         )
 
-        # in case of huggingface quantized model, we add extra metadata
-        if self.card_uris.quantized_model_uri is not None:
-            metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
+        # metadata extras
+
+        if self.card_uris.preprocessor_uri is not None:
+            metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value)
+            metadata.preprocessor_name = self.card.metadata.preprocessor_name  # type: ignore
+
+        if isinstance(self.card.interface, HuggingFaceModel):
+            if self.card_uris.quantized_model_uri is not None:
+                metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
+
+            if self.card_uris.tokenizer_uri is not None:
+                metadata.tokenizer_uri = self.card_uris.resolve_path(UriNames.TOKENIZER_URI.value)
+                metadata.tokenizer_name = self.card.interface.tokenizer_name
+
+            if self.card_uris.feature_extractor_uri is not None:
+                metadata.feature_extractor_uri = self.card_uris.resolve_path(UriNames.FEATURE_EXTRACTOR_URI.value)
+                metadata.feature_extractor_name = self.card.interface.feature_extractor_name
 
         return metadata
 
@@ -244,6 +279,8 @@ class ModelCardSaver(CardSaver):
                     "preprocessor",
                     "sample_data",
                     "onnx_model",
+                    "feature_extractor",
+                    "tokenizer"
                 },
             }
         )
@@ -271,6 +308,7 @@ class ModelCardSaver(CardSaver):
             self._save_sample_data()
             self._save_modelcard()
             self._save_metadata()
+
             client.storage_client.put(self.lpath, self.rpath)
 
     @staticmethod
@@ -380,9 +418,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

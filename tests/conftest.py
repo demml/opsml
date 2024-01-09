@@ -3,7 +3,6 @@ import warnings
 from pathlib import Path
 from typing import Any, Iterator, Optional, Tuple
 
-
 warnings.filterwarnings("ignore")
 
 
@@ -92,7 +91,7 @@ from opsml.model import (
     PyTorchModel,
     SklearnModel,
     TensorFlowModel,
-    XGBoostModel
+    XGBoostModel,
 )
 from opsml.model.challenger import ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
@@ -1217,7 +1216,7 @@ def huggingface_bart() -> HuggingFaceModel:
 
     model = HuggingFaceModel(
         model=model,
-        preprocessor=tokenizer,
+        tokenizer=tokenizer,
         sample_data=inputs,
         task_type=HuggingFaceTask.FEATURE_EXTRACTION.value,
         onnx_args=HuggingFaceOnnxArgs(
@@ -1225,7 +1224,8 @@ def huggingface_bart() -> HuggingFaceModel:
         ),
     )
 
-    return model
+    yield model
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1245,7 +1245,8 @@ def huggingface_text_classification_pipeline():
         ),
     )
 
-    return model
+    yield model
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1259,7 +1260,7 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
 
     model = HuggingFaceModel(
         model=model,
-        preprocessor=tokenizer,
+        tokenizer=tokenizer,
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
@@ -1269,7 +1270,8 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
         ),
     )
 
-    return model
+    yield model
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1283,7 +1285,7 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
 
     model = HuggingFaceModel(
         model=model,
-        preprocessor=tokenizer,
+        tokenizer=tokenizer,
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
@@ -1293,7 +1295,8 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
         ),
     )
 
-    return model
+    yield model
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1314,23 +1317,25 @@ def huggingface_pipeline() -> HuggingFaceModel:
         ),
     )
 
-    return model
+    yield model
+    cleanup()
 
 
 @pytest.fixture(scope="module")
 def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
-    from PIL import Image
-    from transformers import ViTFeatureExtractor, ViTModel
+    from PIL import Image, TiffImagePlugin
+    from transformers import ViTFeatureExtractor, ViTForImageClassification
+
 
     image = Image.open("tests/assets/cats.jpg")
 
     feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
-    model = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224-in21k")
 
     inputs = feature_extractor(images=image, return_tensors="pt")
     model = HuggingFaceModel(
         model=model,
-        preprocessor=feature_extractor,
+        feature_extractor=feature_extractor,
         sample_data=inputs,
         task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
@@ -1340,8 +1345,37 @@ def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
 
     data = TorchData(data=inputs["pixel_values"])
 
-    return model, data
+    yield model, data
+    cleanup()
 
+
+@pytest.fixture(scope="module")
+def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
+    from PIL import Image, TiffImagePlugin
+    from transformers import ViTFeatureExtractor, ViTForImageClassification
+
+
+    image = Image.open("tests/assets/cats.jpg")
+
+    feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
+    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224-in21k")
+    inputs = feature_extractor(images=image, return_tensors="pt")
+    
+    model = HuggingFaceModel(
+        model=model,
+        feature_extractor=feature_extractor,
+        sample_data=image,
+        task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+        ),
+    )
+    model.to_pipeline()
+
+    data = TorchData(data=inputs["pixel_values"])
+
+    yield model, data
+    cleanup()
 
 @pytest.fixture
 def tensorflow_api_example():

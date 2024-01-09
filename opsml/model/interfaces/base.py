@@ -13,6 +13,13 @@ from opsml.types import CommonKwargs, ModelReturn, OnnxModel
 from opsml.types.extra import Suffix
 
 
+def get_processor_name(_class: Optional[Any] = None) -> str:
+    if _class is not None:
+        return str(_class.__class__.__name__)
+
+    return CommonKwargs.UNDEFINED.value
+
+
 def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
     assert model is not None, "Model must not be None"
 
@@ -39,12 +46,10 @@ class SamplePrediction:
 
 class ModelInterface(BaseModel):
     model: Optional[Any] = None
-    preprocessor: Optional[Any] = None
     sample_data: Optional[Any] = None
     onnx_model: Optional[OnnxModel] = None
     task_type: str = CommonKwargs.UNDEFINED.value
     model_type: str = CommonKwargs.UNDEFINED.value
-    preprocessor_name: str = CommonKwargs.UNDEFINED.value
     data_type: str = CommonKwargs.UNDEFINED.value
     modelcard_uid: str = ""
 
@@ -92,16 +97,6 @@ class ModelInterface(BaseModel):
         assert self.model is not None, "No model detected in interface"
         joblib.dump(self.model, path)
 
-    def save_preprocessor(self, path: Path) -> None:
-        """Saves preprocessor to path if present. Base implementation use Joblib
-
-        Args:
-            path:
-                Pathlib object
-        """
-        assert self.preprocessor is not None, "No preprocessor detected in interface"
-        joblib.dump(self.preprocessor, path)
-
     def load_model(self, path: Path, **kwargs: Any) -> None:
         """Load model from pathlib object
 
@@ -112,15 +107,6 @@ class ModelInterface(BaseModel):
                 Additional kwargs
         """
         self.model = joblib.load(path)
-
-    def load_preprocessor(self, path: Path) -> None:
-        """Load preprocessor from pathlib object
-
-        Args:
-            path:
-                Pathlib object
-        """
-        self.preprocessor = joblib.load(path)
 
     def save_onnx(self, path: Path) -> ModelReturn:
         """Saves the onnx model
@@ -172,13 +158,6 @@ class ModelInterface(BaseModel):
         assert self.onnx_model is not None, "No onnx model detected in interface"
         self.onnx_model.sess = InferenceSession(path)
 
-    @classmethod
-    def _get_preprocessor_name(cls, preprocessor: Optional[Any] = None) -> str:
-        if preprocessor is not None:
-            return str(preprocessor.__class__.__name__)
-
-        return CommonKwargs.UNDEFINED.value
-
     def save_sample_data(self, path: Path) -> None:
         """Serialized and save sample data to path.
 
@@ -199,7 +178,7 @@ class ModelInterface(BaseModel):
         self.sample_data = joblib.load(path)
 
     @classmethod
-    def get_sample_data(cls, sample_data: Any) -> Any:
+    def _get_sample_data(cls, sample_data: Any) -> Any:
         """Check sample data and returns one record to be used
         during type inference and ONNX conversion/validation.
 
@@ -249,11 +228,6 @@ class ModelInterface(BaseModel):
 
     @property
     def model_suffix(self) -> str:
-        """Returns suffix for storage"""
-        return Suffix.JOBLIB.value
-
-    @property
-    def preprocessor_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value
 

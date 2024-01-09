@@ -286,8 +286,6 @@ class ModelMetadata(BaseModel):
     model_version: str
     model_team: str
     sample_data_uri: str
-    preprocessor_name: Optional[str] = None
-    preprocessor_uri: Optional[str] = None
     opsml_version: str = __version__
     data_schema: DataSchema
 

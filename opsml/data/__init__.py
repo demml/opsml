@@ -5,5 +5,4 @@ from opsml.data.interfaces._polars import PolarsData
 from opsml.data.interfaces._sql import SqlData
 from opsml.data.interfaces._torch import TorchData
 
-
 __all__ = ["ArrowData", "NumpyData", "PandasData", "PolarsData", "SqlData", "TorchData"]

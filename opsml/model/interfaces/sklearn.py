@@ -1,12 +1,18 @@
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import joblib
 import pandas as pd
 from numpy.typing import NDArray
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.model.interfaces.base import ModelInterface, get_model_args
-from opsml.types import CommonKwargs, TrainedModelType
+from opsml.model.interfaces.base import (
+    ModelInterface,
+    get_model_args,
+    get_processor_name,
+)
+from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
 ValidData = Union[pd.DataFrame, NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
 try:
@@ -37,6 +43,8 @@ try:
 
         model: Optional[BaseEstimator] = None
         sample_data: Optional[ValidData] = None
+        preprocessor: Optional[Any] = None
+        preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
         @property
         def model_class(self) -> str:
@@ -60,14 +68,38 @@ try:
                     if "sklearn" in base:
                         model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
-            sample_data = cls.get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
+            sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
-            model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
-                preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+            model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
+                model_args.get(CommonKwargs.PREPROCESSOR.value),
             )
 
             return model_args
+
+        def save_preprocessor(self, path: Path) -> None:
+            """Saves preprocessor to path if present. Base implementation use Joblib
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            assert self.preprocessor is not None, "No preprocessor detected in interface"
+            joblib.dump(self.preprocessor, path)
+
+        def load_preprocessor(self, path: Path) -> None:
+            """Load preprocessor from pathlib object
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            self.preprocessor = joblib.load(path)
+
+        @property
+        def preprocessor_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return Suffix.JOBLIB.value
 
         @staticmethod
         def name() -> str:
