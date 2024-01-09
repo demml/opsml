@@ -41,7 +41,7 @@ def test_save_huggingface_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TOKENIZER.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.QUANTIZED_MODEL.value))
@@ -62,7 +62,7 @@ def test_save_huggingface_modelcard_api_client(
 
     loaded_card.load_model()
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
-    assert type(loaded_card.interface.preprocessor) == type(modelcard.interface.preprocessor)
+    assert type(loaded_card.interface.tokenizer) == type(modelcard.interface.tokenizer)
 
     #
     loaded_card.load_onnx_model()

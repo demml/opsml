@@ -286,7 +286,13 @@ try:
             with tempfile.TemporaryDirectory() as tmpdirname:
                 lpath = Path(tmpdirname)
                 self.save_model((lpath / SaveName.TRAINED_MODEL.value))
-                self.save_preprocessor((lpath / SaveName.PREPROCESSOR.value))
+
+                if self.tokenizer is not None:
+                    self.save_tokenizer((lpath / SaveName.TOKENIZER.value))
+
+                if self.feature_extractor is not None:
+                    self.save_feature_extractor((lpath / SaveName.FEATURE_EXTRACTOR.value))
+
                 onnx_path = lpath / SaveName.ONNX_MODEL.value
                 return self.convert_to_onnx(**{"path": onnx_path})
 
