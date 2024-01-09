@@ -206,6 +206,7 @@ disable = [
     "no-name-in-module",
     "ungrouped-imports",
     "cyclic-import", 
+    "logging-too-many-args",
 ]
 extension-pkg-whitelist = ["pydantic"]
 

@@ -347,9 +347,11 @@ try:
             assert self.model is not None, "No model detected in interface"
 
             if isinstance(self.model, Pipeline):
-                return self.model.model.save_pretrained(path)
+                self.model.model.save_pretrained(path)
+                return None
 
-            return self.model.save_pretrained(path)
+            self.model.save_pretrained(path)
+            return None
 
         def save_tokenizer(self, path: Path) -> None:
             if self.tokenizer is None:
@@ -357,9 +359,11 @@ try:
 
             if isinstance(self.model, Pipeline):
                 assert self.model.tokenizer is not None, "Tokenizer is missing"
-                return self.model.tokenizer.save_pretrained(path)
+                self.model.tokenizer.save_pretrained(path)
+                return None
 
-            return self.tokenizer.save_pretrained(path)
+            self.tokenizer.save_pretrained(path)
+            return None
 
         def save_feature_extractor(self, path: Path) -> None:
             if self.feature_extractor is None:
@@ -367,9 +371,11 @@ try:
 
             if isinstance(self.model, Pipeline):
                 assert self.model.feature_extractor is not None, "Feature extractor is missing"
-                return self.model.feature_extractor.save_pretrained(path)
+                self.model.feature_extractor.save_pretrained(path)
+                return None
 
-            return self.feature_extractor.save_pretrained(path)
+            self.feature_extractor.save_pretrained(path)
+            return None
 
         def save_onnx(self, path: Path) -> ModelReturn:
             import onnxruntime as rt
