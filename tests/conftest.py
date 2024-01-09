@@ -596,6 +596,7 @@ def pytorch_simple():
         model=model,
         sample_data=inputs,
         save_args={"as_state_dict": True},
+        preprocessor=StandardScaler(),
     )
 
 
@@ -690,7 +691,7 @@ def tf_transformer_example():
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
     data = np.load("tests/assets/transformer_data.npy")
 
-    return TensorFlowModel(model=loaded_model, sample_data=data)
+    return TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
 
 
 @pytest.fixture
@@ -699,7 +700,7 @@ def multi_input_tf_example():
 
     loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
     data = joblib.load("tests/assets/multi_input_data.joblib")
-    return TensorFlowModel(model=loaded_model, sample_data=data)
+    return TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
 
 
 @pytest.fixture(scope="session")
@@ -2149,4 +2150,4 @@ def lightning_regression():
 
     X = torch.Tensor([[1.0], [51.0], [89.0]])
 
-    return LightningModel(model=trainer, sample_data=X), MyModel
+    return LightningModel(model=trainer, sample_data=X, preprocessor=StandardScaler()), MyModel

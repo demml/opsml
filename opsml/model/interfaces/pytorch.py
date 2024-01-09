@@ -6,7 +6,7 @@ import joblib
 from pydantic import model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
-from opsml.model.interfaces.base import ModelInterface, SamplePrediction, get_model_args
+from opsml.model.interfaces.base import ModelInterface, SamplePrediction, get_model_args, get_processor_name
 from opsml.types import (
     CommonKwargs,
     ModelReturn,
@@ -100,8 +100,8 @@ try:
             sample_data = cls._get_sample_data(model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
-            model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
-                preprocessor=model_args.get(CommonKwargs.PREPROCESSOR.value)
+            model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
+                model_args.get(CommonKwargs.PREPROCESSOR.value),
             )
 
             return model_args

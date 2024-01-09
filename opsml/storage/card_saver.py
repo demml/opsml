@@ -246,7 +246,7 @@ class ModelCardSaver(CardSaver):
 
         if self.card_uris.preprocessor_uri is not None:
             metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value)
-            metadata.preprocessor_name = self.card.metadata.preprocessor_name  # type: ignore
+            metadata.preprocessor_name = self.card.interface.preprocessor_name  # type: ignore
 
         if isinstance(self.card.interface, HuggingFaceModel):
             if self.card_uris.quantized_model_uri is not None:
@@ -274,14 +274,7 @@ class ModelCardSaver(CardSaver):
 
         dumped_model = self.card.model_dump(
             exclude={
-                "interface": {
-                    "model",
-                    "preprocessor",
-                    "sample_data",
-                    "onnx_model",
-                    "feature_extractor",
-                    "tokenizer"
-                },
+                "interface": {"model", "preprocessor", "sample_data", "onnx_model", "feature_extractor", "tokenizer"},
             }
         )
         if dumped_model["interface"].get("onnx_args") is not None:
