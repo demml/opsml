@@ -63,7 +63,7 @@ class ModelInterface(BaseModel):
 
     @property
     def model_class(self) -> str:
-        raise NotImplementedError
+        return CommonKwargs.UNDEFINED.value
 
     @model_validator(mode="before")
     @classmethod

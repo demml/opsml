@@ -153,19 +153,6 @@ try:
             return LightningModel.__name__
 
 except ModuleNotFoundError:
+    from opsml.model.interfaces.backups import LightningModel
 
-    class LightningModel(PyTorchModel):  # type: ignore[no-redef]
-        @model_validator(mode="before")
-        @classmethod
-        def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "LightningModel requires pytorch lightning to be installed. Please install lightning."
-            )
-
-        @staticmethod
-        def name() -> str:
-            return LightningModel.__name__
-
-        @property
-        def model_class(self) -> str:
-            return TrainedModelType.PYTORCH_LIGHTNING.value
+    LightningModel

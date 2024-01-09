@@ -1,11 +1,16 @@
 import pytest
 
-from opsml.data import SqlData, TorchData
-from torch.utils.data import Dataset
-import numpy as np
-from opsml.types import Suffix, AllowedDataType, SaveName
-import tempfile
-from pathlib import Path
+from opsml.data import SqlData
+from opsml.model.interfaces.backups import (
+    HuggingFaceModel,
+    LightGBMModel,
+    LightningModel,
+    PyTorchModel,
+    SklearnModel,
+    TensorFlowModel,
+    XGBoostModel,
+)
+
 
 def test_sql_interface():
     interface = SqlData(
@@ -36,3 +41,17 @@ def test_sql_interface():
             feature_descriptions={"a": "b"},
         )
 
+
+def test_backup_interfaces():
+    for model in [
+        TensorFlowModel,
+        SklearnModel,
+        PyTorchModel,
+        XGBoostModel,
+        LightGBMModel,
+        HuggingFaceModel,
+        LightningModel,
+    ]:
+        assert model.name() == model.__name__
+        with pytest.raises(ModuleNotFoundError):
+            model()
