@@ -1,7 +1,11 @@
 import pytest
 
-from opsml.data import SqlData
-
+from opsml.data import SqlData, TorchData
+from torch.utils.data import Dataset
+import numpy as np
+from opsml.types import Suffix, AllowedDataType, SaveName
+import tempfile
+from pathlib import Path
 
 def test_sql_interface():
     interface = SqlData(
@@ -31,3 +35,4 @@ def test_sql_interface():
             sql_logic={"query": "fail.sql"},
             feature_descriptions={"a": "b"},
         )
+

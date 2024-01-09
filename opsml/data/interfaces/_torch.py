@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 from opsml.data.interfaces._base import DataInterface
 from opsml.types import AllowedDataType, CommonKwargs, Feature, Suffix
+import joblib
 
 try:
     import torch
@@ -24,12 +25,11 @@ try:
                 Dictionary or feature descriptions
             sql_logic:
                 Sql logic used to generate data
+            is_dataset:
+                Whether data is a torch dataset or not
         """
 
-        data: Optional[Union[Dataset, torch.Tensor]] = None  # type: ignore[type-arg]
-
-        def _add_feature(self, name: str, shape: Tuple[Any, ...], dtype: str) -> None:
-            self.feature_map[name] = Feature(feature_type=dtype, shape=shape)
+        data: Optional[Union[torch.Tensor]] = None  # type: ignore[type-arg]
 
         def save_data(self, path: Path) -> None:
             """Saves torch dataset or tensor(s)"""
@@ -37,35 +37,14 @@ try:
             assert self.data is not None, "No data detected in interface"
 
             torch.save(self.data, path)
-
-            if isinstance(self.data, Dataset):
-                sample = self.data.__getitem__(0)  # pylint: disable=unnecessary-dunder-call
-
-                if isinstance(sample, (tuple, list)):
-                    for nbr, _sample in enumerate(sample):
-                        self._add_feature(name=f"features_{nbr}", shape=_sample.shape, dtype=str(_sample.dtype))
-
-                elif isinstance(sample, dict):
-                    for key, _sample in sample.items():
-                        self._add_feature(name=str(key), shape=_sample.shape, dtype=str(_sample.dtype))
-
-                else:
-                    try:
-                        self._add_feature("features", sample.shape, str(sample.dtype))
-                    except Exception as _:  # pylint: disable=broad-except
-                        self._add_feature("features", (CommonKwargs.UNDEFINED.value,), CommonKwargs.UNDEFINED.value)
-
-            else:
-                self._add_feature("features", self.data.shape, str(self.data.dtype))
+            self.feature_map["features"] = Feature(feature_type=self.data.shape, shape=str(self.data.dtype))
 
         def load_data(self, path: Path) -> None:
-            """Load numpy array from zarr file"""
+            """Load torch tensors or torch datasets"""
             self.data = torch.load(path)
 
         @property
         def data_type(self) -> str:
-            if isinstance(self.data, Dataset):
-                return AllowedDataType.TORCH_DATASET.value
             return AllowedDataType.TORCH_TENSOR.value
 
         @property
