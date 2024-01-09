@@ -230,8 +230,8 @@ class DataCardLoader(CardLoader):
 
     @cached_property
     def card(self) -> DataCard:
-        # assert isinstance(self._card, DataCard)
-        return cast(DataCard, self._card)
+        assert isinstance(self._card, DataCard)
+        return self._card
 
     @cached_property
     def data_suffix(self) -> str:
@@ -285,8 +285,8 @@ class ModelCardLoader(CardLoader):
 
     @cached_property
     def card(self) -> ModelCard:
-        # assert isinstance(self._card, ModelCard)
-        return cast(ModelCard, self._card)
+        assert isinstance(self._card, ModelCard)
+        return self._card
 
     @cached_property
     def model_suffix(self) -> str:
@@ -294,7 +294,7 @@ class ModelCardLoader(CardLoader):
 
     @cached_property
     def preprocessor_suffix(self) -> str:
-        return self.card.interface.preprocessor_suffix
+        return cast(str, self.card.interface.preprocessor_suffix)
 
     @property
     def onnx_suffix(self) -> str:
@@ -370,7 +370,8 @@ class ModelCardLoader(CardLoader):
             return None
 
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
-        return self.card.interface.load_preprocessor(lpath)
+        self.card.interface.load_preprocessor(lpath)
+        return None
 
     def _load_model(self, lpath: Path, rpath: Path, **kwargs: Dict[str, Any]) -> None:
         """Load model to interface
@@ -441,7 +442,7 @@ class ModelCardLoader(CardLoader):
         save_name = SaveName.ONNX_MODEL.value
         load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
         if not self.storage_client.exists(load_rpath):
-            logger.info("No onnx model exists for {}", save_name)  # pylint: disable=logging-too-many-args
+            logger.info("No onnx model exists for {}", save_name)
             return None
 
         with self._load_object(save_name, self.onnx_suffix) as lpath:
