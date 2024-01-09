@@ -1,13 +1,11 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, CommonKwargs, Feature, Suffix
-import joblib
+from opsml.types import AllowedDataType, Feature, Suffix
 
 try:
     import torch
-    from torch.utils.data import Dataset
 
     class TorchData(DataInterface):
         """Torch dataset interface
@@ -29,7 +27,7 @@ try:
                 Whether data is a torch dataset or not
         """
 
-        data: Optional[Union[torch.Tensor]] = None  # type: ignore[type-arg]
+        data: Optional[torch.Tensor] = None
 
         def save_data(self, path: Path) -> None:
             """Saves torch dataset or tensor(s)"""
@@ -37,7 +35,7 @@ try:
             assert self.data is not None, "No data detected in interface"
 
             torch.save(self.data, path)
-            self.feature_map["features"] = Feature(feature_type=self.data.shape, shape=str(self.data.dtype))
+            self.feature_map["features"] = Feature(feature_type=str(self.data.dtype), shape=self.data.shape)
 
         def load_data(self, path: Path) -> None:
             """Load torch tensors or torch datasets"""

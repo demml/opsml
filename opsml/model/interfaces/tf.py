@@ -162,17 +162,6 @@ try:
             return TensorFlowModel.__name__
 
 except ModuleNotFoundError:
+    from opsml.model.interfaces.backups import TensorFlowModel
 
-    class TensorFlowModel(ModelInterface):  # type: ignore[no-redef]
-        @model_validator(mode="before")
-        @classmethod
-        def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("TensorFlowModel requires tensorflow to be installed. Please install tensorflow.")
-
-        @staticmethod
-        def name() -> str:
-            return TensorFlowModel.__name__
-
-        @property
-        def model_class(self) -> str:
-            return TrainedModelType.TF_KERAS.value
+    TensorFlowModel

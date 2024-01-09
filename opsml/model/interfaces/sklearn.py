@@ -106,19 +106,6 @@ try:
             return SklearnModel.__name__
 
 except ModuleNotFoundError:
+    from opsml.model.interfaces.backups import SklearnModel
 
-    class SklearnModel(ModelInterface):  # type: ignore[no-redef]
-        @model_validator(mode="before")
-        @classmethod
-        def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError(
-                "SklearnModel requires scikit-learn to be installed. Please install scikit-learn."
-            )
-
-        @staticmethod
-        def name() -> str:
-            return SklearnModel.__name__
-
-        @property
-        def model_class(self) -> str:
-            return TrainedModelType.SKLEARN_ESTIMATOR.value
+    SklearnModel

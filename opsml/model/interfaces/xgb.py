@@ -3,12 +3,8 @@ from typing import Any, Dict
 from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
-from opsml.model.interfaces.base import (
-    ModelInterface,
-    get_model_args,
-    get_processor_name,
-)
-from opsml.types import CommonKwargs, TrainedModelType
+from opsml.model.interfaces.base import get_model_args, get_processor_name
+from opsml.types import CommonKwargs
 
 try:
     from xgboost import XGBModel
@@ -71,17 +67,6 @@ try:
             return XGBoostModel.__name__
 
 except ModuleNotFoundError:
+    from opsml.model.interfaces.backups import XGBoostModel
 
-    class XGBoostModel(ModelInterface):  # type: ignore[no-redef]
-        @model_validator(mode="before")
-        @classmethod
-        def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("XGBoostModel requires xgboost to be installed. Please install xgboost.")
-
-        @staticmethod
-        def name() -> str:
-            return XGBoostModel.__name__
-
-        @property
-        def model_class(self) -> str:
-            return TrainedModelType.SKLEARN_ESTIMATOR.value
+    XGBoostModel

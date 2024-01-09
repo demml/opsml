@@ -239,18 +239,6 @@ try:
             return PyTorchModel.__name__
 
 except ModuleNotFoundError:
-    ValidData = Any  # type: ignore[misc]
+    from opsml.model.interfaces.backups import PyTorchModel
 
-    class PyTorchModel(ModelInterface):  # type: ignore[no-redef]
-        @model_validator(mode="before")
-        @classmethod
-        def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("PyTorchModel requires torch to be installed. Please install pytorch.")
-
-        @staticmethod
-        def name() -> str:
-            return PyTorchModel.__name__
-
-        @property
-        def model_class(self) -> str:
-            return TrainedModelType.PYTORCH.value
+    PyTorchModel

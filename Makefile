@@ -79,6 +79,7 @@ test.integration:
 
 test.unit.missing:
 	poetry run pytest \
+		-m "not large and not integration" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report html:coverage \
