@@ -4,12 +4,13 @@
 from typing import Any, Dict, Optional
 from uuid import UUID
 
+
 from pydantic import ConfigDict, SerializeAsAny, field_validator
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
-from opsml.types import CardType, ModelCardMetadata, ModelMetadata
+from opsml.types import CardType, ModelCardMetadata, ModelMetadata, OnnxModel
 
 logger = ArtifactLogger.get_logger()
 
@@ -71,7 +72,7 @@ class ModelCard(ArtifactCard):
 
         ModelCardLoader(self).load_model(**kwargs)
 
-    def load_onnx_model(self, **kwargs: Dict[str, Any]) -> None:
+    def load_onnx_model(self, **kwargs: Any) -> None:
         """Loads onnx model to interface"""
         from opsml.storage.card_loader import ModelCardLoader
 
@@ -98,7 +99,24 @@ class ModelCard(ArtifactCard):
     @property
     def preprocessor(self) -> Any:
         """Quick access to preprocessor from interface"""
-        return self.interface.preprocessor
+
+        if hasattr(self.interface, "preprocessor"):
+            return self.interface.preprocessor
+
+        if hasattr(self.interface, "tokenizer"):
+            if self.interface.tokenizer is not None:
+                return self.interface.tokenizer
+
+        if hasattr(self.interface, "feature_extractor"):
+            if self.interface.feature_extractor is not None:
+                return self.interface.feature_extractor
+
+        return None
+
+    @property
+    def onnx_model(self) -> Optional[OnnxModel]:
+        """Quick access to onnx model from interface"""
+        return self.interface.onnx_model
 
     @property
     def model_metadata(self) -> ModelMetadata:

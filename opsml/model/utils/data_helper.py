@@ -376,6 +376,41 @@ class StrData(ModelDataHelper):
         return data_type == AllowedDataType.STR
 
 
+class ImageFileData(ModelDataHelper):
+    """Helper for dealing with Numpy"""
+
+    def __init__(self, input_data: Any, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
+
+    @property
+    def dtypes(self) -> List[str]:
+        return [self._data.__class__.__name__]
+
+    @property
+    def num_dtypes(self) -> int:
+        return len(self.dtypes)
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        if hasattr(self._data, "height"):
+            height = getattr(self._data, "height") or 0
+        if hasattr(self._data, "width"):
+            width = getattr(self._data, "width") or 0
+
+        return (height, width)
+
+    @property
+    def feature_dict(self) -> Dict[str, Feature]:
+        feature_dict = {}
+        for feature, type_ in zip(self.features, self.dtypes):
+            feature_dict[feature] = Feature(feature_type=type_, shape=self.shape)
+        return feature_dict
+
+    @staticmethod
+    def validate(data_type: str) -> bool:
+        return "ImageFile" in data_type
+
+
 def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
     """Sets the appropriate ModelData subclass depending
     on data_type passed
@@ -384,6 +419,7 @@ def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
         data_type (type): Data type
         input_data (Any): Input data for model
     """
+
     model_data = next(
         data_class
         for data_class in ModelDataHelper.__subclasses__()

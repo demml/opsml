@@ -27,6 +27,8 @@ class UriNames(str, Enum):
     RUNCARD_URI = "runcard_uri"
     ARTIFACT_URIS = "artifact_uris"
     QUANTIZED_MODEL_URI = "quantized_model_uri"
+    TOKENIZER_URI = "tokenizer_uri"
+    FEATURE_EXTRACTOR_URI = "feature_extractor_uri"
 
 
 @unique
@@ -47,6 +49,10 @@ class CommonKwargs(str, Enum):
     ONNX = "onnx"
     LOAD_TYPE = "load_type"
     DATA_TYPE = "data_type"
+    TOKENIZER = "tokenizer"
+    TOKENIZER_NAME = "tokenizer_name"
+    FEATURE_EXTRACTOR = "feature_extractor"
+    FEATURE_EXTRACTOR_NAME = "feature_extractor_name"
 
 
 @unique
@@ -64,6 +70,8 @@ class SaveName(str, Enum):
     PROFILE = "profile"
     ARTIFACTS = "artifacts"
     QUANTIZED_MODEL = "quantized-model"
+    TOKENIZER = "tokenizer"
+    FEATURE_EXTRACTOR = "feature_extractor"
 
 
 @unique

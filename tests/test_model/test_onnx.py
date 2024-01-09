@@ -4,7 +4,7 @@ import warnings
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.model.interfaces import (
+from opsml.model import (
     HuggingFaceModel,
     LightningModel,
     ModelInterface,

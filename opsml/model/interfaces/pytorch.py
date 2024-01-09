@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import joblib
 from pydantic import model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
@@ -50,13 +51,15 @@ try:
         sample_data: Optional[ValidData] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
+        preprocessor: Optional[Any] = None
+        preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
         @property
         def model_class(self) -> str:
             return TrainedModelType.PYTORCH.value
 
         @classmethod
-        def get_sample_data(cls, sample_data: Any) -> Any:
+        def _get_sample_data(cls, sample_data: Any) -> Any:
             """Check sample data and returns one record to be used
             during type inference and ONNX conversion/validation.
 
@@ -94,7 +97,7 @@ try:
                 if "torch" in base:
                     model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
-            sample_data = cls.get_sample_data(model_args[CommonKwargs.SAMPLE_DATA.value])
+            sample_data = cls._get_sample_data(model_args[CommonKwargs.SAMPLE_DATA.value])
             model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
             model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = cls._get_preprocessor_name(
@@ -196,6 +199,30 @@ try:
 
             self.onnx_model = _PyTorchOnnxModel(self).convert_to_onnx(path=path)
             return None
+
+        def save_preprocessor(self, path: Path) -> None:
+            """Saves preprocessor to path if present. Base implementation use Joblib
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            assert self.preprocessor is not None, "No preprocessor detected in interface"
+            joblib.dump(self.preprocessor, path)
+
+        def load_preprocessor(self, path: Path) -> None:
+            """Load preprocessor from pathlib object
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            self.preprocessor = joblib.load(path)
+
+        @property
+        def preprocessor_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return Suffix.JOBLIB.value
 
         @property
         def model_suffix(self) -> str:
