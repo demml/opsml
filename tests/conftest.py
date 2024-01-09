@@ -592,12 +592,13 @@ def pytorch_simple():
     model = Polynomial3()
     inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
 
-    return PyTorchModel(
+    yield PyTorchModel(
         model=model,
         sample_data=inputs,
         save_args={"as_state_dict": True},
         preprocessor=StandardScaler(),
     )
+    cleanup()
 
 
 @pytest.fixture(scope="session")
@@ -691,7 +692,8 @@ def tf_transformer_example():
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
     data = np.load("tests/assets/transformer_data.npy")
 
-    return TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
+    yield TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
+    cleanup()
 
 
 @pytest.fixture
@@ -700,7 +702,8 @@ def multi_input_tf_example():
 
     loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
     data = joblib.load("tests/assets/multi_input_data.joblib")
-    return TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
+    yield TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
+    cleanup()
 
 
 @pytest.fixture(scope="session")
@@ -843,12 +846,13 @@ def random_forest_classifier(example_dataframe):
     reg = ensemble.RandomForestClassifier(n_estimators=5)
     reg.fit(X_train.to_numpy(), y_train)
 
-    return SklearnModel(
+    yield SklearnModel(
         model=reg,
         sample_data=X_train[:100],
         task_type="classification",
         preprocessor=StandardScaler(),
     )
+    cleanup()
 
 
 @pytest.fixture
@@ -937,11 +941,12 @@ def lgb_booster_model(example_dataframe):
         ],
     )
 
-    return LightGBMModel(
+    yield LightGBMModel(
         model=gbm,
         sample_data=X_train[:100],
         preprocessor=StandardScaler(),
     )
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1324,7 +1329,7 @@ def huggingface_pipeline() -> HuggingFaceModel:
 
 @pytest.fixture(scope="module")
 def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
-    from PIL import Image, TiffImagePlugin
+    from PIL import Image
     from transformers import ViTFeatureExtractor, ViTForImageClassification
 
 
@@ -2150,4 +2155,5 @@ def lightning_regression():
 
     X = torch.Tensor([[1.0], [51.0], [89.0]])
 
-    return LightningModel(model=trainer, sample_data=X, preprocessor=StandardScaler()), MyModel
+    yield LightningModel(model=trainer, sample_data=X, preprocessor=StandardScaler()), MyModel
+    cleanup()
