@@ -107,5 +107,3 @@ try:
 
 except ModuleNotFoundError:
     from opsml.model.interfaces.backups import SklearnModel
-
-    SklearnModel

@@ -68,5 +68,3 @@ try:
 
 except ModuleNotFoundError:
     from opsml.model.interfaces.backups import XGBoostModel
-
-    XGBoostModel
