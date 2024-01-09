@@ -405,7 +405,7 @@ class ModelCardLoader(CardLoader):
         # check that onnx file exists
         load_rpath = Path(self.card.uri, SaveName.ONNX_MODEL.value)
         if not self.storage_client.exists(load_rpath):
-            logger.info("No onnx model exists for {}", load_rpath)
+            logger.info("No onnx model exists for {}", load_rpath.as_posix())
             return None
 
         # load onnx model
@@ -421,6 +421,7 @@ class ModelCardLoader(CardLoader):
             load_path = self.download(lpath, rpath, save_name, "")
             self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
             self.card.interface.load_onnx_model(load_path)
+        return None
 
     def load_onnx_model(self, **kwargs: Any) -> None:
         """Load onnx model to interface
