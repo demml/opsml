@@ -422,8 +422,6 @@ try:
         def to_pipeline(self) -> None:
             """Converts model to pipeline"""
 
-            from transformers import pipeline
-
             if isinstance(self.model, Pipeline):
                 return None
 
@@ -436,6 +434,7 @@ try:
 
             self.model = pipe
             self.is_pipeline = True
+            return None
 
         def load_onnx_model(self, path: Path) -> None:
             """Load onnx model from path"""
