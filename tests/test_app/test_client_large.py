@@ -154,4 +154,4 @@ def test_register_large_vit_model(
     )
 
     api_registries.model.register_card(model_card)
-    assert model_card.metadata.data_schema.output_features["last_hidden_state"].shape == (1, 197, 768)
+    assert model_card.metadata.data_schema.output_features["logits"].shape == (1, 2)

@@ -747,7 +747,7 @@ def test_register_vit(
     huggingface_vit: Tuple[HuggingFaceModel, TorchData],
     api_storage_client: client.StorageClient,
 ) -> None:
-    """An example of saving a large, pretrained  bart model to opsml"""
+    """An example of saving a large, pretrained  vit model to opsml"""
     model, data = huggingface_vit
 
     datacard = DataCard(
@@ -771,6 +771,4 @@ def test_register_vit(
     api_registries.model.register_card(modelcard)
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix))
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.FEATURE_EXTRACTOR.value).with_suffix(model.preprocessor_suffix)
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.FEATURE_EXTRACTOR.value).with_suffix(""))

@@ -6,7 +6,12 @@ import joblib
 from pydantic import model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
-from opsml.model.interfaces.base import ModelInterface, SamplePrediction, get_model_args, get_processor_name
+from opsml.model.interfaces.base import (
+    ModelInterface,
+    SamplePrediction,
+    get_model_args,
+    get_processor_name,
+)
 from opsml.types import (
     CommonKwargs,
     ModelReturn,

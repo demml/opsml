@@ -4,7 +4,6 @@
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-
 from pydantic import ConfigDict, SerializeAsAny, field_validator
 
 from opsml.cards.base import ArtifactCard

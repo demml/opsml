@@ -23,20 +23,20 @@ from opsml.types import (
 
 try:
     import transformers
+    from PIL import ImageFile
     from transformers import (
         BatchEncoding,
         BatchFeature,
         FeatureExtractionMixin,
+        ImageProcessingMixin,
         Pipeline,
         PreTrainedModel,
         PreTrainedTokenizer,
         PreTrainedTokenizerFast,
         TFPreTrainedModel,
         pipeline,
-        ImageProcessingMixin,
     )
     from transformers.utils import ModelOutput
-    from PIL import ImageFile
 
     class HuggingFaceModel(ModelInterface):
         """Model interface for HuggingFace models
@@ -485,7 +485,9 @@ except ModuleNotFoundError:
         @model_validator(mode="before")
         @classmethod
         def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
+            raise ModuleNotFoundError(
+                "HuggingFaceModel requires transformers to be installed. Please install transformers."
+            )
 
         @staticmethod
         def name() -> str:

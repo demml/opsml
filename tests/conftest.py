@@ -1332,7 +1332,6 @@ def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
     from PIL import Image
     from transformers import ViTFeatureExtractor, ViTForImageClassification
 
-
     image = Image.open("tests/assets/cats.jpg")
 
     feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
@@ -1357,16 +1356,15 @@ def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
 
 @pytest.fixture(scope="module")
 def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
-    from PIL import Image, TiffImagePlugin
+    from PIL import Image
     from transformers import ViTFeatureExtractor, ViTForImageClassification
-
 
     image = Image.open("tests/assets/cats.jpg")
 
     feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
     model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224-in21k")
     inputs = feature_extractor(images=image, return_tensors="pt")
-    
+
     model = HuggingFaceModel(
         model=model,
         feature_extractor=feature_extractor,
@@ -1382,6 +1380,7 @@ def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
 
     yield model, data
     cleanup()
+
 
 @pytest.fixture
 def tensorflow_api_example():
