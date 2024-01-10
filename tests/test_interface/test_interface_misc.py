@@ -2,6 +2,7 @@ import pytest
 
 from opsml.data import SqlData
 
+
 def test_sql_interface():
     interface = SqlData(
         sql_logic={"query": "SELECT * FROM table"},
@@ -33,7 +34,16 @@ def test_sql_interface():
 
 
 def test_backup_interfaces():
-    from opsml.model.interfaces.backups import TensorFlowModelNoModule, LightGBMModelNoModule, LightningModelNoModule, SklearnModelNoModule, PyTorchModelNoModule, HuggingFaceModelNoModule, XGBoostModelNoModule
+    from opsml.model.interfaces.backups import (
+        HuggingFaceModelNoModule,
+        LightGBMModelNoModule,
+        LightningModelNoModule,
+        PyTorchModelNoModule,
+        SklearnModelNoModule,
+        TensorFlowModelNoModule,
+        XGBoostModelNoModule,
+    )
+
     for model in [
         TensorFlowModelNoModule,
         LightGBMModelNoModule,

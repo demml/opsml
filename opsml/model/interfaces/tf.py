@@ -162,4 +162,6 @@ try:
             return TensorFlowModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import TensorFlowModelNoModule as TensorFlowModel
+    from opsml.model.interfaces.backups import (
+        TensorFlowModelNoModule as TensorFlowModel,
+    )

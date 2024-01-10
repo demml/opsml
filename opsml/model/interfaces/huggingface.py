@@ -485,4 +485,6 @@ try:
             return HuggingFaceModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import HuggingFaceModelNoModule as HuggingFaceModel
+    from opsml.model.interfaces.backups import (
+        HuggingFaceModelNoModule as HuggingFaceModel,
+    )
