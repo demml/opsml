@@ -239,4 +239,4 @@ try:
             return PyTorchModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import PyTorchModel
+    from opsml.model.interfaces.backups import PyTorchModelNoModule as PyTorchModel

@@ -5,44 +5,40 @@ from pydantic import model_validator
 from opsml.model.interfaces.base import ModelInterface
 
 
-class HuggingFaceModel(ModelInterface):
+class HuggingFaceModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "HuggingFaceModel requires transformers to be installed. Please install transformers."
-        )
+        raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
     @staticmethod
     def name() -> str:
-        return HuggingFaceModel.__name__
+        return HuggingFaceModelNoModule.__name__
 
 
-class LightGBMModel(ModelInterface):
+class LightGBMModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError("LightGBMBoosterModel requires lightgbm to be installed. Please install lightgbm.")
+        raise ModuleNotFoundError("LightGBMModel requires lightgbm to be installed. Please install lightgbm.")
 
     @staticmethod
     def name() -> str:
-        return LightGBMModel.__name__
+        return LightGBMModelNoModule.__name__
 
 
-class LightningModel(ModelInterface):
+class LightningModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "LightningModel requires pytorch lightning to be installed. Please install lightning."
-        )
+        raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
     @staticmethod
     def name() -> str:
-        return LightningModel.__name__
+        return LightningModelNoModule.__name__
 
 
-class PyTorchModel(ModelInterface):
+class PyTorchModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
@@ -50,10 +46,10 @@ class PyTorchModel(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return PyTorchModel.__name__
+        return PyTorchModelNoModule.__name__
 
 
-class SklearnModel(ModelInterface):
+class SklearnModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
@@ -61,10 +57,10 @@ class SklearnModel(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return SklearnModel.__name__
+        return SklearnModelNoModule.__name__
 
 
-class TensorFlowModel(ModelInterface):
+class TensorFlowModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
@@ -72,10 +68,10 @@ class TensorFlowModel(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return TensorFlowModel.__name__
+        return TensorFlowModelNoModule.__name__
 
 
-class XGBoostModel(ModelInterface):
+class XGBoostModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
@@ -83,4 +79,4 @@ class XGBoostModel(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return XGBoostModel.__name__
+        return XGBoostModelNoModule.__name__

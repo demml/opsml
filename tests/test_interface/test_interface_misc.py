@@ -1,16 +1,6 @@
 import pytest
 
 from opsml.data import SqlData
-from opsml.model.interfaces.backups import (
-    HuggingFaceModel,
-    LightGBMModel,
-    LightningModel,
-    PyTorchModel,
-    SklearnModel,
-    TensorFlowModel,
-    XGBoostModel,
-)
-
 
 def test_sql_interface():
     interface = SqlData(
@@ -43,14 +33,15 @@ def test_sql_interface():
 
 
 def test_backup_interfaces():
+    from opsml.model.interfaces.backups import TensorFlowModelNoModule, LightGBMModelNoModule, LightningModelNoModule, SklearnModelNoModule, PyTorchModelNoModule, HuggingFaceModelNoModule, XGBoostModelNoModule
     for model in [
-        TensorFlowModel,
-        SklearnModel,
-        PyTorchModel,
-        XGBoostModel,
-        LightGBMModel,
-        HuggingFaceModel,
-        LightningModel,
+        TensorFlowModelNoModule,
+        LightGBMModelNoModule,
+        LightningModelNoModule,
+        SklearnModelNoModule,
+        PyTorchModelNoModule,
+        HuggingFaceModelNoModule,
+        XGBoostModelNoModule,
     ]:
         assert model.name() == model.__name__
         with pytest.raises(ModuleNotFoundError):

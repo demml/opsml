@@ -151,4 +151,4 @@ try:
             return LightningModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import LightningModel
+    from opsml.model.interfaces.backups import LightningModelNoModule as LightningModel

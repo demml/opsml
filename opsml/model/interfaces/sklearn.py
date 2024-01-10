@@ -106,4 +106,4 @@ try:
             return SklearnModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import SklearnModel
+    from opsml.model.interfaces.backups import SklearnModelNoModule as SklearnModel
