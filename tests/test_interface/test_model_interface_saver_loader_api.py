@@ -1,6 +1,9 @@
+import sys
 import uuid
 from pathlib import Path
 from typing import cast
+
+import pytest
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
 from opsml.model import (
@@ -15,8 +18,7 @@ from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName
-import pytest
-import sys
+
 EXCLUDE = sys.platform in ("darwin") and sys.version_info < (3, 11)
 
 
@@ -336,6 +338,7 @@ def test_save_torch_lightning_modelcard_api_client(
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_modelcard_api_client(
@@ -388,6 +391,7 @@ def test_save_tensorflow_modelcard_api_client(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")

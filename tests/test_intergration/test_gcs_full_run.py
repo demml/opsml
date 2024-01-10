@@ -8,7 +8,7 @@ from opsml.data import PandasData
 from opsml.model import SklearnModel
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
-from opsml.types import SaveName, Suffix, RegistryTableNames
+from opsml.types import RegistryTableNames, SaveName, Suffix
 
 
 @pytest.mark.integration
@@ -102,7 +102,7 @@ def test_gcs_full_run(
     assert _runcard.metrics["test_metric"][0].value == 10
 
     # delete cards
-    
+
     # delete datacard
     data_registry.delete_card(datacard)
 
@@ -120,8 +120,7 @@ def test_gcs_full_run(
 
     # check model assets
     assert len(api_storage_client.find(Path(modelcard.uri))) == 0
-    
+
     # need to remove project from gcs
     project_path = gcsfs_bucket / RegistryTableNames.PROJECT.value
     api_storage_client.rm(project_path)
- 

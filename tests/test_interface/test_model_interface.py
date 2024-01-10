@@ -1,4 +1,7 @@
+import sys
 from typing import Tuple
+
+import pytest
 
 from opsml.data import NumpyData
 from opsml.model import (
@@ -8,9 +11,9 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
 )
-import pytest
-import sys
+
 EXCLUDE = sys.platform in ("darwin") and sys.version_info < (3, 11)
+
 
 def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
     model, _ = linear_regression
@@ -18,6 +21,7 @@ def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
 
     prediction = model.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
+
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
@@ -40,6 +44,7 @@ def test_lightning_interface(lightning_regression: LightningModel):
     prediction = light_model.get_sample_prediction()
     assert prediction.prediction_type == "torch.Tensor"
 
+
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
@@ -51,6 +56,7 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
     prediction = huggingface_bart.get_sample_prediction()
     assert prediction.prediction_type == "dict"
+
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
