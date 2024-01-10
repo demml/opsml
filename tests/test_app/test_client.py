@@ -434,6 +434,9 @@ def test_metadata_download_and_registration(
     response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
     assert response.status_code == 200
 
+    response = test_app.get(url=f"opsml/files/download/ui?path={model_card.uri}/{SaveName.TRAINED_MODEL.value}")
+    assert response.status_code == 200
+
 
 def test_download_model_metadata_failure(test_app: TestClient):
     response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})
@@ -743,6 +746,7 @@ def test_download_fail(test_app: TestClient):
 @pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
 @pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
 def test_register_vit(
+    test_app: TestClient,
     api_registries: CardRegistries,
     huggingface_vit: Tuple[HuggingFaceModel, TorchData],
     api_storage_client: client.StorageClient,

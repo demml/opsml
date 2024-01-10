@@ -57,7 +57,7 @@ class DataInterface(BaseModel):
 
     @property
     def data_type(self) -> str:
-        raise NotImplementedError
+        return CommonKwargs.UNDEFINED.value
 
     @field_validator("sql_logic", mode="before")
     @classmethod

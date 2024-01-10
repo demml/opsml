@@ -3,7 +3,6 @@ from typing import Any, Dict
 from pydantic import model_validator
 
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType
 
 
 class TorchDataNoModule(DataInterface):
@@ -15,7 +14,3 @@ class TorchDataNoModule(DataInterface):
     @staticmethod
     def name() -> str:
         return TorchDataNoModule.__name__
-
-    @property
-    def data_type(self) -> str:
-        return AllowedDataType.TORCH_TENSOR.value
