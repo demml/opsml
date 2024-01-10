@@ -8,13 +8,14 @@ from opsml.data import PandasData
 from opsml.model import SklearnModel
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
-from opsml.types import SaveName, Suffix
+from opsml.types import SaveName, Suffix, RegistryTableNames
 
 
 @pytest.mark.integration
 def test_gcs_full_run(
     api_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
+    gcsfs_bucket: Path,
 ):
     # get data and model
     model, data = sklearn_pipeline
@@ -101,7 +102,7 @@ def test_gcs_full_run(
     assert _runcard.metrics["test_metric"][0].value == 10
 
     # delete cards
-
+    a
     # delete datacard
     data_registry.delete_card(datacard)
 
@@ -119,4 +120,8 @@ def test_gcs_full_run(
 
     # check model assets
     assert len(api_storage_client.find(Path(modelcard.uri))) == 0
+    
+    # need to remove project from gcs
+    project_path = gcsfs_bucket /RegistryTableNames.PROJECT_REGISTRY.value 
+    api_storage_client.rm(project_path)
     a
