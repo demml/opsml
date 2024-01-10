@@ -47,7 +47,7 @@ jobs:
         poetry-version: ["1.5.1"]
         os: [ubuntu, macos]
         exclude: # ubuntu 3.11 is used for coverage tests
-          - os: ubuntu-latest
+          - os: ubuntu
             python-version: 3.11
 
     runs-on: ${{ matrix.os }}-latest
