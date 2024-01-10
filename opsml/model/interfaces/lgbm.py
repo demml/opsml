@@ -42,7 +42,7 @@ try:
                 Optional arguments for ONNX conversion. See `TorchOnnxArgs` for supported arguments.
 
         Returns:
-            LightGBMBoosterModel
+            LightGBMModel
         """
 
         model: Optional[Union[Booster, LGBMModel]] = None
@@ -145,4 +145,4 @@ try:
             return LightGBMModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import LightGBMModel
+    from opsml.model.interfaces.backups import LightGBMModelNoModule as LightGBMModel
