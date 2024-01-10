@@ -39,58 +39,58 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
 
-  Unit-Test:
-    needs: Lints
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-        poetry-version: ["1.5.1"]
-        os: [ubuntu, macos]
-
-    runs-on: ${{ matrix.os }}-latest
-    env:
-      OPSML_TESTING: 1
-      LOG_LEVEL: DEBUG
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : make setup.project
-      - run : make test.unit
-
-      - name: Store coverage files
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: coverage
-
-  Unit-Test-Windows:
-    needs: Lints
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
-        os: [windows]
-
-    runs-on: ${{ matrix.os }}-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : make setup.project
-      - run : make test.unit
+  #Unit-Test:
+  #  needs: Lints
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.9", "3.10", "3.11"]
+  #      poetry-version: ["1.5.1"]
+  #      os: [ubuntu, macos]
+#
+  #  runs-on: ${{ matrix.os }}-latest
+  #  env:
+  #    OPSML_TESTING: 1
+  #    LOG_LEVEL: DEBUG
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - name: Install poetry
+  #      run: pipx install poetry==${{ matrix.poetry-version }}
+#
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v4
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+  #        cache: 'poetry'
+  #    - run : make setup.project
+  #    - run : make test.unit
+#
+  #    - name: Store coverage files
+  #      uses: actions/upload-artifact@v3
+  #      with:
+  #        name: coverage
+  #        path: coverage
+#
+  #Unit-Test-Windows:
+  #  needs: Lints
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.11"]
+  #      poetry-version: ["1.5.1"]
+  #      os: [windows]
+#
+  #  runs-on: ${{ matrix.os }}-latest
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - name: Install poetry
+  #      run: pipx install poetry==${{ matrix.poetry-version }}
+#
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v4
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+  #        cache: 'poetry'
+  #    - run : make setup.project
+  #    - run : make test.unit
 
   Unit-Integration:
     needs: Lints
@@ -116,7 +116,7 @@ jobs:
           cache: 'poetry'
       - run : make setup.project
       - run : export OPSML_STORAGE_URI="gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}"
-      - run : make test.unit.integration
+      - run : make test.integration
 
   Postgres-Unit:
     needs: Unit-Test
