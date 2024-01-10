@@ -190,7 +190,7 @@ class CardLoader:
             rpath = rpath or self.card.uri
             yield self.download(lpath, rpath, object_path, suffix)
 
-    def load_card(self, interface: Optional[Union[DataInterface, ModelInterface]]) -> ArtifactCard:
+    def load_card(self, interface: Optional[Union[DataInterface, ModelInterface]] = None) -> ArtifactCard:
         """Loads an ArtifactCard from card arguments
 
         Returns:
