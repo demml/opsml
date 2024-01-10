@@ -19,11 +19,12 @@ from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName
 
-EXCLUDE = sys.platform in ("darwin") and sys.version_info < (3, 11)
+DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+WINDOWS_EXCLUDE = sys.platform == "win32"
 
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel):
     model: HuggingFaceModel = huggingface_torch_distilbert
 
@@ -79,7 +80,6 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel):
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
@@ -431,7 +431,6 @@ def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
     model: TensorFlowModel = tf_transformer_example
 
@@ -482,7 +481,6 @@ def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel):
     model: TensorFlowModel = multi_input_tf_example
 
@@ -533,7 +531,6 @@ def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlo
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel):
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
@@ -589,7 +586,6 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel):
     model, _ = huggingface_vit_pipeline
 
