@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from opsml.data.interfaces._base import DataInterface
 from opsml.types import AllowedDataType, Feature, Suffix
@@ -55,18 +55,4 @@ try:
             return TorchData.__name__
 
 except ModuleNotFoundError:
-    from pydantic import model_validator
-
-    class TorchData(DataInterface):  # type: ignore[no-redef]
-        @model_validator(mode="before")
-        @classmethod
-        def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-            raise ModuleNotFoundError("TorchData requires pytorch to be installed. Please install pytorch.")
-
-        @staticmethod
-        def name() -> str:
-            return TorchData.__name__
-
-        @property
-        def data_type(self) -> str:
-            return AllowedDataType.TORCH_TENSOR.value
+    from opsml.data.interfaces.backups import TorchDataNoModule as TorchData
