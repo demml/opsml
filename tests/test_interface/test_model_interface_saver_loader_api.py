@@ -15,7 +15,8 @@ from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName
-
+import pytest
+import sys
 
 def test_save_huggingface_modelcard_api_client(
     huggingface_torch_distilbert: HuggingFaceModel,
@@ -331,7 +332,7 @@ def test_save_torch_lightning_modelcard_api_client(
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_modelcard_api_client(
     tf_transformer_example: TensorFlowModel,
     api_storage_client: client.StorageClientBase,
@@ -383,7 +384,7 @@ def test_save_tensorflow_modelcard_api_client(
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_multi_input_modelcard_api_client(
     multi_input_tf_example: TensorFlowModel,
     api_storage_client: client.StorageClientBase,

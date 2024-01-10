@@ -8,7 +8,8 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
 )
-
+import pytest
+import sys
 
 def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
     model, _ = linear_regression
@@ -17,7 +18,7 @@ def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
     prediction = model.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
 
-
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_tf_interface(tf_transformer_example: TensorFlowModel):
     assert tf_transformer_example.model_type == "Functional"
     prediction = tf_transformer_example.get_sample_prediction()
