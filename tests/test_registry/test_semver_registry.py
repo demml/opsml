@@ -1,18 +1,20 @@
 import pytest
 
+from opsml.cards import DataCard
+from opsml.data import SqlData
 from opsml.helpers.exceptions import VersionError
-from opsml.registry import CardRegistries, DataCard
-from opsml.registry.sql.registry import CardRegistry
+from opsml.registry import CardRegistries
+from opsml.registry.registry import CardRegistry
 
 
-def test_version_tags(db_registries: CardRegistries):
+def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     registry: CardRegistry = db_registries.data
 
     kwargs = {
         "name": "pre_build",
         "team": "mlops",
         "user_email": "opsml.com",
-        "sql_logic": {"test": "select * from test_table"},
+        "interface": sql_data,
     }
 
     # create initial prerelease
@@ -71,7 +73,7 @@ def test_version_tags(db_registries: CardRegistries):
         "name": "pre_build",
         "team": "fail",
         "user_email": "opsml.com",
-        "sql_logic": {"test": "select * from test_table"},
+        "interface": sql_data,
     }
 
     with pytest.raises(ValueError) as ve:
@@ -80,7 +82,7 @@ def test_version_tags(db_registries: CardRegistries):
     assert ve.match("Model name already exists for a different team. Try a different name.")
 
 
-def test_build_tag_official_version(db_registries: CardRegistries):
+def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegistries):
     # create data card
     registry: CardRegistry = db_registries.data
 
@@ -88,7 +90,7 @@ def test_build_tag_official_version(db_registries: CardRegistries):
         "name": "build_tag",
         "team": "mlops",
         "user_email": "opsml.com",
-        "sql_logic": {"test": "select * from test_table"},
+        "interface": sql_data,
     }
 
     # create card with minor increment with build tag

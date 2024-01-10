@@ -1,8 +1,8 @@
 import pytest
 
+from opsml.cards import ArtifactCard
 from opsml.helpers.utils import validate_name_team_pattern
-from opsml.registry.cards import ArtifactCard
-from opsml.registry.cards.types import CardInfo
+from opsml.types import CardInfo, Comment, RegistryType
 
 card_info = CardInfo(name="test", team="opsml", user_email="opsml@email.com")
 
@@ -55,3 +55,15 @@ def test_artifact_card_name_team_fail():
             name="_invalid_character",
             team="_invalid_character",
         )
+
+
+def test_registry_type():
+    for i in ["data", "model", "run", "pipeline", "audit", "project"]:
+        assert RegistryType.from_str(i) == RegistryType(i)
+
+
+def test_comment():
+    comment1 = Comment(name="foo", comment="bar")
+    comment2 = Comment(name="foo", comment="bar")
+
+    assert comment1.__eq__(comment2)

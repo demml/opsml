@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional, Union
 from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
 
+from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
-from opsml.registry.cards.audit import AuditSections
-from opsml.registry.cards.types import METRICS, Comment
-from opsml.registry.sql.semver import CardVersion, VersionType
+from opsml.registry.semver import CardVersion, VersionType
+from opsml.types import Comment, Metrics
 
 
 class HealthCheckResult(BaseModel):
@@ -61,6 +61,10 @@ class UidExistsResponse(BaseModel):
 
 class DownloadFileRequest(BaseModel):
     read_path: Optional[str] = None
+
+
+class PutFileRequest(BaseModel):
+    write_path: str
 
 
 class ListCardRequest(BaseModel):
@@ -193,6 +197,10 @@ class DeleteFileResponse(BaseModel):
     deleted: bool
 
 
+class FileExistsResponse(BaseModel):
+    exists: bool
+
+
 class DeleteFileRequest(BaseModel):
     read_path: str
 
@@ -205,7 +213,7 @@ class MetricRequest(BaseModel):
 
 
 class MetricResponse(BaseModel):
-    metrics: METRICS
+    metrics: Metrics
 
 
 class CompareMetricRequest(BaseModel):

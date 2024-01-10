@@ -10,7 +10,7 @@ import pandas as pd
 import polars as pl
 
 DIR_PATH = os.path.dirname(__file__)
-ProfileReport = Any  # custom runtime check in DataCard
+ProfileReport = Any
 
 
 class DataProfiler:

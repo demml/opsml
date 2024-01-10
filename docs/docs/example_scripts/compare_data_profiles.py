@@ -7,7 +7,7 @@ from sklearn.datasets import load_linnerud
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard
+from opsml import CardInfo, DataCard
 from opsml.profile import DataProfiler
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)

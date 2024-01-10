@@ -16,7 +16,7 @@ ModelCards are cards for storing, versioning, and tracking model objects.
 from sklearn.linear_model import LinearRegression
 
 # Opsml
-from opsml.registry import CardRegistry, ModelCard, CardInfo
+from opsml import CardRegistry, ModelCard, CardInfo
 
 # set up registries
 data_registry = CardRegistry(registry_name="data")
@@ -124,12 +124,12 @@ Out of the box, `Opsml` supports a variety of common model libraries and types i
 
 ## Docs
 
-::: opsml.registry.ModelCard
+::: opsml.ModelCard
     options:
         members:
             - load_sample_data
             - load_trained_model
-            - load_onnx_model_definition
+            - load_onnx_modelinition
             - onnx_model
         show_root_heading: true
         show_source: true

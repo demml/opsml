@@ -1,10 +1,11 @@
 from typing import Tuple
 
-import pandas as pd
 import pytest
-from sklearn import linear_model
 
-from opsml.registry import AuditCard, CardRegistries, DataCard, ModelCard
+from opsml.cards import AuditCard, DataCard, ModelCard
+from opsml.data import NumpyData
+from opsml.model import SklearnModel
+from opsml.registry import CardRegistries
 
 
 def test_audit_card(db_registries: CardRegistries):
@@ -47,13 +48,11 @@ def test_audit_card_failure():
         card.answer_question(section="business", question_nbr=100, response="response")
 
 
-def test_audit_card_add_uids(
-    db_registries: CardRegistries, linear_regression: Tuple[linear_model.LinearRegression, pd.DataFrame]
-):
+def test_audit_card_add_uids(db_registries: CardRegistries, linear_regression: Tuple[SklearnModel, NumpyData]):
     reg, data = linear_regression
     auditcard = AuditCard(name="audit_card", team="team", user_email="test")
 
-    datacard = DataCard(name="data_card", team="team", user_email="test", data=data)
+    datacard = DataCard(name="data_card", team="team", user_email="test", interface=data)
     db_registries.data.register_card(datacard)
 
     # test 1st path to add uid
@@ -69,8 +68,7 @@ def test_audit_card_add_uids(
         name="model_card",
         team="team",
         user_email="test",
-        trained_model=reg,
-        sample_input_data=data,
+        interface=reg,
         datacard_uid=datacard.uid,
         to_onnx=True,
     )

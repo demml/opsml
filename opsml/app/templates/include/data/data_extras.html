@@ -39,7 +39,7 @@
     </colgroup>
 
     <tbody>
-    {% for depen_var in selected_data.dependent_vars %}
+    {% for depen_var in selected_data.interface.dependent_vars %}
         <tr>
         <td>{{depen_var}}</td>
         </tr>
@@ -68,7 +68,7 @@
     </colgroup>
 
     <tbody>
-    {% for name, type_ in selected_data.metadata.feature_map.items() %}
+    {% for name, type_ in selected_data.interface.feature_map.items() %}
         <tr>
         <td><font color="#999">{{name}}</font></td>
         <td>{{type_}}</td>
@@ -97,7 +97,7 @@
     </colgroup>
 
     <tbody>
-    {% for name, description in selected_data.metadata.feature_descriptions.items() %}
+    {% for name, description in selected_data.interface.feature_descriptions.items() %}
         <tr>
         <td><font color="#999">{{name}}</font></td>
         <td>{{description}}</td>
@@ -108,10 +108,10 @@
 </div>
 {% endif %}
 
-{% if selected_data.sql_logic |length > 0 %}
+{% if selected_data.interface.sql_logic |length > 0 %}
 <div class="card-body" id="SQL" style="display:none">
 <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">SQL</font></h5>
-    {% for name, query in selected_data.sql_logic.items() %}
+    {% for name, query in selected_data.interface.sql_logic.items() %}
 
     <h6><i style="color:#04b78a"></i> <font color="#999">{{name}}</font>
       <clipboard-copy for="{{name}}Code">

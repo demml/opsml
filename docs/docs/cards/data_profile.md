@@ -12,7 +12,7 @@ DataCards support [ydata-profiling](https://github.com/ydataai/ydata-profiling) 
 from sklearn.datasets import load_linnerud
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry
+from opsml import CardInfo, DataCard, CardRegistry
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
@@ -39,7 +39,7 @@ data_registry.register_card(card=data_card)
 ```python
 
 from ydata_profiling import ProfileReport
-from opsml.registry import DataCard
+from opsml import DataCard
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
@@ -61,7 +61,7 @@ from sklearn.datasets import load_linnerud
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard
+from opsml import CardInfo, DataCard
 from opsml.profile import DataProfiler
 
 data, target = load_linnerud(return_X_y=True, as_frame=True)

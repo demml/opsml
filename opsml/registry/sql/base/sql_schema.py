@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.base.types import RegistryTableNames
+from opsml.types import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -52,13 +52,10 @@ class CardSQLTable(Base, BaseMixin):
 
 @declarative_mixin
 class DataMixin:
-    data_uri = Column("data_uri", String(1024))
     data_type = Column("data_type", String(1024))
     runcard_uid = Column("runcard_uid", String(1024))
     pipelinecard_uid = Column("pipelinecard_uid", String(1024))
-    datacard_uri = Column("datacard_uri", String(1024))
     auditcard_uid = Column("auditcard_uid", String(1024))
-    uris = Column("uris", JSON)
 
 
 class DataSchema(Base, BaseMixin, DataMixin):
@@ -70,11 +67,7 @@ class DataSchema(Base, BaseMixin, DataMixin):
 
 @declarative_mixin
 class ModelMixin:
-    modelcard_uri = Column("modelcard_uri", String(1024))
     datacard_uid = Column("datacard_uid", String(1024))
-    trained_model_uri = Column("trained_model_uri", String(1024))
-    model_metadata_uri = Column("model_metadata_uri", String(1024))
-    sample_data_uri = Column("sample_data_uri", String(1024))
     sample_data_type = Column("sample_data_type", String(512))
     model_type = Column("model_type", String(512))
     runcard_uid = Column("runcard_uid", String(1024))
@@ -96,7 +89,6 @@ class RunMixin:
     pipelinecard_uid = Column("pipelinecard_uid", String(512))
     project_id = Column("project_id", String(512))
     artifact_uris = Column("artifact_uris", JSON)
-    runcard_uri = Column("runcard_uri", String(512))
 
 
 class RunSchema(Base, BaseMixin, RunMixin):
@@ -109,7 +101,6 @@ class RunSchema(Base, BaseMixin, RunMixin):
 @declarative_mixin
 class AuditMixin:
     approved = Column("approved", Boolean)
-    audit_uri = Column("audit_uri", String(2048))
     datacards = Column("datacard_uids", JSON)
     modelcards = Column("modelcard_uids", JSON)
     runcards = Column("runcard_uids", JSON)

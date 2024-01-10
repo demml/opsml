@@ -1,6 +1,6 @@
 import pytest
 
-from opsml.registry.sql.semver import (
+from opsml.registry.semver import (
     CardVersion,
     SemVerUtils,
     VersionType,

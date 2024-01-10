@@ -1,7 +1,7 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, List, Optional
+from typing import Any, Iterator, Optional, Tuple
 
 warnings.filterwarnings("ignore")
 
@@ -10,7 +10,8 @@ warnings.filterwarnings("ignore")
 # these must be set prior to importing opsml since they establish their
 DB_FILE_PATH = "tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
-OPSML_STORAGE_URI = f"{os.getcwd()}/mlruns"
+OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
+# OPSML_STORAGE_URI = f"{os.getcwd()}/mlruns"
 # OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
 
 os.environ["APP_ENV"] = "development"
@@ -30,11 +31,14 @@ from unittest.mock import MagicMock, patch
 import httpx
 import joblib
 import lightgbm as lgb
+import lightning as L
 import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pytest
+import torch
+import torch.nn as nn
 from google.auth import load_credentials_from_file
 from pydantic import BaseModel
 from sklearn import (
@@ -60,19 +64,47 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from starlette.testclient import TestClient
+from torch.nn import MSELoss
+from torch.optim import Adam
+from torch.utils.data import DataLoader, Dataset
 from xgboost import XGBRegressor
 
-from opsml.helpers.gcp_utils import GcpCreds
-from opsml.model.challenger import ModelChallenger
-from opsml.model.types import OnnxModelDefinition
-from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.cards import (
+    AuditCard,
+    CardInfo,
+    DataCard,
+    DataCardMetadata,
+    DataSplit,
+    ModelCard,
+    ModelCardMetadata,
+    RunCard,
+)
 
 # opsml
-from opsml.registry import CardRegistries, DataSplit, ModelCard
-from opsml.registry.cards.types import Metric, ModelCardUris
-from opsml.registry.sql.connectors.connector import LocalSQLConnection
-from opsml.registry.storage import client
+from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, TorchData
+from opsml.helpers.data import create_fake_data
+from opsml.helpers.gcp_utils import GcpCreds
+from opsml.model import (
+    HuggingFaceModel,
+    LightGBMModel,
+    LightningModel,
+    PyTorchModel,
+    SklearnModel,
+    TensorFlowModel,
+    XGBoostModel,
+)
+from opsml.model.challenger import ModelChallenger
+from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config
+from opsml.storage import client
+from opsml.types import (
+    HuggingFaceOnnxArgs,
+    HuggingFaceORTModel,
+    HuggingFaceTask,
+    Metric,
+    OnnxModel,
+)
 
 CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
@@ -104,6 +136,9 @@ def cleanup() -> None:
 
     # delete blah directory
     shutil.rmtree("blah", ignore_errors=True)
+
+    # delete pytorch lightning logs
+    shutil.rmtree("lightning_logs", ignore_errors=True)
 
 
 # TODO(@damon): Thesee can probably go.
@@ -181,13 +216,20 @@ def gcp_storage_client(mock_gcp_creds, mock_gcsfs):
 
 
 @pytest.fixture
-def s3_storage_client(mock_s3fs):
-    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="s3://test"))
+def local_storage_client():
+    return client.get_storage_client(OpsmlConfig())
 
 
 @pytest.fixture
-def local_storage_client():
-    return client.get_storage_client(OpsmlConfig())
+def gcsfs_bucket() -> Path:
+    return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
+
+
+@pytest.fixture
+def gcsfs_integration_client(gcsfs_bucket: Path) -> client.GCSFSStorageClient:
+    return client.get_storage_client(
+        OpsmlConfig(opsml_storage_uri=f"gs://{gcsfs_bucket.as_posix()}"),
+    )
 
 
 @pytest.fixture
@@ -195,7 +237,6 @@ def mock_gcsfs():
     with patch.multiple(
         "gcsfs.GCSFileSystem",
         get=MagicMock(return_value="test"),
-        get_mapper=MagicMock(return_value="test"),
         ls=MagicMock(return_value=["test"]),
         put=MagicMock(return_value="test"),
         copy=MagicMock(return_value=None),
@@ -205,71 +246,6 @@ def mock_gcsfs():
         yield mocked_gcsfs
 
 
-@pytest.fixture
-def mock_s3fs():
-    with patch.multiple(
-        "s3fs.S3FileSystem",
-        get=MagicMock(return_value="test"),
-        get_mapper=MagicMock(return_value="test"),
-        ls=MagicMock(return_value=["test"]),
-        put=MagicMock(return_value="test"),
-        copy=MagicMock(return_value=None),
-        rm=MagicMock(return_value=None),
-        exists=MagicMock(return_value=True),
-    ) as mocked_s3fs:
-        yield mocked_s3fs
-
-
-@pytest.fixture
-def mock_pathlib():
-    with patch.multiple(
-        "pathlib.Path",
-        mkdir=MagicMock(return_value=None),
-    ) as mocked_pathlib:
-        yield mocked_pathlib
-
-
-@pytest.fixture
-def mock_joblib_storage(mock_pathlib):
-    with patch.multiple(
-        "opsml.registry.storage.artifact.JoblibStorage",
-        _write_joblib=MagicMock(return_value=None),
-        _load_artifact=MagicMock(return_value=None),
-    ) as mocked_joblib:
-        yield mocked_joblib
-
-
-@pytest.fixture
-def mock_json_storage(mock_pathlib):
-    with patch.multiple(
-        "opsml.registry.storage.artifact.JSONStorage",
-        _write_json=MagicMock(return_value=None),
-        _load_artifact=MagicMock(return_value=None),
-    ) as mocked_json:
-        yield mocked_json
-
-
-@pytest.fixture
-def mock_artifact_storage_clients(mock_json_storage, mock_joblib_storage):
-    yield mock_json_storage, mock_joblib_storage
-
-
-@pytest.fixture
-def mock_pyarrow_parquet_write(mock_pathlib):
-    with patch.multiple("pyarrow.parquet", write_table=MagicMock(return_value=True)) as mock_:
-        yield mock_
-
-
-@pytest.fixture
-def mock_pyarrow_parquet_dataset(mock_pathlib, test_df, test_arrow_table):
-    with patch("pyarrow.parquet.ParquetDataset") as mock_:
-        mock_dataset = mock_.return_value
-        mock_dataset.read.return_value = test_arrow_table
-        mock_dataset.read.to_pandas.return_value = test_df
-
-        yield mock_dataset
-
-
 @pytest.fixture(scope="module")
 def test_app() -> Iterator[TestClient]:
     cleanup()
@@ -277,6 +253,24 @@ def test_app() -> Iterator[TestClient]:
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
+
+        yield tc
+    cleanup()
+
+
+@pytest.fixture
+def test_gcs_app(gcsfs_integration_client) -> Iterator[TestClient]:
+    cleanup()
+
+    # config.opsml_storage_uri = f"gs://{gcsfs_bucket}"
+    # monkeypatch.setenv("OPSML_STORAGE_URI", gcsfs_bucket)
+    client.storage_client = gcsfs_integration_client
+
+    from opsml.app.main import OpsmlApp
+
+    opsml_app = OpsmlApp()
+    with TestClient(opsml_app.get_app()) as tc:
+
         yield tc
     cleanup()
 
@@ -304,7 +298,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 
         # Cards rely on global storage state - so set it to API
         client.storage_client = client.get_storage_client(cfg)
-        return CardRegistries(client.storage_client)
+        return CardRegistries()
 
 
 @pytest.fixture
@@ -316,12 +310,21 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
 
 
 @pytest.fixture
+def gcs_api_registries(monkeypatch: pytest.MonkeyPatch, test_gcs_app: TestClient) -> Iterator[CardRegistries]:
+    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
+    previous_client = client.storage_client
+    yield mock_registries(monkeypatch, test_gcs_app)
+    client.storage_client = previous_client
+
+
+@pytest.fixture
 def db_registries() -> CardRegistries:
     """Returns CardRegistries configured with a local client (to simulate "client" mode)."""
     cleanup()
+
     # Cards rely on global storage state - so set it to local.
     client.storage_client = client.get_storage_client(config)
-    yield CardRegistries(client.storage_client)
+    yield CardRegistries()
     cleanup()
 
 
@@ -366,50 +369,12 @@ def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
 
 
 @pytest.fixture
-def mock_typer():
-    with patch.multiple("typer", launch=MagicMock(return_value=0)) as mock_typer:
-        yield mock_typer
-
-
-@pytest.fixture
 def mock_opsml_app_run():
     with patch.multiple("opsml.app.main.OpsmlApp", run=MagicMock(return_value=0)) as mock_opsml_app_run:
         yield mock_opsml_app_run
 
 
 ######## local clients
-
-
-@pytest.fixture(scope="module")
-def experiment_table_to_migrate():
-    from sqlalchemy import JSON, Column, String
-    from sqlalchemy.orm import declarative_mixin
-
-    @declarative_mixin
-    class ExperimentMixin:
-        data_card_uids = Column("data_card_uids", JSON)
-        model_card_uids = Column("model_card_uids", JSON)
-        pipeline_card_uid = Column("pipeline_card_uid", String(512))
-        project_id = Column("project_id", String(512))
-        artifact_uris = Column("artifact_uris", JSON)
-        metrics = Column("metrics", JSON)
-        parameters = Column("parameters", JSON)
-        tags = Column("tags", JSON)
-
-    class ExperimentSchema(Base, BaseMixin, ExperimentMixin):  # type: ignore
-        __tablename__ = "OPSML_EXPERIMENT_REGISTRY"
-
-        def __repr__(self):
-            return f"<SqlMetric({self.__tablename__}"
-
-    yield ExperimentSchema
-
-
-@pytest.fixture
-def mock_local_engine():
-    local_client = LocalSQLConnection(tracking_uri="sqlite://")
-    local_client.get_engine()
-    return
 
 
 @pytest.fixture
@@ -454,52 +419,77 @@ def mock_gcs_storage_response():
         yield mock_requests
 
 
-@pytest.fixture
-def real_gcs() -> Iterator[client.StorageClient]:
-    prev_client = client.storage_client
-    client.storage_client = client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://shipt-dev"))
-    yield client.storage_client
-    client.storage_client = prev_client
-
-
 ######### Data for registry tests
 
 
 @pytest.fixture
-def test_array() -> np.ndarray[Any, np.float64]:
+def numpy_data() -> np.ndarray[Any, np.float64]:
     data = np.random.rand(10, 100)
-    return data
+    return NumpyData(
+        data=data,
+        datasplits=[
+            DataSplit(label="train", indices=np.array([0, 1, 2])),
+        ],
+    )
 
 
 @pytest.fixture
-def test_split_array() -> List[DataSplit]:
-    indices = np.array([0, 1, 2])
-    return [DataSplit(label="train", indices=indices)]
-
-
-@pytest.fixture
-def test_df() -> pd.DataFrame:
+def pandas_data() -> pd.DataFrame:
     df = pd.DataFrame(
         {
-            "year": [2020, 2022, 2019, 2021],
-            "n_legs": [2, 4, 5, 100],
-            "animals": ["Flamingo", "Horse", "Brittle stars", "Centipede"],
+            "year": [2020, 2022, 2019, 2020, 2020, 2022, 2019, 2021],
+            "n_legs": [2, 4, 5, 100, 2, 4, 5, 100],
+            "animals": [
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+            ],
         }
     )
-    return df
+
+    data_split = [
+        DataSplit(label="train", column_name="year", column_value=2020),
+        DataSplit(label="test", column_name="year", column_value=2021),
+    ]
+    return PandasData(
+        data=df,
+        data_splits=data_split,
+        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
+        dependent_vars=[200, "test"],
+    )
 
 
-@pytest.fixture(scope="session")
-def test_arrow_table():
+@pytest.fixture
+def sql_data():
+    return SqlData(
+        sql_logic={"test": "select * from test_table"},
+        feature_descriptions={"test": "test_description"},
+    )
+
+
+@pytest.fixture
+def sql_file():
+    return SqlData(
+        sql_logic={"test": "test_sql.sql"},
+    )
+
+
+@pytest.fixture
+def arrow_data():
     n_legs = pa.array([2, 4, 5, 100])
     animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
     names = ["n_legs", "animals"]
     table = pa.Table.from_arrays([n_legs, animals], names=names)
-    return table
+    return ArrowData(data=table)
 
 
-@pytest.fixture(scope="session")
-def test_polars_dataframe():
+@pytest.fixture
+def polars_data():
     df = pl.DataFrame(
         {
             "foo": [1, 2, 3, 4, 5, 6],
@@ -507,39 +497,31 @@ def test_polars_dataframe():
             "y": [1, 2, 3, 4, 5, 6],
         }
     )
-    return df
+    return PolarsData(
+        data=df,
+        data_splits=[
+            DataSplit(
+                label="train",
+                column_name="foo",
+                column_value=0,
+            )
+        ],
+        dependent_vars=["y"],
+    )
 
 
 @pytest.fixture
 def pandas_timestamp_df():
     df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
     df["date"] = pd.to_datetime(df["date"])
-    return df
+    return PandasData(data=df)
 
 
 @pytest.fixture(scope="session")
-def test_polars_split():
-    return [DataSplit(label="train", column_name="foo", column_value=0)]
+def example_dataframe():
+    X, y = create_fake_data(n_samples=1200)
 
-
-@pytest.fixture(scope="module")
-def drift_dataframe():
-    mu_1 = -4  # mean of the first distribution
-    mu_2 = 4  # mean of the second distribution
-    X_train = np.random.normal(mu_1, 2.0, size=(1000, 10))
-    cat = np.random.randint(0, 3, 1000).reshape(-1, 1)
-    X_train = np.hstack((X_train, cat))
-    X_test = np.random.normal(mu_2, 2.0, size=(1000, 10))
-    cat = np.random.randint(2, 5, 1000).reshape(-1, 1)
-    X_test = np.hstack((X_test, cat))
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-    X_train = pd.DataFrame(X_train, columns=col_names)
-    X_test = pd.DataFrame(X_test, columns=col_names)
-    y_train = np.random.randint(1, 10, size=(1000, 1))
-    y_test = np.random.randint(1, 10, size=(1000, 1))
-    return X_train, y_train, X_test, y_test
+    return X, y, X, y
 
 
 ###############################################################################
@@ -565,7 +547,7 @@ def regression_data_polars(regression_data):
 
 
 @pytest.fixture(scope="session")
-def load_pytorch_language():
+def huggingface_language_model():
     import torch
     from transformers import AutoTokenizer
 
@@ -576,11 +558,79 @@ def load_pytorch_language():
         padding="max_length",
         truncation=True,
         return_tensors="pt",
-    ).input_ids
-    sample_data = {"input_ids": data.numpy()}
+    )
+
     loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
 
-    return loaded_model, sample_data
+    return PyTorchModel(
+        model=loaded_model,
+        preprocessor=tokenizer,
+        sample_data=dict(data),
+    )
+
+
+@pytest.fixture(scope="module")
+def pytorch_simple():
+    class Polynomial3(torch.nn.Module):
+        def __init__(self):
+            """
+            In the constructor we instantiate four parameters and assign them as
+            member parameters.
+            """
+            super().__init__()
+            self.x1 = torch.nn.Parameter(torch.randn(()))
+            self.x2 = torch.nn.Parameter(torch.randn(()))
+
+        def forward(self, x1: torch.Tensor, x2: torch.Tensor):
+            """
+            In the forward function we accept a Tensor of input data and we must return
+            a Tensor of output data. We can use Modules defined in the constructor as
+            well as arbitrary operators on Tensors.
+            """
+            return self.x1 + self.x2 * x1 * x2
+
+    model = Polynomial3()
+    inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
+
+    yield PyTorchModel(
+        model=model,
+        sample_data=inputs,
+        save_args={"as_state_dict": True},
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def pytorch_simple_tuple():
+    class Polynomial3(torch.nn.Module):
+        def __init__(self):
+            """
+            In the constructor we instantiate four parameters and assign them as
+            member parameters.
+            """
+            super().__init__()
+            self.x1 = torch.nn.Parameter(torch.randn(()))
+            self.x2 = torch.nn.Parameter(torch.randn(()))
+
+        def forward(self, x1: torch.Tensor, x2: torch.Tensor):
+            """
+            In the forward function we accept a Tensor of input data and we must return
+            a Tensor of output data. We can use Modules defined in the constructor as
+            well as arbitrary operators on Tensors.
+            """
+            return self.x1 + self.x2 * x1 * x2
+
+    model = Polynomial3()
+    inputs = (torch.randn((1, 1)), torch.randn((1, 1)))
+
+    yield PyTorchModel(
+        model=model,
+        sample_data=inputs,
+        save_args={"as_state_dict": True},
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
 
 
 @pytest.fixture(scope="session")
@@ -659,7 +709,7 @@ def pytorch_onnx_byo():
 
         onnx_model = onnx.load(onnx_path)
 
-    model_def = OnnxModelDefinition(
+    model_def = OnnxModel(
         onnx_version="1.14.0",
         model_bytes=onnx_model.SerializeToString(),
     )
@@ -668,55 +718,66 @@ def pytorch_onnx_byo():
 
 
 @pytest.fixture(scope="session")
-def load_transformer_example():
+def tf_transformer_example():
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
     data = np.load("tests/assets/transformer_data.npy")
-    return loaded_model, data
+
+    yield TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
+    cleanup()
 
 
 @pytest.fixture
-def load_multi_input_keras_example():
+def multi_input_tf_example():
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/multi_input_example")
     data = joblib.load("tests/assets/multi_input_data.joblib")
-    return loaded_model, data
+    yield TensorFlowModel(model=loaded_model, sample_data=data, preprocessor=StandardScaler())
+    cleanup()
 
 
 @pytest.fixture(scope="session")
-def load_pytorch_resnet():
+def pytorch_resnet() -> PyTorchModel:
     import torch
 
     loaded_model = torch.load("tests/assets/resnet.pt")
-    data = torch.randn(1, 3, 224, 224).numpy()
+    data = torch.randn(1, 3, 224, 224)
 
-    return loaded_model, data
-
-
-@pytest.fixture(scope="session")
-def iris_data() -> pd.DataFrame:
-    iris = load_iris()
-    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
-    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
-    x["target"] = iris["target"]
-
-    return x
-
-
-@pytest.fixture(scope="session")
-def iris_data_polars() -> pl.DataFrame:
-    iris = load_iris()
-    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
-    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
-    x["target"] = iris["target"]
-
-    return pl.from_pandas(data=x)
+    return PyTorchModel(model=loaded_model, sample_data=data)
 
 
 @pytest.fixture
-def stacking_regressor(regression_data):
+def iris_data() -> PandasData:
+    iris = load_iris()
+    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
+    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
+    x["target"] = iris["target"]
+
+    return PandasData(data=x, dependent_vars=["target"])
+
+
+@pytest.fixture
+def iris_data_polars() -> PolarsData:
+    iris = load_iris()
+    feature_names = ["sepal_length_cm", "sepal_width_cm", "petal_length_cm", "petal_width_cm"]
+    x = pd.DataFrame(data=np.c_[iris["data"]], columns=feature_names)
+    x["target"] = iris["target"]
+
+    data_split = [
+        DataSplit(label="train", column_value=0, column_name="eval_flg"),
+        DataSplit(label="test", column_value=1, column_name="eval_flg"),
+    ]
+
+    return PolarsData(
+        data=pl.from_pandas(data=x),
+        data_splits=data_split,
+    )
+
+
+@pytest.fixture
+def stacking_regressor(regression_data) -> SklearnModel:
     X, y = regression_data
     estimators = [
         ("lr", ensemble.RandomForestRegressor(n_estimators=5)),
@@ -729,11 +790,11 @@ def stacking_regressor(regression_data):
         cv=2,
     )
     reg.fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
-@pytest.fixture(scope="session")
-def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
+@pytest.fixture
+def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = pd.DataFrame(
         [
             dict(CAT1="a", CAT2="c", num1=0.5, num2=0.6, num3=0, y=0),
@@ -755,11 +816,21 @@ def sklearn_pipeline() -> tuple[Pipeline, pd.DataFrame]:
         [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
     )
     pipe.fit(train_data, data["y"])
-    return pipe, train_data
+    sql_logic = {"test": "SELECT * FROM TEST_TABLE"}
+
+    model = SklearnModel(model=pipe, sample_data=train_data, preprocessor=pipe.named_steps["preprocess"])
+    data = PandasData(data=train_data, sql_logic=sql_logic, dependent_vars=["y"])
+    return model, data
+
+
+@pytest.fixture
+def sklearn_pipeline_model(sklearn_pipeline) -> SklearnModel:
+    model, _ = sklearn_pipeline
+    return model
 
 
 @pytest.fixture(scope="session")
-def sklearn_pipeline_advanced() -> tuple[Pipeline, pd.DataFrame]:
+def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
@@ -788,40 +859,50 @@ def sklearn_pipeline_advanced() -> tuple[Pipeline, pd.DataFrame]:
     y_train = y_train.to_numpy().astype(np.int32)
 
     clf.fit(X_train, y_train)
-    return clf, X_train[:100]
+
+    return SklearnModel(model=clf, sample_data=X_train[:100])
 
 
 @pytest.fixture
-def xgb_df_regressor(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def xgb_df_regressor(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = XGBRegressor(n_estimators=5, max_depth=3)
     reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
+
+    return XGBoostModel(model=reg, sample_data=X_train[:100])
 
 
 @pytest.fixture
-def random_forest_classifier(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def random_forest_classifier(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = ensemble.RandomForestClassifier(n_estimators=5)
     reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
+
+    yield SklearnModel(
+        model=reg,
+        sample_data=X_train[:100],
+        task_type="classification",
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
 
 
 @pytest.fixture
-def lgb_classifier(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_classifier(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMClassifier(
         n_estimators=3,
         max_depth=3,
         num_leaves=5,
     )
     reg.fit(X_train.to_numpy(), y_train)
-    return reg, X_train[:100]
+
+    return LightGBMModel(model=reg, sample_data=X_train[:100])
 
 
 @pytest.fixture
-def lgb_classifier_calibrated(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_classifier_calibrated(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMClassifier(
         n_estimators=3,
         max_depth=3,
@@ -832,12 +913,12 @@ def lgb_classifier_calibrated(drift_dataframe):
     calibrated_model = CalibratedClassifierCV(reg, method="isotonic", cv="prefit")
     calibrated_model.fit(X_test, y_test)
 
-    return calibrated_model, X_test[:10]
+    return SklearnModel(model=calibrated_model, sample_data=X_test[:10])
 
 
 @pytest.fixture
-def lgb_classifier_calibrated_pipeline(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_classifier_calibrated_pipeline(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     reg = lgb.LGBMClassifier(
         n_estimators=3,
         max_depth=3,
@@ -847,12 +928,25 @@ def lgb_classifier_calibrated_pipeline(drift_dataframe):
     pipe = Pipeline([("preprocess", StandardScaler()), ("clf", CalibratedClassifierCV(reg, method="isotonic", cv=3))])
     pipe.fit(X_train, y_train)
 
-    return pipe, X_test[:10]
+    return SklearnModel(model=pipe, sample_data=X_test[:10])
 
 
 @pytest.fixture
-def lgb_booster_dataframe(drift_dataframe):
-    X_train, y_train, X_test, y_test = drift_dataframe
+def lgb_regressor_model(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+    reg = lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    return LightGBMModel(
+        model=reg,
+        sample_data=X_train[:100],
+        preprocessor=StandardScaler(),
+    )
+
+
+@pytest.fixture
+def lgb_booster_model(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
     # create dataset for lightgbm
     lgb_train = lgb.Dataset(X_train, y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
@@ -870,14 +964,25 @@ def lgb_booster_dataframe(drift_dataframe):
     }
     # train
     gbm = lgb.train(
-        params, lgb_train, num_boost_round=20, valid_sets=lgb_eval, callbacks=[lgb.early_stopping(stopping_rounds=5)]
+        params,
+        lgb_train,
+        num_boost_round=20,
+        valid_sets=lgb_eval,
+        callbacks=[
+            lgb.early_stopping(stopping_rounds=5),
+        ],
     )
 
-    return gbm, X_train[:100]
+    yield LightGBMModel(
+        model=gbm,
+        sample_data=X_train[:100],
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
 
 
 @pytest.fixture(scope="module")
-def linear_regression_polars(regression_data_polars: pl.DataFrame):
+def linear_regression_polars(regression_data_polars: pl.DataFrame) -> Tuple[SklearnModel, PolarsData]:
     data: pl.DataFrame = regression_data_polars
 
     X = data.select(pl.col(["col_0", "col_1"]))
@@ -887,14 +992,20 @@ def linear_regression_polars(regression_data_polars: pl.DataFrame):
         X.to_numpy(),
         y.to_numpy(),
     )
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X.to_numpy()), PolarsData(data=X)
 
 
-@pytest.fixture(scope="module")
-def linear_regression(regression_data):
+@pytest.fixture
+def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
     X, y = regression_data
     reg = linear_model.LinearRegression().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X), NumpyData(data=X)
+
+
+@pytest.fixture
+def linear_regression_model(linear_regression) -> Tuple[SklearnModel, NumpyData]:
+    model, data = linear_regression
+    return model
 
 
 @pytest.fixture
@@ -907,9 +1018,167 @@ def test_model_card(sklearn_pipeline):
         team="mlops",
         user_email="mlops.com",
         version="1.0.0",
-        uris=ModelCardUris(trained_model_uri="test"),
     )
     return model_card
+
+
+@pytest.fixture
+def populate_model_data_for_api(
+    api_registries: CardRegistries,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+) -> Tuple[ModelCard, DataCard]:
+
+    config.opsml_registry_path = uuid.uuid4().hex
+    team = "mlops"
+    user_email = "test@mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+
+    datacard = DataCard(
+        interface=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+        metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
+    )
+    datacard.add_info(info={"added_metadata": 10})
+
+    data_registry.register_card(card=datacard)
+
+    modelcard = ModelCard(
+        interface=model,
+        name=uuid.uuid4().hex,
+        team=team,
+        user_email=user_email,
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+        tags={"id": "model1"},
+    )
+
+    model_registry.register_card(modelcard)
+
+    return modelcard, datacard
+
+
+@pytest.fixture
+def populate_model_data_for_route(
+    api_registries: CardRegistries,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+) -> None:
+
+    config.opsml_registry_path = uuid.uuid4().hex
+    team = "mlops"
+    user_email = "test@mlops.com"
+
+    model, data = linear_regression
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+    audit_registry = api_registries.audit
+
+    # create run
+    card_info = CardInfo(
+        name="test_run",
+        team="mlops",
+        user_email="mlops.com",
+    )
+
+    runcard = RunCard(info=card_info)
+
+    runcard.log_metric(key="m1", value=1.1)
+    runcard.log_metric(key="mape", value=2, step=1)
+    runcard.log_metric(key="mape", value=2, step=2)
+    runcard.log_parameter(key="m1", value="apple")
+    api_registries.run.register_card(runcard)
+
+    datacard = DataCard(
+        interface=data,
+        name="test_data",
+        team=team,
+        user_email=user_email,
+        metadata=DataCardMetadata(
+            additional_info={"input_metadata": 20},
+            runcard_uid=runcard.uid,
+        ),
+    )
+    datacard.add_info(info={"added_metadata": 10})
+
+    data_registry.register_card(card=datacard)
+
+    modelcard = ModelCard(
+        interface=model,
+        name=uuid.uuid4().hex,
+        team=team,
+        user_email=user_email,
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+        metadata=ModelCardMetadata(runcard_uid=runcard.uid),
+        tags={"id": "model1"},
+    )
+
+    model_registry.register_card(modelcard)
+
+    # create auditcard
+
+    auditcard = AuditCard(name="audit_card", team="team", user_email="test")
+    auditcard.add_card(card=modelcard)
+    audit_registry.register_card(auditcard)
+
+    # now switch config back to local for testing routes
+    client.storage_client = client.get_storage_client((OpsmlConfig()))
+    config.opsml_tracking_uri = SQL_PATH
+
+    return modelcard, datacard, auditcard
+
+
+@pytest.fixture
+def populate_run(
+    test_app: TestClient,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+) -> None:
+
+    model, data = sklearn_pipeline
+
+    def callable_api():
+        return test_app
+
+    with patch("httpx.Client", callable_api):
+        info = ProjectInfo(name="test", team="test-exp", user_email="test")
+        project = OpsmlProject(info=info)
+
+        assert project.project_id == "test-exp:test"
+
+        with project.run() as run:
+            datacard = DataCard(
+                interface=data,
+                name="test_data",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            datacard.create_data_profile()
+            run.register_card(card=datacard)
+            run.log_metric("test_metric", 10)
+            run.log_metrics({"test_metric2": 20})
+
+            modelcard = ModelCard(
+                interface=model,
+                name="pipeline_model",
+                team="mlops",
+                user_email="mlops.com",
+                tags={"id": "model1"},
+                datacard_uid=datacard.uid,
+                to_onnx=True,
+            )
+            run.register_card(modelcard)
+
+    # now switch config back to local for testing routes
+    client.storage_client = client.get_storage_client((OpsmlConfig()))
+    config.opsml_tracking_uri = SQL_PATH
+
+    return datacard, modelcard, run
 
 
 ################################################################
@@ -944,53 +1213,205 @@ def random_forest_api_example():
 
 
 @pytest.fixture(scope="module")
-def huggingface_whisper():
+def huggingface_whisper() -> Tuple[HuggingFaceModel, TorchData]:
     import transformers
 
     model = transformers.WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny")
     model.config.forced_decoder_ids = None
 
     # come up with some dummy test data to fake out training.
-    data = joblib.load("tests/assets/whisper-data.joblib")
+    data = torch.Tensor(joblib.load("tests/assets/whisper-data.joblib"))
 
-    return model, data
+    return HuggingFaceModel(
+        model=model,
+        sample_data=data,
+        task_type=HuggingFaceTask.TEXT_GENERATION.value,
+    ), TorchData(data=data)
 
 
 @pytest.fixture(scope="module")
-def huggingface_openai_gpt():
+def huggingface_openai_gpt() -> Tuple[HuggingFaceModel, TorchData]:
     from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer
 
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
     model = OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
     inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
 
-    return model, inputs
+    return HuggingFaceModel(
+        model=model,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+    ), TorchData(data=inputs["input_ids"])
 
 
 @pytest.fixture(scope="module")
-def huggingface_bart():
+def huggingface_bart() -> HuggingFaceModel:
     from transformers import BartModel, BartTokenizer
 
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = BartModel.from_pretrained("facebook/bart-base")
-    inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
+    inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
 
-    return model, inputs
+    model = HuggingFaceModel(
+        model=model,
+        tokenizer=tokenizer,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.FEATURE_EXTRACTION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_FEATURE_EXTRACTION.value,
+        ),
+    )
+
+    yield model
+    cleanup()
 
 
 @pytest.fixture(scope="module")
-def huggingface_vit():
+def huggingface_text_classification_pipeline():
+    from transformers import pipeline
+
+    pipe = pipeline("text-classification")
+    data = "This restaurant is awesome"
+
+    model = HuggingFaceModel(
+        model=pipe,
+        sample_data=data,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        is_pipeline=True,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+        ),
+    )
+
+    yield model
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def huggingface_tf_distilbert() -> HuggingFaceModel:
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
+    from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
+
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    model = TFDistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
+    inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="tf")
+
+    model = HuggingFaceModel(
+        model=model,
+        tokenizer=tokenizer,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            quantize=True,
+            config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
+        ),
+    )
+
+    yield model
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def huggingface_torch_distilbert() -> HuggingFaceModel:
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
+    from transformers import AutoTokenizer, DistilBertForSequenceClassification
+
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
+    inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
+
+    model = HuggingFaceModel(
+        model=model,
+        tokenizer=tokenizer,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            quantize=True,
+            config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
+        ),
+    )
+
+    yield model
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def huggingface_pipeline() -> HuggingFaceModel:
+    from optimum.onnxruntime.configuration import AutoQuantizationConfig
+    from transformers import pipeline
+
+    pipe = pipeline("text-classification", model="distilbert-base-uncased")
+
+    model = HuggingFaceModel(
+        model=pipe,
+        sample_data="test example",
+        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            quantize=True,
+            config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
+        ),
+    )
+
+    yield model
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
     from PIL import Image
-    from transformers import ViTFeatureExtractor, ViTModel
+    from transformers import ViTFeatureExtractor, ViTForImageClassification
 
     image = Image.open("tests/assets/cats.jpg")
 
     feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
-    model = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224-in21k")
 
     inputs = feature_extractor(images=image, return_tensors="pt")
+    model = HuggingFaceModel(
+        model=model,
+        feature_extractor=feature_extractor,
+        sample_data=inputs,
+        task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+        ),
+    )
 
-    return model, inputs
+    data = TorchData(data=inputs["pixel_values"])
+
+    yield model, data
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
+    from PIL import Image
+    from transformers import ViTFeatureExtractor, ViTForImageClassification
+
+    image = Image.open("tests/assets/cats.jpg")
+
+    feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
+    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224-in21k")
+    inputs = feature_extractor(images=image, return_tensors="pt")
+
+    model = HuggingFaceModel(
+        model=model,
+        feature_extractor=feature_extractor,
+        sample_data=image,
+        task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
+        onnx_args=HuggingFaceOnnxArgs(
+            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+        ),
+    )
+    model.to_pipeline()
+
+    data = TorchData(data=inputs["pixel_values"])
+
+    yield model, data
+    cleanup()
 
 
 @pytest.fixture
@@ -1123,10 +1544,10 @@ def test_fastapi_client(fastapi_model_app):
 
 ##### Sklearn estimators for onnx
 @pytest.fixture(scope="module")
-def ard_regression(regression_data):
+def ard_regression(regression_data) -> SklearnModel:
     X, y = regression_data
     reg = linear_model.ARDRegression().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="session")
@@ -1149,14 +1570,14 @@ def ada_boost_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.AdaBoostClassifier(n_estimators=5, random_state=0)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def ada_regression(regression_data):
     X, y = regression_data
     reg = ensemble.AdaBoostRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1164,49 +1585,49 @@ def bagging_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.BaggingClassifier(n_estimators=5)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def bagging_regression(regression_data):
     X, y = regression_data
     reg = ensemble.BaggingRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def bayesian_ridge_regression(regression_data):
     X, y = regression_data
     reg = linear_model.BayesianRidge(n_iter=10).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def bernoulli_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.BernoulliNB(force_alpha=True).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def categorical_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.CategoricalNB(force_alpha=True).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def complement_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.ComplementNB(force_alpha=True).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def decision_tree_regressor(regression_data):
     X, y = regression_data
     reg = tree.DecisionTreeRegressor(max_depth=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1219,35 +1640,35 @@ def decision_tree_classifier():
 
     clf = tree.DecisionTreeClassifier(max_depth=5).fit(X, y)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def elastic_net(regression_data):
     X, y = regression_data
     reg = linear_model.ElasticNet(max_iter=10).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def elastic_net_cv(regression_data):
     X, y = regression_data
     reg = linear_model.ElasticNetCV(max_iter=10, cv=2).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def extra_tree_regressor(regression_data):
     X, y = regression_data
     reg = tree.ExtraTreeRegressor(max_depth=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def extra_trees_regressor(regression_data):
     X, y = regression_data
     reg = ensemble.ExtraTreesRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1255,7 +1676,7 @@ def extra_tree_classifier(classification_data):
     X, y = classification_data
     clf = tree.ExtraTreeClassifier(max_depth=5).fit(X, y)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1263,28 +1684,28 @@ def extra_trees_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.ExtraTreesClassifier(n_estimators=5).fit(X, y)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gamma_regressor(regression_data):
     X, y = regression_data
     reg = linear_model.GammaRegressor(max_iter=5).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gaussian_nb(regression_data):
     X, y = regression_data
     reg = naive_bayes.GaussianNB().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gaussian_process_regressor(regression_data):
     X, y = regression_data
     reg = gaussian_process.GaussianProcessRegressor().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1292,14 +1713,14 @@ def gradient_booster_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.GradientBoostingClassifier(n_estimators=5)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def gradient_booster_regressor(regression_data):
     X, y = regression_data
-    reg = clf = ensemble.GradientBoostingRegressor(n_estimators=5).fit(X, y)
-    return reg, X
+    reg = ensemble.GradientBoostingRegressor(n_estimators=5).fit(X, y)
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1307,119 +1728,119 @@ def hist_booster_classifier(classification_data):
     X, y = classification_data
     clf = ensemble.HistGradientBoostingClassifier(max_iter=5)
     clf.fit(X, y)
-    return clf, X
+    return SklearnModel(model=clf, sample_data=X)
 
 
 @pytest.fixture(scope="module")
-def hist_booster_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def hist_booster_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = ensemble.HistGradientBoostingRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def huber_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def huber_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.HuberRegressor(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def knn_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def knn_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neighbors.KNeighborsRegressor(n_neighbors=2).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def knn_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def knn_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X_train, y_train)
-    return clf, X_train
+    return SklearnModel(model=clf, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lars_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lars_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Lars().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lars_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lars_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LarsCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lasso_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Lasso().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lasso_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lasso_lars_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_lars_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLars().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lasso_lars_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_lars_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLarsCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def lasso_lars_ic_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def lasso_lars_ic_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LassoLarsIC().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def linear_svc(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def linear_svc(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.LinearSVC(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def linear_svr(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def linear_svr(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.LinearSVR(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def logistic_regression_cv(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def logistic_regression_cv(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.LogisticRegressionCV(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def mlp_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def mlp_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neural_network.MLPClassifier(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def mlp_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def mlp_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = neural_network.MLPRegressor(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1428,7 +1849,7 @@ def multioutput_classification():
 
     X, y = make_multilabel_classification(n_classes=3, random_state=0)
     reg = multioutput.MultiOutputClassifier(linear_model.LogisticRegression()).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1437,7 +1858,7 @@ def multioutput_regression():
 
     X, y = load_linnerud(return_X_y=True)
     reg = multioutput.MultiOutputRegressor(linear_model.Ridge(random_state=123)).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1445,7 +1866,7 @@ def multitask_elasticnet():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskElasticNet(alpha=0.1).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1453,7 +1874,7 @@ def multitask_elasticnet_cv():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskElasticNetCV(max_iter=5, cv=2).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1461,7 +1882,7 @@ def multitask_lasso():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskLasso(alpha=0.1).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1469,7 +1890,7 @@ def multitask_lasso_cv():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([[0, 0], [1, 1], [2, 2]])
     reg = linear_model.MultiTaskLassoCV(max_iter=5, cv=2).fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
@@ -1477,140 +1898,158 @@ def multinomial_nb():
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([1, 2, 3])
     reg = naive_bayes.MultinomialNB().fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
-def nu_svc(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def nu_svc(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.NuSVC(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def nu_svr(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def nu_svr(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.NuSVR(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def pls_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def pls_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = cross_decomposition.PLSRegression(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def passive_aggressive_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def passive_aggressive_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PassiveAggressiveClassifier(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def passive_aggressive_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def passive_aggressive_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PassiveAggressiveRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def perceptron(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def perceptron(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Perceptron(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def poisson_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def poisson_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.PoissonRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def quantile_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def quantile_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.QuantileRegressor(solver="highs").fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def ransac_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
-    reg = linear_model.RANSACRegressor(max_trials=5).fit(X_train, y_train)
-    return reg, X_train
+def ransac_regressor():
+    from sklearn import datasets
+
+    n_samples = 1000
+    n_outliers = 50
+
+    X, y, _ = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=1,
+        n_informative=1,
+        noise=10,
+        coef=True,
+        random_state=0,
+    )
+    np.random.seed(0)
+    X[:n_outliers] = 3 + 0.5 * np.random.normal(size=(n_outliers, 1))
+    y[:n_outliers] = -3 + 10 * np.random.normal(size=n_outliers)
+
+    # X_train, y_train, _, _ = example_dataframe
+    reg = linear_model.RANSACRegressor(max_trials=5).fit(X, y)
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
-def radius_neighbors_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def radius_neighbors_regressor(example_dataframe):
+
+    X_train, y_train, _, _ = example_dataframe
     reg = neighbors.RadiusNeighborsRegressor().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def radius_neighbors_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def radius_neighbors_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf = neighbors.RadiusNeighborsClassifier().fit(X_train, y_train)
-    return clf, X_train
+    return SklearnModel(model=clf, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def ridge_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.Ridge().fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def ridge_cv_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_cv_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RidgeCV(cv=2).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def ridge_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def ridge_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = linear_model.RidgeClassifier(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def ridge_cv_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
-    reg = reg = linear_model.RidgeClassifierCV(cv=2).fit(X_train, y_train)
-    return reg, X_train
+def ridge_cv_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
+    reg = linear_model.RidgeClassifierCV(cv=2).fit(X_train, y_train)
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def sgd_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def sgd_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.SGDClassifier(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def sgd_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def sgd_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.SGDRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def svc(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def svc(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.SVC(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def svr(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def svr(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = svm.SVR(max_iter=10).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1627,45 +2066,45 @@ def stacking_classifier():
         estimators=estimators, final_estimator=linear_model.LogisticRegression(max_iter=5)
     )
     reg.fit(X, y)
-    return reg, X
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
-def theilsen_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def theilsen_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.TheilSenRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def tweedie_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def tweedie_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     reg = reg = linear_model.TweedieRegressor(max_iter=5).fit(X_train, y_train)
-    return reg, X_train
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def voting_classifier(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def voting_classifier(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf1 = linear_model.LogisticRegression(multi_class="multinomial", max_iter=5)
     clf2 = ensemble.RandomForestClassifier(n_estimators=5, random_state=1)
     clf3 = naive_bayes.GaussianNB()
     eclf1 = ensemble.VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard", flatten_transform=False
     )
-    eclf1 = eclf1.fit(X_train, y_train)
-    return eclf1, X_train
+    reg = eclf1.fit(X_train, y_train)
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
-def voting_regressor(drift_dataframe):
-    X_train, y_train, _, _ = drift_dataframe
+def voting_regressor(example_dataframe):
+    X_train, y_train, _, _ = example_dataframe
     clf1 = linear_model.LinearRegression()
     clf2 = ensemble.RandomForestRegressor(n_estimators=5, random_state=1)
     clf3 = linear_model.Lasso()
     eclf1 = ensemble.VotingRegressor(estimators=[("lr", clf1), ("rf", clf2), ("lso", clf3)])
-    eclf1 = eclf1.fit(X_train, y_train)
-    return eclf1, X_train
+    reg = eclf1.fit(X_train, y_train)
+    return SklearnModel(model=reg, sample_data=X_train)
 
 
 @pytest.fixture(scope="module")
@@ -1688,4 +2127,82 @@ def deeplabv3_resnet50():
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)
 
-    return model, input_batch.numpy()
+    return PyTorchModel(model=model, sample_data=input_batch)
+
+
+@pytest.fixture(scope="module")
+def pytorch_lightning_model():
+    # define any number of nn.Modules (or use your current ones)
+    nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
+    nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
+
+    # define the LightningModule
+    class SimpleModel(L.LightningModule):
+        def __init__(self):
+            super().__init__()
+            self.l1 = torch.nn.Linear(in_features=64, out_features=4)
+
+        def forward(self, x):
+            return torch.relu(self.l1(x.view(x.size(0), -1)))
+
+    trainer = L.Trainer()
+    model = SimpleModel()
+
+    # set model
+    trainer.strategy.model = model
+    input_sample = torch.randn((1, 64))
+    return LightningModel(model=trainer, sample_data=input_sample)
+
+
+@pytest.fixture(scope="module")
+def lightning_regression():
+    class SimpleDataset(Dataset):
+        def __init__(self):
+            X = np.arange(10000)
+            y = X * 2
+            X = [[_] for _ in X]
+            y = [[_] for _ in y]
+            self.X = torch.Tensor(X)
+            self.y = torch.Tensor(y)
+
+        def __len__(self):
+            return len(self.y)
+
+        def __getitem__(self, idx):
+            return {"X": self.X[idx], "y": self.y[idx]}
+
+    class MyModel(L.LightningModule):
+        def __init__(self):
+            super().__init__()
+            self.fc = nn.Linear(1, 1)
+            self.criterion = MSELoss()
+
+        def forward(self, inputs_id, labels=None):
+            outputs = self.fc(inputs_id)
+            return outputs
+
+        def train_dataloader(self):
+            dataset = SimpleDataset()
+            return DataLoader(dataset, batch_size=1000)
+
+        def training_step(self, batch, batch_idx):
+            input_ids = batch["X"]
+            labels = batch["y"]
+            outputs = self(input_ids, labels)
+            loss = 0
+            if labels is not None:
+                loss = self.criterion(outputs, labels)
+            return {"loss": loss}
+
+        def configure_optimizers(self):
+            optimizer = Adam(self.parameters())
+            return optimizer
+
+    model = MyModel()
+    trainer = L.Trainer(max_epochs=1)
+    trainer.fit(model)
+
+    X = torch.Tensor([[1.0], [51.0], [89.0]])
+
+    yield LightningModel(model=trainer, sample_data=X, preprocessor=StandardScaler()), MyModel
+    cleanup()

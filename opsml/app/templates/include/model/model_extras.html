@@ -1,6 +1,5 @@
 
 <div class="card-body" id="CardButtons" >
-  <button id="sample-data-button" type="submit" class="btn btn-success" >Sample Data</button>
   <button id="metadata-extra-button" type="submit" class="btn btn-success" >Metadata</button>
 
   {% if runcard is not none %}
@@ -9,21 +8,6 @@
     <button id="artifact-button" type="submit" class="btn btn-success" >Artifacts</button>
     {% endif %}
 </div>
-
-  <div class="card-body" id="SampleData" style="display:none">
-    
-    <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Sample Data</font>
-        <clipboard-copy for="SampleDataCode">
-          Copy
-          <span class="notice" hidden>Copied!</span>
-        </clipboard-copy>
-    </h5>
-      <pre style="max-height: 500px; overflow: scroll;">
-        <code id="SampleDataCode" class="json">{{sample_data}}
-        </code>
-      </pre>
-
-  </div>
 
   <div class="card-body" id="MetadataJson" style="display:none;">
     <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Metadata</font>
@@ -118,7 +102,7 @@
             <tr>
               <td><font color="#999">{{name}}</font></td>
               <td>
-                <a href="/opsml/files/download?read_path={{uri}}" download={{uri.split("/")[-1]}}>
+                <a href="/opsml/files/download?path={{uri}}" download={{uri.split("/")[-1]}}>
                   <button id="download-button" type="submit" class="btn btn-success">Download</button>
                 </a>
               </td>

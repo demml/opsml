@@ -227,6 +227,15 @@ def try_import(packages: List[str], extras_expression: str, context: str) -> Non
 
 class OpsmlImportExceptions:
     @staticmethod
+    def try_torchonnx_imports() -> None:
+        """Attempts to import packages needed for onnx conversion of sklearn models"""
+        try_import(
+            ["onnx", "onnxruntime"],
+            "opsml[torch_onnx]",
+            "If you wish to convert your model to onnx",
+        )
+
+    @staticmethod
     def try_skl2onnx_imports() -> None:
         """Attempts to import packages needed for onnx conversion of sklearn models"""
         try_import(
@@ -254,3 +263,30 @@ class OpsmlImportExceptions:
             "opsml[server]",
             "If you wish to use the server registry",
         )
+
+    @staticmethod
+    def try_tensorflow_import() -> None:
+        """Attempts to import packages needed for the server registry"""
+
+        try_import(
+            ["mypackage"],
+            "opsml[server]",
+            "If you wish to use TensorFlowModel",
+        )
+
+
+def get_class_name(object_: object) -> str:
+    """Parses object to get the fully qualified class name.
+    Used during type checking to avoid unnecessary imports.
+
+    Args:
+        object_:
+            object to parse
+    Returns:
+        fully qualified class name
+    """
+    klass = object_.__class__
+    module = klass.__module__
+    if module == "builtins":
+        return klass.__qualname__  # avoid outputs like 'builtins.str'
+    return module + "." + klass.__qualname__

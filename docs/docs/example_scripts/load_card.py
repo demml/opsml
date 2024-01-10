@@ -1,8 +1,10 @@
-from opsml.registry import CardRegistry
+from opsml import CardRegistry
 
 model_registry = CardRegistry(registry_name="model")
 
-example_record = model_registry.list_cards(name="linnerrud", as_dataframe=False)[0]
+example_record = model_registry.list_cards(
+    name="linnerrud",
+)[0]
 
 model_card = model_registry.load_card(uid=example_record.get("uid"))
 print(model_card.version)
