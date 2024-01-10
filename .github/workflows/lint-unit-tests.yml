@@ -93,7 +93,7 @@ jobs:
   #    - run : make test.unit
 
   Unit-Integration:
-    needs: Lints
+    #needs: Lints
     strategy:
       matrix:
         python-version: ["3.11"]
@@ -104,6 +104,7 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
+      OPSML_GCS_TEST_BUCKET: ${{ secrets.OPSML_GCS_TEST_BUCKET }}
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
