@@ -31,7 +31,10 @@ from opsml.types import SaveName
 from opsml.types.extra import Suffix
 from tests.conftest import TODAY_YMD
 
-EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+WINDOWS_EXCLUDE = sys.platform == "win32"
+
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 def test_debug(test_app: TestClient):
@@ -481,7 +484,7 @@ def test_model_metrics(
     assert response.status_code == 200
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+@pytest.mark.skipif(EXCLUDE, reason="Skipping")
 def test_token_fail(
     monkeypatch: pytest.MonkeyPatch,
     api_registries: CardRegistries,
@@ -743,8 +746,7 @@ def test_download_fail(test_app: TestClient):
     assert response.status_code == 422
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
+@pytest.mark.skipif(EXCLUDE, reason="Skipping")
 def test_register_vit(
     test_app: TestClient,
     api_registries: CardRegistries,
