@@ -122,6 +122,6 @@ def test_gcs_full_run(
     assert len(api_storage_client.find(Path(modelcard.uri))) == 0
     
     # need to remove project from gcs
-    project_path = gcsfs_bucket /RegistryTableNames.PROJECT_REGISTRY.value 
+    project_path = gcsfs_bucket / RegistryTableNames.PROJECT.value
     api_storage_client.rm(project_path)
  
