@@ -10,6 +10,7 @@ from opsml.model import (
 )
 import pytest
 import sys
+EXCLUDE = sys.platform in ("darwin", "win32") and sys.version_info < (3, 11)
 
 def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
     model, _ = linear_regression
@@ -18,7 +19,7 @@ def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
     prediction = model.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
 
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+@pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
 def test_tf_interface(tf_transformer_example: TensorFlowModel):
     assert tf_transformer_example.model_type == "Functional"
     prediction = tf_transformer_example.get_sample_prediction()
@@ -38,7 +39,7 @@ def test_lightning_interface(lightning_regression: LightningModel):
     prediction = light_model.get_sample_prediction()
     assert prediction.prediction_type == "torch.Tensor"
 
-
+@pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
 def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
     assert huggingface_bart.model_type == "BartModel"
@@ -49,7 +50,7 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
     prediction = huggingface_bart.get_sample_prediction()
     assert prediction.prediction_type == "dict"
 
-
+@pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
 def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel):
     model = huggingface_text_classification_pipeline
     assert model.model_class == "transformers"

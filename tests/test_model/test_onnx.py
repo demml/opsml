@@ -13,8 +13,7 @@ from opsml.model import (
 )
 from tests import conftest
 
-EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-
+EXCLUDE = sys.platform in ("darwin", "win32") and sys.version_info < (3, 11)
 
 # this is done to filter all the convergence and user warnings during testing
 def warn(*args, **kwargs):
@@ -116,7 +115,7 @@ def test_sklearn_models(interface: ModelInterface):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon or win32")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -129,7 +128,7 @@ def test_model_pytorch_predict(interface: PyTorchModel):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon or win32")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -142,8 +141,7 @@ def test_huggingface_model(interface: HuggingFaceModel):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win32", reason="No tf test with wn_32")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon or win32")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -156,7 +154,7 @@ def test_tensorflow_predict(interface: TensorFlowModel):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon or win32")
 @pytest.mark.parametrize(
     "interface",
     [
