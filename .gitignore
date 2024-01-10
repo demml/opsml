@@ -119,6 +119,7 @@ notebooks/
 .local_tests/
 .local_integration/
 .test_local.py
+lightning_logs/
 
 # git
 **/*.orig

@@ -122,7 +122,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml.registry import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
+from opsml import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
 
 # set up registries
 data_registry = CardRegistry(registry_name="data")
@@ -180,8 +180,8 @@ model_registry.register_card(card=modelcard)
 # >{"level": "INFO", "message": "OPSML_MODEL_REGISTRY: linnerrud, version:1.0.0 registered", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
 
 
-print(data_registry.list_cards(info=card_info, as_dataframe=False))
-print(model_registry.list_cards(info=card_info, as_dataframe=False))
+print(data_registry.list_cards(info=card_info, ))
+print(model_registry.list_cards(info=card_info, ))
 ```
 *(Code will run as-is)*
 

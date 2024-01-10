@@ -4,8 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-import os
 import tempfile
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from fastapi import Request
@@ -14,23 +14,19 @@ from starlette.templating import _TemplateResponse
 
 from opsml.app.routes.pydantic_models import AuditReport
 from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
+from opsml.cards.audit import AuditCard, AuditSections
+from opsml.cards.base import ArtifactCard
+from opsml.cards.data import DataCard
+from opsml.cards.model import ModelCard
+from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.types import ModelMetadata
-from opsml.projects.base.types import ProjectInfo
-from opsml.projects.project import OpsmlProject
-from opsml.registry.cards.audit import AuditCard, AuditSections
-from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.data import DataCard
-from opsml.registry.cards.model import ModelCard
-from opsml.registry.cards.run import RunCard
-from opsml.registry.data.types import AllowedDataType
-from opsml.registry.sql.registry import CardRegistry
+from opsml.registry import CardRegistry
+from opsml.types import ModelMetadata, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
 
 # Constants
-PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
@@ -286,7 +282,9 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool]:
+    def _load_profile(
+        self, request: Request, load_profile: bool, datacard: DataCard
+    ) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -300,22 +298,25 @@ class DataRouteHelper(RouteHelper):
         Returns:
             `Tuple[str, bool]`
         """
+        storage_client = request.app.state.storage_client
 
-        if load_profile and datacard.metadata.uris.profile_html_uri is not None:
+        data_html_path = (datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
+        html_exists = storage_client.exists(data_html_path)
+
+        if load_profile and html_exists:
             with tempfile.TemporaryDirectory() as tmp_dir:
-                filepath = request.app.state.storage_client.download(
-                    datacard.metadata.uris.profile_html_uri,
-                    tmp_dir,
-                )
+                lpath = Path(tmp_dir) / data_html_path.name
+                storage_client.get(data_html_path, lpath)
 
-                stats = os.stat(filepath)
-                if stats.st_size / (1024 * 1024) <= 50:
-                    with open(filepath, "r", encoding="utf-8") as html_file:
-                        return html_file.read(), True
+                file_size = lpath.stat().st_size
+                if file_size / (1024 * 1024) <= 50:
+                    with lpath.open("r", encoding="utf-8") as html_file:
+                        return html_file.read(), True, html_exists
+
                 else:
-                    return "Data profile too large to display. Please download to view.", False
+                    return "Data profile too large to display. Please download to view.", False, html_exists
 
-        return None, False
+        return None, False, html_exists
 
     def get_versions_page(
         self,
@@ -338,13 +339,16 @@ class DataRouteHelper(RouteHelper):
         """
 
         registry: CardRegistry = request.app.state.registries.data
-        versions = registry.list_cards(name=name, as_dataframe=False, limit=50)
+        versions = registry.list_cards(name=name, limit=50)
 
         datacard, version = self._check_version(registry, name, versions, version)
         datacard = cast(DataCard, datacard)
 
         data_splits = self._check_splits(card=datacard)
-        data_profile, render_profile = self._load_profile(request, load_profile, datacard)
+        data_profile, render_profile, html_exists = self._load_profile(request, load_profile, datacard)
+
+        data_filename = Path(SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
+        data_profile_filename = Path(SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
 
         return templates.TemplateResponse(
             "include/data/data_version.html",
@@ -357,52 +361,9 @@ class DataRouteHelper(RouteHelper):
                 "data_profile": data_profile,
                 "render_profile": render_profile,
                 "load_profile": load_profile,
-            },
-        )
-
-    def get_data_profile_page(
-        self,
-        request: Request,
-        name: str,
-        version: str,
-        profile_uri: Optional[str] = None,
-    ) -> _TemplateResponse:
-        """Loads the data profile page
-
-        Args:
-            request:
-                The incoming HTTP request.
-            name:
-                The data name.
-            version:
-                The data version.
-            profile_uri:
-                The data profile uri.
-        """
-        if profile_uri is None:
-            data_profile = "No profile found"
-            render = False
-        else:
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                filepath = request.app.state.storage_client.download(profile_uri, tmp_dir)
-                stats = os.stat(filepath)
-                if stats.st_size / (1024 * 1024) <= 50:
-                    with open(filepath, "r", encoding="utf-8") as html_file:
-                        data_profile = html_file.read()
-                        render = True
-
-                else:
-                    data_profile = "Data profile too large to display. Please download to view."
-                    render = False
-
-        return templates.TemplateResponse(
-            "include/data/data_profile.html",
-            {
-                "request": request,
-                "name": name,
-                "data_profile": data_profile,
-                "version": version,
-                "render": render,
+                "html_exists": html_exists,
+                "data_filename": data_filename,
+                "data_profile_filename": data_profile_filename,
             },
         )
 
@@ -432,44 +393,12 @@ class ModelRouteHelper(RouteHelper):
             },
         )
 
-    def _get_runcard(
-        self,
-        request: Request,
-        registry: CardRegistry,
-        modelcard: ModelCard,
-    ) -> Tuple[Optional[RunCard], Optional[str]]:
+    def _get_runcard(self, registry: CardRegistry, modelcard: ModelCard) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
-            # TODO(@thorresterr): 🤷🏻
             return runcard, runcard.project_id
 
         return None, None
-
-    def _check_data_dim(self, metadata: ModelMetadata) -> Tuple[str, str]:
-        """Checks if the data dimension is too large to load in the UI
-
-        Args:
-            metadata:
-                The model metadata.
-
-        Returns:
-            `Tuple[str, str]`
-        """
-        max_dim = 0
-        if metadata.data_schema.model_data_schema.data_type == AllowedDataType.NUMPY:
-            features = metadata.data_schema.model_data_schema.input_features
-            inputs = features.get("inputs")
-            if inputs is not None:
-                max_dim = max(inputs.shape)
-        # capping amount of sample data shown
-
-        if max_dim > 200:
-            metadata.sample_data = {"inputs": "Sample data is too large to load in ui"}
-
-        metadata_json = json.dumps(metadata.model_dump(), indent=4)
-        sample_data = json.dumps(metadata.sample_data, indent=4)
-
-        return metadata_json, sample_data
 
     def get_versions_page(
         self,
@@ -498,12 +427,32 @@ class ModelRouteHelper(RouteHelper):
         modelcard, version = self._check_version(registry, name, versions, version)
 
         runcard, project_num = self._get_runcard(
-            request=request,
             registry=request.app.state.registries.run,
             modelcard=cast(ModelCard, modelcard),
         )
 
-        metadata_json, sample_data = self._check_data_dim(metadata)
+        metadata_json = json.dumps(metadata.model_dump(), indent=4)
+
+        model_filename = Path(metadata.model_uri)
+
+        if model_filename.suffix == "":
+            model_save_filename = "model.zip"
+        else:
+            model_save_filename = model_filename.name
+
+        onnx_filename = Path(metadata.onnx_uri) if metadata.onnx_uri is not None else None
+
+        if onnx_filename is not None and onnx_filename.suffix == "":
+            onnx_save_filename = "onnx.zip"
+        elif onnx_filename is not None:
+            onnx_save_filename = onnx_filename.name
+
+        preprocessor_filename = Path(metadata.preprocessor_uri) if metadata.preprocessor_uri is not None else None
+
+        if preprocessor_filename is not None and preprocessor_filename.suffix == "":
+            preprocessor_save_filename = "preprocessor.zip"
+        elif preprocessor_filename is not None:
+            preprocessor_save_filename = preprocessor_filename.name
 
         return templates.TemplateResponse(
             "include/model/model_version.html",
@@ -514,9 +463,11 @@ class ModelRouteHelper(RouteHelper):
                 "selected_version": version,
                 "project_num": project_num,
                 "metadata": metadata,
-                "sample_data": sample_data,
                 "runcard": runcard,
                 "metadata_json": metadata_json,
+                "model_filename": model_save_filename,
+                "preprocessor_filename": preprocessor_save_filename,
+                "onnx_filename": onnx_save_filename,
             },
         )
 
@@ -553,22 +504,25 @@ class ProjectRouteHelper(RouteHelper):
         """
 
         projects = project_registry.list_cards()
-        return list(set(f"{project['team']}:{project['name']}" for project in projects))
+        return [project["project_id"] for project in projects]
 
-    def get_project_runs(self, selected_project: str) -> List[Dict[str, Any]]:
+    def get_project_runs(self, selected_project: str, run_registry: CardRegistry) -> List[Dict[str, Any]]:
         """Get runs for a project
 
         Args:
             selected_project:
                 The selected project.
+            run_registry:
+                The run registry.
         """
-        # get projects
-        project_info = ProjectInfo(
-            name=selected_project.split(":")[1],
-            team=selected_project.split(":")[0],
+
+        project_runs = run_registry._registry.list_cards(
+            limit=100,
+            query_terms={"project_id": selected_project},
         )
-        project = OpsmlProject(project_info)
-        return project.list_runs()
+        sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
+
+        return project_runs
 
     def get_project_run(
         self,
@@ -591,7 +545,7 @@ class ProjectRouteHelper(RouteHelper):
 
         unique_projects = self.get_unique_projects(project_registry)
 
-        logger.info(f"unique_projects: {unique_projects}")
+        logger.debug(f"unique_projects: {unique_projects}")
 
         if len(unique_projects) == 0:
             return templates.TemplateResponse(
@@ -605,7 +559,9 @@ class ProjectRouteHelper(RouteHelper):
             selected_project = project
 
         # get projects
-        project_runs = self.get_project_runs(selected_project)
+        project_runs = self.get_project_runs(selected_project, run_registry)
+
+        logger.debug("Found {} runs", len(project_runs))
 
         if run_uid is not None:
             runcard = run_registry.load_card(uid=run_uid)

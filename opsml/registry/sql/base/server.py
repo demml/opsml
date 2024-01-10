@@ -5,27 +5,25 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
+from opsml.cards import ArtifactCard, ModelCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
-from opsml.registry.cards import ArtifactCard, ModelCard
-from opsml.registry.cards.types import RegistryType
-from opsml.registry.sql.base.db_initializer import DBInitializer
-from opsml.registry.sql.base.query_engine import QueryEngine
-from opsml.registry.sql.base.registry_base import SQLRegistryBase
-from opsml.registry.sql.base.sql_schema import SQLTableGetter
-from opsml.registry.sql.base.types import RegistryTableNames
-from opsml.registry.sql.base.utils import log_card_change
-from opsml.registry.sql.connectors.connector import DefaultConnector
-from opsml.registry.sql.records import LoadedRecordType
-from opsml.registry.sql.semver import (
+from opsml.registry.semver import (
     CardVersion,
     SemVerRegistryValidator,
     SemVerSymbols,
     SemVerUtils,
     VersionType,
 )
-from opsml.registry.storage.client import StorageClient
+from opsml.registry.sql.base.db_initializer import DBInitializer
+from opsml.registry.sql.base.query_engine import QueryEngine
+from opsml.registry.sql.base.registry_base import SQLRegistryBase
+from opsml.registry.sql.base.sql_schema import SQLTableGetter
+from opsml.registry.sql.base.utils import log_card_change
+from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
+from opsml.storage.client import StorageClient
+from opsml.types import RegistryTableNames, RegistryType
 
 logger = ArtifactLogger.get_logger()
 
@@ -354,16 +352,6 @@ class ServerProjectCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
-
-    def load_card_record(
-        self,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        uid: Optional[str] = None,
-        ignore_release_candidates: bool = False,
-    ) -> LoadedRecordType:
-        raise ValueError("ProjectCardRegistry does not support load_card")
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")

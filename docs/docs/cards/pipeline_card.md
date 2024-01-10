@@ -1,6 +1,6 @@
 # PipelineCard
 
-::: opsml.registry.PipelineCard
+::: opsml.PipelineCard
     options:
         members:
             - add_card_uid

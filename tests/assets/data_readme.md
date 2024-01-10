@@ -22,5 +22,5 @@ This is an example summary for a model
 ### Example code:
 ```python
 import numpy as np
-from opsml.registry import CardRegistry, ModelCard
+from opsml import CardRegistry, ModelCard
 ```

@@ -7,8 +7,8 @@
 import codecs
 import csv
 import datetime
-import os
-from typing import Any, BinaryIO, Dict, List, Optional
+from pathlib import Path
+from typing import Any, BinaryIO, Dict, List, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -26,14 +26,16 @@ from opsml.app.routes.utils import (
     get_names_teams_versions,
     write_records_to_csv,
 )
+from opsml.cards.audit import AuditCard, AuditSections
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.audit import AuditCard, AuditSections
+from opsml.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
 # Constants
-PARENT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
+TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
+
 AUDIT_FILE = "audit_file.csv"
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
@@ -113,6 +115,7 @@ async def save_audit_form(
         audit_form_dict=form.model_dump(),
         registries=request.app.state.registries,
     )
+
     audit_card = parser.parse_form()
 
     audit_report = AuditReport(
@@ -157,21 +160,22 @@ async def save_audit_comment(
         comment:
             `CommentSaveRequest`
     """
-
-    audit_card: AuditCard = request.app.state.registries.audit.load_card(uid=comment.uid)
+    registry: CardRegistry = request.app.state.registries.audit
+    audit_card = cast(AuditCard, registry.load_card(uid=comment.uid))
 
     # most recent first
     audit_card.add_comment(
         name=comment.comment_name,
         comment=comment.comment_text,
     )
+
     model_names, teams, versions = get_names_teams_versions(
         registry=request.app.state.registries.model,
         name=comment.selected_model_name,
         team=comment.selected_model_team,
     )
 
-    request.app.state.registries.audit.update_card(card=audit_card)
+    registry.update_card(card=audit_card)
 
     audit_report = AuditReport(
         name=audit_card.name,

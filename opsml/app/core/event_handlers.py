@@ -3,16 +3,16 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, Awaitable, Callable, Union
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator, Awaitable, Callable, Union
 
-import rollbar
 from fastapi import FastAPI, Response
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.model.registrar import ModelRegistrar
-from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.storage import client
+from opsml.model.registrar import ModelRegistrar
+from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
+from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
 
@@ -21,16 +21,23 @@ MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 def _init_rollbar() -> None:
     logger.info("Initializing rollbar")
-    rollbar.init(
-        os.getenv("ROLLBAR_TOKEN"),
-        config.app_env,
-    )
+
+    rollbar_token = os.getenv("ROLLBAR_TOKEN")
+
+    if rollbar_token is None:
+        return None
+
+    import rollbar
+
+    rollbar.init(rollbar_token, config.app_env)
+    return None
 
 
 def _init_registries(app: FastAPI) -> None:
     app.state.registries = CardRegistries()
     app.state.storage_client = client.storage_client
     app.state.model_registrar = ModelRegistrar(client.storage_client)
+    app.state.storage_root = config.storage_root
 
 
 def _shutdown_registries(app: FastAPI) -> None:
@@ -60,3 +67,10 @@ def stop_app_handler(app: FastAPI) -> Callable[[], None]:
         _shutdown_registries(app=app)
 
     return shutdown
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[Any, Any]:
+    start_app_handler(app)()
+    yield
+    stop_app_handler(app)()

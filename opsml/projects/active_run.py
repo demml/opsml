@@ -3,19 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
+from opsml.cards.base import ArtifactCard
+from opsml.cards.data import DataCard
+from opsml.cards.model import ModelCard
+from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.base import ArtifactCard
-from opsml.registry.cards.data import DataCard
-from opsml.registry.cards.model import ModelCard
-from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import METRICS, PARAMS, CardInfo, CardType
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.sql.semver import VersionType
-from opsml.registry.storage.artifact import save_artifact_to_storage
-from opsml.registry.storage.client import StorageClient
-from opsml.registry.storage.types import ArtifactStorageType
+from opsml.registry.registry import CardRegistries, CardRegistry
+from opsml.registry.semver import VersionType
+from opsml.storage.client import StorageClient
+from opsml.types import ArtifactUris, CardInfo, CardType, Metrics, Params, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -173,27 +172,38 @@ class ActiveRun:
             info=info,
         )
 
-    def log_artifact(self, name: str, artifact: Any) -> None:
+    def log_artifact_from_file(
+        self,
+        name: str,
+        local_path: Union[str, Path],
+        artifact_path: Optional[Union[str, Path]] = None,
+    ) -> None:
         """
-        Append any artifact associated with your run to an ActiveRun. Artifact
-        must be pickleable (saved with joblib)
+        Log a local file or directory to the opsml server and associate with the current run.
 
         Args:
             name:
-                Artifact name
-            artifact:
-                Artifact
+                Name to assign to artifact(s)
+            local_path:
+                Local path to file or directory. Can be string or pathlike object
+            artifact_path:
+                Optional path to store artifact in opsml server. If not provided, 'artifacts' will be used
         """
+
         self._verify_active()
 
-        uri = save_artifact_to_storage(
-            artifact=artifact,
-            artifact_type=ArtifactStorageType.JOBLIB,
-            storage_client=self._info.storage_client,
-            root_uri=self.runcard.artifact_uri,
-            filename=name,
+        lpath = Path(local_path)
+        rpath = self.runcard.uri / (artifact_path or SaveName.ARTIFACTS.value)
+
+        if lpath.is_file():
+            rpath = rpath / lpath.name
+
+        self._info.storage_client.put(lpath, rpath)
+        self.runcard._add_artifact_uri(  # pylint: disable=protected-access
+            name=name,
+            local_path=lpath.as_posix(),
+            remote_path=rpath.as_posix(),
         )
-        self.runcard.add_artifact_uri(name=name, uri=uri)
 
     def log_metric(
         self,
@@ -270,13 +280,17 @@ class ActiveRun:
         raise NotImplementedError
 
     @property
-    def metrics(self) -> METRICS:
+    def metrics(self) -> Metrics:
         return self.runcard.metrics
 
     @property
-    def parameters(self) -> PARAMS:
+    def parameters(self) -> Params:
         return self.runcard.parameters
 
     @property
     def tags(self) -> dict[str, str]:
         return self.runcard.tags
+
+    @property
+    def artifact_uris(self) -> ArtifactUris:
+        return self.runcard.artifact_uris

@@ -14,7 +14,7 @@ from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_absolute_percentage_error
 
 from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.registry import CardInfo, DataCard, ModelCard
+from opsml import CardInfo, DataCard, ModelCard
 
 card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
@@ -83,8 +83,8 @@ import pandas as pd
 
 from opsml.projects import ProjectInfo, OpsmlProject
 
-from opsml.registry.cards import CardInfo
-from opsml.registry import DataCard, ModelCard, CardRegistry
+from opsml.cards import CardInfo
+from opsml import DataCard, ModelCard, CardRegistry
 
 
 def fake_data():
@@ -129,7 +129,7 @@ with project.run(run_name="opsml-test") as run:
 
 You can now log into the `Opsml` server and see your recent run and associated metadata
 
-::: opsml.registry.RunCard
+::: opsml.RunCard
     options:
         members:
             - add_tag

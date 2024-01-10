@@ -17,12 +17,13 @@ from fastapi.templating import Jinja2Templates
 from streaming_form_data.targets import FileTarget
 
 from opsml.app.routes.pydantic_models import ListTeamNameInfo
+from opsml.cards.audit import AuditCard, AuditSections
+from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.cards.audit import AuditCard, AuditSections
-from opsml.registry.cards.run import RunCard
-from opsml.registry.cards.types import RegistryType
-from opsml.registry.sql.registry import CardRegistries, CardRegistry
-from opsml.registry.storage.client import LocalStorageClient, StorageClient
+from opsml.registry.registry import CardRegistries, CardRegistry
+from opsml.settings.config import config
+from opsml.storage.client import LocalStorageClient, StorageClient
+from opsml.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 # Constants
@@ -47,7 +48,13 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
         A list of model versions
     """
 
-    return [card["version"] for card in registry.list_cards(name=model, team=team, as_dataframe=False)]
+    return [
+        card["version"]
+        for card in registry.list_cards(
+            name=model,
+            team=team,
+        )
+    ]
 
 
 def get_names_teams_versions(
@@ -113,9 +120,14 @@ def error_to_500(func: Callable[..., Any]) -> Any:
     async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         try:
             return await func(request, *args, **kwargs)
+
         except Exception as exc:  # pylint: disable=broad-exception-caught
             trace_back = traceback.format_exc()
             logger.error("exceptions: {} {}", exc, trace_back)
+
+            if config.opsml_testing:
+                raise ValueError(f"Exception: {exc}, {trace_back}") from exc
+
             return templates.TemplateResponse(
                 "include/500.html",
                 {
@@ -166,27 +178,22 @@ class MaxBodySizeValidator:
 class ExternalFileTarget(FileTarget):  # type: ignore[misc]
     def __init__(  # pylint: disable=keyword-arg-before-vararg
         self,
-        filename: str,
-        write_path: str,
+        write_path: Path,
         storage_client: StorageClient,
         allow_overwrite: bool = True,
         *args: Any,
         **kwargs: Any,
     ):
-        super().__init__(filename=filename, allow_overwrite=allow_overwrite, *args, **kwargs)
+        super().__init__(filename=write_path.name, allow_overwrite=allow_overwrite, *args, **kwargs)
 
         self.storage_client = storage_client
-        self.filepath = f"{write_path}/{filename}"
-        self._create_base_path()
-
-    def _create_base_path(self) -> None:
-        self.filepath = self.storage_client.build_absolute_path(self.filepath)
+        self.write_path = write_path
 
         if isinstance(self.storage_client, LocalStorageClient):
-            Path(self.filepath).parent.mkdir(parents=True, exist_ok=True)
+            self.write_path.parent.mkdir(parents=True, exist_ok=True)
 
     def on_start(self) -> None:
-        self._fd = self.storage_client.open(self.filepath, self._mode)
+        self._fd = self.storage_client.open(self.write_path, self._mode)
 
 
 def list_team_name_info(registry: CardRegistry, team: Optional[str] = None) -> ListTeamNameInfo:
@@ -251,8 +258,11 @@ class AuditFormParser:
         # register/update audit
         if audit_card.uid is not None:
             return self.registries.audit.update_card(card=audit_card)
+
         self.registries.audit.register_card(card=audit_card)
+
         self._add_auditcard_to_modelcard(auditcard_uid=audit_card.uid)
+
         return None
 
     def get_audit_card(self) -> AuditCard:

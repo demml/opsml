@@ -36,7 +36,7 @@ import numpy as np
 
 from opsml.projects import ProjectInfo
 from opsml.projects.mlflow import MlflowProject
-from opsml.registry import DataCard, ModelCard
+from opsml import DataCard, ModelCard
 
 
 def fake_data():

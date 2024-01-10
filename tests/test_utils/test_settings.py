@@ -1,12 +1,12 @@
-from opsml.registry.sql.registry import CardRegistries
-from opsml.registry.storage.client import (
+from opsml.registry.registry import CardRegistries
+from opsml.settings.config import OpsmlConfig
+from opsml.storage.client import (
     ApiStorageClient,
     GCSFSStorageClient,
     LocalStorageClient,
     S3StorageClient,
     get_storage_client,
 )
-from opsml.settings.config import OpsmlConfig
 
 
 def test_default_local_settings() -> None:

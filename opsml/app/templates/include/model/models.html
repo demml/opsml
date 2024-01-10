@@ -28,36 +28,25 @@
     </div>
 
 
-<div class="btn-group">
-  <div class="dropdown" id="MetadataTeamSelect">
-    <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
-      
-      {% if selected_team is not none %}
-        {{selected_team}}
-      {% else %}
-        Select Team
-      {% endif %}
+  <div>
+      <select class="dropdown" id="MetadataTeamSelect" style="visibility:hidden;">
 
-    </a>
-  
-    <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
-      {% if all_teams is not none %}
+        {% if all_teams is not none %}
 
-        {% for team in all_teams %}
-          <a class="dropdown-item" href="/opsml/models/list/?team={{team}}">{{team}}</a>
-        {% endfor %}
-        
-      {% else %}
-      <a class="dropdown-item" href="#">No Team Found</a>
-      {% endif %}
+          {% for team in all_teams %}
+          <option value="/opsml/models/list/?team={{team}}" {% if team == selected_team %} selected="selected" {% endif %}>{{ team }}</option>
+          {% endfor %}
 
-    </div>
+        {% else %}
+        <option value="None">No team found</option>
+        {% endif %}
+
+      </select>
   </div>
-</div>
 
 
 
-  <br>
+<br>
 <!---- Form for selecting model -------->
 <div class="container">
     <div class="page-header">
@@ -67,18 +56,29 @@
 <br>
 <div class="model-container">
   <div class="row row-cols-md-5">
-      {% for model in models %}
-        <div class="col-12">
-          {% with model=model %}
-      		{% include "include/model/card.html" %}
-    	    {% endwith %}
-        </div>
-      {% endfor %}
-    </div>
+    {% for model in models %}
+      <div class="col-12">
+        {% with model=model %}
+        {% include "include/model/card.html" %}
+        {% endwith %}
+      </div>
+    {% endfor %}
+  </div>
 </div>
 </body>
+{% endblock %}
 
+{% block scripts %}
 
+<script>
+  $(document).ready(function() {
+    $('#MetadataTeamSelect').select2();
+  
+    $("#MetadataTeamSelect").on('select2:select', function(e){
+      window.location.href = e.params.data.id;
+    });
+  });
+</script>
 {% endblock %}
 
 

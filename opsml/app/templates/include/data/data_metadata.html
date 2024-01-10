@@ -33,8 +33,14 @@
         </tr>
 
         <tr>
+        <td><i class="fa-solid fa-brain" style="color:#04b78a"></i></td>
+        <td><font color="#999">Data Interface:</font></td>
+        <td>{{selected_data.metadata.interface_type}}</td>
+        </tr>
+
+        <tr>
         <td><i class="fa fa-file" style="color:#04b78a"></i></td>
-        <td><font color="#999">Type:</font></td>
+        <td><font color="#999">Data Type:</font></td>
         <td>{{selected_data.metadata.data_type}}</td>
         </tr>
 
@@ -42,18 +48,18 @@
         <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
         <td><font color="#999">Data:</font></td>
         <td>
-            <a href="/opsml/files/download?read_path={{selected_data.metadata.uris.data_uri}}" download={{selected_data.metadata.uris.data_uri.split("/")[-1]}}>
+            <a href="/opsml/data/download?uid={{selected_data.uid}}" download={{data_filename}}>
                 <button id="download-button" type="submit" class="btn btn-success" >Download</button>
             </a>
         </td>
         </tr>
 
-        {% if selected_data.metadata.uris.profile_html_uri is not none %}
+        {% if html_exists == True %}
         <tr>
             <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
             <td><font color="#999">Data Profile:</font></td>
             <td>
-            <a href="/opsml/files/download?read_path={{selected_data.metadata.uris.profile_html_uri}}" download={{selected_data.metadata.uris.profile_html_uri.split("/")[-1]}}>
+            <a href="/opsml/data/download/profile?uid={{selected_data.uid}}" download={{data_profile_filename}}>
                 <button id="download-button" type="submit" class="btn btn-success" >Download</button>
             </a>
         </td>

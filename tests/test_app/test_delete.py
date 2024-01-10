@@ -1,104 +1,72 @@
-import os
 import sys
+from pathlib import Path
 from typing import Tuple
 
-import pandas as pd
 import pytest
-from sklearn import pipeline
 
-from opsml.registry import CardRegistries, DataCard, ModelCard
+from opsml.cards import DataCard, ModelCard
+from opsml.registry import CardRegistries
+from opsml.storage import client
+from opsml.types import SaveName
+from opsml.types.extra import Suffix
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_delete_data_model(
     api_registries: CardRegistries,
-    sklearn_pipeline: Tuple[pipeline.Pipeline, pd.DataFrame],
+    populate_model_data_for_api: Tuple[ModelCard, DataCard],
+    api_storage_client: client.StorageClient,
 ):
-    model, data = sklearn_pipeline
-    # create data card
+    modelcard, datacard = populate_model_data_for_api
+
     data_registry = api_registries.data
+    model_registry = api_registries.model
 
-    data_card = DataCard(
-        data=data,
-        name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
-    )
-    data_registry.register_card(card=data_card)
-
-    assert os.path.exists(
-        data_registry._registry.storage_client.build_absolute_path(data_card.metadata.uris.data_uri),
-    )
-    assert os.path.exists(
-        data_registry._registry.storage_client.build_absolute_path(data_card.metadata.uris.datacard_uri),
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert api_storage_client.exists(
+        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
     )
 
     # assert card and artifacts exist
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
+    cards = data_registry.list_cards(name=datacard.name, team=datacard.team)
     assert len(cards) == 1
 
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        tags={"id": "model1"},
-        datacard_uid=data_card.uid,
-        to_onnx=True,
-    )
-
-    model_registry = api_registries.model
-    model_registry.register_card(model_card)
-
-    cards = model_registry.list_cards(name="pipeline_model", team="mlops")
+    cards = model_registry.list_cards(name=modelcard.name, team=modelcard.team)
     assert len(cards) == 1
 
-    assert os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.trained_model_uri),
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(modelcard.interface.model_suffix)
     )
-    assert os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.model_metadata_uri),
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
     )
-    assert os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.onnx_model_uri),
-    )
-    assert os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.sample_data_uri),
-    )
-    assert os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.modelcard_uri),
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
 
     # delete model card
-    model_registry.delete_card(card=model_card)
-    cards = model_registry.list_cards(name="pipeline_model", team="mlops")
+    model_registry.delete_card(card=modelcard)
+    cards = model_registry.list_cards(name=modelcard.name, team=modelcard.team)
     assert len(cards) == 0
 
-    assert not os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.trained_model_uri),
+    assert not api_storage_client.exists(
+        Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(modelcard.interface.model_suffix)
     )
-    assert not os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.model_metadata_uri),
+    assert not api_storage_client.exists(
+        Path(modelcard.uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
     )
-    assert not os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.onnx_model_uri),
+    assert not api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
+    assert not api_storage_client.exists(
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
     )
-    assert not os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.sample_data_uri),
-    )
-    assert not os.path.exists(
-        model_registry._registry.storage_client.build_absolute_path(model_card.metadata.uris.modelcard_uri),
-    )
+    assert not api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
 
     # delete datacard
-    data_registry.delete_card(card=data_card)
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
+    data_registry.delete_card(card=datacard)
+    cards = data_registry.list_cards(name=datacard.name, team=datacard.team)
     assert len(cards) == 0
 
-    assert not os.path.exists(
-        data_registry._registry.storage_client.build_absolute_path(data_card.metadata.uris.data_uri),
-    )
-    assert not os.path.exists(
-        data_registry._registry.storage_client.build_absolute_path(data_card.metadata.uris.datacard_uri),
+    assert not api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert not api_storage_client.exists(
+        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
     )

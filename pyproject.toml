@@ -150,13 +150,15 @@ transformers = "^4.27.3"
 tensorflow = { version = "^2.11.0", platform = "linux" }
 # Tensorflow < 2.13.0 has no arm64 build in the main pypi package, so this separate one must be used for apple silicon
 tensorflow-macos = { version = "2.12.0", platform = "darwin" }
+lightning = "^2.1.2"
+optimum = "^1.16.1"
 pytest-rerunfailures = "^13.0"
 
 [tool.poetry.group.dev-lints]
 optional = true
 
 [tool.poetry.group.dev-lints.dependencies]
-ruff = "^0.0.242"
+ruff = "^0.1.0"
 types-pymysql = "^1.0.19.1"
 types-requests = "^2.28.11.7"
 black = "22.3.0"
@@ -201,6 +203,10 @@ disable = [
     "unused-argument",
     "fixme",
     "import-outside-toplevel",
+    "no-name-in-module",
+    "ungrouped-imports",
+    "cyclic-import", 
+    "logging-too-many-args",
 ]
 extension-pkg-whitelist = ["pydantic"]
 
@@ -219,6 +225,10 @@ log_cli = true
 log_cli_level = "INFO"
 testpaths = ["tests"]
 addopts = "--ignore=tests/test_docs"
+markers = [
+    "large",
+    "compat",
+]
 
 
 [tool.mypy]
@@ -227,6 +237,10 @@ python_version = "3.9"
 platform = "linux"
 ignore_missing_imports = true
 strict = true
+disable_error_code = [
+    "attr-defined",
+    "assignment",
+]
 
 plugins = [
     "numpy.typing.mypy_plugin",
