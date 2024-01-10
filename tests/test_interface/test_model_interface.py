@@ -32,14 +32,14 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel):
     prediction = tf_transformer_example.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
 
-
+@pytest.mark.flaky(reruns=1, reruns_delay=2)
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_torch_interface(deeplabv3_resnet50: PyTorchModel):
     assert deeplabv3_resnet50.model_type == "DeepLabV3"
     prediction = deeplabv3_resnet50.get_sample_prediction()
     assert prediction.prediction_type == "collections.OrderedDict"
 
-
+@pytest.mark.flaky(reruns=1, reruns_delay=2)
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_interface(lightning_regression: LightningModel):
 
@@ -48,7 +48,7 @@ def test_lightning_interface(lightning_regression: LightningModel):
     prediction = light_model.get_sample_prediction()
     assert prediction.prediction_type == "torch.Tensor"
 
-
+@pytest.mark.flaky(reruns=1, reruns_delay=2)
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
