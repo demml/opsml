@@ -102,7 +102,7 @@ def test_gcs_full_run(
     assert _runcard.metrics["test_metric"][0].value == 10
 
     # delete cards
-    a
+    
     # delete datacard
     data_registry.delete_card(datacard)
 
@@ -124,4 +124,4 @@ def test_gcs_full_run(
     # need to remove project from gcs
     project_path = gcsfs_bucket /RegistryTableNames.PROJECT_REGISTRY.value 
     api_storage_client.rm(project_path)
-    a
+ 
