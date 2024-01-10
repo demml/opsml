@@ -116,13 +116,7 @@ jobs:
           cache: 'poetry'
       - run : make setup.project
       - run : export OPSML_STORAGE_URI="gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}"
-      - run : make test.unit
-
-      - name: Store coverage files
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: coverage
+      - run : make test.unit.integration
 
   Postgres-Unit:
     needs: Unit-Test

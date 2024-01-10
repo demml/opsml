@@ -1926,14 +1926,32 @@ def quantile_regressor(example_dataframe):
 
 
 @pytest.fixture(scope="module")
-def ransac_regressor(example_dataframe):
-    X_train, y_train, _, _ = example_dataframe
-    reg = linear_model.RANSACRegressor(max_trials=5).fit(X_train, y_train)
-    return SklearnModel(model=reg, sample_data=X_train)
+def ransac_regressor():
+    from sklearn import datasets
+
+    n_samples = 1000
+    n_outliers = 50
+
+    X, y, _ = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=1,
+        n_informative=1,
+        noise=10,
+        coef=True,
+        random_state=0,
+    )
+    np.random.seed(0)
+    X[:n_outliers] = 3 + 0.5 * np.random.normal(size=(n_outliers, 1))
+    y[:n_outliers] = -3 + 10 * np.random.normal(size=n_outliers)
+
+    # X_train, y_train, _, _ = example_dataframe
+    reg = linear_model.RANSACRegressor(max_trials=5).fit(X, y)
+    return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture(scope="module")
 def radius_neighbors_regressor(example_dataframe):
+
     X_train, y_train, _, _ = example_dataframe
     reg = neighbors.RadiusNeighborsRegressor().fit(X_train, y_train)
     return SklearnModel(model=reg, sample_data=X_train)
