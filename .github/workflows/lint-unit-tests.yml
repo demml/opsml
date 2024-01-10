@@ -67,11 +67,6 @@ jobs:
       - run : make setup.project
       - run : make test.unit
 
-      - name: Store coverage files
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: coverage
 
   Unit-Test-311-Coverage:
     needs: Lints

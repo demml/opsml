@@ -31,12 +31,16 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel):
     assert prediction.prediction_type == "numpy.ndarray"
 
 
+@pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_torch_interface(deeplabv3_resnet50: PyTorchModel):
     assert deeplabv3_resnet50.model_type == "DeepLabV3"
     prediction = deeplabv3_resnet50.get_sample_prediction()
     assert prediction.prediction_type == "collections.OrderedDict"
 
 
+@pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
+@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_lightning_interface(lightning_regression: LightningModel):
 
     light_model, model = lightning_regression
