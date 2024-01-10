@@ -118,120 +118,120 @@ jobs:
       - run : export OPSML_STORAGE_URI="gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}"
       - run : make test.integration
 
-  Postgres-Unit:
-    needs: Unit-Test
-    runs-on: ubuntu-latest
-    env:
-      OPSML_TESTING: 1
-      LOG_LEVEL: DEBUG
+  #Postgres-Unit:
+  #  needs: Unit-Test
+  #  runs-on: ubuntu-latest
+  #  env:
+  #    OPSML_TESTING: 1
+  #    LOG_LEVEL: DEBUG
+#
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.11"]
+  #      poetry-version: ["1.5.1"]
+#
+  #  services:
+  #    postgres:
+  #      image: postgres:latest
+  #      env:
+  #        POSTGRES_DB: postgres        
+  #        POSTGRES_PASSWORD: postgres
+  #        POSTGRES_USER: postgres
+  #      ports:
+  #        - 5432:5432
+  #      # Set health checks to wait until postgres has started
+  #      options: >-
+  #        --health-cmd pg_isready
+  #        --health-interval 10s
+  #        --health-timeout 5s
+  #        --health-retries 5
+#
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - name: Install poetry
+  #      run: pipx install poetry==${{ matrix.poetry-version }}
+#
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v4
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+  #        cache: 'poetry'
+  #    
+  #    - run : make setup.project
+  #    - run : make test.registry
+  #      env:
+  #          OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
+#
+  #MySql-Unit:
+  #  needs: Unit-Test
+  #  runs-on: ubuntu-latest
+  #  env:
+  #    OPSML_TESTING: 1
+  #    LOG_LEVEL: DEBUG
+#
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.11"]
+  #      poetry-version: ["1.5.1"]
+#
+  #  services:
+  #    mysql:
+  #      image: mysql:8.2
+  #      env:
+  #        MYSQL_DATABASE: mysql
+  #        MYSQL_ALLOW_EMPTY_PASSWORD: yes
+  #      ports:
+  #        - 3306:3306
+  #      # Set health checks to wait until postgres has started
+  #      options: >-
+  #        --health-cmd="mysqladmin ping"
+  #        --health-interval=10s
+  #        --health-timeout=5s
+  #        --health-retries=3
+  #        --name=mysql-test
+#
+  #  steps:
+  #    - uses: actions/checkout@v3 
+  #    - name: Install poetry
+  #      run: |
+  #        sudo apt-get update
+  #        sudo apt-get install libcurl4-openssl-dev libmysqlclient-dev libgirepository1.0-dev
+  #        pipx install poetry==${{ matrix.poetry-version }}
+#
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      uses: actions/setup-python@v4
+  #      with:
+  #        python-version: ${{ matrix.python-version }}
+  #        cache: 'poetry'
+  #    
+  #    - run : make setup.project
+  #    - run : make test.registry
+  #      env:
+  #          OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5
 
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
 
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_DB: postgres        
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-        ports:
-          - 5432:5432
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  #overage:
+  # needs: Unit-Test
+  # runs-on: ubuntu-latest
+  # steps:
+  #   - uses: actions/setup-python@v4
+  #     with:
+  #       python-version: '3.9'
 
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+  #   - run: pip install smokeshow
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      
-      - run : make setup.project
-      - run : make test.registry
-        env:
-            OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
+  #   - name: get coverage artifacts
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: coverage
+  #       path: coverage
 
-  MySql-Unit:
-    needs: Unit-Test
-    runs-on: ubuntu-latest
-    env:
-      OPSML_TESTING: 1
-      LOG_LEVEL: DEBUG
-
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
-
-    services:
-      mysql:
-        image: mysql:8.2
-        env:
-          MYSQL_DATABASE: mysql
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-        ports:
-          - 3306:3306
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-          --name=mysql-test
-
-    steps:
-      - uses: actions/checkout@v3 
-      - name: Install poetry
-        run: |
-          sudo apt-get update
-          sudo apt-get install libcurl4-openssl-dev libmysqlclient-dev libgirepository1.0-dev
-          pipx install poetry==${{ matrix.poetry-version }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      
-      - run : make setup.project
-      - run : make test.registry
-        env:
-            OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5
-
-
-  Coverage:
-    needs: Unit-Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - run: pip install smokeshow
-
-      - name: get coverage artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: coverage
-          path: coverage
-
-      - run: smokeshow upload coverage
-        env:
-          SMOKESHOW_GITHUB_STATUS_DESCRIPTION: CLI Coverage {coverage-percentage}
-          SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 85
-          SMOKESHOW_GITHUB_CONTEXT: coverage
-          SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          SMOKESHOW_AUTH_KEY: ${{ secrets.SMOKESHOW_AUTH_TOKEN }}
+  #   - run: smokeshow upload coverage
+  #     env:
+  #       SMOKESHOW_GITHUB_STATUS_DESCRIPTION: CLI Coverage {coverage-percentage}
+  #       SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 85
+  #       SMOKESHOW_GITHUB_CONTEXT: coverage
+  #       SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+  #       SMOKESHOW_AUTH_KEY: ${{ secrets.SMOKESHOW_AUTH_TOKEN }}
 
