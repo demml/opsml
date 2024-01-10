@@ -67,12 +67,37 @@
         </td>
       </tr>
 
-      {% if metadata.preprocessor_uri is not none %}
+      {% if processor_uris["preprocessor"]["filename"] is not none %}
         <tr>
           <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
           <td><font color="#999">Preprocessor:</font></td>
           <td>
-            <a href="/opsml/files/download?path={{metadata.preprocessor_ur}}" download={{preprocessor_filename}}>
+            <a href="/opsml/files/download?path={{processor_uris["preprocessor"]["rpath"]}}" download={{processor_uris["preprocessor"]["filename"]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+
+      {% if processor_uris["tokenizer"]["filename"] is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Tokenizer:</font></td>
+          <td>
+            <a href="/opsml/files/download?path={{processor_uris["tokenizer"]["rpath"]}}" download={{processor_uris["tokenizer"]["filename"]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+      {% if processor_uris["feature_extractor"]["filename"] is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Tokenizer:</font></td>
+          <td>
+            <a href="/opsml/files/download?path={{processor_uris["feature_extractor"]["rpath"]}}" download={{processor_uris["feature_extractor"]["filename"]}}>
               <button id="download-button" type="submit" class="btn btn-success" >Download</button>
             </a>
         </td>

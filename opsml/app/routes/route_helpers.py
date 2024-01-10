@@ -282,9 +282,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -400,6 +398,37 @@ class ModelRouteHelper(RouteHelper):
 
         return None, None
 
+    def _get_path(self, name: str, path: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+        if path is None:
+            return None, None
+
+        rpath = Path(path)
+
+        if rpath.suffix == "":
+            save_filename = f"{name}.zip"
+        else:
+            save_filename = rpath.name
+
+        return rpath.as_posix(), save_filename
+
+    def _get_processor_uris(self, metadata: ModelMetadata) -> Dict[str, Dict[str, Optional[str]]]:
+        processor_uris = {}
+        dumped_meta = metadata.model_dump()
+
+        # get preprocessor
+        rpath, filename = self._get_path("preprocessor", dumped_meta.get("preprocessor_uri"))
+        processor_uris["preprocessor"] = {"rpath": rpath, "filename": filename}
+
+        # get tokenizer
+        rpath, filename = self._get_path("tokenizer", dumped_meta.get("tokenizer_uri"))
+        processor_uris["tokenizer"] = {"rpath": rpath, "filename": filename}
+
+        # get feature extractor
+        rpath, filename = self._get_path("feature_extractor", dumped_meta.get("feature_extractor_uri"))
+        processor_uris["feature_extractor"] = {"rpath": rpath, "filename": filename}
+
+        return processor_uris
+
     def get_versions_page(
         self,
         request: Request,
@@ -446,13 +475,10 @@ class ModelRouteHelper(RouteHelper):
             onnx_save_filename = "onnx.zip"
         elif onnx_filename is not None:
             onnx_save_filename = onnx_filename.name
+        else:
+            onnx_save_filename = None
 
-        preprocessor_filename = Path(metadata.preprocessor_uri) if metadata.preprocessor_uri is not None else None
-
-        if preprocessor_filename is not None and preprocessor_filename.suffix == "":
-            preprocessor_save_filename = "preprocessor.zip"
-        elif preprocessor_filename is not None:
-            preprocessor_save_filename = preprocessor_filename.name
+        processor_uris = self._get_processor_uris(metadata)
 
         return templates.TemplateResponse(
             "include/model/model_version.html",
@@ -466,7 +492,7 @@ class ModelRouteHelper(RouteHelper):
                 "runcard": runcard,
                 "metadata_json": metadata_json,
                 "model_filename": model_save_filename,
-                "preprocessor_filename": preprocessor_save_filename,
+                "processor_uris": processor_uris,
                 "onnx_filename": onnx_save_filename,
             },
         )
