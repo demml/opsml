@@ -78,7 +78,7 @@ try:
                 return [data[0:1] for data in sample_data]
 
             if isinstance(sample_data, tuple):
-                return (data[0:1] for data in sample_data)
+                return tuple(data[0:1] for data in sample_data)
 
             if isinstance(sample_data, dict):
                 sample_dict = {}

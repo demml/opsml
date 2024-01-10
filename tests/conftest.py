@@ -601,6 +601,38 @@ def pytorch_simple():
     cleanup()
 
 
+@pytest.fixture(scope="module")
+def pytorch_simple_tuple():
+    class Polynomial3(torch.nn.Module):
+        def __init__(self):
+            """
+            In the constructor we instantiate four parameters and assign them as
+            member parameters.
+            """
+            super().__init__()
+            self.x1 = torch.nn.Parameter(torch.randn(()))
+            self.x2 = torch.nn.Parameter(torch.randn(()))
+
+        def forward(self, x1: torch.Tensor, x2: torch.Tensor):
+            """
+            In the forward function we accept a Tensor of input data and we must return
+            a Tensor of output data. We can use Modules defined in the constructor as
+            well as arbitrary operators on Tensors.
+            """
+            return self.x1 + self.x2 * x1 * x2
+
+    model = Polynomial3()
+    inputs = (torch.randn((1, 1)), torch.randn((1, 1)))
+
+    yield PyTorchModel(
+        model=model,
+        sample_data=inputs,
+        save_args={"as_state_dict": True},
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
+
+
 @pytest.fixture(scope="session")
 def pytorch_onnx_byo():
     import onnx

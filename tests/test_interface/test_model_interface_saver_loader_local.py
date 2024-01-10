@@ -320,6 +320,58 @@ def test_save_torch_modelcard(pytorch_simple: PyTorchModel):
     assert loaded_card.interface.onnx_model.sess is not None
 
 
+def test_save_torch_tuple_modelcard(pytorch_simple_tuple: PyTorchModel):
+    model: PyTorchModel = pytorch_simple_tuple
+
+    modelcard = ModelCard(
+        interface=model,
+        name="test_model",
+        team="mlops",
+        user_email="test_email",
+        datacard_uid=uuid.uuid4().hex,
+        to_onnx=True,
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+        metadata=ModelCardMetadata(
+            description=Description(summary="test summary"),
+        ),
+    )
+
+    save_card_artifacts(modelcard)
+
+    # check paths exist on server
+    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".pt").exists()
+    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib").exists()
+    assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx").exists()
+    assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
+
+    # load objects
+    loader = CardLoader(
+        card_args={
+            "name": modelcard.name,
+            "team": modelcard.team,
+            "version": modelcard.version,
+        },
+        registry_type=RegistryType.MODEL,
+    )
+
+    loaded_card = cast(ModelCard, loader.load_card())
+    assert isinstance(loaded_card, ModelCard)
+
+    #
+    loaded_card.load_model()
+
+    model.model.load_state_dict(loaded_card.interface.model)
+    loaded_card.interface.model = model.model
+
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+
+    #
+    loaded_card.load_onnx_model()
+    assert loaded_card.interface.onnx_model is not None
+    assert loaded_card.interface.onnx_model.sess is not None
+
+
 def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
     model, model_arch = lightning_regression
     model = cast(LightningModel, model)

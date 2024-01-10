@@ -419,7 +419,6 @@ def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
         data_type (type): Data type
         input_data (Any): Input data for model
     """
-
     model_data = next(
         data_class
         for data_class in ModelDataHelper.__subclasses__()

@@ -5,11 +5,11 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Type, Union
 
-from opsml.model import ModelInterface
-from opsml.data import DataInterface
 from opsml.cards import ArtifactCard, CardInfo
+from opsml.data import DataInterface
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
+from opsml.model import ModelInterface
 from opsml.registry.semver import VersionType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.settings.config import config
