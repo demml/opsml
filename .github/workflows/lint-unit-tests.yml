@@ -40,7 +40,7 @@ jobs:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
 
   Unit-Test:
-    #needs: Lints
+    needs: Lints
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]

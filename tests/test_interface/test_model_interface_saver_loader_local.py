@@ -24,6 +24,7 @@ WINDOWS_EXCLUDE = sys.platform == "win32"
 
 EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
+
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel):
     model: HuggingFaceModel = huggingface_torch_distilbert
@@ -275,6 +276,7 @@ def test_save_lgb_sklearn_modelcard(
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_torch_modelcard(pytorch_simple: PyTorchModel):
     model: PyTorchModel = pytorch_simple
@@ -327,6 +329,7 @@ def test_save_torch_modelcard(pytorch_simple: PyTorchModel):
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_torch_tuple_modelcard(pytorch_simple_tuple: PyTorchModel):
     model: PyTorchModel = pytorch_simple_tuple
@@ -378,6 +381,7 @@ def test_save_torch_tuple_modelcard(pytorch_simple_tuple: PyTorchModel):
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
