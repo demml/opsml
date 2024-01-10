@@ -41,6 +41,7 @@ class GcpCredsSetter:
 
     def get_base64_creds(self) -> Tuple[Optional[Credentials], Optional[str]]:
         if self.service_base64_creds is not None:
+            logger.info("Using base64 encoded service creds")
             return self.create_gcp_creds_from_base64(self.service_base64_creds)
 
         return (None, None)
