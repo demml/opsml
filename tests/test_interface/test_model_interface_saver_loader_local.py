@@ -171,9 +171,7 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_lgb_booster_modelcard(
-    lgb_booster_model: LightGBMModel,
-):
+def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel):
     model: LightGBMModel = lgb_booster_model
 
     modelcard = ModelCard(
@@ -270,9 +268,7 @@ def test_save_lgb_sklearn_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_torch_modelcard(
-    pytorch_simple: PyTorchModel,
-):
+def test_save_torch_modelcard(pytorch_simple: PyTorchModel):
     model: PyTorchModel = pytorch_simple
 
     modelcard = ModelCard(
@@ -324,9 +320,7 @@ def test_save_torch_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_torch_lightning_modelcard(
-    lightning_regression: LightningModel,
-):
+def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
     model, model_arch = lightning_regression
     model = cast(LightningModel, model)
 
@@ -376,9 +370,7 @@ def test_save_torch_lightning_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_tensorflow_modelcard(
-    tf_transformer_example: TensorFlowModel,
-):
+def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
     model: TensorFlowModel = tf_transformer_example
 
     modelcard = ModelCard(
@@ -427,9 +419,7 @@ def test_save_tensorflow_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_tensorflow_multi_input_modelcard(
-    multi_input_tf_example: TensorFlowModel,
-):
+def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel):
     model: TensorFlowModel = multi_input_tf_example
 
     modelcard = ModelCard(
