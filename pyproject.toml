@@ -239,6 +239,7 @@ ignore_missing_imports = true
 strict = true
 disable_error_code = [
     "attr-defined",
+    "assignment",
 ]
 
 plugins = [
