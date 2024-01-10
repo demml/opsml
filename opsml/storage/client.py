@@ -155,6 +155,7 @@ class GCSFSStorageClient(StorageClientBase):
 
         assert isinstance(settings, GcsStorageClientSettings)
         if settings.credentials is None:
+            logger.info("Using default GCP credentials")
             client = gcsfs.GCSFileSystem()
         else:
             client = gcsfs.GCSFileSystem(
