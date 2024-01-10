@@ -12,7 +12,7 @@ from opsml.model import (
     TensorFlowModel,
 )
 
-EXCLUDE = sys.platform in ("darwin") and sys.version_info < (3, 11)
+EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 
 
 def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
