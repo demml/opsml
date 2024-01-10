@@ -23,7 +23,7 @@ jobs:
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v3
         with:
-          fail-on-severity: moderate
+          fail-on-severity: high
           comment-summary-in-pr: always
 
   Lints:
