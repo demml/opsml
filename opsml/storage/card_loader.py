@@ -190,22 +190,21 @@ class CardLoader:
             rpath = rpath or self.card.uri
             yield self.download(lpath, rpath, object_path, suffix)
 
-    def load_card(self, **kwargs: Any) -> ArtifactCard:
+    def load_card(self, interface: Optional[Union[DataInterface, ModelInterface]]) -> ArtifactCard:
         """Loads an ArtifactCard from card arguments
 
         Returns:
             Loaded ArtifactCard
         """
         rpath = self.get_rpath_from_args()
-        custom_interface: Optional[Union[DataInterface, ModelInterface]] = kwargs.get("interface", None)
 
         with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
             loaded_card: Dict[str, Any] = joblib.load(lpath)
 
         # load interface logic
         if self.registry_type in (RegistryType.MODEL, RegistryType.DATA):
-            if custom_interface is not None:
-                loaded_interface = custom_interface.model_validate(loaded_card["interface"])
+            if interface is not None:
+                loaded_interface = interface.model_validate(loaded_card["interface"])
 
             else:
                 # get interface type

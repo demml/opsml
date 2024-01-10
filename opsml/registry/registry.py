@@ -3,8 +3,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import textwrap
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
+from opsml.model import ModelInterface
+from opsml.data import DataInterface
 from opsml.cards import ArtifactCard, CardInfo
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
@@ -150,6 +152,7 @@ class CardRegistry:
         version: Optional[str] = None,
         info: Optional[CardInfo] = None,
         ignore_release_candidates: bool = False,
+        interface: Optional[Union[ModelInterface, DataInterface]] = None,
     ) -> ArtifactCard:
         """Loads a specific card
 
@@ -168,6 +171,9 @@ class CardRegistry:
                 Optional CardInfo object. If present, the info takes precedence
             ignore_release_candidates:
                 If True, ignores release candidates
+            interface:
+                Optional interface to use for loading card. This is required for when using
+                subclassed interfaces.
 
         Returns
             ArtifactCard
@@ -191,7 +197,10 @@ class CardRegistry:
             limit=1,
         )
 
-        return CardLoader(card_args=records[0], registry_type=self.registry_type).load_card()
+        return CardLoader(
+            card_args=records[0],
+            registry_type=self.registry_type,
+        ).load_card(interface=interface)
 
     def register_card(
         self,
