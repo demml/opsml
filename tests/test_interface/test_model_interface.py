@@ -12,7 +12,10 @@ from opsml.model import (
     TensorFlowModel,
 )
 
-EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+WINDOWS_EXCLUDE = sys.platform == "win32"
+
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
@@ -24,7 +27,6 @@ def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
 
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_tf_interface(tf_transformer_example: TensorFlowModel):
     assert tf_transformer_example.model_type == "Functional"
     prediction = tf_transformer_example.get_sample_prediction()
@@ -32,7 +34,6 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel):
 
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_torch_interface(deeplabv3_resnet50: PyTorchModel):
     assert deeplabv3_resnet50.model_type == "DeepLabV3"
     prediction = deeplabv3_resnet50.get_sample_prediction()
@@ -40,7 +41,6 @@ def test_torch_interface(deeplabv3_resnet50: PyTorchModel):
 
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_lightning_interface(lightning_regression: LightningModel):
 
     light_model, model = lightning_regression
@@ -50,7 +50,6 @@ def test_lightning_interface(lightning_regression: LightningModel):
 
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
     assert huggingface_bart.model_type == "BartModel"
@@ -63,7 +62,6 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
 
 @pytest.mark.skipif(sys.platform == EXCLUDE, reason="skipping")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel):
     model = huggingface_text_classification_pipeline
     assert model.model_class == "transformers"
