@@ -13,8 +13,10 @@ from opsml.model import (
 )
 from tests import conftest
 
-EXCLUDE = sys.platform in ("darwin") and sys.version_info < (3, 11)
+DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
+WINDOWS_EXCLUDE = sys.platform == "win32"
 
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 # this is done to filter all the convergence and user warnings during testing
 def warn(*args, **kwargs):
     pass
@@ -115,8 +117,7 @@ def test_sklearn_models(interface: ModelInterface):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -129,8 +130,7 @@ def test_model_pytorch_predict(interface: PyTorchModel):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -143,8 +143,7 @@ def test_huggingface_model(interface: HuggingFaceModel):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -157,8 +156,7 @@ def test_tensorflow_predict(interface: TensorFlowModel):
     assert interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="Not supported on apple silicon")
-@pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [
