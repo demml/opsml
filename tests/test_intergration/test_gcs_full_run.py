@@ -119,3 +119,4 @@ def test_gcs_full_run(
 
     # check model assets
     assert len(api_storage_client.find(Path(modelcard.uri))) == 0
+    a
