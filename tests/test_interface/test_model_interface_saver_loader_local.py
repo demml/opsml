@@ -1,7 +1,9 @@
+import sys
 import uuid
 from pathlib import Path
 from typing import cast
 
+import pytest
 from transformers import Pipeline
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
@@ -16,9 +18,9 @@ from opsml.model import (
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName
-import pytest
-import sys
+
 EXCLUDE = sys.platform in ("darwin") and sys.version_info < (3, 11)
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
@@ -74,6 +76,7 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
     loaded_card.load_onnx_model(load_quantized=True)
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
@@ -426,6 +429,7 @@ def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
@@ -476,6 +480,7 @@ def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
 def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel):
@@ -525,6 +530,7 @@ def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlo
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
@@ -580,6 +586,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
     loaded_card.load_model()
     assert type(loaded_card.model) == type(modelcard.interface.model)
     assert isinstance(loaded_card.model, Pipeline)
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
