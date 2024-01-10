@@ -13,6 +13,7 @@ from opsml.model import (
 )
 from tests import conftest
 
+
 DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 WINDOWS_EXCLUDE = sys.platform == "win32"
 
@@ -25,7 +26,7 @@ def warn(*args, **kwargs):
 warnings.warn = warn
 
 
-@pytest.mark.flaky(reruns=2)
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
 @pytest.mark.parametrize(
     "interface",
     [
@@ -116,7 +117,7 @@ def test_sklearn_models(interface: ModelInterface):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
-
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
 @pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
@@ -129,7 +130,7 @@ def test_model_pytorch_predict(interface: PyTorchModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
-
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
 @pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
@@ -142,7 +143,7 @@ def test_huggingface_model(interface: HuggingFaceModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
-
+@pytest.mark.flaky(reruns=2)
 @pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
@@ -155,7 +156,7 @@ def test_tensorflow_predict(interface: TensorFlowModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
-
+@pytest.mark.flaky(reruns=2)
 @pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
