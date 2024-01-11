@@ -38,7 +38,6 @@ import pytest
 import torch
 import torch.nn as nn
 from google.auth import load_credentials_from_file
-from pydantic import BaseModel
 from sklearn import (
     cross_decomposition,
     ensemble,
@@ -104,7 +103,6 @@ from opsml.types import (
     OnnxModel,
 )
 
-CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
 FOURTEEN_DAYS_TS = int(round(fourteen_days_ago.timestamp() * 1_000_000))
 FOURTEEN_DAYS_STR = datetime.datetime.fromtimestamp(FOURTEEN_DAYS_TS / 1_000_000).strftime("%Y-%m-%d")
@@ -730,7 +728,7 @@ def stacking_regressor(regression_data) -> SklearnModel:
     return SklearnModel(model=reg, sample_data=X)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = pd.DataFrame(
         [
@@ -760,14 +758,8 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     return model, data
 
 
-@pytest.fixture
-def sklearn_pipeline_model(sklearn_pipeline) -> SklearnModel:
-    model, _ = sklearn_pipeline
-    return model
-
-
 @pytest.fixture(scope="session")
-def sklearn_pipeline_advanced() -> SklearnModel:
+def sklearn_pipeline_advanced() -> Tuple[SklearnModel, NumpyData]:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
@@ -797,6 +789,7 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
     clf.fit(X_train, y_train)
 
+    data = NumpyData(data=X_train)
     return SklearnModel(model=clf, sample_data=X_train[:100])
 
 
