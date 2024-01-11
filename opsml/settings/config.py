@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -63,11 +64,12 @@ class OpsmlConfig(BaseSettings):
     def storage_root(self) -> str:
         """Returns the root of the storage URI"""
         if self.is_tracking_local:
-            if self.opsml_storage_uri.lower().startswith("gs:/"):
-                return self.opsml_storage_uri.lower().lstrip("gs:/")
-            if self.opsml_storage_uri.lower().startswith("s3:/"):
-                return self.opsml_storage_uri.lower().lstrip("s3:/")
-            return self.opsml_storage_uri.lower()
+            storage_uri_lower = self.opsml_storage_uri.lower()
+            if storage_uri_lower.startswith("gs://"):
+                return re.sub("^gs://", "", storage_uri_lower)
+            if storage_uri_lower.startswith("s3://"):
+                return re.sub("^s3://", "", storage_uri_lower)
+            return storage_uri_lower
         return self.opsml_proxy_root
 
 
