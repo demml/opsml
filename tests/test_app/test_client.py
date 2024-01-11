@@ -614,6 +614,20 @@ def test_data_model_version(
     response = test_app.get(f"/opsml/projects/runs/plot/?run_uid={run.runcard.uid}")
     assert response.status_code == 200
 
+    response = test_app.post(
+        url="/opsml/models/compare_metrics",
+        json={
+            "metric_name": ["test_metric"],
+            "lower_is_better": True,
+            "challenger_uid": modelcard.uid,
+            "champion_uid": [modelcard.uid],
+        },
+    )
+    assert response.status_code == 200
+
+    battle_report = response.json()
+    assert battle_report["report"]["test_metric"][0]["challenger_win"] == False
+
 
 ##### Test audit
 def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]):

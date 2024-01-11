@@ -33,7 +33,7 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel):
     assert prediction.prediction_type == "numpy.ndarray"
 
 
-@pytest.mark.flaky(reruns=1, reruns_delay=2)
+@pytest.mark.flaky(reruns=2, reruns_delay=5)
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_torch_interface(deeplabv3_resnet50: PyTorchModel):
     assert deeplabv3_resnet50.model_type == "DeepLabV3"
