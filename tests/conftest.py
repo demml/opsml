@@ -335,12 +335,6 @@ def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
     return api_registries.data._registry.storage_client
 
 
-@pytest.fixture
-def mock_opsml_app_run():
-    with patch.multiple("opsml.app.main.OpsmlApp", run=MagicMock(return_value=0)) as mock_opsml_app_run:
-        yield mock_opsml_app_run
-
-
 ######## local clients
 
 
