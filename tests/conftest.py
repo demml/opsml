@@ -731,7 +731,7 @@ def stacking_regressor(regression_data) -> SklearnModel:
     return SklearnModel(model=reg, sample_data=X)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = pd.DataFrame(
         [
@@ -761,7 +761,7 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     return model, data
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
@@ -792,7 +792,6 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
     clf.fit(X_train, y_train)
 
-    data = NumpyData(data=X_train)
     return SklearnModel(model=clf, sample_data=X_train[:100])
 
 
