@@ -13,6 +13,8 @@ from fastapi.templating import Jinja2Templates
 from opsml.app.routes.files import download_dir, download_file
 from opsml.app.routes.pydantic_models import (
     CardRequest,
+    CompareMetricRequest,
+    CompareMetricResponse,
     MetricRequest,
     MetricResponse,
     RegisterModelRequest,
@@ -22,11 +24,12 @@ from opsml.app.routes.utils import error_to_500
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.challenger import ModelChallenger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.registrar import ModelRegistrar, RegistrationError, RegistrationRequest
 from opsml.registry.registry import CardRegistries, CardRegistry
-from opsml.types import ModelMetadata, SaveName
+from opsml.types import CardInfo, ModelMetadata, SaveName
 
 logger = ArtifactLogger.get_logger()
 
@@ -220,3 +223,35 @@ def post_model_metrics(
     runcard = cast(RunCard, registries.run.load_card(uid=card.get("runcard_uid")))
 
     return MetricResponse(metrics=runcard.metrics)
+
+
+@router.post("/models/compare_metrics", response_model=CompareMetricResponse, name="compare_model_metrics")
+def compare_metrics(
+    request: Request,
+    payload: CompareMetricRequest = Body(...),
+) -> CompareMetricResponse:
+    """Compare model metrics using `ModelChallenger`"""
+
+    try:
+        # Get challenger
+        registries: CardRegistries = request.app.state.registries
+        challenger_card = cast(ModelCard, registries.model.load_card(uid=payload.challenger_uid))
+        model_challenger = ModelChallenger(challenger=challenger_card)
+
+        champions = [CardInfo(uid=champion_uid) for champion_uid in payload.champion_uid]
+        battle_report = model_challenger.challenge_champion(
+            metric_name=payload.metric_name,
+            champions=champions,
+            lower_is_better=payload.lower_is_better,
+        )
+
+        return CompareMetricResponse(
+            challenger_name=challenger_card.name,
+            challenger_version=challenger_card.version,
+            report=battle_report,
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to compare model metrics. {error}",
+        ) from error
