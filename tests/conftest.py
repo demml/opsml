@@ -762,7 +762,7 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
 
 
 @pytest.fixture(scope="session")
-def sklearn_pipeline_advanced() -> Tuple[SklearnModel, NumpyData]:
+def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
@@ -784,7 +784,7 @@ def sklearn_pipeline_advanced() -> Tuple[SklearnModel, NumpyData]:
 
     clf = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", linear_model.LogisticRegression(max_iter=5))])
 
-    X_train, X_test, y_train, y_test = train_test_split(X[:1000], y[:1000], test_size=0.2, random_state=0)
+    X_train, _, y_train, _ = train_test_split(X[:1000], y[:1000], test_size=0.2, random_state=0)
 
     features = [*numeric_features, *categorical_features]
     X_train = X_train[features]
