@@ -139,30 +139,6 @@ def cleanup() -> None:
     shutil.rmtree("lightning_logs", ignore_errors=True)
 
 
-# TODO(@damon): Thesee can probably go.
-class Blob(BaseModel):
-    name: str = "test_upload/test.csv"
-
-    def download_to_filename(self, destination_filename):
-        return True
-
-    def upload_from_filename(self, filename):
-        return True
-
-    def delete(self):
-        return True
-
-
-class Bucket(BaseModel):
-    name: str = "bucket"
-
-    def blob(self, path: str):
-        return Blob()
-
-    def list_blobs(self, prefix: str):
-        return [Blob()]
-
-
 @pytest.fixture
 def gcp_cred_path():
     return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
