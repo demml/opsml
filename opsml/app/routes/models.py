@@ -13,23 +13,23 @@ from fastapi.templating import Jinja2Templates
 from opsml.app.routes.files import download_dir, download_file
 from opsml.app.routes.pydantic_models import (
     CardRequest,
+    CompareMetricRequest,
+    CompareMetricResponse,
     MetricRequest,
     MetricResponse,
     RegisterModelRequest,
-    CompareMetricResponse,
-    CompareMetricRequest,
 )
-from opsml.model.challenger import ModelChallenger
 from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model.challenger import ModelChallenger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.registrar import ModelRegistrar, RegistrationError, RegistrationRequest
 from opsml.registry.registry import CardRegistries, CardRegistry
-from opsml.types import ModelMetadata, SaveName, CardInfo
+from opsml.types import CardInfo, ModelMetadata, SaveName
 
 logger = ArtifactLogger.get_logger()
 
