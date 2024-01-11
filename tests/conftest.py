@@ -465,7 +465,7 @@ def example_dataframe():
 
 
 @pytest.fixture(scope="session")
-def regression_data():
+def regression_data() -> Tuple[np.ndarray, np.ndarray]:
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
     y = np.dot(X, np.array([1, 2])) + 3
 
@@ -473,12 +473,15 @@ def regression_data():
 
 
 @pytest.fixture(scope="session")
-def regression_data_polars(regression_data):
+def regression_data_polars(regression_data: Tuple[np.ndarray, np.ndarray]):
     X, y = regression_data
+    return pd.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
 
-    data = pl.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
 
-    return data
+@pytest.fixture(scope="session")
+def regression_data_polars(regression_data: Tuple[np.ndarray, np.ndarray]):
+    X, y = regression_data
+    return pl.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
 
 
 @pytest.fixture(scope="session")
@@ -653,7 +656,7 @@ def pytorch_onnx_byo():
 
 
 @pytest.fixture(scope="session")
-def tf_transformer_example():
+def tf_transformer_example() -> TensorFlowModel:
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
@@ -936,20 +939,6 @@ def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
 def linear_regression_model(linear_regression) -> Tuple[SklearnModel, NumpyData]:
     model, data = linear_regression
     return model
-
-
-@pytest.fixture
-def test_model_card(sklearn_pipeline):
-    model, data = sklearn_pipeline
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        version="1.0.0",
-    )
-    return model_card
 
 
 @pytest.fixture

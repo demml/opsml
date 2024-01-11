@@ -5,25 +5,28 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from opsml.cards import DataCard, ModelCard, RunCard
-from opsml.data import DataInterface
+from opsml.data import DataInterface, PandasData
 from opsml.model import ModelInterface
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
 
-@pytest.mark.integration
 @pytest.mark.parametrize(
     "model_and_data",
     [
         lazy_fixture("sklearn_pipeline"),
-        # lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
+@pytest.mark.integration
 def test_gcs_full_run(
     api_registries: CardRegistries,
-    model_and_data: Tuple[ModelInterface, DataInterface],
+    model_and_data: Tuple[ModelInterface, PandasData],
 ):
+    """Verifies the full cycle of model and data card persistence.
+
+    Because a profile is saved, data must be PandasData.
+    """
     # get data and model
     model, data = model_and_data
 
