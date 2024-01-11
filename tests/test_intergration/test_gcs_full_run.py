@@ -2,22 +2,30 @@ from pathlib import Path
 from typing import Tuple
 
 import pytest
+from pytest_lazyfixture import lazy_fixture
 
 from opsml.cards import DataCard, ModelCard, RunCard
-from opsml.data import PandasData
-from opsml.model import SklearnModel
+from opsml.data import DataInterface
+from opsml.model import ModelInterface
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        lazy_fixture("sklearn_pipeline"),
+        # lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
+    ],
+)
 def test_gcs_full_run(
     api_registries: CardRegistries,
-    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+    model_and_data: Tuple[ModelInterface, DataInterface],
 ):
     # get data and model
-    model, data = sklearn_pipeline
+    model, data = model_and_data
 
     # set registries
     model_registry: CardRegistry = api_registries.model
