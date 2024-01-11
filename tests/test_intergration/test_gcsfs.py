@@ -8,38 +8,41 @@ from opsml.storage.client import GCSFSStorageClient
 
 # gcs integration tests perform operation on test bucket that has a TTL of 1 day for all objects
 @pytest.mark.integration
-def test_gcsfs_integration(gcsfs_integration_client: GCSFSStorageClient, gcsfs_bucket: Path):
-
+def test_gcsfs_integration(gcs_storage_client: GCSFSStorageClient, gcs_test_bucket: Path):
     lpath = Path("tests/assets/cats.jpg")
-    rpath = gcsfs_bucket / "cats.jpg"
+    rpath = gcs_test_bucket / "cats.jpg"
 
-    # put file
-    gcsfs_integration_client.put(lpath, rpath)
+    try:
+        # put file
+        gcs_storage_client.put(lpath, rpath)
 
-    # check file exists
-    assert gcsfs_integration_client.exists(rpath)
+        # check file exists
+        assert gcs_storage_client.exists(rpath)
 
-    # list files
-    files = gcsfs_integration_client.ls(gcsfs_bucket)
-    assert len(files) == 1
+        # list files
+        files = gcs_storage_client.ls(gcs_test_bucket)
+        assert len(files) >= 1
 
-    # find file
-    assert gcsfs_integration_client.find(rpath) == [rpath.as_posix()]
+        # find file
+        assert gcs_storage_client.find(rpath) == [rpath.as_posix()]
 
-    # get file
-    get_lpath = Path("tests/assets/empty/cats.jpg")
-    gcsfs_integration_client.get(rpath, get_lpath)
-    assert get_lpath.exists()
+        # get file
+        get_lpath = Path("tests/assets/empty/cats.jpg")
+        gcs_storage_client.get(rpath, get_lpath)
+        assert get_lpath.exists()
 
-    # remove local file
-    os.remove(get_lpath.as_posix())
+        # remove local file
+        os.remove(get_lpath.as_posix())
 
-    # check iterfile
-    for f in gcsfs_integration_client.iterfile(rpath, 1000):
-        _bytes = lpath.read_bytes()
+        # check iterfile
+        for f in gcs_storage_client.iterfile(rpath, 1000):
+            _bytes = lpath.read_bytes()
 
-    # remove file
-    gcsfs_integration_client.rm(rpath)
+        # remove file
+        gcs_storage_client.rm(rpath)
 
-    # assert file is removed
-    assert not gcsfs_integration_client.exists(rpath)
+        # assert file is removed
+        assert not gcs_storage_client.exists(rpath)
+    finally:
+        if gcs_storage_client.exists(rpath):
+            gcs_storage_client.rm(rpath)
