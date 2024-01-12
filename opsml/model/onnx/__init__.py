@@ -1,5 +1,6 @@
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
+from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.model.utils.data_helper import ModelDataHelper, get_model_data
 from opsml.types import ModelReturn
 
@@ -11,7 +12,6 @@ try:
 
     from opsml.model.onnx.base_converter import _ModelConverter
     from opsml.model.onnx.lightgbm_converter import _LightGBMBoosterOnnxModel
-    from opsml.model.onnx.metadata_creator import _TrainedModelMetadataCreator
     from opsml.model.onnx.sklearn_converter import _SklearnOnnxModel
     from opsml.model.onnx.tensorflow_converter import _TensorflowKerasOnnxModel
 
