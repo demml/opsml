@@ -8,8 +8,7 @@ from typing import List, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, String
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import declarative_mixin, validates
+from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import RegistryTableNames
