@@ -18,7 +18,6 @@ from opsml.types import RegistryTableNames, SaveName, Suffix
         lazy_fixture("sklearn_pipeline"),
     ],
 )
-@pytest.mark.integration
 def test_gcs_full_run(
     api_registries: CardRegistries,
     model_and_data: Tuple[ModelInterface, PandasData],
