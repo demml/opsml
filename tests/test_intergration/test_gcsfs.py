@@ -30,7 +30,7 @@ def test_gcsfs_integration(tmp_path: Path, gcs_storage_client: GCSFSStorageClien
             assert len(gcs_storage_client.ls(gcs_test_bucket / "notthere")) == 0
 
         # find file
-        assert gcs_storage_client.find(rpath) == [rpath.as_posix()]
+        assert gcs_storage_client.find(rpath) == [rpath]
 
         # get file
         get_lpath = Path("tests/assets/empty/cats.jpg")
@@ -39,7 +39,7 @@ def test_gcsfs_integration(tmp_path: Path, gcs_storage_client: GCSFSStorageClien
 
         # check iterfile
         for f in gcs_storage_client.iterfile(rpath, 1000):
-            _bytes = lpath.read_bytes()
+            _ = lpath.read_bytes()
 
         # remove file
         gcs_storage_client.rm(rpath)
