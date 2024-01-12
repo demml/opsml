@@ -111,8 +111,8 @@ class StorageClientBase(StorageClientProtocol):
     def ls(self, path: Path) -> List[Path]:
         return [Path(p) for p in self.client.ls(str(path))]
 
-    def find(self, path: Path) -> List[str]:
-        return self.client.find(str(path))
+    def find(self, path: Path) -> List[Path]:
+        return [Path(p) for p in self.client.find(str(path))]
 
     def open(self, path: Path, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         return self.client.open(str(path), mode=mode, encoding=encoding)
@@ -230,7 +230,7 @@ class ApiStorageClient(StorageClientBase):
                 filename=_rpath.name,
             )
 
-    def find(self, path: Path) -> List[str]:
+    def find(self, path: Path) -> List[Path]:
         response = self.api_client.get_request(
             route=ApiRoutes.LIST_FILES,
             params={"path": path.as_posix()},
@@ -239,7 +239,7 @@ class ApiStorageClient(StorageClientBase):
         # storage clients always return a list
         files: List[str] = response["files"]
 
-        return files
+        return [Path(p) for p in files]
 
     def put(self, lpath: Path, rpath: Path) -> None:
         if not lpath.is_file():
