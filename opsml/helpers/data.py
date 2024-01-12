@@ -1,5 +1,7 @@
 # mypy: ignore-errors
 
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 
@@ -10,7 +12,7 @@ def create_fake_data(
     n_classes: int = 2,
     task_type: str = "classification",
     random_state: int = 42,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates fake data for testing
 
     Args:
