@@ -1,27 +1,30 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, Optional, Tuple
+from typing import Any, Iterator, Tuple
 
 warnings.filterwarnings("ignore")
 
+LOCAL_DB_FILE_PATH = "tmp.db"
+LOCAL_TRACKING_URI = f"sqlite:///{LOCAL_DB_FILE_PATH}"
+LOCAL_STORAGE_URI = f"{os.getcwd()}/mlruns"
 
-# setting initial env vars to override default sql db
-# these must be set prior to importing opsml since they establish their
-DB_FILE_PATH = "tmp.db"
-SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
-OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
+# The unit tests are setup to use local tracking and storage by default. All
+# unit tests must use the default local client or a mocked GCS / S3 account.
+#
+# Integration tests can override the env vars as needed.
+OPSML_TRACKING_URI = os.environ.get("OPSML_TRACKING_URI", LOCAL_TRACKING_URI)
+OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", LOCAL_STORAGE_URI)
 
 os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
-os.environ["OPSML_TRACKING_URI"] = SQL_PATH
+os.environ["OPSML_TRACKING_URI"] = OPSML_TRACKING_URI
 os.environ["OPSML_STORAGE_URI"] = OPSML_STORAGE_URI
 os.environ["OPSML_USERNAME"] = "test-user"
 os.environ["OPSML_PASSWORD"] = "test-pass"
 
 import datetime
 import shutil
-import tempfile
 import time
 import uuid
 from unittest.mock import MagicMock, patch
@@ -90,7 +93,6 @@ from opsml.model import (
     TensorFlowModel,
     XGBoostModel,
 )
-from opsml.model.challenger import ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config
@@ -99,7 +101,6 @@ from opsml.types import (
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
     HuggingFaceTask,
-    Metric,
     OnnxModel,
 )
 
@@ -112,29 +113,20 @@ TODAY_YMD = datetime.date.today().strftime("%Y-%m-%d")
 def cleanup() -> None:
     """Removes temp files"""
 
-    if os.path.exists(DB_FILE_PATH):
-        os.remove(DB_FILE_PATH)
+    if os.path.exists(LOCAL_DB_FILE_PATH):
+        os.remove(LOCAL_DB_FILE_PATH)
 
-    # remove api mlrun path
+    # remove api mlrun path (will fail if not local)
     shutil.rmtree(OPSML_STORAGE_URI, ignore_errors=True)
 
     # remove api local path
-    shutil.rmtree("local", ignore_errors=True)
+    # shutil.rmtree("local", ignore_errors=True)
 
     # remove test experiment mlrun path
     shutil.rmtree("mlruns", ignore_errors=True)
 
-    # remove test folder for loading model
-    shutil.rmtree("loader_test", ignore_errors=True)
-
     # delete test image dir
     shutil.rmtree("test_image_dir", ignore_errors=True)
-
-    # delete blah directory
-    shutil.rmtree("blah", ignore_errors=True)
-
-    # delete pytorch lightning logs
-    shutil.rmtree("lightning_logs", ignore_errors=True)
 
 
 @pytest.fixture
@@ -162,11 +154,6 @@ def mock_gcp_vars(gcp_cred_path):
     return mock_vars
 
 
-@pytest.fixture(scope="module")
-def tracking_uri():
-    return SQL_PATH
-
-
 @pytest.fixture
 def mock_gcp_creds(mock_gcp_vars):
     creds = GcpCreds(
@@ -182,8 +169,16 @@ def mock_gcp_creds(mock_gcp_vars):
 
 
 @pytest.fixture
-def local_storage_client():
-    return client.get_storage_client(OpsmlConfig())
+def local_storage_client() -> Iterator[client.LocalStorageClient]:
+    cleanup()
+    yield client.get_storage_client(
+        OpsmlConfig(
+            opsml_tracking_uri=LOCAL_TRACKING_URI,
+            opsml_storage_uri=LOCAL_STORAGE_URI,
+        )
+    )
+
+    cleanup()
 
 
 @pytest.fixture
@@ -260,48 +255,18 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
 
 @pytest.fixture
 def db_registries() -> CardRegistries:
-    """Returns CardRegistries configured with a local client (to simulate "client" mode)."""
+    """Returns CardRegistries configured with a local client."""
     cleanup()
 
-    # Cards rely on global storage state - so set it to local.
-    client.storage_client = client.get_storage_client(config)
-    yield CardRegistries()
-    cleanup()
-
-
-@pytest.fixture
-def opsml_project() -> Iterator[OpsmlProject]:
-    project = OpsmlProject(
-        info=ProjectInfo(
-            name="test_exp",
-            team="test",
-            user_email="test",
+    # CardRegistries rely on global storage state - so set it to local.
+    client.storage_client = client.get_storage_client(
+        OpsmlConfig(
+            opsml_storage_uri=LOCAL_STORAGE_URI,
+            opsml_tracking_uri=LOCAL_TRACKING_URI,
         )
     )
-    return project
-
-
-@pytest.fixture
-def mock_model_challenger() -> Any:
-    class MockModelChallenger(ModelChallenger):
-        def __init__(
-            self,
-            challenger: ModelCard,
-            registries: CardRegistries,
-        ):
-            """
-            Instantiates ModelChallenger class
-
-            Args:
-                challenger:
-                    ModelCard of challenger
-
-            """
-            self._challenger = challenger
-            self._challenger_metric: Optional[Metric] = None
-            self._registries = registries
-
-    return MockModelChallenger
+    yield CardRegistries()
+    cleanup()
 
 
 @pytest.fixture
@@ -772,7 +737,12 @@ def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
-    numeric_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())])
+    numeric_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
 
     categorical_features = ["embarked", "sex", "pclass"]
     categorical_transformer = Pipeline(
@@ -792,12 +762,14 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
     X_train, _, y_train, _ = train_test_split(X[:1000], y[:1000], test_size=0.2, random_state=0)
 
+    assert isinstance(X_train, pd.DataFrame)
+    assert isinstance(y_train, pd.Series)
+
     features = [*numeric_features, *categorical_features]
     X_train = X_train[features]
     y_train = y_train.to_numpy().astype(np.int32)
 
     clf.fit(X_train, y_train)
-
     return SklearnModel(model=clf, sample_data=X_train[:100])
 
 
@@ -1051,7 +1023,7 @@ def populate_model_data_for_route(
 
     # now switch config back to local for testing routes
     client.storage_client = client.get_storage_client((OpsmlConfig()))
-    config.opsml_tracking_uri = SQL_PATH
+    config.opsml_tracking_uri = LOCAL_TRACKING_URI
 
     return modelcard, datacard, auditcard
 
@@ -1096,9 +1068,7 @@ def populate_run(
             run.register_card(modelcard)
 
     # now switch config back to local for testing routes
-    client.storage_client = client.get_storage_client((OpsmlConfig()))
-    config.opsml_tracking_uri = SQL_PATH
-
+    client.storage_client = client.get_storage_client(OpsmlConfig(opsml_tracking_uri=LOCAL_TRACKING_URI))
     return datacard, modelcard, run
 
 

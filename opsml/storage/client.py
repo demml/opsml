@@ -57,7 +57,6 @@ class _FileSystemProtocol(Protocol):
     def ls(self, path: str) -> List[str]:  # pylint:  disable=invalid-name
         """Lists files"""
 
-    # TODO(@damon): Do we need 'find' or can we get by w/ ls() only?
     def find(self, path: str) -> List[str]:
         """Recursively list all files excluding directories"""
 
@@ -87,7 +86,7 @@ class StorageClientBase(StorageClientProtocol):
         client: Optional[_FileSystemProtocol] = None,
     ):
         if client is None:
-            self.client = cast(_FileSystemProtocol, LocalFileSystem())
+            self.client = cast(_FileSystemProtocol, LocalFileSystem(auto_mkdir=True))
         else:
             self.client = client
         self.settings = settings
