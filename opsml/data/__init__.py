@@ -5,6 +5,7 @@ from opsml.data.interfaces._pandas import PandasData
 from opsml.data.interfaces._polars import PolarsData
 from opsml.data.interfaces._sql import SqlData
 from opsml.data.interfaces._torch import TorchData
+from opsml.data.splitter import DataSplit
 
 __all__ = [
     "ArrowData",
@@ -14,4 +15,5 @@ __all__ = [
     "SqlData",
     "TorchData",
     "DataInterface",
+    "DataSplit",
 ]
