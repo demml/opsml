@@ -11,8 +11,6 @@ warnings.filterwarnings("ignore")
 DB_FILE_PATH = "tmp.db"
 SQL_PATH = os.environ.get("OPSML_TRACKING_URI", f"sqlite:///{DB_FILE_PATH}")
 OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
-# OPSML_STORAGE_URI = f"{os.getcwd()}/mlruns"
-# OPSML_STORAGE_URI = os.environ.get("OPSML_STORAGE_URI", f"{os.getcwd()}/mlruns")
 
 os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
@@ -40,7 +38,6 @@ import pytest
 import torch
 import torch.nn as nn
 from google.auth import load_credentials_from_file
-from pydantic import BaseModel
 from sklearn import (
     cross_decomposition,
     ensemble,
@@ -106,7 +103,6 @@ from opsml.types import (
     OnnxModel,
 )
 
-CWD = os.getcwd()
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
 FOURTEEN_DAYS_TS = int(round(fourteen_days_ago.timestamp() * 1_000_000))
 FOURTEEN_DAYS_STR = datetime.datetime.fromtimestamp(FOURTEEN_DAYS_TS / 1_000_000).strftime("%Y-%m-%d")
@@ -141,30 +137,6 @@ def cleanup() -> None:
     shutil.rmtree("lightning_logs", ignore_errors=True)
 
 
-# TODO(@damon): Thesee can probably go.
-class Blob(BaseModel):
-    name: str = "test_upload/test.csv"
-
-    def download_to_filename(self, destination_filename):
-        return True
-
-    def upload_from_filename(self, filename):
-        return True
-
-    def delete(self):
-        return True
-
-
-class Bucket(BaseModel):
-    name: str = "bucket"
-
-    def blob(self, path: str):
-        return Blob()
-
-    def list_blobs(self, prefix: str):
-        return [Blob()]
-
-
 @pytest.fixture
 def gcp_cred_path():
     return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
@@ -181,7 +153,6 @@ def mock_gcp_vars(gcp_cred_path):
     creds, _ = load_credentials_from_file(gcp_cred_path)
     mock_vars = {
         "gcp_project": "test",
-        "gcs_bucket": "test",
         "gcp_region": "test",
         "app_env": "staging",
         "path": os.getcwd(),
@@ -211,25 +182,8 @@ def mock_gcp_creds(mock_gcp_vars):
 
 
 @pytest.fixture
-def gcp_storage_client(mock_gcp_creds, mock_gcsfs):
-    return client.get_storage_client(OpsmlConfig(opsml_storage_uri="gs://test"))
-
-
-@pytest.fixture
 def local_storage_client():
     return client.get_storage_client(OpsmlConfig())
-
-
-@pytest.fixture
-def gcsfs_bucket() -> Path:
-    return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
-
-
-@pytest.fixture
-def gcsfs_integration_client(gcsfs_bucket: Path) -> client.GCSFSStorageClient:
-    return client.get_storage_client(
-        OpsmlConfig(opsml_storage_uri=f"gs://{gcsfs_bucket.as_posix()}"),
-    )
 
 
 @pytest.fixture
@@ -253,24 +207,6 @@ def test_app() -> Iterator[TestClient]:
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
-
-        yield tc
-    cleanup()
-
-
-@pytest.fixture
-def test_gcs_app(gcsfs_integration_client) -> Iterator[TestClient]:
-    cleanup()
-
-    # config.opsml_storage_uri = f"gs://{gcsfs_bucket}"
-    # monkeypatch.setenv("OPSML_STORAGE_URI", gcsfs_bucket)
-    client.storage_client = gcsfs_integration_client
-
-    from opsml.app.main import OpsmlApp
-
-    opsml_app = OpsmlApp()
-    with TestClient(opsml_app.get_app()) as tc:
-
         yield tc
     cleanup()
 
@@ -284,6 +220,19 @@ def test_app_login() -> Iterator[TestClient]:
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
     cleanup()
+
+
+@pytest.fixture
+def gcs_test_bucket() -> Path:
+    return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
+
+
+@pytest.fixture
+def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
+    cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri=f"gs://{str(gcs_test_bucket)}")
+    storage_client = client.get_storage_client(cfg)
+    assert isinstance(storage_client, client.GCSFSStorageClient)
+    return storage_client
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
@@ -306,14 +255,6 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
     """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
     previous_client = client.storage_client
     yield mock_registries(monkeypatch, test_app)
-    client.storage_client = previous_client
-
-
-@pytest.fixture
-def gcs_api_registries(monkeypatch: pytest.MonkeyPatch, test_gcs_app: TestClient) -> Iterator[CardRegistries]:
-    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
-    previous_client = client.storage_client
-    yield mock_registries(monkeypatch, test_gcs_app)
     client.storage_client = previous_client
 
 
@@ -366,12 +307,6 @@ def mock_model_challenger() -> Any:
 @pytest.fixture
 def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
     return api_registries.data._registry.storage_client
-
-
-@pytest.fixture
-def mock_opsml_app_run():
-    with patch.multiple("opsml.app.main.OpsmlApp", run=MagicMock(return_value=0)) as mock_opsml_app_run:
-        yield mock_opsml_app_run
 
 
 ######## local clients
@@ -530,7 +465,7 @@ def example_dataframe():
 
 
 @pytest.fixture(scope="session")
-def regression_data():
+def regression_data() -> Tuple[np.ndarray, np.ndarray]:
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
     y = np.dot(X, np.array([1, 2])) + 3
 
@@ -538,12 +473,15 @@ def regression_data():
 
 
 @pytest.fixture(scope="session")
-def regression_data_polars(regression_data):
+def regression_data_polars(regression_data: Tuple[np.ndarray, np.ndarray]):
     X, y = regression_data
+    return pd.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
 
-    data = pl.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
 
-    return data
+@pytest.fixture(scope="session")
+def regression_data_polars(regression_data: Tuple[np.ndarray, np.ndarray]):
+    X, y = regression_data
+    return pl.DataFrame({"col_0": X[:, 0], "col_1": X[:, 1], "y": y})
 
 
 @pytest.fixture(scope="session")
@@ -718,7 +656,7 @@ def pytorch_onnx_byo():
 
 
 @pytest.fixture(scope="session")
-def tf_transformer_example():
+def tf_transformer_example() -> TensorFlowModel:
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
@@ -822,14 +760,13 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = PandasData(data=train_data, sql_logic=sql_logic, dependent_vars=["y"])
     return model, data
 
-
 @pytest.fixture
 def sklearn_pipeline_model(sklearn_pipeline) -> SklearnModel:
     model, _ = sklearn_pipeline
     return model
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
@@ -852,7 +789,7 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
     clf = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", linear_model.LogisticRegression(max_iter=5))])
 
-    X_train, X_test, y_train, y_test = train_test_split(X[:1000], y[:1000], test_size=0.2, random_state=0)
+    X_train, _, y_train, _ = train_test_split(X[:1000], y[:1000], test_size=0.2, random_state=0)
 
     features = [*numeric_features, *categorical_features]
     X_train = X_train[features]
@@ -1009,25 +946,10 @@ def linear_regression_model(linear_regression) -> Tuple[SklearnModel, NumpyData]
 
 
 @pytest.fixture
-def test_model_card(sklearn_pipeline):
-    model, data = sklearn_pipeline
-    model_card = ModelCard(
-        trained_model=model,
-        sample_input_data=data[0:1],
-        name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
-        version="1.0.0",
-    )
-    return model_card
-
-
-@pytest.fixture
 def populate_model_data_for_api(
     api_registries: CardRegistries,
     linear_regression: Tuple[SklearnModel, NumpyData],
 ) -> Tuple[ModelCard, DataCard]:
-
     config.opsml_registry_path = uuid.uuid4().hex
     team = "mlops"
     user_email = "test@mlops.com"
@@ -1068,7 +990,6 @@ def populate_model_data_for_route(
     api_registries: CardRegistries,
     linear_regression: Tuple[SklearnModel, NumpyData],
 ) -> None:
-
     config.opsml_registry_path = uuid.uuid4().hex
     team = "mlops"
     user_email = "test@mlops.com"
@@ -1139,7 +1060,6 @@ def populate_run(
     test_app: TestClient,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
-
     model, data = sklearn_pipeline
 
     def callable_api():
@@ -1983,7 +1903,6 @@ def ransac_regressor():
 
 @pytest.fixture(scope="module")
 def radius_neighbors_regressor(example_dataframe):
-
     X_train, y_train, _, _ = example_dataframe
     reg = neighbors.RadiusNeighborsRegressor().fit(X_train, y_train)
     return SklearnModel(model=reg, sample_data=X_train)

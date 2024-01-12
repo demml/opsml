@@ -19,9 +19,9 @@ from opsml.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData
+from opsml.data import DataInterface, ArrowData, NumpyData, PandasData, PolarsData, SqlData
 from opsml.helpers.exceptions import VersionError
-from opsml.model import SklearnModel
+from opsml.model import ModelInterface, SklearnModel
 from opsml.registry import CardRegistries
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
@@ -320,10 +320,9 @@ def test_semver_registry_list(
 
 
 def test_runcard(
-    linear_regression: Tuple[SklearnModel, NumpyData],
+    linear_regression: Tuple[ModelInterface, NumpyData],
     db_registries: CardRegistries,
 ):
-
     registry = db_registries.run
     model, _ = linear_regression
 
@@ -382,7 +381,7 @@ def test_runcard(
 
 def test_model_registry_onnx(
     db_registries: CardRegistries,
-    sklearn_pipeline: Pipeline,
+    sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ):
     # create data card
     data_registry = db_registries.data
@@ -444,9 +443,8 @@ def test_model_registry_onnx(
 
 def test_modelcard_register_fail(
     db_registries: CardRegistries,
-    sklearn_pipeline: Pipeline,
+    sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ):
-
     model_registry = db_registries.model
     model, _ = sklearn_pipeline
 
