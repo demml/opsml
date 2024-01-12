@@ -1,8 +1,11 @@
+import sys
 from pathlib import Path
 
 import pytest
 
 from opsml.storage.client import StorageClient
+
+pytestmark = [pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")]
 
 
 def test_local_storage_client_crud(tmp_path: Path, local_storage_client: StorageClient):
