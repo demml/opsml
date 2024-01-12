@@ -157,8 +157,9 @@ p {
 
 #VersionColumn {
   float:left;
-  width:20%;
+  width:22%;
   padding-right: 1%;
+  font-size: 15px;
 }
 
 .list-group {
@@ -178,7 +179,7 @@ p {
 
 #MetadataColumn {
   float:left;
-  width:80%;
+  width:78%;
   padding-right: 1%;
 }
 
