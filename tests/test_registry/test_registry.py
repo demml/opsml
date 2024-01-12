@@ -32,19 +32,21 @@ from opsml.registry import CardRegistries
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
-from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS, LOCAL_TRACKING_URI
+from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS, OPSML_TRACKING_URI
 
 
 def test_registry_dialect(db_registries: CardRegistries):
     # Pick one registry as they all have the same engine
+
     registry = db_registries.data
-    if "postgres" in LOCAL_TRACKING_URI:
+
+    if "postgres" in OPSML_TRACKING_URI:
         assert "postgres" in registry._registry.engine.dialect
 
-    elif "mysql" in LOCAL_TRACKING_URI:
+    elif "mysql" in OPSML_TRACKING_URI:
         assert "mysql" in registry._registry.engine.dialect
 
-    elif "sqlite" in LOCAL_TRACKING_URI:
+    elif "sqlite" in OPSML_TRACKING_URI:
         assert "sqlite" in registry._registry.engine.dialect
     else:
         raise ValueError("Supported dialect not found")
