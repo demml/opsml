@@ -17,7 +17,7 @@ from opsml.cards.pipeline import PipelineCard
 from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
 from opsml.model.interfaces.huggingface import HuggingFaceModel
-from opsml.model.onnx.metadata_creator import _TrainedModelMetadataCreator
+from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.storage import client
 from opsml.types import CardType, ModelMetadata, SaveName, UriNames
 from opsml.types.extra import Suffix
@@ -411,9 +411,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
