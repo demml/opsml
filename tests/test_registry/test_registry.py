@@ -8,7 +8,6 @@ import joblib
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from sklearn.pipeline import Pipeline
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -19,29 +18,35 @@ from opsml.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData
+from opsml.data import (
+    ArrowData,
+    DataInterface,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    SqlData,
+)
 from opsml.helpers.exceptions import VersionError
-from opsml.model import SklearnModel
+from opsml.model import ModelInterface, SklearnModel
 from opsml.registry import CardRegistries
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
-from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS
+from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS, OPSML_TRACKING_URI
 
 
-def test_registry_dialect(
-    db_registries: CardRegistries,
-    tracking_uri: str,
-):
+def test_registry_dialect(db_registries: CardRegistries):
+    # Pick one registry as they all have the same engine
+
     registry = db_registries.data
 
-    if "postgres" in tracking_uri:
+    if "postgres" in OPSML_TRACKING_URI:
         assert "postgres" in registry._registry.engine.dialect
 
-    elif "mysql" in tracking_uri:
+    elif "mysql" in OPSML_TRACKING_URI:
         assert "mysql" in registry._registry.engine.dialect
 
-    elif "sqlite" in tracking_uri:
+    elif "sqlite" in OPSML_TRACKING_URI:
         assert "sqlite" in registry._registry.engine.dialect
     else:
         raise ValueError("Supported dialect not found")
@@ -320,10 +325,9 @@ def test_semver_registry_list(
 
 
 def test_runcard(
-    linear_regression: Tuple[SklearnModel, NumpyData],
+    linear_regression: Tuple[ModelInterface, NumpyData],
     db_registries: CardRegistries,
 ):
-
     registry = db_registries.run
     model, _ = linear_regression
 
@@ -382,7 +386,7 @@ def test_runcard(
 
 def test_model_registry_onnx(
     db_registries: CardRegistries,
-    sklearn_pipeline: Pipeline,
+    sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ):
     # create data card
     data_registry = db_registries.data
@@ -444,9 +448,8 @@ def test_model_registry_onnx(
 
 def test_modelcard_register_fail(
     db_registries: CardRegistries,
-    sklearn_pipeline: Pipeline,
+    sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ):
-
     model_registry = db_registries.model
     model, _ = sklearn_pipeline
 

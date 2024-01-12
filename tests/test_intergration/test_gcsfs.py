@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -8,38 +7,46 @@ from opsml.storage.client import GCSFSStorageClient
 
 # gcs integration tests perform operation on test bucket that has a TTL of 1 day for all objects
 @pytest.mark.integration
-def test_gcsfs_integration(gcsfs_integration_client: GCSFSStorageClient, gcsfs_bucket: Path):
-
+def test_gcsfs_integration(tmp_path: Path, gcs_storage_client: GCSFSStorageClient, gcs_test_bucket: Path):
     lpath = Path("tests/assets/cats.jpg")
-    rpath = gcsfs_bucket / "cats.jpg"
+    rpath = gcs_test_bucket / "cats.jpg"
 
-    # put file
-    gcsfs_integration_client.put(lpath, rpath)
+    get_lpath = Path(tmp_path / "tests/assets/empty.cats.jpg")
+    try:
+        # put file
+        gcs_storage_client.put(lpath, rpath)
 
-    # check file exists
-    assert gcsfs_integration_client.exists(rpath)
+        # check file exists
+        assert gcs_storage_client.exists(rpath)
 
-    # list files
-    files = gcsfs_integration_client.ls(gcsfs_bucket)
-    assert len(files) == 1
+        # deep tree
+        rpath_nested = rpath.parent / "nested/really/deep/cats-2.jpg"
+        gcs_storage_client.put(lpath, rpath_nested)
 
-    # find file
-    assert gcsfs_integration_client.find(rpath) == [rpath.as_posix()]
+        # list files (not recursive)
+        assert len(gcs_storage_client.ls(gcs_test_bucket)) >= 1
+        assert len(gcs_storage_client.ls(rpath_nested.parent)) >= 1
+        with pytest.raises(FileNotFoundError):
+            assert len(gcs_storage_client.ls(gcs_test_bucket / "notthere")) == 0
 
-    # get file
-    get_lpath = Path("tests/assets/empty/cats.jpg")
-    gcsfs_integration_client.get(rpath, get_lpath)
-    assert get_lpath.exists()
+        # find file
+        assert gcs_storage_client.find(rpath) == [rpath.as_posix()]
 
-    # remove local file
-    os.remove(get_lpath.as_posix())
+        # get file
+        get_lpath = Path("tests/assets/empty/cats.jpg")
+        gcs_storage_client.get(rpath, get_lpath)
+        assert get_lpath.exists()
 
-    # check iterfile
-    for f in gcsfs_integration_client.iterfile(rpath, 1000):
-        _bytes = lpath.read_bytes()
+        # check iterfile
+        for f in gcs_storage_client.iterfile(rpath, 1000):
+            _bytes = lpath.read_bytes()
 
-    # remove file
-    gcsfs_integration_client.rm(rpath)
+        # remove file
+        gcs_storage_client.rm(rpath)
 
-    # assert file is removed
-    assert not gcsfs_integration_client.exists(rpath)
+        # assert file is removed
+        assert not gcs_storage_client.exists(rpath)
+    finally:
+        if gcs_storage_client.exists(rpath):
+            gcs_storage_client.rm(rpath)
+        get_lpath.unlink(missing_ok=True)

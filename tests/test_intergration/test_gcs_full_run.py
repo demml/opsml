@@ -2,23 +2,33 @@ from pathlib import Path
 from typing import Tuple
 
 import pytest
+from pytest_lazyfixture import lazy_fixture
 
 from opsml.cards import DataCard, ModelCard, RunCard
 from opsml.data import PandasData
-from opsml.model import SklearnModel
+from opsml.model import ModelInterface
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
 
+@pytest.mark.parametrize(
+    "model_and_data",
+    [
+        lazy_fixture("sklearn_pipeline"),
+    ],
+)
 @pytest.mark.integration
 def test_gcs_full_run(
     api_registries: CardRegistries,
-    sklearn_pipeline: Tuple[SklearnModel, PandasData],
-    gcsfs_bucket: Path,
+    model_and_data: Tuple[ModelInterface, PandasData],
 ):
+    """Verifies the full cycle of model and data card persistence.
+
+    Because a profile is saved, data must be PandasData.
+    """
     # get data and model
-    model, data = sklearn_pipeline
+    model, data = model_and_data
 
     # set registries
     model_registry: CardRegistry = api_registries.model
@@ -29,98 +39,103 @@ def test_gcs_full_run(
     assert model_registry._registry.storage_client is api_storage_client
 
     # setup project
-    info = ProjectInfo(name="test", team="test-exp", user_email="test")
-    project = OpsmlProject(info=info)
+    try:
+        info = ProjectInfo(name="test", team="test-exp", user_email="test")
+        project = OpsmlProject(info=info)
 
-    # create run
-    with project.run() as run:
-        datacard = DataCard(
-            interface=data,
-            name="test_data",
-            team="mlops",
-            user_email="mlops.com",
+        # create run
+        with project.run() as run:
+            datacard = DataCard(
+                interface=data,
+                name="test_data",
+                team="mlops",
+                user_email="mlops.com",
+            )
+            datacard.create_data_profile()
+            run.register_card(card=datacard)
+            run.log_metric("test_metric", 10)
+            run.log_metrics({"test_metric2": 20})
+
+            modelcard = ModelCard(
+                interface=model,
+                name="pipeline_model",
+                team="mlops",
+                user_email="mlops.com",
+                tags={"id": "model1"},
+                datacard_uid=datacard.uid,
+                to_onnx=True,
+            )
+            run.register_card(modelcard)
+
+        # check run assets
+        assert api_storage_client.exists(Path(run.runcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+
+        # check data assets
+        assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+        assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
+        assert api_storage_client.exists(
+            Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
         )
-        datacard.create_data_profile()
-        run.register_card(card=datacard)
-        run.log_metric("test_metric", 10)
-        run.log_metrics({"test_metric2": 20})
+        assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
 
-        modelcard = ModelCard(
-            interface=model,
-            name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
-            tags={"id": "model1"},
-            datacard_uid=datacard.uid,
-            to_onnx=True,
+        # check model assets
+        assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+        assert api_storage_client.exists(
+            Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix)
         )
-        run.register_card(modelcard)
+        assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
+        assert api_storage_client.exists(
+            Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        )
+        assert api_storage_client.exists(
+            Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(model.preprocessor_suffix)
+        )
 
-    # check run assets
-    assert api_storage_client.exists(Path(run.runcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+        # load cards
 
-    # check data assets
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
+        # load datacard
+        _datacard: DataCard = data_registry.load_card(uid=datacard.uid)
+        _datacard.load_data_profile()
+        _datacard.load_data()
 
-    # check model assets
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
-    )
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(model.preprocessor_suffix)
-    )
+        assert _datacard.interface.data is not None
+        assert _datacard.interface.data_profile is not None
 
-    # load cards
+        # load modelcard
+        _modelcard: ModelCard = model_registry.load_card(uid=modelcard.uid)
+        _modelcard.load_model()
+        _modelcard.load_onnx_model()
 
-    # load datacard
-    _datacard: DataCard = data_registry.load_card(uid=datacard.uid)
-    _datacard.load_data_profile()
-    _datacard.load_data()
+        assert _modelcard.interface.model is not None
+        assert _modelcard.interface.preprocessor is not None
+        assert _modelcard.interface.sample_data is not None
+        assert _modelcard.interface.onnx_model is not None
 
-    assert _datacard.interface.data is not None
-    assert _datacard.interface.data_profile is not None
+        # load runcard
+        _runcard: RunCard = run_registry.load_card(uid=run.runcard.uid)
 
-    # load modelcard
-    _modelcard: ModelCard = model_registry.load_card(uid=modelcard.uid)
-    _modelcard.load_model()
-    _modelcard.load_onnx_model()
+        assert _runcard.metrics["test_metric"][0].value == 10
 
-    assert _modelcard.interface.model is not None
-    assert _modelcard.interface.preprocessor is not None
-    assert _modelcard.interface.sample_data is not None
-    assert _modelcard.interface.onnx_model is not None
+        # delete cards
 
-    # load runcard
-    _runcard: RunCard = run_registry.load_card(uid=run.runcard.uid)
+        # delete datacard
+        data_registry.delete_card(datacard)
 
-    assert _runcard.metrics["test_metric"][0].value == 10
+        # delete modelcard
+        model_registry.delete_card(modelcard)
 
-    # delete cards
+        # delete runcard
+        run_registry.delete_card(run.runcard)
 
-    # delete datacard
-    data_registry.delete_card(datacard)
+        # check run assets
+        assert len(api_storage_client.find(Path(run.runcard.uri))) == 0
 
-    # delete modelcard
-    model_registry.delete_card(modelcard)
+        # check data assets
+        assert len(api_storage_client.find(Path(datacard.uri))) == 0
 
-    # delete runcard
-    run_registry.delete_card(run.runcard)
-
-    # check run assets
-    assert len(api_storage_client.find(Path(run.runcard.uri))) == 0
-
-    # check data assets
-    assert len(api_storage_client.find(Path(datacard.uri))) == 0
-
-    # check model assets
-    assert len(api_storage_client.find(Path(modelcard.uri))) == 0
-
-    # need to remove project from gcs
-    project_path = gcsfs_bucket / RegistryTableNames.PROJECT.value
-    api_storage_client.rm(project_path)
+        # check model assets
+        assert len(api_storage_client.find(Path(modelcard.uri))) == 0
+    finally:
+        # need to remove project from gcs
+        project_path = Path("opsml-root:/") / RegistryTableNames.PROJECT.value
+        api_storage_client.rm(project_path)
