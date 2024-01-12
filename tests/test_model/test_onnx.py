@@ -17,6 +17,8 @@ DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 WINDOWS_EXCLUDE = sys.platform == "win32"
 
 EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+
+
 # this is done to filter all the convergence and user warnings during testing
 def warn(*args, **kwargs):
     pass
@@ -36,7 +38,7 @@ warnings.warn = warn
         lazy_fixture("lgb_booster_model"),  # lgb base package with dataframe
         lazy_fixture("lgb_classifier"),  # lgb classifier with dataframe
         lazy_fixture("sklearn_pipeline_model"),  # sklearn pipeline with dict onnx input
-        lazy_fixture("sklearn_pipeline_advanced"),
+        lazy_fixture("sklearn_pipeline_advanced"),  # nested pipelines
         lazy_fixture("stacking_regressor"),  # stacking regressor with lgb as one estimator
         ###### test all supported sklearn estimators
         lazy_fixture("ard_regression"),
