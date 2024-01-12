@@ -1,8 +1,8 @@
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
+from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.model.utils.data_helper import ModelDataHelper, get_model_data
 from opsml.types import ModelReturn
-from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 
 logger = ArtifactLogger.get_logger()
 
