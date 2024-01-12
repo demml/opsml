@@ -41,31 +41,113 @@ def test_local_storage_client_crud(tmp_path: Path, local_storage_client: Storage
     assert [str(rpath), str(rpath2)] == local_storage_client.find(tmp_path)
 
     # # get
-    # get_lpath = Path(tmp_path / "test.jpg")
-    # local_storage_client.get(rpath, get_lpath)
-    # assert local_storage_client.exists(get_lpath)
-    # local_storage_client.rm(get_lpath)
+    get_lpath = Path(tmp_path / "child/cats.jpg")
+    local_storage_client.get(rpath, get_lpath)
+    assert local_storage_client.exists(get_lpath)
+    local_storage_client.rm(get_lpath)
 
-    # # rm
-    # local_storage_client.rm(rpath)
-    # with pytest.raises(FileNotFoundError):
-    #     local_storage_client.rm(invalid_path)
-    # assert len(local_storage_client.find(tmp_path)) == 1  #
-    # assert str(rpath2) == local_storage_client.find(tmp_path)[0]
+    # rm
+    local_storage_client.rm(rpath)
+    with pytest.raises(FileNotFoundError):
+        local_storage_client.rm(invalid_path)
+    assert len(local_storage_client.find(tmp_path)) == 1
+    assert str(rpath2) == local_storage_client.find(tmp_path)[0]
 
-    # # open
-    # txt_path: Path = tmp_path / "test.txt"
-    # txt_path.write_text("hello, world")
-    # with local_storage_client.open(txt_path, mode="r") as f:
-    #     assert "hello, world" == f.read().decode()
+    # open
+    txt_path: Path = tmp_path / "test.txt"
+    txt_path.write_text("hello, world")
+    with local_storage_client.open(txt_path, mode="r") as f:
+        assert "hello, world" == f.read()
 
 
 def test_local_storage_client_trees(tmp_path: Path, local_storage_client: StorageClient):
-    # TODO(@damon): Finish trees
     child = Path(tmp_path, "child")
-    grand_child = Path(tmp_path, "grandchild")
+    grand_child = Path(child, "grandchild")
     for path in [tmp_path, child, grand_child]:
         path.mkdir(parents=True, exist_ok=True)
         Path(path, "test.txt").write_text("hello, world")
 
+        # exists
+        assert local_storage_client.exists(path)
+
+        # ls
+        assert len(local_storage_client.ls(path)) == 1
+
+    # find
     assert len(local_storage_client.find(tmp_path)) == 3
+
+    # copy
+    #
+    # test.txt
+    # child/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    copy_dir = Path(tmp_path / "copy")
+    local_storage_client.copy(tmp_path / "child", copy_dir)
+    assert len(local_storage_client.find(copy_dir)) == 2
+
+    # get
+    #
+    # test.txt
+    # child/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy2/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+
+    get_dir = Path(tmp_path / "copy2")
+    local_storage_client.get(tmp_path / "child", get_dir)
+    assert len(local_storage_client.find(get_dir)) == 2
+
+    # put
+    #
+    # test.txt
+    # child/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy2/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy3/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    put_dir = Path(tmp_path / "copy3")
+    local_storage_client.put(tmp_path / "child", put_dir)
+    assert len(local_storage_client.find(put_dir)) == 2
+
+    # rm
+    #
+    # test.txt
+    # copy/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy2/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    # copy3/
+    #   test.txt
+    #   grandchild/
+    #     test.txt
+    local_storage_client.rm(tmp_path / "child")
+    assert not local_storage_client.exists(tmp_path / "child")

@@ -135,8 +135,8 @@ class StorageClientBase(StorageClientProtocol):
         else:
             self.client.put(str(lpath), str(rpath), False)
 
-    def copy(self, src: Path, dest: Path, recursive: bool = True) -> None:
-        self.client.copy(str(src), str(dest), recursive)
+    def copy(self, src: Path, dest: Path) -> None:
+        self.client.copy(str(src), str(dest), recursive=True)
 
     def rm(self, path: Path) -> None:
         self.client.rm(str(path), True)

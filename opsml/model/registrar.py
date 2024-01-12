@@ -113,7 +113,7 @@ class ModelRegistrar:
             assert not self.is_registered(model_request)
 
         # register the model
-        self.storage_client.copy(read_path, registry_path, False)
+        self.storage_client.copy(read_path, registry_path)
 
         # register model settings
         self.register_model_settings(metadata, registry_path, model_uri)
