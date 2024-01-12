@@ -2,6 +2,7 @@ from opsml.cards import DataCard, ModelCard, PipelineCard, ProjectCard, RunCard
 from opsml.data import (
     ArrowData,
     DataInterface,
+    DataSplit,
     NumpyData,
     PandasData,
     PolarsData,
@@ -18,13 +19,18 @@ from opsml.model import (
     TensorFlowModel,
     XGBoostModel,
 )
-from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.types import (
+    AuditCardMetadata,
     CardInfo,
+    Comment,
+    DataCardMetadata,
+    Description,
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
     HuggingFaceTask,
+    ModelCardMetadata,
     TorchOnnxArgs,
 )
 from opsml.version import __version__
@@ -60,4 +66,11 @@ __all__ = [
     "TorchOnnxArgs",
     "HuggingFaceTask",
     "HuggingFaceORTModel",
+    "DataSplit",
+    "ActiveRun",
+    "ModelCardMetadata",
+    "DataCardMetadata",
+    "Description",
+    "Comment",
+    "AuditCardMetadata",
 ]
