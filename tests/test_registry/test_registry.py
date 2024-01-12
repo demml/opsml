@@ -8,7 +8,6 @@ import joblib
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from sklearn.pipeline import Pipeline
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -19,7 +18,14 @@ from opsml.cards import (
     PipelineCard,
     RunCard,
 )
-from opsml.data import DataInterface, ArrowData, NumpyData, PandasData, PolarsData, SqlData
+from opsml.data import (
+    ArrowData,
+    DataInterface,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    SqlData,
+)
 from opsml.helpers.exceptions import VersionError
 from opsml.model import ModelInterface, SklearnModel
 from opsml.registry import CardRegistries
