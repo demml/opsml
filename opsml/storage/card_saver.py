@@ -21,6 +21,9 @@ from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.storage import client
 from opsml.types import CardType, ModelMetadata, SaveName, UriNames
 from opsml.types.extra import Suffix
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger()
 
 
 class CardUris(BaseModel):
@@ -37,6 +40,15 @@ class CardUris(BaseModel):
     rpath: Optional[Path] = None
 
     def resolve_path(self, name: str) -> Optional[str]:
+        """Resolves a path to a given artifact
+
+        Args:
+            name:
+                Name of artifact to resolve
+
+        Returns:
+            Path to artifact
+        """
         curr_path: Optional[Path] = getattr(self, name)
 
         if curr_path is None:
@@ -202,6 +214,7 @@ class ModelCardSaver(CardSaver):
 
     def _save_onnx_model(self) -> None:
         if self.card.to_onnx:
+            logger.info("---------------------Converting Model to Onnx---------------------")
             save_path = (self.lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
             metadata = self.card.interface.save_onnx(save_path)
 
@@ -219,6 +232,7 @@ class ModelCardSaver(CardSaver):
 
         self.card.metadata.data_schema = metadata.data_schema
         self.card_uris.onnx_model_uri = save_path
+        logger.info("---------------------Onnx Conversion Complete---------------------")
 
     def _get_model_metadata(self) -> ModelMetadata:
         """Create Onnx Model from trained model"""
@@ -411,9 +425,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
