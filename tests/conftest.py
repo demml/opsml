@@ -1,7 +1,7 @@
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, Optional, Tuple
+from typing import Any, Iterator, Tuple
 
 warnings.filterwarnings("ignore")
 
@@ -90,7 +90,6 @@ from opsml.model import (
     TensorFlowModel,
     XGBoostModel,
 )
-from opsml.model.challenger import ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig, config
@@ -99,7 +98,6 @@ from opsml.types import (
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
     HuggingFaceTask,
-    Metric,
     OnnxModel,
 )
 
@@ -267,41 +265,6 @@ def db_registries() -> CardRegistries:
     client.storage_client = client.get_storage_client(config)
     yield CardRegistries()
     cleanup()
-
-
-@pytest.fixture
-def opsml_project() -> Iterator[OpsmlProject]:
-    project = OpsmlProject(
-        info=ProjectInfo(
-            name="test_exp",
-            team="test",
-            user_email="test",
-        )
-    )
-    return project
-
-
-@pytest.fixture
-def mock_model_challenger() -> Any:
-    class MockModelChallenger(ModelChallenger):
-        def __init__(
-            self,
-            challenger: ModelCard,
-            registries: CardRegistries,
-        ):
-            """
-            Instantiates ModelChallenger class
-
-            Args:
-                challenger:
-                    ModelCard of challenger
-
-            """
-            self._challenger = challenger
-            self._challenger_metric: Optional[Metric] = None
-            self._registries = registries
-
-    return MockModelChallenger
 
 
 @pytest.fixture
@@ -771,7 +734,12 @@ def sklearn_pipeline_advanced() -> SklearnModel:
     X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
 
     numeric_features = ["age", "fare"]
-    numeric_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())])
+    numeric_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
 
     categorical_features = ["embarked", "sex", "pclass"]
     categorical_transformer = Pipeline(
@@ -791,12 +759,14 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
     X_train, _, y_train, _ = train_test_split(X[:1000], y[:1000], test_size=0.2, random_state=0)
 
+    assert isinstance(X_train, pd.DataFrame)
+    assert isinstance(y_train, pd.Series)
+
     features = [*numeric_features, *categorical_features]
     X_train = X_train[features]
     y_train = y_train.to_numpy().astype(np.int32)
 
     clf.fit(X_train, y_train)
-
     return SklearnModel(model=clf, sample_data=X_train[:100])
 
 

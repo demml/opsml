@@ -5,7 +5,7 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from opsml.cards import DataCard, ModelCard, RunCard
-from opsml.data import DataInterface, PandasData
+from opsml.data import PandasData
 from opsml.model import ModelInterface
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
