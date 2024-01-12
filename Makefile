@@ -61,7 +61,8 @@ setup.sysdeps:
 
 test.unit:
 	poetry run pytest \
-		-m "not large and not compat and not integration" \
+		-m "not large and not compat" \
+		--ignore tests/integration \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report html:coverage \
@@ -69,8 +70,7 @@ test.unit:
 		--junitxml=./results.xml
 
 test.integration:
-	poetry run pytest \
-		-m "integration" \
+	poetry run pytest tests/integration \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report html:coverage \
