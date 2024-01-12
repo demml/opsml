@@ -16,11 +16,14 @@ from opsml.cards.model import ModelCard
 from opsml.cards.pipeline import PipelineCard
 from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
+from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.storage import client
 from opsml.types import CardType, ModelMetadata, SaveName, UriNames
 from opsml.types.extra import Suffix
+
+logger = ArtifactLogger.get_logger()
 
 
 class CardUris(BaseModel):
@@ -37,6 +40,15 @@ class CardUris(BaseModel):
     rpath: Optional[Path] = None
 
     def resolve_path(self, name: str) -> Optional[str]:
+        """Resolves a path to a given artifact
+
+        Args:
+            name:
+                Name of artifact to resolve
+
+        Returns:
+            Path to artifact
+        """
         curr_path: Optional[Path] = getattr(self, name)
 
         if curr_path is None:
@@ -201,7 +213,10 @@ class ModelCardSaver(CardSaver):
         self.card_uris.sample_data_uri = save_path
 
     def _save_onnx_model(self) -> None:
+        """If to_onnx is True, converts and saves a model to onnx format"""
+
         if self.card.to_onnx:
+            logger.info("---------------------Converting Model to Onnx---------------------")
             save_path = (self.lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
             metadata = self.card.interface.save_onnx(save_path)
 
@@ -219,6 +234,7 @@ class ModelCardSaver(CardSaver):
 
         self.card.metadata.data_schema = metadata.data_schema
         self.card_uris.onnx_model_uri = save_path
+        logger.info("---------------------Onnx Conversion Complete---------------------")
 
     def _get_model_metadata(self) -> ModelMetadata:
         """Create Onnx Model from trained model"""
@@ -242,12 +258,12 @@ class ModelCardSaver(CardSaver):
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
         )
 
-        # metadata extras
-
+        # add extra uris
         if self.card_uris.preprocessor_uri is not None:
             metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value)
             metadata.preprocessor_name = self.card.interface.preprocessor_name  # type: ignore
 
+        # add huggingface specific uris
         if isinstance(self.card.interface, HuggingFaceModel):
             if self.card_uris.quantized_model_uri is not None:
                 metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
@@ -263,6 +279,7 @@ class ModelCardSaver(CardSaver):
         return metadata
 
     def _save_metadata(self) -> None:
+        """Saves Model metadata"""
         model_metadata = self._get_model_metadata()
 
         # save model metadata to json
@@ -284,6 +301,7 @@ class ModelCardSaver(CardSaver):
         joblib.dump(dumped_model, save_path)
 
     def save_artifacts(self) -> None:
+        """Prepares and saves artifacts from a modelcard"""
         if self.card.interface is None:
             raise ValueError("ModelCard must have a data interface to save artifacts")
 
@@ -315,11 +333,13 @@ class AuditCardSaver(CardSaver):
         return cast(AuditCard, self._card)
 
     def _save_auditcard(self) -> None:
+        """Save auditcard to file"""
         dumped_audit = self.card.model_dump()
         save_path = Path(self.lpath, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> None:
+        """Save auditcard artifacts"""
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
@@ -344,6 +364,7 @@ class RunCardSaver(CardSaver):
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> None:
+        """Saves a runcard's artifacts"""
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
@@ -361,11 +382,13 @@ class PipelineCardSaver(CardSaver):
         return cast(PipelineCard, self._card)
 
     def _save_pipelinecard(self) -> None:
+        """Saves a pipelinecard"""
         dumped_audit = self.card.model_dump()
         save_path = Path(self.lpath, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> None:
+        """Saves a pipelinecard's artifacts"""
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
@@ -383,11 +406,13 @@ class ProjectCardSaver(CardSaver):
         return cast(ProjectCard, self._card)
 
     def _save_projectcard(self) -> None:
+        """Saves a projectcard"""
         dumped_audit = self.card.model_dump()
         save_path = Path(self.lpath, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_audit, save_path)
 
     def save_artifacts(self) -> None:
+        """Saves a projectcard's artifacts"""
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri

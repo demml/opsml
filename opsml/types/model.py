@@ -295,13 +295,6 @@ class ModelMetadata(BaseModel):
     )
 
 
-class ModelDownloadInfo(BaseModel):
-    name: Optional[str] = None
-    version: Optional[str] = None
-    team: Optional[str] = None
-    uid: Optional[str] = None
-
-
 # Sklearn protocol stub
 class BaseEstimator(Protocol):
     ...
