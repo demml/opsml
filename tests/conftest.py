@@ -760,6 +760,7 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
     data = PandasData(data=train_data, sql_logic=sql_logic, dependent_vars=["y"])
     return model, data
 
+
 @pytest.fixture
 def sklearn_pipeline_model(sklearn_pipeline) -> SklearnModel:
     model, _ = sklearn_pipeline
