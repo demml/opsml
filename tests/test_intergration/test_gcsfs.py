@@ -19,9 +19,14 @@ def test_gcsfs_integration(gcs_storage_client: GCSFSStorageClient, gcs_test_buck
         # check file exists
         assert gcs_storage_client.exists(rpath)
 
-        # list files
-        files = gcs_storage_client.ls(gcs_test_bucket)
-        assert len(files) >= 1
+        # deep tree
+        rpath_nested = rpath.parent / "nested/really/deep/cats-2.jpg"
+        gcs_storage_client.put(lpath, rpath_nested)
+
+        # list files (not recursive)
+        assert len(gcs_storage_client.ls(gcs_test_bucket)) >= 1
+        assert len(gcs_storage_client.ls(rpath_nested.parent)) >= 1
+        assert len(gcs_storage_client.ls(gcs_test_bucket / "notthere")) == 0
 
         # find file
         assert gcs_storage_client.find(rpath) == [rpath.as_posix()]
