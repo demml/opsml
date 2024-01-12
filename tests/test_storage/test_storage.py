@@ -38,7 +38,7 @@ def test_local_storage_client_crud(tmp_path: Path, local_storage_client: Storage
     local_storage_client.copy(rpath, rpath2)
     assert local_storage_client.exists(rpath2)
     assert len(local_storage_client.find(tmp_path)) == 2
-    assert [str(rpath), str(rpath2)] == local_storage_client.find(tmp_path)
+    assert [rpath, rpath2] == local_storage_client.find(tmp_path)
 
     # # get
     get_lpath = Path(tmp_path / "child/cats.jpg")
@@ -51,7 +51,7 @@ def test_local_storage_client_crud(tmp_path: Path, local_storage_client: Storage
     with pytest.raises(FileNotFoundError):
         local_storage_client.rm(invalid_path)
     assert len(local_storage_client.find(tmp_path)) == 1
-    assert str(rpath2) == local_storage_client.find(tmp_path)[0]
+    assert rpath2 == local_storage_client.find(tmp_path)[0]
 
     # open
     txt_path: Path = tmp_path / "test.txt"

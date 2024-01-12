@@ -59,7 +59,10 @@ class StorageClientProtocol(Protocol):
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
     def ls(self, path: Path) -> List[Path]:  # pylint:  disable=invalid-name
-        """Lists files"""
+        """Lists files in directory (not recursive)"""
+
+    def find(self, path: Path) -> List[Path]:
+        """Lists all files in directory (recursive)"""
 
     def open(self, path: Path, mode: str, encoding: Optional[str] = None) -> BinaryIO:
         """Open a file"""
