@@ -108,8 +108,8 @@ class StorageClientBase(StorageClientProtocol):
 
         self.client.get(rpath=abs_rpath, lpath=abs_lpath, recursive=recursive)
 
-    def ls(self, path: Path) -> List[str]:
-        return self.client.ls(str(path))
+    def ls(self, path: Path) -> List[Path]:
+        return [Path(p) for p in self.client.ls(str(path))]
 
     def find(self, path: Path) -> List[str]:
         return self.client.find(str(path))
