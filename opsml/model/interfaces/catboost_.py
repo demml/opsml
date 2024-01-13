@@ -14,8 +14,14 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-from opsml.types import CommonKwargs, SaveName, Suffix, TrainedModelType
-from opsml.types.model import OnnxModel
+from opsml.types import (
+    CommonKwargs,
+    ModelReturn,
+    OnnxModel,
+    SaveName,
+    Suffix,
+    TrainedModelType,
+)
 
 ValidData = Union[List[Any], NDArray[Any]]
 
@@ -166,7 +172,7 @@ try:
             )
             return None
 
-        def save_onnx(self, path: Path) -> None:
+        def save_onnx(self, path: Path) -> ModelReturn:
             import onnxruntime as rt
 
             from opsml.model.onnx import _get_onnx_metadata
