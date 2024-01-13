@@ -153,7 +153,7 @@ try:
             )
             return None
 
-        def save_onnx_model(self, path: Path) -> None:
+        def save_onnx(self, path: Path) -> None:
             import onnxruntime as rt
 
             from opsml.model.onnx import _get_onnx_metadata

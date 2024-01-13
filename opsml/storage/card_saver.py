@@ -218,6 +218,7 @@ class ModelCardSaver(CardSaver):
         if self.card.to_onnx:
             logger.info("---------------------Converting Model to Onnx---------------------")
             save_path = (self.lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
+
             metadata = self.card.interface.save_onnx(save_path)
 
             if isinstance(self.card.interface, HuggingFaceModel):
@@ -436,9 +437,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
