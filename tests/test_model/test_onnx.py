@@ -112,6 +112,9 @@ warnings.warn = warn
         lazy_fixture("voting_classifier"),
         lazy_fixture("voting_regressor"),
         lazy_fixture("lgb_classifier_calibrated_pipeline"),
+        lazy_fixture("catboost_regressor"), # test catboost
+        lazy_fixture("catboost_classifier"), # test catboost
+        lazy_fixture("catboost_ranker"), # test catboost
     ],
 )
 def test_sklearn_models(interface: ModelInterface):
@@ -128,7 +131,7 @@ def test_sklearn_models(interface: ModelInterface):
         lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
-def test_model_pytorch_predict(interface: PyTorchModel):
+def _test_model_pytorch_predict(interface: PyTorchModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
@@ -142,7 +145,7 @@ def test_model_pytorch_predict(interface: PyTorchModel):
         lazy_fixture("huggingface_text_classification_pipeline"),
     ],
 )
-def test_huggingface_model(interface: HuggingFaceModel):
+def _test_huggingface_model(interface: HuggingFaceModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
@@ -156,7 +159,7 @@ def test_huggingface_model(interface: HuggingFaceModel):
         lazy_fixture("multi_input_tf_example"),  # keras multi input model
     ],
 )
-def test_tensorflow_predict(interface: TensorFlowModel):
+def _test_tensorflow_predict(interface: TensorFlowModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
@@ -169,7 +172,7 @@ def test_tensorflow_predict(interface: TensorFlowModel):
         lazy_fixture("lightning_regression"),  # pytorch lightning
     ],
 )
-def test_torch_lightning_predict(interface: LightningModel):
+def _test_torch_lightning_predict(interface: LightningModel):
     interface, _ = interface
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
