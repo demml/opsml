@@ -820,7 +820,7 @@ def catboost_ranker():
     train = Pool(
         data=X_train[:1000],
         label=y_train[:1000],
-        group_id=queries_train
+        group_id=queries_train[:1000]
     )
 
     parameters = {
@@ -836,7 +836,7 @@ def catboost_ranker():
   
     
 
-    return CatBoostModel(model=model, sample_data=X_train.to_numpy()[:100])
+    return CatBoostModel(model=model, sample_data=X_train[:100])
 
 
 
