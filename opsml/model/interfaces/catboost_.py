@@ -1,5 +1,6 @@
+import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import joblib
 import numpy as np
@@ -12,7 +13,8 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-from opsml.types import CommonKwargs, Suffix, TrainedModelType
+from opsml.types import CommonKwargs, SaveName, Suffix, TrainedModelType
+from opsml.types.model import OnnxModel
 
 ValidData = Union[List[Any], NDArray[Any]]
 
@@ -120,6 +122,48 @@ try:
             model = getattr(catboost, self.model_type, CatBoost)()
             self.model = model.load_model(path.as_posix())
 
+        def _convert_to_onnx_inplace(self) -> None:
+            """Convert to onnx model using temp dir"""
+            with tempfile.TemporaryDirectory() as tmpdir:
+                lpath = Path(tmpdir) / SaveName.ONNX_MODEL.value
+                onnx_path = lpath.with_suffix(Suffix.ONNX.value)
+                self.convert_to_onnx(**{"path": onnx_path})
+
+        def convert_to_onnx(self, **kwargs: Path) -> None:
+            """Converts model to onnx format"""
+
+            import onnx
+            import onnxruntime as rt
+
+            if self.onnx_model is not None:
+                return None
+
+            path: Optional[Path] = kwargs.get("path")
+            if path is None:
+                return self._convert_to_onnx_inplace()
+
+            self.model.save_model(
+                path.as_posix(),
+                format="onnx",
+                export_parameters={"onnx_domain": "ai.catboost"},
+            )
+            self.onnx_model = OnnxModel(
+                onnx_version=onnx.__version__,
+                sess=rt.InferenceSession(path.as_posix()),
+            )
+            return None
+
+        def save_onnx_model(self, path: Path) -> None:
+            import onnxruntime as rt
+
+            from opsml.model.onnx import _get_onnx_metadata
+
+            if self.onnx_model is None:
+                self.convert_to_onnx(**{"path": path})
+
+            # no need to save onnx to bytes since its done during onnx conversion
+            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+
         def save_preprocessor(self, path: Path) -> None:
             """Saves preprocessor to path if present. Base implementation use Joblib
 
@@ -143,6 +187,11 @@ try:
         def preprocessor_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.JOBLIB.value
+
+        @property
+        def model_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return Suffix.CATBOOST.value
 
         @staticmethod
         def name() -> str:
