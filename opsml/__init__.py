@@ -10,6 +10,7 @@ from opsml.data import (
     TorchData,
 )
 from opsml.model import (
+    CatBoostModel,
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -18,7 +19,6 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     XGBoostModel,
-    CatBoostModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
