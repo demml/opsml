@@ -6,6 +6,7 @@ from opsml.model.interfaces.pytorch_lightning import LightningModel
 from opsml.model.interfaces.sklearn import SklearnModel
 from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.interfaces.xgb import XGBoostModel
+from opsml.model.interfaces.catboost_ import CatBoostModel
 from opsml.types import (
     HuggingFaceModuleType,
     HuggingFaceOnnxArgs,
@@ -26,4 +27,5 @@ __all__ = [
     "HuggingFaceORTModel",
     "HuggingFaceOnnxArgs",
     "ModelInterface",
+    "CatBoostModel",
 ]
