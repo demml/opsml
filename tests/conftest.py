@@ -792,7 +792,7 @@ def catboost_regressor(example_dataframe):
     reg.fit(X_train.to_numpy(), y_train)
     
 
-    return CatBoostModel(model=reg, sample_data=X_train.to_numpy()[:100])
+    return CatBoostModel(model=reg, sample_data=X_train.to_numpy()[:100], preprocessor=StandardScaler(),)
 
 @pytest.fixture
 def catboost_classifier(example_dataframe):
