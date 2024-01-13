@@ -154,6 +154,7 @@ tensorflow-macos = { version = "2.12.0", platform = "darwin" }
 lightning = "^2.1.2"
 optimum = "^1.16.1"
 pytest-rerunfailures = "^13.0"
+catboost = "^1.2.2"
 
 [tool.poetry.group.dev-lints]
 optional = true

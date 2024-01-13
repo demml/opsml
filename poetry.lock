@@ -406,6 +406,48 @@ files = [
 ]
 
 [[package]]
+name = "catboost"
+version = "1.2.2"
+description = "CatBoost Python Package"
+optional = false
+python-versions = "*"
+files = [
+    {file = "catboost-1.2.2-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:806189e8491d3ba5f6a24875689da2f997c95a21d2d32e92144ea391882a75a0"},
+    {file = "catboost-1.2.2-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:2108673d05c6e961a1298aea0c722d6c7a0acca112d6ec14cf01a274486af6af"},
+    {file = "catboost-1.2.2-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:0b17019ce42939a153895cd44430b50c49e3fa7ab65109f98c9a7df461359705"},
+    {file = "catboost-1.2.2-cp310-cp310-win_amd64.whl", hash = "sha256:dab0ad5f9dec575b7949ba58cc2ec029128d90611c45a6caa03f9d52d28f3420"},
+    {file = "catboost-1.2.2-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:83f59b7526e5330a96d70f25e162c7a4ab9d9c9def234b48e325f1098c854c0f"},
+    {file = "catboost-1.2.2-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:467b6e0064fe5a6aa7efc7f86a91dfe1266df91f623256db792095964b644d0e"},
+    {file = "catboost-1.2.2-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:db151f661305b13d81d460df1f01580085671a24a71300abbbe17dc8d1c152a0"},
+    {file = "catboost-1.2.2-cp311-cp311-win_amd64.whl", hash = "sha256:0b8b5cdc2f1e1452018867a55902dc440d8a67a0869d5258f59b290d917cd73a"},
+    {file = "catboost-1.2.2-cp37-cp37m-macosx_11_0_universal2.whl", hash = "sha256:d82d2a2914a6dec8b95cc107d9b6686ad00b0177144561bce14e44ef4c91a488"},
+    {file = "catboost-1.2.2-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:d2a281797abc6e6572621c4c99a3aded9ef32b25bfdbf7824021f84f9fbebd63"},
+    {file = "catboost-1.2.2-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:d0f0e39ab9cb1e5287c785bc8a7448b2ebeff6257f4509693008043b8b24e53e"},
+    {file = "catboost-1.2.2-cp37-cp37m-win_amd64.whl", hash = "sha256:7714aeef4c079592f64b5cb79e78c0b5c636784b41bca882f5ff6d8f4481c734"},
+    {file = "catboost-1.2.2-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:aa758d5a3cb1c4a5f87d2399ccc7879b63f3db711fc34b1c285b5499c4112234"},
+    {file = "catboost-1.2.2-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:6ad09ae45d69bc0ea8685cb92e6df8db1f99796392bb54ba588c2291890eea66"},
+    {file = "catboost-1.2.2-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:7a57052030cb0a7b8cc1db98d6de3c00f864b6f36275bc0608d85f9ea04df751"},
+    {file = "catboost-1.2.2-cp38-cp38-win_amd64.whl", hash = "sha256:fb0a8902b78179d9008e608f57626195726cd7328ac052f1ee2e46663bb8f964"},
+    {file = "catboost-1.2.2-cp39-cp39-macosx_11_0_universal2.whl", hash = "sha256:2a7c3a081af1da25c3d25e3be249ac85a979c5dd4ab4fba5c4f5742b83c8b434"},
+    {file = "catboost-1.2.2-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:85459ee572e3e81f4cbde76b9ba08c3a2c9c31586861947bdbe95dbc29672205"},
+    {file = "catboost-1.2.2-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:f6f3ae50f84a177455d0739ae08333db4fe2642278a8c287be95f2d6cdc9cdf8"},
+    {file = "catboost-1.2.2-cp39-cp39-win_amd64.whl", hash = "sha256:1c0c3973542c5c46898c157a9f545ad80a36b8d8b17d92424a07376818911162"},
+    {file = "catboost-1.2.2.tar.gz", hash = "sha256:c9381af807369fa6a24288a028eebbcfcec939c897ffd95729ca0f891d1d49c4"},
+]
+
+[package.dependencies]
+graphviz = "*"
+matplotlib = "*"
+numpy = ">=1.16.0"
+pandas = ">=0.24"
+plotly = "*"
+scipy = "*"
+six = "*"
+
+[package.extras]
+widget = ["ipython", "ipywidgets (>=7.0,<9.0)", "traitlets"]
+
+[[package]]
 name = "certifi"
 version = "2023.11.17"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -677,7 +719,7 @@ cron = ["capturer (>=2.4)"]
 name = "contourpy"
 version = "1.2.0"
 description = "Python library for calculating contours of 2D quadrilateral grids"
-optional = true
+optional = false
 python-versions = ">=3.9"
 files = [
     {file = "contourpy-1.2.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0274c1cb63625972c0c007ab14dd9ba9e199c36ae1a231ce45d725cbcbfd10a8"},
@@ -850,7 +892,7 @@ test-randomorder = ["pytest-randomly"]
 name = "cycler"
 version = "0.12.1"
 description = "Composable style cycles"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30"},
@@ -1016,7 +1058,7 @@ files = [
 name = "fonttools"
 version = "4.47.2"
 description = "Tools to manipulate font files"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "fonttools-4.47.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:3b629108351d25512d4ea1a8393a2dba325b7b7d7308116b605ea3f8e1be88df"},
@@ -1488,6 +1530,22 @@ protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.1 || >4.21.1,<4
 grpc = ["grpcio (>=1.44.0,<2.0.0.dev0)"]
 
 [[package]]
+name = "graphviz"
+version = "0.20.1"
+description = "Simple Python interface for Graphviz"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "graphviz-0.20.1-py3-none-any.whl", hash = "sha256:587c58a223b51611c0cf461132da386edd896a029524ca61a1462b880bf97977"},
+    {file = "graphviz-0.20.1.zip", hash = "sha256:8c58f14adaa3b947daf26c19bc1e98c4e0702cdc31cf99153e6f06904d492bf8"},
+]
+
+[package.extras]
+dev = ["flake8", "pep8-naming", "tox (>=3)", "twine", "wheel"]
+docs = ["sphinx (>=5)", "sphinx-autodoc-typehints", "sphinx-rtd-theme"]
+test = ["coverage", "mock (>=4)", "pytest (>=7)", "pytest-cov", "pytest-mock (>=3)"]
+
+[[package]]
 name = "greenlet"
 version = "3.0.3"
 description = "Lightweight in-process concurrent programming"
@@ -1857,7 +1915,7 @@ testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs
 name = "importlib-resources"
 version = "6.1.1"
 description = "Read resources from Python packages"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "importlib_resources-6.1.1-py3-none-any.whl", hash = "sha256:e8bf90d8213b486f428c9c39714b920041cb02c184686a3dee24905aaa8105d6"},
@@ -1984,7 +2042,7 @@ files = [
 name = "kiwisolver"
 version = "1.4.5"
 description = "A fast implementation of the Cassowary constraint solver"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "kiwisolver-1.4.5-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:05703cf211d585109fcd72207a31bb170a0f22144d68298dc5e61b3c946518af"},
@@ -2427,7 +2485,7 @@ files = [
 name = "matplotlib"
 version = "3.8.2"
 description = "Python plotting package"
-optional = true
+optional = false
 python-versions = ">=3.9"
 files = [
     {file = "matplotlib-3.8.2-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:09796f89fb71a0c0e1e2f4bdaf63fb2cefc84446bb963ecdeb40dfee7dfa98c7"},
@@ -3646,6 +3704,21 @@ docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.1)", "sphinx-
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4)", "pytest-cov (>=4.1)", "pytest-mock (>=3.11.1)"]
 
 [[package]]
+name = "plotly"
+version = "5.18.0"
+description = "An open-source, interactive data visualization library for Python"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "plotly-5.18.0-py3-none-any.whl", hash = "sha256:23aa8ea2f4fb364a20d34ad38235524bd9d691bf5299e800bca608c31e8db8de"},
+    {file = "plotly-5.18.0.tar.gz", hash = "sha256:360a31e6fbb49d12b007036eb6929521343d6bee2236f8459915821baefa2cbb"},
+]
+
+[package.dependencies]
+packaging = "*"
+tenacity = ">=6.2.0"
+
+[[package]]
 name = "pluggy"
 version = "1.3.0"
 description = "plugin and hook calling mechanisms for python"
@@ -4106,7 +4179,7 @@ rsa = ["cryptography"]
 name = "pyparsing"
 version = "3.1.1"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-optional = true
+optional = false
 python-versions = ">=3.6.8"
 files = [
     {file = "pyparsing-3.1.1-py3-none-any.whl", hash = "sha256:32c7c0b711493c72ff18a981d24f28aaf9c1fb7ed5e9667c9e84e3db623bdbfb"},
@@ -6723,4 +6796,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "f567d29ebd57108aba1000a4261e9ddb66e447275f917b303fd8838d76676267"
+content-hash = "ee04e92abc506b43d2e1ff61d7a11cf5fac555b717b2265386a434b034a8cfae"
