@@ -10,6 +10,7 @@ from pydantic import model_validator
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
+    SamplePrediction,
     get_model_args,
     get_processor_name,
 )
@@ -66,6 +67,18 @@ try:
                 if len(sample_data.shape) == 1:
                     return sample_data.reshape(1, -1)
                 return sample_data[0:1]
+
+            raise ValueError("Sample data should be a list or numpy array")
+
+        def get_sample_prediction(self) -> SamplePrediction:
+            assert self.model is not None, "Model is not defined"
+            assert self.sample_data is not None, "Sample data must be provided"
+
+            prediction = self.model.predict(self.sample_data)
+
+            prediction_type = get_class_name(prediction)
+
+            return SamplePrediction(prediction_type, prediction)
 
         @property
         def model_class(self) -> str:

@@ -7,13 +7,13 @@ import pytest
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
 from opsml.model import (
+    CatBoostModel,
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
     PyTorchModel,
     SklearnModel,
     TensorFlowModel,
-    CatBoostModel
 )
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
@@ -449,7 +449,11 @@ def test_save_tensorflow_multi_input_modelcard_api_client(
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-def test_save_catboost_modelcard(catboost_regressor: CatBoostModel, api_storage_client: client.StorageClientBase,):
+
+def test_save_catboost_modelcard(
+    catboost_regressor: CatBoostModel,
+    api_storage_client: client.StorageClientBase,
+):
     model: CatBoostModel = catboost_regressor
     modelcard = ModelCard(
         interface=model,
@@ -467,10 +471,14 @@ def test_save_catboost_modelcard(catboost_regressor: CatBoostModel, api_storage_
 
     save_card_artifacts(modelcard)
 
- # check paths exist on server
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CATBOOST.value))
+    # check paths exist on server
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CATBOOST.value)
+    )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix( Suffix.JOBLIB.value))
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+    )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
 
@@ -493,4 +501,3 @@ def test_save_catboost_modelcard(catboost_regressor: CatBoostModel, api_storage_
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
-

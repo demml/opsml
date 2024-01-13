@@ -655,8 +655,16 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
 
 def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
     model: CatBoostModel = catboost_regressor
+
+    # remake catboost model with list
+    new_model = CatBoostModel(
+        model=model.model,
+        sample_data=list(model.sample_data),
+        preprocessor=model.preprocessor,
+    )
+
     modelcard = ModelCard(
-        interface=model,
+        interface=new_model,
         name="test_model",
         team="mlops",
         user_email="test_email",
@@ -697,3 +705,5 @@ def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+    assert loaded_card.metadata.data_schema.input_features["input_0"].shape == (10,)
+    assert loaded_card.metadata.data_schema.output_features["outputs"].shape == (1,)
