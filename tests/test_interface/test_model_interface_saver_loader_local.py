@@ -8,13 +8,13 @@ from transformers import Pipeline
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
 from opsml.model import (
+    CatBoostModel,
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
     PyTorchModel,
     SklearnModel,
     TensorFlowModel,
-    CatBoostModel
 )
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
