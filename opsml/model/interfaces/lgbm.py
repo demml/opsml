@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import joblib
+import pandas as pd
 from numpy.typing import NDArray
 from pydantic import model_validator
 
@@ -11,7 +12,6 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-import pandas as pd
 from opsml.types import CommonKwargs, TrainedModelType
 from opsml.types.extra import Suffix
 

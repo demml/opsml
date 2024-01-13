@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import joblib
-import pandas as pd
+import numpy as np
 from numpy.typing import NDArray
 from pydantic import model_validator
 
@@ -12,7 +12,6 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-import numpy as np
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
 ValidData = Union[List[Any], NDArray[Any]]
@@ -80,7 +79,7 @@ try:
 
             model, module, bases = get_model_args(model)
 
-            if "sklearn" in module:
+            if "catboost" in module:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
             else:
@@ -96,6 +95,30 @@ try:
             )
 
             return model_args
+
+        def save_model(self, path: Path) -> None:
+            """Saves model to path. Base implementation use Joblib
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            assert self.model is not None, "No model detected in interface"
+            self.model.save_model(path.as_posix())
+
+        def load_model(self, path: Path, **kwargs: Any) -> None:
+            """Load model from pathlib object
+
+            Args:
+                path:
+                    Pathlib object
+                kwargs:
+                    Additional kwargs
+            """
+            import catboost
+
+            model = getattr(catboost, self.model_type, CatBoost)()
+            self.model = model.load_model(path.as_posix())
 
         def save_preprocessor(self, path: Path) -> None:
             """Saves preprocessor to path if present. Base implementation use Joblib
@@ -124,7 +147,6 @@ try:
         @staticmethod
         def name() -> str:
             return CatBoostModel.__name__
-
 
 except ModuleNotFoundError:
     from opsml.model.interfaces.backups import CatBoostModelNoModule as CatBoostModel
