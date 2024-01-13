@@ -10,6 +10,7 @@ from opsml.data import (
     TorchData,
 )
 from opsml.model import (
+    CatBoostModel,
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -49,6 +50,7 @@ __all__ = [
     "TensorFlowModel",
     "LightningModel",
     "HuggingFaceModel",
+    "CatBoostModel",
     "ModelInterface",
     "CardRegistries",
     "CardRegistry",

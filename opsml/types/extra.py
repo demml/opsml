@@ -85,6 +85,7 @@ class Suffix(str, Enum):
     CKPT = ".ckpt"
     PT = ".pt"
     TEXT = ".txt"
+    CATBOOST = ".cbm"
 
 
 @unique
