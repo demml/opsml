@@ -18,6 +18,7 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     XGBoostModel,
+    CatBoostModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
@@ -49,6 +50,7 @@ __all__ = [
     "TensorFlowModel",
     "LightningModel",
     "HuggingFaceModel",
+    "CatBoostModel",
     "ModelInterface",
     "CardRegistries",
     "CardRegistry",
