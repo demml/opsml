@@ -1,4 +1,5 @@
 from opsml.model.interfaces.base import ModelInterface
+from opsml.model.interfaces.catboost_ import CatBoostModel
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.interfaces.lgbm import LightGBMModel
 from opsml.model.interfaces.pytorch import PyTorchModel
@@ -26,4 +27,5 @@ __all__ = [
     "HuggingFaceORTModel",
     "HuggingFaceOnnxArgs",
     "ModelInterface",
+    "CatBoostModel",
 ]

@@ -41,6 +41,9 @@ import pyarrow as pa
 import pytest
 import torch
 import torch.nn as nn
+
+# ml model packages and classes
+from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool
 from google.auth import load_credentials_from_file
 from sklearn import (
     cross_decomposition,
@@ -56,8 +59,6 @@ from sklearn import (
 )
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
-
-# ml model packages and classes
 from sklearn.datasets import fetch_openml, load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.impute import SimpleImputer
@@ -86,6 +87,7 @@ from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, To
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model import (
+    CatBoostModel,
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -128,6 +130,9 @@ def cleanup() -> None:
 
     # delete test image dir
     shutil.rmtree("test_image_dir", ignore_errors=True)
+
+    # delete catboost dir
+    shutil.rmtree("catboost_info", ignore_errors=True)
 
 
 @pytest.fixture
@@ -781,6 +786,62 @@ def xgb_df_regressor(example_dataframe):
     reg.fit(X_train.to_numpy(), y_train)
 
     return XGBoostModel(model=reg, sample_data=X_train[:100])
+
+
+@pytest.fixture
+def catboost_regressor(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    reg = CatBoostRegressor(n_estimators=5, max_depth=3)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    yield CatBoostModel(
+        model=reg,
+        sample_data=X_train.to_numpy()[:100],
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
+
+
+@pytest.fixture
+def catboost_classifier(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    reg = CatBoostClassifier(n_estimators=5, max_depth=3)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    yield CatBoostModel(model=reg, sample_data=X_train.to_numpy()[:100])
+    cleanup()
+
+
+@pytest.fixture
+def catboost_ranker():
+    from catboost.datasets import msrank_10k
+
+    train_df, _ = msrank_10k()
+
+    X_train = train_df.drop([0, 1], axis=1).values
+    y_train = train_df[0].values
+    queries_train = train_df[1].values
+
+    max_relevance = np.max(y_train)
+    y_train /= max_relevance
+
+    train = Pool(data=X_train[:1000], label=y_train[:1000], group_id=queries_train[:1000])
+
+    parameters = {
+        "iterations": 100,
+        "custom_metric": ["PrecisionAt:top=10", "RecallAt:top=10", "MAP:top=10"],
+        "loss_function": "RMSE",
+        "verbose": False,
+        "random_seed": 0,
+    }
+
+    model = CatBoostRanker(**parameters)
+    model.fit(train)
+
+    yield CatBoostModel(model=model, sample_data=X_train[:100])
+    cleanup()
 
 
 @pytest.fixture

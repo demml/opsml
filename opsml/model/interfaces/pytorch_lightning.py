@@ -24,7 +24,7 @@ try:
             preprocessor:
                 Optional preprocessor
             sample_data:
-                Sample data to be used for type inference and ONNX conversion/validation.
+                Sample data to be used for type inference.
                 This should match exactly what the model expects as input. See example below.
             task_type:
                 Task type for model. Defaults to undefined.
