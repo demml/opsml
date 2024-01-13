@@ -24,7 +24,7 @@ try:
             preprocessor:
                 Optional preprocessor
             sample_data:
-                Sample data to be used for type inference and ONNX conversion/validation.
+                Sample data to be used for type inference.
                 This should match exactly what the model expects as input. See example below.
             task_type:
                 Task type for model. Defaults to undefined.
@@ -112,9 +112,7 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    assert issubclass(
-                        model_arch, LightningModule
-                    ), "Model architecture must be a subclass of LightningModule"
+                    assert issubclass(model_arch, LightningModule), "Model architecture must be a subclass of LightningModule"
                     self.model = model_arch.load_from_checkpoint(checkpoint_path=path, **kwargs)
 
                 else:

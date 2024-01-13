@@ -12,23 +12,25 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
+import numpy as np
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
-ValidData = Union[pd.DataFrame, NDArray[Any]]
-try:
-    from sklearn.base import BaseEstimator
+ValidData = Union[List[Any], NDArray[Any]]
 
-    class SklearnModel(ModelInterface):
-        """Model interface for Sklearn models.
+try:
+    from catboost import CatBoost
+
+    class CatBoostModel(ModelInterface):
+        """Model interface for CatBoost models.
 
         Args:
             model:
-                Sklearn model
+                CatBoost model (Classifier, Regressor, Ranker)
             preprocessor:
                 Optional preprocessor
             sample_data:
-                Sample data to be used for type inference.
-                For sklearn models this should be a pandas DataFrame or numpy array.
+                Sample data to be used for type inference and sample prediction.
+                For catboost models this should be a numpy array (either 1d or 2d) or list of feature values.
                 This should match exactly what the model expects as input. See example below.
             task_type:
                 Task type for model. Defaults to undefined.
@@ -39,17 +41,34 @@ try:
                 preprocessor is provided.
 
         Returns:
-        SklearnModel
+            CatBoostModel
         """
 
-        model: Optional[BaseEstimator] = None
+        model: Optional[CatBoost] = None
         sample_data: Optional[ValidData] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
+        @classmethod
+        def _get_sample_data(cls, sample_data: NDArray[Any]) -> ValidData:
+            """Check sample data and returns one record to be used
+            during type inference and sample prediction.
+
+            Returns:
+                Sample data with only one record
+            """
+
+            if isinstance(sample_data, list):
+                return sample_data
+
+            if isinstance(sample_data, np.ndarray):
+                if len(sample_data.shape) == 1:
+                    return sample_data.reshape(1, -1)
+                return sample_data[0:1]
+
         @property
         def model_class(self) -> str:
-            return TrainedModelType.SKLEARN_ESTIMATOR.value
+            return TrainedModelType.CATBOOST.value
 
         @model_validator(mode="before")
         @classmethod
@@ -66,7 +85,7 @@ try:
 
             else:
                 for base in bases:
-                    if "sklearn" in base:
+                    if "catboost" in base:
                         model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
@@ -104,7 +123,8 @@ try:
 
         @staticmethod
         def name() -> str:
-            return SklearnModel.__name__
+            return CatBoostModel.__name__
+
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import SklearnModelNoModule as SklearnModel
+    from opsml.model.interfaces.backups import CatBoostModelNoModule as CatBoostModel

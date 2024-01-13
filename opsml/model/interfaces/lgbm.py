@@ -11,11 +11,11 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
+import pandas as pd
 from opsml.types import CommonKwargs, TrainedModelType
 from opsml.types.extra import Suffix
 
-ValidData = Union[NDArray[Any], Dict[str, NDArray[Any]], List[NDArray[Any]], Tuple[NDArray[Any]], Any]
-
+ValidData = Union[pd.DataFrame, NDArray[Any]]
 try:
     import lightgbm as lgb
     from lightgbm import Booster, LGBMModel
@@ -29,7 +29,8 @@ try:
             preprocessor:
                 Optional preprocessor
             sample_data:
-                Sample data to be used for type inference and ONNX conversion/validation.
+                Sample data to be used for type inference.
+                For lightgbm models this should be a pandas DataFrame or numpy array.
                 This should match exactly what the model expects as input. See example below.
             task_type:
                 Task type for model. Defaults to undefined.

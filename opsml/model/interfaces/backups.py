@@ -9,9 +9,7 @@ class HuggingFaceModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "HuggingFaceModel requires transformers to be installed. Please install transformers."
-        )
+        raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
     @staticmethod
     def name() -> str:
@@ -33,9 +31,7 @@ class LightningModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "LightningModel requires pytorch lightning to be installed. Please install lightning."
-        )
+        raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
     @staticmethod
     def name() -> str:
@@ -84,3 +80,14 @@ class XGBoostModelNoModule(ModelInterface):
     @staticmethod
     def name() -> str:
         return XGBoostModelNoModule.__name__
+
+
+class CatBoostModelNoModule(ModelInterface):
+    @model_validator(mode="before")
+    @classmethod
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        raise ModuleNotFoundError("CatBoost requires catboost to be installed. Please install catboost.")
+
+    @staticmethod
+    def name() -> str:
+        return CatBoostModelNoModule.__name_
