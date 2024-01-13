@@ -94,4 +94,4 @@ class CatBoostModelNoModule(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return CatBoostModelNoModule.__name_
+        return CatBoostModelNoModule.__name__
