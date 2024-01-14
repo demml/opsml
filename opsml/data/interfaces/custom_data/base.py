@@ -2,17 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json
-import os
-from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-
-from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.data.splitter import DataSplitter
 
 logger = ArtifactLogger.get_logger()
 

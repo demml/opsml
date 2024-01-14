@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.helpers.logging import ArtifactLogger
 
 # from opsml.regis import ImageDataset, ImageRecord
-from opsml.data.interfaces.custom_data.base import Dataset
+from opsml.data.interfaces.custom_data.base import Dataset, FileRecord
 
 # try to import pillow for ImageDataset dependency
 try:
@@ -31,7 +31,7 @@ class ShardSize(Enum):
     GB = 1e9
 
 
-def yield_chunks(list_: List[Any], size: int) -> Iterator[Any]:
+def yield_chunks(list_: List[FileRecord], size: int) -> Iterator[FileRecord]:
     """Yield successive n-sized chunks from list.
 
     Args:
@@ -48,15 +48,20 @@ def yield_chunks(list_: List[Any], size: int) -> Iterator[Any]:
 class PyarrowDatasetWriter:
     """Client side writer for pyarrow datasets"""
 
-    def __init__(self, dataset: Dataset):
-        """Instantiates a PyarrowDatasetWriter object
+    def __init__(self, dataset: Dataset, write_path: Path):
+        """Instantiates a PyarrowDatasetWriter object and writes dataset to pyarrow tables
+        This class is used by all DataSet classes when saving to path. This class will ALWAYS
+        write tables locally before uploading to server.
 
         Args:
-            info:
-                DatasetWriteInfo object
+            dataset:
+                `Dataset` object
+            write_path:
+                Path to write dataset
         """
 
         self.dataset = dataset
+        self.write_path = write_path
         self.shard_size = self._set_shard_size(dataset.shard_size)
         self.parquet_paths: List[str] = []
 
@@ -94,33 +99,29 @@ class PyarrowDatasetWriter:
         """
         raise NotImplementedError
 
-    def _write_buffer(self, records: List[Dict[str, Any]], split_name: str) -> str:
+    def _write_buffer(self, records: List[Dict[str, Any]], split_name: str) -> Path:
         try:
             temp_table = pa.Table.from_pylist(records, schema=self.schema)
-            write_path = self.info.write_path / split_name / f"shard-{uuid.uuid4().hex}.parquet"
+            lpath = self.write_path / split_name / f"shard-{uuid.uuid4().hex}.parquet"
 
-            pq.write_table(
-                table=temp_table,
-                where=write_path,
-                filesystem=self.info.storage_filesystem,
-            )
+            pq.write_table(table=temp_table, where=lpath)
 
-            return str(write_path)
+            return lpath
 
         except Exception as exc:
             logger.error("Exception occurred while writing to table: {}", exc)
             raise exc
 
-    def create_path(self, split_name: str) -> None:
+    def create_path(self, sub_dir: str) -> None:
         """Create path to write files. If split name is defined, create split dir
         Args:
         split_name:
             `str` name of split
         """
-        write_path = str(self.info.write_path / split_name)
-        self.info.storage_filesystem.create_dir(write_path)
+        write_path = self.write_path / sub_dir
+        write_path.mkdir(parents=True, exist_ok=True)
 
-    def write_to_table(self, records: List[Any], split_name: str) -> str:
+    def write_to_table(self, records: List[FileRecord], split_name: str) -> str:
         """Write records to pyarrow table
 
         Args:
@@ -142,25 +143,25 @@ class PyarrowDatasetWriter:
         """Writes image dataset to pyarrow tables"""
         # get splits first (can be None, or more than one)
         # Splits are saved to their own paths for quick access in the future
-        splits = self.dataset.split_data()
-        for name, split in splits:
-            num_shards = int(max(1, split.size // self.shard_size))
-            records_per_shard = len(split.records) // num_shards
-            shard_chunks = list(yield_chunks(split.records, records_per_shard))
+        self.dataset.split_data()
+        for split_name, metadata in self.dataset.splits.items():
+            num_shards = int(max(1, metadata.size // self.shard_size))
+            records_per_shard = len(metadata.records) // num_shards
+            shard_chunks = list(yield_chunks(metadata.records, records_per_shard))
 
-            # create split name path
-            self.create_path(name)
+            # create subdir path
+            self.create_path(split_name)
 
-            logger.info("Writing {} images to parquet for split {}", len(split.records), name)
+            logger.info("Writing {} images to parquet for split {}", len(metadata.records), split_name)
 
             # don't want the overhead for one shard
             if num_shards == 1:
                 for chunk in shard_chunks:
-                    self.parquet_paths.append(self.write_to_table(chunk, name))
+                    self.parquet_paths.append(self.write_to_table(chunk, split_name))
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {executor.submit(self.write_to_table, chunk, name): chunk for chunk in shard_chunks}
+                    future_to_table = {executor.submit(self.write_to_table, chunk, split_name): chunk for chunk in shard_chunks}
                     for future in as_completed(future_to_table):
                         try:
                             self.parquet_paths.append(future.result())
