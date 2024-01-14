@@ -1,22 +1,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import json
-import os
-from dataclasses import dataclass
-from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from numpy import isin
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
-from sqlalchemy import MetaData
 
-from opsml.helpers.logging import ArtifactLogger
-from opsml.data.splitter import DataSplitter
 from opsml.data.interfaces.custom_data.base import Dataset
 from opsml.data.interfaces.custom_data.image import ImageMetadata
-
+from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 
@@ -62,6 +53,14 @@ class ImageData(Dataset):
     """
 
     splits: Dict[str, ImageMetadata] = {}
+
+    def save_data(self, path: Path) -> None:
+        """Saves data to path. Base implementation use Joblib
+
+        Args:
+            path:
+                Pathlib object
+        """
 
     def _load_metadata_from_file(self, data_dir: Path, split: Optional[str]) -> ImageMetadata:
         """Loads metadata file from data_dir or subdirectory of data_dir

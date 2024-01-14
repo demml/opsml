@@ -1,5 +1,5 @@
-
 from opsml.data.interfaces._image import ImageRecord
+
 
 def test_image_record():
     record = {
