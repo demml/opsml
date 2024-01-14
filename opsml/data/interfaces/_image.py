@@ -7,22 +7,63 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from isort import file
+from numpy import isin
 
 from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
-from regex import E
+from sqlalchemy import MetaData
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.data.splitter import DataSplitter
 from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
 
+
 logger = ArtifactLogger.get_logger()
+
+
+def check_for_dirs(data_dir: Path) -> List[str]:
+    """Checks if data_dir contains subdirectories and returns a list of subdirectories
+
+    Args:
+        data_dir:
+            Path to data directory
+
+    Returns:
+        List of subdirectories
+    """
+    dirs = [x.as_posix() for x in data_dir.iterdir() if x.is_dir()]
+    return dirs
+
+
+def load_metadata_from_file(data_dir: Path, split: Optional[str]) -> ImageMetadata:
+    """Loads metadata file from data_dir or subdirectory of data_dir
+
+    Args:
+        data_dir:
+            Path to data directory
+        split:
+            Optional split to use for the dataset. If not provided, all images in the data_dir will be used.
+
+    Returns:
+        `ImageMetadata`
+    """
+    search_path = data_dir
+
+    if split is not None:
+        search_path = data_dir / split
+
+    for p in search_path.rglob("*.jsonl"):
+        if p.name == "metadata.jsonl":
+            return ImageMetadata.from_file(p)
+
+    raise ValueError(f"Could not find metadata.jsonl in {data_dir} or subdirectories")
 
 
 class ImageData(BaseModel):
 
-    """Create an image dataset from a directory of images and a metadata file.
-    Splits will be inferred from the child of the parent data_dir if it exists.
+    """Create an image dataset from a directory of images.
+    User can also provide a split that indicates the subdirectory of images to use.
+    It is expected that each split contains a metadata.jsonl built from the ImageMetadata class.
+    ImageData was built to have parity with HuggingFace.
 
     Args:
         data_dir:
@@ -32,37 +73,35 @@ class ImageData(BaseModel):
              - `images/train/my_image.png`
              - `images/my_image.png`
             Then the data_dir should be `images/`
-
-        metadata:
-            Metadata file for images. Can be a jsonl file or an ImageMetadata object.
-            If a jsonl file is provided, it is expected that each line is a valid ImageRecord
-            and that the file is located in the data_dir.
-
+        shard_size:
+            Size of shards to use for dataset. Default is 512MB.
+        batch_size:
+            Batch size for dataset. Default is 1000.
+        splits:
+            Dictionary of splits to use for dataset. If no splits are provided, then the
+            data_dir or subdirs will be used as the split. It is expected that each split contains a
+            metadata.jsonl built from the ImageMetadata class. It is recommended to allow opsml
+            to create the splits for you.
     """
 
-    data_dir: Union[str, Path]
-    metadata: Union[str, ImageMetadata]
+    data_dir: Path
+    shard_size: str = "512MB"
+    batch_size: int = 1000
+    splits: Dict[str, ImageMetadata] = {}
 
-    def check_metadata(self) -> None:
-        """Validates if metadata is a jsonl file and if each record is valid"""
-        if isinstance(self.metadata, str):
-            # check metadata file is valid
-            assert "jsonl" in self.metadata, "metadata must be a jsonl file"
+    def split_data(self) -> None:
+        """Creates data splits based on subdirectories of data_dir and supplied split value
 
-            # Validate metadata file (load each file in as record)
-            try:
-                with open(self.metadata, "r", encoding="utf-8") as file_:
-                    for line in file_:
-                        ImageRecord(**json.loads(line))
+        Returns:
+            `ImageSplitHolder`
+        """
+        if bool(self.splits):
+            return
 
-            except Exception as e:
-                raise ValueError(f"Invalid metadata file: {e}")
+        splits = check_for_dirs(self.data_dir)
 
-    def convert_metadata(self) -> None:
-        """Converts metadata to jsonl file if metadata is an ImageMetadata object"""
-
-        if isinstance(self.metadata, ImageMetadata):
-            logger.info("convert metadata to jsonl file")
-            filepath = os.path.join(self.data_dir, "metadata.jsonl")
-
-            self.metadata.write_to_file(filepath)
+        if bool(splits):
+            for split in splits:
+                self.splits[split] = load_metadata_from_file(self.data_dir, split)
+        else:
+            self.splits["all"] = load_metadata_from_file(self.data_dir, None)
