@@ -84,3 +84,8 @@ class ImageMetadata(BaseModel):
             for record in self.records:
                 json.dump(record.model_dump(), file_)
                 file_.write("\n")
+
+    @cached_property
+    def size(self) -> int:
+        """Total size of all images in metadata"""
+        return sum([record.size for record in self.images])
