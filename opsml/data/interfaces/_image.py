@@ -140,4 +140,4 @@ try:
             return CommonKwargs.IMAGE.value
 
 except ModuleNotFoundError:
-    pass
+    from opsml.data.interfaces.backups import ImageDataNoModule as ImageData
