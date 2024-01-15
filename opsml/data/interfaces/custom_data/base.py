@@ -29,7 +29,7 @@ def check_for_dirs(data_dir: Path) -> List[str]:
     return dirs
 
 
-def get_metadata_filepath(data_dir: Path, split: Optional[str]) -> Path:
+def get_metadata_filepath(data_dir: Path, split: Optional[str] = None) -> Path:
     """Loads metadata file from data_dir or subdirectory of data_dir
 
     Args:

@@ -61,9 +61,7 @@ class ImageRecord(FileRecord):
         Returns:
             Dictionary of data to be saved to arrow
         """
-
-        lpath = Path(*self.filepath.parts[: -self.filepath.parts.index(data_dir)])
-        path = self.filepath.relative_to(lpath)
+        path = self.filepath.relative_to(data_dir)
 
         with Image.open(self.filepath) as img:
             stream_record = {

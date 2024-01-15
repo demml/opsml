@@ -4,12 +4,12 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
-
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml.data.interfaces.custom_data.base import Dataset, FileRecord
+from opsml.data.interfaces.custom_data.base import Dataset, FileRecord, Metadata
 from opsml.helpers.logging import ArtifactLogger
+from opsml.types import SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
 
@@ -54,6 +54,7 @@ class PyarrowDatasetWriter:
         self.shard_size = self._set_shard_size(dataset.shard_size)
         self.parquet_paths: List[str] = []
         self.schema = schema
+        self.write_path.mkdir(parents=True, exist_ok=True)
 
     def _set_shard_size(self, shard_size: str) -> int:
         """
@@ -85,10 +86,14 @@ class PyarrowDatasetWriter:
         """
         raise NotImplementedError
 
-    def _write_buffer(self, records: List[Dict[str, Any]], split_label: str) -> Path:
+    def _write_buffer(self, records: List[Dict[str, Any]], split_label: Optional[str] = None) -> Path:
         try:
             temp_table = pa.Table.from_pylist(records, schema=self.schema)
-            lpath = self.write_path / split_label / f"shard-{uuid.uuid4().hex}.parquet"
+
+            if split_label:
+                lpath = (self.write_path / split_label / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.PARQUET.value)
+            else:
+                lpath = (self.write_path / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.PARQUET.value)
 
             pq.write_table(table=temp_table, where=lpath)
 
@@ -125,7 +130,18 @@ class PyarrowDatasetWriter:
 
         return self._write_buffer(processed_records, split_label)
 
-    def write_dataset_to_table(self) -> List[str]:
+    def _save_metadata(self, metadata: Metadata, split_label: Optional[str] = None) -> None:
+        """Saves metadata for a split"""
+
+        # write metadata to file
+        if split_label:
+            meta_lpath = (self.write_path / split_label / SaveName.METADATA.value).with_suffix(Suffix.JSONL.value)
+        else:
+            meta_lpath = (self.write_path / SaveName.METADATA.value).with_suffix(Suffix.JSONL.value)
+
+        metadata.write_to_file(meta_lpath)
+
+    def write_dataset_to_table(self) -> None:
         """Writes image dataset to pyarrow tables"""
         # get splits first (can be None, or more than one)
         # Splits are saved to their own paths for quick access in the future
@@ -144,18 +160,19 @@ class PyarrowDatasetWriter:
             # don't want the overhead for one shard
             if num_shards == 1:
                 for chunk in shard_chunks:
-                    self.parquet_paths.append(self.write_to_table(chunk, split_label))
+                    self.write_to_table(chunk, split_label)
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {
-                        executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks
-                    }
+                    future_to_table = {executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks}
                     for future in as_completed(future_to_table):
                         try:
-                            self.parquet_paths.append(future.result())
+                            future.result()
                         except Exception as exc:
                             logger.error("Exception occurred while writing to table: {}", exc)
                             raise exc
 
-        return self.parquet_paths
+            # write metadata
+            self._save_metadata(metadata, split_label)
+
+        return
