@@ -72,4 +72,4 @@ try:
             raise ValueError(f"Could not find metadata.jsonl in {data_dir} or subdirectories")
 
 except ModuleNotFoundError:
-    from opsml.data.interfaces.backups import ImageDataNoModule as ImageData
+    pass

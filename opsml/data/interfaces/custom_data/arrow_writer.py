@@ -8,10 +8,8 @@ from typing import Any, Dict, Iterator, List, Optional
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-
 from opsml.data.interfaces.custom_data.base import Dataset, FileRecord
 from opsml.helpers.logging import ArtifactLogger
-
 
 logger = ArtifactLogger.get_logger()
 
@@ -150,7 +148,9 @@ class PyarrowDatasetWriter:
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks}
+                    future_to_table = {
+                        executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks
+                    }
                     for future in as_completed(future_to_table):
                         try:
                             self.parquet_paths.append(future.result())
