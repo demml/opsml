@@ -23,6 +23,7 @@ from opsml.cards import (
     RunCard,
 )
 from opsml.data.interfaces._base import DataInterface
+from opsml.data.interfaces.custom_data.base import Dataset
 from opsml.helpers.utils import all_subclasses
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
@@ -239,19 +240,40 @@ class DataCardLoader(CardLoader):
 
     @cached_property
     def data_suffix(self) -> str:
+        assert isinstance(self.card.interface, DataInterface)
         return self.card.interface.data_suffix
 
-    def load_data(self) -> None:
-        """Saves a data via data interface"""
+    def _load_interface_data(self) -> None:
+        assert isinstance(self.card.interface, DataInterface)
 
         if self.card.interface.data is not None:
             logger.info("Data already loaded")
-            return None
+            return
 
         with self._load_object(SaveName.DATA.value, self.data_suffix) as lpath:
             self.card.interface.load_data(lpath)
 
-        return None
+        return
+
+    def _load_dataset_data(self, **kwargs: str) -> None:
+        assert isinstance(self.card.interface, Dataset)
+
+        split = kwargs.get("split")
+
+        load_path = SaveName.DATA.value
+
+        if split is not None:
+            load_path = f"{load_path}/{split}"
+
+        with self._load_object(load_path, Suffix.NONE.value) as lpath:
+            self.card.interface.load_data(lpath)
+
+    def load_data(self, **kwargs: str) -> None:
+        """Saves a data via data interface"""
+
+        if isinstance(self.card.interface, Dataset):
+            return self._load_dataset_data()
+        return self._load_interface_data()
 
     def load_data_profile(self) -> None:
         """Saves a data profile"""

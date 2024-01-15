@@ -18,7 +18,7 @@ class PyarrowDatasetReader:
             dataset:
                 `Dataset` object
             lpath:
-                Path to read dataset
+                Path to read dataset from
             batch_size:
                 Batch size to use for loading dataset
         """

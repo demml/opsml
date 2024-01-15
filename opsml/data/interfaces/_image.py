@@ -6,6 +6,7 @@ from typing import Dict
 
 import pyarrow as pa
 
+from opsml.data.interfaces.custom_data.arrow_reader import PyarrowDatasetReader
 from opsml.data.interfaces.custom_data.arrow_writer import PyarrowDatasetWriter
 from opsml.data.interfaces.custom_data.base import (
     Dataset,
@@ -60,6 +61,19 @@ try:
                     Pathlib object
             """
             PyarrowDatasetWriter(self, path, self.arrow_schema).write_dataset_to_table()
+
+        def load_data(self, path: Path) -> None:
+            """Saves data to data_dir
+
+            Args:
+                data_dir:
+                    Path to save data
+
+            Returns:
+                None
+            """
+
+            PyarrowDatasetReader(self, path).load_dataset()
 
         def split_data(self) -> None:
             """Creates data splits based on subdirectories of data_dir and supplied split value
