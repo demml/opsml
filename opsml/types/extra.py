@@ -53,6 +53,7 @@ class CommonKwargs(str, Enum):
     TOKENIZER_NAME = "tokenizer_name"
     FEATURE_EXTRACTOR = "feature_extractor"
     FEATURE_EXTRACTOR_NAME = "feature_extractor_name"
+    IMAGE = "image"
 
 
 @unique
