@@ -38,13 +38,13 @@ class FileRecord(BaseModel):
 
     """
 
-    filepath: str
+    filepath: Path
     size: int
 
     @model_validator(mode="before")
     @classmethod
     def check_args(cls, data_args: Dict[str, Any]) -> Dict[str, Any]:
-        filepath: Optional[str] = data_args.get("filepath")
+        filepath: Optional[Path] = data_args.get("filepath")
         size: Optional[int] = data_args.get("size")
 
         # if reloading record
@@ -58,6 +58,10 @@ class FileRecord(BaseModel):
         data_args["size"] = filepath.stat().st_size
 
         return data_args
+
+    def to_arrow(self, data_dir: str, split_label: Optional[str] = None) -> Any:
+        """Create pyarrow record"""
+        raise NotImplementedError
 
 
 class Metadata(BaseModel):
@@ -113,7 +117,7 @@ class Dataset(BaseModel):
     data_dir: Path
     shard_size: str = "512MB"
     batch_size: int = 1000
-    splits: Dict[str, Metadata] = {}
+    splits: Dict[Optional[str], Metadata] = {}
 
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value
@@ -130,7 +134,7 @@ class Dataset(BaseModel):
             for split in splits:
                 self.splits[split] = self._load_metadata_from_file(self.data_dir, split)
         else:
-            self.splits["all"] = self._load_metadata_from_file(self.data_dir, None)
+            self.splits[None] = self._load_metadata_from_file(self.data_dir, None)
 
     def _load_metadata_from_file(self, data_dir: Path, split: Optional[str]) -> Any:
         raise NotImplementedError
