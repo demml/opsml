@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import pyarrow as pa
 from pydantic import BaseModel, model_validator
+from opsml.types import CommonKwargs
 
 from opsml.helpers.logging import ArtifactLogger
 
@@ -182,3 +183,11 @@ class Dataset(BaseModel):
     def arrow_schema(self) -> pa.Schema:
         """Returns schema for ImageDataset records"""
         raise NotImplementedError
+
+    @staticmethod
+    def name() -> str:
+        raise NotImplementedError
+
+    @property
+    def data_type(self) -> str:
+        return CommonKwargs.UNDEFINED.value

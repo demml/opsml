@@ -4,12 +4,15 @@
 from pathlib import Path
 from typing import Dict
 import pyarrow as pa
+from pyparsing import C
 from opsml.data.interfaces.custom_data.base import (
     Dataset,
     check_for_dirs,
     get_metadata_filepath,
 )
 from opsml.helpers.logging import ArtifactLogger
+from opsml.data.interfaces.custom_data.arrow_writer import PyarrowDatasetWriter
+from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
@@ -51,6 +54,7 @@ try:
                 path:
                     Pathlib object
             """
+            PyarrowDatasetWriter(self, path, self.arrow_schema).write()
 
         def split_data(self) -> None:
             """Creates data splits based on subdirectories of data_dir and supplied split value
@@ -95,6 +99,14 @@ try:
                     "bytes": "image bytes",
                 },
             )
+
+        @staticmethod
+        def name() -> str:
+            return ImageData.__name__
+
+        @property
+        def data_type(self) -> str:
+            return CommonKwargs.IMAGE.value
 
 except ModuleNotFoundError:
     pass
