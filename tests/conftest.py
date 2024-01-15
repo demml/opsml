@@ -2193,7 +2193,8 @@ def create_image_dataset() -> Path:
 
     # delete images
     shutil.rmtree(write_path, ignore_errors=True)
-    
+
+
 @pytest.fixture(scope="function")
 def create_split_image_dataset() -> Path:
     # create images
@@ -2208,9 +2209,9 @@ def create_split_image_dataset() -> Path:
             im.save(save_path)
 
             records.append(ImageRecord(filepath=save_path))
-            
+
         ImageMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
-        
+
     yield Path(write_path)
 
     # delete images
