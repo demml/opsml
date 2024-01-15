@@ -1,10 +1,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from pathlib import Path
-from typing import Dict, Optional
-
-from opsml.data.interfaces.custom_data.base import Dataset
+from pathlib import Path, Dict
+import pyarrow as pa
+from opsml.data.interfaces.custom_data.base import (
+    Dataset,
+    check_for_dirs,
+    get_metadata_filepath,
+)
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
@@ -48,28 +51,49 @@ try:
                     Pathlib object
             """
 
-        def _load_metadata_from_file(self, data_dir: Path, split: Optional[str]) -> ImageMetadata:
-            """Loads metadata file from data_dir or subdirectory of data_dir
-
-            Args:
-                data_dir:
-                    Path to data directory
-                split:
-                    Optional split to use for the dataset. If not provided, all images in the data_dir will be used.
+        def split_data(self) -> None:
+            """Creates data splits based on subdirectories of data_dir and supplied split value
 
             Returns:
-                `ImageMetadata`
+                None
             """
-            search_path = data_dir
+            if bool(self.splits):
+                return
 
-            if split is not None:
-                search_path = data_dir / split
+            splits = check_for_dirs(self.data_dir)
 
-            for p in search_path.rglob("*.jsonl"):
-                if p.name == "metadata.jsonl":
-                    return ImageMetadata.from_file(p)
+            if bool(splits):
+                for split in splits:
+                    self.splits[split] = ImageMetadata.load_from_file(
+                        get_metadata_filepath(self.data_dir, split),
+                    )
+            else:
+                self.splits[None] = ImageMetadata.load_from_file(
+                    get_metadata_filepath(self.data_dir, split),
+                )
 
-            raise ValueError(f"Could not find metadata.jsonl in {data_dir} or subdirectories")
+        @property
+        def arrow_schema(self) -> pa.Schema:
+            """Returns schema for ImageDataset records"""
+
+            return pa.schema(
+                [
+                    pa.field("split_label", pa.string()),
+                    pa.field("path", pa.string()),
+                    pa.field("height", pa.int32()),
+                    pa.field("width", pa.int32()),
+                    pa.field("bytes", pa.binary()),
+                    pa.field("mode", pa.string()),
+                ],
+                metadata={
+                    "splt_label": "label assigned to image",
+                    "path": "path to image",
+                    "mode": "image mode",
+                    "height": "image height",
+                    "width": "image width",
+                    "bytes": "image bytes",
+                },
+            )
 
 except ModuleNotFoundError:
     pass

@@ -5,7 +5,7 @@ import json
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-
+import pyarrow as pa
 from pydantic import BaseModel, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
@@ -25,6 +25,30 @@ def check_for_dirs(data_dir: Path) -> List[str]:
     """
     dirs = [x.as_posix() for x in data_dir.iterdir() if x.is_dir()]
     return dirs
+
+
+def get_metadata_filepath(data_dir: Path, split: Optional[str]) -> Path:
+    """Loads metadata file from data_dir or subdirectory of data_dir
+
+    Args:
+        data_dir:
+            Path to data directory
+        split:
+            Optional split to use for the dataset. If not provided, all images in the data_dir will be used.
+
+    Returns:
+        `ImageMetadata`
+    """
+    search_path = data_dir
+
+    if split is not None:
+        search_path = data_dir / split
+
+    for p in search_path.rglob("*.jsonl"):
+        if p.name == "metadata.jsonl":
+            return p
+
+    raise ValueError(f"Could not find metadata.jsonl in {data_dir} or subdirectories")
 
 
 class FileRecord(BaseModel):
@@ -154,5 +178,7 @@ class Dataset(BaseModel):
         else:
             self.splits[None] = self._load_metadata_from_file(self.data_dir, None)
 
-    def _load_metadata_from_file(self, data_dir: Path, split: Optional[str]) -> Any:
+    @property
+    def arrow_schema(self) -> pa.Schema:
+        """Returns schema for ImageDataset records"""
         raise NotImplementedError
