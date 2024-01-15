@@ -1,8 +1,10 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import List, Optional, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
+from PIL import Image
 from pydantic import BaseModel
 
 from opsml.data.interfaces.custom_data.base import FileRecord, Metadata
@@ -45,6 +47,33 @@ class ImageRecord(FileRecord):
     caption: Optional[str] = None
     categories: Optional[List[Union[str, int, float]]] = None
     objects: Optional[BBox] = None
+
+    def to_arrow(self, data_dir: str, split_label: Optional[str] = None) -> Dict[str, Any]:
+        """Saves data to arrow format
+
+        Args:
+            data_dir:
+                Path to data directory
+            split_label:
+                Optional split label for data
+
+        Returns:
+            Dictionary of data to be saved to arrow
+        """
+
+        lpath = Path(*self.filepath.parts[: -self.filepath.parts.index(data_dir)])
+        path = self.filepath.relative_to(lpath)
+
+        with Image.open(self.filepath) as img:
+            stream_record = {
+                "split_label": split_label,
+                "path": path.as_posix(),
+                "height": img.height,
+                "width": img.width,
+                "bytes": img.tobytes(),
+                "mode": img.mode,
+            }
+        return stream_record
 
 
 class ImageMetadata(Metadata):

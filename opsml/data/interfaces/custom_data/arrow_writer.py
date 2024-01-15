@@ -3,23 +3,14 @@ import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Iterator, Union
+from typing import Any, Dict, Iterator, List, Optional
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from fsspec.implementations.local import LocalFileSystem
-from pydantic import BaseModel, ConfigDict, field_validator
 
-from opsml.helpers.logging import ArtifactLogger
 
-# from opsml.regis import ImageDataset, ImageRecord
 from opsml.data.interfaces.custom_data.base import Dataset, FileRecord
-
-# try to import pillow for ImageDataset dependency
-try:
-    from PIL import Image
-except ImportError:
-    pass
+from opsml.helpers.logging import ArtifactLogger
 
 
 logger = ArtifactLogger.get_logger()
@@ -48,7 +39,7 @@ def yield_chunks(list_: List[FileRecord], size: int) -> Iterator[FileRecord]:
 class PyarrowDatasetWriter:
     """Client side writer for pyarrow datasets"""
 
-    def __init__(self, dataset: Dataset, write_path: Path):
+    def __init__(self, dataset: Dataset, write_path: Path, schema: pa.Schema):
         """Instantiates a PyarrowDatasetWriter object and writes dataset to pyarrow tables
         This class is used by all DataSet classes when saving to path. This class will ALWAYS
         write tables locally before uploading to server.
@@ -64,10 +55,7 @@ class PyarrowDatasetWriter:
         self.write_path = write_path
         self.shard_size = self._set_shard_size(dataset.shard_size)
         self.parquet_paths: List[str] = []
-
-    @property
-    def schema(self) -> pa.Schema:
-        raise NotImplementedError
+        self.schema = schema
 
     def _set_shard_size(self, shard_size: str) -> int:
         """
@@ -99,10 +87,10 @@ class PyarrowDatasetWriter:
         """
         raise NotImplementedError
 
-    def _write_buffer(self, records: List[Dict[str, Any]], split_name: str) -> Path:
+    def _write_buffer(self, records: List[Dict[str, Any]], split_label: str) -> Path:
         try:
             temp_table = pa.Table.from_pylist(records, schema=self.schema)
-            lpath = self.write_path / split_name / f"shard-{uuid.uuid4().hex}.parquet"
+            lpath = self.write_path / split_label / f"shard-{uuid.uuid4().hex}.parquet"
 
             pq.write_table(table=temp_table, where=lpath)
 
@@ -115,53 +103,54 @@ class PyarrowDatasetWriter:
     def create_path(self, sub_dir: str) -> None:
         """Create path to write files. If split name is defined, create split dir
         Args:
-        split_name:
+        split_label:
             `str` name of split
         """
         write_path = self.write_path / sub_dir
         write_path.mkdir(parents=True, exist_ok=True)
 
-    def write_to_table(self, records: List[FileRecord], split_name: str) -> str:
+    def write_to_table(self, records: List[FileRecord], split_label: Optional[str] = None) -> str:
         """Write records to pyarrow table
 
         Args:
             records:
                 `List[ImageRecord]`
 
-            split_name:
+            split_label:
                 `str` name of split
         """
 
         processed_records = []
         for record in records:
-            arrow_record = self._create_record(record)
+            arrow_record = record.to_arrow(self.dataset.data_dir, split_label)
             processed_records.append(arrow_record)
 
-        return self._write_buffer(processed_records, split_name)
+        return self._write_buffer(processed_records, split_label)
 
     def write_dataset_to_table(self) -> List[str]:
         """Writes image dataset to pyarrow tables"""
         # get splits first (can be None, or more than one)
         # Splits are saved to their own paths for quick access in the future
         self.dataset.split_data()
-        for split_name, metadata in self.dataset.splits.items():
+        for split_label, metadata in self.dataset.splits.items():
             num_shards = int(max(1, metadata.size // self.shard_size))
             records_per_shard = len(metadata.records) // num_shards
             shard_chunks = list(yield_chunks(metadata.records, records_per_shard))
 
             # create subdir path
-            self.create_path(split_name)
+            if split_label:
+                self.create_path(split_label)
 
-            logger.info("Writing {} images to parquet for split {}", len(metadata.records), split_name)
+            logger.info("Writing {} images to parquet for split {}", len(metadata.records), split_label)
 
             # don't want the overhead for one shard
             if num_shards == 1:
                 for chunk in shard_chunks:
-                    self.parquet_paths.append(self.write_to_table(chunk, split_name))
+                    self.parquet_paths.append(self.write_to_table(chunk, split_label))
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {executor.submit(self.write_to_table, chunk, split_name): chunk for chunk in shard_chunks}
+                    future_to_table = {executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks}
                     for future in as_completed(future_to_table):
                         try:
                             self.parquet_paths.append(future.result())
@@ -196,24 +185,3 @@ class ImageDatasetWriter(PyarrowDatasetWriter):
                 "bytes": "image bytes",
             },
         )
-
-    def _create_record(self, record: ImageRecord) -> Dict[str, Any]:
-        """Create record for pyarrow table
-
-        Returns:
-            Record dictionary and buffer size
-        """
-
-        image_path = str(Path(f"{record.path}/{record.filename}"))
-
-        with Image.open(image_path) as img:
-            stream_record = {
-                "split_label": record.split,
-                "path": str(Path(record.split or "") / record.filename),
-                "height": img.height,
-                "width": img.width,
-                "bytes": img.tobytes(),
-                "mode": img.mode,
-            }
-
-        return stream_record
