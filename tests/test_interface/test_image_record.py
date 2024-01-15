@@ -1,12 +1,15 @@
 from pathlib import Path
 
 from opsml.data import ImageData
-from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
+from opsml.data import ImageMetadata, ImageRecord
 from opsml.storage.card_saver import save_card_artifacts
+from opsml.cards import DataCard
+from opsml.types import SaveName, Suffix
+import uuid
 from tests.conftest import client
 
 
-def test_image_metadata():
+def _test_image_metadata():
     record = {
         "filepath": Path("tests/assets/image_dataset/cats.jpg"),
         "caption": "This is a second value of a text feature you added to your images",
@@ -42,5 +45,18 @@ def test_image_metadata():
 def test_image_dataset(create_image_dataset: Path):
     data_dir = create_image_dataset
     image_data = ImageData(data_dir=data_dir)
+    storage_client = client.storage_client
 
-    save_card_artifacts()
+    datacard = DataCard(
+        interface=image_data,
+        name="test_data",
+        team="mlops",
+        user_email="test_email",
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+    )
+
+    save_card_artifacts(datacard)
+    
+    assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))

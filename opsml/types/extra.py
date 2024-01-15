@@ -73,6 +73,7 @@ class SaveName(str, Enum):
     QUANTIZED_MODEL = "quantized-model"
     TOKENIZER = "tokenizer"
     FEATURE_EXTRACTOR = "feature_extractor"
+    METADATA = "metadata"
 
 
 @unique
@@ -87,6 +88,7 @@ class Suffix(str, Enum):
     PT = ".pt"
     TEXT = ".txt"
     CATBOOST = ".cbm"
+    JSONL = ".jsonl"
 
 
 @unique

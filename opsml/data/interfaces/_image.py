@@ -21,7 +21,6 @@ try:
     from opsml.data.interfaces.custom_data.image import ImageMetadata
 
     class ImageData(Dataset):
-
         """Create an image dataset from a directory of images.
         User can also provide a split that indicates the subdirectory of images to use.
         It is expected that each split contains a metadata.jsonl built from the ImageMetadata class.
@@ -32,13 +31,18 @@ try:
                 Root directory for images.
 
                 For example, you the image file is located at either:
-                - `images/train/my_image.png`
-                - `images/my_image.png`
+
+                    - "images/train/my_image.png"
+                    - "images/my_image.png"
+
                 Then the data_dir should be `images/`
+
             shard_size:
                 Size of shards to use for dataset. Default is 512MB.
+
             batch_size:
                 Batch size for dataset. Default is 1000.
+
             splits:
                 Dictionary of splits to use for dataset. If no splits are provided, then the
                 data_dir or subdirs will be used as the split. It is expected that each split contains a
@@ -55,7 +59,7 @@ try:
                 path:
                     Pathlib object
             """
-            PyarrowDatasetWriter(self, path, self.arrow_schema).write()
+            PyarrowDatasetWriter(self, path, self.arrow_schema).write_dataset_to_table()
 
         def split_data(self) -> None:
             """Creates data splits based on subdirectories of data_dir and supplied split value
@@ -70,17 +74,17 @@ try:
 
             if bool(splits):
                 for split in splits:
-                    self.splits[split] = ImageMetadata.load_from_file(
-                        get_metadata_filepath(self.data_dir, split),
-                    )
+                    self.splits[split] = ImageMetadata.load_from_file(get_metadata_filepath(self.data_dir, split))
             else:
-                self.splits[None] = ImageMetadata.load_from_file(
-                    get_metadata_filepath(self.data_dir, split),
-                )
+                self.splits[None] = ImageMetadata.load_from_file(get_metadata_filepath(self.data_dir))
 
         @property
         def arrow_schema(self) -> pa.Schema:
-            """Returns schema for ImageDataset records"""
+            """Returns schema for ImageDataset records
+
+            Returns:
+                pyarrow.Schema
+            """
 
             return pa.schema(
                 [
