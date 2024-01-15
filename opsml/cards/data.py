@@ -55,13 +55,37 @@ class DataCard(ArtifactCard):
     interface: SerializeAsAny[Union[DataInterface, Dataset]]
     metadata: DataCardMetadata = DataCardMetadata()
 
-    def load_data(self) -> None:
+    def load_data(self, **kwargs: Union[str, int]) -> None:
         """
         Load data to interface
+
+        Args:
+            kwargs:
+                Keyword arguments to pass to the data loader
+
+            ---- Supported kwargs ----
+
+            split:
+                Split to use for data. If not provided, then all data will be loaded.
+                Only used for subclasses of `Dataset`.
+
+            batch_size:
+                What batch size to use when loading data. Only used for subclasses of `Dataset`.
+                Defaults to 1000.
+
+            chunk_size:
+                How many files per batch to use when writing arrow back to local file.
+                Defaults to 1000.
+
+                Example:
+
+                    - If batch_size=1000 and chunk_size=100, then the loaded batch will be split into
+                    10 chunks to write in parallel. This is useful for large datasets.
+
         """
         from opsml.storage.card_loader import DataCardLoader
 
-        DataCardLoader(self).load_data()
+        DataCardLoader(self).load_data(**kwargs)
 
     def load_data_profile(self) -> None:
         """

@@ -3,12 +3,12 @@ import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml.data.interfaces.custom_data.base import Dataset, FileRecord, Metadata
+from opsml.data.interfaces.custom_data.base import Dataset, FileRecord, Metadata, yield_chunks
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import SaveName, Suffix
 
@@ -19,20 +19,6 @@ class ShardSize(Enum):
     KB = 1e3
     MB = 1e6
     GB = 1e9
-
-
-def yield_chunks(list_: List[FileRecord], size: int) -> Iterator[FileRecord]:
-    """Yield successive n-sized chunks from list.
-
-    Args:
-        list_:
-            list to chunk
-        size:
-            size of chunks
-
-    """
-    for _, i in enumerate(range(0, len(list_), size)):
-        yield list_[i : i + size]
 
 
 class PyarrowDatasetWriter:
@@ -165,9 +151,7 @@ class PyarrowDatasetWriter:
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {
-                        executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks
-                    }
+                    future_to_table = {executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks}
                     for future in as_completed(future_to_table):
                         try:
                             future.result()

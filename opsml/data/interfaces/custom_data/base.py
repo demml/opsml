@@ -4,7 +4,7 @@
 import json
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Iterator
 
 import pyarrow as pa
 from pydantic import BaseModel, model_validator
@@ -29,7 +29,7 @@ def check_for_dirs(data_dir: Path) -> List[str]:
     return dirs
 
 
-def get_metadata_filepath(data_dir: Path, split_label: Optional[str] = None) -> Path:
+def get_metadata_filepath(data_dir: Path, split_label: Optional[str] = None) -> List[Path]:
     """Loads metadata file from data_dir or subdirectory of data_dir
 
     Args:
@@ -47,9 +47,10 @@ def get_metadata_filepath(data_dir: Path, split_label: Optional[str] = None) -> 
     else:
         search_path = data_dir
 
-    for p in search_path.rglob("*.jsonl"):
-        if p.name == "metadata.jsonl":
-            return p
+    paths = [p for p in search_path.rglob("*.jsonl") if p.name == "metadata.jsonl"]
+
+    if paths:
+        return paths
 
     raise ValueError(f"Could not find metadata.jsonl in {search_path} or subdirectories")
 
@@ -92,6 +93,20 @@ class FileRecord(BaseModel):
     def to_arrow(self, data_dir: str, split_label: Optional[str] = None) -> Any:
         """Create pyarrow record"""
         raise NotImplementedError
+
+
+def yield_chunks(list_: List[FileRecord], size: int) -> Iterator[FileRecord]:
+    """Yield successive n-sized chunks from list.
+
+    Args:
+        list_:
+            list to chunk
+        size:
+            size of chunks
+
+    """
+    for _, i in enumerate(range(0, len(list_), size)):
+        yield list_[i : i + size]
 
 
 class Metadata(BaseModel):
@@ -150,8 +165,6 @@ class Dataset(BaseModel):
             Then the data_dir should be `images/`
         shard_size:
             Size of shards to use for dataset. Default is 512MB.
-        batch_size:
-            Batch size for dataset. Default is 1000.
         splits:
             Dictionary of splits to use for dataset. If no splits are provided, then the
             data_dir or subdirs will be used as the split. It is expected that each split contains a
@@ -161,7 +174,6 @@ class Dataset(BaseModel):
 
     data_dir: Path
     shard_size: str = "512MB"
-    batch_size: int = 1000
     splits: Dict[Optional[str], Metadata] = {}
 
     def split_data(self) -> None:
@@ -170,16 +182,7 @@ class Dataset(BaseModel):
         Returns:
             None
         """
-        if bool(self.splits):
-            return
-
-        splits = check_for_dirs(self.data_dir)
-
-        if bool(splits):
-            for split in splits:
-                self.splits[split] = self._load_metadata_from_file(self.data_dir, split)
-        else:
-            self.splits[None] = self._load_metadata_from_file(self.data_dir, None)
+        raise NotImplementedError
 
     def save_data(self, path: Path) -> None:
         """Saves data to data_dir
@@ -193,7 +196,7 @@ class Dataset(BaseModel):
         """
         raise NotImplementedError
 
-    def load_data(self, path: Path) -> None:
+    def load_data(self, path: Path, **kwargs: Union[int, str]) -> None:
         """Saves data to data_dir
 
         Args:
