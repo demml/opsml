@@ -1,11 +1,10 @@
+import uuid
 from pathlib import Path
 
-from opsml.data import ImageData
-from opsml.data import ImageMetadata, ImageRecord
-from opsml.storage.card_saver import save_card_artifacts
 from opsml.cards import DataCard
+from opsml.data import ImageData, ImageMetadata, ImageRecord
+from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import SaveName, Suffix
-import uuid
 from tests.conftest import client
 
 
@@ -57,7 +56,7 @@ def _test_image_dataset(create_image_dataset: Path):
     )
 
     save_card_artifacts(datacard)
-    
+
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
     assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
 
@@ -77,6 +76,6 @@ def test_image_split_dataset(create_split_image_dataset: Path):
     )
 
     save_card_artifacts(datacard)
-    
-    #assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    #assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+
+    # assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
+    # assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))

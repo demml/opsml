@@ -4,6 +4,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
+
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -37,7 +38,7 @@ def yield_chunks(list_: List[FileRecord], size: int) -> Iterator[FileRecord]:
 class PyarrowDatasetWriter:
     """Client side writer for pyarrow datasets"""
 
-    def __init__(self, dataset: Dataset, write_path: Path, schema: pa.Schema):
+    def __init__(self, dataset: Dataset, lpath: Path, schema: pa.Schema):
         """Instantiates a PyarrowDatasetWriter object and writes dataset to pyarrow tables
         This class is used by all DataSet classes when saving to path. This class will ALWAYS
         write tables locally before uploading to server.
@@ -45,16 +46,16 @@ class PyarrowDatasetWriter:
         Args:
             dataset:
                 `Dataset` object
-            write_path:
+            lpath:
                 Path to write dataset
         """
 
         self.dataset = dataset
-        self.write_path = write_path
+        self.lpath = lpath
         self.shard_size = self._set_shard_size(dataset.shard_size)
         self.parquet_paths: List[str] = []
         self.schema = schema
-        self.write_path.mkdir(parents=True, exist_ok=True)
+        self.lpath.mkdir(parents=True, exist_ok=True)
 
     def _set_shard_size(self, shard_size: str) -> int:
         """
@@ -91,9 +92,9 @@ class PyarrowDatasetWriter:
             temp_table = pa.Table.from_pylist(records, schema=self.schema)
 
             if split_label:
-                lpath = (self.write_path / split_label / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.PARQUET.value)
+                lpath = (self.lpath / split_label / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.PARQUET.value)
             else:
-                lpath = (self.write_path / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.PARQUET.value)
+                lpath = (self.lpath / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.PARQUET.value)
 
             pq.write_table(table=temp_table, where=lpath)
 
@@ -109,8 +110,8 @@ class PyarrowDatasetWriter:
         split_label:
             `str` name of split
         """
-        write_path = self.write_path / sub_dir
-        write_path.mkdir(parents=True, exist_ok=True)
+        lpath = self.lpath / sub_dir
+        lpath.mkdir(parents=True, exist_ok=True)
 
     def write_to_table(self, records: List[FileRecord], split_label: Optional[str] = None) -> str:
         """Write records to pyarrow table
@@ -135,9 +136,9 @@ class PyarrowDatasetWriter:
 
         # write metadata to file
         if split_label:
-            meta_lpath = (self.write_path / split_label / SaveName.METADATA.value).with_suffix(Suffix.JSONL.value)
+            meta_lpath = (self.lpath / split_label / SaveName.METADATA.value).with_suffix(Suffix.JSONL.value)
         else:
-            meta_lpath = (self.write_path / SaveName.METADATA.value).with_suffix(Suffix.JSONL.value)
+            meta_lpath = (self.lpath / SaveName.METADATA.value).with_suffix(Suffix.JSONL.value)
 
         metadata.write_to_file(meta_lpath)
 
@@ -164,7 +165,9 @@ class PyarrowDatasetWriter:
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks}
+                    future_to_table = {
+                        executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks
+                    }
                     for future in as_completed(future_to_table):
                         try:
                             future.result()

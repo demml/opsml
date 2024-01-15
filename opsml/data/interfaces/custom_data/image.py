@@ -2,13 +2,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from PIL import Image
 from pydantic import BaseModel
 
-from opsml.data.interfaces.custom_data.base import FileRecord, Metadata
+from opsml.data.interfaces.custom_data.arrow_reader import PyarrowDatasetReader
+from opsml.data.interfaces.custom_data.base import FileRecord, Metadata, yield_chunks
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
@@ -100,3 +102,50 @@ class ImageMetadata(Metadata):
             for line in file_:
                 records.append(ImageRecord(**json.loads(line)))
             return cls(records=records)
+
+
+class ImageDatasetReader(PyarrowDatasetReader):
+    def _write_data_to_images(self, files: List[Dict[str, Any]]) -> None:
+        """Writes a list of pyarrow data to image files.
+
+        Args:
+            files:
+                List of tuples containing filename, image_bytes, and split_label
+        """
+
+        for record in files:
+            write_path = Path(self.dataset.data_dir, cast(str, record["path"]))
+            write_path.mkdir(parents=True, exist_ok=True)
+
+            try:
+                with write_path.open("wb") as file_:
+                    file_.write(record["bytes"])  # type: ignore
+
+            except Exception as exc:
+                logger.error("Exception occurred while writing to file: {}", exc)
+                raise exc
+
+    def write_batch_to_file(self, arrow_batch: List[Dict[str, Any]]) -> None:
+        """Write image data to file
+
+        Args:
+            arrow_batch:
+                List of pyarrow file data
+        """
+
+        # get chunks
+        chunks = list(yield_chunks(arrow_batch, 100))
+
+        # don't want overhead of instantiating a process pool if we don't need to
+        if len(chunks) == 1:
+            self._write_data_to_images(chunks[0])
+
+        else:
+            with ProcessPoolExecutor() as executor:
+                future_to_table = {executor.submit(self._write_data_to_images, chunk): chunk for chunk in chunks}
+                for future in as_completed(future_to_table):
+                    try:
+                        _ = future.result()
+                    except Exception as exc:
+                        logger.error("Exception occurred while writing to file: {}", exc)
+                        raise exc
