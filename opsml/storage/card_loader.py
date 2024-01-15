@@ -23,6 +23,7 @@ from opsml.cards import (
     RunCard,
 )
 from opsml.data.interfaces._base import DataInterface
+from opsml.data.interfaces.custom_data.base import Dataset
 from opsml.helpers.utils import all_subclasses
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
@@ -65,8 +66,11 @@ def _get_data_interface(interface_type: str) -> DataInterface:
         interface_type:
             Name of interface
     """
+    interfaces = all_subclasses(DataInterface)
+    interfaces.update(all_subclasses(Dataset))
+
     return next(
-        (cls for cls in all_subclasses(DataInterface) if cls.name() == interface_type),  # type: ignore
+        (cls for cls in interfaces if cls.name() == interface_type),  # type: ignore
         DataInterface,  # type: ignore
     )
 
@@ -78,6 +82,7 @@ def _get_model_interface(interface_type: str) -> ModelInterface:
         interface_type:
             Name of interface
     """
+
     return next(
         (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),  # type: ignore
         ModelInterface,  # type: ignore[arg-type]
@@ -239,37 +244,62 @@ class DataCardLoader(CardLoader):
 
     @cached_property
     def data_suffix(self) -> str:
+        assert isinstance(self.card.interface, DataInterface)
         return self.card.interface.data_suffix
 
-    def load_data(self) -> None:
-        """Saves a data via data interface"""
+    def _load_interface_data(self) -> None:
+        assert isinstance(self.card.interface, DataInterface)
 
         if self.card.interface.data is not None:
             logger.info("Data already loaded")
-            return None
+            return
 
         with self._load_object(SaveName.DATA.value, self.data_suffix) as lpath:
             self.card.interface.load_data(lpath)
 
-        return None
+        return
+
+    def _load_dataset_data(self, **kwargs: Union[str, int]) -> None:
+        assert isinstance(self.card.interface, Dataset)
+
+        split = kwargs.get("split")
+
+        load_path = SaveName.DATA.value
+
+        if split is not None:
+            load_path = f"{load_path}/{split}"
+
+        with self._load_object(load_path, Suffix.NONE.value) as lpath:
+            print(lpath)
+            self.card.interface.load_data(lpath, **kwargs)
+
+    def load_data(self, **kwargs: Union[str, int]) -> None:
+        """Saves a data via data interface"""
+
+        if isinstance(self.card.interface, Dataset):
+            return self._load_dataset_data(**kwargs)
+        return self._load_interface_data()
 
     def load_data_profile(self) -> None:
         """Saves a data profile"""
 
+        if isinstance(self.card.interface, Dataset):
+            return
+
         if self.card.interface.data_profile is not None:
             logger.info("Data profile already loaded")
-            return None
+            return
 
         # check exists
         rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
         if not self.storage_client.exists(rpath):
-            return None
+            return
 
         # load data profile
         with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
             self.card.interface.load_data_profile(lpath)
 
-        return None
+        return
 
     @staticmethod
     def validate(card_type: str) -> bool:

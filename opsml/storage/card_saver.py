@@ -16,6 +16,7 @@ from opsml.cards.model import ModelCard
 from opsml.cards.pipeline import PipelineCard
 from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
+from opsml.data import DataInterface, Dataset
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.metadata_creator import _TrainedModelMetadataCreator
@@ -103,21 +104,41 @@ class DataCardSaver(CardSaver):
     def card(self) -> DataCard:
         return cast(DataCard, self._card)
 
-    def _save_data(self) -> None:
-        """Saves a data via data interface"""
+    def _save_dataset(self) -> None:
+        """Logic for saving subclasses of Dataset"""
+        assert isinstance(self.card.interface, Dataset), "Expected Dataset interface"
+        save_path = self.lpath / SaveName.DATA.value
+        self.card.interface.save_data(save_path)
+
+    def _save_data_interface(self) -> None:
+        """Logic for saving subclasses of DataInterface"""
+
+        assert isinstance(self.card.interface, DataInterface), "Expected DataInterface"
 
         if self.card.interface.data is None:
-            return None
+            return
 
         save_path = (self.lpath / SaveName.DATA.value).with_suffix(self.card.interface.data_suffix)
         self.card.interface.save_data(save_path)
 
         # set feature map on metadata
         self.card.metadata.feature_map = self.card.interface.feature_map
-        return None
+        return
+
+    def _save_data(self) -> None:
+        """Saves a data via data interface"""
+
+        # saving Dataset
+        if isinstance(self.card.interface, Dataset):
+            return self._save_dataset()
+
+        return self._save_data_interface()
 
     def _save_data_profile(self) -> None:
         """Saves a data profile"""
+
+        if isinstance(self.card.interface, Dataset):
+            return
 
         if self.card.interface.data_profile is None:
             return
@@ -131,7 +152,7 @@ class DataCardSaver(CardSaver):
     def _save_datacard(self) -> None:
         """Saves a datacard to file system"""
 
-        exclude_attr = {"interface": {"data", "data_profile"}}
+        exclude_attr = {"interface": {"data", "data_profile", "splits"}}
 
         dumped_datacard = self.card.model_dump(exclude=exclude_attr)
 
@@ -146,11 +167,12 @@ class DataCardSaver(CardSaver):
         if self.card.interface is None:
             raise ValueError("DataCard must have a data interface to save artifacts")
 
-        if self.card.interface.data is None and not bool(self.card.interface.sql_logic):
-            raise ValueError("DataInterface must have data or sql logic")
+        if isinstance(self.card.interface, DataInterface):
+            if self.card.interface.data is None and not bool(self.card.interface.sql_logic):
+                raise ValueError("DataInterface must have data or sql logic")
 
         # set type needed for loading
-        self.card.metadata.interface_type = self.card.interface.__class__.__name__
+        self.card.metadata.interface_type = self.card.interface.name()
         self.card.metadata.data_type = self.card.interface.data_type
 
         with tempfile.TemporaryDirectory() as tmp_dir:
