@@ -53,6 +53,7 @@ class CommonKwargs(str, Enum):
     TOKENIZER_NAME = "tokenizer_name"
     FEATURE_EXTRACTOR = "feature_extractor"
     FEATURE_EXTRACTOR_NAME = "feature_extractor_name"
+    IMAGE = "image"
 
 
 @unique
@@ -72,6 +73,7 @@ class SaveName(str, Enum):
     QUANTIZED_MODEL = "quantized-model"
     TOKENIZER = "tokenizer"
     FEATURE_EXTRACTOR = "feature_extractor"
+    METADATA = "metadata"
 
 
 @unique
@@ -86,6 +88,8 @@ class Suffix(str, Enum):
     PT = ".pt"
     TEXT = ".txt"
     CATBOOST = ".cbm"
+    JSONL = ".jsonl"
+    NONE = ""
 
 
 @unique
