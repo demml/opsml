@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-
+import json
 from PIL import Image
 from pydantic import BaseModel
 
@@ -86,3 +86,18 @@ class ImageMetadata(Metadata):
     """
 
     records: List[ImageRecord]
+
+    @classmethod
+    def load_from_file(cls, filepath: Path) -> None:
+        """Load metadata from a file
+
+        Args:
+            filepath:
+                Path to metadata file
+        """
+        assert filepath.name == "metadata.jsonl", "Filename must be metadata.jsonl"
+        with filepath.open("r", encoding="utf-8") as file_:
+            records = []
+            for line in file_:
+                records.append(ImageRecord(**json.loads(line)))
+            return cls(records=records)

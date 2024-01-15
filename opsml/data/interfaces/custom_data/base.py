@@ -4,7 +4,7 @@
 import json
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, model_validator
 
@@ -32,7 +32,7 @@ class FileRecord(BaseModel):
 
     Args:
         filepath:
-            Path to the file
+            Path to the file relative to root directory
         size:
             Size of the file. This is inferred automatically if filepath is provided.
 
@@ -44,8 +44,11 @@ class FileRecord(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def check_args(cls, data_args: Dict[str, Any]) -> Dict[str, Any]:
-        filepath: Optional[Path] = data_args.get("filepath")
+        filepath: Optional[Union[str, Path]] = data_args.get("filepath")
         size: Optional[int] = data_args.get("size")
+
+        if isinstance(filepath, str):
+            filepath = Path(filepath)
 
         # if reloading record
         if all([filepath, size]):
@@ -69,19 +72,34 @@ class Metadata(BaseModel):
 
     records: List[FileRecord]
 
-    def write_to_file(self, filename: Path) -> None:
-        """Write image metadata to file
+    def write_to_file(self, filepath: Path) -> None:
+        """Write image metadata to jsonl file
 
         Args:
-            filename:
-                Path to file to write metadata to
-        """
+            filepath:
+                Filepath to write metadata jsonl. Filename of metadata path should be `metadata.jsonl`
 
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        with filename.open("w", encoding="utf-8") as file_:
+        """
+        assert filepath.name == "metadata.jsonl", "Filename must be metadata.jsonl"
+
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with filepath.open("w", encoding="utf-8") as file_:
             for record in self.records:
-                json.dump(record.model_dump(), file_)
+                record = record.model_dump()
+                record["filepath"] = record["filepath"].as_posix()
+                json.dump(record, file_)
                 file_.write("\n")
+
+    @classmethod
+    def load_from_file(cls, filepath: Path) -> None:
+        """Load image metadata from jsonl file
+
+        Args:
+            filepath:
+                Filepath to load metadata jsonl. Filename of metadata path should be `metadata.jsonl`
+
+        """
+        raise NotImplementedError
 
     @cached_property
     def size(self) -> int:
