@@ -2207,7 +2207,7 @@ def create_split_image_dataset() -> Path:
             im = Image.fromarray(imarray.astype("uint8")).convert("RGBA")
             im.save(save_path)
 
-            records.append(ImageRecord(filename=save_path, split=i))
+            records.append(ImageRecord(filepath=save_path))
             
         ImageMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
         
