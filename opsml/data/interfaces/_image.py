@@ -1,7 +1,8 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from pathlib import Path, Dict
+from pathlib import Path
+from typing import Dict
 import pyarrow as pa
 from opsml.data.interfaces.custom_data.base import (
     Dataset,
