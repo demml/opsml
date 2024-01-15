@@ -34,7 +34,7 @@ def test_sql_interface():
 
 
 def test_backup_interfaces():
-    from opsml.data.interfaces.backups import TorchDataNoModule, ImageDataNoModule
+    from opsml.data.interfaces.backups import ImageDataNoModule, TorchDataNoModule
     from opsml.model.interfaces.backups import (
         HuggingFaceModelNoModule,
         LightGBMModelNoModule,
