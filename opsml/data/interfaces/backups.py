@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, Union
 
 from pydantic import model_validator
 
@@ -26,3 +27,34 @@ class ImageDataNoModule(Dataset):
     @staticmethod
     def name() -> str:
         return ImageDataNoModule.__name__
+
+    def split_data(self) -> None:
+        """Creates data splits based on subdirectories of data_dir and supplied split value
+
+        Returns:
+            None
+        """
+        raise NotImplementedError
+
+    def save_data(self, path: Path) -> None:
+        """Saves data to data_dir
+
+        Args:
+            path:
+                Path to save data
+
+        """
+        raise NotImplementedError
+
+    def load_data(self, path: Path, **kwargs: Union[int, str]) -> None:
+        """Saves data to data_dir
+
+        Args:
+            path:
+                Path to save data
+
+            kwargs:
+                Keyword arguments to pass to the data loader
+
+        """
+        raise NotImplementedError
