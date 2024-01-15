@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
+from opsml.data import ImageData
 from tests.conftest import client
 
 
@@ -37,4 +38,9 @@ def test_image_metadata():
     assert not Path("tests/assets/image_dataset/metadata.jsonl").exists()
 
 
-# def test_image_metadata
+def test_image_dataset(create_image_dataset:Path):
+    data_dir = create_image_dataset
+    image_data = ImageData(data_dir=data_dir)
+    
+    
+    

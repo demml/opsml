@@ -41,6 +41,7 @@ import pyarrow as pa
 import pytest
 import torch
 import torch.nn as nn
+from PIL import Image
 
 # ml model packages and classes
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool
@@ -83,7 +84,7 @@ from opsml.cards import (
 )
 
 # opsml
-from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, TorchData
+from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, TorchData, ImageRecord, ImageMetadata
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model import (
@@ -2158,3 +2159,27 @@ def lightning_regression():
 
     yield LightningModel(model=trainer, sample_data=X, preprocessor=StandardScaler()), MyModel
     cleanup()
+
+
+# ImageDataset test helpers
+
+@pytest.fixture(scope="function")
+def create_image_dataset() -> Path:
+    # create images
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    Path(f"{write_path}").mkdir(parents=True, exist_ok=True)
+
+    for j in range(200):
+        save_path = f"{write_path}/image_{j}.png"
+        imarray = np.random.rand(100, 100, 3) * 255
+        im = Image.fromarray(imarray.astype("uint8")).convert("RGBA")
+        im.save(save_path)
+        records.append(ImageRecord(filepath=save_path))
+    
+    ImageMetadata(records=records).write_to_file(Path(f"{write_path}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
