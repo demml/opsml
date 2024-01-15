@@ -126,7 +126,7 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        assert isinstance(self.interface, DataInterface), "Data profile can only be created for a DataInferace subclasses"
+        assert isinstance(self.interface, DataInterface), "Data profile can only be created for a DataInterface subclasses"
         self.interface.create_data_profile(sample_perc, self.name)
 
     def split_data(self) -> DataHolder:
