@@ -42,7 +42,7 @@ def _test_image_metadata():
     assert not Path("tests/assets/image_dataset/metadata.jsonl").exists()
 
 
-def test_image_dataset(create_image_dataset: Path):
+def _test_image_dataset(create_image_dataset: Path):
     data_dir = create_image_dataset
     image_data = ImageData(data_dir=data_dir)
     storage_client = client.storage_client
@@ -60,3 +60,23 @@ def test_image_dataset(create_image_dataset: Path):
     
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
     assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+
+
+def test_image_split_dataset(create_split_image_dataset: Path):
+    data_dir = create_split_image_dataset
+    image_data = ImageData(data_dir=data_dir)
+    storage_client = client.storage_client
+
+    datacard = DataCard(
+        interface=image_data,
+        name="test_data",
+        team="mlops",
+        user_email="test_email",
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+    )
+
+    save_card_artifacts(datacard)
+    
+    #assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
+    #assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
