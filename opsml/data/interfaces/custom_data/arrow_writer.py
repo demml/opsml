@@ -148,9 +148,7 @@ class PyarrowDatasetWriter:
 
             else:
                 with ProcessPoolExecutor() as executor:
-                    future_to_table = {
-                        executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks
-                    }
+                    future_to_table = {executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks}
                     for future in as_completed(future_to_table):
                         try:
                             self.parquet_paths.append(future.result())
@@ -159,29 +157,3 @@ class PyarrowDatasetWriter:
                             raise exc
 
         return self.parquet_paths
-
-
-# this can be extended to language datasets in the future
-class ImageDatasetWriter(PyarrowDatasetWriter):
-    @property
-    def schema(self) -> pa.Schema:
-        """Returns schema for ImageDataset records"""
-
-        return pa.schema(
-            [
-                pa.field("split_label", pa.string()),
-                pa.field("path", pa.string()),
-                pa.field("height", pa.int32()),
-                pa.field("width", pa.int32()),
-                pa.field("bytes", pa.binary()),
-                pa.field("mode", pa.string()),
-            ],
-            metadata={
-                "splt_label": "label assigned to image",
-                "path": "path to image",
-                "mode": "image mode",
-                "height": "image height",
-                "width": "image width",
-                "bytes": "image bytes",
-            },
-        )
