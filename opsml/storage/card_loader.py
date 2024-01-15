@@ -270,6 +270,7 @@ class DataCardLoader(CardLoader):
             load_path = f"{load_path}/{split}"
 
         with self._load_object(load_path, Suffix.NONE.value) as lpath:
+            print(lpath)
             self.card.interface.load_data(lpath, **kwargs)
 
     def load_data(self, **kwargs: Union[str, int]) -> None:

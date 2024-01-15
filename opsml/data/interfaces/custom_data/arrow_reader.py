@@ -1,13 +1,19 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, cast, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import pyarrow.dataset as ds
-from opsml.storage import client
-from opsml.data.interfaces.custom_data.base import Dataset, yield_chunks, get_metadata_filepath
+
+from opsml.data.interfaces.custom_data.base import (
+    Dataset,
+    get_metadata_filepath,
+    yield_chunks,
+)
 from opsml.helpers.logging import ArtifactLogger
+from opsml.storage import client
 
 logger = ArtifactLogger.get_logger()
+local_fs = client.LocalFileSystem(auto_mkdir=True)
 
 
 class PyarrowDatasetReader:
@@ -103,8 +109,9 @@ class PyarrowDatasetReader:
                 # split label will not be in path
                 rpath = self.dataset.data_dir / lpath.relative_to(self.lpath)
 
-            client.storage_client.put(lpath, rpath)
-            client.storage_client.rm(lpath)
+            # this will always be local fs
+            local_fs.put(str(lpath), str(rpath))
+            local_fs.rm(str(lpath))
 
         for record_batch in self.arrow_dataset.to_batches(batch_size=self.batch_size):
             self._write_batch_to_file(record_batch.to_pylist())

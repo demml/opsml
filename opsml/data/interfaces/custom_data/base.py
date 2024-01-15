@@ -4,7 +4,7 @@
 import json
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Iterator
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pyarrow as pa
 from pydantic import BaseModel, model_validator

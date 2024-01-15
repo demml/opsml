@@ -1,14 +1,14 @@
-
 import uuid
 from pathlib import Path
 from typing import cast
+
 from opsml.cards import DataCard
 from opsml.data import ImageData, ImageMetadata, ImageRecord
-from opsml.storage.card_saver import save_card_artifacts
-from opsml.types import SaveName, Suffix
-from tests.conftest import client, OPSML_STORAGE_URI
 from opsml.storage.card_loader import CardLoader
-from opsml.types import RegistryType
+from opsml.storage.card_saver import save_card_artifacts
+from opsml.types import RegistryType, SaveName, Suffix
+from tests.conftest import OPSML_STORAGE_URI, client
+
 
 def test_image_metadata():
     record = {
@@ -64,11 +64,11 @@ def test_image_dataset(create_image_dataset: Path):
     storage_client.rm(Path(OPSML_STORAGE_URI))
     assert not storage_client.exists(Path(OPSML_STORAGE_URI))
 
+
 def test_image_dataset_multiproc(create_image_dataset: Path):
     data_dir = create_image_dataset
     image_data = ImageData(data_dir=data_dir, shard_size="200KB")
     storage_client = client.storage_client
-
 
     datacard = DataCard(
         interface=image_data,
@@ -87,12 +87,11 @@ def test_image_dataset_multiproc(create_image_dataset: Path):
     assert not storage_client.exists(Path(OPSML_STORAGE_URI))
 
 
-
 def test_image_split_dataset(create_split_image_dataset: Path):
     data_dir = create_split_image_dataset
     image_data = ImageData(data_dir=data_dir)
     storage_client = client.storage_client
-    
+
     nbr_files = len(storage_client.find(data_dir))
 
     datacard = DataCard(
@@ -105,10 +104,10 @@ def test_image_split_dataset(create_split_image_dataset: Path):
     )
 
     save_card_artifacts(datacard)
-    
+
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
     assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
-    
+
     # load objects
     loader = CardLoader(
         card_args={
@@ -121,33 +120,31 @@ def test_image_split_dataset(create_split_image_dataset: Path):
 
     loaded_card = cast(DataCard, loader.load_card())
     assert isinstance(loaded_card, DataCard)
-    
+
     ## swap write path so we can test loading
     write_dir_path = uuid.uuid4().hex
-    loaded_card.interface.data_dir =  data_dir.parent / write_dir_path
-    
+    loaded_card.interface.data_dir = data_dir.parent / write_dir_path
+
     # Loading
-    loaded_card.load_data() # this will load all splits and use single processing
+    loaded_card.load_data()  # this will load all splits and use single processing
     assert storage_client.exists(Path(loaded_card.interface.data_dir, "train"))
     assert storage_client.exists(Path(loaded_card.interface.data_dir, "test"))
     assert storage_client.exists(Path(loaded_card.interface.data_dir, "eval"))
-    
+
     # check numbers match up
     downloaded_files = len(storage_client.find(Path(loaded_card.interface.data_dir)))
     assert nbr_files == downloaded_files
     storage_client.rm(Path(loaded_card.interface.data_dir))
     assert not storage_client.exists(Path(loaded_card.interface.data_dir))
-    
-    
+
     # test specific split
-    loaded_card.load_data(split="train", chunk_size=100) # this will load train split and use multi processing
+    loaded_card.load_data(split="train", chunk_size=100)  # this will load train split and use multi processing
     assert storage_client.exists(Path(loaded_card.interface.data_dir, "train"))
     assert not storage_client.exists(Path(loaded_card.interface.data_dir, "test"))
     assert not storage_client.exists(Path(loaded_card.interface.data_dir, "eval"))
     storage_client.rm(Path(loaded_card.interface.data_dir))
     assert not storage_client.exists(Path(loaded_card.interface.data_dir))
-    
+
     # cleanup datacard path
     storage_client.rm(Path(OPSML_STORAGE_URI))
     assert not storage_client.exists(Path(OPSML_STORAGE_URI))
-    
