@@ -2193,3 +2193,25 @@ def create_image_dataset() -> Path:
 
     # delete images
     shutil.rmtree(write_path, ignore_errors=True)
+    
+@pytest.fixture(scope="function")
+def create_split_image_dataset() -> Path:
+    # create images
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    for i in ["train", "test", "eval"]:
+        Path(f"{write_path}/{i}").mkdir(parents=True, exist_ok=True)
+        for j in range(200):
+            save_path = f"{write_path}/{i}/image_{j}.png"
+            imarray = np.random.rand(100, 100, 3) * 255
+            im = Image.fromarray(imarray.astype("uint8")).convert("RGBA")
+            im.save(save_path)
+
+            records.append(ImageRecord(filename=save_path, split=i))
+            
+        ImageMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
+        
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
