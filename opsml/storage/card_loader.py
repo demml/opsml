@@ -66,8 +66,11 @@ def _get_data_interface(interface_type: str) -> DataInterface:
         interface_type:
             Name of interface
     """
+    interfaces = all_subclasses(DataInterface)
+    interfaces.update(all_subclasses(Dataset))
+
     return next(
-        (cls for cls in all_subclasses(DataInterface) if cls.name() == interface_type),  # type: ignore
+        (cls for cls in interfaces if cls.name() == interface_type),  # type: ignore
         DataInterface,  # type: ignore
     )
 
@@ -79,6 +82,7 @@ def _get_model_interface(interface_type: str) -> ModelInterface:
         interface_type:
             Name of interface
     """
+
     return next(
         (cls for cls in all_subclasses(ModelInterface) if cls.name() == interface_type),  # type: ignore
         ModelInterface,  # type: ignore[arg-type]
@@ -255,7 +259,7 @@ class DataCardLoader(CardLoader):
 
         return
 
-    def _load_dataset_data(self, **kwargs: str) -> None:
+    def _load_dataset_data(self, **kwargs: Union[str, int]) -> None:
         assert isinstance(self.card.interface, Dataset)
 
         split = kwargs.get("split")
@@ -266,13 +270,13 @@ class DataCardLoader(CardLoader):
             load_path = f"{load_path}/{split}"
 
         with self._load_object(load_path, Suffix.NONE.value) as lpath:
-            self.card.interface.load_data(lpath)
+            self.card.interface.load_data(lpath, **kwargs)
 
-    def load_data(self, **kwargs: str) -> None:
+    def load_data(self, **kwargs: Union[str, int]) -> None:
         """Saves a data via data interface"""
 
         if isinstance(self.card.interface, Dataset):
-            return self._load_dataset_data()
+            return self._load_dataset_data(**kwargs)
         return self._load_interface_data()
 
     def load_data_profile(self) -> None:

@@ -1,17 +1,19 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, cast, Optional
 
 import pyarrow.dataset as ds
-
-from opsml.data.interfaces.custom_data.base import Dataset, yield_chunks
+from opsml.storage import client
+from opsml.data.interfaces.custom_data.base import Dataset, yield_chunks, get_metadata_filepath
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 
 
 class PyarrowDatasetReader:
-    def __init__(self, dataset: Dataset, lpath: Path, batch_size: int = 1000):
+    def __init__(
+        self, dataset: Dataset, lpath: Path, batch_size: int = 1000, chunk_size: int = 1000, split: Optional[str] = None
+    ):
         """Instantiates a PyarrowReaderBase and reads dataset from pyarrow tables
 
         Args:
@@ -21,15 +23,26 @@ class PyarrowDatasetReader:
                 Path to read dataset from
             batch_size:
                 Batch size to use for loading dataset
+            split:
+                Optional split to use for the dataset. If not provided, all images in the data_dir will be used.
+                If provided, lpath will be checked if it already contains the split label. If not, the split label
+                will be appended to the path.
         """
         self.dataset = dataset
         self.lpath = lpath
         self.batch_size = batch_size
+        self.split = split
+        self.chunk_size = chunk_size
+
+        if self.split is not None:
+            # check if split in lpath
+            if self.split not in self.lpath.parts:
+                self.lpath = self.lpath / self.split
 
     @property
     def arrow_dataset(self) -> ds.Dataset:
         """Returns a pyarrow dataset"""
-        return ds.dataset(source=self.lpath, format="parquet")
+        return ds.dataset(source=self.lpath, format="parquet", ignore_prefixes=["metadata.jsonl"])
 
     def _write_data_to_file(self, files: List[Dict[str, Any]]) -> None:
         """Writes a list of pyarrow data to image files.
@@ -41,8 +54,6 @@ class PyarrowDatasetReader:
 
         for record in files:
             write_path = Path(self.dataset.data_dir, cast(str, record["path"]))
-            write_path.mkdir(parents=True, exist_ok=True)
-
             try:
                 with write_path.open("wb") as file_:
                     file_.write(record["bytes"])  # type: ignore
@@ -60,7 +71,7 @@ class PyarrowDatasetReader:
         """
 
         # get chunks
-        chunks = list(yield_chunks(arrow_batch, 100))
+        chunks = list(yield_chunks(arrow_batch, self.chunk_size))
 
         # don't want overhead of instantiating a process pool if we don't need to
         if len(chunks) == 1:
@@ -68,7 +79,7 @@ class PyarrowDatasetReader:
 
         else:
             with ProcessPoolExecutor() as executor:
-                future_to_table = {executor.submit(self._write_data_to_images, chunk): chunk for chunk in chunks}
+                future_to_table = {executor.submit(self._write_data_to_file, chunk): chunk for chunk in chunks}
                 for future in as_completed(future_to_table):
                     try:
                         _ = future.result()
@@ -78,7 +89,22 @@ class PyarrowDatasetReader:
 
     def load_dataset(self) -> None:
         """Loads a pyarrow dataset and writes to file"""
-        self.check_write_paths_exist()
+
+        # Get metadata first
+        paths = get_metadata_filepath(self.lpath)
+
+        # move metadata files from lpath to dataset.data_dir
+        for lpath in paths:
+            if self.split is not None:
+                # split will be the last directory in path
+                rpath = self.dataset.data_dir / lpath.relative_to(self.lpath.parent)
+
+            else:
+                # split label will not be in path
+                rpath = self.dataset.data_dir / lpath.relative_to(self.lpath)
+
+            client.storage_client.put(lpath, rpath)
+            client.storage_client.rm(lpath)
 
         for record_batch in self.arrow_dataset.to_batches(batch_size=self.batch_size):
-            self.write_batch_to_file(record_batch.to_pylist())
+            self._write_batch_to_file(record_batch.to_pylist())
