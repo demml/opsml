@@ -89,6 +89,7 @@ class Suffix(str, Enum):
     TEXT = ".txt"
     CATBOOST = ".cbm"
     JSONL = ".jsonl"
+    NONE = ""
 
 
 @unique

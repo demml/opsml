@@ -181,6 +181,30 @@ class Dataset(BaseModel):
         else:
             self.splits[None] = self._load_metadata_from_file(self.data_dir, None)
 
+    def save_data(self, path: Path) -> None:
+        """Saves data to data_dir
+
+        Args:
+            data_dir:
+                Path to save data
+
+        Returns:
+            None
+        """
+        raise NotImplementedError
+
+    def load_data(self, path: Path) -> None:
+        """Saves data to data_dir
+
+        Args:
+            data_dir:
+                Path to save data
+
+        Returns:
+            None
+        """
+        raise NotImplementedError
+
     @property
     def arrow_schema(self) -> pa.Schema:
         """Returns schema for ImageDataset records"""
