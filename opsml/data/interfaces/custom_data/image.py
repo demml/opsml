@@ -49,7 +49,7 @@ class ImageRecord(FileRecord):
     categories: Optional[List[Union[str, int, float]]] = None
     objects: Optional[BBox] = None
 
-    def to_arrow(self, data_dir: str, split_label: Optional[str] = None) -> Dict[str, Any]:
+    def to_arrow(self, data_dir: Path, split_label: Optional[str] = None) -> Dict[str, Any]:
         """Saves data to arrow format
 
         Args:
@@ -87,7 +87,7 @@ class ImageMetadata(Metadata):
     records: List[ImageRecord]
 
     @classmethod
-    def load_from_file(cls, filepath: Path) -> None:
+    def load_from_file(cls, filepath: Path) -> "ImageMetadata":
         """Load metadata from a file
 
         Args:

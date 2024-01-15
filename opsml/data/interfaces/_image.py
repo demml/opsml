@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import pyarrow as pa
 
@@ -48,7 +48,7 @@ try:
                 to create the splits for you.
         """
 
-        splits: Dict[str, ImageMetadata] = {}
+        splits: Dict[Optional[str], ImageMetadata] = {}
 
         def save_data(self, path: Path) -> None:
             """Saves data to path. Base implementation use Joblib
@@ -88,19 +88,11 @@ try:
 
                             - If batch_size=1000 and chunk_size=100, then the loaded batch will be split into
                             10 chunks to write in parallel. This is useful for large datasets.
-
-            Returns:
-                None
-
             """
-            PyarrowDatasetReader(self, path, **kwargs).load_dataset()
+            PyarrowDatasetReader(dataset=self, lpath=path, **kwargs).load_dataset()  # type: ignore[arg-type]
 
         def split_data(self) -> None:
-            """Creates data splits based on subdirectories of data_dir and supplied split value
-
-            Returns:
-                None
-            """
+            """Creates data splits based on subdirectories of data_dir and supplied split value"""
             if bool(self.splits):
                 return
 

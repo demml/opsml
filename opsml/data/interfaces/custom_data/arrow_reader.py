@@ -1,6 +1,6 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pyarrow.dataset as ds
 
@@ -18,7 +18,13 @@ local_fs = client.LocalFileSystem(auto_mkdir=True)
 
 class PyarrowDatasetReader:
     def __init__(
-        self, dataset: Dataset, lpath: Path, batch_size: int = 1000, chunk_size: int = 1000, split: Optional[str] = None
+        self,
+        dataset: Dataset,
+        lpath: Path,
+        batch_size: int = 1000,
+        chunk_size: int = 1000,
+        split: Optional[str] = None,
+        **kwargs: Union[str, int],
     ):
         """Instantiates a PyarrowReaderBase and reads dataset from pyarrow tables
 
@@ -62,7 +68,7 @@ class PyarrowDatasetReader:
             write_path = Path(self.dataset.data_dir, cast(str, record["path"]))
             try:
                 with write_path.open("wb") as file_:
-                    file_.write(record["bytes"])  # type: ignore
+                    file_.write(record["bytes"])
 
             except Exception as exc:
                 logger.error("Exception occurred while writing to file: {}", exc)

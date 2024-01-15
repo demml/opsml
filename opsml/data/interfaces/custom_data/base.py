@@ -10,7 +10,7 @@ import pyarrow as pa
 from pydantic import BaseModel, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.types import CommonKwargs
+from opsml.types import CommonKwargs, Suffix
 
 logger = ArtifactLogger.get_logger()
 
@@ -29,7 +29,7 @@ def check_for_dirs(data_dir: Path) -> List[str]:
     return dirs
 
 
-def get_metadata_filepath(data_dir: Path, split_label: Optional[str] = None) -> List[Path]:
+def get_metadata_filepath(data_dir: Path, split: Optional[str] = None) -> List[Path]:
     """Loads metadata file from data_dir or subdirectory of data_dir
 
     Args:
@@ -42,8 +42,8 @@ def get_metadata_filepath(data_dir: Path, split_label: Optional[str] = None) -> 
         `ImageMetadata`
     """
 
-    if split_label is not None:
-        search_path = data_dir / split_label
+    if split is not None:
+        search_path = data_dir / split
     else:
         search_path = data_dir
 
@@ -90,12 +90,12 @@ class FileRecord(BaseModel):
 
         return data_args
 
-    def to_arrow(self, data_dir: str, split_label: Optional[str] = None) -> Any:
+    def to_arrow(self, data_dir: Path, split_label: Optional[str] = None) -> Any:
         """Create pyarrow record"""
         raise NotImplementedError
 
 
-def yield_chunks(list_: List[FileRecord], size: int) -> Iterator[FileRecord]:
+def yield_chunks(list_: List[Any], size: int) -> Iterator[List[Any]]:
     """Yield successive n-sized chunks from list.
 
     Args:
@@ -127,13 +127,13 @@ class Metadata(BaseModel):
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with filepath.open("w", encoding="utf-8") as file_:
             for record in self.records:
-                record = record.model_dump()
-                record["filepath"] = record["filepath"].as_posix()
-                json.dump(record, file_)
+                dumped_record = record.model_dump()
+                dumped_record["filepath"] = dumped_record["filepath"].as_posix()
+                json.dump(dumped_record, file_)
                 file_.write("\n")
 
     @classmethod
-    def load_from_file(cls, filepath: Path) -> None:
+    def load_from_file(cls, filepath: Path) -> Any:
         """Load image metadata from jsonl file
 
         Args:
@@ -146,7 +146,7 @@ class Metadata(BaseModel):
     @cached_property
     def size(self) -> int:
         """Total size of all images in metadata"""
-        return sum([record.size for record in self.records])
+        return sum(record.size for record in self.records)
 
 
 class Dataset(BaseModel):
@@ -188,11 +188,9 @@ class Dataset(BaseModel):
         """Saves data to data_dir
 
         Args:
-            data_dir:
+            path:
                 Path to save data
 
-        Returns:
-            None
         """
         raise NotImplementedError
 
@@ -200,11 +198,12 @@ class Dataset(BaseModel):
         """Saves data to data_dir
 
         Args:
-            data_dir:
+            path:
                 Path to save data
 
-        Returns:
-            None
+            kwargs:
+                Keyword arguments to pass to the data loader
+
         """
         raise NotImplementedError
 
@@ -220,3 +219,7 @@ class Dataset(BaseModel):
     @property
     def data_type(self) -> str:
         return CommonKwargs.UNDEFINED.value
+
+    @property
+    def data_suffix(self) -> str:
+        return Suffix.NONE.value
