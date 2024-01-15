@@ -25,11 +25,11 @@ def check_for_dirs(data_dir: Path) -> List[str]:
     Returns:
         List of subdirectories
     """
-    dirs = [x.as_posix() for x in data_dir.iterdir() if x.is_dir()]
+    dirs = [x.stem for x in data_dir.iterdir() if x.is_dir()]
     return dirs
 
 
-def get_metadata_filepath(data_dir: Path, split: Optional[str] = None) -> Path:
+def get_metadata_filepath(data_dir: Path, split_label: Optional[str] = None) -> Path:
     """Loads metadata file from data_dir or subdirectory of data_dir
 
     Args:
@@ -41,16 +41,17 @@ def get_metadata_filepath(data_dir: Path, split: Optional[str] = None) -> Path:
     Returns:
         `ImageMetadata`
     """
-    search_path = data_dir
 
-    if split is not None:
-        search_path = data_dir / split
+    if split_label is not None:
+        search_path = data_dir / split_label
+    else:
+        search_path = data_dir
 
     for p in search_path.rglob("*.jsonl"):
         if p.name == "metadata.jsonl":
             return p
 
-    raise ValueError(f"Could not find metadata.jsonl in {data_dir} or subdirectories")
+    raise ValueError(f"Could not find metadata.jsonl in {search_path} or subdirectories")
 
 
 class FileRecord(BaseModel):
