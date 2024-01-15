@@ -283,20 +283,23 @@ class DataCardLoader(CardLoader):
     def load_data_profile(self) -> None:
         """Saves a data profile"""
 
+        if isinstance(self.card.interface, Dataset):
+            return
+
         if self.card.interface.data_profile is not None:
             logger.info("Data profile already loaded")
-            return None
+            return
 
         # check exists
         rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
         if not self.storage_client.exists(rpath):
-            return None
+            return
 
         # load data profile
         with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
             self.card.interface.load_data_profile(lpath)
 
-        return None
+        return
 
     @staticmethod
     def validate(card_type: str) -> bool:

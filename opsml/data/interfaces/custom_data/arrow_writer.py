@@ -104,7 +104,7 @@ class PyarrowDatasetWriter:
         lpath = self.lpath / sub_dir
         lpath.mkdir(parents=True, exist_ok=True)
 
-    def write_to_table(self, records: List[FileRecord], split_label: Optional[str] = None) -> str:
+    def write_to_table(self, records: List[FileRecord], split_label: Optional[str] = None) -> None:
         """Write records to pyarrow table
 
         Args:
@@ -120,7 +120,7 @@ class PyarrowDatasetWriter:
             arrow_record = record.to_arrow(self.dataset.data_dir, split_label)
             processed_records.append(arrow_record)
 
-        return self._write_buffer(processed_records, split_label)
+        self._write_buffer(processed_records, split_label)
 
     def _save_metadata(self, metadata: Metadata, split_label: Optional[str] = None) -> None:
         """Saves metadata for a split"""
@@ -168,5 +168,3 @@ class PyarrowDatasetWriter:
 
             # write metadata
             self._save_metadata(metadata, split_label)
-
-        return

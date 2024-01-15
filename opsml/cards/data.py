@@ -55,7 +55,7 @@ class DataCard(ArtifactCard):
     interface: SerializeAsAny[Union[DataInterface, Dataset]]
     metadata: DataCardMetadata = DataCardMetadata()
 
-    def load_data(self, **kwargs: Union[str, int]) -> None:
+    def load_data(self, **kwargs: Union[str, int]) -> None:  # pylint: disable=differing-param-doc
         """
         Load data to interface
 
@@ -126,26 +126,35 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-
+        assert isinstance(
+            self.interface, DataInterface
+        ), "Data profile can only be created for a DataInferace subclasses"
         self.interface.create_data_profile(sample_perc, self.name)
 
     def split_data(self) -> DataHolder:
         """Splits data interface according to data split logic"""
+
+        assert isinstance(self.interface, DataInterface), "Splitting is only support for DataInterface subclasses"
         return self.interface.split_data()
 
     @property
     def data_splits(self) -> List[DataSplit]:
         """Returns data splits"""
+        assert isinstance(self.interface, DataInterface), "Data splits are only supported for DataInterface subclasses"
         return self.interface.data_splits
 
     @property
     def data(self) -> Any:
         """Returns data"""
+        assert isinstance(
+            self.interface, DataInterface
+        ), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property
     def data_profile(self) -> Any:
         """Returns data profile"""
+        assert isinstance(self.interface, DataInterface), "Data profile is only supported for DataInterface subclasses"
         return self.interface.data_profile
 
     @property

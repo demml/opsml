@@ -109,7 +109,6 @@ class DataCardSaver(CardSaver):
         assert isinstance(self.card.interface, Dataset), "Expected Dataset interface"
         save_path = self.lpath / SaveName.DATA.value
         self.card.interface.save_data(save_path)
-        return
 
     def _save_data_interface(self) -> None:
         """Logic for saving subclasses of DataInterface"""

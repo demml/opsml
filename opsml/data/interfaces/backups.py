@@ -3,7 +3,7 @@ from typing import Any, Dict
 from pydantic import model_validator
 
 from opsml.data.interfaces._base import DataInterface
-from opsml.data.interfaces.custom_data import Dataset
+from opsml.data.interfaces.custom_data.base import Dataset
 
 
 class TorchDataNoModule(DataInterface):
