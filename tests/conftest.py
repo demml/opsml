@@ -41,11 +41,11 @@ import pyarrow as pa
 import pytest
 import torch
 import torch.nn as nn
-from PIL import Image
 
 # ml model packages and classes
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool
 from google.auth import load_credentials_from_file
+from PIL import Image
 from sklearn import (
     cross_decomposition,
     ensemble,
@@ -84,7 +84,16 @@ from opsml.cards import (
 )
 
 # opsml
-from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, TorchData, ImageRecord, ImageMetadata
+from opsml.data import (
+    ArrowData,
+    ImageMetadata,
+    ImageRecord,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    SqlData,
+    TorchData,
+)
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model import (
@@ -2163,6 +2172,7 @@ def lightning_regression():
 
 # ImageDataset test helpers
 
+
 @pytest.fixture(scope="function")
 def create_image_dataset() -> Path:
     # create images
@@ -2176,7 +2186,7 @@ def create_image_dataset() -> Path:
         im = Image.fromarray(imarray.astype("uint8")).convert("RGBA")
         im.save(save_path)
         records.append(ImageRecord(filepath=save_path))
-    
+
     ImageMetadata(records=records).write_to_file(Path(f"{write_path}/metadata.jsonl"))
 
     yield Path(write_path)

@@ -16,11 +16,11 @@ from typing import (  # noqa # pylint: disable=unused-import
 from pydantic import SerializeAsAny
 
 from opsml.cards.base import ArtifactCard
+from opsml.data import Dataset
 from opsml.data.interfaces._base import DataInterface
 from opsml.data.splitter import DataHolder, DataSplit
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CardType, DataCardMetadata
-from opsml.data import Dataset
 
 try:
     from ydata_profiling import ProfileReport

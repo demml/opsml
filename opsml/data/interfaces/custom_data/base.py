@@ -5,11 +5,12 @@ import json
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+
 import pyarrow as pa
 from pydantic import BaseModel, model_validator
-from opsml.types import CommonKwargs
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
