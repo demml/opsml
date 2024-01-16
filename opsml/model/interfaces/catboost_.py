@@ -22,6 +22,9 @@ from opsml.types import (
     Suffix,
     TrainedModelType,
 )
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger()
 
 ValidData = Union[List[Any], NDArray[Any]]
 
@@ -150,6 +153,8 @@ try:
 
         def convert_to_onnx(self, **kwargs: Path) -> None:
             """Converts model to onnx format"""
+
+            logger.info("Converting CatBoost model to onnx format")
 
             import onnx
             import onnxruntime as rt
