@@ -9,13 +9,13 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-from opsml.model.interfaces.pytorch import PyTorchModel
+from opsml.model.interfaces.pytorch import TorchModel
 from opsml.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
     from lightning import LightningModule, Trainer
 
-    class LightningModel(PyTorchModel):
+    class LightningModel(TorchModel):
         """Model interface for Pytorch Lightning models.
 
         Args:
@@ -112,9 +112,7 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    assert issubclass(
-                        model_arch, LightningModule
-                    ), "Model architecture must be a subclass of LightningModule"
+                    assert issubclass(model_arch, LightningModule), "Model architecture must be a subclass of LightningModule"
                     self.model = model_arch.load_from_checkpoint(checkpoint_path=path, **kwargs)
 
                 else:

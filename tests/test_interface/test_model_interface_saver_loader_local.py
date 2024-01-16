@@ -12,7 +12,7 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    PyTorchModel,
+    TorchModel,
     SklearnModel,
     TensorFlowModel,
 )
@@ -279,8 +279,8 @@ def test_save_lgb_sklearn_modelcard(
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_modelcard(pytorch_simple: PyTorchModel):
-    model: PyTorchModel = pytorch_simple
+def test_save_torch_modelcard(pytorch_simple: TorchModel):
+    model: TorchModel = pytorch_simple
 
     modelcard = ModelCard(
         interface=model,
@@ -332,8 +332,8 @@ def test_save_torch_modelcard(pytorch_simple: PyTorchModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_tuple_modelcard(pytorch_simple_tuple: PyTorchModel):
-    model: PyTorchModel = pytorch_simple_tuple
+def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel):
+    model: TorchModel = pytorch_simple_tuple
 
     modelcard = ModelCard(
         interface=model,

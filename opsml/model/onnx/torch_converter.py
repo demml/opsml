@@ -13,7 +13,7 @@ import onnxruntime as rt
 import torch
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.model.interfaces.pytorch import PyTorchModel, ValidData
+from opsml.model.interfaces.pytorch import TorchModel, ValidData
 from opsml.model.interfaces.pytorch_lightning import LightningModel
 from opsml.types import OnnxModel, TorchOnnxArgs
 
@@ -44,7 +44,7 @@ class _PytorchArgBuilder:
 
 
 class _PyTorchOnnxModel:
-    def __init__(self, model_interface: PyTorchModel):
+    def __init__(self, model_interface: TorchModel):
         self.interface = model_interface
 
     def _get_additional_model_args(self) -> TorchOnnxArgs:

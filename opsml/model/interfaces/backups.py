@@ -9,9 +9,7 @@ class HuggingFaceModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "HuggingFaceModel requires transformers to be installed. Please install transformers."
-        )
+        raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
     @staticmethod
     def name() -> str:
@@ -33,24 +31,22 @@ class LightningModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "LightningModel requires pytorch lightning to be installed. Please install lightning."
-        )
+        raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
     @staticmethod
     def name() -> str:
         return LightningModelNoModule.__name__
 
 
-class PyTorchModelNoModule(ModelInterface):
+class TorchModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError("PyTorchModel requires torch to be installed. Please install pytorch.")
+        raise ModuleNotFoundError("TorchModel requires torch to be installed. Please install pytorch.")
 
     @staticmethod
     def name() -> str:
-        return PyTorchModelNoModule.__name__
+        return TorchModelNoModule.__name__
 
 
 class SklearnModelNoModule(ModelInterface):

@@ -7,7 +7,7 @@ from opsml.data import NumpyData
 from opsml.model import (
     HuggingFaceModel,
     LightningModel,
-    PyTorchModel,
+    TorchModel,
     SklearnModel,
     TensorFlowModel,
 )
@@ -35,7 +35,7 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel):
 
 @pytest.mark.flaky(reruns=2, reruns_delay=5)
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_torch_interface(deeplabv3_resnet50: PyTorchModel):
+def test_torch_interface(deeplabv3_resnet50: TorchModel):
     assert deeplabv3_resnet50.model_type == "DeepLabV3"
     prediction = deeplabv3_resnet50.get_sample_prediction()
     assert prediction.prediction_type == "collections.OrderedDict"

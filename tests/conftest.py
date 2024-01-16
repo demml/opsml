@@ -103,7 +103,7 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    PyTorchModel,
+    TorchModel,
     SklearnModel,
     TensorFlowModel,
     XGBoostModel,
@@ -483,7 +483,7 @@ def huggingface_language_model():
 
     loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
 
-    return PyTorchModel(
+    return TorchModel(
         model=loaded_model,
         preprocessor=tokenizer,
         sample_data=dict(data),
@@ -513,7 +513,7 @@ def pytorch_simple():
     model = Polynomial3()
     inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
 
-    yield PyTorchModel(
+    yield TorchModel(
         model=model,
         sample_data=inputs,
         save_args={"as_state_dict": True},
@@ -545,7 +545,7 @@ def pytorch_simple_tuple():
     model = Polynomial3()
     inputs = (torch.randn((1, 1)), torch.randn((1, 1)))
 
-    yield PyTorchModel(
+    yield TorchModel(
         model=model,
         sample_data=inputs,
         save_args={"as_state_dict": True},
@@ -660,13 +660,13 @@ def multi_input_tf_example():
 
 
 @pytest.fixture(scope="session")
-def pytorch_resnet() -> PyTorchModel:
+def pytorch_resnet() -> TorchModel:
     import torch
 
     loaded_model = torch.load("tests/assets/resnet.pt")
     data = torch.randn(1, 3, 224, 224)
 
-    return PyTorchModel(model=loaded_model, sample_data=data)
+    return TorchModel(model=loaded_model, sample_data=data)
 
 
 @pytest.fixture
@@ -2091,7 +2091,7 @@ def deeplabv3_resnet50():
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)
 
-    return PyTorchModel(model=model, sample_data=input_batch)
+    return TorchModel(model=model, sample_data=input_batch)
 
 
 @pytest.fixture(scope="module")

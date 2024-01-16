@@ -8,7 +8,7 @@ from opsml.model import (
     HuggingFaceModel,
     LightningModel,
     ModelInterface,
-    PyTorchModel,
+    TorchModel,
     TensorFlowModel,
 )
 from tests import conftest
@@ -131,7 +131,7 @@ def test_sklearn_models(interface: ModelInterface):
         lazy_fixture("deeplabv3_resnet50"),  # deeplabv3_resnet50 trained with numpy array
     ],
 )
-def test_model_pytorch_predict(interface: PyTorchModel):
+def test_model_pytorch_predict(interface: TorchModel):
     interface.convert_to_onnx()
     assert interface.onnx_model.sess is not None
 
