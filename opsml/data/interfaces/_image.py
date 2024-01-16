@@ -122,12 +122,12 @@ try:
                     pa.field("mode", pa.string()),
                 ],
                 metadata={
-                    "splt_label": "label assigned to image",
+                    "split_label": "label assigned to image",
                     "path": "path to image",
-                    "mode": "image mode",
                     "height": "image height",
                     "width": "image width",
                     "bytes": "image bytes",
+                    "mode": "image mode",
                 },
             )
 

@@ -42,7 +42,7 @@ class TextRecord(FileRecord):
             stream_record = {
                 "split_label": split_label,
                 "path": path.as_posix(),
-                "text": f.read(),
+                "bytes": f.read(),
             }
         return stream_record
 

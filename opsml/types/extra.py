@@ -54,6 +54,7 @@ class CommonKwargs(str, Enum):
     FEATURE_EXTRACTOR = "feature_extractor"
     FEATURE_EXTRACTOR_NAME = "feature_extractor_name"
     IMAGE = "image"
+    TEXT = "text"
 
 
 @unique
