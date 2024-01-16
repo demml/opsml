@@ -1,7 +1,16 @@
 from metaflow import FlowSpec, step
-from opsml import DataCard, ModelCard, CardInfo, CardRegistries, PandasData, DataSplit, SklearnModel
-from opsml.helpers.data import create_fake_data
 from sklearn.linear_model import LinearRegression
+
+from opsml import (
+    CardInfo,
+    CardRegistries,
+    DataCard,
+    DataSplit,
+    ModelCard,
+    PandasData,
+    SklearnModel,
+)
+from opsml.helpers.data import create_fake_data
 
 
 class OpsmlFlow(FlowSpec):

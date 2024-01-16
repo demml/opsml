@@ -7,6 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import model_validator
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
@@ -22,7 +23,6 @@ from opsml.types import (
     Suffix,
     TrainedModelType,
 )
-from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 

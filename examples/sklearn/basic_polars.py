@@ -9,7 +9,6 @@ from opsml import (
     PolarsData,
     SklearnModel,
 )
-
 from opsml.helpers.data import create_fake_data
 
 

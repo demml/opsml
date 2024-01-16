@@ -1,10 +1,20 @@
-from opsml import CardInfo, CardRegistries, DataCard, DataSplit, ModelCard, PandasData, SklearnModel, LightGBMModel
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from opsml.helpers.data import create_fake_data
 import lightgbm as lgb
 import numpy as np
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+
+from opsml import (
+    CardInfo,
+    CardRegistries,
+    DataCard,
+    DataSplit,
+    LightGBMModel,
+    ModelCard,
+    PandasData,
+    SklearnModel,
+)
+from opsml.helpers.data import create_fake_data
 
 
 class OpsmlLightGBMPipelineWorkflow:
@@ -64,8 +74,10 @@ class OpsmlLightGBMPipelineWorkflow:
             remainder="passthrough",
         )
 
-        # setup stacking regressor
-        pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
+        # setup lgb regressor
+        pipe = Pipeline(
+            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
+        )
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
