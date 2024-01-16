@@ -26,7 +26,7 @@ class ModelCard(ArtifactCard):
         user_email:
             Email to associate with card
         interface:
-            Trained model interface. Can be one of SklearnModel, TensorFlowModel, PyTorchModel
+            Trained model interface. Can be one of SklearnModel, TensorFlowModel, TorchModel
             LightningModel, LGBModel, XGBoostModel, HuggingFaceModel
         uid:
             Unique id (assigned if card has been registered)

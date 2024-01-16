@@ -27,7 +27,7 @@ try:
 
     ValidData = Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
 
-    class PyTorchModel(ModelInterface):
+    class TorchModel(ModelInterface):
         """Model interface for Pytorch models.
 
         Args:
@@ -49,7 +49,7 @@ try:
                 Optional arguments for ONNX conversion. See `TorchOnnxArgs` for supported arguments.
 
         Returns:
-        PyTorchModel
+        TorchModel
         """
 
         model: Optional[torch.nn.Module] = None
@@ -236,7 +236,7 @@ try:
 
         @staticmethod
         def name() -> str:
-            return PyTorchModel.__name__
+            return TorchModel.__name__
 
 except ModuleNotFoundError:
-    from opsml.model.interfaces.backups import PyTorchModelNoModule as PyTorchModel
+    from opsml.model.interfaces.backups import TorchModelNoModule as TorchModel
