@@ -17,7 +17,7 @@ try:
     extra_imports = ["ImageMetadata", "ImageRecord"]
 
 except ModuleNotFoundError:
-    pass
+    extra_imports = []
 
 __all__ = [
     "ArrowData",
