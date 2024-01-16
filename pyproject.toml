@@ -155,6 +155,7 @@ lightning = "^2.1.2"
 optimum = "^1.16.1"
 pytest-rerunfailures = "^13.0"
 catboost = "^1.2.2"
+accelerate = "^0.26.1"
 
 [tool.poetry.group.dev-lints]
 optional = true

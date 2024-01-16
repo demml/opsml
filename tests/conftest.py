@@ -1223,7 +1223,7 @@ def huggingface_bart() -> HuggingFaceModel:
         sample_data=inputs,
         task_type=HuggingFaceTask.FEATURE_EXTRACTION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_FEATURE_EXTRACTION.value,
+            ort_type=HuggingFaceORTModel.ORT_FEATURE_EXTRACTION.value,
         ),
     )
 
@@ -1244,7 +1244,7 @@ def huggingface_text_classification_pipeline():
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         is_pipeline=True,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
         ),
     )
 
@@ -1267,7 +1267,7 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
@@ -1292,7 +1292,7 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
@@ -1314,7 +1314,7 @@ def huggingface_pipeline() -> HuggingFaceModel:
         sample_data="test example",
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
@@ -1341,7 +1341,7 @@ def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
         sample_data=inputs,
         task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_IMAGE_CLASSIFICATION.value,
         ),
     )
 
@@ -1368,7 +1368,7 @@ def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
         sample_data=image,
         task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_IMAGE_CLASSIFICATION.value,
         ),
     )
     model.to_pipeline()

@@ -382,7 +382,7 @@ class ModelCardLoader(CardLoader):
                 lpath = self.download(lpath, rpath, SaveName.FEATURE_EXTRACTOR.value, "")
                 self.card.interface.load_feature_extractor(lpath)
 
-    def _load_preprocessor(self, lpath: Path, rpath: Path) -> None:
+    def load_preprocessor(self, lpath: Path, rpath: Path) -> None:
         """Load Preprocessor for model interface
 
         Args:
@@ -397,17 +397,17 @@ class ModelCardLoader(CardLoader):
 
         if self.card.interface.preprocessor is not None:
             logger.info("Preprocessor already loaded")
-            return None
+            return
 
         load_rpath = Path(self.card.uri, SaveName.PREPROCESSOR.value).with_suffix(self.preprocessor_suffix)
         if not self.storage_client.exists(load_rpath):
-            return None
+            return
 
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
         self.card.interface.load_preprocessor(lpath)
-        return None
+        return
 
-    def _load_model(self, lpath: Path, rpath: Path, **kwargs: Dict[str, Any]) -> None:
+    def _load_model(self, lpath: Path, rpath: Path, **kwargs: str) -> None:
         """Load model to interface
 
         Args:
@@ -424,7 +424,7 @@ class ModelCardLoader(CardLoader):
             if self.card.interface.is_pipeline:
                 self.card.interface.to_pipeline()
 
-    def _load_hugginface_onnx_model(self, **kwargs: Any) -> None:
+    def _load_hugginface_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
         """Load onnx model to interface
 
         Args:
@@ -437,28 +437,22 @@ class ModelCardLoader(CardLoader):
         load_quantized = kwargs.get("load_quantized", False)
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
 
-        # check that onnx file exists
-        load_rpath = Path(self.card.uri, SaveName.ONNX_MODEL.value)
+        load_rpath = Path(rpath, save_name)
         if not self.storage_client.exists(load_rpath):
             logger.info("No onnx model exists for {}", load_rpath.as_posix())
-            return None
+            return
 
-        # load onnx model
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            lpath = Path(tmp_dir)
-            rpath = self.card.uri
+        if self.card.interface.is_pipeline:
+            self._load_huggingface_preprocessors(lpath, rpath)
 
-            # if assembling onnx pipeline, need to download preprocessors first
-            if self.card.interface.is_pipeline:
-                self._load_huggingface_preprocessors(lpath, rpath)
+        # download and load onnx model
+        load_path = self.download(lpath, rpath, save_name, "")
+        self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
+        self.card.interface.load_onnx_model(load_path)
 
-            # download and load onnx model
-            load_path = self.download(lpath, rpath, save_name, "")
-            self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
-            self.card.interface.load_onnx_model(load_path)
-        return None
+        return
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
+    def _load_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
         """Load onnx model to interface
 
         Args:
@@ -468,21 +462,20 @@ class ModelCardLoader(CardLoader):
 
         if self.card.interface.onnx_model is not None:
             logger.info("Onnx model already loaded")
-            return None
+            return
 
         if isinstance(self.card.interface, HuggingFaceModel):
-            return self._load_hugginface_onnx_model(**kwargs)
+            return self._load_hugginface_onnx_model(lpath, rpath, **kwargs)
 
         save_name = SaveName.ONNX_MODEL.value
-        load_rpath = Path(self.card.uri, save_name).with_suffix(self.onnx_suffix)
-        if not self.storage_client.exists(load_rpath):
+        if not self.storage_client.exists(Path(rpath, save_name).with_suffix(self.onnx_suffix)):
             logger.info("No onnx model exists for {}", save_name)
-            return None
+            return
 
-        with self._load_object(save_name, self.onnx_suffix) as lpath:
-            self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
-            self.card.interface.load_onnx_model(lpath)
-        return None
+        load_lpath = self.download(lpath, rpath, save_name, self.onnx_suffix)
+        self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
+        self.card.interface.load_onnx_model(load_lpath)
+        return
 
     def load_model_metadata(self) -> ModelMetadata:
         """Load model metadata to interface"""
@@ -497,6 +490,23 @@ class ModelCardLoader(CardLoader):
 
         return ModelMetadata(**metadata)
 
+    def load_onnx_model(self, **kwargs: Any) -> None:
+        if self.card.interface.onnx_model is not None:
+            logger.info("Onnx Model already loaded")
+            return None
+
+        load_preprocessor = kwargs.get("load_preprocessor", True)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lpath = Path(tmp_dir)
+            rpath = self.card.uri
+
+            if load_preprocessor:
+                self.load_preprocessor(lpath, rpath)
+
+            self._load_onnx_model(lpath, rpath, **kwargs)
+
+        return None
+
     def load_model(self, **kwargs: Any) -> None:
         """Load model, preprocessor and sample data"""
 
@@ -504,10 +514,15 @@ class ModelCardLoader(CardLoader):
             logger.info("Model already loaded")
             return None
 
+        load_preprocessor = kwargs.get("load_preprocessor", True)
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
-            self._load_preprocessor(lpath, rpath)
+
+            if load_preprocessor:
+                self.load_preprocessor(lpath, rpath)
+
             self._load_sample_data(lpath, rpath)
             self._load_model(lpath, rpath, **kwargs)
 
