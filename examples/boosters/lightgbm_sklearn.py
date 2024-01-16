@@ -17,7 +17,7 @@ from opsml import (
 from opsml.helpers.data import create_fake_data
 
 
-class OpsmlLightGBMPipelineWorkflow:
+class OpsmlLightGBMSklearnWorkflow:
     def __init__(self, info: CardInfo):
         """Instantiates workflow class. Instantiation will also set up the registries that
         will be used to store cards and artifacts
@@ -75,9 +75,7 @@ class OpsmlLightGBMPipelineWorkflow:
         )
 
         # setup lgb regressor
-        pipe = Pipeline(
-            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
-        )
+        pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
@@ -94,7 +92,6 @@ class OpsmlLightGBMPipelineWorkflow:
         )
 
         # create modelcard
-        # Here we are registering the pipeline which contains an sklearn model
         modelcard = ModelCard(interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True)
         self.registries.model.register_card(card=modelcard)
 
@@ -165,6 +162,6 @@ class OpsmlLightGBMPipelineWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="linear-regression", team="opsml", user_email="user@email.com")
-    workflow = OpsmlLightGBMPipelineWorkflow(info=info)
+    info = CardInfo(name="lightgbm", team="opsml", user_email="user@email.com")
+    workflow = OpsmlLightGBMSklearnWorkflow(info=info)
     workflow.run_workflow()
