@@ -19,22 +19,22 @@ from opsml.types import CommonKwargs
 logger = ArtifactLogger.get_logger()
 
 
-class TextData(Dataset):
-    """Create an image dataset from a directory of images.
-    User can also provide a split that indicates the subdirectory of images to use.
-    It is expected that each split contains a metadata.jsonl built from the ImageMetadata class.
-    ImageData was built to have parity with HuggingFace.
+class TextDataset(Dataset):
+    """Create a text dataset from a directory of files
+    User can also provide a split that indicates the subdirectory of files to use.
+    It is expected that each split contains a metadata.jsonl built from the TextMetadata class.
+    TextDataset was built to have parity with HuggingFace.
 
     Args:
         data_dir:
-            Root directory for images.
+            Root directory for text data.
 
-            For example, you the image file is located at either:
+            For example, the file is located at either:
 
-                - "images/train/my_image.png"
-                - "images/my_image.png"
+                - "text/train/example.txt"
+                - "text/example.txt"
 
-            Then the data_dir should be `images/`
+            Then the data_dir should be `text/`
 
         shard_size:
             Size of shards to use for dataset. Default is 512MB.
@@ -42,7 +42,7 @@ class TextData(Dataset):
         splits:
             Dictionary of splits to use for dataset. If no splits are provided, then the
             data_dir or subdirs will be used as the split. It is expected that each split contains a
-            metadata.jsonl built from the ImageMetadata class. It is recommended to allow opsml
+            metadata.jsonl built from the TextMetadata class. It is recommended to allow opsml
             to create the splits for you.
     """
 
@@ -68,7 +68,7 @@ class TextData(Dataset):
 
                 Keyword arguments to pass to the data loader
 
-                ---- Supported kwargs for ImageData and TextData ----
+                ---- Supported kwargs for ImageDataset and TextDataset ----
 
                 split:
                     Split to use for data. If not provided, then all data will be loaded.
@@ -104,7 +104,7 @@ class TextData(Dataset):
 
     @property
     def arrow_schema(self) -> pa.Schema:
-        """Returns schema for ImageDataset records
+        """Returns schema for TextData records
 
         Returns:
             pyarrow.Schema
@@ -117,15 +117,15 @@ class TextData(Dataset):
                 pa.field("bytes", pa.binary()),
             ],
             metadata={
-                "split_label": "label assigned to image",
-                "path": "path to image",
-                "bytes": "image bytes",
+                "split_label": "label assigned to text",
+                "path": "path to text",
+                "bytes": "text bytes",
             },
         )
 
     @staticmethod
     def name() -> str:
-        return TextData.__name__
+        return TextDataset.__name__
 
     @property
     def data_type(self) -> str:
