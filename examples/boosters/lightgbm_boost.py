@@ -1,14 +1,16 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 import lightgbm as lgb
 from sklearn.preprocessing import StandardScaler
+
 from opsml import (
     CardInfo,
     CardRegistries,
     DataCard,
     DataSplit,
+    LightGBMModel,
     ModelCard,
     PandasData,
-    LightGBMModel,
 )
 from opsml.helpers.data import create_fake_data
 
