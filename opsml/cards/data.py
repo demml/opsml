@@ -63,7 +63,7 @@ class DataCard(ArtifactCard):
             kwargs:
                 Keyword arguments to pass to the data loader
 
-            ---- Supported kwargs for ImageData and TextData ----
+            ---- Supported kwargs for ImageData and TextDataset ----
 
             split:
                 Split to use for data. If not provided, then all data will be loaded.
