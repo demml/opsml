@@ -104,23 +104,23 @@ class OpsmlHuggingFaceWorkflow:
         val_dataset = ExampleDataset(val_encodings, val_labels)
 
         training_args = TrainingArguments(
-            output_dir="./results",  # output directory
-            num_train_epochs=1,  # total number of training epochs
-            per_device_train_batch_size=4,  # batch size per device during training
-            per_device_eval_batch_size=4,  # batch size for evaluation
-            warmup_steps=500,  # number of warmup steps for learning rate scheduler
-            weight_decay=0.01,  # strength of weight decay
-            logging_dir="./logs",  # directory for storing logs
+            output_dir="mlruns/results",
+            num_train_epochs=1,
+            per_device_train_batch_size=4,
+            per_device_eval_batch_size=4,
+            warmup_steps=500,
+            weight_decay=0.01,
+            logging_dir="mlruns/logs",
             logging_steps=10,
         )
 
         model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
 
         trainer = Trainer(
-            model=model,  # the instantiated 🤗 Transformers model to be trained
-            args=training_args,  # training arguments, defined above
-            train_dataset=train_dataset,  # training dataset
-            eval_dataset=val_dataset,  # evaluation dataset
+            model=model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset,
         )
 
         trainer.train()
@@ -151,42 +151,29 @@ class OpsmlHuggingFaceWorkflow:
     def _test_onnx_model(self):
         """This shows how to load a modelcard and the associated model and onnx model (if converted to onnx)"""
 
-        datacard: DataCard = self.registries.data.load_card(name=self.info.name)
         modelcard: ModelCard = self.registries.model.load_card(name=self.info.name)
 
-        # load data for testing
-        # datacard.load_data()
-
         # load onnx model
-
         modelcard.load_onnx_model()
+        inputs = dict(modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True))
 
-        inputs = dict(modelcard.interface.tokenizer("This is a test", return_tensors="np", padding="max_length", truncation=True))
-
-        for key, val in inputs.items():
-            print(key)
-            print(val.shape)
-        # modelcard.load_model()
-
-        # nputs = datacard.data.numpy()[:1, 0]
-
-        # print(modelcard.onnx_model.sess.run(None, {"predict": inputs}))
+        print(modelcard.onnx_model.sess(**inputs))
 
     def run_workflow(self):
         """Helper method for executing workflow"""
-        # self._create_datacard()
-        # self._create_modelcard()
+        self._create_datacard()
+        self._create_modelcard()
         self._test_onnx_model()
 
 
 if __name__ == "__main__":
     # populate data
 
-    # writer = TextWriterHelper()
-    # writer.generate_text_records()
+    writer = TextWriterHelper()
+    writer.generate_text_records()
 
     info = CardInfo(name="huggingface", team="opsml", user_email="user@email.com")
     workflow = OpsmlHuggingFaceWorkflow(info=info)
     workflow.run_workflow()
 
-    # shutil.rmtree(writer.write_path, ignore_errors=True)
+    shutil.rmtree(writer.write_path, ignore_errors=True)
