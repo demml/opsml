@@ -34,7 +34,7 @@ def test_sql_interface():
 
 
 def test_backup_interfaces():
-    from opsml.data.interfaces.backups import TorchDataNoModule
+    from opsml.data.interfaces.backups import ImageDatasetNoModule, TorchDataNoModule
     from opsml.model.interfaces.backups import (
         HuggingFaceModelNoModule,
         LightGBMModelNoModule,
@@ -54,6 +54,7 @@ def test_backup_interfaces():
         HuggingFaceModelNoModule,
         XGBoostModelNoModule,
         TorchDataNoModule,
+        ImageDatasetNoModule,
     ]:
         assert model.name() == model.__name__
         with pytest.raises(ModuleNotFoundError):

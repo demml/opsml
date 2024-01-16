@@ -50,6 +50,7 @@ class TrainedModelType(str, Enum):
     TF_KERAS = "keras"
     PYTORCH = "pytorch"
     PYTORCH_LIGHTNING = "pytorch_lightning"
+    CATBOOST = "CatBoost"
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [

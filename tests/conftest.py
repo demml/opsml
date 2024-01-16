@@ -41,7 +41,11 @@ import pyarrow as pa
 import pytest
 import torch
 import torch.nn as nn
+
+# ml model packages and classes
+from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool
 from google.auth import load_credentials_from_file
+from PIL import Image
 from sklearn import (
     cross_decomposition,
     ensemble,
@@ -56,8 +60,6 @@ from sklearn import (
 )
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
-
-# ml model packages and classes
 from sklearn.datasets import fetch_openml, load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.impute import SimpleImputer
@@ -82,10 +84,22 @@ from opsml.cards import (
 )
 
 # opsml
-from opsml.data import ArrowData, NumpyData, PandasData, PolarsData, SqlData, TorchData
+from opsml.data import (
+    ArrowData,
+    ImageMetadata,
+    ImageRecord,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    SqlData,
+    TextMetadata,
+    TextRecord,
+    TorchData,
+)
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.gcp_utils import GcpCreds
 from opsml.model import (
+    CatBoostModel,
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
@@ -128,6 +142,9 @@ def cleanup() -> None:
 
     # delete test image dir
     shutil.rmtree("test_image_dir", ignore_errors=True)
+
+    # delete catboost dir
+    shutil.rmtree("catboost_info", ignore_errors=True)
 
 
 @pytest.fixture
@@ -781,6 +798,62 @@ def xgb_df_regressor(example_dataframe):
     reg.fit(X_train.to_numpy(), y_train)
 
     return XGBoostModel(model=reg, sample_data=X_train[:100])
+
+
+@pytest.fixture
+def catboost_regressor(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    reg = CatBoostRegressor(n_estimators=5, max_depth=3)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    yield CatBoostModel(
+        model=reg,
+        sample_data=X_train.to_numpy()[:100],
+        preprocessor=StandardScaler(),
+    )
+    cleanup()
+
+
+@pytest.fixture
+def catboost_classifier(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    reg = CatBoostClassifier(n_estimators=5, max_depth=3)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    yield CatBoostModel(model=reg, sample_data=X_train.to_numpy()[:100])
+    cleanup()
+
+
+@pytest.fixture
+def catboost_ranker():
+    from catboost.datasets import msrank_10k
+
+    train_df, _ = msrank_10k()
+
+    X_train = train_df.drop([0, 1], axis=1).values
+    y_train = train_df[0].values
+    queries_train = train_df[1].values
+
+    max_relevance = np.max(y_train)
+    y_train /= max_relevance
+
+    train = Pool(data=X_train[:1000], label=y_train[:1000], group_id=queries_train[:1000])
+
+    parameters = {
+        "iterations": 100,
+        "custom_metric": ["PrecisionAt:top=10", "RecallAt:top=10", "MAP:top=10"],
+        "loss_function": "RMSE",
+        "verbose": False,
+        "random_seed": 0,
+    }
+
+    model = CatBoostRanker(**parameters)
+    model.fit(train)
+
+    yield CatBoostModel(model=model, sample_data=X_train[:100])
+    cleanup()
 
 
 @pytest.fixture
@@ -2097,3 +2170,92 @@ def lightning_regression():
 
     yield LightningModel(model=trainer, sample_data=X, preprocessor=StandardScaler()), MyModel
     cleanup()
+
+
+# ImageDataset test helpers
+
+
+@pytest.fixture(scope="function")
+def create_image_dataset() -> Path:
+    # create images
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    Path(f"{write_path}").mkdir(parents=True, exist_ok=True)
+
+    for j in range(200):
+        save_path = f"{write_path}/image_{j}.png"
+        imarray = np.random.rand(100, 100, 3) * 255
+        im = Image.fromarray(imarray.astype("uint8")).convert("RGBA")
+        im.save(save_path)
+        records.append(ImageRecord(filepath=save_path))
+
+    ImageMetadata(records=records).write_to_file(Path(f"{write_path}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
+
+
+@pytest.fixture(scope="function")
+def create_split_image_dataset() -> Path:
+    # create images
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    for i in ["train", "test", "eval"]:
+        Path(f"{write_path}/{i}").mkdir(parents=True, exist_ok=True)
+        for j in range(200):
+            save_path = f"{write_path}/{i}/image_{j}.png"
+            imarray = np.random.rand(100, 100, 3) * 255
+            im = Image.fromarray(imarray.astype("uint8")).convert("RGBA")
+            im.save(save_path)
+
+            records.append(ImageRecord(filepath=save_path))
+
+        ImageMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
+
+
+@pytest.fixture(scope="function")
+def create_text_dataset() -> Path:
+    # create text files
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    Path(f"{write_path}").mkdir(parents=True, exist_ok=True)
+
+    for j in range(200):
+        save_path = Path(f"{write_path}/text_{j}.txt")
+        with open(save_path, "w") as f:
+            f.write("test")
+        records.append(TextRecord(filepath=save_path))
+
+    TextMetadata(records=records).write_to_file(Path(f"{write_path}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
+
+
+@pytest.fixture(scope="function")
+def create_split_text_dataset() -> Path:
+    # create text files
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    for i in ["train", "test", "eval"]:
+        Path(f"{write_path}/{i}").mkdir(parents=True, exist_ok=True)
+        for j in range(200):
+            save_path = Path(f"{write_path}/{i}/text_{j}.txt")
+            with open(save_path, "w") as f:
+                f.write("test")
+            records.append(TextRecord(filepath=save_path))
+        TextMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)

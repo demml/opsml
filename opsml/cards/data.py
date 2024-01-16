@@ -16,6 +16,7 @@ from typing import (  # noqa # pylint: disable=unused-import
 from pydantic import SerializeAsAny
 
 from opsml.cards.base import ArtifactCard
+from opsml.data import Dataset
 from opsml.data.interfaces._base import DataInterface
 from opsml.data.splitter import DataHolder, DataSplit
 from opsml.helpers.logging import ArtifactLogger
@@ -51,16 +52,40 @@ class DataCard(ArtifactCard):
 
     """
 
-    interface: SerializeAsAny[DataInterface]
+    interface: SerializeAsAny[Union[DataInterface, Dataset]]
     metadata: DataCardMetadata = DataCardMetadata()
 
-    def load_data(self) -> None:
+    def load_data(self, **kwargs: Union[str, int]) -> None:  # pylint: disable=differing-param-doc
         """
         Load data to interface
+
+        Args:
+            kwargs:
+                Keyword arguments to pass to the data loader
+
+            ---- Supported kwargs for ImageData and TextDataset ----
+
+            split:
+                Split to use for data. If not provided, then all data will be loaded.
+                Only used for subclasses of `Dataset`.
+
+            batch_size:
+                What batch size to use when loading data. Only used for subclasses of `Dataset`.
+                Defaults to 1000.
+
+            chunk_size:
+                How many files per batch to use when writing arrow back to local file.
+                Defaults to 1000.
+
+                Example:
+
+                    - If batch_size=1000 and chunk_size=100, then the loaded batch will be split into
+                    10 chunks to write in parallel. This is useful for large datasets.
+
         """
         from opsml.storage.card_loader import DataCardLoader
 
-        DataCardLoader(self).load_data()
+        DataCardLoader(self).load_data(**kwargs)
 
     def load_data_profile(self) -> None:
         """
@@ -101,26 +126,35 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-
+        assert isinstance(
+            self.interface, DataInterface
+        ), "Data profile can only be created for a DataInterface subclasses"
         self.interface.create_data_profile(sample_perc, self.name)
 
     def split_data(self) -> DataHolder:
         """Splits data interface according to data split logic"""
+
+        assert isinstance(self.interface, DataInterface), "Splitting is only support for DataInterface subclasses"
         return self.interface.split_data()
 
     @property
     def data_splits(self) -> List[DataSplit]:
         """Returns data splits"""
+        assert isinstance(self.interface, DataInterface), "Data splits are only supported for DataInterface subclasses"
         return self.interface.data_splits
 
     @property
     def data(self) -> Any:
         """Returns data"""
+        assert isinstance(
+            self.interface, DataInterface
+        ), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property
     def data_profile(self) -> Any:
         """Returns data profile"""
+        assert isinstance(self.interface, DataInterface), "Data profile is only supported for DataInterface subclasses"
         return self.interface.data_profile
 
     @property
