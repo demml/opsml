@@ -10,7 +10,7 @@ import pyarrow as pa
 from pydantic import BaseModel, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.types import CommonKwargs, Suffix
+from opsml.types import CommonKwargs, Description, Suffix
 
 logger = ArtifactLogger.get_logger()
 
@@ -85,7 +85,7 @@ class FileRecord(BaseModel):
         # Check image exists
         assert filepath, "Filepath is required"
 
-        assert filepath.exists(), f"Image file {filepath} does not exist"
+        assert filepath.exists(), f"File {filepath} does not exist"
         data_args["size"] = filepath.stat().st_size
 
         return data_args
@@ -175,6 +175,7 @@ class Dataset(BaseModel):
     data_dir: Path
     shard_size: str = "512MB"
     splits: Dict[Optional[str], Metadata] = {}
+    description: Description = Description()
 
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value
