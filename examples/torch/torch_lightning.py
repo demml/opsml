@@ -1,12 +1,20 @@
-import math
-
+import lightning as L
+import numpy as np
 import torch
 
-from examples.torch.polynomial_nn import Polynomial3
-from opsml import CardInfo, CardRegistries, DataCard, ModelCard, TorchData, TorchModel
+from examples.torch.lightning_module import RegressionModel, SimpleDataset
+from opsml import (
+    CardInfo,
+    CardRegistries,
+    DataCard,
+    LightningModel,
+    ModelCard,
+    TorchData,
+    TorchOnnxArgs,
+)
 
 
-class OpsmlTorchWorkflow:
+class OpsmlLightningWorkflow:
     def __init__(self, info: CardInfo):
         """Instantiates workflow class. Instantiation will also set up the registries that
         will be used to store cards and artifacts
@@ -32,8 +40,8 @@ class OpsmlTorchWorkflow:
         """
 
         # create fake data
-        x = torch.linspace(-math.pi, math.pi, 2000).reshape(-1, 1)
-        y = torch.sin(x).reshape(-1, 1)
+        x = torch.Tensor(np.arange(10000)).reshape(-1, 1)
+        y = x * 2
 
         # Create data interface
         data_interface = TorchData(data=torch.concatenate((x, y), dim=1))
@@ -54,16 +62,26 @@ class OpsmlTorchWorkflow:
         # load data from server
         datacard.load_data()
 
-        # split data
-        model = Polynomial3()
+        X = datacard.data[:, 0].reshape(-1, 1)
+        y = datacard.data[:, 1].reshape(-1, 1)
 
-        x = datacard.data[:, 0]
-        y = datacard.data[:, 1]
+        dataset = SimpleDataset(X, y)
+        model = RegressionModel()
+        model.dataset = dataset
 
-        model.train_model(x, y)
+        trainer = L.Trainer(max_epochs=10)
+        trainer.fit(model)
 
         # torch interface
-        interface = TorchModel(model=model, sample_data=x)
+        interface = LightningModel(
+            model=trainer,
+            sample_data=X,
+            onnx_args=TorchOnnxArgs(
+                input_names=["predict"],
+                output_names=["output"],
+                dynamic_axes={"predict": {0: "batch_size"}},  # allow for >=1 batch size
+            ),
+        )
 
         # create modelcard
         modelcard = ModelCard(
@@ -85,10 +103,9 @@ class OpsmlTorchWorkflow:
 
         # load onnx model
         modelcard.load_onnx_model()
-        modelcard.load_model()
+        modelcard.load_model(model_arch=RegressionModel)
 
-        inputs = datacard.data.numpy()[:1, 0]
-
+        inputs = datacard.data.numpy()[:2, 0].reshape(-1, 1)
         print(modelcard.onnx_model.sess.run(None, {"predict": inputs}))
 
     def run_workflow(self):
@@ -101,5 +118,5 @@ class OpsmlTorchWorkflow:
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
     info = CardInfo(name="torch", team="opsml", user_email="user@email.com")
-    workflow = OpsmlTorchWorkflow(info=info)
+    workflow = OpsmlLightningWorkflow(info=info)
     workflow.run_workflow()

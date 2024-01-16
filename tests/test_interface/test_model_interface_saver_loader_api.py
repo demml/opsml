@@ -11,9 +11,9 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    TorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
 )
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader

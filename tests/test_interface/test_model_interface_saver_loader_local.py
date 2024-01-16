@@ -12,9 +12,9 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    TorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
 )
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
