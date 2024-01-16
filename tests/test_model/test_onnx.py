@@ -8,8 +8,8 @@ from opsml.model import (
     HuggingFaceModel,
     LightningModel,
     ModelInterface,
-    TorchModel,
     TensorFlowModel,
+    TorchModel,
 )
 from tests import conftest
 

@@ -1,6 +1,7 @@
 # Example taken from https://pytorch.org/tutorials/beginner/examples_nn/two_layer_net_module.html
 
 import torch
+
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()

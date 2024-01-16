@@ -39,9 +39,9 @@ def test_backup_interfaces():
         HuggingFaceModelNoModule,
         LightGBMModelNoModule,
         LightningModelNoModule,
-        TorchModelNoModule,
         SklearnModelNoModule,
         TensorFlowModelNoModule,
+        TorchModelNoModule,
         XGBoostModelNoModule,
     )
 

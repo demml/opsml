@@ -15,9 +15,9 @@ from opsml.model import (
     LightGBMModel,
     LightningModel,
     ModelInterface,
-    TorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
     XGBoostModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo

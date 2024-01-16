@@ -103,9 +103,9 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    TorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
     XGBoostModel,
 )
 from opsml.projects import OpsmlProject, ProjectInfo

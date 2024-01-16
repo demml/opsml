@@ -7,9 +7,9 @@ from opsml.data import NumpyData
 from opsml.model import (
     HuggingFaceModel,
     LightningModel,
-    TorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
 )
 
 DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)

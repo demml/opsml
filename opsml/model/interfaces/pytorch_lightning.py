@@ -107,12 +107,14 @@ try:
         def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load lightning model from path"""
 
-            model_arch = kwargs[CommonKwargs.MODEL_ARCH.value]
+            model_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
 
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    assert issubclass(model_arch, LightningModule), "Model architecture must be a subclass of LightningModule"
+                    assert issubclass(
+                        model_arch, LightningModule
+                    ), "Model architecture must be a subclass of LightningModule"
                     self.model = model_arch.load_from_checkpoint(checkpoint_path=path, **kwargs)
 
                 else:

@@ -319,7 +319,8 @@ class ModelCardSaver(CardSaver):
             }
         )
         if dumped_model["interface"].get("onnx_args") is not None:
-            dumped_model["interface"]["onnx_args"].pop("config")
+            if dumped_model["interface"]["onnx_args"].get("config") is not None:
+                dumped_model["interface"]["onnx_args"].pop("config")
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_model, save_path)
