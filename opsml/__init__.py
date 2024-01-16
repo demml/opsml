@@ -8,6 +8,10 @@ from opsml.data import (
     PolarsData,
     SqlData,
     TorchData,
+    TextDataset,
+    TextMetadata,
+    TextRecord,
+    ImageDataset,
 )
 from opsml.model import (
     CatBoostModel,
@@ -36,6 +40,15 @@ from opsml.types import (
 )
 from opsml.version import __version__
 
+
+try:
+    from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
+
+    extra_imports = ["ImageMetadata", "ImageRecord"]
+
+except ModuleNotFoundError:
+    extra_imports = []
+
 __all__ = [
     "__version__",
     "DataCard",
@@ -60,6 +73,10 @@ __all__ = [
     "PolarsData",
     "TorchData",
     "ArrowData",
+    "TextDataset",
+    "TextMetadata",
+    "TextRecord",
+    "ImageDataset",
     "DataInterface",
     "OpsmlProject",
     "ProjectInfo",
@@ -75,4 +92,5 @@ __all__ = [
     "Description",
     "Comment",
     "AuditCardMetadata",
+    *extra_imports,
 ]
