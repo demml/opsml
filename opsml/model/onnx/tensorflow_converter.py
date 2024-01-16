@@ -29,6 +29,7 @@ class _TensorflowKerasOnnxModel(_ModelConverter):
 
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts a tensorflow keras model"""
+        logger.info("Staring conversion of TensorFLow model to ONNX")
 
         import tf2onnx
 

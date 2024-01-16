@@ -21,6 +21,8 @@ class _LightGBMBoosterOnnxModel(_ModelConverter):
         """Converts lightgbm model to ONNX ModelProto"""
         from onnxmltools import convert_lightgbm
 
+        logger.info("Staring conversion of LightGBM model to ONNX")
+
         onnx_model = convert_lightgbm(model=self.trained_model, initial_types=initial_types)
 
         return cast(ModelProto, onnx_model)

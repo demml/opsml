@@ -72,6 +72,9 @@ class _PyTorchOnnxModel:
 
     def convert_to_onnx(self, path: Path) -> OnnxModel:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
+
+        logger.info("Staring conversion of PyTorch model to ONNX")
+
         assert self.interface.model is not None, "Model must not be None"
 
         arg_data = self._coerce_data_for_onnx()
@@ -114,6 +117,9 @@ class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
 
     def convert_to_onnx(self, path: Path) -> OnnxModel:
         """Converts Pytorch model into Onnx model through torch.onnx.export method"""
+
+        logger.info("Staring conversion of PyTorch Lightning model to ONNX")
+
         assert self.interface.model is not None, "Trainer must not be None"
         assert self.interface.model.model is not None, "Model must not be None"
 
