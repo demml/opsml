@@ -1,5 +1,7 @@
 ## Sklearn Examples
 
+<img width="260px" src="../../images/sklean.png" alt="sklearn" class="center" />
+
 The following examples demonstrate how to use Opsml with Sklearn.
 
 ### Basic
