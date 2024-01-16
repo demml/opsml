@@ -254,3 +254,7 @@ class DataInterface(BaseModel):
     def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value
+
+    @staticmethod
+    def name() -> str:
+        raise NotImplementedError

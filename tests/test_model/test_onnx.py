@@ -112,6 +112,9 @@ warnings.warn = warn
         lazy_fixture("voting_classifier"),
         lazy_fixture("voting_regressor"),
         lazy_fixture("lgb_classifier_calibrated_pipeline"),
+        lazy_fixture("catboost_regressor"),  # test catboost
+        lazy_fixture("catboost_classifier"),  # test catboost
+        lazy_fixture("catboost_ranker"),  # test catboost
     ],
 )
 def test_sklearn_models(interface: ModelInterface):
