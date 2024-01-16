@@ -21,11 +21,11 @@ logger = ArtifactLogger.get_logger()
 try:
     from opsml.data.interfaces.custom_data.image import ImageMetadata
 
-    class ImageData(Dataset):
+    class ImageDataset(Dataset):
         """Create an image dataset from a directory of images.
         User can also provide a split that indicates the subdirectory of images to use.
         It is expected that each split contains a metadata.jsonl built from the ImageMetadata class.
-        ImageData was built to have parity with HuggingFace.
+        ImageDataset was built to have parity with HuggingFace.
 
         Args:
             data_dir:
@@ -70,7 +70,7 @@ try:
 
                     Keyword arguments to pass to the data loader
 
-                    ---- Supported kwargs for ImageData and TextData ----
+                    ---- Supported kwargs for ImageData and TextDataset ----
 
                     split:
                         Split to use for data. If not provided, then all data will be loaded.
@@ -106,7 +106,7 @@ try:
 
         @property
         def arrow_schema(self) -> pa.Schema:
-            """Returns schema for ImageDataset records
+            """Returns schema for ImageData records
 
             Returns:
                 pyarrow.Schema
@@ -122,22 +122,22 @@ try:
                     pa.field("mode", pa.string()),
                 ],
                 metadata={
-                    "splt_label": "label assigned to image",
+                    "split_label": "label assigned to image",
                     "path": "path to image",
-                    "mode": "image mode",
                     "height": "image height",
                     "width": "image width",
                     "bytes": "image bytes",
+                    "mode": "image mode",
                 },
             )
 
         @staticmethod
         def name() -> str:
-            return ImageData.__name__
+            return ImageDataset.__name__
 
         @property
         def data_type(self) -> str:
             return CommonKwargs.IMAGE.value
 
 except ModuleNotFoundError:
-    from opsml.data.interfaces.backups import ImageDataNoModule as ImageData
+    from opsml.data.interfaces.backups import ImageDatasetNoModule as ImageDataset
