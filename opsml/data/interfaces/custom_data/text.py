@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 from opsml.data.interfaces.custom_data.base import FileRecord, Metadata
 from opsml.helpers.logging import ArtifactLogger
 
@@ -38,11 +37,11 @@ class TextRecord(FileRecord):
         path = self.filepath.relative_to(data_dir)
 
         # write file
-        with open(self.filepath, "rb") as f:
+        with open(self.filepath, "rb") as file_:
             stream_record = {
                 "split_label": split_label,
                 "path": path.as_posix(),
-                "bytes": f.read(),
+                "bytes": file_.read(),
             }
         return stream_record
 

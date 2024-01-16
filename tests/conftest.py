@@ -92,6 +92,8 @@ from opsml.data import (
     PandasData,
     PolarsData,
     SqlData,
+    TextMetadata,
+    TextRecord,
     TorchData,
 )
 from opsml.helpers.data import create_fake_data
@@ -2211,6 +2213,47 @@ def create_split_image_dataset() -> Path:
             records.append(ImageRecord(filepath=save_path))
 
         ImageMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
+
+
+@pytest.fixture(scope="function")
+def create_text_dataset() -> Path:
+    # create text files
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    Path(f"{write_path}").mkdir(parents=True, exist_ok=True)
+
+    for j in range(200):
+        save_path = Path(f"{write_path}/text_{j}.txt")
+        with open(save_path, "w") as f:
+            f.write("test")
+        records.append(TextRecord(filepath=save_path))
+
+    TextMetadata(records=records).write_to_file(Path(f"{write_path}/metadata.jsonl"))
+
+    yield Path(write_path)
+
+    # delete images
+    shutil.rmtree(write_path, ignore_errors=True)
+
+
+@pytest.fixture(scope="function")
+def create_split_text_dataset() -> Path:
+    # create text files
+    records = []
+    write_path = f"tests/assets/{uuid.uuid4().hex}"
+    for i in ["train", "test", "eval"]:
+        Path(f"{write_path}/{i}").mkdir(parents=True, exist_ok=True)
+        for j in range(200):
+            save_path = Path(f"{write_path}/{i}/text_{j}.txt")
+            with open(save_path, "w") as f:
+                f.write("test")
+            records.append(TextRecord(filepath=save_path))
+        TextMetadata(records=records).write_to_file(Path(f"{write_path}/{i}/metadata.jsonl"))
 
     yield Path(write_path)
 

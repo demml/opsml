@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import pyarrow as pa
-from opsml.data.interfaces.custom_data.text import TextMetadata
+
 from opsml.data.interfaces.custom_data.arrow_reader import PyarrowDatasetReader
 from opsml.data.interfaces.custom_data.arrow_writer import PyarrowDatasetWriter
 from opsml.data.interfaces.custom_data.base import (
@@ -13,6 +13,7 @@ from opsml.data.interfaces.custom_data.base import (
     check_for_dirs,
     get_metadata_filepath,
 )
+from opsml.data.interfaces.custom_data.text import TextMetadata
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CommonKwargs
 
