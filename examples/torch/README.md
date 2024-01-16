@@ -3,7 +3,7 @@
 The following examples demonstrate how to use Opsml with PyTorch and PyTorch Lightning.
 
 ### Torch
-<img width="426px" src="../../images/torch.png" alt="sklearn" class="center" />
+<img width="426px" src="../../images/torch.png" alt="torch" class="center" />
 
 Includes examples of how to use Opsml with torch
 
@@ -11,7 +11,7 @@ Includes examples of how to use Opsml with torch
 
 
 ### Torch Lightning
-<img width="318px" src="../../images/torch-lightning.png" alt="sklearn" class="center" />
+<img src="../../images/torch-lightning.png" alt="lightning" class="center" />
 
 Includes examples of how to use Opsml with torch lightning
 
