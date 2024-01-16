@@ -29,7 +29,3 @@ class TextWriterHelper:
         metadata = TextMetadata(records=records)
 
         metadata.write_to_file(Path(f"{self.write_path}/metadata.jsonl"))
-
-
-if __name__ == "__main__":
-    TextWriterHelper().generate_text_records()

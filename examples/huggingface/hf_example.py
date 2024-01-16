@@ -16,8 +16,9 @@ from opsml import (
 import json
 from pathlib import Path
 from optimum.onnxruntime.configuration import AutoQuantizationConfig
-
+from examples.huggingface.create_dataset import TextWriterHelper
 import torch
+import shutil
 
 
 class ExampleDataset(torch.utils.data.Dataset):
@@ -159,13 +160,17 @@ class OpsmlHuggingFaceWorkflow:
         # load onnx model
 
         modelcard.load_onnx_model()
-        print(modelcard.preprocessor)
-        print(modelcard.onnx_model)
+
+        inputs = dict(modelcard.interface.tokenizer("This is a test", return_tensors="np", padding="max_length", truncation=True))
+
+        for key, val in inputs.items():
+            print(key)
+            print(val.shape)
         # modelcard.load_model()
 
         # nputs = datacard.data.numpy()[:1, 0]
 
-        print(modelcard.onnx_model.sess.run(None, {"predict": inputs}))
+        # print(modelcard.onnx_model.sess.run(None, {"predict": inputs}))
 
     def run_workflow(self):
         """Helper method for executing workflow"""
@@ -175,7 +180,13 @@ class OpsmlHuggingFaceWorkflow:
 
 
 if __name__ == "__main__":
-    # set info (easier than specifying in each card)
+    # populate data
+
+    # writer = TextWriterHelper()
+    # writer.generate_text_records()
+
     info = CardInfo(name="huggingface", team="opsml", user_email="user@email.com")
     workflow = OpsmlHuggingFaceWorkflow(info=info)
     workflow.run_workflow()
+
+    # shutil.rmtree(writer.write_path, ignore_errors=True)
