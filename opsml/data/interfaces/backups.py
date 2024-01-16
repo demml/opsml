@@ -18,15 +18,15 @@ class TorchDataNoModule(DataInterface):
         return TorchDataNoModule.__name__
 
 
-class ImageDataNoModule(Dataset):
+class ImageDatasetNoModule(Dataset):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError("ImageData requires pillow to be installed. Please install pillow.")
+        raise ModuleNotFoundError("ImageDataset requires pillow to be installed. Please install pillow.")
 
     @staticmethod
     def name() -> str:
-        return ImageDataNoModule.__name__
+        return ImageDatasetNoModule.__name__
 
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value

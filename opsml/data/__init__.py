@@ -26,7 +26,7 @@ __all__ = [
     "TorchData",
     "DataInterface",
     "DataSplit",
-    "ImageData",
+    "ImageDataset",
     "Dataset",
     *extra_imports,
 ]

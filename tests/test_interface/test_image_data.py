@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import cast
 
 from opsml.cards import DataCard
-from opsml.data import ImageData, ImageMetadata, ImageRecord
+from opsml.data import ImageDataset, ImageMetadata, ImageRecord
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import RegistryType, SaveName, Suffix
@@ -45,7 +45,7 @@ def test_image_metadata():
 
 def test_image_dataset(create_image_dataset: Path):
     data_dir = create_image_dataset
-    image_data = ImageData(data_dir=data_dir)
+    image_data = ImageDataset(data_dir=data_dir)
     storage_client = client.storage_client
 
     datacard = DataCard(
@@ -67,7 +67,7 @@ def test_image_dataset(create_image_dataset: Path):
 
 def test_image_dataset_multiproc(create_image_dataset: Path):
     data_dir = create_image_dataset
-    image_data = ImageData(data_dir=data_dir, shard_size="200KB")
+    image_data = ImageDataset(data_dir=data_dir, shard_size="200KB")
     storage_client = client.storage_client
 
     datacard = DataCard(
@@ -89,7 +89,7 @@ def test_image_dataset_multiproc(create_image_dataset: Path):
 
 def test_image_split_dataset(create_split_image_dataset: Path):
     data_dir = create_split_image_dataset
-    image_data = ImageData(data_dir=data_dir)
+    image_data = ImageDataset(data_dir=data_dir)
     storage_client = client.storage_client
 
     nbr_files = len(storage_client.find(data_dir))

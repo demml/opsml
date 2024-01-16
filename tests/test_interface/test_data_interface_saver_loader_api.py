@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import cast
 
 from opsml.cards import DataCard
-from opsml.data import ArrowData, ImageData, NumpyData, PandasData, PolarsData
+from opsml.data import ArrowData, ImageDataset, NumpyData, PandasData, PolarsData
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
@@ -182,7 +182,7 @@ def test_image_data(
 ):
 
     data_dir = create_image_dataset
-    image_data = ImageData(data_dir=data_dir)
+    image_data = ImageDataset(data_dir=data_dir)
 
     datacard = DataCard(
         interface=image_data,

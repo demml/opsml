@@ -153,7 +153,7 @@ class Dataset(BaseModel):
     """Create an image dataset from a directory of images.
     User can also provide a split that indicates the subdirectory of images to use.
     It is expected that each split contains a metadata.jsonl built from the ImageMetadata class.
-    ImageData was built to have parity with HuggingFace.
+    ImageDataset was built to have parity with HuggingFace.
 
     Args:
         data_dir:
