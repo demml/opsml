@@ -1,7 +1,7 @@
-## MetaFLow Examples
+## Metaflow Examples
 <img width="640px" src="../../images/metaflow-logo.png" alt="metaflow" class="center" href="https://metaflow.org/" />
 
-The following examples demonstrate how to use Opsml with a simple MetaFlow pipeline.
+The following examples demonstrate how to use Opsml with a simple Metaflow pipeline.
 
 ### flow
 
