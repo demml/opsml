@@ -115,7 +115,6 @@ class OpsmlXGBoostPipelineWorkflow:
         interface = XGBoostModel(model=reg, sample_data=data.train.X.to_numpy()[:, 0:5])
 
         # create modelcard
-        # Here we are registering the pipeline which contains an sklearn model
         modelcard = ModelCard(
             name="xgb-reg",
             team="opsml",
@@ -163,6 +162,6 @@ class OpsmlXGBoostPipelineWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="linear-regression", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="xgboost", team="opsml", user_email="user@email.com")
     workflow = OpsmlXGBoostPipelineWorkflow(info=info)
     workflow.run_workflow()
