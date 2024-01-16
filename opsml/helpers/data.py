@@ -1,9 +1,10 @@
 # mypy: ignore-errors
 
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+import polars as pl
 
 
 def create_fake_data(
@@ -13,7 +14,8 @@ def create_fake_data(
     n_categorical_features: int = 0,
     task_type: str = "classification",
     random_state: int = 42,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    to_polars: bool = False,
+) -> Tuple[Union[pd.DataFrame, pl.DataFrame], Union[pd.DataFrame, pl.DataFrame]]:
     """Creates fake data for testing
 
     Args:
@@ -54,4 +56,8 @@ def create_fake_data(
 
     y = pd.DataFrame(y, columns=["target"])  # pylint: disable=invalid-name
 
-    return X, pd.DataFrame(y)
+    if to_polars:
+        X = pl.from_pandas(X)
+        y = pl.from_pandas(y)
+
+    return X, y
