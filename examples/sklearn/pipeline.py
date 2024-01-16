@@ -1,11 +1,20 @@
-from opsml import ModelCard, DataCard, CardRegistries, SklearnModel, PandasData, CardInfo, DataSplit
-from opsml.helpers.data import create_fake_data
-from sklearn.linear_model import LinearRegression
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import Pipeline
-from sklearn import ensemble
 import numpy as np
+from sklearn import ensemble
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+
+from opsml import (
+    CardInfo,
+    CardRegistries,
+    DataCard,
+    DataSplit,
+    ModelCard,
+    PandasData,
+    SklearnModel,
+)
+from opsml.helpers.data import create_fake_data
 
 """"This example walks through creating an Sklearn pipelines featuring and ColumnTransformer and a stacking regressor
 

@@ -6,9 +6,10 @@ from opsml import (
     DataCard,
     DataSplit,
     ModelCard,
-    PandasData,
+    PolarsData,
     SklearnModel,
 )
+
 from opsml.helpers.data import create_fake_data
 
 
@@ -38,11 +39,11 @@ class OpsmlWorkflow:
         """
 
         # create fake data
-        X, y = create_fake_data(n_samples=1000, task_type="regression")
-        X["target"] = y
+        X, y = create_fake_data(n_samples=1000, task_type="regression", to_polars=True)
+        X = X.with_columns((y).to_series().alias("target"))
 
         # Create data interface
-        data_interface = PandasData(
+        data_interface = PolarsData(
             data=X,
             data_splits=[
                 DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
