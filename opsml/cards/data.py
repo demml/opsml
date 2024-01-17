@@ -135,6 +135,9 @@ class DataCard(ArtifactCard):
         """Splits data interface according to data split logic"""
 
         assert isinstance(self.interface, DataInterface), "Splitting is only support for DataInterface subclasses"
+        if self.data is None:
+            self.load_data()
+
         return self.interface.split_data()
 
     @property

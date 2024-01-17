@@ -3,10 +3,14 @@ from opsml.data import (
     ArrowData,
     DataInterface,
     DataSplit,
+    ImageDataset,
     NumpyData,
     PandasData,
     PolarsData,
     SqlData,
+    TextDataset,
+    TextMetadata,
+    TextRecord,
     TorchData,
 )
 from opsml.model import (
@@ -15,9 +19,10 @@ from opsml.model import (
     LightGBMModel,
     LightningModel,
     ModelInterface,
-    PyTorchModel,
+    ModelLoader,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
     XGBoostModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
@@ -32,9 +37,18 @@ from opsml.types import (
     HuggingFaceORTModel,
     HuggingFaceTask,
     ModelCardMetadata,
+    ModelMetadata,
     TorchOnnxArgs,
 )
 from opsml.version import __version__
+
+try:
+    from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
+
+    extra_imports = ["ImageMetadata", "ImageRecord"]
+
+except ModuleNotFoundError:
+    extra_imports = []
 
 __all__ = [
     "__version__",
@@ -43,7 +57,7 @@ __all__ = [
     "RunCard",
     "PipelineCard",
     "ProjectCard",
-    "PyTorchModel",
+    "TorchModel",
     "SklearnModel",
     "XGBoostModel",
     "LightGBMModel",
@@ -60,6 +74,10 @@ __all__ = [
     "PolarsData",
     "TorchData",
     "ArrowData",
+    "TextDataset",
+    "TextMetadata",
+    "TextRecord",
+    "ImageDataset",
     "DataInterface",
     "OpsmlProject",
     "ProjectInfo",
@@ -75,4 +93,7 @@ __all__ = [
     "Description",
     "Comment",
     "AuditCardMetadata",
+    "ModelMetadata",
+    "ModelLoader",
+    *extra_imports,
 ]

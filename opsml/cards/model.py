@@ -26,7 +26,7 @@ class ModelCard(ArtifactCard):
         user_email:
             Email to associate with card
         interface:
-            Trained model interface. Can be one of SklearnModel, TensorFlowModel, PyTorchModel
+            Trained model interface. Can be one of SklearnModel, TensorFlowModel, TorchModel
             LightningModel, LGBModel, XGBoostModel, HuggingFaceModel
         uid:
             Unique id (assigned if card has been registered)
@@ -73,9 +73,20 @@ class ModelCard(ArtifactCard):
 
     def load_onnx_model(self, **kwargs: Any) -> None:
         """Loads onnx model to interface"""
+
         from opsml.storage.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_onnx_model(**kwargs)
+
+    def load_preprocessor(self, **kwargs: Any) -> None:
+        """Loads onnx model to interface"""
+
+        if self.preprocessor is not None:
+            return
+
+        from opsml.storage.card_loader import ModelCardLoader
+
+        ModelCardLoader(self).load_preprocessor(**kwargs)
 
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record from the current ModelCard"""

@@ -7,6 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import model_validator
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
@@ -22,6 +23,8 @@ from opsml.types import (
     Suffix,
     TrainedModelType,
 )
+
+logger = ArtifactLogger.get_logger()
 
 ValidData = Union[List[Any], NDArray[Any]]
 
@@ -150,6 +153,8 @@ try:
 
         def convert_to_onnx(self, **kwargs: Path) -> None:
             """Converts model to onnx format"""
+
+            logger.info("Converting CatBoost model to onnx format")
 
             import onnx
             import onnxruntime as rt

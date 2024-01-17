@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Union, cast
 
 from pydantic import field_validator, model_validator
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
@@ -20,6 +21,8 @@ from opsml.types import (
     SaveName,
     TrainedModelType,
 )
+
+logger = ArtifactLogger.get_logger()
 
 try:
     import transformers
@@ -273,6 +276,8 @@ try:
             assert self.onnx_args is not None, "No onnx args provided"
             assert self.onnx_args.config is not None, "No quantization config provided"
 
+            logger.info("Quantizing HuggingFace ONNX model")
+
             from optimum.onnxruntime import ORTQuantizer
 
             save_path = path / SaveName.QUANTIZED_MODEL.value
@@ -300,6 +305,8 @@ try:
             """Converts a huggingface model or pipeline to onnx via optimum library.
             Converted model or pipeline is accessible via the `onnx_model` attribute.
             """
+
+            logger.info("Staring conversion of HuggingFace model to ONNX")
 
             assert (
                 self.onnx_args is not None

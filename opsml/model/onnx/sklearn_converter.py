@@ -193,6 +193,7 @@ class _SklearnOnnxModel(_ModelConverter):
     def convert_model(self, initial_types: List[Any]) -> ModelProto:
         """Converts sklearn model to ONNX ModelProto"""
 
+        logger.info("Staring conversion of sklearn model to ONNX")
         onnx_model = self._convert_sklearn(initial_types=initial_types)
         return onnx_model
 

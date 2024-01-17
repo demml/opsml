@@ -1,7 +1,7 @@
 PROJECT=opsml
 PYTHON_VERSION=3.11.2
 SOURCE_OBJECTS=opsml
-FORMAT_OBJECTS=opsml tests
+FORMAT_OBJECTS=opsml tests examples
 
 format.black:
 	poetry run black ${FORMAT_OBJECTS}
