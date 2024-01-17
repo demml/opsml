@@ -12,6 +12,7 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
+    ModelLoader,
     SklearnModel,
     TensorFlowModel,
     TorchModel,
@@ -80,6 +81,15 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+    # Test local loader
+    loader = ModelLoader(HuggingFaceModel, modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model()
+    loader.load_onnx_model(
+        load_quantized=True,
+        onnx_args=loaded_card.interface.onnx_args,
+    )
+
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel):
@@ -134,6 +144,13 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
+    loader = ModelLoader(HuggingFaceModel, modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model()
+    loader.load_onnx_model(
+        onnx_args=loaded_card.interface.onnx_args,
+    )
+
 
 def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
     model: SklearnModel = random_forest_classifier
@@ -179,6 +196,11 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+    loader = ModelLoader(SklearnModel, modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model()
+    loader.load_onnx_model()
 
 
 def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel):
@@ -329,6 +351,11 @@ def test_save_torch_modelcard(pytorch_simple: TorchModel):
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+    loader = ModelLoader(TorchModel, modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model()
+    loader.load_onnx_model()
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
@@ -651,6 +678,14 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
 
     assert getattr(metadata, "feature_extractor_uri", None) is not None
     assert getattr(metadata, "feature_extractor_name", None) is not None
+
+    # Test local loader
+    loader = ModelLoader(HuggingFaceModel, modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model()
+    loader.load_onnx_model(
+        onnx_args=loaded_card.interface.onnx_args,
+    )
 
 
 def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
