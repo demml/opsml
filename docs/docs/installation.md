@@ -68,7 +68,7 @@ Types of extras that can be installed:
 
 - **OPSML_TRACKING_URI**: This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
 
-- **OPSML_STORAGE_URI**: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file systems and google cloud storage.
+- **OPSML_STORAGE_URI**: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file system, google cloud storage and amazon s3.
 If running `Opsml` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
 
 ## TLDR Scenarios
