@@ -12,6 +12,8 @@
 [![Examples](https://github.com/shipt/opsml/actions/workflows/example-tests.yml/badge.svg)](https://github.com/shipt/opsml/actions/workflows/example-tests.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
 
 
 ## What is it?
@@ -24,9 +26,9 @@
 
   - **Cards**: Track, version and store a variety of ML artifacts via cards (data, models, runs, projects) and a SQL-based card registry system. Think `trading cards for machine learning`.
 
-  - **Type Checking**: Type checking for data and model artifacts.
+  - **Type Checking**: Strongly typed and type checking for data and model artifacts.
 
-  - **Support**: Robust support for a variety of ML libraries and storage types.
+  - **Support**: Robust support for a variety of ML and data libraries.
 
   - **Automation**: Automated processes including onnx model conversion, metadata creation and production packaging.
 
