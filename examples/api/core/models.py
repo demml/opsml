@@ -1,6 +1,5 @@
-import json
 from functools import cached_property
-from typing import Any, List
+from typing import Any, List, cast
 
 import numpy as np
 from core.config import Config
@@ -8,7 +7,7 @@ from numpy.typing import NDArray
 from onnxruntime import InferenceSession
 from pydantic import BaseModel, ConfigDict
 
-from opsml import ModelMetadata
+from opsml import ModelLoader
 
 
 class HealthCheckResult(BaseModel):
@@ -33,14 +32,12 @@ class ModelResponse(BaseModel):
 
 class OnnxModel:
     def __init__(self):
-        with Config.METADATA_PATH.open("r") as f:
-            self.metadata = ModelMetadata(**json.load(f))
-        self.onnx_model = InferenceSession(Config.MODEL_PATH)
+        self.loader = ModelLoader(Config.MODEL_PATH)
+        self.loader.load_onnx_model()
 
     @cached_property
-    def input_name(self) -> str:
-        """Returns the names of the input features for the model"""
-        return list(self.metadata.data_schema.onnx_input_features.keys())[0]
+    def model(self) -> InferenceSession:
+        return cast(InferenceSession, self.loader.onnx_model.sess)
 
     def predict(self, features: NDArray[np.float32]) -> List[Any]:
         """Predicts the target variable for a given set of features
@@ -52,4 +49,4 @@ class OnnxModel:
         Returns:
             Predicted value
         """
-        return self.onnx_model.run(None, {self.input_name: features})
+        return self.model.run(None, {"predict": features})

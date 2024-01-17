@@ -15,7 +15,7 @@ from opsml.types import ModelMetadata, OnnxModel, SaveName, Suffix
 class ModelLoader:
     """Helper class for loading models from disk and downloading via opsml-cli"""
 
-    def __init__(self, interface: ModelInterface, path: Path):
+    def __init__(self, path: Path):
         """Initialize ModelLoader
 
         Args:
@@ -27,9 +27,9 @@ class ModelLoader:
 
         self.path = path
         self.metadata = self._load_metadata()
-        self.interface = self._load_interface(interface)
+        self.interface = self._load_interface()
 
-    def _load_interface(self, interface: ModelInterface) -> ModelInterface:
+    def _load_interface(self) -> ModelInterface:
         """Loads a ModelInterface from disk using metadata
 
         Args:
@@ -39,8 +39,11 @@ class ModelLoader:
         Returns:
             ModelInterface
         """
+        from opsml.storage.card_loader import _get_model_interface
 
-        loaded_interface = interface.model_construct(
+        Interface = _get_model_interface(self.metadata.model_interface)  # pylint: disable=invalid-name
+
+        loaded_interface = Interface.model_construct(
             _fields_set={"name", "team", "version"},
             **{
                 "name": self.metadata.model_name,

@@ -19,6 +19,7 @@ from opsml.model import (
     LightGBMModel,
     LightningModel,
     ModelInterface,
+    ModelLoader,
     SklearnModel,
     TensorFlowModel,
     TorchModel,
@@ -93,5 +94,6 @@ __all__ = [
     "Comment",
     "AuditCardMetadata",
     "ModelMetadata",
+    "ModelLoader",
     *extra_imports,
 ]

@@ -82,7 +82,7 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
     assert loaded_card.interface.onnx_model.sess is not None
 
     # Test local loader
-    loader = ModelLoader(HuggingFaceModel, modelcard.uri)
+    loader = ModelLoader(modelcard.uri)
     loader.load_preprocessor()
     loader.load_model()
     loader.load_onnx_model(
@@ -144,7 +144,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-    loader = ModelLoader(HuggingFaceModel, modelcard.uri)
+    loader = ModelLoader(modelcard.uri)
     loader.load_preprocessor()
     loader.load_model()
     loader.load_onnx_model(
@@ -197,7 +197,7 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-    loader = ModelLoader(SklearnModel, modelcard.uri)
+    loader = ModelLoader(modelcard.uri)
     loader.load_preprocessor()
     loader.load_model()
     loader.load_onnx_model()
@@ -352,7 +352,7 @@ def test_save_torch_modelcard(pytorch_simple: TorchModel):
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
-    loader = ModelLoader(TorchModel, modelcard.uri)
+    loader = ModelLoader(modelcard.uri)
     loader.load_preprocessor()
     loader.load_model()
     loader.load_onnx_model()
@@ -680,7 +680,7 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
     assert getattr(metadata, "feature_extractor_name", None) is not None
 
     # Test local loader
-    loader = ModelLoader(HuggingFaceModel, modelcard.uri)
+    loader = ModelLoader(modelcard.uri)
     loader.load_preprocessor()
     loader.load_model()
     loader.load_onnx_model(

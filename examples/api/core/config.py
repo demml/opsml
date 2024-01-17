@@ -12,8 +12,7 @@ class _Config:
     APP_ENV = os.getenv("APP_ENV", "localhost")
 
     MODEL_NAME = "lightgbm-reg"
-    MODEL_PATH = Path("./model/onnx-model.onnx")
-    METADATA_PATH = Path("./model/model-metadata.json")
+    MODEL_PATH = Path("./model")
     MODEL_VERSION = "1.0.0"
 
 
