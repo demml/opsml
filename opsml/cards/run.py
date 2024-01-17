@@ -39,7 +39,7 @@ class RunCard(ArtifactCard):
             Run name
         team:
             Team that this card is associated with
-        user_email:
+        contact:
             Email to associate with card
         datacard_uids:
             Optional DataCard uids associated with this run

@@ -118,7 +118,7 @@ class OpsmlXGBoostPipelineWorkflow:
         modelcard = ModelCard(
             name="xgb-reg",
             team="opsml",
-            user_email="user@email.com",
+            contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
             to_onnx=True,
@@ -162,6 +162,6 @@ class OpsmlXGBoostPipelineWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="xgboost", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="xgboost", team="opsml", contact="user@email.com")
     workflow = OpsmlXGBoostPipelineWorkflow(info=info)
     workflow.run_workflow()

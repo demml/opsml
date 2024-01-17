@@ -9,7 +9,7 @@ As mention in above, registering a `ModelCard` will convert your original model 
 modelcard = ModelCard(
     name="pytorch-model",
     team="opsml",
-    user_email="user@opsml.com",
+    contact="user@opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],
     datacard_uid=datacard.uid,
@@ -111,7 +111,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
 datacard = DataCard(
     name="image-data",
     team="opsml",
-    user_email="user@opsml.com",
+    contact="user@opsml.com",
     data=x.detach().numpy(),
 )
 registries.data.register_card(datacard)
@@ -127,7 +127,7 @@ model_def = OnnxModel(
 modelcard = ModelCard(
     name="pytorch-custom-onnx",
     team="opsml",
-    user_email="opsml.com",
+    contact="opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],
     onnx_model=model_def,

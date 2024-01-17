@@ -26,7 +26,7 @@ indices = np.arange(data.shape[0])
 
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 
 # Create card
 datacard = DataCard(
@@ -43,7 +43,7 @@ data_reg.register_card(card=datacard)
 
 
 ###################### Create 1st model
-info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+info = ProjectInfo(name="opsml", team="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lin-reg") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -61,7 +61,7 @@ with project.run(run_name="challenger-lin-reg") as run:
         sample_input_data=splits.train.X[0:1],
         name="linear_reg",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
     )
@@ -69,7 +69,7 @@ with project.run(run_name="challenger-lin-reg") as run:
 
 
 ###################### Create 2nd model
-info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+info = ProjectInfo(name="opsml", team="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lasso") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -87,7 +87,7 @@ with project.run(run_name="challenger-lasso") as run:
         sample_input_data=splits.train.X[0:1],
         name="lasso_reg",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
     )
@@ -95,7 +95,7 @@ with project.run(run_name="challenger-lasso") as run:
 
 
 ###################### Create 3rd model
-info = ProjectInfo(name="opsml", team="devops", user_email="test_email")
+info = ProjectInfo(name="opsml", team="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-poisson") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -113,7 +113,7 @@ with project.run(run_name="challenger-poisson") as run:
         sample_input_data=splits.train.X[0:1],
         name="poisson_reg",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
     )

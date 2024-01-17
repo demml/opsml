@@ -40,7 +40,7 @@ class DataCard(ArtifactCard):
             What to name the data
         team:
             Team that this data is associated with
-        user_email:
+        contact:
             Email to associate with data card
         version:
             DataCard version

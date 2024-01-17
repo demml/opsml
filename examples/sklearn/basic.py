@@ -120,7 +120,7 @@ class OpsmlWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="linear-regression", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="linear-regression", team="opsml", contact="user@email.com")
 
     workflow = OpsmlWorkflow(info=info)
     workflow.run_workflow()

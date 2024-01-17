@@ -20,7 +20,7 @@ class RunUris(BaseModel):
 class SaveRecord(BaseModel):
     name: str
     team: str
-    user_email: str
+    contact: str
     uid: Optional[str] = None
     version: str
     tags: Dict[str, str]

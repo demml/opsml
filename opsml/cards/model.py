@@ -23,7 +23,7 @@ class ModelCard(ArtifactCard):
             Name for the model specific to your current project
         team:
             Team that this model is associated with
-        user_email:
+        contact:
             Email to associate with card
         interface:
             Trained model interface. Can be one of SklearnModel, TensorFlowModel, TorchModel

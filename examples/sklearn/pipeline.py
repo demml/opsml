@@ -26,7 +26,7 @@ Steps:
 """
 
 """-------------------------------------DataCard-------------------------------------"""
-info = CardInfo(name="sklearn_pipeline", team="opsml", user_email="user@email.com")
+info = CardInfo(name="sklearn_pipeline", team="opsml", contact="user@email.com")
 registries = CardRegistries()
 
 X, y = create_fake_data(n_samples=1000, n_categorical_features=2, task_type="regression")

@@ -121,7 +121,7 @@ async def save_audit_form(
     audit_report = AuditReport(
         name=audit_card.name,
         team=audit_card.team,
-        user_email=audit_card.user_email,
+        contact=audit_card.contact,
         version=audit_card.version,
         uid=audit_card.uid,
         status=audit_card.approved,
@@ -180,7 +180,7 @@ async def save_audit_comment(
     audit_report = AuditReport(
         name=audit_card.name,
         team=audit_card.team,
-        user_email=audit_card.user_email,
+        contact=audit_card.contact,
         version=audit_card.version,
         uid=audit_card.uid,
         status=audit_card.approved,
@@ -254,7 +254,7 @@ async def upload_audit_data(
         audit_report = AuditReport(
             name=audit_card.name,
             team=audit_card.team,
-            user_email=audit_card.user_email,
+            contact=audit_card.contact,
             version=audit_card.version,
             uid=audit_card.uid,
             status=audit_card.approved,
@@ -267,7 +267,7 @@ async def upload_audit_data(
         audit_report = AuditReport(
             name=form.name or form.selected_model_name,
             team=form.team or form.selected_model_team,
-            user_email=form.email or form.selected_model_email,
+            contact=form.email or form.selected_model_email,
             version=form.version,
             uid=form.uid,
             status=form.status,

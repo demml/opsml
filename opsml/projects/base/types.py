@@ -14,7 +14,7 @@ from opsml.settings.config import config
 class Tags(str, Enum):
     NAME = "name"
     TEAM = "team"
-    EMAIL = "user_email"
+    EMAIL = "contact"
     VERSION = "version"
 
 
@@ -37,7 +37,7 @@ class ProjectInfo(BaseModel):
         description="Team to associate with project",
         min_length=1,
     )
-    user_email: Optional[str] = Field(
+    contact: Optional[str] = Field(
         None,
         description="Email to associate with project",
         min_length=1,

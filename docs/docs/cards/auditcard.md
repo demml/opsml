@@ -14,7 +14,7 @@ from opsml import AuditCard, CardRegistry
 auditcard = AuditCard(
     name="linear-regressor-audit",
     team="my_team", 
-    user_email="user_email"
+    contact="contact"
 )
 
 # add modelcard to auditcard
