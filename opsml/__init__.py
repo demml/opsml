@@ -3,15 +3,15 @@ from opsml.data import (
     ArrowData,
     DataInterface,
     DataSplit,
+    ImageDataset,
     NumpyData,
     PandasData,
     PolarsData,
     SqlData,
-    TorchData,
     TextDataset,
     TextMetadata,
     TextRecord,
-    ImageDataset,
+    TorchData,
 )
 from opsml.model import (
     CatBoostModel,
@@ -36,10 +36,10 @@ from opsml.types import (
     HuggingFaceORTModel,
     HuggingFaceTask,
     ModelCardMetadata,
+    ModelMetadata,
     TorchOnnxArgs,
 )
 from opsml.version import __version__
-
 
 try:
     from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
@@ -92,5 +92,6 @@ __all__ = [
     "Description",
     "Comment",
     "AuditCardMetadata",
+    "ModelMetadata",
     *extra_imports,
 ]
