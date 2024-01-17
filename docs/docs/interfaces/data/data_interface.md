@@ -52,3 +52,10 @@ In the event that the currently supported `DataInterfaces` do not meet your need
 These requirements are necessary for `Opsml` to properly save and load your data, as these are called during either saving or loading via the `DataCard`.
 
 **Final Note** - It is up to you to make sure your subclass works as expected and is compatible with the `DataCard` class. If you feel your subclass is useful to others, please consider contributing it to the `Opsml` library.
+
+
+::: opsml.DataInterface
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
