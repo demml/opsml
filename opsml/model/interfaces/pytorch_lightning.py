@@ -9,13 +9,13 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-from opsml.model.interfaces.pytorch import PyTorchModel
+from opsml.model.interfaces.pytorch import TorchModel
 from opsml.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
     from lightning import LightningModule, Trainer
 
-    class LightningModel(PyTorchModel):
+    class LightningModel(TorchModel):
         """Model interface for Pytorch Lightning models.
 
         Args:
@@ -107,7 +107,7 @@ try:
         def load_model(self, path: Path, **kwargs: Any) -> None:
             """Load lightning model from path"""
 
-            model_arch = kwargs[CommonKwargs.MODEL_ARCH.value]
+            model_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
 
             try:
                 if model_arch is not None:

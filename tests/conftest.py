@@ -103,9 +103,9 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    PyTorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
     XGBoostModel,
 )
 from opsml.projects import OpsmlProject, ProjectInfo
@@ -483,7 +483,7 @@ def huggingface_language_model():
 
     loaded_model = torch.load("tests/assets/distill-bert-tiny.pt", torch.device("cpu"))
 
-    return PyTorchModel(
+    return TorchModel(
         model=loaded_model,
         preprocessor=tokenizer,
         sample_data=dict(data),
@@ -513,7 +513,7 @@ def pytorch_simple():
     model = Polynomial3()
     inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
 
-    yield PyTorchModel(
+    yield TorchModel(
         model=model,
         sample_data=inputs,
         save_args={"as_state_dict": True},
@@ -545,7 +545,7 @@ def pytorch_simple_tuple():
     model = Polynomial3()
     inputs = (torch.randn((1, 1)), torch.randn((1, 1)))
 
-    yield PyTorchModel(
+    yield TorchModel(
         model=model,
         sample_data=inputs,
         save_args={"as_state_dict": True},
@@ -660,13 +660,13 @@ def multi_input_tf_example():
 
 
 @pytest.fixture(scope="session")
-def pytorch_resnet() -> PyTorchModel:
+def pytorch_resnet() -> TorchModel:
     import torch
 
     loaded_model = torch.load("tests/assets/resnet.pt")
     data = torch.randn(1, 3, 224, 224)
 
-    return PyTorchModel(model=loaded_model, sample_data=data)
+    return TorchModel(model=loaded_model, sample_data=data)
 
 
 @pytest.fixture
@@ -1223,7 +1223,7 @@ def huggingface_bart() -> HuggingFaceModel:
         sample_data=inputs,
         task_type=HuggingFaceTask.FEATURE_EXTRACTION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_FEATURE_EXTRACTION.value,
+            ort_type=HuggingFaceORTModel.ORT_FEATURE_EXTRACTION.value,
         ),
     )
 
@@ -1244,7 +1244,7 @@ def huggingface_text_classification_pipeline():
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         is_pipeline=True,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
         ),
     )
 
@@ -1267,7 +1267,7 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
@@ -1292,7 +1292,7 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
@@ -1314,7 +1314,7 @@ def huggingface_pipeline() -> HuggingFaceModel:
         sample_data="test example",
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_SEQUENCE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
             quantize=True,
             config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
         ),
@@ -1341,7 +1341,7 @@ def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
         sample_data=inputs,
         task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_IMAGE_CLASSIFICATION.value,
         ),
     )
 
@@ -1368,7 +1368,7 @@ def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
         sample_data=image,
         task_type=HuggingFaceTask.IMAGE_CLASSIFICATION.value,
         onnx_args=HuggingFaceOnnxArgs(
-            ort_type=HuggingFaceORTModel.ORT_MODEL_FOR_IMAGE_CLASSIFICATION.value,
+            ort_type=HuggingFaceORTModel.ORT_IMAGE_CLASSIFICATION.value,
         ),
     )
     model.to_pipeline()
@@ -2091,7 +2091,7 @@ def deeplabv3_resnet50():
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)
 
-    return PyTorchModel(model=model, sample_data=input_batch)
+    return TorchModel(model=model, sample_data=input_batch)
 
 
 @pytest.fixture(scope="module")

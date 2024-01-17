@@ -239,6 +239,7 @@ class ModelCardSaver(CardSaver):
 
         if self.card.to_onnx:
             logger.info("---------------------Converting Model to Onnx---------------------")
+
             save_path = (self.lpath / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
 
             metadata = self.card.interface.save_onnx(save_path)
@@ -251,13 +252,13 @@ class ModelCardSaver(CardSaver):
                 # remove suffix for uris
                 save_path = save_path.with_suffix("")
 
+            logger.info("---------------------Onnx Conversion Complete---------------------")
         else:
             metadata = _TrainedModelMetadataCreator(self.card.interface).get_model_metadata()
             save_path = None
 
         self.card.metadata.data_schema = metadata.data_schema
         self.card_uris.onnx_model_uri = save_path
-        logger.info("---------------------Onnx Conversion Complete---------------------")
 
     def _get_model_metadata(self) -> ModelMetadata:
         """Create Onnx Model from trained model"""
@@ -318,7 +319,8 @@ class ModelCardSaver(CardSaver):
             }
         )
         if dumped_model["interface"].get("onnx_args") is not None:
-            dumped_model["interface"]["onnx_args"].pop("config")
+            if dumped_model["interface"]["onnx_args"].get("config") is not None:
+                dumped_model["interface"]["onnx_args"].pop("config")
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_model, save_path)

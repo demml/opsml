@@ -11,9 +11,9 @@ from opsml.model import (
     HuggingFaceModel,
     LightGBMModel,
     LightningModel,
-    PyTorchModel,
     SklearnModel,
     TensorFlowModel,
+    TorchModel,
 )
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
@@ -236,10 +236,10 @@ def test_save_lgb_sklearn_modelcard_api_client(
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_torch_modelcard_api_client(
-    pytorch_simple: PyTorchModel,
+    pytorch_simple: TorchModel,
     api_storage_client: client.StorageClientBase,
 ):
-    model: PyTorchModel = pytorch_simple
+    model: TorchModel = pytorch_simple
 
     modelcard = ModelCard(
         interface=model,
