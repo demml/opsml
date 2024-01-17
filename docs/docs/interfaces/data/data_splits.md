@@ -97,3 +97,9 @@ interface = NumpyData(
 splits = interface.split_data()
 assert splits.train.X.shape[0] == 3
 ```
+
+::: opsml.DataSplit
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
