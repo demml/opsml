@@ -1,23 +1,23 @@
 {
-    "model_name": "linear-regression",
+    "model_name": "lgb-reg",
     "model_class": "SklearnEstimator",
-    "model_type": "LinearRegression",
-    "model_interface": "SklearnModel",
-    "onnx_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/linear-regression/v1.0.0/onnx-model.onnx",
+    "model_type": "LGBMRegressor",
+    "model_interface": "LightGBMModel",
+    "onnx_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/lgb-reg/v1.0.0/onnx-model.onnx",
     "onnx_version": "1.14.1",
-    "model_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/linear-regression/v1.0.0/trained-model.joblib",
+    "model_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/lgb-reg/v1.0.0/trained-model.joblib",
     "model_version": "1.0.0",
     "model_team": "opsml",
-    "sample_data_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/linear-regression/v1.0.0/sample-model-data.joblib",
+    "sample_data_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/lgb-reg/v1.0.0/sample-model-data.joblib",
     "opsml_version": "2.0.0",
     "data_schema": {
         "data_type": "numpy.ndarray",
         "input_features": {
             "inputs": {
-                "feature_type": "float64",
+                "feature_type": "object",
                 "shape": [
                     1,
-                    10
+                    5
                 ]
             }
         },
@@ -25,7 +25,6 @@
             "outputs": {
                 "feature_type": "float64",
                 "shape": [
-                    1,
                     1
                 ]
             }
@@ -35,7 +34,7 @@
                 "feature_type": "tensor(float)",
                 "shape": [
                     null,
-                    10
+                    5
                 ]
             }
         },
