@@ -1,24 +1,30 @@
-from typing import Tuple, List
-from transformers import DistilBertTokenizerFast
-from transformers import DistilBertForSequenceClassification, Trainer, TrainingArguments
+import json
+import shutil
+from pathlib import Path
+from typing import List, Tuple
+
+import torch
+from optimum.onnxruntime.configuration import AutoQuantizationConfig
 from sklearn.model_selection import train_test_split
+from transformers import (
+    DistilBertForSequenceClassification,
+    DistilBertTokenizerFast,
+    Trainer,
+    TrainingArguments,
+)
+
+from examples.huggingface.create_dataset import TextWriterHelper
 from opsml import (
     CardInfo,
     CardRegistries,
     DataCard,
-    ModelCard,
-    TextDataset,
     HuggingFaceModel,
+    HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
     HuggingFaceTask,
-    HuggingFaceOnnxArgs,
+    ModelCard,
+    TextDataset,
 )
-import json
-from pathlib import Path
-from optimum.onnxruntime.configuration import AutoQuantizationConfig
-from examples.huggingface.create_dataset import TextWriterHelper
-import torch
-import shutil
 
 
 class ExampleDataset(torch.utils.data.Dataset):
@@ -155,7 +161,9 @@ class OpsmlHuggingFaceWorkflow:
 
         # load onnx model
         modelcard.load_onnx_model()
-        inputs = dict(modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True))
+        inputs = dict(
+            modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
+        )
 
         print(modelcard.onnx_model.sess(**inputs))
 

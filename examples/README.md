@@ -1,6 +1,6 @@
 ## Opsml Examples
 
-This directory different examples of Opsml usage.
+This directory contains different examples of Opsml usage.
 
 ## Examples
 

@@ -1,7 +1,8 @@
-from opsml import TextRecord, TextMetadata
-from typing import Dict
-from pathlib import Path
 import json
+from pathlib import Path
+from typing import Dict
+
+from opsml import TextMetadata, TextRecord
 
 
 class TextWriterHelper:
