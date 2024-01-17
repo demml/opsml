@@ -15,8 +15,10 @@ from opsml.helpers.data import create_fake_data
 info = ProjectInfo(name="opsml-project", team="opsml", user_email="user@email.com")
 card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
 
+# create project
 project = OpsmlProject(info=info)
 
+# create run
 with project.run() as run:
     # create fake data
     X, y = create_fake_data(n_samples=1000, task_type="regression")
