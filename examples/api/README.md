@@ -1,4 +1,4 @@
-## OpsML Model API Example
+# OpsML Model API Example
 
 <img width="450px" src="../../images/fastapi.png" alt="huggingface" class="center" />
 
