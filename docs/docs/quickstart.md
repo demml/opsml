@@ -99,19 +99,19 @@ Next, navigate to `OPSML_TRACKING_URI` and you should see the following:
 
 
 <p align="left">
-  <img src="images/quickstart-list.png"  width="450" height="230"/>
+  <img src="../images/quickstart-list.png"  width="450" height="230"/>
 </p>
 
 Click on the `linear-regression` card and you should see the following:
 
 <p align="left">
-  <img src="images/quickstart-model.png"  width="651" height="410"/>
+  <img src="../images/quickstart-model.png"  width="651" height="410"/>
 </p>
 
 Click on the `DataCard` button and you should see the following:
 
 <p align="left">
-  <img src="images/quickstart-data.png"  width="559" height="410"/>
+  <img src="../images/quickstart-data.png"  width="559" height="410"/>
 </p>
 
 ## Download your model via CLI
@@ -119,10 +119,10 @@ Click on the `DataCard` button and you should see the following:
 Try downloading your model via the CLI:
 
 ```bash
-opsml-cli download-model --name linear-regression --version 1.0.0
+opsml-cli download-model --name 'linear-regression' --version '1.0.0'
 ```
 Here we are downloading the model with name `linear-regression` and version `1.0.0`. You could also provide the `uid` of the model instead of the name and version. By default, the cli command will download objects to the `models` directory. You will see both the model `joblib` file as well as the model's associated `metadata`. If you'd wish to download the `onnx` version of the model, you can add the `--onnx` flag to the command.
 
 ```bash
-opsml-cli download-model --name linear-regression --version 1.0.0 --onnx
+opsml-cli download-model --name 'linear-regression' --version '1.0.0' --onnx
 ```

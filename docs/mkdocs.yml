@@ -38,6 +38,13 @@ nav:
   - Overview: 'index.md'
   - Installation: 'installation.md'
   - Quickstart: 'quickstart.md'
+  - Interfaces:
+    - 'interfaces/overview.md'
+    - Data Interface:
+      - 'interfaces/data/data_interface.md'
+      - 'interfaces/data/data_splits.md'
+
+    #- Model Interface:
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'
