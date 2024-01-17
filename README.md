@@ -212,8 +212,8 @@ set is `OPSML_TRACKING_URI`.
 
 ## Data Libraries
 
-| Name          | :Opsml Implementation:   |   :Docs:    |                                
-|---------------|------------------------- |-------------|
+| Name          |  Opsml Implementation    |    Docs     |                                
+|---------------|:-----------------------: |:-----------:|
 | Pandas        | `PandasData`             | [link]()    |
 | Polars        | `PolarsData`             | [link]()    |                                                            
 | Torch         | `TorchData`              | [link]()    |                                                                     
@@ -223,6 +223,18 @@ set is `OPSML_TRACKING_URI`.
 | Text          | `TextDataset`            | [link]()    | 
 | Image         | `ImageDataset`           | [link]()    | 
 
+## Model Libraries
+
+| Name          |  Opsml Implementation      |    Docs     |    Example                                          |                                
+|-----------------|:-----------------------: |:-----------:|:--------------------------------------------------: |
+| Sklearn         | `SklearnModel`           | [link]()    | [link](examples/sklearn/basic.py)                   |
+| LightGBM        | `LightGBMModel`          | [link]()    | [link](examples/boosters/lightgbm_boost.py)         |                                                           
+| XGBoost         | `XGBoostModel`           | [link]()    | [link](examples/boosters/xgboost_sklearn.py)        |                                                                     
+| CatBoost        | `CatBoostModel`          | [link]()    | [link](examples/boosters/catboost_example.py)       |                                                                              
+| Torch           | `TorchModel`             | [link]()    | [link](examples/torch/torch_example.py)             |                        
+| Torch Lightning | `LightningModel`         | [link]()    | [link](examples/torch/torch_lightning_example.py)   |                     
+| TensorFlow      | `TensorFlowModel`        | [link]()    | [link]()                                            | 
+| HuggingFace     | `HuggingFaceModel`       | [link]()    | [link](examples/huggingface/hf_example.py)          | 
 
 
 ## Contributing
