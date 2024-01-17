@@ -176,7 +176,6 @@ class OpsmlHuggingFaceWorkflow:
 
 if __name__ == "__main__":
     # populate data
-
     writer = TextWriterHelper()
     writer.generate_text_records()
 
@@ -184,4 +183,5 @@ if __name__ == "__main__":
     workflow = OpsmlHuggingFaceWorkflow(info=info)
     workflow.run_workflow()
 
+    # cleanup data
     shutil.rmtree(writer.write_path, ignore_errors=True)
