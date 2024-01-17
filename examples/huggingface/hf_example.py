@@ -161,7 +161,9 @@ class OpsmlHuggingFaceWorkflow:
 
         # load onnx model
         modelcard.load_onnx_model()
-        inputs = dict(modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True))
+        inputs = dict(
+            modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
+        )
 
         print(modelcard.onnx_model.sess(**inputs))
 
