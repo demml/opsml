@@ -64,7 +64,7 @@ def test_register_data(
         interface=pandas_data,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     datacard.create_data_profile()
     registry.register_card(card=datacard)
@@ -102,7 +102,7 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
         interface=numpy_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.1.1",
     )
 
@@ -112,7 +112,7 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
         interface=numpy_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.1",
     )
 
@@ -123,7 +123,7 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
         interface=numpy_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.1",
     )
 
@@ -139,7 +139,7 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
         interface=numpy_data,
         name="test_array",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)
@@ -149,7 +149,7 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
         interface=numpy_data,
         name="test_array",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     registry.register_card(card=data_card, version_type="major")
 
@@ -158,7 +158,7 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
             interface=numpy_data,
             name="test_array",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
         registry.register_card(card=data_card)
 
@@ -193,7 +193,7 @@ def test_run_card(
     registry = api_registries.run
     model, data = linear_regression
 
-    run = RunCard(name="test_df", team="mlops", user_email="mlops.com", datacard_uids=["test_uid"])
+    run = RunCard(name="test_df", team="mlops", contact="mlops.com", datacard_uids=["test_uid"])
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
     assert run.get_metric("test_metric").value == 10
@@ -239,7 +239,7 @@ def test_register_model_data(
             interface=modelcard.interface,
             name="pipeline_model",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=None,
             to_onnx=True,
         )
@@ -256,7 +256,7 @@ def test_register_model_data(
             interface=modelcard.interface,
             name=modelcard.name,
             team="new-team",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=datacard.uid,
             to_onnx=True,
         )
@@ -281,7 +281,7 @@ def test_register_model_data(
         DataCard(
             name=datacard.name,
             team=datacard.team,
-            user_email=datacard.user_email,
+            contact=datacard.contact,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
         )
 
@@ -290,7 +290,7 @@ def test_pipeline_registry(api_registries: CardRegistry):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "run", "model"]:
@@ -494,7 +494,7 @@ def test_token_fail(
     run = RunCard(
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uids=["test_uid"],
     )
 
@@ -647,7 +647,7 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
         selected_model_name=modelcard.name,
         selected_model_team=modelcard.team,
         selected_model_version=modelcard.version,
-        selected_model_email=modelcard.user_email,
+        selected_model_email=modelcard.contact,
         name="model_audit",
         team="mlops",
         email="mlops.com",
@@ -667,11 +667,11 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
         uid=auditcard.uid,
         name=auditcard.name,
         team=auditcard.team,
-        email=auditcard.user_email,
+        email=auditcard.contact,
         selected_model_name=modelcard.name,
         selected_model_version=modelcard.version,
         selected_model_team=modelcard.team,
-        selected_model_email=modelcard.user_email,
+        selected_model_email=modelcard.contact,
         comment_name="test",
         comment_text="test",
     )
@@ -698,7 +698,7 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
         selected_model_name=modelcard.name,
         selected_model_team=modelcard.team,
         selected_model_version=modelcard.version,
-        selected_model_email=modelcard.user_email,
+        selected_model_email=modelcard.contact,
         name="model_audit",
         team="mlops",
         email="mlops.com",
@@ -774,7 +774,7 @@ def test_register_vit(
         interface=data,
         name="vit",
         team="mlops",
-        user_email="test@mlops.com",
+        contact="test@mlops.com",
     )
     api_registries.data.register_card(datacard)
 
@@ -782,7 +782,7 @@ def test_register_vit(
         interface=model,
         name="vit",
         team="mlops",
-        user_email="test@mlops.com",
+        contact="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=datacard.uid,
         to_onnx=True,

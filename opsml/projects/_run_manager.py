@@ -59,7 +59,7 @@ class _RunManager:
         return {
             Tags.NAME.value: self._project_info.name,
             Tags.TEAM.value: self._project_info.team,
-            Tags.EMAIL.value: self._project_info.user_email,
+            Tags.EMAIL.value: self._project_info.contact,
         }
 
     @property
@@ -154,7 +154,7 @@ class _RunManager:
         return RunCard(
             name=self.run_name or self._project_info.name,
             team=self._project_info.team,
-            user_email=self._project_info.user_email,
+            contact=self._project_info.contact,
             uid=self.run_id,
             project_id=self._project_info.project_id,
         )
@@ -263,7 +263,7 @@ class _RunManager:
         card = ProjectCard(
             name=info.name,
             team=info.team,
-            user_email=info.user_email,
+            contact=info.contact,
             project_id=f"{info.team}:{info.name}",
         )
         project_registry.register_card(card=card)

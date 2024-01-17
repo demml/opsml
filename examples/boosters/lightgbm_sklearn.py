@@ -75,9 +75,7 @@ class OpsmlLightGBMSklearnWorkflow:
         )
 
         # setup lgb regressor
-        pipe = Pipeline(
-            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
-        )
+        pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
@@ -120,7 +118,7 @@ class OpsmlLightGBMSklearnWorkflow:
         modelcard = ModelCard(
             name="lgb-reg",
             team="opsml",
-            user_email="user@email.com",
+            contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
             to_onnx=True,
@@ -164,6 +162,6 @@ class OpsmlLightGBMSklearnWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="lightgbm", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="lightgbm", team="opsml", contact="user@email.com")
     workflow = OpsmlLightGBMSklearnWorkflow(info=info)
     workflow.run_workflow()

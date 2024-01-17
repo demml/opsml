@@ -27,7 +27,7 @@ class BaseMixin:
     name = Column("name", String(128))
     team = Column("team", String(128))
     version = Column("version", String(32), nullable=False)
-    user_email = Column("user_email", String(128))
+    contact = Column("contact", String(128))
     tags = Column("tags", JSON)
 
     @validates("team")

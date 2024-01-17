@@ -24,7 +24,7 @@ def test_delete_data_model(
         interface=data,
         name="pipeline_data",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     data_registry.register_card(card=datacard)
     cards = data_registry.list_cards(name="pipeline_data", team="mlops")
@@ -37,7 +37,7 @@ def test_delete_data_model(
         interface=model,
         name="pipeline_model",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         to_onnx=True,
     )
@@ -76,7 +76,7 @@ def test_delete_runcard(db_registries: CardRegistries):
     run = RunCard(
         name="test_run",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uids=["test_uid"],
     )
     run.log_metric("test_metric", 10)
@@ -107,7 +107,7 @@ def test_delete_data_model_api(
         interface=data,
         name="pipeline_data",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     data_registry.register_card(card=datacard)
     cards = data_registry.list_cards(name="pipeline_data", team="mlops")
@@ -120,7 +120,7 @@ def test_delete_data_model_api(
         interface=model,
         name="pipeline_model",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         to_onnx=True,
     )

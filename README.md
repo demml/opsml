@@ -192,7 +192,7 @@ data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
 
 # card info (optional, but is used to simplify required args a bit)
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 
 # get X, y
 data, target = load_linnerud(return_X_y=True, as_frame=True)
@@ -263,7 +263,7 @@ data registry output
         "app_env": "development",
         "uid": "07131023c60d4a6892092851eab0f86d",
         "team": "opsml",
-        "user_email": "user@email.com",
+        "contact": "user@email.com",
         "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
         "runcard_uid": null,
         "datacard_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/datacard.joblib",
@@ -279,7 +279,7 @@ model registry output
         "uid": "1e68ef7851b34974bfaac764f348491d",
         "app_env": "development",
         "team": "opsml",
-        "user_email": "user@email.com",
+        "contact": "user@email.com",
         "modelcard_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/modelcard.joblib",
         "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",
         "sample_data_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/sample-model-data.parquet",

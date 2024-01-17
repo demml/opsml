@@ -12,7 +12,7 @@ from opsml.registry.registry import CardRegistries
 
 def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     """Tests logging and retrieving artifacts"""
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", contact="user@test.com")
     with OpsmlProject(info=info).run() as run:
         run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
         run_id = run.run_id
@@ -33,7 +33,7 @@ def test_opsml_read_only(
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
 
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", contact="user@test.com")
     with OpsmlProject(info=info).run() as run:
 
         # Create metrics / params / cards
@@ -44,7 +44,7 @@ def test_opsml_read_only(
             interface=data,
             name="pipeline_data",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
         run.register_card(card=data_card, version_type="major")
 
@@ -52,7 +52,7 @@ def test_opsml_read_only(
             interface=model,
             name="pipeline_model",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=data_card.uid,
             to_onnx=True,
         )
@@ -65,7 +65,7 @@ def test_opsml_read_only(
 
         assert data_card.metadata.runcard_uid == run.run_id
 
-        auditcard = AuditCard(name="audit_card", team="team", user_email="test")
+        auditcard = AuditCard(name="audit_card", team="team", contact="test")
         auditcard.add_card(card=data_card)
         auditcard.add_card(card=model_card)
         run.register_card(card=auditcard)
@@ -86,7 +86,7 @@ def test_opsml_read_only(
     # Load model card
     loaded_card: ModelCard = proj.load_card(
         registry_name="model",
-        info=CardInfo(name="pipeline_model", user_email="mlops.com"),
+        info=CardInfo(name="pipeline_model", contact="mlops.com"),
     )
     loaded_card.load_model()
     assert loaded_card.uid is not None
@@ -133,7 +133,7 @@ def test_opsml_read_only(
 def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     """Verify a run con be continued"""
 
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", contact="user@test.com")
     proj = OpsmlProject(info=info)
     with proj.run(run_name="test") as run:
         # Create metrics / params / cards
@@ -171,7 +171,7 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
 def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
     """Verify starting another run inside another fails"""
 
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", contact="user@test.com")
     proj = OpsmlProject(info=info)
     with proj.run(run_name="test") as run:
         # Create metrics / params / cards
@@ -183,7 +183,7 @@ def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
 
 
 def test_run_fail(db_registries: CardRegistries) -> None:
-    info = ProjectInfo(name="test-exp", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test-exp", team="test", contact="user@test.com")
     with pytest.raises(AttributeError):
         with OpsmlProject(info).run(run_name="test") as run:
             run.log_metric(key="m1", value=1.1)
@@ -205,7 +205,7 @@ def test_run_fail(db_registries: CardRegistries) -> None:
 def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
-    info = ProjectInfo(name="test_opsml_project_list_runs", team="test", user_email="user@test.com")
+    info = ProjectInfo(name="test_opsml_project_list_runs", team="test", contact="user@test.com")
 
     with OpsmlProject(info=info).run() as run:
         # Create metrics / params / cards
@@ -221,7 +221,7 @@ def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
 # def test_opsml_image_dataset(db_registries: CardRegistries, sql) -> None:
 #    """verify we can save image dataset"""
 #
-#    info = ProjectInfo(name="test_opsml_image_dataset", team="test", user_email="user@test.com")
+#    info = ProjectInfo(name="test_opsml_image_dataset", team="test", contact="user@test.com")
 #    with OpsmlProject(info=info).run() as run:
 #        # Create metrics / params / cards
 #        image_dataset = ImageDataset(
@@ -233,7 +233,7 @@ def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
 #            data=image_dataset,
 #            name="image_test",
 #            team="mlops",
-#            user_email="mlops.com",
+#            contact="mlops.com",
 #        )
 #
 #        run.register_card(card=data_card)

@@ -34,7 +34,7 @@ def test_model_interface(
         interface=model,
         name="test_model",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         version="0.0.1",
         uid=uuid.uuid4().hex,

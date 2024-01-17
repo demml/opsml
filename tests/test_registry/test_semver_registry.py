@@ -13,7 +13,7 @@ def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     kwargs = {
         "name": "pre_build",
         "team": "mlops",
-        "user_email": "opsml.com",
+        "contact": "opsml.com",
         "interface": sql_data,
     }
 
@@ -72,7 +72,7 @@ def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     kwargs = {
         "name": "pre_build",
         "team": "fail",
-        "user_email": "opsml.com",
+        "contact": "opsml.com",
         "interface": sql_data,
     }
 
@@ -89,7 +89,7 @@ def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegist
     kwargs = {
         "name": "build_tag",
         "team": "mlops",
-        "user_email": "opsml.com",
+        "contact": "opsml.com",
         "interface": sql_data,
     }
 

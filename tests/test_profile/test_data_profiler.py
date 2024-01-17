@@ -27,7 +27,7 @@ def test_datacard_create_data_profile_pandas(
         interface=iris_data,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     registry.register_card(data_card)
@@ -48,7 +48,7 @@ def test_datacard_create_data_profile_polars(
         interface=iris_data_polars,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     # test non-sample path
@@ -80,7 +80,7 @@ def test_feed_data_profile(
         interface=iris_data,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     # test profiling with sample
@@ -88,7 +88,7 @@ def test_feed_data_profile(
         interface=iris_data,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     iris_data.data_profile = None
@@ -114,7 +114,7 @@ def test_compare_data_profile(
         interface=iris_data,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     splits = data_card.split_data()

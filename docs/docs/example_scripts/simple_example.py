@@ -12,7 +12,7 @@ data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
 
 # card info (optional, but is used to simplify required args a bit)
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 
 # get X, y
 data, target = load_linnerud(return_X_y=True, as_frame=True)
@@ -81,7 +81,7 @@ print(
         "uid": "873978bf4c3a49be819b9813f8d02ae8",
         "date": "2023-04-27",
         "team": "opsml",
-        "user_email": "user@email.com",
+        "contact": "user@email.com",
         "data_type": "DataFrame",
         "pipelinecard_uid": None,
     }
@@ -100,7 +100,7 @@ print(
         "uid": "3fa6f762c5b74d4289b1e52bfd66f158",
         "app_env": "development",
         "team": "opsml",
-        "user_email": "user@email.com",
+        "contact": "user@email.com",
         "datacard_uid": "873978bf4c3a49be819b9813f8d02ae8",
         "onnx_model_uri": "/opsml_artifacts/OPSML_MODEL_REGISTRY/opsml/linnerrud/v-1.0.0/api-def.json",
         "sample_data_type": "DataFrame",

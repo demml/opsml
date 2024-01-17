@@ -72,7 +72,7 @@ def test_register_data(
         interface=test_interface,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)
@@ -98,7 +98,7 @@ def test_register_data(
         interface=test_interface,
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     registry.register_card(card=data_card)
 
@@ -123,7 +123,7 @@ def test_datacard_sql_register(sql_data: SqlData, db_registries: CardRegistries)
         interface=sql_data,
         name="test_sql",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         metadata=DataCardMetadata(
             description=Description(summary="data_readme.md"),
         ),
@@ -152,7 +152,7 @@ def test_datacard_sql_register_date(sql_data: SqlData, db_registries: CardRegist
         interface=sql_data,
         name="test_sql",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)
@@ -176,7 +176,7 @@ def test_datacard_sql_register_file(sql_file: SqlData, db_registries: CardRegist
         interface=sql_file,
         name="test_file",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     registry.register_card(card=data_card)
     loaded_card = registry.load_card(uid=data_card.uid)
@@ -190,7 +190,7 @@ def test_unique_name_fail(sql_file: SqlData, db_registries: CardRegistries):
         interface=sql_file,
         name="test_name_fail",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)
@@ -201,7 +201,7 @@ def test_unique_name_fail(sql_file: SqlData, db_registries: CardRegistries):
             interface=sql_file,
             name="test_name_fail",
             team="fail_teams",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
 
         registry.register_card(card=data_card)
@@ -220,7 +220,7 @@ def test_semver_registry_list(
             interface=numpy_data,
             name="test_semver",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
@@ -234,7 +234,7 @@ def test_semver_registry_list(
         interface=numpy_data,
         name="test_semver",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     registry.register_card(card=data_card, version_type="major")
 
@@ -243,7 +243,7 @@ def test_semver_registry_list(
             interface=numpy_data,
             name="test_semver",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
         registry.register_card(card=data_card)
 
@@ -260,7 +260,7 @@ def test_semver_registry_list(
         interface=numpy_data,
         name="test_semver",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.0.0-rc.1",
     )
     registry.register_card(card=data_card_pre)
@@ -283,7 +283,7 @@ def test_semver_registry_list(
             interface=numpy_data,
             name="test_semver",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             version="3.0.0-rc.1",  # cant create a release for a minor version that already exists
         )
         registry.register_card(card=data_card)
@@ -294,7 +294,7 @@ def test_semver_registry_list(
             interface=numpy_data,
             name="test_semver",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             version="3.0.0blah",
         )
         registry.register_card(card=data_card)
@@ -304,7 +304,7 @@ def test_semver_registry_list(
         interface=numpy_data,
         name="test_semver",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.0.1-rc.1",
     )
     registry.register_card(card=data_card_pre)
@@ -315,7 +315,7 @@ def test_semver_registry_list(
             interface=numpy_data,
             name="patch",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
@@ -334,7 +334,7 @@ def test_runcard(
     run = RunCard(
         name="test_run",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uids=["test_uid"],
     )
     run.log_metric("test_metric", 10)
@@ -396,7 +396,7 @@ def test_model_registry_onnx(
         interface=data,
         name="pipeline_data",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     data_registry.register_card(card=data_card)
 
@@ -405,7 +405,7 @@ def test_model_registry_onnx(
         interface=model,
         name="pipeline_model",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=data_card.uid,
         to_onnx=True,
     )
@@ -435,7 +435,7 @@ def test_model_registry_onnx(
         interface=model,
         name="pipeline_model",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=data_card.uid,
     )
 
@@ -457,7 +457,7 @@ def test_modelcard_register_fail(
         interface=model,
         name="pipeline_model",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=None,
     )
 
@@ -468,7 +468,7 @@ def test_modelcard_register_fail(
 def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
     team = "mlops"
-    user_email = "mlops.com"
+    contact = "mlops.com"
 
     registry = db_registries.data
     data: PandasData = pandas_data
@@ -477,7 +477,7 @@ def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
         interface=data,
         name=data_name,
         team=team,
-        user_email=user_email,
+        contact=contact,
         metadata=DataCardMetadata(
             additional_info={"input_metadata": 20},
             description=Description(summary="test description"),
@@ -511,7 +511,7 @@ def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
 def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
     team = "mlops"
-    user_email = "mlops.com"
+    contact = "mlops.com"
 
     data_registry = db_registries.data
     data: PandasData = pandas_data
@@ -526,7 +526,7 @@ def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries
             interface=data,
             name=data_name,
             team=team,
-            user_email=user_email,
+            contact=contact,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
             dependent_vars=[200, "test"],
         )
@@ -539,7 +539,7 @@ def test_pipeline_registry(db_registries: CardRegistries):
     pipeline_card = PipelineCard(
         name="test_df",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "run", "model"]:
@@ -568,7 +568,7 @@ def test_full_pipeline_with_loading(
     db_registries: CardRegistries,
 ):
     team = "mlops"
-    user_email = "mlops.com"
+    contact = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
     data_registry = db_registries.data
     model_registry = db_registries.model
@@ -581,7 +581,7 @@ def test_full_pipeline_with_loading(
         interface=data,
         name="test_data",
         team=team,
-        user_email=user_email,
+        contact=contact,
     )
 
     data_registry.register_card(card=data_card)
@@ -590,7 +590,7 @@ def test_full_pipeline_with_loading(
         interface=model,
         name="test_model",
         team=team,
-        user_email=user_email,
+        contact=contact,
         datacard_uid=data_card.uid,
         to_onnx=True,
     )
@@ -601,7 +601,7 @@ def test_full_pipeline_with_loading(
     exp_card = RunCard(
         name="test_experiment",
         team=team,
-        user_email=user_email,
+        contact=contact,
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
     )
@@ -612,7 +612,7 @@ def test_full_pipeline_with_loading(
     pipeline_card = PipelineCard(
         name="test_pipeline",
         team=team,
-        user_email=user_email,
+        contact=contact,
         pipeline_code_uri=pipeline_code_uri,
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
@@ -633,7 +633,7 @@ def test_model_registry_with_polars(
         interface=data,
         name="polars_data",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     data_registry.register_card(card=data_card)
 
@@ -641,7 +641,7 @@ def test_model_registry_with_polars(
         interface=model,
         name="polars_model",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=data_card.uid,
         to_onnx=True,
     )
@@ -659,7 +659,7 @@ def test_pandas_dtypes(db_registries: CardRegistries, pandas_data: PandasData):
     datacard = DataCard(
         name="pandas_dtype",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         interface=pandas_data,
     )
 
@@ -690,7 +690,7 @@ def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsDa
     datacard = DataCard(
         name="pandas_dtype",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         interface=iris_data_polars,
     )
     registry.register_card(card=datacard, version_type="patch")
@@ -709,7 +709,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.1.1",
     )
 
@@ -719,7 +719,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.1",  # specifying major minor version
     )
 
@@ -730,7 +730,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3",  # specifying major with minor bump
     )
 
@@ -741,7 +741,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3",  # specifying major with patch bump
     )
 
@@ -752,7 +752,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.2",  # specifying major minor with minor bump.
     )
 
@@ -763,7 +763,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="3.2",  # specifying major minor with minor bump.
     )
 
@@ -776,7 +776,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
         interface=sql_data,
         name="major_minor",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         version="4.1",  # specifying major minor version
     )
 
@@ -792,7 +792,7 @@ def test_list_cards(db_registries: CardRegistries):
         "timestamp": 1,
         "name": "list-test",
         "team": "test_team",
-        "user_email": "test_email",
+        "contact": "test_email",
         "version": "1.0.0",
         "data_type": "test_type",
     }
