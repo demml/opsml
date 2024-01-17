@@ -92,17 +92,3 @@ DataCard(
 )
 
 ```
-
-## Docs
-
-::: opsml.image.dataset
-    options:
-        members:
-            - ImageDataset
-            - ImageMetadata
-            - ImageRecord
-            - BBox
-        show_root_heading: true
-        show_source: true
-        heading_level: 3
-
