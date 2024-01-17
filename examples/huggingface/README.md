@@ -1,6 +1,6 @@
 ## HuggingFace Example
 
-<img width="481px" src="../../images/huggingface.png" alt="huggingface" class="center" />
+<img width="450px" src="../../images/huggingface.png" alt="huggingface" class="center" />
 
 The following examples demonstrates how to use Opsml with `HuggingFace`.
 
