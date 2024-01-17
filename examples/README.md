@@ -1,4 +1,4 @@
-## Opsml Examples
+# Opsml Examples
 
 This directory contains different examples of Opsml usage.
 
