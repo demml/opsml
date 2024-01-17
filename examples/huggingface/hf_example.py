@@ -161,9 +161,7 @@ class OpsmlHuggingFaceWorkflow:
 
         # load onnx model
         modelcard.load_onnx_model()
-        inputs = dict(
-            modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
-        )
+        inputs = dict(modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True))
 
         print(modelcard.onnx_model.sess(**inputs))
 
@@ -179,7 +177,7 @@ if __name__ == "__main__":
     writer = TextWriterHelper()
     writer.generate_text_records()
 
-    info = CardInfo(name="huggingface", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="huggingface", team="opsml", contact="user@email.com")
     workflow = OpsmlHuggingFaceWorkflow(info=info)
     workflow.run_workflow()
 

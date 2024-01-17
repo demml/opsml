@@ -54,7 +54,7 @@ def fake_data():
 info = ProjectInfo(
     name="opsml",
     team="devops",
-    user_email="test_email",
+    contact="test_email",
 )
 
 # start mlflow run
@@ -70,7 +70,7 @@ with project.run(run_name="test-run") as run:
         data=X,
         name="pipeline-data",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     data_card.create_data_profile()
     run.register_card(card=data_card)
@@ -81,7 +81,7 @@ with project.run(run_name="test-run") as run:
         sample_input_data=X[0:1],
         name="linear_reg",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=data_card.uid,
         tags={"name": "model_tag"},
     )

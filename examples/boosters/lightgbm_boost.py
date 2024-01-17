@@ -139,7 +139,7 @@ class OpsmlLightGBMBoosterWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="lightgbm", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="lightgbm", team="opsml", contact="user@email.com")
     params = {
         "boosting_type": "gbdt",
         "objective": "regression",

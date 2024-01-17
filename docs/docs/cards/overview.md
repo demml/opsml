@@ -112,7 +112,7 @@ Register a card to a registry
         sample_input_data=data[0:1],
         name="linear-reg",
         team="opsml",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=data_card.uid,
     )
 

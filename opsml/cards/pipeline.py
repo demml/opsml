@@ -19,7 +19,7 @@ class PipelineCard(ArtifactCard):
             Pipeline name
         team:
             Team that this card is associated with
-        user_email:
+        contact:
             Email to associate with card
         uid:
             Unique id (assigned if card has been registered)

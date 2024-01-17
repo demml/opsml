@@ -117,6 +117,6 @@ class OpsmlLightningWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="torch", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="torch", team="opsml", contact="user@email.com")
     workflow = OpsmlLightningWorkflow(info=info)
     workflow.run_workflow()

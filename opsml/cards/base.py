@@ -25,7 +25,7 @@ class ArtifactCard(BaseModel):
 
     name: str
     team: str
-    user_email: str
+    contact: str
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
@@ -46,7 +46,7 @@ class ArtifactCard(BaseModel):
 
         card_info = card_args.get("info")
 
-        for key in ["name", "team", "user_email", "version", "uid"]:
+        for key in ["name", "team", "contact", "version", "uid"]:
             val = card_args.get(key)
 
             if card_info is not None:

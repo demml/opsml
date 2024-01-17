@@ -166,7 +166,7 @@ class AuditRouteHelper(RouteHelper):
             return AuditReport(
                 name=None,
                 team=None,
-                user_email=None,
+                contact=None,
                 version=None,
                 uid=None,
                 status=False,
@@ -179,7 +179,7 @@ class AuditRouteHelper(RouteHelper):
         return AuditReport(
             name=audit_card.name,
             team=audit_card.team,
-            user_email=audit_card.user_email,
+            contact=audit_card.contact,
             version=audit_card.version,
             uid=audit_card.uid,
             status=audit_card.approved,
@@ -226,7 +226,7 @@ class AuditRouteHelper(RouteHelper):
             uid=uid,
         )[0]
 
-        email = model_record.get("user_email") if email is None else email
+        email = model_record.get("contact") if email is None else email
 
         audit_report = self._get_audit_report(
             audit_registry=request.app.state.registries.audit,
@@ -282,9 +282,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:

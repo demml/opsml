@@ -18,7 +18,7 @@ data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
 
 
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 data_card = DataCard(info=card_info, data=data)
 
 data_card.create_data_profile(sample_perc=0.5)  # you can specify a sampling percentage between 0 and 1
@@ -46,7 +46,7 @@ data["Pulse"] = target.Pulse
 
 data_profile = ProfileReport(data, title="Profiling Report")
 
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 data_card = DataCard(info=card_info, data=data, data_profile=data_profile)
 ```
 *(Code will run as-is)*
@@ -68,13 +68,13 @@ data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
 
 # Simulate creating 1st DataCard
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 data_card = DataCard(info=card_info, data=data)
 data_card.create_data_profile()
 
 # Simulate creating 2nd DataCard
 data2 = data * np.random.rand(data.shape[1])
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 data_card2 = DataCard(info=card_info, data=data2)
 data_card2.create_data_profile()
 
