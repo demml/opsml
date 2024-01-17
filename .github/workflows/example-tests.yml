@@ -63,3 +63,6 @@ jobs:
 
       - name: Run HuggingFace example
         run : poetry run python examples/huggingface/hf_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Project example
+        run : poetry run python examples/run_tracking/opsml-run-example.py && rm -rf mlruns && rm tmp.db
