@@ -39,7 +39,7 @@ def test_challenger_example(
 
     # usual train-val split
     train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 
     # Create card
     datacard = DataCard(
@@ -53,7 +53,7 @@ def test_challenger_example(
     )
     api_registries.data.register_card(card=datacard)
 
-    ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    ProjectInfo(name="opsml", team="devops", contact="test_email")
     with opsml_project.run(run_name="challenger-lin-reg") as run:
         datacard = api_registries.data.load_card(uid=datacard.uid)
         splits = datacard.split_data()
@@ -70,14 +70,14 @@ def test_challenger_example(
             sample_input_data=splits.train.X[0:1],
             name="linear_reg",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
             to_onnx=True,
         )
         run.register_card(card=model_card)
 
-    ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    ProjectInfo(name="opsml", team="devops", contact="test_email")
     with opsml_project.run(run_name="challenger-lasso") as run:
         datacard = api_registries.data.load_card(uid=datacard.uid)
         splits = datacard.split_data()
@@ -94,14 +94,14 @@ def test_challenger_example(
             sample_input_data=splits.train.X[0:1],
             name="lasso_reg",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
             to_onnx=True,
         )
         run.register_card(card=model_card)
 
-    ProjectInfo(name="opsml", team="devops", user_email="test_email")
+    ProjectInfo(name="opsml", team="devops", contact="test_email")
     with opsml_project.run(run_name="challenger-poisson") as run:
         datacard = api_registries.data.load_card(uid=datacard.uid)
         splits = datacard.split_data()
@@ -118,7 +118,7 @@ def test_challenger_example(
             sample_input_data=splits.train.X[0:1],
             name="poisson_reg",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
             to_onnx=True,
@@ -165,7 +165,7 @@ def test_datacard(db_registries: CardRegistries):
     # usual train-val split
     train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
 
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
     data_card = DataCard(
         info=card_info,
         data=data,
@@ -197,7 +197,7 @@ def test_data_splits():
 
     from opsml import CardInfo, DataCard, DataSplit
 
-    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+    info = CardInfo(name="data", team="mlops", contact="user@mlops.com")
 
     df = pl.DataFrame(
         {
@@ -224,7 +224,7 @@ def test_data_splits():
 
     from opsml import CardInfo, DataCard, DataSplit
 
-    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+    info = CardInfo(name="data", team="mlops", contact="user@mlops.com")
 
     data = np.random.rand(10, 10)
 
@@ -239,7 +239,7 @@ def test_data_splits():
 
     from opsml import CardInfo, DataCard, DataSplit
 
-    info = CardInfo(name="data", team="mlops", user_email="user@mlops.com")
+    info = CardInfo(name="data", team="mlops", contact="user@mlops.com")
 
     data = np.random.rand(10, 10)
 
@@ -260,7 +260,7 @@ def test_data_profile(db_registries: CardRegistries):
     data, target = load_linnerud(return_X_y=True, as_frame=True)
     data["Pulse"] = target.Pulse
 
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
     data_card = DataCard(info=card_info, data=data)
 
     data_card.create_data_profile(sample_perc=0.5)  # you can specify a sampling percentage between 0 and 1
@@ -282,7 +282,7 @@ def test_data_profile(db_registries: CardRegistries):
 
     data_profile = ProfileReport(data, title="Profiling Report")
 
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
     data_card = DataCard(info=card_info, data=data, data_profile=data_profile)
 
     import numpy as np
@@ -296,13 +296,13 @@ def test_data_profile(db_registries: CardRegistries):
     data["Pulse"] = target.Pulse
 
     # Simulate creating 1st DataCard
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
     data_card = DataCard(info=card_info, data=data)
     data_card.create_data_profile()
 
     # Simulate creating 2nd DataCard
     data2 = data * np.random.rand(data.shape[1])
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
     data_card2 = DataCard(info=card_info, data=data2)
     data_card2.create_data_profile()
 
@@ -401,7 +401,7 @@ def test_custom_onnx(db_registries: CardRegistries):
     datacard = DataCard(
         name="image-data",
         team="opsml",
-        user_email="user@opsml.com",
+        contact="user@opsml.com",
         data=x.detach().numpy(),
     )
     registries.data.register_card(datacard)
@@ -416,7 +416,7 @@ def test_custom_onnx(db_registries: CardRegistries):
     ModelCard(
         name="pytorch-custom-onnx",
         team="opsml",
-        user_email="opsml.com",
+        contact="opsml.com",
         trained_model=torch_model,
         sample_input_data=datacard.data[0:1],
         onnx_model=model_def,
@@ -438,7 +438,7 @@ def test_overview_list(
         data=data,
         name="reg_data",
         team="mlops",
-        user_email="mlops.com",
+        contact="mlops.com",
     )
     data_registry.register_card(card=data_card)
 
@@ -447,7 +447,7 @@ def test_overview_list(
         sample_input_data=data[0:1],
         name="linear-reg",
         team="opsml",
-        user_email="mlops.com",
+        contact="mlops.com",
         datacard_uid=data_card.uid,
         version="1.0.0",
         to_onnx=True,
@@ -503,10 +503,10 @@ def test_runcard_opsml_example(
     # from opsml.projects import OpsmlProject, ProjectInfo
     from opsml import CardInfo, DataCard, ModelCard
 
-    card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linear-reg", team="opsml", contact="user@email.com")
 
     # to use runs, you must create and use a project
-    ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+    ProjectInfo(name="opsml-dev", team="opsml", contact="user@email.com")
     # project = OpsmlProject(info=project_info)
     project = opsml_project
 
@@ -572,7 +572,7 @@ def test_index_example(db_registries: CardRegistries):
     model_registry = db_registries.model
 
     # card info (optional, but is used to simplify required args a bit)
-    card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+    card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 
     # get X, y
     data, target = load_linnerud(return_X_y=True, as_frame=True)
@@ -648,7 +648,7 @@ def test_quickstart(
     ProjectInfo(
         name="opsml",
         team="devops",
-        user_email="test_email",
+        contact="test_email",
     )
 
     # start opsmlrun
@@ -663,7 +663,7 @@ def test_quickstart(
             data=X,
             name="pipeline-data",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
         )
         data_card.create_data_profile()
         run.register_card(card=data_card)
@@ -674,7 +674,7 @@ def test_quickstart(
             sample_input_data=X[0:1],
             name="linear_reg",
             team="mlops",
-            user_email="mlops.com",
+            contact="mlops.com",
             datacard_uid=data_card.uid,
             tags={"name": "model_tag"},
             to_onnx=True,

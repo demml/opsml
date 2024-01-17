@@ -17,12 +17,12 @@ logger = ArtifactLogger.get_logger()
 data_info = CardInfo(
     name="pipeline_data",
     team="mlops",
-    user_email="mlops.com",
+    contact="mlops.com",
 )
 model_info = CardInfo(
     name="pipeline_model",
     team="mlops",
-    user_email="mlops.com",
+    contact="mlops.com",
 )
 
 
@@ -31,7 +31,7 @@ def test_challenger_no_previous_version(
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
     """Test ModelChallenger using one registered model and no champions"""
-    info = ProjectInfo(name="test", team="test", user_email="test")
+    info = ProjectInfo(name="test", team="test", contact="test")
 
     with OpsmlProject(info=info).run() as run:
         # Create metrics / params / cards
@@ -61,7 +61,7 @@ def test_challenger(
 ) -> None:
     """Test ModelChallenger using challenger and previous champion"""
 
-    info = ProjectInfo(name="test", team="test", user_email="test")
+    info = ProjectInfo(name="test", team="test", contact="test")
     with OpsmlProject(info=info).run() as run:
         model, data = sklearn_pipeline
         data_card = DataCard(interface=data, info=data_info)
@@ -100,7 +100,7 @@ def test_challenger_champion_list(
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
     """Test ModelChallenger using champion list"""
-    info = ProjectInfo(name="test", team="test", user_email="test")
+    info = ProjectInfo(name="test", team="test", contact="test")
     with OpsmlProject(info=info).run() as run:
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
@@ -116,7 +116,7 @@ def test_challenger_champion_list(
         run.log_metric("mape", 100)
         run.register_card(card=model_card)
 
-    info = ProjectInfo(name="test", team="test", user_email="test")
+    info = ProjectInfo(name="test", team="test", contact="test")
     proj = OpsmlProject(info=info)
     modelcard = proj._run_mgr.registries.model.load_card(name="pipeline_model", version="1.0.0")
     proj._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)

@@ -107,7 +107,7 @@ class AuditCard(ArtifactCard):
             What to name the AuditCard
         team:
             Team that this card is associated with
-        user_email:
+        contact:
             Email to associate with the AuditCard
         audit:
             AuditSections object containing the audit questions and responses

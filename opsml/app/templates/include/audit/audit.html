@@ -154,7 +154,7 @@
       <!--Hidden fields-->
       <input name="name" type="hidden" class="form-control" id="InputName" placeholder="Name" {% if audit_report["name"] is not none %} value={{audit_report["name"]}} {% endif %}>
       <input name="team" type="hidden" class="form-control" id="InputTeam" placeholder="Team" {% if audit_report["team"] is not none %} value={{audit_report["team"]}} {% endif %}>
-      <input name="email" type="hidden" class="form-control" id="InputEmail" placeholder="Email" {% if audit_report["user_email"] is not none %} value={{audit_report["user_email"]}} {% endif %}>
+      <input name="email" type="hidden" class="form-control" id="InputEmail" placeholder="Email" {% if audit_report["contact"] is not none %} value={{audit_report["contact"]}} {% endif %}>
       <input name="uid" type="hidden" class="form-control" id="InputUid" {% if audit_report["uid"] is not none %} value={{audit_report["uid"]}} {% endif %}>
       <input name="selected_model_name" type="hidden" class="form-control" id="InputModelName" value={{selected_model}}>
       <input name="selected_model_team" type="hidden" class="form-control" id="InputModelTeam" value={{selected_team}}>
@@ -183,7 +183,7 @@
       </div>
       <div class="col">
         <label for="InputEmail">User Email</label>
-        <input name="email" type="text" class="form-control" id="InputEmail" placeholder="Email" {% if audit_report["user_email"] is not none %} value={{audit_report["user_email"]}} {% endif %} required>
+        <input name="email" type="text" class="form-control" id="InputEmail" placeholder="Email" {% if audit_report["contact"] is not none %} value={{audit_report["contact"]}} {% endif %} required>
       </div>
     </div>
     <br>

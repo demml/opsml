@@ -82,7 +82,7 @@ class CardInfo:
             Name of card
         team:
             Team name
-        user_email:
+        contact:
             Email
         uid:
             Unique id of card
@@ -94,7 +94,7 @@ class CardInfo:
 
     name: Optional[str] = None
     team: Optional[str] = None
-    user_email: Optional[str] = None
+    contact: Optional[str] = None
     uid: Optional[str] = None
     version: Optional[str] = None
     tags: Optional[Dict[str, str]] = None

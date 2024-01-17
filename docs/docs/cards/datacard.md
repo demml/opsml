@@ -31,7 +31,7 @@ indices = np.arange(data.shape[0])
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
 
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 data_card = DataCard(
     info=card_info,
     data=data,
@@ -85,7 +85,7 @@ Output:
     "app_env": "staging",
     "timestamp": 1682699807492552,
     "team": "opsml",
-    "user_email": "user@email.com",
+    "contact": "user@email.com",
     "data_type": "DataFrame",
     "pipelinecard_uid": None,
 }
@@ -103,7 +103,7 @@ Output:
 `team`
 : Team data belongs to (Required)
 
-`user_email`
+`contact`
 : Email to associate with data (Required)
 
 `sql_logic`

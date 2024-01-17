@@ -120,7 +120,7 @@ class OpsmlLightGBMSklearnWorkflow:
         modelcard = ModelCard(
             name="lgb-reg",
             team="opsml",
-            user_email="user@email.com",
+            contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
             to_onnx=True,
@@ -164,6 +164,6 @@ class OpsmlLightGBMSklearnWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="lightgbm", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="lightgbm", team="opsml", contact="user@email.com")
     workflow = OpsmlLightGBMSklearnWorkflow(info=info)
     workflow.run_workflow()

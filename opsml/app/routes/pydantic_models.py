@@ -356,7 +356,7 @@ class AuditFormRequest(BaseModel):
 class AuditReport(BaseModel):
     name: Optional[str] = None
     team: Optional[str] = None
-    user_email: Optional[str] = None
+    contact: Optional[str] = None
     version: Optional[str] = None
     uid: Optional[str] = None
     status: Optional[bool] = False

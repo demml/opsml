@@ -179,7 +179,7 @@ if __name__ == "__main__":
     writer = TextWriterHelper()
     writer.generate_text_records()
 
-    info = CardInfo(name="huggingface", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="huggingface", team="opsml", contact="user@email.com")
     workflow = OpsmlHuggingFaceWorkflow(info=info)
     workflow.run_workflow()
 

@@ -29,7 +29,7 @@ def test_numpy_api_client(
         interface=data,
         name="test_data",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -68,7 +68,7 @@ def test_pandas_api_client(
         interface=data,
         name="test_data",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -112,7 +112,7 @@ def test_polars_api_client(
         interface=data,
         name="test_data",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -155,7 +155,7 @@ def test_arrow_api_client(
         interface=data,
         name="test_data",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -195,7 +195,7 @@ def test_image_data(
         interface=image_data,
         name="test_data",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -242,7 +242,7 @@ def test_text_data(
         interface=text_data,
         name="test_data",
         team="mlops",
-        user_email="test_email",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )

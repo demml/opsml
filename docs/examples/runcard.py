@@ -6,10 +6,10 @@ from sklearn.metrics import mean_absolute_percentage_error
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml import CardInfo, DataCard, ModelCard
 
-card_info = CardInfo(name="linear-reg", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linear-reg", team="opsml", contact="user@email.com")
 
 # to use runs, you must create and use a project
-project_info = ProjectInfo(name="opsml-dev", team="opsml", user_email="user@email.com")
+project_info = ProjectInfo(name="opsml-dev", team="opsml", contact="user@email.com")
 project = OpsmlProject(info=project_info)
 
 

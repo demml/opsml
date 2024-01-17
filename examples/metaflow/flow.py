@@ -23,7 +23,7 @@ class OpsmlFlow(FlowSpec):
         - Load modelcard and test onnx predictions
     """
 
-    info = CardInfo(name="metaflow_example", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="metaflow_example", team="opsml", contact="user@email.com")
 
     @step
     def start(self):

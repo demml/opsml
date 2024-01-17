@@ -22,7 +22,7 @@ indices = np.arange(data.shape[0])
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
 
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
 data_card = DataCard(
     info=card_info,
     data=data,
@@ -72,7 +72,7 @@ print(cards[0])
     "uid": "38da1aaecfac42048cbde821a55289ab",
     "app_env": "development",
     "team": "opsml",
-    "user_email": "user@email.com",
+    "contact": "user@email.com",
     "feature_map": {"Chins": "double", "Situps": "double", "Jumps": "double", "Pulse": "double"},
     "data_splits": {
         "splits": [
