@@ -213,7 +213,7 @@ set is `OPSML_TRACKING_URI`.
 ## Data Libraries
 
 | Name          | :Opsml Implementation:   |   :Docs:    |                                
-|---------------|------------------------- |             |
+|---------------|------------------------- |-------------|
 | Pandas        | `PandasData`             | [link]()    |
 | Polars        | `PolarsData`             | [link]()    |                                                            
 | Torch         | `TorchData`              | [link]()    |                                                                     
