@@ -29,6 +29,10 @@ def create_fake_data(
             Task type
         random_state:
             Random state
+        n_categorical_features:
+            Number of categorical features
+        to_polars:
+            Whether to convert to polars
 
     Returns:
         Tuple of pd.DataFrame
@@ -36,28 +40,28 @@ def create_fake_data(
     num_features = n_features - n_categorical_features
 
     np.random.seed(random_state)
-    X = np.random.randn(n_samples, num_features)  # pylint: disable=invalid-name
+    x_data = np.random.randn(n_samples, num_features)  # pylint: disable=invalid-name
 
     if n_categorical_features > 0:
         cat_cols = np.random.randint(0, n_classes, size=(n_samples, n_categorical_features)).astype(str)
 
-    y = np.random.randint(0, n_classes, n_samples)  # pylint: disable=invalid-name
+    y_data = np.random.randint(0, n_classes, n_samples)  # pylint: disable=invalid-name
     if task_type == "regression":
-        y = np.random.randn(n_samples)  # pylint: disable=invalid-name
+        y_data = np.random.randn(n_samples)  # pylint: disable=invalid-name
 
     # rename columns
-    X = pd.DataFrame(X, columns=[f"col_{i}" for i in range(num_features)])  # pylint: disable=invalid-name
+    x_data = pd.DataFrame(x_data, columns=[f"col_{i}" for i in range(num_features)])  # pylint: disable=invalid-name
 
     if n_categorical_features > 0:
         cat_df = pd.DataFrame(cat_cols, columns=[f"cat_col_{i}" for i in range(n_categorical_features)])
 
         # add to X
-        X = pd.concat([X, cat_df], axis=1)
+        x_data = pd.concat([x_data, cat_df], axis=1)
 
-    y = pd.DataFrame(y, columns=["target"])  # pylint: disable=invalid-name
+    y_data = pd.DataFrame(y_data, columns=["target"])  # pylint: disable=invalid-name
 
     if to_polars:
-        X = pl.from_pandas(X)
-        y = pl.from_pandas(y)
+        x_data = pl.from_pandas(x_data)
+        y_data = pl.from_pandas(y_data)
 
-    return X, y
+    return x_data, y_data

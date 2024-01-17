@@ -375,12 +375,16 @@ class ModelCardLoader(CardLoader):
             if self.storage_client.exists(load_rpath):
                 lpath = self.download(lpath, rpath, SaveName.TOKENIZER.value, "")
                 self.card.interface.load_tokenizer(lpath)
+                return
 
         if self.card.interface.feature_extractor is None:
             load_rpath = Path(self.card.uri, SaveName.FEATURE_EXTRACTOR.value)
             if self.storage_client.exists(load_rpath):
                 lpath = self.download(lpath, rpath, SaveName.FEATURE_EXTRACTOR.value, "")
                 self.card.interface.load_feature_extractor(lpath)
+                return
+
+        return
 
     def load_preprocessor(self, lpath: Path, rpath: Path) -> None:
         """Load Preprocessor for model interface
@@ -393,7 +397,8 @@ class ModelCardLoader(CardLoader):
         """
 
         if isinstance(self.card.interface, HuggingFaceModel):
-            return self._load_huggingface_preprocessors(lpath, rpath)
+            self._load_huggingface_preprocessors(lpath, rpath)
+            return
 
         if self.card.interface.preprocessor is not None:
             logger.info("Preprocessor already loaded")
@@ -424,7 +429,7 @@ class ModelCardLoader(CardLoader):
             if self.card.interface.is_pipeline:
                 self.card.interface.to_pipeline()
 
-    def _load_hugginface_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
+    def _load_huggingface_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
         """Load onnx model to interface
 
         Args:
@@ -465,7 +470,8 @@ class ModelCardLoader(CardLoader):
             return
 
         if isinstance(self.card.interface, HuggingFaceModel):
-            return self._load_hugginface_onnx_model(lpath, rpath, **kwargs)
+            self._load_huggingface_onnx_model(lpath, rpath, **kwargs)
+            return
 
         save_name = SaveName.ONNX_MODEL.value
         if not self.storage_client.exists(Path(rpath, save_name).with_suffix(self.onnx_suffix)):
