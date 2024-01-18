@@ -13,7 +13,10 @@ from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
 from opsml.app.routes.pydantic_models import AuditReport
-from opsml.app.routes.utils import get_names_repositories_versions, list_repository_name_info
+from opsml.app.routes.utils import (
+    get_names_repositories_versions,
+    list_repository_name_info,
+)
 from opsml.cards.audit import AuditCard, AuditSections
 from opsml.cards.base import ArtifactCard
 from opsml.cards.data import DataCard
@@ -282,7 +285,9 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(
+        self, request: Request, load_profile: bool, datacard: DataCard
+    ) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:

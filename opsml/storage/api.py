@@ -116,7 +116,9 @@ class ApiClient:
     ) -> Dict[str, Any]:
         result = ""
 
-        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
+        with self.client.stream(
+            method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
+        ) as response:
             for data in response.iter_bytes():
                 result += data.decode("utf-8")
 
@@ -133,7 +135,9 @@ class ApiClient:
         )
 
     @retry(reraise=True, stop=stop_after_attempt(3))
-    def stream_download_file_request(self, route: str, local_dir: Path, filename: str, read_dir: Path) -> Dict[str, Any]:
+    def stream_download_file_request(
+        self, route: str, local_dir: Path, filename: str, read_dir: Path
+    ) -> Dict[str, Any]:
         local_dir.mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
         read_path = read_dir / filename
         local_path = local_dir / filename

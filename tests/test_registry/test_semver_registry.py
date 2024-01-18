@@ -69,7 +69,6 @@ def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     assert card.version == "1.0.0+git.1a5d783h3784"
 
 
-
 def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegistries):
     # create data card
     registry: CardRegistry = db_registries.data
