@@ -6,6 +6,7 @@ from opsml.cards import AuditCard, CardInfo, DataCard, ModelCard
 from opsml.data import PandasData
 from opsml.model import SklearnModel
 from opsml.projects import OpsmlProject, ProjectInfo
+from opsml.projects._run_manager import ActiveRunException
 from opsml.projects.active_run import ActiveRun
 from opsml.registry.registry import CardRegistries
 
@@ -173,11 +174,12 @@ def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
 
     info = ProjectInfo(name="test-exp", repository="test", contact="user@test.com")
     proj = OpsmlProject(info=info)
+
     with proj.run(run_name="test") as run:
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ActiveRunException):
             with proj.run() as run:
                 pass
 

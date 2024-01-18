@@ -542,7 +542,7 @@ class ProjectRouteHelper(RouteHelper):
         """Get runs for a project
 
         Args:
-            selected_project:
+            project:
                 The selected project.
             run_registry:
                 The run registry.

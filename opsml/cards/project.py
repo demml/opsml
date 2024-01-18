@@ -6,15 +6,12 @@
 # IMPORTANT: We need `Dict`, `List`, and `Optional` imported here in order for Pydantic to be able to
 # deserialize ProjectCard.
 #
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa # pylint: disable=unused-import
 
 from pydantic import model_validator
 
 from opsml.cards.base import ArtifactCard
 from opsml.types import CardType
-
-_ = Optional
-_ = List
 
 
 class ProjectCard(ArtifactCard):

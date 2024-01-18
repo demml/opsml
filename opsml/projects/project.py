@@ -9,7 +9,7 @@ from typing import Any, Dict, Iterator, List, Optional, Union, cast
 from opsml.cards.base import ArtifactCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._run_manager import _RunManager
+from opsml.projects._run_manager import ActiveRunException, _RunManager
 from opsml.projects.active_run import ActiveRun, CardHandler
 from opsml.projects.types import ProjectInfo
 from opsml.types import CardInfo, CardType, Metric, Metrics, Param, Params
@@ -71,12 +71,12 @@ class OpsmlProject:
         self._run_mgr.run_id = run_id
 
     @property
-    def project_id(self) -> str:
+    def project_id(self) -> int:
         return self._run_mgr.project_id
 
     @property
     def project_name(self) -> str:
-        return self._run_mgr._project_info.name
+        return self._run_mgr._project_info.name  # pylint: disable=protected-access
 
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
@@ -88,10 +88,12 @@ class OpsmlProject:
                 Optional run name
         """
 
-        self._run_mgr.start_run(run_name=run_name)
-
         try:
-            yield self._run_mgr.active_run
+            yield self._run_mgr.start_run(run_name=run_name)  # self._run_mgr.active_run
+
+        except ActiveRunException as error:
+            logger.error("Run already active. Ending run.")
+            raise error
 
         except Exception as error:
             logger.error("Error encountered. Ending run. {}", error)
@@ -178,7 +180,7 @@ class OpsmlProject:
         return self.run_card.get_parameter(name=name)
 
     @property
-    def tags(self) -> Dict[str, str]:
+    def tags(self) -> Dict[str, Union[str, int]]:
         return self.run_card.tags
 
     @property
