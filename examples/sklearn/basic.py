@@ -20,7 +20,7 @@ class OpsmlWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "team" and "email" to a card; however, this
+                You could also provide "name", "repository" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -120,7 +120,7 @@ class OpsmlWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="linear-regression", team="opsml", contact="user@email.com")
+    info = CardInfo(name="linear-regression", repository="opsml", contact="user@email.com")
 
     workflow = OpsmlWorkflow(info=info)
     workflow.run_workflow()

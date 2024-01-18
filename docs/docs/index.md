@@ -28,7 +28,7 @@
 
 :star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
 ## Version 2
-The `opsml` team is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
+The `opsml` repository is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
 
 Core features of version 2 include:
 
@@ -46,7 +46,7 @@ Core features of version 2 include:
 
 ## Why?
 
-The end-result of a machine learning project is often an artifact that is used as a component in a production process. Because of this, ML artifacts must conform to and meet engineering specifications in order to provide businesses with service guarantees and customers with a consistent experience. Thus, the creation and use of ML artifacts is no different than a manufacturing process. With this in mind, `OpsML` aims to help DS and Eng teams by providing consistency and standardization across the entire ML workflow in the production of ML artifacts.
+The end-result of a machine learning project is often an artifact that is used as a component in a production process. Because of this, ML artifacts must conform to and meet engineering specifications in order to provide businesses with service guarantees and customers with a consistent experience. Thus, the creation and use of ML artifacts is no different than a manufacturing process. With this in mind, `OpsML` aims to help DS and Eng repositories by providing consistency and standardization across the entire ML workflow in the production of ML artifacts.
 
 ## Features
   
@@ -60,7 +60,7 @@ The end-result of a machine learning project is often an artifact that is used a
 
   - `Consistency`: No surpises. Outputs and generated artifacts follow engineering standards providing consistency across the entire ML workflow. `Varying input --> Standardized output`.
 
-  - `Shareable`: Share cards and workflows across teams
+  - `Shareable`: Share cards and workflows across repositories
 
   - `Server`: Run `Opsml` as a server to provide a centralized location for ML artifacts and metadata. Easily setup on any system that supports Docker.
 
@@ -90,13 +90,13 @@ Taking a data science project from ideation :bulb: to deployment :rocket: often 
 
 - :angry: Overhead in packaging data science code into production code. This results in duplicating data science code just to run in another environment (necessary, but can this be simplified?). 
 
-- :watch: Time lag in deployment due to different teams having different priorities (especially true if developers/ML engineers are needed to help data scientists deploy their code). Lack of consistency in the production process.
+- :watch: Time lag in deployment due to different repositories having different priorities (especially true if developers/ML engineers are needed to help data scientists deploy their code). Lack of consistency in the production process.
 
 - :rage: Inflexible prod code that is not easily updatable
 
 - :sob: Often no linking of metadata across the entire workflow (data, runs/experiments, models, pipelines)
 
-What `Opsml` aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from `development` and `production` processes and help teams go from ideation to deployment quicker :smile: with the added benefits of reproducibility and auditability.
+What `Opsml` aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from `development` and `production` processes and help repositories go from ideation to deployment quicker :smile: with the added benefits of reproducibility and auditability.
 
 ## Why Use OpsML vs other open source or vendor tooling?
 
@@ -108,7 +108,7 @@ With the plethora of available ML tooling it can be difficult to decide which to
 - You want all artifacts to be given the same priority (no more treating data as less of a priority than models)
 - Don't want to worry about implementation details (how to version, store and track artifacts)
 - You'd like to have auto-generated metadata that meets engineering standards and can be used in production
-- You want to be able to share artifacts and workflows across teams
+- You want to be able to share artifacts and workflows across repositories
 
 ## Example
 
@@ -129,7 +129,7 @@ data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
 
 # card info (optional, but is used to simplify required args a bit)
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 
 # get X, y
 data, target = load_linnerud(return_X_y=True, as_frame=True)
@@ -200,7 +200,7 @@ data registry output
         "timestamp": 1698622188318014,
         "app_env": "development",
         "uid": "07131023c60d4a6892092851eab0f86d",
-        "team": "opsml",
+        "repository": "opsml",
         "contact": "user@email.com",
         "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
         "runcard_uid": null,
@@ -216,7 +216,7 @@ model registry output
     {
         "uid": "1e68ef7851b34974bfaac764f348491d",
         "app_env": "development",
-        "team": "opsml",
+        "repository": "opsml",
         "contact": "user@email.com",
         "modelcard_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/modelcard.joblib",
         "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",

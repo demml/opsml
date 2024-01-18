@@ -13,7 +13,7 @@ In addition to using `Opsml` as a stand-alone python package, it can also be use
 ---
 
 ## **Setup**
-You can setup the `Opsml` server based on your team needs. For our purposes at `Shipt`, we tend to follow a conventional setup whereby we host Docker images via K8s. For this setup up, we typically will install `Opsml` and its dependencies into a Dockerfile.
+You can setup the `Opsml` server based on your repository needs. For our purposes at `Shipt`, we tend to follow a conventional setup whereby we host Docker images via K8s. For this setup up, we typically will install `Opsml` and its dependencies into a Dockerfile.
 
 ### Required Env Vars
 

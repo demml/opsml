@@ -44,7 +44,7 @@ indices = np.arange(data.shape[0])
 
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 
 # Create card
 datacard = DataCard(
@@ -67,7 +67,7 @@ We will now train a linear regression model and score it with the test dataset
 
 ```python
 
-info = ProjectInfo(name="opsml", team="devops", contact="test_email")
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lin-reg") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -84,7 +84,7 @@ with project.run(run_name="challenger-lin-reg") as run:
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
         name="linear_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
@@ -99,7 +99,7 @@ Train a Lasso regression model
 
 ```python
 
-info = ProjectInfo(name="opsml", team="devops", contact="test_email")
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lasso") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -116,7 +116,7 @@ with project.run(run_name="challenger-lasso") as run:
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
         name="lasso_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
@@ -132,7 +132,7 @@ Train a Poisson regression model
 
 ```python
 
-info = ProjectInfo(name="opsml", team="devops", contact="test_email")
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-poisson") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -149,7 +149,7 @@ with project.run(run_name="challenger-poisson") as run:
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
         name="poisson_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
@@ -168,7 +168,7 @@ We will now run comparison for all model via the `ModelChallenger` class. To cre
 model_registry = CardRegistry(registry_name="model")
 linreg_card = model_registry.load_card(
     name="linear_reg",
-    team="mlops",
+    repository="mlops",
     tags={"example": "challenger"},
 )
 
@@ -180,8 +180,8 @@ reports = challenger.challenge_champion(
     metric_name="mae",
     lower_is_better=True,
     champions=[
-        CardInfo(name="lasso_reg", team="mlops", version="1.0.0"),
-        CardInfo(name="poisson_reg", team="mlops", version="1.0.0"),
+        CardInfo(name="lasso_reg", repository="mlops", version="1.0.0"),
+        CardInfo(name="poisson_reg", repository="mlops", version="1.0.0"),
     ],
 )
 
@@ -261,7 +261,7 @@ def fake_data():
 
 info = ProjectInfo(
     name="opsml",
-    team="devops",
+    repository="devops",
     contact="test_email",
 )
 project = OpsmlProject(info=info)
@@ -272,7 +272,7 @@ with project.run(run_name="create-model") as run:
     data_card = DataCard(
         data=X,
         name="pipeline-data1",
-        team="mlops-test",
+        repository="mlops-test",
         contact="mlops.com",
     )
     data_card.create_data_profile()
@@ -284,7 +284,7 @@ with project.run(run_name="create-model") as run:
         trained_model=reg,
         sample_input_data=X[0:1],
         name=f"linear-reg",
-        team="mlops-test",
+        repository="mlops-test",
         contact="mlops.com",
         datacard_uid=data_card.uid,
         tags={"name": "model_tag"},
@@ -298,7 +298,7 @@ Here we will create a run, train a new model, instantiate a `ModelCard` for the 
 ```python
 info = ProjectInfo(
     name="opsml",
-    team="devops",
+    repository="devops",
     contact="test_email",
 )
 project = OpsmlProject(info=info)
@@ -312,7 +312,7 @@ with project.run(run_name="challenge-model") as run:
         trained_model=reg,
         sample_input_data=X[0:1],
         name=f"linear-reg",
-        team="mlops-test",
+        repository="mlops-test",
         contact="mlops.com",
     )
 
@@ -331,7 +331,7 @@ with project.run(run_name="challenge-model") as run:
         data_card = DataCard(
             data=X,
             name="pipeline-data1",
-            team="mlops-test",
+            repository="mlops-test",
             contact="mlops.com",
         )
         run.register_card(card=data_card)

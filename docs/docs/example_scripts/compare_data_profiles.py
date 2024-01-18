@@ -14,13 +14,13 @@ data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
 
 # Simulate creating 1st DataCard
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 data_card = DataCard(info=card_info, data=data)
 data_card.create_data_profile()
 
 # Simulate creating 2nd DataCard
 data2 = data * np.random.rand(data.shape[1])
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 data_card2 = DataCard(info=card_info, data=data2)
 data_card2.create_data_profile()
 

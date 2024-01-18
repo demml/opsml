@@ -20,7 +20,7 @@ def test_register_data(api_registries: CardRegistries):
     data_card = DataCard(
         data=image_dataset,
         name="image_dataset",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 

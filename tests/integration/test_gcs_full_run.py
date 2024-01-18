@@ -39,7 +39,7 @@ def test_gcs_full_run(
 
     # setup project
     try:
-        info = ProjectInfo(name="test", team="test-exp", contact="test")
+        info = ProjectInfo(name="test", repository="test-exp", contact="test")
         project = OpsmlProject(info=info)
 
         # create run
@@ -47,7 +47,7 @@ def test_gcs_full_run(
             datacard = DataCard(
                 interface=data,
                 name="test_data",
-                team="mlops",
+                repository="mlops",
                 contact="mlops.com",
             )
             datacard.create_data_profile()
@@ -58,7 +58,7 @@ def test_gcs_full_run(
             modelcard = ModelCard(
                 interface=model,
                 name="pipeline_model",
-                team="mlops",
+                repository="mlops",
                 contact="mlops.com",
                 tags={"id": "model1"},
                 datacard_uid=datacard.uid,

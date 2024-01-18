@@ -22,7 +22,7 @@ indices = np.arange(data.shape[0])
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
 
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 data_card = DataCard(
     info=card_info,
     data=data,
@@ -55,7 +55,7 @@ print(data_card.version)
 # list cards
 cards = data_registry.list_cards(
     uid=data_card.uid,
-)  # can also supply, name, team, version
+)  # can also supply, name, repository, version
 print(cards[0])
 
 """
@@ -71,7 +71,7 @@ print(cards[0])
     "date": "2023-04-26",
     "uid": "38da1aaecfac42048cbde821a55289ab",
     "app_env": "development",
-    "team": "opsml",
+    "repository": "opsml",
     "contact": "user@email.com",
     "feature_map": {"Chins": "double", "Situps": "double", "Jumps": "double", "Pulse": "double"},
     "data_splits": {

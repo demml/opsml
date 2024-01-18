@@ -80,7 +80,7 @@ class CardRegistry:
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         info: Optional[CardInfo] = None,
@@ -93,8 +93,8 @@ class CardRegistry:
         Args:
             name:
                 Card name
-            team:
-                Team associated with card
+            repository:
+                Repository associated with card
             version:
                 Optional version number of existing data. If not specified, the
                 most recent version will be used
@@ -117,7 +117,7 @@ class CardRegistry:
 
         if info is not None:
             name = name or info.name
-            team = team or info.team
+            repository = repository or info.repository
             uid = uid or info.uid
             version = version or info.version
             tags = tags or info.tags
@@ -125,16 +125,16 @@ class CardRegistry:
         if name is not None:
             name = name.lower()
 
-        if team is not None:
-            team = team.lower()
+        if repository is not None:
+            repository = repository.lower()
 
-        if all(not bool(var) for var in [name, team, version, uid, tags]):
+        if all(not bool(var) for var in [name, repository, version, uid, tags]):
             limit = limit or 25
 
         card_list = self._registry.list_cards(
             uid=uid,
             name=name,
-            team=team,
+            repository=repository,
             version=version,
             max_date=max_date,
             limit=limit,

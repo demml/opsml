@@ -7,7 +7,7 @@
     "onnx_version": "1.14.1",
     "model_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/lgb-reg/v1.0.0/trained-model.joblib",
     "model_version": "1.0.0",
-    "model_team": "opsml",
+    "model_repository": "opsml",
     "sample_data_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/lgb-reg/v1.0.0/sample-model-data.joblib",
     "opsml_version": "2.0.0",
     "data_schema": {

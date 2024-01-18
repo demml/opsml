@@ -31,10 +31,10 @@ class SQLRegistryBase:
         self._table_name = RegistryTableNames[registry_type.value.upper()].value
 
     @property
-    def unique_teams(self) -> Sequence[str]:
+    def unique_repositories(self) -> Sequence[str]:
         raise NotImplementedError
 
-    def get_unique_card_names(self, team: Optional[str] = None) -> Sequence[str]:
+    def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
         raise NotImplementedError
 
     @property
@@ -48,7 +48,7 @@ class SQLRegistryBase:
     def set_version(
         self,
         name: str,
-        team: str,
+        repository: str,
         pre_tag: str,
         build_tag: str,
         version_type: VersionType,
@@ -98,15 +98,15 @@ class SQLRegistryBase:
             """
             )
 
-    def _validate_semver(self, name: str, team: str, version: CardVersion) -> None:
+    def _validate_semver(self, name: str, repository: str, version: CardVersion) -> None:
         """
         Validates version if version is manually passed to Card
 
         Args:
             name:
                 Name of card
-            team:
-                Team of card
+            repository:
+                Repository of card
             version:
                 Version of card
         Returns:
@@ -115,9 +115,6 @@ class SQLRegistryBase:
         if version.is_full_semver:
             records = self.list_cards(name=name, version=version.valid_version)
             if len(records) > 0:
-                if records[0]["team"] != team:
-                    raise ValueError("""Model name already exists for a different team. Try a different name.""")
-
                 for record in records:
                     ver = VersionInfo.parse(record["version"])
 
@@ -170,7 +167,7 @@ class SQLRegistryBase:
                     card.version = self.set_version(
                         name=card.name,
                         supplied_version=card_version,
-                        team=card.team,
+                        repository=card.repository,
                         version_type=version_type,
                         pre_tag=pre_tag,
                         build_tag=build_tag,
@@ -178,13 +175,13 @@ class SQLRegistryBase:
 
             card_version = CardVersion(version=card.version)
             if card_version.is_full_semver:
-                self._validate_semver(name=card.name, team=card.team, version=card_version)
+                self._validate_semver(name=card.name, repository=card.repository, version=card_version)
                 return None
 
         version = self.set_version(
             name=card.name,
             supplied_version=card_version,
-            team=card.team,
+            repository=card.repository,
             version_type=version_type,
             pre_tag=pre_tag,
             build_tag=build_tag,
@@ -263,7 +260,7 @@ class SQLRegistryBase:
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
