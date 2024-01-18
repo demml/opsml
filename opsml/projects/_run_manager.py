@@ -156,7 +156,6 @@ class _RunManager:
         )
         self._active_run = None
         self.run_id = None
-        self._run_name = None
 
     def _get_project_id(self) -> int:
         """
@@ -171,7 +170,7 @@ class _RunManager:
 
         projects = self.registries.project.list_cards(name=self._project_info.name)
         if bool(projects):
-            return projects[0]["project_id"]
+            return int(projects[0]["project_id"])
 
         # get nbr of unique projects
         cards = self.registries.project.list_cards()
