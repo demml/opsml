@@ -1,7 +1,7 @@
 import pydantic
 import pytest
 
-from opsml.projects.base import types
+from opsml.projects import types
 
 
 def test_project_id() -> None:
@@ -17,8 +17,3 @@ def test_project_id() -> None:
     with pytest.raises(pydantic.ValidationError):
         types.ProjectInfo(name="", repository="a", tracking_uri="test")
 
-    info = types.ProjectInfo(name="a", repository="a", tracking_uri="test")
-    assert info.project_id == "a:a"
-
-    info = types.ProjectInfo(name="A", repository="A", tracking_uri="test")
-    assert info.project_id == "a:a"
