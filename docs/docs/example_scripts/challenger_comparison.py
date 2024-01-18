@@ -26,7 +26,7 @@ indices = np.arange(data.shape[0])
 
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 
 # Create card
 datacard = DataCard(
@@ -43,7 +43,7 @@ data_reg.register_card(card=datacard)
 
 
 ###################### Create 1st model
-info = ProjectInfo(name="opsml", team="devops", contact="test_email")
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lin-reg") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -60,7 +60,7 @@ with project.run(run_name="challenger-lin-reg") as run:
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
         name="linear_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
@@ -69,7 +69,7 @@ with project.run(run_name="challenger-lin-reg") as run:
 
 
 ###################### Create 2nd model
-info = ProjectInfo(name="opsml", team="devops", contact="test_email")
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-lasso") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -86,7 +86,7 @@ with project.run(run_name="challenger-lasso") as run:
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
         name="lasso_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
@@ -95,7 +95,7 @@ with project.run(run_name="challenger-lasso") as run:
 
 
 ###################### Create 3rd model
-info = ProjectInfo(name="opsml", team="devops", contact="test_email")
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
 with project.run(run_name="challenger-poisson") as run:
     datacard = data_reg.load_card(uid=datacard.uid)
@@ -112,7 +112,7 @@ with project.run(run_name="challenger-poisson") as run:
         trained_model=reg,
         sample_input_data=splits.train.X[0:1],
         name="poisson_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=datacard.uid,
         tags={"example": "challenger"},
@@ -132,8 +132,8 @@ challenger = ModelChallenger(challenger=linreg_card)
 reports = challenger.challenge_champion(
     metric_name="mae",
     champions=[
-        CardInfo(name="lasso_reg", team="mlops", version="1.0.0"),
-        CardInfo(name="poisson_reg", team="mlops", version="1.0.0"),
+        CardInfo(name="lasso_reg", repository="mlops", version="1.0.0"),
+        CardInfo(name="poisson_reg", repository="mlops", version="1.0.0"),
     ],
     lower_is_better=True,
 )

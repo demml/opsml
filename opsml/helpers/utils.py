@@ -20,7 +20,7 @@ logger = ArtifactLogger.get_logger()
 
 PUNCTUATION = string.punctuation.replace("_", "").replace("-", "")
 REMOVE_CHARS = re.escape(PUNCTUATION)
-NAME_TEAM_PATTERN = r"^[a-z0-9]+([-a-z0-9]+)*:[-a-z0-9]+$"
+NAME_REPOSITORY_PATTERN = r"^[a-z0-9]+([-a-z0-9]+)*/[-a-z0-9]+$"
 
 
 def experimental_feature(func: Callable[..., None]) -> Callable[..., None]:
@@ -57,25 +57,26 @@ def clean_string(value: Optional[str] = None) -> Optional[str]:
     return clean.replace("_", "-")
 
 
-def validate_name_team_pattern(name: str, team: str) -> None:
+def validate_name_repository_pattern(name: str, repository: str) -> None:
     """
-    Validates name and team combination
+    Validates name and repository combination
 
     Args:
         name:
             Card name
-        team:
-            Team associated with card
+        repository:
+            repository associated with card
 
     """
-    name_team = f"{name}:{team}"
-    pattern_match = bool(re.match(NAME_TEAM_PATTERN, name_team))
+    name_repository = f"{repository}/{name}"
+
+    pattern_match = bool(re.match(NAME_REPOSITORY_PATTERN, name_repository))
 
     if not pattern_match:
-        raise ValueError(f"Name and team failed to match the required pattern. Pattern: {NAME_TEAM_PATTERN}")
+        raise ValueError(f"Name and Repository failed to match the required pattern. Pattern: {NAME_REPOSITORY_PATTERN}")
 
-    if len(name_team) > 53:
-        raise ValueError("Name and team combination must be 53 characters or less")
+    if len(name_repository) > 53:
+        raise ValueError("Name and Repository combination must be 53 characters or less")
 
 
 class TypeChecker:

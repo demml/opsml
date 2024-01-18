@@ -53,7 +53,7 @@ def fake_data():
 
 info = ProjectInfo(
     name="opsml",
-    team="devops",
+    repository="devops",
     contact="test_email",
 )
 
@@ -69,7 +69,7 @@ with project.run(run_name="test-run") as run:
     data_card = DataCard(
         data=X,
         name="pipeline-data",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     data_card.create_data_profile()
@@ -80,7 +80,7 @@ with project.run(run_name="test-run") as run:
         trained_model=reg,
         sample_input_data=X[0:1],
         name="linear_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=data_card.uid,
         tags={"name": "model_tag"},
@@ -97,7 +97,7 @@ with project.run(run_name="test-run") as run:
 
 ### Models
 
-List models by team
+List models by repository
 
 <p align="left">
   <img src="../images/list-models.png"  width="449" height="413"/>

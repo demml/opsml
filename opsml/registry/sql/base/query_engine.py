@@ -51,11 +51,7 @@ class DialectHelper:
     @staticmethod
     def get_dialect_logic(query: Select[Any], table: CardSQLTable, dialect: str) -> Select[Any]:
         helper = next(
-            (
-                dialect_helper
-                for dialect_helper in DialectHelper.__subclasses__()
-                if dialect_helper.validate_dialect(dialect)
-            ),
+            (dialect_helper for dialect_helper in DialectHelper.__subclasses__() if dialect_helper.validate_dialect(dialect)),
             None,
         )
 
@@ -70,24 +66,18 @@ class DialectHelper:
 class SqliteHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
-            sql_cast(sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer).label(
-                "major"
-            ),
+            sql_cast(sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer).label("major"),
             sql_cast(
                 sqa_func.substr(
                     sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
                     1,
-                    sqa_func.instr(
-                        sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), "."
-                    )
-                    - 1,
+                    sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".") - 1,
                 ),
                 Integer,
             ).label("minor"),
             sqa_func.substr(
                 sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
-                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".")
-                + 1,
+                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".") + 1,
             ).label("patch"),
         )
 
@@ -116,9 +106,9 @@ class MySQLHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
             sql_cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
-            sql_cast(
-                sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
-            ).label("minor"),
+            sql_cast(sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer).label(
+                "minor"
+            ),
             sql_cast(
                 sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""),
                 Integer,
@@ -199,7 +189,7 @@ class QueryEngine:
         table: CardSQLTable,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -207,7 +197,7 @@ class QueryEngine:
         query_terms: Optional[Dict[str, Any]] = None,
     ) -> Select[Any]:
         """
-        Creates a sql query based on table, uid, name, team and version
+        Creates a sql query based on table, uid, name, repository and version
 
         Args:
             table:
@@ -216,8 +206,8 @@ class QueryEngine:
                 Optional unique id of Card
             name:
                 Optional name of Card
-            team:
-                Optional team name
+            repository:
+                Optional Repository name
             version:
                 Optional version of Card
             tags:
@@ -241,7 +231,7 @@ class QueryEngine:
 
         filters = []
 
-        for field, value in zip(["name", "team"], [name, team]):
+        for field, value in zip(["name", "repository"], [name, repository]):
             if value is not None:
                 filters.append(getattr(table, field) == value)
 
@@ -296,7 +286,7 @@ class QueryEngine:
         table: CardSQLTable,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -307,7 +297,7 @@ class QueryEngine:
             table=table,
             uid=uid,
             name=name,
-            team=team,
+            repository=repository,
             version=version,
             max_date=max_date,
             tags=tags,
@@ -332,9 +322,7 @@ class QueryEngine:
             time stamp as integer related to `max_date`
         """
         converted_date = datetime.datetime.strptime(max_date, YEAR_MONTH_DATE)
-        max_date_: datetime.datetime = converted_date.replace(
-            hour=23, minute=59, second=59
-        )  # provide max values for a date
+        max_date_: datetime.datetime = converted_date.replace(hour=23, minute=59, second=59)  # provide max values for a date
 
         # opsml timestamp records are stored as BigInts
         return int(round(max_date_.timestamp() * 1_000_000))
@@ -383,29 +371,29 @@ class QueryEngine:
             query.update(card)
             sess.commit()
 
-    def get_unique_teams(self, table: CardSQLTable) -> Sequence[str]:
-        """Retrieves unique teams in a registry
+    def get_unique_repositories(self, table: CardSQLTable) -> Sequence[str]:
+        """Retrieves unique repositories in a registry
 
         Args:
             table:
                 Registry table to query
 
         Returns:
-            List of unique teams
+            List of unique repositories
         """
 
-        team_col = table.team
-        query = select(team_col).distinct()  # type:ignore[call-overload]
+        repository_col = table.repository
+        query = select(repository_col).distinct()  # type:ignore[call-overload]
 
         with self.session() as sess:
             return sess.scalars(query).all()
 
-    def get_unique_card_names(self, team: Optional[str], table: CardSQLTable) -> Sequence[str]:
+    def get_unique_card_names(self, repository: Optional[str], table: CardSQLTable) -> Sequence[str]:
         """Returns a list of unique card names"""
         query = select(table.name)  # type:ignore[call-overload]
 
-        if team is not None:
-            query = query.filter(table.team == team).distinct()
+        if repository is not None:
+            query = query.filter(table.repository == repository).distinct()
         else:
             query = query.distinct()
 

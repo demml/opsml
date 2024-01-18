@@ -16,10 +16,10 @@ from sklearn.metrics import mean_absolute_percentage_error
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml import CardInfo, DataCard, ModelCard
 
-card_info = CardInfo(name="linear-reg", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linear-reg", repository="opsml", contact="user@email.com")
 
 # to use runs, you must create and use a project
-project_info = ProjectInfo(name="opsml-dev", team="opsml", contact="user@email.com")
+project_info = ProjectInfo(name="opsml-dev", repository="opsml", contact="user@email.com")
 project = OpsmlProject(info=project_info)
 
 
@@ -99,7 +99,7 @@ def fake_data():
     return X, y
 
 
-info = ProjectInfo(name="opsml", team="devops", contact="test_email",)
+info = ProjectInfo(name="opsml", repository="devops", contact="test_email",)
 project = OpsmlProject(info=info)
 with project.run(run_name="opsml-test") as run:
 
@@ -109,7 +109,7 @@ with project.run(run_name="opsml-test") as run:
     data_card = DataCard(
         data=X,
         name="pipeline-data",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     run.register_card(card=data_card)
@@ -118,7 +118,7 @@ with project.run(run_name="opsml-test") as run:
         trained_model=reg,
         sample_input_data=X[0:1],
         name="linear_reg",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=data_card.uid,
     )

@@ -17,7 +17,7 @@ In most data science workflows, it's common to split data into different subsets
 import polars as pl
 from opsml import DataCard, DataSplit, CardInfo
 
-info = CardInfo(name="data", team="mlops", contact="user@mlops.com")
+info = CardInfo(name="data", repository="mlops", contact="user@mlops.com")
 
 df = pl.DataFrame(
     {
@@ -53,7 +53,7 @@ datacard = DataCard(
 import numpy as np
 from opsml import DataCard, DataSplit, CardInfo
 
-info = CardInfo(name="data", team="mlops", contact="user@mlops.com")
+info = CardInfo(name="data", repository="mlops", contact="user@mlops.com")
 
 data = np.random.rand(10, 10)
 
@@ -81,7 +81,7 @@ assert splits.train.X.shape[0] == 3
 import numpy as np
 from opsml import DataCard, DataSplit, CardInfo
 
-info = CardInfo(name="data", team="mlops", contact="user@mlops.com")
+info = CardInfo(name="data", repository="mlops", contact="user@mlops.com")
 
 data = np.random.rand(10, 10)
 

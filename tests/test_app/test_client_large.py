@@ -26,7 +26,7 @@ def test_register_large_data(api_registries: CardRegistries):
     data_card = DataCard(
         interface=data,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     registry.register_card(card=data_card)
@@ -53,7 +53,7 @@ def test_register_large_whisper_model(
     data_card = DataCard(
         interface=data,
         name="dummy-data",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
     )
     api_registries.data.register_card(data_card)
@@ -61,7 +61,7 @@ def test_register_large_whisper_model(
     model_card = ModelCard(
         interface=model,
         name="whisper-small",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
@@ -78,7 +78,7 @@ def test_register_large_gpt_model(api_registries: CardRegistries, huggingface_op
     data_card = DataCard(
         interface=data,
         name="dummy-data",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
     )
     api_registries.data.register_card(data_card)
@@ -86,7 +86,7 @@ def test_register_large_gpt_model(api_registries: CardRegistries, huggingface_op
     model_card = ModelCard(
         interface=model,
         name="gpt",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
@@ -108,7 +108,7 @@ def test_register_large_bart_model(
     data_card = DataCard(
         interface=data,
         name="dummy-data",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
     )
     api_registries.data.register_card(data_card)
@@ -116,7 +116,7 @@ def test_register_large_bart_model(
     model_card = ModelCard(
         interface=model,
         name="bart",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,
@@ -138,7 +138,7 @@ def test_register_large_vit_model(
     data_card = DataCard(
         interface=data,
         name="dummy-data",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
     )
     api_registries.data.register_card(data_card)
@@ -146,7 +146,7 @@ def test_register_large_vit_model(
     model_card = ModelCard(
         interface=model,
         name="vit",
-        team="mlops",
+        repository="mlops",
         contact="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=data_card.uid,

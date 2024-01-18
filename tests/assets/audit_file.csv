@@ -71,9 +71,9 @@ data_understanding,5,What data quality is needed for the application to meet the
 data_understanding,6,What data quality thresholds have you selected and why?," - Learn more about,
 --- if threshold values have been defined for the data quality and
 --- for what technical and other reasons these threshold values have been chosen?
-- The team should be able to explain what happens when a value is above or below the threshold.",
+- The repository should be able to explain what happens when a value is above or below the threshold.",
 data_understanding,7,How is the semantic of the data model documented?," - Learn more about whether or not semantics and syntax have been defined for all data
-- e.g. whether the team knows the abbreviated values i.e S&D, BOO etc",
+- e.g. whether the repository knows the abbreviated values i.e S&D, BOO etc",
 data_understanding,8,Does the application draw on/use/generate any data that are subject to security requirements (e.g. according to GDPR)? Please specify.,- Learn more about whether the application is subject to GDPR and what is the reason given by the data scientist to use such data. ,
 data_understanding,9,How do you ensure data security? ,"- Learn more about technical, organizational and other steps taken by the product owner/developer to ensure data security.",
 data_preparation,1,Please specify any shortcomings in data quality you noted in the input data of the application.,"
@@ -165,7 +165,7 @@ deployment_ops,8,What qualifications do users of the application need?,"- Unders
 deployment_ops,9,How can users overrule decisions/proposals made by the application? What autonomy do you grant to the application and do you think the level of autonomy is appropriate? ,- Understand what autonomy the application has (BITKOM model on decision-making processes).,
 deployment_ops,10,What criteria govern decisions/proposals of the application that are submitted to the user?,- Understand what decisions are submitted to the user and which are not.,
 deployment_ops,11,To what extent do you consider the application to comply with applicable laws and regulations?,"- Understand the laws and regulations the application is subject to.
-- Obtain assessments on the application of the various parties involved. Possibly, the Data Gov team holds a different view of the application than the project manager or the DS .",
+- Obtain assessments on the application of the various parties involved. Possibly, the Data Gov repository holds a different view of the application than the project manager or the DS .",
 deployment_ops,12,What ethical concerns do you have about using the application?,"-Understand if apart from purely statutory aspects, the application may also affect ethical aspects.",
 deployment_ops,13,To what extent can you understand or track decisions/proposals made by the application?,- Understand if the user considers the decisions/proposals of the application to be fair and reasonable and if the user can even list individual criteria that in his/her view underlie a decisions/proposal of the application.,
 deployment_ops,14,To what extent are you able to understand or track how the application works?,- Understand if the user knows and is aware of the internal processes underlying the application or if these ideas are mere presumptions.,

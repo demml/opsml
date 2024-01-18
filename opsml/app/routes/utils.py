@@ -16,7 +16,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 from streaming_form_data.targets import FileTarget
 
-from opsml.app.routes.pydantic_models import ListTeamNameInfo
+from opsml.app.routes.pydantic_models import ListRepositoryNameInfo
 from opsml.cards.audit import AuditCard, AuditSections
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
@@ -34,16 +34,16 @@ TEMPLATE_PATH = os.path.abspath(os.path.join(PARENT_DIR, "templates"))
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
-def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[str]:
-    """Returns a list of model versions for a given team and model
+def get_model_versions(registry: CardRegistry, model: str, repository: str) -> List[str]:
+    """Returns a list of model versions for a given repository and model
 
     Args:
         registry:
             The registry to query
         model:
             The model to query
-        team:
-            The team to query
+        repository:
+            The repository to query
     Returns:
         A list of model versions
     """
@@ -52,31 +52,31 @@ def get_model_versions(registry: CardRegistry, model: str, team: str) -> List[st
         card["version"]
         for card in registry.list_cards(
             name=model,
-            team=team,
+            repository=repository,
         )
     ]
 
 
-def get_names_teams_versions(
-    registry: CardRegistry, team: str, name: str
+def get_names_repositories_versions(
+    registry: CardRegistry, repository: str, name: str
 ) -> Tuple[Sequence[str], Sequence[str], List[str]]:
-    """Helper functions to get the names, teams, and versions for a given registry
+    """Helper functions to get the names, repositories, and versions for a given registry
 
     Args:
         registry:
             The registry to query
-        team:
-            The team to query
+        repository:
+            The repository to query
         name:
             The name to query
     Returns:
-        A tuple of names, teams, and versions
+        A tuple of names, repositories, and versions
     """
 
-    teams = registry._registry.unique_teams  # pylint: disable=protected-access
-    versions = get_model_versions(registry, name, team)
-    names = registry._registry.get_unique_card_names(team=team)  # pylint: disable=protected-access
-    return names, teams, versions
+    repositories = registry._registry.unique_repositories  # pylint: disable=protected-access
+    versions = get_model_versions(registry, name, repository)
+    names = registry._registry.get_unique_card_names(repository=repository)  # pylint: disable=protected-access
+    return names, repositories, versions
 
 
 def get_runcard_from_model(
@@ -196,22 +196,22 @@ class ExternalFileTarget(FileTarget):  # type: ignore[misc]
         self._fd = self.storage_client.open(self.write_path, self._mode)
 
 
-def list_team_name_info(registry: CardRegistry, team: Optional[str] = None) -> ListTeamNameInfo:
-    """Returns dictionary of teams and info"""
+def list_repository_name_info(registry: CardRegistry, repository: Optional[str] = None) -> ListRepositoryNameInfo:
+    """Returns dictionary of repositories and info"""
 
-    all_teams = registry._registry.unique_teams  # pylint: disable=protected-access
+    all_repositories = registry._registry.unique_repositories  # pylint: disable=protected-access
 
-    if not bool(all_teams):
-        default_team = None
+    if not bool(all_repositories):
+        default_repository = None
     else:
-        default_team = all_teams[0]
+        default_repository = all_repositories[0]
 
-    team = team or default_team
-    names = registry._registry.get_unique_card_names(team=team)  # pylint: disable=protected-access
+    repository = repository or default_repository
+    names = registry._registry.get_unique_card_names(repository=repository)  # pylint: disable=protected-access
 
-    return ListTeamNameInfo(
-        teams=all_teams,
-        selected_team=team,
+    return ListRepositoryNameInfo(
+        repositories=all_repositories,
+        selected_repository=repository,
         names=names,
     )
 
@@ -282,13 +282,13 @@ class AuditFormParser:
                 logger.info("Invalid uid specified, defaulting to new AuditCard")
                 audit_card = AuditCard(
                     name=self.audit_form_dict["name"],
-                    team=self.audit_form_dict["team"],
+                    repository=self.audit_form_dict["repository"],
                     contact=self.audit_form_dict["email"],
                 )
         else:
             audit_card = AuditCard(
                 name=self.audit_form_dict["name"],
-                team=self.audit_form_dict["team"],
+                repository=self.audit_form_dict["repository"],
                 contact=self.audit_form_dict["email"],
             )
 

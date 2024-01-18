@@ -28,7 +28,7 @@ def test_numpy_api_client(
     datacard = DataCard(
         interface=data,
         name="test_data",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -44,7 +44,7 @@ def test_numpy_api_client(
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,
@@ -67,7 +67,7 @@ def test_pandas_api_client(
     datacard = DataCard(
         interface=data,
         name="test_data",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -85,7 +85,7 @@ def test_pandas_api_client(
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,
@@ -111,7 +111,7 @@ def test_polars_api_client(
     datacard = DataCard(
         interface=data,
         name="test_data",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -129,7 +129,7 @@ def test_polars_api_client(
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,
@@ -154,7 +154,7 @@ def test_arrow_api_client(
     datacard = DataCard(
         interface=data,
         name="test_data",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -170,7 +170,7 @@ def test_arrow_api_client(
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,
@@ -194,7 +194,7 @@ def test_image_data(
     datacard = DataCard(
         interface=image_data,
         name="test_data",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -210,7 +210,7 @@ def test_image_data(
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,
@@ -241,7 +241,7 @@ def test_text_data(
     datacard = DataCard(
         interface=text_data,
         name="test_data",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -257,7 +257,7 @@ def test_text_data(
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,

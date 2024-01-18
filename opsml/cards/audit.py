@@ -105,10 +105,10 @@ class AuditCard(ArtifactCard):
     Args:
         name:
             What to name the AuditCard
-        team:
-            Team that this card is associated with
+        repository:
+            Repository that this card is associated with
         contact:
-            Email to associate with the AuditCard
+            Contact to associate with the AuditCard
         audit:
             AuditSections object containing the audit questions and responses
         approved:

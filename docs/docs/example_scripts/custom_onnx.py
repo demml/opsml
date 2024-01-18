@@ -90,7 +90,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
 ######## Create DataCard
 datacard = DataCard(
     name="image-data",
-    team="opsml",
+    repository="opsml",
     contact="user@opsml.com",
     data=x.detach().numpy(),
 )
@@ -106,7 +106,7 @@ model_def = OnnxModel(
 
 modelcard = ModelCard(
     name="pytorch-custom-onnx",
-    team="opsml",
+    repository="opsml",
     contact="opsml.com",
     trained_model=torch_model,
     sample_input_data=datacard.data[0:1],

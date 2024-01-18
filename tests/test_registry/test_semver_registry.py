@@ -12,7 +12,7 @@ def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
 
     kwargs = {
         "name": "pre_build",
-        "team": "mlops",
+        "repository": "mlops",
         "contact": "opsml.com",
         "interface": sql_data,
     }
@@ -68,18 +68,6 @@ def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     registry.register_card(card=card, version_type="build")
     assert card.version == "1.0.0+git.1a5d783h3784"
 
-    # this should fail
-    kwargs = {
-        "name": "pre_build",
-        "team": "fail",
-        "contact": "opsml.com",
-        "interface": sql_data,
-    }
-
-    with pytest.raises(ValueError) as ve:
-        card = DataCard(**kwargs, version="1.0.0")
-        registry.register_card(card=card)
-    assert ve.match("Model name already exists for a different team. Try a different name.")
 
 
 def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegistries):
@@ -88,7 +76,7 @@ def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegist
 
     kwargs = {
         "name": "build_tag",
-        "team": "mlops",
+        "repository": "mlops",
         "contact": "opsml.com",
         "interface": sql_data,
     }

@@ -11,8 +11,9 @@ from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._run_manager import _RunManager
 from opsml.projects.active_run import ActiveRun, CardHandler
-from opsml.projects.base.types import ProjectInfo
+from opsml.projects.types import ProjectInfo
 from opsml.types import CardInfo, CardType, Metric, Metrics, Param, Params
+
 
 logger = ArtifactLogger.get_logger()
 
@@ -36,7 +37,6 @@ class OpsmlProject:
             project: OpsmlProject = OpsmlProject(
                 ProjectInfo(
                     name="test-project",
-                    team="data-devops",
                     # If run_id is omitted, a new run is created.
                     run_id="123ab123kaj8u8naskdfh813",
                 )
@@ -74,6 +74,10 @@ class OpsmlProject:
     @property
     def project_id(self) -> str:
         return self._run_mgr.project_id
+
+    @property
+    def project_name(self) -> str:
+        return self._run_mgr._project_info.name
 
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
@@ -127,11 +131,11 @@ class OpsmlProject:
         Returns:
             List of RunCard
         """
-        logger.info("Listing runs for project {}", self.project_id)
+        logger.info("Listing runs for project {}", self.project_name)
 
         project_runs = self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
             limit=limit,
-            query_terms={"project_id": self.project_id},
+            query_terms={"project": self.project_name},
         )
 
         return sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)

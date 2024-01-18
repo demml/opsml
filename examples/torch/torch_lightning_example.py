@@ -22,7 +22,7 @@ class OpsmlLightningWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "team" and "email" to a card; however, this
+                You could also provide "name", "repository" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -117,6 +117,6 @@ class OpsmlLightningWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="torch", team="opsml", contact="user@email.com")
+    info = CardInfo(name="torch", repository="opsml", contact="user@email.com")
     workflow = OpsmlLightningWorkflow(info=info)
     workflow.run_workflow()

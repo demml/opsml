@@ -44,7 +44,7 @@
 
 :star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
 ## Version 2
-The `opsml` team is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
+The `opsml` repository is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
 
 Core features of version 2 include:
 
@@ -192,7 +192,7 @@ data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
 
 # card info (optional, but is used to simplify required args a bit)
-card_info = CardInfo(name="linnerrud", team="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 
 # get X, y
 data, target = load_linnerud(return_X_y=True, as_frame=True)
@@ -262,7 +262,7 @@ data registry output
         "timestamp": 1698622188318014,
         "app_env": "development",
         "uid": "07131023c60d4a6892092851eab0f86d",
-        "team": "opsml",
+        "repository": "opsml",
         "contact": "user@email.com",
         "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
         "runcard_uid": null,
@@ -278,7 +278,7 @@ model registry output
     {
         "uid": "1e68ef7851b34974bfaac764f348491d",
         "app_env": "development",
-        "team": "opsml",
+        "repository": "opsml",
         "contact": "user@email.com",
         "modelcard_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/modelcard.joblib",
         "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",

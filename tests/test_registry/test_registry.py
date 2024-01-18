@@ -71,7 +71,7 @@ def test_register_data(
     data_card = DataCard(
         interface=test_interface,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -82,7 +82,7 @@ def test_register_data(
     registry.register_card(card=data_card)
     assert data_card.version == version
 
-    cards = registry.list_cards(name=data_card.name, team=data_card.team)
+    cards = registry.list_cards(name=data_card.name, repository=data_card.repository)
     assert bool(cards)
 
     cards = registry.list_cards(name=data_card.name)
@@ -91,29 +91,29 @@ def test_register_data(
     cards = registry.list_cards()
     assert bool(cards)
 
-    cards = registry.list_cards(name=data_card.name, team=data_card.team, version="1.0.0")
+    cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="1.0.0")
     assert bool(cards)
 
     data_card = DataCard(
         interface=test_interface,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     registry.register_card(card=data_card)
 
-    cards = registry.list_cards(name=data_card.name, team=data_card.team, version="^1")
+    cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="^1")
     assert len(cards) >= 1
 
     # Verify card name normalization (replacing "_" with "-")
-    names = registry._registry.get_unique_card_names(team="mlops")
+    names = registry._registry.get_unique_card_names(repository="mlops")
     # NOTE: opsml replaces "_" with "-" in card name name
     assert "test-df" in names
 
     names = registry._registry.get_unique_card_names()
     assert "test-df" in names
 
-    assert "mlops" in registry._registry.unique_teams
+    assert "mlops" in registry._registry.unique_repositories
 
 
 def test_datacard_sql_register(sql_data: SqlData, db_registries: CardRegistries):
@@ -122,7 +122,7 @@ def test_datacard_sql_register(sql_data: SqlData, db_registries: CardRegistries)
     data_card = DataCard(
         interface=sql_data,
         name="test_sql",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         metadata=DataCardMetadata(
             description=Description(summary="data_readme.md"),
@@ -134,7 +134,7 @@ def test_datacard_sql_register(sql_data: SqlData, db_registries: CardRegistries)
     loaded_card: DataCard = registry.load_card(uid=data_card.uid)
     assert loaded_card.interface.sql_logic.get("test") is not None
     assert data_card.name == "test-sql"
-    assert data_card.team == "mlops"
+    assert data_card.repository == "mlops"
     assert data_card.version >= "1.0.0"
     assert data_card.tags == {"test": "hello"}
 
@@ -151,7 +151,7 @@ def test_datacard_sql_register_date(sql_data: SqlData, db_registries: CardRegist
     data_card = DataCard(
         interface=sql_data,
         name="test_sql",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -175,7 +175,7 @@ def test_datacard_sql_register_file(sql_file: SqlData, db_registries: CardRegist
     data_card = DataCard(
         interface=sql_file,
         name="test_file",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     registry.register_card(card=data_card)
@@ -189,18 +189,18 @@ def test_unique_name_fail(sql_file: SqlData, db_registries: CardRegistries):
     data_card = DataCard(
         interface=sql_file,
         name="test_name_fail",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
     registry.register_card(card=data_card)
 
-    # test registering card with same name and different team
+    # test registering card with same name and different repository
     with pytest.raises(ValueError):
         data_card = DataCard(
             interface=sql_file,
             name="test_name_fail",
-            team="fail_teams",
+            repository="fail_repositories",
             contact="mlops.com",
         )
 
@@ -219,12 +219,12 @@ def test_semver_registry_list(
         data_card = DataCard(
             interface=numpy_data,
             name="test_semver",
-            team="mlops",
+            repository="mlops",
             contact="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
-    cards = registry.list_cards(name="test_semver", team="mlops", version="^1.0.0")
+    cards = registry.list_cards(name="test_semver", repository="mlops", version="^1.0.0")
 
     assert len(cards) == 1
     assert cards[0]["version"] == "1.0.4"
@@ -233,7 +233,7 @@ def test_semver_registry_list(
     data_card = DataCard(
         interface=numpy_data,
         name="test_semver",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     registry.register_card(card=data_card, version_type="major")
@@ -242,16 +242,16 @@ def test_semver_registry_list(
         data_card = DataCard(
             interface=numpy_data,
             name="test_semver",
-            team="mlops",
+            repository="mlops",
             contact="mlops.com",
         )
         registry.register_card(card=data_card)
 
     # should return 13 versions
-    cards = registry.list_cards(name=data_card.name, team=data_card.team, version="2.*.*")
+    cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="2.*.*")
     assert len(cards) == 13
 
-    cards = registry.list_cards(name=data_card.name, team=data_card.team, version="^2.0.0")
+    cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="^2.0.0")
     cards[0]["version"] == "2.12.0"
     assert len(cards) == 1
 
@@ -259,13 +259,13 @@ def test_semver_registry_list(
     data_card_pre = DataCard(
         interface=numpy_data,
         name="test_semver",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3.0.0-rc.1",
     )
     registry.register_card(card=data_card_pre)
 
-    records = registry.list_cards(name=data_card.name, team=data_card.team, version="3.*.*")
+    records = registry.list_cards(name=data_card.name, repository=data_card.repository, version="3.*.*")
 
     assert len(records) == 1
 
@@ -273,7 +273,7 @@ def test_semver_registry_list(
     registry.update_card(card=data_card_pre)
 
     # check update works
-    records = registry.list_cards(name=data_card.name, team=data_card.team, version="3.*.*")
+    records = registry.list_cards(name=data_card.name, repository=data_card.repository, version="3.*.*")
 
     assert records[0]["version"] == "3.0.0"
 
@@ -282,7 +282,7 @@ def test_semver_registry_list(
         data_card = DataCard(
             interface=numpy_data,
             name="test_semver",
-            team="mlops",
+            repository="mlops",
             contact="mlops.com",
             version="3.0.0-rc.1",  # cant create a release for a minor version that already exists
         )
@@ -293,7 +293,7 @@ def test_semver_registry_list(
         data_card = DataCard(
             interface=numpy_data,
             name="test_semver",
-            team="mlops",
+            repository="mlops",
             contact="mlops.com",
             version="3.0.0blah",
         )
@@ -303,7 +303,7 @@ def test_semver_registry_list(
     data_card_pre = DataCard(
         interface=numpy_data,
         name="test_semver",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3.0.1-rc.1",
     )
@@ -314,12 +314,12 @@ def test_semver_registry_list(
         data_card = DataCard(
             interface=numpy_data,
             name="patch",
-            team="mlops",
+            repository="mlops",
             contact="mlops.com",
         )
         registry.register_card(card=data_card, version_type="patch")
 
-    cards = registry.list_cards(name="patch", team="mlops", version="^1.0.0")
+    cards = registry.list_cards(name="patch", repository="mlops", version="^1.0.0")
 
     assert cards[0]["version"] == "1.0.4"
 
@@ -333,7 +333,7 @@ def test_runcard(
 
     run = RunCard(
         name="test_run",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uids=["test_uid"],
     )
@@ -395,7 +395,7 @@ def test_model_registry_onnx(
     data_card = DataCard(
         interface=data,
         name="pipeline_data",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     data_registry.register_card(card=data_card)
@@ -404,7 +404,7 @@ def test_model_registry_onnx(
     model_card = ModelCard(
         interface=model,
         name="pipeline_model",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=data_card.uid,
         to_onnx=True,
@@ -434,7 +434,7 @@ def test_model_registry_onnx(
     model_card = ModelCard(
         interface=model,
         name="pipeline_model",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=data_card.uid,
     )
@@ -456,7 +456,7 @@ def test_modelcard_register_fail(
     model_card = ModelCard(
         interface=model,
         name="pipeline_model",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=None,
     )
@@ -467,7 +467,7 @@ def test_modelcard_register_fail(
 
 def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
-    team = "mlops"
+    repository = "mlops"
     contact = "mlops.com"
 
     registry = db_registries.data
@@ -476,7 +476,7 @@ def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
     data_card = DataCard(
         interface=data,
         name=data_name,
-        team=team,
+        repository=repository,
         contact=contact,
         metadata=DataCardMetadata(
             additional_info={"input_metadata": 20},
@@ -510,7 +510,7 @@ def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
 
 def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
-    team = "mlops"
+    repository = "mlops"
     contact = "mlops.com"
 
     data_registry = db_registries.data
@@ -525,7 +525,7 @@ def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries
         datacard = DataCard(
             interface=data,
             name=data_name,
-            team=team,
+            repository=repository,
             contact=contact,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
             dependent_vars=[200, "test"],
@@ -538,7 +538,7 @@ def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries
 def test_pipeline_registry(db_registries: CardRegistries):
     pipeline_card = PipelineCard(
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         pipeline_code_uri="test_pipe_uri",
     )
@@ -567,7 +567,7 @@ def test_full_pipeline_with_loading(
     linear_regression: Tuple[SklearnModel, NumpyData],
     db_registries: CardRegistries,
 ):
-    team = "mlops"
+    repository = "mlops"
     contact = "mlops.com"
     pipeline_code_uri = "test_pipe_uri"
     data_registry = db_registries.data
@@ -580,7 +580,7 @@ def test_full_pipeline_with_loading(
     data_card = DataCard(
         interface=data,
         name="test_data",
-        team=team,
+        repository=repository,
         contact=contact,
     )
 
@@ -589,7 +589,7 @@ def test_full_pipeline_with_loading(
     model_card = ModelCard(
         interface=model,
         name="test_model",
-        team=team,
+        repository=repository,
         contact=contact,
         datacard_uid=data_card.uid,
         to_onnx=True,
@@ -600,7 +600,7 @@ def test_full_pipeline_with_loading(
     ##### RunCard
     exp_card = RunCard(
         name="test_experiment",
-        team=team,
+        repository=repository,
         contact=contact,
         datacard_uids=[data_card.uid],
         modelcard_uids=[model_card.uid],
@@ -611,7 +611,7 @@ def test_full_pipeline_with_loading(
     #### PipelineCard
     pipeline_card = PipelineCard(
         name="test_pipeline",
-        team=team,
+        repository=repository,
         contact=contact,
         pipeline_code_uri=pipeline_code_uri,
         datacard_uids=[data_card.uid],
@@ -632,7 +632,7 @@ def test_model_registry_with_polars(
     data_card = DataCard(
         interface=data,
         name="polars_data",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
     data_registry.register_card(card=data_card)
@@ -640,7 +640,7 @@ def test_model_registry_with_polars(
     model_card = ModelCard(
         interface=model,
         name="polars_model",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         datacard_uid=data_card.uid,
         to_onnx=True,
@@ -658,7 +658,7 @@ def test_pandas_dtypes(db_registries: CardRegistries, pandas_data: PandasData):
     pandas_data.data["animals"] = pandas_data.data["animals"].astype("category")
     datacard = DataCard(
         name="pandas_dtype",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         interface=pandas_data,
     )
@@ -689,7 +689,7 @@ def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsDa
 
     datacard = DataCard(
         name="pandas_dtype",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         interface=iris_data_polars,
     )
@@ -708,7 +708,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3.1.1",
     )
@@ -718,7 +718,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3.1",  # specifying major minor version
     )
@@ -729,7 +729,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3",  # specifying major with minor bump
     )
@@ -740,7 +740,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3",  # specifying major with patch bump
     )
@@ -751,7 +751,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3.2",  # specifying major minor with minor bump.
     )
@@ -762,7 +762,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="3.2",  # specifying major minor with minor bump.
     )
@@ -775,7 +775,7 @@ def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardReg
     data_card = DataCard(
         interface=sql_data,
         name="major_minor",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
         version="4.1",  # specifying major minor version
     )
@@ -791,7 +791,7 @@ def test_list_cards(db_registries: CardRegistries):
         "uid": uuid.uuid4().hex,
         "timestamp": 1,
         "name": "list-test",
-        "team": "test_team",
+        "repository": "test_repository",
         "contact": "test_email",
         "version": "1.0.0",
         "data_type": "test_type",
