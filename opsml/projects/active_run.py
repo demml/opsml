@@ -282,7 +282,7 @@ class ActiveRun:
         return self.runcard.parameters
 
     @property
-    def tags(self) -> dict[str, str]:
+    def tags(self) -> dict[str, Union[str, int]]:
         return self.runcard.tags
 
     @property
