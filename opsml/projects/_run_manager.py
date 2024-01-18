@@ -9,8 +9,8 @@ from typing import Dict, Optional, Union, cast
 from opsml.cards import ProjectCard, RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
-from opsml.registry import CardRegistries
 from opsml.projects.types import ProjectInfo, Tags
+from opsml.registry import CardRegistries
 
 logger = ArtifactLogger.get_logger()
 

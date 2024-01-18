@@ -628,6 +628,7 @@ def test_data_model_version(
     battle_report = response.json()
     assert battle_report["report"]["test_metric"][0]["challenger_win"] == False
 
+
 ##### Test audit
 def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]):
 
@@ -659,7 +660,9 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
 
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?repository={modelcard.repository}&model={modelcard.name}&version={modelcard.version}")
+    response = test_app.get(
+        f"/opsml/audit/?repository={modelcard.repository}&model={modelcard.name}&version={modelcard.version}"
+    )
     assert response.status_code == 200
 
     comment = CommentSaveRequest(
