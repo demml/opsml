@@ -7,7 +7,7 @@ from opsml.cards import CardInfo, DataCard, DataSplit
 from opsml.data import NumpyData, PandasData, PolarsData
 from opsml.registry import CardRegistries, CardRegistry
 
-card_info = CardInfo(name="test-data", team="opsml", contact="@opsml.com")
+card_info = CardInfo(name="test-data", repository="opsml", contact="@opsml.com")
 
 
 def test_data_card_splits_column_pandas(pandas_data: PandasData):

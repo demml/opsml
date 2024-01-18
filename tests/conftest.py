@@ -998,7 +998,7 @@ def populate_model_data_for_api(
     linear_regression: Tuple[SklearnModel, NumpyData],
 ) -> Tuple[ModelCard, DataCard]:
     config.opsml_registry_path = uuid.uuid4().hex
-    team = "mlops"
+    repository = "mlops"
     contact = "test@mlops.com"
 
     model, data = linear_regression
@@ -1009,7 +1009,7 @@ def populate_model_data_for_api(
     datacard = DataCard(
         interface=data,
         name="test_data",
-        team=team,
+        repository=repository,
         contact=contact,
         metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
     )
@@ -1020,7 +1020,7 @@ def populate_model_data_for_api(
     modelcard = ModelCard(
         interface=model,
         name=uuid.uuid4().hex,
-        team=team,
+        repository=repository,
         contact=contact,
         datacard_uid=datacard.uid,
         to_onnx=True,
@@ -1038,7 +1038,7 @@ def populate_model_data_for_route(
     linear_regression: Tuple[SklearnModel, NumpyData],
 ) -> None:
     config.opsml_registry_path = uuid.uuid4().hex
-    team = "mlops"
+    repository = "mlops"
     contact = "test@mlops.com"
 
     model, data = linear_regression
@@ -1050,7 +1050,7 @@ def populate_model_data_for_route(
     # create run
     card_info = CardInfo(
         name="test_run",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -1065,7 +1065,7 @@ def populate_model_data_for_route(
     datacard = DataCard(
         interface=data,
         name="test_data",
-        team=team,
+        repository=repository,
         contact=contact,
         metadata=DataCardMetadata(
             additional_info={"input_metadata": 20},
@@ -1079,7 +1079,7 @@ def populate_model_data_for_route(
     modelcard = ModelCard(
         interface=model,
         name=uuid.uuid4().hex,
-        team=team,
+        repository=repository,
         contact=contact,
         datacard_uid=datacard.uid,
         to_onnx=True,
@@ -1091,7 +1091,7 @@ def populate_model_data_for_route(
 
     # create auditcard
 
-    auditcard = AuditCard(name="audit_card", team="team", contact="test")
+    auditcard = AuditCard(name="audit_card", repository="repository", contact="test")
     auditcard.add_card(card=modelcard)
     audit_registry.register_card(auditcard)
 
@@ -1113,16 +1113,16 @@ def populate_run(
         return test_app
 
     with patch("httpx.Client", callable_api):
-        info = ProjectInfo(name="test", team="test-exp", contact="test")
+        info = ProjectInfo(name="opsml-project", contact="test")
         project = OpsmlProject(info=info)
 
-        assert project.project_id == "test-exp:test"
+        assert project.project_id == 1
 
         with project.run() as run:
             datacard = DataCard(
                 interface=data,
                 name="test_data",
-                team="mlops",
+                repository="mlops",
                 contact="mlops.com",
             )
             datacard.create_data_profile()
@@ -1133,7 +1133,7 @@ def populate_run(
             modelcard = ModelCard(
                 interface=model,
                 name="pipeline_model",
-                team="mlops",
+                repository="mlops",
                 contact="mlops.com",
                 tags={"id": "model1"},
                 datacard_uid=datacard.uid,

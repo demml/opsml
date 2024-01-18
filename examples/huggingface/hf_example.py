@@ -49,7 +49,7 @@ class OpsmlHuggingFaceWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "team" and "email" to a card; however, this
+                You could also provide "name", "repository" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     writer = TextWriterHelper()
     writer.generate_text_records()
 
-    info = CardInfo(name="huggingface", team="opsml", contact="user@email.com")
+    info = CardInfo(name="huggingface", repository="opsml", contact="user@email.com")
     workflow = OpsmlHuggingFaceWorkflow(info=info)
     workflow.run_workflow()
 

@@ -8,7 +8,7 @@
 Will download a model and/or it's metadata to a local folder
 
 - **name**: Name of model
-- **team**: Team associated with model
+- **repository**: repository associated with model
 - **version**: Version of model
 - **uid**: uid of model
 - **write-dir**: Folder to download model object to
@@ -20,7 +20,7 @@ Will list available models in a registry
 
 - **registry**: Card registry to search
 - **name**: Name of card
-- **team**: Team associated with card
+- **repository**: repository associated with card
 - **version**: Version of card
 - **uid**: uid of card
 - **max-date**: Max date to search. Must be in `YYYY-MM-DD` format
@@ -31,7 +31,7 @@ Will list available models in a registry
 Prints metrics associated with a ModelCard
 
 - **name**: Name of card
-- **team**: Team associated with card
+- **repository**: repository associated with card
 - **version**: Version of card
 - **uid**: uid of card
 
@@ -40,7 +40,7 @@ Prints metrics associated with a ModelCard
 Downloads a data profile from a DataCard
 
 - **name**: Name of card
-- **team**: Team associated with card
+- **repository**: repository associated with card
 - **version**: Version of card
 - **uid**: uid of card
 
@@ -49,7 +49,7 @@ Downloads a data profile from a DataCard
 Takes a list of version or uids and runs data profile comparisons
 
 - **name**: Name of card
-- **team**: Team associated with card
+- **repository**: repository associated with card
 - **version**: List of versions to compare
 - **uid**: List of uids to compare
 

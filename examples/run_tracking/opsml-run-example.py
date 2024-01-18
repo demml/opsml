@@ -14,8 +14,8 @@ from opsml import (
 )
 from opsml.helpers.data import create_fake_data
 
-info = ProjectInfo(name="opsml-project", team="opsml", contact="user@email.com")
-card_info = CardInfo(name="linear-reg", team="opsml", contact="user@email.com")
+info = ProjectInfo(name="opsml-project", repository="opsml", contact="user@email.com")
+card_info = CardInfo(name="linear-reg", repository="opsml", contact="user@email.com")
 
 # create project
 project = OpsmlProject(info=info)

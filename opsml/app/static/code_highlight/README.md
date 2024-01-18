@@ -38,7 +38,7 @@ The Github project may be found at: <https://github.com/highlightjs/highlight.js
 Further in-depth documentation for the API and other topics is at
 <http://highlightjs.readthedocs.io/>.
 
-A list of the Core Team and contributors can be found in the [CONTRIBUTORS.md][8] file.
+A list of the Core repository and contributors can be found in the [CONTRIBUTORS.md][8] file.
 
 [1]: https://www.npmjs.com/package/highlight.js
 [7]: https://github.com/highlightjs/highlight.js/blob/main/LICENSE

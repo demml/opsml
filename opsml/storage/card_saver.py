@@ -277,7 +277,7 @@ class ModelCardSaver(CardSaver):
             onnx_version=onnx_version,
             model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
             model_version=self.card.version,
-            model_team=self.card.team,
+            model_repository=self.card.repository,
             data_schema=self.card.metadata.data_schema,
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
         )

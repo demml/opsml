@@ -28,10 +28,10 @@ def test_delete_data_model(
     )
 
     # assert card and artifacts exist
-    cards = data_registry.list_cards(name=datacard.name, team=datacard.team)
+    cards = data_registry.list_cards(name=datacard.name, repository=datacard.repository)
     assert len(cards) == 1
 
-    cards = model_registry.list_cards(name=modelcard.name, team=modelcard.team)
+    cards = model_registry.list_cards(name=modelcard.name, repository=modelcard.repository)
     assert len(cards) == 1
 
     assert api_storage_client.exists(
@@ -46,7 +46,7 @@ def test_delete_data_model(
 
     # delete model card
     model_registry.delete_card(card=modelcard)
-    cards = model_registry.list_cards(name=modelcard.name, team=modelcard.team)
+    cards = model_registry.list_cards(name=modelcard.name, repository=modelcard.repository)
     assert len(cards) == 0
 
     assert not api_storage_client.exists(
@@ -63,7 +63,7 @@ def test_delete_data_model(
 
     # delete datacard
     data_registry.delete_card(card=datacard)
-    cards = data_registry.list_cards(name=datacard.name, team=datacard.team)
+    cards = data_registry.list_cards(name=datacard.name, repository=datacard.repository)
     assert len(cards) == 0
 
     assert not api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))

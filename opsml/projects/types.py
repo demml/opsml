@@ -1,7 +1,3 @@
-# Copyright (c) Shipt, Inc.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
 from enum import Enum
 from typing import Optional
 
@@ -10,21 +6,16 @@ from pydantic import BaseModel, Field, field_validator
 from opsml.settings.config import config
 
 
-# This needs to be kept here for backward compatibility with v1
 class Tags(str, Enum):
     NAME = "name"
-    TEAM = "team"
-    EMAIL = "contact"
+    ID = "id"
+    CONTACT = "contact"
     VERSION = "version"
 
 
 class ProjectInfo(BaseModel):
     """
-    A project identifier.
-
-    Projects are identified by a combination of name and team. Each project must
-    be unique within a team. The full project identifier is represented as
-    "name:team".
+    Data structure for project information
     """
 
     name: str = Field(
@@ -32,14 +23,10 @@ class ProjectInfo(BaseModel):
         description="The project name",
         min_length=1,
     )
-    team: str = Field(
-        ...,
-        description="Team to associate with project",
-        min_length=1,
-    )
-    contact: Optional[str] = Field(
-        None,
-        description="Email to associate with project",
+
+    repository: str = Field(
+        "opsml",
+        description="Optional repository to associate with the project. If not provided, defaults to opsml",
         min_length=1,
     )
 
@@ -53,17 +40,7 @@ class ProjectInfo(BaseModel):
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
     )
 
-    @property
-    def project_id(self) -> str:
-        """The unique project identifier."""
-        return f"{self.team}:{self.name}"
-
-    @property
-    def project_name(self) -> str:
-        """The project name."""
-        return self.name
-
-    @field_validator("name", "team", mode="before")
+    @field_validator("name", mode="before")
     def identifier_validator(cls, value: Optional[str]) -> Optional[str]:
         """Lowers and strips an identifier.
 

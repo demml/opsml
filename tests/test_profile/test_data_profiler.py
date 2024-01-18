@@ -26,7 +26,7 @@ def test_datacard_create_data_profile_pandas(
     data_card = DataCard(
         interface=iris_data,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -47,7 +47,7 @@ def test_datacard_create_data_profile_polars(
     data_card = DataCard(
         interface=iris_data_polars,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -79,7 +79,7 @@ def test_feed_data_profile(
     data_card = DataCard(
         interface=iris_data,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -87,7 +87,7 @@ def test_feed_data_profile(
     data_card = DataCard(
         interface=iris_data,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
@@ -113,7 +113,7 @@ def test_compare_data_profile(
     data_card = DataCard(
         interface=iris_data,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 

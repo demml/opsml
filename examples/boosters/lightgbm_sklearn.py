@@ -25,7 +25,7 @@ class OpsmlLightGBMSklearnWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "team" and "email" to a card; however, this
+                You could also provide "name", "repository" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -119,7 +119,7 @@ class OpsmlLightGBMSklearnWorkflow:
         # Here we are registering the pipeline which contains an sklearn model
         modelcard = ModelCard(
             name="lgb-reg",
-            team="opsml",
+            repository="opsml",
             contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
@@ -164,6 +164,6 @@ class OpsmlLightGBMSklearnWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="lightgbm", team="opsml", contact="user@email.com")
+    info = CardInfo(name="lightgbm", repository="opsml", contact="user@email.com")
     workflow = OpsmlLightGBMSklearnWorkflow(info=info)
     workflow.run_workflow()

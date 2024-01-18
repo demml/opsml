@@ -101,7 +101,7 @@ def test_register_data(
     data_card = DataCard(
         data=image_dataset,
         name="test_df",
-        team="mlops",
+        repository="mlops",
         contact="mlops.com",
     )
 
