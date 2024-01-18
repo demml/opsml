@@ -1,4 +1,4 @@
-# Data Interface
+# Interfaces
 
 As mentioned in the [overview](../overview.md), the `DataInterface` supports the following subclasses:
 
