@@ -6,7 +6,7 @@ import uuid
 from datetime import date
 from typing import List, cast
 
-from sqlalchemy import BigInteger, Boolean, Column, String
+from sqlalchemy import BigInteger, Boolean, Column, String, Integer
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
@@ -25,14 +25,14 @@ class BaseMixin:
     timestamp = Column("timestamp", BigInteger)
     app_env = Column("app_env", String(32), default=os.getenv("APP_ENV", "development"))
     name = Column("name", String(128))
-    team = Column("team", String(128))
-    version = Column("version", String(32), nullable=False)
-    contact = Column("contact", String(128))
+    repository = Column("repository", String(128))
+    version = Column("version", String(64), nullable=False)
+    contact = Column("contact", String(64))
     tags = Column("tags", JSON)
 
-    @validates("team")
-    def lower_team(self, key: str, team: str) -> str:
-        return team.lower().replace("_", "-")
+    @validates("repository")
+    def lower_repository(self, key: str, repository: str) -> str:
+        return repository.lower().replace("_", "-")
 
     @validates("name")
     def lower_name(self, key: str, name: str) -> str:
@@ -51,10 +51,10 @@ class CardSQLTable(Base, BaseMixin):
 
 @declarative_mixin
 class DataMixin:
-    data_type = Column("data_type", String(1024))
-    runcard_uid = Column("runcard_uid", String(1024))
-    pipelinecard_uid = Column("pipelinecard_uid", String(1024))
-    auditcard_uid = Column("auditcard_uid", String(1024))
+    data_type = Column("data_type", String(64))
+    runcard_uid = Column("runcard_uid", String(64))
+    pipelinecard_uid = Column("pipelinecard_uid", String(64))
+    auditcard_uid = Column("auditcard_uid", String(64))
 
 
 class DataSchema(Base, BaseMixin, DataMixin):
@@ -66,12 +66,12 @@ class DataSchema(Base, BaseMixin, DataMixin):
 
 @declarative_mixin
 class ModelMixin:
-    datacard_uid = Column("datacard_uid", String(1024))
-    sample_data_type = Column("sample_data_type", String(512))
-    model_type = Column("model_type", String(512))
-    runcard_uid = Column("runcard_uid", String(1024))
-    pipelinecard_uid = Column("pipelinecard_uid", String(1024))
-    auditcard_uid = Column("auditcard_uid", String(1024))
+    datacard_uid = Column("datacard_uid", String(64))
+    sample_data_type = Column("sample_data_type", String(64))
+    model_type = Column("model_type", String(64))
+    runcard_uid = Column("runcard_uid", String(64))
+    pipelinecard_uid = Column("pipelinecard_uid", String(64))
+    auditcard_uid = Column("auditcard_uid", String(64))
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):
@@ -85,8 +85,8 @@ class ModelSchema(Base, BaseMixin, ModelMixin):
 class RunMixin:
     datacard_uids = Column("datacard_uids", JSON)
     modelcard_uids = Column("modelcard_uids", JSON)
-    pipelinecard_uid = Column("pipelinecard_uid", String(512))
-    project_id = Column("project_id", String(512))
+    pipelinecard_uid = Column("pipelinecard_uid", String(64))
+    project = Column("project", String(64))
     artifact_uris = Column("artifact_uris", JSON)
 
 
@@ -114,7 +114,7 @@ class AuditSchema(Base, BaseMixin, AuditMixin):
 
 @declarative_mixin
 class PipelineMixin:
-    pipeline_code_uri = Column("pipeline_code_uri", String(512))
+    pipeline_code_uri = Column("pipeline_code_uri", String(256))
     datacard_uids = Column("datacard_uids", JSON)
     modelcard_uids = Column("modelcard_uids", JSON)
     runcard_uids = Column("runcard_uids", JSON)
@@ -130,12 +130,11 @@ class PipelineSchema(Base, BaseMixin, PipelineMixin):
 class ProjectSchema(Base):
     __tablename__ = RegistryTableNames.PROJECT.value
 
-    uid = Column("uid", String(512), default=lambda: uuid.uuid4().hex)
-    name = Column("name", String(512))
-    team = Column("team", String(512))
-    project_id = Column("project_id", String(512), primary_key=True)
-    description = Column("description", String(512))
-    version = Column("version", String(512))
+    uid = Column("uid", String(64), default=lambda: uuid.uuid4().hex)
+    name = Column("name", String(128))
+    repository = Column("repository", String(128))
+    project_id = Column("project_id", Integer, primary_key=True)
+    version = Column("version", String(64), nullable=False)
     timestamp = Column("timestamp", BigInteger)
 
     def __repr__(self) -> str:

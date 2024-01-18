@@ -178,7 +178,7 @@ data_understanding:
 
       --- for what technical and other reasons these threshold values have been chosen?
 
-      - The team should be able to explain what happens when a value is above or below
+      - The repository should be able to explain what happens when a value is above or below
       the threshold."
     question: What data quality thresholds have you selected and why?
     response:
@@ -188,7 +188,7 @@ data_understanding:
       - Learn more about whether or not semantics and syntax have been defined for all
       data
 
-      - e.g. whether the team knows the abbreviated values i.e S&D, BOO etc"
+      - e.g. whether the repository knows the abbreviated values i.e S&D, BOO etc"
     question: How is the semantic of the data model documented?
     response:
 
@@ -566,7 +566,7 @@ deployment_ops:
       "- Understand the laws and regulations the application is subject to.
 
       - Obtain assessments on the application of the various parties involved. Possibly,
-      the Data Gov team holds a different view of the application than the project manager
+      the Data Gov repository holds a different view of the application than the project manager
       or the DS ."
     question:
       To what extent do you consider the application to comply with applicable

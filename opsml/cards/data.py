@@ -38,10 +38,10 @@ class DataCard(ArtifactCard):
             Instance of `DataInterface` that contains data
         name:
             What to name the data
-        team:
-            Team that this data is associated with
+        repository:
+            Repository that this data is associated with
         contact:
-            Email to associate with data card
+            Contact to associate with data card
         version:
             DataCard version
         uid:
@@ -126,9 +126,7 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data profile can only be created for a DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data profile can only be created for a DataInterface subclasses"
         self.interface.create_data_profile(sample_perc, self.name)
 
     def split_data(self) -> DataHolder:
@@ -149,9 +147,7 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property

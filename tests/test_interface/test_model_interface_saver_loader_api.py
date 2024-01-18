@@ -36,7 +36,7 @@ def test_save_huggingface_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -61,7 +61,7 @@ def test_save_huggingface_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -92,7 +92,7 @@ def test_save_sklearn_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -116,7 +116,7 @@ def test_save_sklearn_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -142,7 +142,7 @@ def test_save_lgb_booster_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -166,7 +166,7 @@ def test_save_lgb_booster_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -192,7 +192,7 @@ def test_save_lgb_sklearn_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -216,7 +216,7 @@ def test_save_lgb_sklearn_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -244,7 +244,7 @@ def test_save_torch_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -267,7 +267,7 @@ def test_save_torch_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -301,7 +301,7 @@ def test_save_torch_lightning_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -324,7 +324,7 @@ def test_save_torch_lightning_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -354,7 +354,7 @@ def test_save_tensorflow_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -377,7 +377,7 @@ def test_save_tensorflow_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -407,7 +407,7 @@ def test_save_tensorflow_multi_input_modelcard_api_client(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -430,7 +430,7 @@ def test_save_tensorflow_multi_input_modelcard_api_client(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,
@@ -458,7 +458,7 @@ def test_save_catboost_modelcard(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
+        repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         to_onnx=True,
@@ -486,7 +486,7 @@ def test_save_catboost_modelcard(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,

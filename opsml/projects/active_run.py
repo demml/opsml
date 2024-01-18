@@ -13,7 +13,7 @@ from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
-from opsml.storage.client import StorageClient
+from opsml.storage import client
 from opsml.types import ArtifactUris, CardInfo, CardType, Metrics, Params, SaveName
 
 logger = ArtifactLogger.get_logger()
@@ -23,14 +23,12 @@ logger = ArtifactLogger.get_logger()
 class RunInfo:
     def __init__(
         self,
-        storage_client: StorageClient,
-        registries: CardRegistries,
         runcard: RunCard,
         run_id: str,
         run_name: Optional[str] = None,
     ):
-        self.storage_client = storage_client
-        self.registries = registries
+        self.storage_client = client.storage_client
+        self.registries = CardRegistries()
         self.runcard = runcard
         self.run_id = run_id
         self.run_name = run_name
@@ -142,7 +140,7 @@ class ActiveRun:
             version_type=version_type,
         )
 
-        tag_key = f"{card.card_type}-{card.name}"
+        tag_key = f"{card.card_type}:{card.name}"
         self.add_tag(key=tag_key, value=str(card.version))
 
         # add uid to RunCard
@@ -166,11 +164,7 @@ class ActiveRun:
         """
         card_type = CardType(registry_name.lower()).value
 
-        return CardHandler.load_card(
-            registries=self._info.registries,
-            registry_name=card_type,
-            info=info,
-        )
+        return CardHandler.load_card(registries=self._info.registries, registry_name=card_type, info=info)
 
     def log_artifact_from_file(
         self,

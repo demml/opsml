@@ -277,7 +277,7 @@ class ModelCardSaver(CardSaver):
             onnx_version=onnx_version,
             model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
             model_version=self.card.version,
-            model_team=self.card.team,
+            model_repository=self.card.repository,
             data_schema=self.card.metadata.data_schema,
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
         )
@@ -461,9 +461,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

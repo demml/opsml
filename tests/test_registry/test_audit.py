@@ -10,7 +10,7 @@ from opsml.registry import CardRegistries
 
 def test_audit_card(db_registries: CardRegistries):
     audit_registry = db_registries.audit
-    card = AuditCard(name="audit_card", team="team", contact="test")
+    card = AuditCard(name="audit_card", repository="repository", contact="test")
 
     assert card.business[1].response is None
     card.answer_question(section="business", question_nbr=1, response="response")
@@ -39,7 +39,7 @@ def test_audit_card(db_registries: CardRegistries):
 
 
 def test_audit_card_failure():
-    card = AuditCard(name="audit_card", team="team", contact="test")
+    card = AuditCard(name="audit_card", repository="repository", contact="test")
 
     with pytest.raises(ValueError):
         card._get_section("not_a_section")
@@ -50,9 +50,9 @@ def test_audit_card_failure():
 
 def test_audit_card_add_uids(db_registries: CardRegistries, linear_regression: Tuple[SklearnModel, NumpyData]):
     reg, data = linear_regression
-    auditcard = AuditCard(name="audit_card", team="team", contact="test")
+    auditcard = AuditCard(name="audit_card", repository="repository", contact="test")
 
-    datacard = DataCard(name="data_card", team="team", contact="test", interface=data)
+    datacard = DataCard(name="data_card", repository="repository", contact="test", interface=data)
     db_registries.data.register_card(datacard)
 
     # test 1st path to add uid
@@ -66,7 +66,7 @@ def test_audit_card_add_uids(db_registries: CardRegistries, linear_regression: T
     # create modelcard
     modelcard = ModelCard(
         name="model_card",
-        team="team",
+        repository="repository",
         contact="test",
         interface=reg,
         datacard_uid=datacard.uid,

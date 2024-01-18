@@ -22,10 +22,10 @@ Return either a list of dictionaries or a dataframe containing card metadata.
 : Required Args:
   
     - Name: Name of card *(Optional)*
-    - Team: Team associated with card *(Optional)*
+    - repository: repository associated with card *(Optional)*
     - Version: Version of Card *(Optional)*
     - uid: Uid of card *(Optional)*
-    - info: `CardInfo` dataclass that can be used in place of Name, Team, Version and Uid
+    - info: `CardInfo` dataclass that can be used in place of Name, repository, Version and Uid
     - limit: Limit result
     - as_dataframe: Returns a dataframe if true else list of dictionaries
 
@@ -47,20 +47,20 @@ Return either a list of dictionaries or a dataframe containing card metadata.
   registry.list_cards(name="linear-reg")
     # list all cards with name "linear-reg"
   
-  registry.list_cards(name="linear-reg", team="opsml") 
-  # list all cards with name "linear-reg" with team "opsml"
+  registry.list_cards(name="linear-reg", repository="opsml") 
+  # list all cards with name "linear-reg" with repository "opsml"
   
-  registry.list_cards(name="linear-reg", team="opsml", version="1.0.0") 
-  # list card with name "linear-reg" with team "opsml" and version 1.0.0
+  registry.list_cards(name="linear-reg", repository="opsml", version="1.0.0") 
+  # list card with name "linear-reg" with repository "opsml" and version 1.0.0
 
-  registry.list_cards(name="linear-reg", team="opsml", version="1.*.*") 
-  # list cards with name "linear-reg" with team "opsml" and major version of "1"
+  registry.list_cards(name="linear-reg", repository="opsml", version="1.*.*") 
+  # list cards with name "linear-reg" with repository "opsml" and major version of "1"
 
-  registry.list_cards(name="linear-reg", team="opsml", version="^2.3.4") 
-  # list card with name "linear-reg" with team "opsml" and latest version < 3.0.0
+  registry.list_cards(name="linear-reg", repository="opsml", version="^2.3.4") 
+  # list card with name "linear-reg" with repository "opsml" and latest version < 3.0.0
 
-  registry.list_cards(name="linear-reg", team="opsml", version="~2.3.4") 
-  # list card with name "linear-reg" with team "opsml" and latest version < 2.4.0
+  registry.list_cards(name="linear-reg", repository="opsml", version="~2.3.4") 
+  # list card with name "linear-reg" with repository "opsml" and latest version < 2.4.0
 
   registry.list_cards(uid=uid, )
   # list card by uid
@@ -73,10 +73,10 @@ Load an Artifact card from a registry.
 : Required Args:
   
     - Name: Name of card *(Optional)*
-    - Team: Team associated with card *(Optional)*
+    - repository: repository associated with card *(Optional)*
     - Version: Version of Card *(Optional)*
     - uid: Uid of card *(Optional)*
-    - info: `CardInfo` dataclass that can be used in place of Name, Team, Version and Uid
+    - info: `CardInfo` dataclass that can be used in place of Name, repository, Version and Uid
 
 
 ```python
@@ -111,7 +111,7 @@ Register a card to a registry
         trained_model=model,
         sample_input_data=data[0:1],
         name="linear-reg",
-        team="opsml",
+        repository="opsml",
         contact="mlops.com",
         datacard_uid=data_card.uid,
     )

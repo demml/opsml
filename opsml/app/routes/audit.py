@@ -23,7 +23,7 @@ from opsml.app.routes.route_helpers import AuditRouteHelper
 from opsml.app.routes.utils import (
     AuditFormParser,
     error_to_500,
-    get_names_teams_versions,
+    get_names_repositories_versions,
     write_records_to_csv,
 )
 from opsml.cards.audit import AuditCard, AuditSections
@@ -48,7 +48,7 @@ router = APIRouter()
 @error_to_500
 async def audit_list_homepage(
     request: Request,
-    team: Optional[str] = None,
+    repository: Optional[str] = None,
     model: Optional[str] = None,
     email: Optional[str] = None,
     version: Optional[str] = None,
@@ -59,8 +59,8 @@ async def audit_list_homepage(
     Args:
         request:
             The incoming HTTP request.
-        team:
-            Team name
+        repository:
+            repository name
         model:
             Model name
         email:
@@ -74,21 +74,21 @@ async def audit_list_homepage(
         with the list of models.
     """
 
-    if all(attr is None for attr in [uid, version, model, team]):
+    if all(attr is None for attr in [uid, version, model, repository]):
         return audit_route_helper.get_homepage(request=request)
 
-    if team is not None and all(attr is None for attr in [version, model]):
-        return audit_route_helper.get_team_page(request=request, team=team)
+    if repository is not None and all(attr is None for attr in [version, model]):
+        return audit_route_helper.get_repository_page(request=request, repository=repository)
 
-    if team is not None and model is not None and version is None:
-        return audit_route_helper.get_versions_page(request=request, team=team, name=model)
+    if repository is not None and model is not None and version is None:
+        return audit_route_helper.get_versions_page(request=request, repository=repository, name=model)
 
-    if model is not None and team is not None and all(attr is None for attr in [uid, version]):
+    if model is not None and repository is not None and all(attr is None for attr in [uid, version]):
         raise ValueError("Model name provided without either version or uid")
 
     return audit_route_helper.get_name_version_page(
         request=request,
-        team=str(team),
+        repository=str(repository),
         name=str(model),
         email=email,
         version=version,
@@ -105,10 +105,10 @@ async def save_audit_form(
     # collect all function arguments into a dictionary
 
     # base attr needed for html
-    model_names, teams, versions = get_names_teams_versions(
+    model_names, repositories, versions = get_names_repositories_versions(
         registry=request.app.state.registries.model,
         name=form.selected_model_name,
-        team=form.selected_model_team,
+        repository=form.selected_model_repository,
     )
 
     parser = AuditFormParser(
@@ -120,7 +120,7 @@ async def save_audit_form(
 
     audit_report = AuditReport(
         name=audit_card.name,
-        team=audit_card.team,
+        repository=audit_card.repository,
         contact=audit_card.contact,
         version=audit_card.version,
         uid=audit_card.uid,
@@ -134,8 +134,8 @@ async def save_audit_form(
         "include/audit/audit.html",
         {
             "request": request,
-            "teams": teams,
-            "selected_team": form.selected_model_team,
+            "repositories": repositories,
+            "selected_repository": form.selected_model_repository,
             "models": model_names,
             "selected_model": form.selected_model_name,
             "selected_email": form.selected_model_email,
@@ -169,17 +169,17 @@ async def save_audit_comment(
         comment=comment.comment_text,
     )
 
-    model_names, teams, versions = get_names_teams_versions(
+    model_names, repositories, versions = get_names_repositories_versions(
         registry=request.app.state.registries.model,
         name=comment.selected_model_name,
-        team=comment.selected_model_team,
+        repository=comment.selected_model_repository,
     )
 
     registry.update_card(card=audit_card)
 
     audit_report = AuditReport(
         name=audit_card.name,
-        team=audit_card.team,
+        repository=audit_card.repository,
         contact=audit_card.contact,
         version=audit_card.version,
         uid=audit_card.uid,
@@ -193,8 +193,8 @@ async def save_audit_comment(
         "include/audit/audit.html",
         {
             "request": request,
-            "teams": teams,
-            "selected_team": comment.selected_model_team,
+            "repositories": repositories,
+            "selected_repository": comment.selected_model_repository,
             "models": model_names,
             "selected_model": comment.selected_model_name,
             "selected_email": comment.selected_model_email,
@@ -253,7 +253,7 @@ async def upload_audit_data(
         audit_card: AuditCard = request.app.state.registries.audit.load_card(uid=form.uid)
         audit_report = AuditReport(
             name=audit_card.name,
-            team=audit_card.team,
+            repository=audit_card.repository,
             contact=audit_card.contact,
             version=audit_card.version,
             uid=audit_card.uid,
@@ -266,7 +266,7 @@ async def upload_audit_data(
     else:
         audit_report = AuditReport(
             name=form.name or form.selected_model_name,
-            team=form.team or form.selected_model_team,
+            repository=form.repository or form.selected_model_repository,
             contact=form.email or form.selected_model_email,
             version=form.version,
             uid=form.uid,
@@ -277,18 +277,18 @@ async def upload_audit_data(
         )
 
     # base attr needed for html
-    model_names, teams, versions = get_names_teams_versions(
+    model_names, repositories, versions = get_names_repositories_versions(
         registry=request.app.state.registries.model,
         name=form.selected_model_name,
-        team=form.selected_model_team,
+        repository=form.selected_model_repository,
     )
 
     return templates.TemplateResponse(  # type: ignore[return-value]
         "include/audit/audit.html",
         {
             "request": request,
-            "teams": teams,
-            "selected_team": form.selected_model_team,
+            "repositories": repositories,
+            "selected_repository": form.selected_model_repository,
             "models": model_names,
             "selected_model": form.selected_model_name,
             "selected_email": form.selected_model_name,

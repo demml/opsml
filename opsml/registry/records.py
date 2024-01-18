@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -19,7 +19,7 @@ class RunUris(BaseModel):
 
 class SaveRecord(BaseModel):
     name: str
-    team: str
+    repository: str
     contact: str
     uid: Optional[str] = None
     version: str
@@ -73,9 +73,9 @@ class RunRegistryRecord(SaveRecord):
     datacard_uids: Optional[List[str]] = None
     modelcard_uids: Optional[List[str]] = None
     pipelinecard_uid: Optional[str] = None
-    project_id: Optional[str] = None
+    project: Optional[str] = None
     artifact_uris: Optional[Dict[str, Dict[str, str]]] = None
-    tags: Dict[str, str]
+    tags: Dict[str, Union[str, int]]
     timestamp: int = get_timestamp()
 
 
@@ -90,10 +90,9 @@ class PipelineRegistryRecord(SaveRecord):
 class ProjectRegistryRecord(BaseModel):
     uid: str
     name: str
-    team: str
-    project_id: str
+    repository: str
+    project_id: int
     version: Optional[str] = None
-    description: Optional[str] = None
     timestamp: int = get_timestamp()
 
 

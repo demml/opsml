@@ -21,7 +21,7 @@
 
 <div style="padding-top:2px; padding-left:40px;">
    
-  <select class="dropdown" id="MetadataTeamSelect" style="visibility:hidden;">
+  <select class="dropdown" id="MetadataRepositoriesSelect" style="visibility:hidden;">
     
       {% if all_projects is not none %}
 
@@ -104,9 +104,9 @@ $('.list-group-item').click(function() {
  });
 
 $(document).ready(function() {
-  $('#MetadataTeamSelect').select2();
+  $('#MetadataRepositoriesSelect').select2();
 
-  $("#MetadataTeamSelect").on('select2:select', function(e){
+  $("#MetadataRepositoriesSelect").on('select2:select', function(e){
     window.location.href = e.params.data.id;
   });
 });

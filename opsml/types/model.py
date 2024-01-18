@@ -285,7 +285,7 @@ class ModelMetadata(BaseModel):
     onnx_version: Optional[str] = None
     model_uri: str
     model_version: str
-    model_team: str
+    model_repository: str
     sample_data_uri: str
     opsml_version: str = __version__
     data_schema: DataSchema

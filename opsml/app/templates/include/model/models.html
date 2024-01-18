@@ -24,21 +24,21 @@
 <br>
 <div class="container" style="padding-top:50px;">
     <div class="row">
-      <h5 class="display-8">Select a team to view available models</h5>
+      <h5 class="display-8">Select a repository to view available models</h5>
     </div>
 
 
   <div>
-      <select class="dropdown" id="MetadataTeamSelect" style="visibility:hidden;">
+      <select class="dropdown" id="MetadataRepositoriesSelect" style="visibility:hidden;">
 
-        {% if all_teams is not none %}
+        {% if all_repositories is not none %}
 
-          {% for team in all_teams %}
-          <option value="/opsml/models/list/?team={{team}}" {% if team == selected_team %} selected="selected" {% endif %}>{{ team }}</option>
+          {% for repository in all_repositories %}
+          <option value="/opsml/models/list/?repository={{repository}}" {% if repository == selected_repository %} selected="selected" {% endif %}>{{ repository }}</option>
           {% endfor %}
 
         {% else %}
-        <option value="None">No team found</option>
+        <option value="None">No repository found</option>
         {% endif %}
 
       </select>
@@ -50,7 +50,7 @@
 <!---- Form for selecting model -------->
 <div class="container">
     <div class="page-header">
-      <h2>{{selected_team}}</h2>
+      <h2>{{selected_repository}}</h2>
     </div>
 </div>
 <br>
@@ -72,9 +72,9 @@
 
 <script>
   $(document).ready(function() {
-    $('#MetadataTeamSelect').select2();
+    $('#MetadataRepositoriesSelect').select2();
   
-    $("#MetadataTeamSelect").on('select2:select', function(e){
+    $("#MetadataRepositoriesSelect").on('select2:select', function(e){
       window.location.href = e.params.data.id;
     });
   });

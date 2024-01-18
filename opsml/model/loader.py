@@ -44,10 +44,10 @@ class ModelLoader:
         Interface = _get_model_interface(self.metadata.model_interface)  # pylint: disable=invalid-name
 
         loaded_interface = Interface.model_construct(
-            _fields_set={"name", "team", "version"},
+            _fields_set={"name", "repository", "version"},
             **{
                 "name": self.metadata.model_name,
-                "team": self.metadata.model_team,
+                "repository": self.metadata.model_repository,
                 "version": self.metadata.model_version,
             },
         )

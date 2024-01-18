@@ -9,18 +9,14 @@ from typing import Dict, Optional, Union, cast
 from opsml.cards import ProjectCard, RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
-from opsml.projects.base.types import ProjectInfo, Tags
-from opsml.registry import CardRegistries, CardRegistry
-from opsml.storage import client
+from opsml.registry import CardRegistries
+from opsml.projects.types import ProjectInfo, Tags
 
 logger = ArtifactLogger.get_logger()
 
 
 class _RunManager:
-    def __init__(
-        self,
-        project_info: ProjectInfo,
-    ):
+    def __init__(self, project_info: ProjectInfo):
         """
         Manages runs for a given project including storing general attributes and creating, activating and
         ending runs. Also holds storage client needed to store artifacts associated with a run.
@@ -36,7 +32,6 @@ class _RunManager:
         self._active_run: Optional[ActiveRun] = None
         self._version: Optional[str] = None
 
-        self._storage_client = client.storage_client
         self.registries = CardRegistries()
 
         run_id = project_info.run_id
@@ -47,19 +42,14 @@ class _RunManager:
         self._project_id = self._get_project_id()
 
     @property
-    def project_id(self) -> str:
+    def project_id(self) -> int:
         return self._project_id
-
-    @property
-    def storage_client(self) -> client.StorageClient:
-        return self._storage_client
 
     @property
     def base_tags(self) -> Dict[str, Union[str, Optional[str]]]:
         return {
             Tags.NAME.value: self._project_info.name,
-            Tags.TEAM.value: self._project_info.team,
-            Tags.EMAIL.value: self._project_info.contact,
+            Tags.ID.value: self.project_id,
         }
 
     @property
@@ -136,9 +126,7 @@ class _RunManager:
         # Create opsml active run
         run_info = RunInfo(
             run_id=cast(str, self.run_id),
-            storage_client=self.storage_client,
             run_name=self.run_name,
-            registries=self.registries,
             runcard=self._load_runcard(),
         )
 
@@ -152,11 +140,10 @@ class _RunManager:
             return cast(RunCard, runcard)
 
         return RunCard(
-            name=self.run_name or self._project_info.name,
-            team=self._project_info.team,
-            contact=self._project_info.contact,
+            name=self.run_name or self.run_id[:7],  # use short run_id if no name
+            repository=self._project_info.repository,
             uid=self.run_id,
-            project_id=self._project_info.project_id,
+            project=self._project_info.name,
         )
 
     def _restore_run(self) -> None:
@@ -231,10 +218,10 @@ class _RunManager:
         self._run_name = None
         self._version = None
 
-    def _get_project_id(self) -> str:
+    def _get_project_id(self) -> int:
         """
-        Checks if the name and team exist as a project in the Project registry. A ProjectCard is created if it
-        doesn't exist. If a run_id is provided, a check is performed to match the project_id to the run_id.
+        Checks if the project name exists int the project registry. A ProjectCard is created if it
+        doesn't exist.
 
         Args:
             info:
@@ -242,48 +229,19 @@ class _RunManager:
 
         """
 
-        if self.run_id is not None:
-            self._verify_runcard_project_match(
-                project_id=self._project_info.project_id,
-                run_id=self.run_id,
-                runcard_registry=self.registries.run,
-            )
-            return self._project_info.project_id
-
-        return self._get_project_id_from_registry(
-            project_registry=self.registries.project,
-            info=self._project_info,
-        )
-
-    def _get_project_id_from_registry(self, project_registry: CardRegistry, info: ProjectInfo) -> str:
-        projects = project_registry.list_cards(name=info.name, team=info.team)
+        projects = self.registries.project.list_cards(name=self._project_info.name)
         if bool(projects):
-            return f"{info.team}:{info.name}"
+            return projects[0]["project_id"]
 
-        card = ProjectCard(
-            name=info.name,
-            team=info.team,
-            contact=info.contact,
-            project_id=f"{info.team}:{info.name}",
-        )
-        project_registry.register_card(card=card)
+        # get nbr of unique projects
+        cards = self.registries.project.list_cards()
 
-        return str(card.project_id)
+        if cards:
+            max_project = max([card["project_id"] for card in cards])
+        else:
+            max_project = 0
 
-    def _verify_runcard_project_match(
-        self,
-        project_id: str,
-        run_id: str,
-        runcard_registry: CardRegistry,
-    ) -> None:
-        run = runcard_registry.list_cards(
-            uid=run_id,
-        )[0]
+        card = ProjectCard(name=self._project_info.name, project_id=max_project + 1)
+        self.registries.project.register_card(card=card)
 
-        if run.get("project_id") != project_id:
-            raise ValueError(
-                f"""
-                Run id {run_id} is not associated with project {project_id}.
-                Expected project {run.get("project_id")}.
-                """
-            )
+        return card.project_id

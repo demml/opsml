@@ -43,18 +43,18 @@ router = APIRouter()
 
 @router.get("/models/list/", response_class=HTMLResponse)
 @error_to_500
-async def model_list_homepage(request: Request, team: Optional[str] = None) -> HTMLResponse:
+async def model_list_homepage(request: Request, repository: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
     Args:
         request:
             The incoming HTTP request.
-        team:
-            The team to query
+        repository:
+            The repository to query
     Returns:
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return model_route_helper.get_homepage(request=request, team=team)  # type: ignore[return-value]
+    return model_route_helper.get_homepage(request=request, repository=repository)  # type: ignore[return-value]
 
 
 @router.get("/models/versions/", response_class=HTMLResponse)
@@ -202,7 +202,7 @@ def post_model_metrics(
     cards: List[Dict[str, Any]] = registries.model.list_cards(
         uid=payload.uid,
         name=payload.name,
-        team=payload.team,
+        repository=payload.repository,
         version=payload.version,
     )
 

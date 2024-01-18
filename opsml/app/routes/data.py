@@ -31,19 +31,19 @@ router = APIRouter()
 
 @router.get("/data/list/", response_class=HTMLResponse)
 @error_to_500
-async def data_list_homepage(request: Request, team: Optional[str] = None) -> HTMLResponse:
+async def data_list_homepage(request: Request, repository: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:
         request:
             The incoming HTTP request.
-        team:
-            The team to query
+        repository:
+            The repository to query
     Returns:
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return data_route_helper.get_homepage(request=request, team=team)  # type: ignore[return-value]
+    return data_route_helper.get_homepage(request=request, repository=repository)  # type: ignore[return-value]
 
 
 @router.get("/data/versions/", response_class=HTMLResponse)
