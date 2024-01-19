@@ -61,13 +61,13 @@ class ArtifactCard(BaseModel):
 
         # check env vars
         if card_args["name"] is None:
-            card_args["name"] = os.environ.get("OPSML_NAME")
+            card_args["name"] = os.environ.get("OPSML_RUNTIME_NAME")
 
         if card_args["repository"] is None:
-            card_args["repository"] = os.environ.get("OPSML_REPOSITORY")
+            card_args["repository"] = os.environ.get("OPSML_RUNTIME_REPOSITORY")
 
         if card_args["contact"] is None:
-            card_args["contact"] = os.environ.get("OPSML_CONTACT")
+            card_args["contact"] = os.environ.get("OPSML_RUNTIME_CONTACT")
 
         # validate name and repository for pattern
         validate_name_repository_pattern(name=card_args["name"], repository=card_args["repository"])
