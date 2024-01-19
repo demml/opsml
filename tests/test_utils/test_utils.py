@@ -28,18 +28,18 @@ def test_clean_string() -> None:
     assert utils.clean_string("  !!_-test-_!!  ") == "--test--"
 
 
-def test_validate_team_name_pattern() -> None:
-    utils.validate_name_team_pattern("test", "test")
-    utils.validate_name_team_pattern("test-name", "test-team")
+def test_validate_repository_name_pattern() -> None:
+    utils.validate_name_repository_pattern("test", "test")
+    utils.validate_name_repository_pattern("test-name", "test-repository")
 
     with pytest.raises(ValueError):
-        utils.validate_name_team_pattern("TEST", "test")
+        utils.validate_name_repository_pattern("TEST", "test")
 
     with pytest.raises(ValueError):
-        utils.validate_name_team_pattern("test:", "test")
+        utils.validate_name_repository_pattern("test:", "test")
 
     with pytest.raises(ValueError):
-        utils.validate_name_team_pattern("test_name", "test")
+        utils.validate_name_repository_pattern("test_name", "test")
 
 
 def test_type_checker_check_metric_type() -> None:

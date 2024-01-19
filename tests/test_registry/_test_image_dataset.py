@@ -101,8 +101,8 @@ def test_register_data(
     data_card = DataCard(
         data=image_dataset,
         name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)

@@ -24,9 +24,9 @@ Auto onnx conversion can be turned off via the `to_onnx` arg when creating a Mod
 
 If you'd like to create your onnx model yourself and associate that with the ModelCard, you will need to provide your own implementation of the `onnx_model` arg. An example of this can be seen [here](../cards/onnx.md).
 
-### What's with using name, team, and user_email or `CardInfo` in the examples?
+### What's with using name, repository, and contact or `CardInfo` in the examples?
 
-Every `ArtifactCard` requires a name, team and user email. For convenience, you can instead provide a `CardInfo` instance instead.
+Every `ArtifactCard` requires a name, repository and user email. For convenience, you can instead provide a `CardInfo` instance instead.
 
 ### How is `Opsml` different than other products out there?
 

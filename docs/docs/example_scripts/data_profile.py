@@ -13,7 +13,7 @@ data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
 
 
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 data_card = DataCard(info=card_info, data=data)
 
 data_card.create_data_profile(sample_perc=0.5)  # you can specify a sampling percentage between 0 and 1

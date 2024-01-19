@@ -33,8 +33,8 @@ def test_model_interface(
     modelcard = ModelCard(
         interface=model,
         name="test_model",
-        team="mlops",
-        user_email="test_email",
+        repository="mlops",
+        contact="test_email",
         datacard_uid=uuid.uuid4().hex,
         version="0.0.1",
         uid=uuid.uuid4().hex,
@@ -51,7 +51,7 @@ def test_model_interface(
     loader = CardLoader(
         card_args={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
             "version": modelcard.version,
         },
         registry_type=RegistryType.MODEL,

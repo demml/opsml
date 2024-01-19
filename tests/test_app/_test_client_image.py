@@ -20,8 +20,8 @@ def test_register_data(api_registries: CardRegistries):
     data_card = DataCard(
         data=image_dataset,
         name="image_dataset",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)

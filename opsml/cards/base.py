@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import clean_string, validate_name_team_pattern
+from opsml.helpers.utils import clean_string, validate_name_repository_pattern
 from opsml.settings.config import config
 from opsml.types import CardInfo, RegistryTableNames
 
@@ -24,8 +24,8 @@ class ArtifactCard(BaseModel):
     )
 
     name: str
-    team: str
-    user_email: str
+    repository: str
+    contact: str
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
@@ -34,7 +34,7 @@ class ArtifactCard(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_args(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:  # pylint: disable=arguments-renamed
-        """Validate base args and Lowercase name and team
+        """Validate base args and Lowercase name and repository
 
         Args:
             card_args:
@@ -46,20 +46,20 @@ class ArtifactCard(BaseModel):
 
         card_info = card_args.get("info")
 
-        for key in ["name", "team", "user_email", "version", "uid"]:
+        for key in ["name", "repository", "contact", "version", "uid"]:
             val = card_args.get(key)
 
             if card_info is not None:
                 val = val or getattr(card_info, key)
 
-            if key in ["name", "team"]:
+            if key in ["name", "repository"]:
                 if val is not None:
                     val = clean_string(val)
 
             card_args[key] = val
 
-        # validate name and team for pattern
-        validate_name_team_pattern(name=card_args["name"], team=card_args["team"])
+        # validate name and repository for pattern
+        validate_name_repository_pattern(name=card_args["name"], repository=card_args["repository"])
 
         return card_args
 
@@ -78,7 +78,7 @@ class ArtifactCard(BaseModel):
         return Path(
             config.storage_root,
             RegistryTableNames.from_str(self.card_type).value,
-            self.team,
+            self.repository,
             self.name,
             f"v{self.version}",
         )

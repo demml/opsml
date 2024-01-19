@@ -19,12 +19,15 @@ class ProjectCard(ArtifactCard):
     Card containing project information
     """
 
-    project_id: str
+    project_id: int
 
     @model_validator(mode="before")
     @classmethod
-    def create_project_id(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:
-        card_args["project_id"] = f'{card_args["team"]}:{card_args["name"]}'
+    def validate_args(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:
+        # add default
+        card_args["contact"] = ""
+        card_args["repository"] = ""
+
         return card_args
 
     def create_registry_record(self) -> Dict[str, Any]:

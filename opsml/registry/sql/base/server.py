@@ -54,32 +54,29 @@ class ServerRegistry(SQLRegistryBase):
         raise NotImplementedError
 
     @property
-    def unique_teams(self) -> Sequence[str]:
-        """Returns a list of unique teams"""
-        return self.engine.get_unique_teams(table=self._table)
+    def unique_repositories(self) -> Sequence[str]:
+        """Returns a list of unique repositories"""
+        return self.engine.get_unique_repositories(table=self._table)
 
-    def get_unique_card_names(self, team: Optional[str] = None) -> Sequence[str]:
+    def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
         """Returns a list of unique card names
         Args:
-            team:
-                Team to filter by
+            repository:
+                repository to filter by
         Returns:
             List of unique card names
         """
 
-        return self.engine.get_unique_card_names(
-            table=self._table,
-            team=team,
-        )
+        return self.engine.get_unique_card_names(table=self._table, repository=repository)
 
-    def _get_versions_from_db(self, name: str, team: str, version_to_search: Optional[str] = None) -> List[str]:
+    def _get_versions_from_db(self, name: str, repository: str, version_to_search: Optional[str] = None) -> List[str]:
         """Query versions from Card Database
 
         Args:
             name:
                 Card name
-            team:
-                Card team
+            repository:
+                Card repository
             version_to_search:
                 Version to search for
         Returns:
@@ -88,8 +85,8 @@ class ServerRegistry(SQLRegistryBase):
         results = self.engine.get_versions(table=self._table, name=name, version=version_to_search)
 
         if bool(results):
-            if results[0].team != team:
-                raise ValueError("""Model name already exists for a different team. Try a different name.""")
+            if results[0].repository != repository:
+                raise ValueError("""Model name already exists for a different repository. Try a different name.""")
 
             versions = [result.version for result in results]
             return SemVerUtils.sort_semvers(versions=versions)
@@ -98,7 +95,7 @@ class ServerRegistry(SQLRegistryBase):
     def set_version(
         self,
         name: str,
-        team: str,
+        repository: str,
         pre_tag: str,
         build_tag: str,
         version_type: VersionType,
@@ -110,8 +107,8 @@ class ServerRegistry(SQLRegistryBase):
         Args:
             name:
                 Card name
-            team:
-                Card team
+            repository:
+                Card repository
             pre_tag:
                 Pre-release tag
             build_tag:
@@ -135,7 +132,7 @@ class ServerRegistry(SQLRegistryBase):
 
         versions = self._get_versions_from_db(
             name=name,
-            team=team,
+            repository=repository,
             version_to_search=ver_validator.version_to_search,
         )
 
@@ -155,7 +152,7 @@ class ServerRegistry(SQLRegistryBase):
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
@@ -169,8 +166,8 @@ class ServerRegistry(SQLRegistryBase):
         Args:
             name:
                 Artifact record name
-            team:
-                Team data is assigned to
+            repository:
+                Repository card is assigned to
             version:
                 Optional version number of existing data. If not specified,
                 the most recent version will be used. Version can also include tilde (~), caret (^) and * characters.
@@ -193,12 +190,12 @@ class ServerRegistry(SQLRegistryBase):
         """
 
         cleaned_name = clean_string(name)
-        cleaned_team = clean_string(team)
+        cleaned_repository = clean_string(repository)
 
         records = self.engine.get_records_from_table(
             table=self._table,
             name=cleaned_name,
-            team=cleaned_team,
+            repository=cleaned_repository,
             version=version,
             uid=uid,
             max_date=max_date,
