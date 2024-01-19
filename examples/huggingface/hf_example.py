@@ -89,8 +89,7 @@ class OpsmlHuggingFaceWorkflow:
     def _create_modelcard(self):
         """Shows how to create a model interface and modelcard
 
-        This example highlights the uses of the SklearnModel interface and how you can load
-        and split data from a datacard.
+        This example highlights the uses of the HuggingFaceModel.
         """
 
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
@@ -161,9 +160,7 @@ class OpsmlHuggingFaceWorkflow:
 
         # load onnx model
         modelcard.load_onnx_model()
-        inputs = dict(
-            modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
-        )
+        inputs = dict(modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True))
 
         print(modelcard.onnx_model.sess(**inputs))
 
