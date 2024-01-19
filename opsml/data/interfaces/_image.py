@@ -77,7 +77,7 @@ try:
                         Only used for subclasses of `Dataset`.
 
                     batch_size:
-                        What batch size to use when loading data. Only used for subclasses of `Dataset`.
+                        What batch size to use when loading data in memory. Only used for subclasses of `Dataset`.
                         Defaults to 1000.
 
                     chunk_size:
