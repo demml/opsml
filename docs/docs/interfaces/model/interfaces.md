@@ -97,6 +97,8 @@ Interface for saving a LightGBM booster or sklearn flavor model
 | **Model Type** | `Booster` or `LGBMModel` |
 | **Save Format** | `text` or `joblib` |
 | **Source** | [`LightGBMModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/lgbm.py) |
+| **Example 1** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_boost.py) |
+| **Example 2** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_sklearn.py) |
 
 
 ### Arguments
@@ -156,6 +158,7 @@ Interface for saving a XGBoost model. Only sklearn flavor is currently supported
 | **Model Type** | `XGBModel` |
 | **Save Format** | `joblib` |
 | **Source** | [`XGBoostModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/xgb.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/xgboost_sklearn.py) |
 
 
 ### Arguments
@@ -207,6 +210,7 @@ Interface for saving a CatBoost model.
 | **Model Type** | `CatBoost` |
 | **Save Format** | `cbm` |
 | **Source** | [`CatBoostModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/catboost_.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py) |
 
 
 ### Arguments
@@ -256,6 +260,7 @@ Interface for saving a PyTorch model.
 | **Model Type** | `torch.nn.Module` |
 | **Save Format** | `torch` |
 | **Source** | [`TorchModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/pytorch.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py) |
 
 
 ### Arguments
@@ -313,6 +318,7 @@ Interface for saving a PyTorch Lightning model.
 | **Model Type** | `Trainer` |
 | **Save Format** | `ckpt` |
 | **Source** | [`LightningModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/pytorch_lightning.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py) |
 
 
 ### Arguments
@@ -380,28 +386,26 @@ Interface for saving a tensorflow model.
 | --- | --- |
 | **Model Type** | `tf.keras.Model` |
 | **Save Format** | `tensorflow` |
-| **Source** | [`TorchModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/tf.py) |
+| **Source** | [`TensorFlowModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/tf.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/tensorflow/tf_example.py) |
 
 
 ### Arguments
 
-`model`: `torch.nn.Module`
-: A pytorch model that subclasses `torch.nn.Module`
+`model`: `tf.keras.Model`
+: A tensorflow model that subclasses `tf.keras.Model`
 
 `preprocessor`: `Optional[Any]`
 : Optional preprocessor
 
-`sample_data`: `Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]`
+`sample_data`: `Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]` (ArrayType= `Union[NDArray[Any], tf.Tensor]`)
 : Sample data to be used for type inference.
-
-`onnx_args`: `Optional[TorchOnnxArgs]`
-: Optional arguments for converting to onnx. See [TorchOnnxArgs](./onnx.md#torchonnxargs) for more information.
 
 ### Example
 
-```py hl_lines="1  15"
-from opsml import TorchModel, CardInfo, ModelCard, CardRegistry
-from examples.torch.polynomial_nn import Polynomial3 # see examples/torch/polynomial_nn.py
+```py hl_lines="1  22"
+from opsml import TensorFlowModel, CardInfo, ModelCard, CardRegistry
+import tensorflow as tf 
 
 info = CardInfo(name="model", repository="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
@@ -409,12 +413,19 @@ model_registry = CardRegistry("model")
 # Skipping data step
 ...
 
-# instantiate model
-model = Polynomial3()
-model.train_model(X, y)
+# build and compile model
+model = tf.keras.Sequential(
+    [
+        keras.layers.Dense(64, activation="relu"),
+        keras.layers.Dense(64, activation="relu"),
+        keras.layers.Dense(1),
+    ]
+)
+model.compile(loss="mean_absolute_error", optimizer=tf.keras.optimizers.Adam(0.001))
+model.fit(X, y, epochs=10)
 
-# torch interface
-interface = TorchModel(model=model, sample_data=X)
+# tensorflow interface
+interface = TensorFlowModel(model=model, sample_data=X)
 
 # create modelcard
 modelcard = ModelCard(

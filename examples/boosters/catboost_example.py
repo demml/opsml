@@ -58,8 +58,7 @@ class OpsmlCatBoostWorkflow:
     def _create_modelcard(self):
         """Shows how to create a model interface and modelcard
 
-        This example highlights the uses of the SklearnModel interface and how you can load
-        and split data from a datacard.
+        This example highlights the uses of the CatBoostModel.
         """
 
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
