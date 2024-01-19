@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
@@ -98,6 +99,17 @@ class CardInfo:
     uid: Optional[str] = None
     version: Optional[str] = None
     tags: Optional[Dict[str, str]] = None
+
+    def set_env(self) -> "CardInfo":
+        """Helper to set environment variables for the current runtime environment"""
+        if self.name is not None:
+            os.environ["OPSML_NAME"] = self.name
+        if self.repository is not None:
+            os.environ["OPSML_REPOSITORY"] = self.repository
+        if self.contact is not None:
+            os.environ["OPSML_CONTACT"] = self.contact
+
+        return self
 
 
 class CardType(str, Enum):

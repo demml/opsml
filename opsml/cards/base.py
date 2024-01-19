@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -57,6 +58,16 @@ class ArtifactCard(BaseModel):
                     val = clean_string(val)
 
             card_args[key] = val
+
+        # check env vars
+        if card_args["name"] is None:
+            card_args["name"] = os.environ.get("OPSML_NAME")
+
+        if card_args["repository"] is None:
+            card_args["repository"] = os.environ.get("OPSML_REPOSITORY")
+
+        if card_args["contact"] is None:
+            card_args["contact"] = os.environ.get("OPSML_CONTACT")
 
         # validate name and repository for pattern
         validate_name_repository_pattern(name=card_args["name"], repository=card_args["repository"])
