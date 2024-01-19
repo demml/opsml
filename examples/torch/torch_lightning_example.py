@@ -72,7 +72,7 @@ class OpsmlLightningWorkflow:
         trainer = L.Trainer(max_epochs=10)
         trainer.fit(model)
 
-        # torch interface
+        # lightning interface
         interface = LightningModel(
             model=trainer,
             sample_data=X,

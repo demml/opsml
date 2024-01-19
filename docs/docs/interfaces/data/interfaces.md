@@ -55,8 +55,9 @@ Information about the `PandasData` interface.
 
 ### Example
 
-```py hl_lines="1  10"
+```py hl_lines="1  11"
 from opsml import PandasData, CardInfo, DataCard, CardRegistry
+from opsml.helpers.data import create_fake_data
 
 info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
@@ -87,8 +88,9 @@ Information about the `PandasData` interface.
 
 ### Example
 
-```python hl_lines="1  10"
+```python hl_lines="1  11"
 from opsml import PolarsData, CardInfo, DataCard, CardRegistry
+from opsml.helpers.data import create_fake_data
 
 info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
@@ -118,8 +120,9 @@ Information about the `NumpyData` interface.
 
 ### Example
 
-```python hl_lines="1  7"
+```python hl_lines="1  8"
 from opsml import NumpyData, CardInfo, DataCard, CardRegistry
+import numpy as np
 
 info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
@@ -177,8 +180,9 @@ Information about the `TorchData` interface.
 
 ### Example
 
-```python hl_lines="1  8"
+```python hl_lines="1  9"
 from opsml import TorchData, CardInfo, DataCard, CardRegistry
+import torch
 
 info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
@@ -223,41 +227,6 @@ data_registry.register_card(card=datacard)
 ```
 
 ---
-## Dataset
-
-In addition to `DataInterface` classes, `opsml` also provides a `Dataset` class that is used for when working with text or image data.
-
-### Required Arguments
-
-`data_dir`
-: Path to directory containing data
-
-`shard_size`
-: Size of each shard. Defaults to `512MB`
-
-### Optional Arguments
-
-`splits`
-: Dictionary of splits. Defaults to `{}` This is automatically inferred from directory structure
-
-`description`
-: Description of dataset. Defaults to `Description()`
-
-### Dataset Saving and Loading
-
-Datasets are saved via `pyarrow` reader and writers. This allows for efficient loading and saving of datasets. For saving, `Dataset` splits are saved as parquet files based on the specified `shard` size. During loading, the dataset is loaded based on both `batch_size` and `chunk_size` arguments. The `batch_size` argument is used to specify the number of rows to load at a time. The `chunk_size` argument is used to split the batch by `n` chunks. Both of these arguments are used to control memory usage during loading.
-
-
-### ImageDataset
-
-|  |  |
-| --- | --- |
-| **Data Type** | `Directory of images` |
-| **Save Format** | [`parquet`](https://arrow.apache.org/docs/python/parquet.html) |
-| **Source** | [`ImageDataset`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_image.py) |
-
-
----
 ## Subclassing `DataInterface`
 
 In the event that the currently supported `DataInterfaces` do not meet your needs, you can subclass the parent `DataInterface` and implement your own interface. However, there are a few requirements:
@@ -268,5 +237,40 @@ In the event that the currently supported `DataInterfaces` do not meet your need
 
 These requirements are necessary for `Opsml` to properly save and load your data, as these are called during either saving or loading via the `DataCard`.
 
-**Final Note** - It is up to you to make sure your subclass works as expected and is compatible with the `DataCard` class. If you feel your subclass is useful to others, please consider contributing it to the `Opsml` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.
 
+### Example
+
+```python
+from opsml import DataInterface, CardInfo, DataCard, CardRegistry
+
+info = CardInfo(name="data", repository="opsml", contact="opsml_user")
+registry = CardRegistry("data")
+
+# DataInterface is a pydantic BaseModel
+class MyDataInterface(DataInterface):
+    
+    data: DataType
+
+    def save_data(self, path):
+        # save logic here
+
+    def load_data(self, path):
+        # load logic here
+
+    @property
+    def data_suffix(self):
+        return ".my_data"
+
+interface = MyDataInterface(data={{my_data}})
+
+# Create and register datacard
+datacard = DataCard(interface=interface, info=info)
+registry.register_card(card=datacard)
+
+# Now you can load your data via the registry
+# you will need to supply the interface subclass
+datacard = registry.load_card(uid=datacard.uid, interface=MyDataInterface)
+```
+
+### **Final Note** 
+It is up to you to make sure your subclass works as expected and is compatible with the `DataCard` class. If you feel your subclass is useful to others, please consider contributing it to the `Opsml` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.

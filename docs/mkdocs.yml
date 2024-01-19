@@ -44,6 +44,9 @@ nav:
     - Data Interface:
       - 'interfaces/data/interfaces.md'
       - 'interfaces/data/data_splits.md'
+      - 'interfaces/data/datasets.md'
+    - Model Interface:
+      - 'interfaces/model/interfaces.md'
 
     #- Model Interface:
   - Cards:

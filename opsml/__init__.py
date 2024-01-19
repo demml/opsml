@@ -43,9 +43,9 @@ from opsml.types import (
 from opsml.version import __version__
 
 try:
-    from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord
+    from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord, BBox
 
-    extra_imports = ["ImageMetadata", "ImageRecord"]
+    extra_imports = ["ImageMetadata", "ImageRecord", "BBox"]
 
 except ModuleNotFoundError:
     extra_imports = []
