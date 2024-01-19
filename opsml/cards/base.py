@@ -24,9 +24,9 @@ class ArtifactCard(BaseModel):
         validate_default=True,
     )
 
-    name: str = os.environ.get("OPSML_RUNTIME_NAME")
-    repository: str = os.environ.get("OPSML_RUNTIME_REPOSITORY")
-    contact: str = os.environ.get("OPSML_RUNTIME_CONTACT")
+    name: str
+    repository: str
+    contact: str
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
