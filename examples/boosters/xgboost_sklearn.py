@@ -74,7 +74,7 @@ class OpsmlXGBoostPipelineWorkflow:
             remainder="passthrough",
         )
 
-        # setup lgb regressor
+        # setup xgb regressor
         pipe = Pipeline([("preprocess", preprocessor), ("rf", xgb.XGBRegressor(n_estimators=3, max_depth=3))])
 
         # split data

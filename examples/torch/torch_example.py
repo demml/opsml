@@ -54,7 +54,7 @@ class OpsmlTorchWorkflow:
         # load data from server
         datacard.load_data()
 
-        # split data
+        # instantiate model
         model = Polynomial3()
 
         x = datacard.data[:, 0]
