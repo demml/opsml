@@ -23,8 +23,8 @@ The `DataInterface` is the primary interface for working with data in `Opsml`. I
 `name`
 : Name for the data
 
-`team`
-: Team data belongs to
+`repository`
+: Repository data belongs to
 
 `contact`
 : Contact information (can be anything you define such as an email or slack channel) (Required)
@@ -50,10 +50,10 @@ The [`PandasData`](https://github.com/shipt/opsml/blob/main/opsml/data/interface
 
 ### Example
 
-```py
+```py hl_lines="1  10"
 from opsml import PandasData, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", team="opsml", contact="user@email.com")
+info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 # create fake data
@@ -75,10 +75,10 @@ The [`PolarsData`](https://github.com/shipt/opsml/blob/main/opsml/data/interface
 
 ### Example
 
-```python
+```python hl_lines="1  10"
 from opsml import PolarsData, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", team="opsml", contact="user@email.com")
+info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 # create fake data
@@ -100,10 +100,10 @@ The [`NumpyData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces
 
 ### Example
 
-```python
+```python hl_lines="1  7"
 from opsml import NumpyData, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", team="opsml", contact="user@email.com")
+info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 data = np.random.rand(10, 100)
@@ -121,11 +121,11 @@ The [`ArrowData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces
 
 ### Example
 
-```python
+```python hl_lines="1  12"
 from opsml import ArrowData, CardInfo, DataCard, CardRegistry
 import pyarrow as pa
 
-info = CardInfo(name="data", team="opsml", contact="user@email.com")
+info = CardInfo(name="data", repository="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 n_legs = pa.array([2, 4, 5, 100])
