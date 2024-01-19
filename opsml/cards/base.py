@@ -24,9 +24,9 @@ class ArtifactCard(BaseModel):
         validate_default=True,
     )
 
-    name: str
-    repository: str
-    contact: str
+    name: str = os.environ.get("OPSML_RUNTIME_NAME")
+    repository: str = os.environ.get("OPSML_RUNTIME_REPOSITORY")
+    contact: str = os.environ.get("OPSML_RUNTIME_CONTACT")
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
@@ -48,26 +48,22 @@ class ArtifactCard(BaseModel):
         card_info = card_args.get("info")
 
         for key in ["name", "repository", "contact", "version", "uid"]:
+            # check card args
             val = card_args.get(key)
 
+            # check card info
             if card_info is not None:
                 val = val or getattr(card_info, key)
+
+            # check runtime env vars
+            if val is None:
+                val = os.environ.get(f"OPSML_RUNTIME_{key.upper()}")
 
             if key in ["name", "repository"]:
                 if val is not None:
                     val = clean_string(val)
 
             card_args[key] = val
-
-        # check env vars
-        if card_args["name"] is None:
-            card_args["name"] = os.environ.get("OPSML_RUNTIME_NAME")
-
-        if card_args["repository"] is None:
-            card_args["repository"] = os.environ.get("OPSML_RUNTIME_REPOSITORY")
-
-        if card_args["contact"] is None:
-            card_args["contact"] = os.environ.get("OPSML_RUNTIME_CONTACT")
 
         # validate name and repository for pattern
         validate_name_repository_pattern(name=card_args["name"], repository=card_args["repository"])
