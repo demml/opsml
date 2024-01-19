@@ -42,6 +42,8 @@ Interface for saving an Sklearn model
 | **Model Type** | `sklearn.base.BaseEstimator` |
 | **Save Format** | `joblib` |
 | **Source** | [`SklearnModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/sklearn.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py) |
+
 
 
 ### Arguments
@@ -53,7 +55,7 @@ Interface for saving an Sklearn model
 : Optional preprocessor
 
 `sample_data`: `Union[pd.DataFrame, NDArray[Any]]`
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 For sklearn models this should be a pandas DataFrame or numpy array.
 This should match exactly what the model expects as input. See example below.
 
@@ -110,7 +112,7 @@ Interface for saving a LightGBM booster or sklearn flavor model
 : Optional preprocessor
 
 `sample_data`: `Union[pd.DataFrame, NDArray[Any]]`
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 
 ### Example
 
@@ -170,7 +172,7 @@ Interface for saving a XGBoost model. Only sklearn flavor is currently supported
 : Optional preprocessor
 
 `sample_data`: `Union[pd.DataFrame, NDArray[Any]]`
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 For xgboost models this should be a pandas DataFrame or numpy array.
 This should match exactly what the model expects as input. See example below.
 
@@ -222,7 +224,7 @@ Interface for saving a CatBoost model.
 : Optional preprocessor
 
 `sample_data`: `Union[List[Any], NDArray[Any]]`
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 For catboost models this is either a list or numpy array.
 
 ### Example
@@ -272,7 +274,7 @@ Interface for saving a PyTorch model.
 : Optional preprocessor
 
 `sample_data`: `Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]`
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 
 `onnx_args`: `Optional[TorchOnnxArgs]`
 : Optional arguments for converting to onnx. See [TorchOnnxArgs](./onnx.md#torchonnxargs) for more information.
@@ -330,7 +332,7 @@ Interface for saving a PyTorch Lightning model.
 : Optional preprocessor
 
 `sample_data`: `Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]`
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 
 `onnx_args`: `Optional[TorchOnnxArgs]`
 : Optional arguments for converting to onnx. See [TorchOnnxArgs](./onnx.md#torchonnxargs) for more information.
@@ -399,7 +401,7 @@ Interface for saving a tensorflow model.
 : Optional preprocessor
 
 `sample_data`: `Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]` (ArrayType= `Union[NDArray[Any], tf.Tensor]`)
-: Sample data to be used for type inference.
+: Sample data to be used for model inference.
 
 ### Example
 
@@ -426,6 +428,78 @@ model.fit(X, y, epochs=10)
 
 # tensorflow interface
 interface = TensorFlowModel(model=model, sample_data=X)
+
+# create modelcard
+modelcard = ModelCard(
+    interface=interface,
+    info=info,
+    to_onnx=True, 
+    datacard_uid=datacard.uid,  
+)
+
+# register
+model_registry.register_card(card=modelcard)
+```
+
+---
+## HuggingFaceModel
+
+Interface for saving a huggingface model.
+
+|  |  |
+| --- | --- |
+| **Model Type** | `Union[Pipeline, PreTrainedModel, TFPreTrainedModel]` |
+| **Save Format** | `huggingface` |
+| **Source** | [`HuggingFaceModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/huggingface.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py) |
+
+
+### Arguments
+
+`model`: `Union[Pipeline, PreTrainedModel, TFPreTrainedModel]`
+: A huggingface model that subclasses `Pipeline`, `PreTrainedModel` or `TFPreTrainedModel`
+
+`tokenizer`: `Optional[Union[PreTrainedTokenizer, PreTrainedTokenizerFast]]`
+: Optional huggingface tokenizer
+
+`feature_extractor`: `Optional[Union[FeatureExtractionMixin, ImageProcessingMixin]]`
+: Optional huggingface feature extractor
+
+`sample_data`: `Union[list, tuple, dict, BatchEncoding, BatchFeature, str, ImageFile]`
+: Sample data to be used for model inference.
+
+`onnx_args`: `Optional[HuggingFaceOnnxArgs]`
+: Optional arguments for converting to onnx. See [HuggingFaceOnnxArgs](./onnx.md#huggingfaceonnxargs) for more information.
+
+`task_type`: `str`
+: Model task. Must be task from `HuggingFaceTask`. See [HuggingFaceTask](./huggingface.md#huggingfacetask) for more information.
+
+### Example
+
+```py hl_lines="1  15-23"
+from opsml import HuggingFaceModel, HuggingFaceOnnxArgs, HuggingFaceORTModel, HuggingFaceTask, CardInfo, ModelCard, CardRegistry
+from transformers import BartModel, BartTokenizer
+
+info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+model_registry = CardRegistry("model")
+
+# Skipping data step
+...
+
+tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+model = BartModel.from_pretrained("facebook/bart-base")
+inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
+
+# huggingface interface
+model = HuggingFaceModel(
+    model=model,
+    tokenizer=tokenizer,
+    sample_data=inputs,
+    task_type=HuggingFaceTask.FEATURE_EXTRACTION.value,
+    onnx_args=HuggingFaceOnnxArgs(
+        ort_type=HuggingFaceORTModel.ORT_FEATURE_EXTRACTION.value,
+    ),
+)
 
 # create modelcard
 modelcard = ModelCard(

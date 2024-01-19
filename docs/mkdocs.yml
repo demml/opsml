@@ -47,8 +47,8 @@ nav:
       - 'interfaces/data/datasets.md'
     - Model Interface:
       - 'interfaces/model/interfaces.md'
-
-    #- Model Interface:
+      - 'interfaces/model/onnx.md'
+      - 'interfaces/model/extras.md'
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'
