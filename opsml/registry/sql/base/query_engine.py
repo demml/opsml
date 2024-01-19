@@ -199,7 +199,7 @@ class QueryEngine:
         table: CardSQLTable,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -207,7 +207,7 @@ class QueryEngine:
         query_terms: Optional[Dict[str, Any]] = None,
     ) -> Select[Any]:
         """
-        Creates a sql query based on table, uid, name, team and version
+        Creates a sql query based on table, uid, name, repository and version
 
         Args:
             table:
@@ -216,8 +216,8 @@ class QueryEngine:
                 Optional unique id of Card
             name:
                 Optional name of Card
-            team:
-                Optional team name
+            repository:
+                Optional Repository name
             version:
                 Optional version of Card
             tags:
@@ -241,7 +241,7 @@ class QueryEngine:
 
         filters = []
 
-        for field, value in zip(["name", "team"], [name, team]):
+        for field, value in zip(["name", "repository"], [name, repository]):
             if value is not None:
                 filters.append(getattr(table, field) == value)
 
@@ -296,7 +296,7 @@ class QueryEngine:
         table: CardSQLTable,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         max_date: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -307,7 +307,7 @@ class QueryEngine:
             table=table,
             uid=uid,
             name=name,
-            team=team,
+            repository=repository,
             version=version,
             max_date=max_date,
             tags=tags,
@@ -383,29 +383,29 @@ class QueryEngine:
             query.update(card)
             sess.commit()
 
-    def get_unique_teams(self, table: CardSQLTable) -> Sequence[str]:
-        """Retrieves unique teams in a registry
+    def get_unique_repositories(self, table: CardSQLTable) -> Sequence[str]:
+        """Retrieves unique repositories in a registry
 
         Args:
             table:
                 Registry table to query
 
         Returns:
-            List of unique teams
+            List of unique repositories
         """
 
-        team_col = table.team
-        query = select(team_col).distinct()  # type:ignore[call-overload]
+        repository_col = table.repository
+        query = select(repository_col).distinct()  # type:ignore[call-overload]
 
         with self.session() as sess:
             return sess.scalars(query).all()
 
-    def get_unique_card_names(self, team: Optional[str], table: CardSQLTable) -> Sequence[str]:
+    def get_unique_card_names(self, repository: Optional[str], table: CardSQLTable) -> Sequence[str]:
         """Returns a list of unique card names"""
         query = select(table.name)  # type:ignore[call-overload]
 
-        if team is not None:
-            query = query.filter(table.team == team).distinct()
+        if repository is not None:
+            query = query.filter(table.repository == repository).distinct()
         else:
             query = query.distinct()
 

@@ -206,7 +206,7 @@ class DataInterface(BaseModel):
         Example:
 
             ```python
-            card_info = CardInfo(name="linnerrud", team="tutorial", user_email="user@email.com")
+            card_info = CardInfo(name="linnerrud", repository="tutorial", contact="user@email.com")
             data_card = DataCard(
                 info=card_info,
                 data=data,

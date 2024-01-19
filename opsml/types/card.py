@@ -80,9 +80,9 @@ class CardInfo:
     Args:
         name:
             Name of card
-        team:
-            Team name
-        user_email:
+        repository:
+            repository name
+        contact:
             Email
         uid:
             Unique id of card
@@ -93,8 +93,8 @@ class CardInfo:
     """
 
     name: Optional[str] = None
-    team: Optional[str] = None
-    user_email: Optional[str] = None
+    repository: Optional[str] = None
+    contact: Optional[str] = None
     uid: Optional[str] = None
     version: Optional[str] = None
     tags: Optional[Dict[str, str]] = None

@@ -58,8 +58,8 @@ def test_image_dataset(create_image_dataset: Path):
     datacard = DataCard(
         interface=image_data,
         name="test_data",
-        team="mlops",
-        user_email="test_email",
+        repository="mlops",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -80,8 +80,8 @@ def test_image_dataset_multiproc(create_image_dataset: Path):
     datacard = DataCard(
         interface=image_data,
         name="test_data",
-        team="mlops",
-        user_email="test_email",
+        repository="mlops",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -104,8 +104,8 @@ def test_image_split_dataset(create_split_image_dataset: Path):
     datacard = DataCard(
         interface=image_data,
         name="test_data",
-        team="mlops",
-        user_email="test_email",
+        repository="mlops",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -119,7 +119,7 @@ def test_image_split_dataset(create_split_image_dataset: Path):
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,
@@ -187,8 +187,8 @@ def test_text_dataset(create_text_dataset: Path):
     datacard = DataCard(
         interface=text_data,
         name="test_data",
-        team="mlops",
-        user_email="test_email",
+        repository="mlops",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -211,8 +211,8 @@ def test_text_split_dataset(create_split_text_dataset: Path):
     datacard = DataCard(
         interface=text_data,
         name="test_data",
-        team="mlops",
-        user_email="test_email",
+        repository="mlops",
+        contact="test_email",
         version="0.0.1",
         uid=uuid.uuid4().hex,
     )
@@ -226,7 +226,7 @@ def test_text_split_dataset(create_split_text_dataset: Path):
     loader = CardLoader(
         card_args={
             "name": datacard.name,
-            "team": datacard.team,
+            "repository": datacard.repository,
             "version": datacard.version,
         },
         registry_type=RegistryType.DATA,

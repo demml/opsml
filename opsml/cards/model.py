@@ -21,10 +21,10 @@ class ModelCard(ArtifactCard):
     Args:
         name:
             Name for the model specific to your current project
-        team:
-            Team that this model is associated with
-        user_email:
-            Email to associate with card
+        repository:
+            Repository that this model is associated with
+        contact:
+            Contact to associate with card
         interface:
             Trained model interface. Can be one of SklearnModel, TensorFlowModel, TorchModel
             LightningModel, LGBModel, XGBoostModel, HuggingFaceModel

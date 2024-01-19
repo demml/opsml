@@ -51,21 +51,21 @@ class ClientRegistry(SQLRegistryBase):
         raise NotImplementedError
 
     @property
-    def unique_teams(self) -> Sequence[str]:
-        """Returns a list of unique teams"""
+    def unique_repositories(self) -> Sequence[str]:
+        """Returns a list of unique repositories"""
         data = self._session.get_request(
-            route=api_routes.TEAM_CARDS,
+            route=api_routes.REPOSITORY_CARDS,
             params={"registry_type": self.registry_type.value},
         )
 
-        return cast(List[str], data["teams"])
+        return cast(List[str], data["repositories"])
 
-    def get_unique_card_names(self, team: Optional[str] = None) -> List[str]:
+    def get_unique_card_names(self, repository: Optional[str] = None) -> List[str]:
         """Returns a list of unique card names
 
         Args:
-            team:
-                Team to filter by
+            repository:
+                Repository to filter by
 
         Returns:
             List of unique card names
@@ -73,13 +73,10 @@ class ClientRegistry(SQLRegistryBase):
 
         params = {"registry_type": self.registry_type.value}
 
-        if team is not None:
-            params["team"] = team
+        if repository is not None:
+            params["repository"] = repository
 
-        data = self._session.get_request(
-            route=api_routes.NAME_CARDS,
-            params=params,
-        )
+        data = self._session.get_request(route=api_routes.NAME_CARDS, params=params)
 
         return cast(List[str], data["names"])
 
@@ -94,7 +91,7 @@ class ClientRegistry(SQLRegistryBase):
     def set_version(
         self,
         name: str,
-        team: str,
+        repository: str,
         pre_tag: str,
         build_tag: str,
         version_type: VersionType = VersionType.MINOR,
@@ -109,7 +106,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.VERSION,
             json={
                 "name": name,
-                "team": team,
+                "repository": repository,
                 "version": version_to_send,
                 "version_type": version_type,
                 "registry_type": self._registry_type.value,
@@ -124,7 +121,7 @@ class ClientRegistry(SQLRegistryBase):
         self,
         uid: Optional[str] = None,
         name: Optional[str] = None,
-        team: Optional[str] = None,
+        repository: Optional[str] = None,
         version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         max_date: Optional[str] = None,
@@ -138,8 +135,8 @@ class ClientRegistry(SQLRegistryBase):
         Args:
             name:
                 Card Name
-            team:
-                Team Card
+            repository:
+                Card Repository
             version:
                 Version. If not specified, the most recent version will be used.
             uid:
@@ -162,7 +159,7 @@ class ClientRegistry(SQLRegistryBase):
             route=api_routes.LIST_CARDS,
             json={
                 "name": name,
-                "team": team,
+                "repository": repository,
                 "version": version,
                 "uid": uid,
                 "max_date": max_date,

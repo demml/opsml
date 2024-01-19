@@ -125,7 +125,7 @@ class ModelChallenger:
 
         champion_records = self._registries.model.list_cards(
             name=self._challenger.name,
-            team=self._challenger.team,
+            repository=self._challenger.repository,
         )
 
         if not bool(champion_records):
@@ -241,9 +241,9 @@ class ModelChallenger:
                 metric_name=metric_name,
             )
 
-            # update name, team and version in case of None
+            # update name, repository and version in case of None
             champion.name = champion.name or champion_card.get("name")
-            champion.team = champion.team or champion_card.get("team")
+            champion.repository = champion.repository or champion_card.get("repository")
             champion.version = champion.version or champion_card.get("version")
 
             battle_reports.append(

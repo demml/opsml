@@ -23,11 +23,11 @@ def test_delete_data_model(
     datacard = DataCard(
         interface=data,
         name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
     data_registry.register_card(card=datacard)
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
+    cards = data_registry.list_cards(name="pipeline_data", repository="mlops")
 
     # assert card and artifacts exist
     assert len(cards) == 1
@@ -36,15 +36,15 @@ def test_delete_data_model(
     modelcard = ModelCard(
         interface=model,
         name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         to_onnx=True,
     )
 
     model_registry: CardRegistry = db_registries.model
     model_registry.register_card(card=modelcard)
-    cards = model_registry.list_cards(name="pipeline_model", team="mlops")
+    cards = model_registry.list_cards(name="pipeline_model", repository="mlops")
     assert len(cards) == 1
 
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib").exists()
@@ -54,7 +54,7 @@ def test_delete_data_model(
 
     # delete model card
     model_registry.delete_card(card=modelcard)
-    cards = model_registry.list_cards(name="pipeline_model", team="mlops")
+    cards = model_registry.list_cards(name="pipeline_model", repository="mlops")
     assert len(cards) == 0
 
     assert not Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib").exists()
@@ -64,7 +64,7 @@ def test_delete_data_model(
 
     # delete datacard
     data_registry.delete_card(card=datacard)
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
+    cards = data_registry.list_cards(name="pipeline_data", repository="mlops")
     assert len(cards) == 0
 
     assert not Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
@@ -75,8 +75,8 @@ def test_delete_runcard(db_registries: CardRegistries):
     registry = db_registries.run
     run = RunCard(
         name="test_run",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         datacard_uids=["test_uid"],
     )
     run.log_metric("test_metric", 10)
@@ -88,7 +88,7 @@ def test_delete_runcard(db_registries: CardRegistries):
     assert Path(run.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
 
     registry.delete_card(card=run)
-    cards = registry.list_cards(name="test_run", team="mlops")
+    cards = registry.list_cards(name="test_run", repository="mlops")
     assert len(cards) == 0
 
     assert not Path(run.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
@@ -106,11 +106,11 @@ def test_delete_data_model_api(
     datacard = DataCard(
         interface=data,
         name="pipeline_data",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
     data_registry.register_card(card=datacard)
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
+    cards = data_registry.list_cards(name="pipeline_data", repository="mlops")
 
     # assert card and artifacts exist
     assert len(cards) == 1
@@ -119,15 +119,15 @@ def test_delete_data_model_api(
     modelcard = ModelCard(
         interface=model,
         name="pipeline_model",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         datacard_uid=datacard.uid,
         to_onnx=True,
     )
 
     model_registry: CardRegistry = api_registries.model
     model_registry.register_card(card=modelcard)
-    cards = model_registry.list_cards(name="pipeline_model", team="mlops")
+    cards = model_registry.list_cards(name="pipeline_model", repository="mlops")
     assert len(cards) == 1
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
@@ -137,7 +137,7 @@ def test_delete_data_model_api(
 
     # delete model card
     model_registry.delete_card(card=modelcard)
-    cards = model_registry.list_cards(name="pipeline_model", team="mlops")
+    cards = model_registry.list_cards(name="pipeline_model", repository="mlops")
     assert len(cards) == 0
 
     assert not api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
@@ -147,7 +147,7 @@ def test_delete_data_model_api(
 
     # delete datacard
     data_registry.delete_card(card=datacard)
-    cards = data_registry.list_cards(name="pipeline_data", team="mlops")
+    cards = data_registry.list_cards(name="pipeline_data", repository="mlops")
     assert len(cards) == 0
 
     assert not api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))

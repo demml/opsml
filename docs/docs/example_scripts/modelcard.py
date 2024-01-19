@@ -7,7 +7,7 @@ from opsml import CardRegistry, ModelCard, CardInfo
 data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
 
-card_info = CardInfo(name="linnerrud", team="opsml", user_email="user@email.com")
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 
 
 # load datacard

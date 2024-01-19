@@ -17,9 +17,9 @@ class PipelineCard(ArtifactCard):
     Args:
         name:
             Pipeline name
-        team:
-            Team that this card is associated with
-        user_email:
+        repository:
+            repository that this card is associated with
+        contact:
             Email to associate with card
         uid:
             Unique id (assigned if card has been registered)

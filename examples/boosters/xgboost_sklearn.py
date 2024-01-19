@@ -25,7 +25,7 @@ class OpsmlXGBoostPipelineWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "team" and "email" to a card; however, this
+                You could also provide "name", "repository" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -117,8 +117,8 @@ class OpsmlXGBoostPipelineWorkflow:
         # create modelcard
         modelcard = ModelCard(
             name="xgb-reg",
-            team="opsml",
-            user_email="user@email.com",
+            repository="opsml",
+            contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
             to_onnx=True,
@@ -162,6 +162,6 @@ class OpsmlXGBoostPipelineWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="xgboost", team="opsml", user_email="user@email.com")
+    info = CardInfo(name="xgboost", repository="opsml", contact="user@email.com")
     workflow = OpsmlXGBoostPipelineWorkflow(info=info)
     workflow.run_workflow()

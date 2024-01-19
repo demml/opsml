@@ -6,6 +6,8 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from pydantic import model_validator
+
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
@@ -37,10 +39,10 @@ class RunCard(ArtifactCard):
     Args:
         name:
             Run name
-        team:
-            Team that this card is associated with
-        user_email:
-            Email to associate with card
+        repository:
+            Repository that this card is associated with
+        contact:
+            Contact to associate with card
         datacard_uids:
             Optional DataCard uids associated with this run
         modelcard_uids:
@@ -67,8 +69,24 @@ class RunCard(ArtifactCard):
     metrics: Metrics = {}
     parameters: Params = {}
     artifact_uris: ArtifactUris = {}
-    tags: Dict[str, str] = {}
-    project_id: Optional[str] = None
+    tags: Dict[str, Union[str, int]] = {}
+    project: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_defaults_args(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:
+        # add default
+        contact = card_args.get("contact")
+
+        if contact is None:
+            card_args["contact"] = ""
+
+        repository = card_args.get("repository")
+
+        if repository is None:
+            card_args["repository"] = "opsml"
+
+        return card_args
 
     def add_tag(self, key: str, value: str) -> None:
         """
@@ -322,7 +340,7 @@ class RunCard(ArtifactCard):
         return Path(
             config.storage_root,
             RegistryTableNames.from_str(self.card_type).value,
-            self.team,
+            self.repository,
             self.name,
             end_path,
         )

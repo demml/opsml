@@ -11,7 +11,7 @@ from requests.auth import HTTPBasicAuth
 from starlette.testclient import TestClient
 
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
-from opsml.app.routes.utils import error_to_500, list_team_name_info
+from opsml.app.routes.utils import error_to_500, list_repository_name_info
 from opsml.cards import (
     AuditCard,
     DataCard,
@@ -63,8 +63,8 @@ def test_register_data(
     datacard = DataCard(
         interface=pandas_data,
         name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
     datacard.create_data_profile()
     registry.register_card(card=datacard)
@@ -72,25 +72,25 @@ def test_register_data(
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
 
-    _ = registry.list_cards(name=datacard.name, team=datacard.team, max_date=TODAY_YMD)
+    _ = registry.list_cards(name=datacard.name, repository=datacard.repository, max_date=TODAY_YMD)
 
     _ = registry.list_cards(name=datacard.name)
 
     _ = registry.list_cards()
 
-    # Verify teams / names
-    teams = registry._registry.unique_teams
-    assert "mlops" in teams
+    # Verify repositories / names
+    repositories = registry._registry.unique_repositories
+    assert "mlops" in repositories
 
-    names = registry._registry.get_unique_card_names(team="mlops")
+    names = registry._registry.get_unique_card_names(repository="mlops")
     assert "test-df" in names
 
-    info = list_team_name_info(registry=registry, team="mlops")
-    assert "mlops" in info.teams
+    info = list_repository_name_info(registry=registry, repository="mlops")
+    assert "mlops" in info.repositories
     assert "test-df" in info.names
 
-    info = list_team_name_info(registry=registry)
-    assert "mlops" in info.teams
+    info = list_repository_name_info(registry=registry)
+    assert "mlops" in info.repositories
     assert "test-df" in info.names
 
 
@@ -101,8 +101,8 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
     data_card = DataCard(
         interface=numpy_data,
         name="major_minor",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         version="3.1.1",
     )
 
@@ -111,8 +111,8 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
     data_card = DataCard(
         interface=numpy_data,
         name="major_minor",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         version="3.1",
     )
 
@@ -122,8 +122,8 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
     data_card = DataCard(
         interface=numpy_data,
         name="major_minor",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         version="3.1",
     )
 
@@ -138,8 +138,8 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
     data_card = DataCard(
         interface=numpy_data,
         name="test_array",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
 
     registry.register_card(card=data_card)
@@ -148,8 +148,8 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
     data_card = DataCard(
         interface=numpy_data,
         name="test_array",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
     )
     registry.register_card(card=data_card, version_type="major")
 
@@ -157,29 +157,29 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
         data_card = DataCard(
             interface=numpy_data,
             name="test_array",
-            team="mlops",
-            user_email="mlops.com",
+            repository="mlops",
+            contact="mlops.com",
         )
         registry.register_card(card=data_card)
 
     # should return 13 versions
     cards = registry.list_cards(
         name=data_card.name,
-        team=data_card.team,
+        repository=data_card.repository,
         version="2.*.*",
     )
     assert len(cards) == 13
 
     cards = registry.list_cards(
         name=data_card.name,
-        team=data_card.team,
+        repository=data_card.repository,
         version="^2.3.0",
     )
     assert len(cards) == 1
 
     cards = registry.list_cards(
         name=data_card.name,
-        team=data_card.team,
+        repository=data_card.repository,
         version="~2.3.0",
     )
     assert len(cards) == 1
@@ -193,7 +193,7 @@ def test_run_card(
     registry = api_registries.run
     model, data = linear_regression
 
-    run = RunCard(name="test_df", team="mlops", user_email="mlops.com", datacard_uids=["test_uid"])
+    run = RunCard(name="run", contact="mlops.com", datacard_uids=["test_uid"])
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
     assert run.get_metric("test_metric").value == 10
@@ -238,30 +238,30 @@ def test_register_model_data(
         modelcard_fail = ModelCard(
             interface=modelcard.interface,
             name="pipeline_model",
-            team="mlops",
-            user_email="mlops.com",
+            repository="mlops",
+            contact="mlops.com",
             datacard_uid=None,
             to_onnx=True,
         )
         model_registry.register_card(card=modelcard_fail)
 
     # test card tags
-    cards = model_registry.list_cards(name=modelcard.name, team=modelcard.team, tags=modelcard.tags)
+    cards = model_registry.list_cards(name=modelcard.name, repository=modelcard.repository, tags=modelcard.tags)
 
     assert cards[0]["tags"] == {"id": "model1"}
 
     with pytest.raises(ValueError) as ve:
-        # try registering model to different team
+        # try registering model to different repository
         model_card_dup = ModelCard(
             interface=modelcard.interface,
             name=modelcard.name,
-            team="new-team",
-            user_email="mlops.com",
+            repository="new-repository",
+            contact="mlops.com",
             datacard_uid=datacard.uid,
             to_onnx=True,
         )
         model_registry.register_card(card=model_card_dup)
-    assert ve.match("different team")
+    assert ve.match("different repository")
 
     # load data
     loaded_data: DataCard = data_registry.load_card(name=datacard.name, version=datacard.version)
@@ -280,8 +280,8 @@ def test_register_model_data(
     with pytest.raises(ValueError):
         DataCard(
             name=datacard.name,
-            team=datacard.team,
-            user_email=datacard.user_email,
+            repository=datacard.repository,
+            contact=datacard.contact,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
         )
 
@@ -289,8 +289,8 @@ def test_register_model_data(
 def test_pipeline_registry(api_registries: CardRegistry):
     pipeline_card = PipelineCard(
         name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         pipeline_code_uri="test_pipe_uri",
     )
     for card_type in ["data", "run", "model"]:
@@ -478,7 +478,7 @@ def test_model_metrics(
         url=f"/opsml/{ApiRoutes.MODEL_METRICS}",
         json={
             "name": modelcard.name,
-            "team": modelcard.team,
+            "repository": modelcard.repository,
         },
     )
     assert response.status_code == 200
@@ -493,8 +493,8 @@ def test_token_fail(
     monkeypatch.setattr(config, "opsml_prod_token", "fail")
     run = RunCard(
         name="test_df",
-        team="mlops",
-        user_email="mlops.com",
+        repository="mlops",
+        contact="mlops.com",
         datacard_uids=["test_uid"],
     )
 
@@ -605,10 +605,10 @@ def test_data_model_version(
     response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
     assert response.status_code == 200
 
-    response = test_app.get("/opsml/projects/list/?project=test-exp:test")
+    response = test_app.get("/opsml/projects/list/?project=opsml-project")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/projects/list/?project=test-exp:test&run_uid={run.runcard.uid}")
+    response = test_app.get(f"/opsml/projects/list/?project=opsml-project&run_uid={run.runcard.uid}")
     assert response.status_code == 200
 
     response = test_app.get(f"/opsml/projects/runs/plot/?run_uid={run.runcard.uid}")
@@ -637,19 +637,19 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
     response = test_app.get("/opsml/audit/")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team={modelcard.team}")
+    response = test_app.get(f"/opsml/audit/?repository={modelcard.repository}")
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team={modelcard.team}&?model={modelcard.name}")
+    response = test_app.get(f"/opsml/audit/?repository={modelcard.repository}&?model={modelcard.name}")
     assert response.status_code == 200
 
     audit_form = AuditFormRequest(
         selected_model_name=modelcard.name,
-        selected_model_team=modelcard.team,
+        selected_model_repository=modelcard.repository,
         selected_model_version=modelcard.version,
-        selected_model_email=modelcard.user_email,
+        selected_model_email=modelcard.contact,
         name="model_audit",
-        team="mlops",
+        repository="mlops",
         email="mlops.com",
     )
 
@@ -660,18 +660,20 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
 
     assert response.status_code == 200
 
-    response = test_app.get(f"/opsml/audit/?team={modelcard.team}&model={modelcard.name}&version={modelcard.version}")
+    response = test_app.get(
+        f"/opsml/audit/?repository={modelcard.repository}&model={modelcard.name}&version={modelcard.version}"
+    )
     assert response.status_code == 200
 
     comment = CommentSaveRequest(
         uid=auditcard.uid,
         name=auditcard.name,
-        team=auditcard.team,
-        email=auditcard.user_email,
+        repository=auditcard.repository,
+        email=auditcard.contact,
         selected_model_name=modelcard.name,
         selected_model_version=modelcard.version,
-        selected_model_team=modelcard.team,
-        selected_model_email=modelcard.user_email,
+        selected_model_repository=modelcard.repository,
+        selected_model_email=modelcard.contact,
         comment_name="test",
         comment_text="test",
     )
@@ -696,11 +698,11 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
     # with uid
     audit_form = AuditFormRequest(
         selected_model_name=modelcard.name,
-        selected_model_team=modelcard.team,
+        selected_model_repository=modelcard.repository,
         selected_model_version=modelcard.version,
-        selected_model_email=modelcard.user_email,
+        selected_model_email=modelcard.contact,
         name="model_audit",
-        team="mlops",
+        repository="mlops",
         email="mlops.com",
         uid=auditcard.uid,
     )
@@ -773,16 +775,16 @@ def test_register_vit(
     datacard = DataCard(
         interface=data,
         name="vit",
-        team="mlops",
-        user_email="test@mlops.com",
+        repository="mlops",
+        contact="test@mlops.com",
     )
     api_registries.data.register_card(datacard)
 
     modelcard = ModelCard(
         interface=model,
         name="vit",
-        team="mlops",
-        user_email="test@mlops.com",
+        repository="mlops",
+        contact="test@mlops.com",
         tags={"id": "model1"},
         datacard_uid=datacard.uid,
         to_onnx=True,

@@ -13,7 +13,10 @@ from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
 from opsml.app.routes.pydantic_models import AuditReport
-from opsml.app.routes.utils import get_names_teams_versions, list_team_name_info
+from opsml.app.routes.utils import (
+    get_names_repositories_versions,
+    list_repository_name_info,
+)
 from opsml.cards.audit import AuditCard, AuditSections
 from opsml.cards.base import ArtifactCard
 from opsml.cards.data import DataCard
@@ -80,32 +83,32 @@ class AuditRouteHelper(RouteHelper):
             "include/audit/audit.html",
             {
                 "request": request,
-                "teams": request.app.state.registries.model._registry.unique_teams,
+                "repositories": request.app.state.registries.model._registry.unique_repositories,
                 "models": None,
-                "selected_team": None,
+                "selected_repository": None,
                 "selected_model": None,
                 "version": None,
                 "audit_report": None,
             },
         )
 
-    def get_team_page(self, request: Request, team: str) -> _TemplateResponse:
-        """Returns audit page for a specific team
+    def get_repository_page(self, request: Request, repository: str) -> _TemplateResponse:
+        """Returns audit page for a specific repository
 
         Args:
             request:
                 The incoming HTTP request.
-            team:
-                The team name.
+            repository:
+                The repository name.
         """
-        teams = request.app.state.registries.model._registry.unique_teams
-        model_names = request.app.state.registries.model._registry.get_unique_card_names(team=team)
+        repositories = request.app.state.registries.model._registry.unique_repositories
+        model_names = request.app.state.registries.model._registry.get_unique_card_names(repository=repository)
         return templates.TemplateResponse(
             "include/audit/audit.html",
             {
                 "request": request,
-                "teams": teams,
-                "selected_team": team,
+                "repositories": repositories,
+                "selected_repository": repository,
                 "models": model_names,
                 "versions": None,
                 "selected_model": None,
@@ -114,29 +117,29 @@ class AuditRouteHelper(RouteHelper):
             },
         )
 
-    def get_versions_page(self, request: Request, name: str, team: str) -> _TemplateResponse:
-        """Returns the audit page for a model name, team, and versions
+    def get_versions_page(self, request: Request, name: str, repository: str) -> _TemplateResponse:
+        """Returns the audit page for a model name, repository, and versions
 
         Args:
             request:
                 The incoming HTTP request.
             name:
                 The model name.
-            team:
-                The team name.
+            repository:
+                The repository name.
         """
-        model_names, teams, versions = get_names_teams_versions(
+        model_names, repositories, versions = get_names_repositories_versions(
             registry=request.app.state.registries.model,
             name=name,
-            team=team,
+            repository=repository,
         )
 
         return templates.TemplateResponse(
             "include/audit/audit.html",
             {
                 "request": request,
-                "teams": teams,
-                "selected_team": team,
+                "repositories": repositories,
+                "selected_repository": repository,
                 "models": model_names,
                 "selected_model": name,
                 "versions": versions,
@@ -165,8 +168,8 @@ class AuditRouteHelper(RouteHelper):
         if uid is None:
             return AuditReport(
                 name=None,
-                team=None,
-                user_email=None,
+                repository=None,
+                contact=None,
                 version=None,
                 uid=None,
                 status=False,
@@ -178,8 +181,8 @@ class AuditRouteHelper(RouteHelper):
         audit_card: AuditCard = audit_registry.load_card(uid=uid)  # type: ignore
         return AuditReport(
             name=audit_card.name,
-            team=audit_card.team,
-            user_email=audit_card.user_email,
+            repository=audit_card.repository,
+            contact=audit_card.contact,
             version=audit_card.version,
             uid=audit_card.uid,
             status=audit_card.approved,
@@ -191,7 +194,7 @@ class AuditRouteHelper(RouteHelper):
     def get_name_version_page(
         self,
         request: Request,
-        team: str,
+        repository: str,
         name: str,
         version: Optional[str] = None,
         email: Optional[str] = None,
@@ -202,8 +205,8 @@ class AuditRouteHelper(RouteHelper):
         Args:
             request:
                 The incoming HTTP request.
-            team:
-                The team name.
+            repository:
+                The repository name.
             name:
                 The model name.
             version:
@@ -214,10 +217,10 @@ class AuditRouteHelper(RouteHelper):
                 The user email.
         """
 
-        model_names, teams, versions = get_names_teams_versions(
+        model_names, repositories, versions = get_names_repositories_versions(
             registry=request.app.state.registries.model,
             name=name,
-            team=team,
+            repository=repository,
         )
 
         model_record = request.app.state.registries.model.list_cards(
@@ -226,7 +229,7 @@ class AuditRouteHelper(RouteHelper):
             uid=uid,
         )[0]
 
-        email = model_record.get("user_email") if email is None else email
+        email = model_record.get("contact") if email is None else email
 
         audit_report = self._get_audit_report(
             audit_registry=request.app.state.registries.audit,
@@ -237,8 +240,8 @@ class AuditRouteHelper(RouteHelper):
             "include/audit/audit.html",
             {
                 "request": request,
-                "teams": teams,
-                "selected_team": team,
+                "repositories": repositories,
+                "selected_repository": repository,
                 "models": model_names,
                 "selected_model": name,
                 "selected_email": email,
@@ -252,24 +255,24 @@ class AuditRouteHelper(RouteHelper):
 class DataRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, team: Optional[str] = None) -> _TemplateResponse:
+    def get_homepage(self, request: Request, repository: Optional[str] = None) -> _TemplateResponse:
         """Retrieves homepage
 
         Args:
             request:
                 The incoming HTTP request.
-            team:
-                The team name.
+            repository:
+                The repository name.
         """
         registry: CardRegistry = request.app.state.registries.data
 
-        info = list_team_name_info(registry, team)
+        info = list_repository_name_info(registry, repository)
         return templates.TemplateResponse(
             "include/data/data.html",
             {
                 "request": request,
-                "all_teams": info.teams,
-                "selected_team": info.selected_team,
+                "all_repositories": info.repositories,
+                "selected_repository": info.selected_repository,
                 "data": info.names,
             },
         )
@@ -371,24 +374,24 @@ class DataRouteHelper(RouteHelper):
 class ModelRouteHelper(RouteHelper):
     """Route helper for DataCard pages"""
 
-    def get_homepage(self, request: Request, team: Optional[str] = None) -> _TemplateResponse:
+    def get_homepage(self, request: Request, repository: Optional[str] = None) -> _TemplateResponse:
         """Retrieve homepage
 
         Args:
             request:
                 The incoming HTTP request.
-            team:
-                The team name.
+            repository:
+                The repository name.
         """
         registry: CardRegistry = request.app.state.registries.model
 
-        info = list_team_name_info(registry, team)
+        info = list_repository_name_info(registry, repository)
         return templates.TemplateResponse(
             "include/model/models.html",
             {
                 "request": request,
-                "all_teams": info.teams,
-                "selected_team": info.selected_team,
+                "all_repositories": info.repositories,
+                "selected_repository": info.selected_repository,
                 "models": info.names,
             },
         )
@@ -396,7 +399,7 @@ class ModelRouteHelper(RouteHelper):
     def _get_runcard(self, registry: CardRegistry, modelcard: ModelCard) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
-            return runcard, runcard.project_id
+            return runcard, runcard.project
 
         return None, None
 
@@ -532,21 +535,21 @@ class ProjectRouteHelper(RouteHelper):
         """
 
         projects = project_registry.list_cards()
-        return [project["project_id"] for project in projects]
 
-    def get_project_runs(self, selected_project: str, run_registry: CardRegistry) -> List[Dict[str, Any]]:
+        return list(set(project["name"] for project in projects))
+
+    def get_project_runs(self, project: str, run_registry: CardRegistry) -> List[Dict[str, Any]]:
         """Get runs for a project
 
         Args:
-            selected_project:
+            project:
                 The selected project.
             run_registry:
                 The run registry.
         """
-
         project_runs = run_registry._registry.list_cards(
             limit=100,
-            query_terms={"project_id": selected_project},
+            query_terms={"project": project},
         )
         sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
 

@@ -44,7 +44,7 @@ table_name_card_map = {
 
 class CardLoadArgs(BaseModel):
     name: str
-    team: str
+    repository: str
     version: str
     table_name: str
 
@@ -53,7 +53,7 @@ class CardLoadArgs(BaseModel):
         return Path(
             config.storage_root,
             self.table_name,
-            self.team,
+            self.repository,
             self.name,
             f"v{self.version}",
         )

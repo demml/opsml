@@ -9,9 +9,9 @@ from typing import Any, Dict, Iterator, List, Optional, Union, cast
 from opsml.cards.base import ArtifactCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._run_manager import _RunManager
+from opsml.projects._run_manager import ActiveRunException, _RunManager
 from opsml.projects.active_run import ActiveRun, CardHandler
-from opsml.projects.base.types import ProjectInfo
+from opsml.projects.types import ProjectInfo
 from opsml.types import CardInfo, CardType, Metric, Metrics, Param, Params
 
 logger = ArtifactLogger.get_logger()
@@ -36,7 +36,6 @@ class OpsmlProject:
             project: OpsmlProject = OpsmlProject(
                 ProjectInfo(
                     name="test-project",
-                    team="data-devops",
                     # If run_id is omitted, a new run is created.
                     run_id="123ab123kaj8u8naskdfh813",
                 )
@@ -72,8 +71,12 @@ class OpsmlProject:
         self._run_mgr.run_id = run_id
 
     @property
-    def project_id(self) -> str:
+    def project_id(self) -> int:
         return self._run_mgr.project_id
+
+    @property
+    def project_name(self) -> str:
+        return self._run_mgr._project_info.name  # pylint: disable=protected-access
 
     @contextmanager
     def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
@@ -85,10 +88,12 @@ class OpsmlProject:
                 Optional run name
         """
 
-        self._run_mgr.start_run(run_name=run_name)
-
         try:
-            yield self._run_mgr.active_run
+            yield self._run_mgr.start_run(run_name=run_name)  # self._run_mgr.active_run
+
+        except ActiveRunException as error:
+            logger.error("Run already active. Ending run.")
+            raise error
 
         except Exception as error:
             logger.error("Error encountered. Ending run. {}", error)
@@ -127,11 +132,11 @@ class OpsmlProject:
         Returns:
             List of RunCard
         """
-        logger.info("Listing runs for project {}", self.project_id)
+        logger.info("Listing runs for project {}", self.project_name)
 
         project_runs = self._run_mgr.registries.run._registry.list_cards(  # pylint: disable=protected-access
             limit=limit,
-            query_terms={"project_id": self.project_id},
+            query_terms={"project": self.project_name},
         )
 
         return sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
@@ -175,7 +180,7 @@ class OpsmlProject:
         return self.run_card.get_parameter(name=name)
 
     @property
-    def tags(self) -> Dict[str, str]:
+    def tags(self) -> Dict[str, Union[str, int]]:
         return self.run_card.tags
 
     @property

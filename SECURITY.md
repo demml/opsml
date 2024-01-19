@@ -13,9 +13,9 @@ receiving such patches depend on the CVSS v3.0 Rating:
 
 ## Reporting a Vulnerability
 
-If you believe you've found a security vulnerability in this project please utilize our HackerOne bug bounty program by going to https://hackerone.com/shipt/?type=team. 
+If you believe you've found a security vulnerability in this project please utilize our HackerOne bug bounty program by going to https://hackerone.com/shipt/?type=repository. 
 
-Once submitted, someone on our team will review it shortly, typically within 1 business day. If the issue is confirmed, we will release a patch as soon as possible depending on complexity but historically within a few days.
+Once submitted, someone on our repository will review it shortly, typically within 1 business day. If the issue is confirmed, we will release a patch as soon as possible depending on complexity but historically within a few days.
 
 **Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
 

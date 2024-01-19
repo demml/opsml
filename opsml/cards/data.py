@@ -38,10 +38,10 @@ class DataCard(ArtifactCard):
             Instance of `DataInterface` that contains data
         name:
             What to name the data
-        team:
-            Team that this data is associated with
-        user_email:
-            Email to associate with data card
+        repository:
+            Repository that this data is associated with
+        contact:
+            Contact to associate with data card
         version:
             DataCard version
         uid:
