@@ -1,7 +1,10 @@
 from tests.conftest import cleanup
+
+
 def test_quickstart():
-    
+
     from sklearn.linear_model import LinearRegression
+
     from opsml import (
         CardInfo,
         CardRegistries,
@@ -13,10 +16,9 @@ def test_quickstart():
     )
     from opsml.helpers.data import create_fake_data
 
-
     info = CardInfo(name="linear-regression", repository="opsml", user_email="user@email.com")
     registries = CardRegistries()
-    
+
     # create fake data
     X, y = create_fake_data(n_samples=1000, task_type="regression")
     X["target"] = y
@@ -35,7 +37,7 @@ def test_quickstart():
     datacard = DataCard(interface=data_interface, info=info)
     registries.data.register_card(card=datacard)
 
-    #--------- Create ModelCard ---------#
+    # --------- Create ModelCard ---------#
 
     # split data
     data = datacard.split_data()
@@ -59,5 +61,5 @@ def test_quickstart():
         datacard_uid=datacard.uid,  # modelcards must be associated with a datacard
     )
     registries.model.register_card(card=modelcard)
-    
+
     cleanup()

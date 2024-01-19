@@ -12,7 +12,7 @@ from opsml.data.interfaces.custom_data.text import TextMetadata, TextRecord
 from opsml.data.splitter import DataSplit
 
 try:
-    from opsml.data.interfaces.custom_data.image import ImageMetadata, ImageRecord, BBox
+    from opsml.data.interfaces.custom_data.image import BBox, ImageMetadata, ImageRecord
 
     extra_imports = ["ImageMetadata", "ImageRecord", "BBox"]
 

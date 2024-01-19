@@ -370,3 +370,60 @@ modelcard = ModelCard(
 # register
 model_registry.register_card(card=modelcard)
 ```
+
+---
+## TensorFlowModel
+
+Interface for saving a tensorflow model.
+
+|  |  |
+| --- | --- |
+| **Model Type** | `tf.keras.Model` |
+| **Save Format** | `tensorflow` |
+| **Source** | [`TorchModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/tf.py) |
+
+
+### Arguments
+
+`model`: `torch.nn.Module`
+: A pytorch model that subclasses `torch.nn.Module`
+
+`preprocessor`: `Optional[Any]`
+: Optional preprocessor
+
+`sample_data`: `Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]`
+: Sample data to be used for type inference.
+
+`onnx_args`: `Optional[TorchOnnxArgs]`
+: Optional arguments for converting to onnx. See [TorchOnnxArgs](./onnx.md#torchonnxargs) for more information.
+
+### Example
+
+```py hl_lines="1  15"
+from opsml import TorchModel, CardInfo, ModelCard, CardRegistry
+from examples.torch.polynomial_nn import Polynomial3 # see examples/torch/polynomial_nn.py
+
+info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+model_registry = CardRegistry("model")
+
+# Skipping data step
+...
+
+# instantiate model
+model = Polynomial3()
+model.train_model(X, y)
+
+# torch interface
+interface = TorchModel(model=model, sample_data=X)
+
+# create modelcard
+modelcard = ModelCard(
+    interface=interface,
+    info=info,
+    to_onnx=True, 
+    datacard_uid=datacard.uid,  
+)
+
+# register
+model_registry.register_card(card=modelcard)
+```

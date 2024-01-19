@@ -55,8 +55,11 @@ jobs:
       - name: Run XGBoost Booster example
         run : poetry run python examples/boosters/xgboost_sklearn.py && rm -rf mlruns && rm tmp.db
 
-      - name: Run Torch example
+      - name: Run TensorFlow example
         run : poetry run python examples/torch/torch_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Torch example
+        run : poetry run python examples/tensorflow/tf_example.py && rm -rf mlruns && rm tmp.db
 
       - name: Run Torch Lightning example
         run : poetry run python examples/torch/torch_lightning_example.py && rm -rf mlruns && rm tmp.db
