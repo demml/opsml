@@ -216,3 +216,33 @@ def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
         run.log_parameter(key="m1", value="apple")
 
     assert len(OpsmlProject(info=info).list_runs()) > 0
+
+
+def test_project_card_info_env_var(
+    db_registries: CardRegistries,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+) -> None:
+    """Verify that we can set card info via env vars"""
+
+    card_info = CardInfo(name="test-card", repository="opsml", contact="opsml_user").set_env()
+    project_info = ProjectInfo(name="test-exp")
+    model, data = sklearn_pipeline
+
+    with OpsmlProject(info=project_info).run() as run:
+        run = cast(ActiveRun, run)
+
+        # data card should inherit card info from env vars
+        datacard = DataCard(interface=data)
+        run.register_card(card=datacard)
+
+        # model card should inherit card info from env vars
+        modelcard = ModelCard(interface=model, datacard_uid=datacard.uid)
+        run.register_card(card=modelcard)
+
+    assert datacard.name == card_info.name
+    assert datacard.repository == card_info.repository
+    assert datacard.contact == card_info.contact
+
+    assert modelcard.name == card_info.name
+    assert modelcard.repository == card_info.repository
+    assert modelcard.contact == card_info.contact

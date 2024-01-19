@@ -16,4 +16,3 @@ def test_project_id() -> None:
 
     with pytest.raises(pydantic.ValidationError):
         types.ProjectInfo(name="", repository="a", tracking_uri="test")
-
