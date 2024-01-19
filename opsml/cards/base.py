@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -47,10 +48,16 @@ class ArtifactCard(BaseModel):
         card_info = card_args.get("info")
 
         for key in ["name", "repository", "contact", "version", "uid"]:
+            # check card args
             val = card_args.get(key)
 
+            # check card info
             if card_info is not None:
                 val = val or getattr(card_info, key)
+
+            # check runtime env vars
+            if val is None:
+                val = os.environ.get(f"OPSML_RUNTIME_{key.upper()}")
 
             if key in ["name", "repository"]:
                 if val is not None:
