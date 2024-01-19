@@ -103,11 +103,11 @@ class CardInfo:
     def set_env(self) -> "CardInfo":
         """Helper to set environment variables for the current runtime environment"""
         if self.name is not None:
-            os.environ["OPSML_NAME"] = self.name
+            os.environ["OPSML_RUNTIME_NAME"] = self.name
         if self.repository is not None:
-            os.environ["OPSML_REPOSITORY"] = self.repository
+            os.environ["OPSML_RUNTIME_REPOSITORY"] = self.repository
         if self.contact is not None:
-            os.environ["OPSML_CONTACT"] = self.contact
+            os.environ["OPSML_RUNTIME_CONTACT"] = self.contact
 
         return self
 
